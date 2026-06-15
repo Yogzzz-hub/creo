@@ -30,6 +30,8 @@ def create_razorpay_subscription(user: User, plan: Plan, razorpay_customer_id: s
         "pro": settings.RAZORPAY_PRO_PLAN_ID,
     }
     gateway_plan_id = plan_id_map.get(plan.name.value, "")
+    if not gateway_plan_id:
+        raise ValueError(f"Missing Razorpay plan mapping for plan: {plan.name.value}")
 
     subscription = razorpay_client.subscription.create(
         plan_id=gateway_plan_id,
