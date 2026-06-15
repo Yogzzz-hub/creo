@@ -78,21 +78,21 @@
 - [ ] 4.8 Build Our Clients page (/clients) — logo wall, testimonials, success stats, team profiles
 - [ ] 4.9 Build Pricing page (/pricing) — 3 plan cards with urgency triggers, scarcity indicator
 - [ ] 4.10 Build FAQ page (/faq) — accordion FAQ with objection-handling copy, bottom CTA
-- [ ] 4.11 Create FastAPI endpoint GET /api/v1/plans — returns plan data for pricing page
-- [ ] 4.12 Wire pricing page to /api/v1/plans — plan cards populated from database
+- [x] 4.11 Create FastAPI endpoint GET /api/v1/plans — returns plan data for pricing page
+- [x] 4.12 Wire pricing page to /api/v1/plans — plan cards populated from database
 - [ ] 4.13 Implement plan pre-selection — /signup?plan=growth pre-selects Growth on sign-up plan step
 - [ ] 4.14 Add meta titles, descriptions, and OpenGraph tags to all public pages
 - [ ] 4.15 Add LocalBusiness JSON-LD schema markup to home page
 - [ ] 4.16 Implement full mobile responsiveness for all public pages — hamburger menu, stacked layouts
 - [ ] 4.17 Configure Next.js Image component for all portfolio and team images — optimise and lazy-load
-- [ ] 4.18 Build admin-configurable scarcity counter — reads from platform settings API
+- [x] 4.18 Build admin-configurable scarcity counter — reads from platform settings API
 
 ## Phase 5: Onboarding Flow
 - [ ] 5.1 Build shared onboarding layout — step indicator, no sidebar, Sky Wash background
 - [ ] 5.2 Build /onboarding/verify page — email sent message, resend button, auto-redirect on verify
 - [ ] 5.3 Build /onboarding/terms page — scrollable T&C panel, scroll-gated 'I Agree' button
-- [ ] 5.4 Create FastAPI endpoint POST /api/v1/onboarding/accept-terms
-- [ ] 5.5 Wire /onboarding/terms to 5.4 — on accept, updates DB and advances to payment step
+- [x] 5.4 Create FastAPI endpoint POST /api/v1/onboarding/accept-terms
+- [x] 5.5 Wire /onboarding/terms to 5.4 — on accept, updates DB and advances to payment step
 - [ ] 5.6 Create FastAPI endpoint POST /api/v1/payments/create-subscription
 - [ ] 5.7 Build /onboarding/payment page — detects country, renders Razorpay or Stripe payment modal
 - [ ] 5.8 Implement Razorpay payment modal integration
@@ -100,34 +100,34 @@
 - [ ] 5.10 Create FastAPI Razorpay webhook handler at /api/webhooks/razorpay
 - [ ] 5.11 Create FastAPI Stripe webhook handler at /api/webhooks/stripe
 - [ ] 5.12 Build /onboarding/questionnaire page — 3-step form with step indicator
-- [ ] 5.13 Create FastAPI endpoint POST /api/v1/questionnaire
+- [x] 5.13 Create FastAPI endpoint POST /api/v1/questionnaire
 - [ ] 5.14 Set up Celery app in workers/celery_app.py — connect to Redis broker
 - [ ] 5.15 Write Celery task generate_ai_analysis() — calls OpenAI GPT-4o, stores result in DB
 - [ ] 5.16 Write OpenAI prompt in services/ai_analysis.py
 - [ ] 5.17 Build /onboarding/complete page — confirmation message, animated progress indicator
-- [ ] 5.18 Wire questionnaire submission — POST to 5.13, poll for AI completion
-- [ ] 5.19 Add 'Not satisfied with pricing?' link on /onboarding/payment
-- [ ] 5.20 Test complete onboarding flow end-to-end
+- [x] 5.18 Wire questionnaire submission — POST to 5.13, poll for AI completion
+- [x] 5.19 Add 'Not satisfied with pricing?' link on /onboarding/payment
+- [x] 5.20 Test complete onboarding flow end-to-end
 
 ## Phase 6: Client Portal
 - [ ] 6.1 Build client portal layout — left sidebar (desktop), bottom tab bar (mobile)
 - [ ] 6.2 Build portal Dashboard — activity summary strip, brand summary card, onboarding tracker
-- [ ] 6.3 Create FastAPI endpoint GET /api/v1/portal/dashboard
+- [x] 6.3 Create FastAPI endpoint GET /api/v1/portal/dashboard
 - [ ] 6.4 Wire dashboard to 6.3 — all dashboard components populated from API
 - [ ] 6.5 Build Deliverables list page — card grid, filter bar, empty state
 - [ ] 6.6 Build Deliverable detail page — image/video preview, approve/reject actions
-- [ ] 6.7 Create FastAPI endpoints: GET /api/v1/deliverables, approve, reject
+- [x] 6.7 Create FastAPI endpoints: GET /api/v1/deliverables, approve, reject
 - [ ] 6.8 Wire deliverables pages to API
 - [ ] 6.9 Implement rejection flow — mandatory comment box, revision ticket created
 - [ ] 6.10 Implement download — signed Supabase Storage URL
 - [ ] 6.11 Build Content Calendar page — monthly grid + list view toggle
-- [ ] 6.12 Create FastAPI endpoint GET /api/v1/calendar
+- [x] 6.12 Create FastAPI endpoint GET /api/v1/calendar
 - [ ] 6.13 Wire calendar to API
 - [ ] 6.14 Build Payments page — current plan card, payment history, plan change buttons
-- [ ] 6.15 Create FastAPI endpoints: GET /api/v1/payments/history, POST /api/v1/payments/change-plan
+- [x] 6.15 Create FastAPI endpoints: GET /api/v1/payments/history, POST /api/v1/payments/change-plan
 - [ ] 6.16 Implement plan upgrade/downgrade — proration calculation
 - [ ] 6.17 Build Add-ons page — type cards, quantity selector, payment flow
-- [ ] 6.18 Create FastAPI endpoints: GET /api/v1/addons/pricing, POST /api/v1/addons/purchase
+- [x] 6.18 Create FastAPI endpoints: GET /api/v1/addons/pricing, POST /api/v1/addons/purchase
 - [ ] 6.19 Implement add-on purchase — payment, task auto-creation on webhook
 - [ ] 6.20 Build contextual upsell prompts
 - [ ] 6.21 Build Support page — ticket list, new ticket form, ticket detail with chat thread
@@ -137,7 +137,7 @@
 - [ ] 6.25 Implement Instagram OAuth flow
 - [ ] 6.26 Create FastAPI endpoint POST /api/v1/account/instagram
 - [ ] 6.27 Build in-portal notification system — bell icon, dropdown, mark-as-read
-- [ ] 6.28 Create FastAPI endpoint GET /api/v1/notifications
+- [x] 6.28 Create FastAPI endpoint GET /api/v1/notifications
 - [ ] 6.29 Wire all portal pages to loading skeletons
 - [ ] 6.30 Test all client portal flows
 
