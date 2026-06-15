@@ -134,9 +134,10 @@ def verify_razorpay_signature(payload_body: bytes, signature: str) -> dict:
     )
 
 
-def verify_stripe_signature(payload_body: bytes, signature: str, timestamp: str) -> stripe.Event:
+def verify_stripe_signature(payload_body: bytes, signature_header: str) -> stripe.Event:
     return stripe.Webhook.construct_event(
         payload_body,
-        f"{timestamp},{signature}",
+        signature_header,
         settings.STRIPE_WEBHOOK_SECRET,
+    )
     )
