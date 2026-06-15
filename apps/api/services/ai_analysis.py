@@ -67,14 +67,14 @@ Rules:
 
 Return the analysis as a JSON object with the required keys."""
 
-    return system_prompt + "\n\n" + user_prompt
+    return system_prompt, user_prompt
 
 
-def call_openai_gpt4o(prompt_text: str) -> dict:
-    messages = prompt_text.split("\n\n", 1)
-    system_message = messages[0] if len(messages) > 0 else ""
-    user_message = messages[1] if len(messages) > 1 else prompt_text
-
+def call_openai_gpt4o(system_message: str, user_message: str) -> dict:
+    messages=[
+        {"role": "system", "content": system_message},
+        {"role": "user", "content": user_message},
+    ],
     client = _get_openai_client()
     response = client.chat.completions.create(
         model="gpt-4o",
