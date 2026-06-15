@@ -1,0 +1,345 @@
+# CREO — BACKEND SCHEMA
+## Creo Backend Schema — Data Model & Auth Architecture
+
+| Attribute | Details |
+|---|---|
+| Document | Backend Schema — Document 05 of 06 |
+| Version | 1.0 |
+| Project | Creo — Digital Marketing Agency Platform |
+| Database | PostgreSQL 15 via Supabase |
+| ORM | SQLAlchemy 2.0 (async) + Alembic |
+| Status | Final |
+| Audience | Development Team / AI Coding Agent |
+
+## 1. Overview
+This document defines the complete database schema for Creo. Every table, column, data type, constraint, relationship, index, and Row Level Security policy is specified here. The AI coding agent must use this document as the authoritative reference for writing SQLAlchemy models, Alembic migrations, and Supabase RLS policies.
+
+| Category | Details |
+|---|---|
+| Database | PostgreSQL 15 hosted on Supabase |
+| ORM | SQLAlchemy 2.0 with async support (asyncpg driver) |
+| Migrations | Alembic — all schema changes via versioned migration files |
+| Connection | Supabase connection pooler (PgBouncer) in transaction mode for production |
+| UUID generation | gen_random_uuid() — PostgreSQL native, no application-side UUID generation |
+| Timestamps | All tables include created_at and updated_at. Stored in UTC. updated_at auto-updated via trigger. |
+| Soft deletes | Accounts and clients use deleted_at (nullable timestamp) — never hard delete client data |
+| Naming convention | snake_case for all tables and columns. Plural table names. |
+
+## 2. Enum Types
+All enum types are defined as PostgreSQL native enums and mapped to Python Enum classes in SQLAlchemy models.
+
+### 2.1 user_role
+| Value | Meaning |
+|---|---|
+| client | Paying customer — accesses client portal only |
+| team_member | Creative or operational staff |
+| team_lead | Senior team member — same as team_member plus team management |
+| sales | Sales team — client pipeline and pricing |
+| admin | Full platform access |
+| investor_relations | Read-only access to reports and financial data |
+| super_admin | Founder — all admin capabilities plus platform-level controls |
+
+### 2.2 account_status
+| Value | Meaning |
+|---|---|
+| pending_verification | Account created, email not yet verified |
+| pending_payment | Email verified, T&C accepted, payment not yet completed |
+| active | Payment confirmed — full access |
+| lapsed | Subscription payment failed or cancelled — read-only portal access |
+| suspended | Manually suspended by admin |
+| deleted | Soft-deleted — deleted_at set |
+
+### 2.3 plan_name
+| Value | Meaning |
+|---|---|
+| starter | Starter plan — 3 posters, 2 reels, 3 stories/month, 1 revision round |
+| growth | Growth plan — 6 posters, 4 reels, 6 stories/month, 2 revision rounds |
+| pro | Pro plan — 6 posters, 4 reels, 9 stories/month, 3 revision rounds, dedicated manager |
+
+### 2.4 deliverable_type
+| Value | Meaning |
+|---|---|
+| poster | Static image post |
+| reel | Short video content |
+| story | Static or animated story format |
+
+### 2.5 deliverable_status
+| Value | Meaning |
+|---|---|
+| pending_approval | Submitted by creative team — awaiting client review |
+| approved | Client approved — downloadable |
+| rejected | Client rejected — revision required |
+| revision_in_progress | Team is working on revision |
+| revised_pending_approval | Revised version submitted — awaiting re-review |
+
+### 2.6 task_status
+| Value | Meaning |
+|---|---|
+| pending | Created but not yet started |
+| in_progress | Team member has started work |
+| submitted | Deliverable submitted — awaiting client approval |
+| approved | Client approved deliverable |
+| revision | Client rejected — revision in progress |
+| overdue | SLA deadline passed without submission |
+
+### 2.7 ticket_type
+| Value | Meaning |
+|---|---|
+| deliverable_revision | Client requesting revision on a specific deliverable |
+| general_support | General help request — routed to chatbot then admin |
+| billing_issue | Payment or subscription problem — admin + sales |
+| content_brief_update | Client wants to update their brand questionnaire |
+
+### 2.8 ticket_status
+| Value | Meaning |
+|---|---|
+| open | Ticket submitted — awaiting first response |
+| in_progress | Team actively working on it |
+| awaiting_client | Team has responded — waiting for client reply |
+| resolved | Issue resolved — ticket closed |
+| escalated | Escalated to admin due to SLA breach or severity |
+
+### 2.9 department
+| Value | Meaning |
+|---|---|
+| graphics | Graphics designing team |
+| video | Video editing / videography team |
+| content_writing | Content writing team |
+| social_media | Social media management team |
+| sales | Sales team |
+| investor_relations | Investor relations team |
+| admin | Administration team |
+| tech | IT / Tech team (internal, hidden from clients) |
+
+### 2.10 payment_gateway
+| Value | Meaning |
+|---|---|
+| razorpay | Razorpay — domestic India payments |
+| stripe | Stripe — international payments |
+
+### 2.11 content_plan_status
+| Value | Meaning |
+|---|---|
+| draft | Content plan created internally — not yet shared with client |
+| submitted | Shared with client — awaiting approval |
+| approved | Client approved the content plan |
+| rejected | Client requested changes |
+
+### 2.12 calendar_entry_status
+| Value | Meaning |
+|---|---|
+| draft | Calendar entry created but content plan not yet approved |
+| scheduled | Content plan approved — entry locked in |
+| in_progress | Task assigned and team is working on it |
+| ready_for_review | Deliverable submitted — awaiting client approval |
+| approved | Deliverable approved |
+| rejected | Deliverable rejected — revision in progress |
+
+### 2.13 leave_status / custom_pricing_status / addon_status
+| Value | Meaning |
+|---|---|
+| pending | Awaiting approval/processing |
+| approved | Approved by admin |
+| rejected | Rejected by admin |
+| completed | Fully processed (add-ons: delivered and approved) |
+
+## 3. Table Definitions
+
+### 3.1 users
+Core account table for all platform users — clients, team members, and admins. Supabase Auth manages authentication; this table stores profile and role data.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK, default gen_random_uuid() | Primary key |
+| auth_id | UUID | UNIQUE, NOT NULL | Supabase Auth user ID — foreign key to auth.users |
+| email | TEXT | UNIQUE, NOT NULL | User email address |
+| phone | TEXT | UNIQUE, NULLABLE | Phone number — used for OTP auth |
+| full_name | TEXT | NOT NULL | User's full name |
+| business_name | TEXT | NULLABLE | Client's business name — required for clients |
+| role | user_role | NOT NULL, default 'client' | User role — determines access level |
+| account_status | account_status | NOT NULL, default 'pending_verification' | Current account lifecycle state |
+| plan_name | plan_name | NULLABLE | Active subscription plan — null for non-clients |
+| instagram_access_token | TEXT | NULLABLE, ENCRYPTED | Facebook OAuth token for Instagram publishing |
+| instagram_user_id | TEXT | NULLABLE | Instagram Business account ID |
+| razorpay_customer_id | TEXT | NULLABLE | Razorpay customer ID for recurring billing |
+| stripe_customer_id | TEXT | NULLABLE | Stripe customer ID for international billing |
+| two_fa_enabled | BOOLEAN | NOT NULL, default false | Whether client has enabled 2FA |
+| deleted_at | TIMESTAMPTZ | NULLABLE | Soft delete timestamp — null means active |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Account creation timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated — auto-managed by trigger |
+
+users.auth_id links to Supabase's internal auth.users table. All authentication is handled by Supabase Auth. The users table is for application-level profile and role data only.
+
+### 3.2 plans
+Stores the three predefined plan configurations. Pricing and quotas are admin-configurable here — changing this table updates the pricing page.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK, default gen_random_uuid() | Primary key |
+| name | plan_name | UNIQUE, NOT NULL | Plan identifier |
+| display_name | TEXT | NOT NULL | Display name — e.g. 'Growth' |
+| monthly_price | NUMERIC(10,2) | NOT NULL | Monthly price in INR (Razorpay) or USD (Stripe) |
+| poster_quota | INTEGER | NOT NULL | Posters per month |
+| reel_quota | INTEGER | NOT NULL | Reels per month |
+| story_quota | INTEGER | NOT NULL | Stories per month |
+| revision_rounds | INTEGER | NOT NULL | Max revision rounds per deliverable |
+| has_dedicated_manager | BOOLEAN | NOT NULL, default false | Whether plan includes a dedicated account manager |
+| is_active | BOOLEAN | NOT NULL, default true | Whether plan is currently offered |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Record creation timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
+
+### 3.3 subscriptions
+Tracks the active and historical subscription state for each client.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| user_id | UUID | FK → users.id, NOT NULL | Subscribing client |
+| plan_id | UUID | FK → plans.id, NOT NULL | Subscribed plan |
+| status | TEXT | NOT NULL | active / past_due / cancelled / trialing |
+| gateway | payment_gateway | NOT NULL | Which gateway processed this subscription |
+| gateway_subscription_id | TEXT | UNIQUE, NOT NULL | Razorpay/Stripe subscription ID |
+| gateway_customer_id | TEXT | NOT NULL | Razorpay/Stripe customer ID |
+| current_period_start | TIMESTAMPTZ | NOT NULL | Start of current billing period |
+| current_period_end | TIMESTAMPTZ | NOT NULL | End of current billing period |
+| cancelled_at | TIMESTAMPTZ | NULLABLE | When subscription was cancelled |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Subscription creation timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
+
+### 3.4 questionnaires
+Stores client brand questionnaire responses and the AI-generated analysis. One record per client.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| user_id | UUID | FK → users.id, UNIQUE, NOT NULL | One questionnaire per client |
+| industry | TEXT | NOT NULL | Client's business industry / sector |
+| business_description | TEXT | NOT NULL | Brief description of the business |
+| target_audience | JSONB | NOT NULL | Age range, gender, location, interests |
+| social_handles | JSONB | NOT NULL | Instagram, Facebook, TikTok, other platforms |
+| current_posting_frequency | TEXT | NULLABLE | How often they currently post |
+| content_what_works | TEXT | NULLABLE | What's working with current content |
+| content_what_doesnt | TEXT | NULLABLE | What's not working |
+| primary_goal | TEXT | NOT NULL | awareness / sales / engagement / all |
+| brand_tone | TEXT[] | NOT NULL | Array: formal, casual, fun, inspirational |
+| competitor_refs | TEXT[] | NULLABLE | Array of competitor/reference account handles |
+| topics_to_avoid | TEXT | NULLABLE | Topics or themes to exclude |
+| style_references | TEXT[] | NULLABLE | URLs or descriptions of preferred content style |
+| ai_analysis | JSONB | NULLABLE | Full AI-generated brand analysis output |
+| ai_summary_line | TEXT | NULLABLE | One-line client-visible summary: tone + audience + goal |
+| submitted_at | TIMESTAMPTZ | NOT NULL | When questionnaire was submitted |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated — editable within 7 days |
+
+ai_analysis stores the full structured JSON from OpenAI. ai_summary_line stores the condensed one-liner shown to the client on their dashboard. Only ai_summary_line is exposed via the client-facing API.
+
+### 3.5 team_members
+Extended profile for internal team members. Linked to users table. Stores department, capacity, and performance data.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| user_id | UUID | FK → users.id, UNIQUE, NOT NULL | Linked user account |
+| department | department | NOT NULL | Team department |
+| daily_cap_posters | INTEGER | NOT NULL, default 6 | Max posters per day (designers only) |
+| daily_cap_reels | INTEGER | NOT NULL, default 4 | Max reels per day (video editors only) |
+| daily_cap_stories | INTEGER | NOT NULL, default 3 | Max stories per day (designers only) |
+| is_active | BOOLEAN | NOT NULL, default true | Whether member is currently active |
+| joined_at | DATE | NOT NULL | Date joined the team |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Record creation timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
+
+### 3.6 client_assignments
+Maps clients to their assigned creative team members. A client can have one assigned designer and one assigned video editor.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| client_id | UUID | FK → users.id, NOT NULL | The client being assigned |
+| team_member_id | UUID | FK → team_members.id, NOT NULL | The assigned team member |
+| deliverable_type | deliverable_type | NOT NULL | What this team member handles for this client |
+| assigned_at | TIMESTAMPTZ | NOT NULL, default now() | When the assignment was made |
+| assigned_by | UUID | FK → users.id, NULLABLE | Admin or system that made the assignment |
+| is_active | BOOLEAN | NOT NULL, default true | Whether assignment is current |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Record creation timestamp |
+
+A client will have at minimum 2 active assignments: one designer (poster + story) and one video editor (reel). Pro plan clients may also have a dedicated manager assignment.
+
+### 3.7 content_plans
+The content plan document shared with the client during the 7-day onboarding window. One plan per client per month.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| client_id | UUID | FK → users.id, NOT NULL | The client this plan belongs to |
+| month | INTEGER | NOT NULL | Month number (1–12) |
+| year | INTEGER | NOT NULL | 4-digit year |
+| status | content_plan_status | NOT NULL, default 'draft' | Current plan status |
+| pdf_url | TEXT | NULLABLE | Supabase Storage URL of downloadable PDF version |
+| submitted_at | TIMESTAMPTZ | NULLABLE | When plan was submitted to client |
+| approved_at | TIMESTAMPTZ | NULLABLE | When client approved the plan |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Record creation timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
+
+### 3.8 content_calendar
+Individual calendar entries — one per deliverable scheduled for a client. Linked to the content plan, task, and delivered file.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| client_id | UUID | FK → users.id, NOT NULL | The client this entry belongs to |
+| content_plan_id | UUID | FK → content_plans.id, NULLABLE | The parent content plan |
+| scheduled_date | DATE | NOT NULL | Date content is scheduled to be delivered/published |
+| deliverable_type | deliverable_type | NOT NULL | Type of content for this entry |
+| content_topic | TEXT | NULLABLE | Proposed topic or brief description |
+| status | calendar_entry_status | NOT NULL, default 'draft' | Current entry status |
+| linked_task_id | UUID | FK → tasks.id, NULLABLE | Task assigned to produce this content |
+| linked_deliverable_id | UUID | FK → deliverables.id, NULLABLE | The produced deliverable file |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Record creation timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
+
+### 3.9 tasks
+Individual work items assigned to creative team members. Created automatically on day 7 of onboarding and at each monthly cycle start. Also created for add-on orders.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| client_id | UUID | FK → users.id, NOT NULL | The client this task is for |
+| assigned_to | UUID | FK → team_members.id, NULLABLE | Assigned team member |
+| assigned_by | UUID | FK → users.id, NULLABLE | Admin or system that assigned the task |
+| deliverable_type | deliverable_type | NOT NULL | Type of deliverable to produce |
+| content_brief | TEXT | NULLABLE | Brief derived from AI analysis + content plan |
+| status | task_status | NOT NULL, default 'pending' | Current task status |
+| priority | INTEGER | NOT NULL, default 1 | 1=Pro, 2=Growth, 3=Starter — for sorting |
+| is_addon | BOOLEAN | NOT NULL, default false | Whether this task is for an add-on order |
+| addon_id | UUID | FK → addons.id, NULLABLE | Linked add-on order if is_addon=true |
+| calendar_entry_id | UUID | FK → content_calendar.id, NULLABLE | Linked calendar entry |
+| assignment_date | DATE | NULLABLE | Date task was formally assigned |
+| due_date | DATE | NULLABLE | SLA deadline — assignment_date + 3 business days |
+| submitted_at | TIMESTAMPTZ | NULLABLE | When team member submitted the deliverable |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Record creation timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
+
+### 3.10 deliverables
+The actual content files produced by the creative team and submitted for client approval.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| task_id | UUID | FK → tasks.id, NOT NULL | The task that produced this deliverable |
+| client_id | UUID | FK → users.id, NOT NULL | The client who owns this deliverable |
+| submitted_by | UUID | FK → team_members.id, NOT NULL | Team member who submitted it |
+| file_url | TEXT | NOT NULL | Supabase Storage URL of the deliverable file |
+| file_type | TEXT | NOT NULL | MIME type — image/jpeg, image/png, video/mp4 |
+| file_size_bytes | BIGINT | NOT NULL | File size in bytes |
+| status | deliverable_status | NOT NULL, default 'pending_approval' | Current approval status |
+| revision_round | INTEGER | NOT NULL, default 1 | Which revision round this is (1 = first submission) |
+| parent_deliverable_id | UUID | FK → deliverables.id, NULLABLE | Previous version if this is a revision |
+| approved_at | TIMESTAMPTZ | NULLABLE | When client approved this deliverable |
+| rejected_at | TIMESTAMPTZ | NULLABLE | When client rejected this deliverable |
+| instagram_published_at | TIMESTAMPTZ | NULLABLE | When published to Instagram (if applicable) |
+| instagram_post_id | TEXT | NULLABLE | Instagram post ID after publishing |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Submission timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
+
+### 3.11 deliverable_comments
+Comments left on deliverables by clients and team members. Required on rejection; optional on approval

@@ -1,0 +1,349 @@
+# CREO — UI/UX DESIGN BRIEF
+## Creo UI/UX Design Brief — Visual & Interaction Design Guide
+
+| Attribute | Details |
+|---|---|
+| Document | UI/UX Design Brief — Document 04 of 06 |
+| Version | 1.0 |
+| Project | Creo — Digital Marketing Agency Platform |
+| Status | Final |
+| Audience | Development Team / AI Coding Agent / Designers |
+
+## 1. Design Philosophy
+Creo's visual identity sits at the intersection of professional credibility and creative energy. The platform serves two very different user types — local business owners who need simplicity and clarity, and agency creatives who need a dense, efficient tool. The design must serve both without compromising either.
+
+| Client Portal | Internal Dashboard |
+|---|---|
+| Consumer-grade polish | Dense, tool-like efficiency |
+| Larger components and touch targets | Compact information density |
+| Clear hierarchy — one action at a time | Multiple data points visible simultaneously |
+| Calm, reassuring visual tone | Functional, action-oriented visual tone |
+| Minimal jargon in UI labels | Role-specific terminology acceptable |
+| Onboarding-friendly progressive disclosure | Power-user shortcuts and filters |
+
+The aesthetic direction is hybrid — a professional shell with creative accents. Think: structured and trustworthy as the foundation, with the blue palette and subtle motion bringing warmth and creative character.
+
+## 2. Colour Palette
+The Creo colour palette is anchored by two blues derived from the brand reference — a mid steel blue as the primary action colour and a soft sky wash as the light surface colour. Together they create a palette that feels premium, trustworthy, and distinctly Creo.
+
+### 2.1 Primary Palette
+| Name | Hex | Usage |
+|---|---|---|
+| Brand Blue | 2B7BC4 | Primary CTA buttons, active nav items, links, focus rings, banner backgrounds |
+| Sky Wash | E8F4FD | Page backgrounds (light mode), card surfaces, section banners |
+| Deep Navy | 0D2137 | Primary text, headings, sidebar backgrounds (dark elements) |
+| Steel Mid | 6BAED6 | Secondary text, dividers, borders, muted icons, placeholder text |
+| Ocean Accent | 0EA5E9 | Hover states, highlights, active indicators, progress bars |
+| Pure White | FFFFFF | Card backgrounds, modal backgrounds, input fields |
+
+### 2.2 Semantic Colours
+| Name | Hex | Usage |
+|---|---|---|
+| Success Green | 065F46 | Approved status, success toasts, positive metrics |
+| Success Light | D1FAE5 | Success badge backgrounds, approved card tint |
+| Warning Amber | D97706 | Pending states, SLA approaching, amber alerts |
+| Warning Light | FEF3C7 | Warning badge backgrounds, pending card tint |
+| Error Red | 991B1B | Rejected status, error toasts, failed payments, overdue tasks |
+| Error Light | FEE2E2 | Error badge backgrounds, rejected card tint |
+| Neutral Grey | 374151 | Body text on white surfaces, secondary UI text |
+| Neutral Light | F9FAFB | Alternate table rows, disabled states, subtle dividers |
+
+### 2.3 Gradient
+* A subtle gradient is used on the public website hero, onboarding screens, and the client portal welcome banner only.
+* It should not appear in data-dense internal dashboards.
+* Hero gradient: linear-gradient(135deg, #2B7BC4 0%, #E8F4FD 100%)
+* Card gradient (subtle): linear-gradient(180deg, #E8F4FD 0%, #FFFFFF 100%)
+* Never use gradients on interactive elements like buttons — flat colour only
+
+## 3. Typography
+
+| Category | Details |
+|---|---|
+| Primary Font | Inter — clean, highly legible, modern sans-serif. Industry standard for SaaS products. |
+| Monospace Font | JetBrains Mono — used for code snippets, route paths, environment variable names, ticket IDs, and task IDs. |
+| Font Loading | Both loaded via Google Fonts with display:swap. Subset to Latin for performance. |
+
+### 3.1 Type Scale
+| Token | Size | Weight | Usage |
+|---|---|---|---|
+| display | 36px / 2.25rem | 700 Bold | Page hero headlines, onboarding titles |
+| heading-1 | 30px / 1.875rem | 700 Bold | Section headings, dashboard titles |
+| heading-2 | 24px / 1.5rem | 600 SemiBold | Sub-section headings, card titles |
+| heading-3 | 20px / 1.25rem | 600 SemiBold | Group labels, sidebar section titles |
+| body-lg | 16px / 1rem | 400 Regular | Primary body text, descriptions |
+| body | 14px / 0.875rem | 400 Regular | Standard UI text, table content, form labels |
+| body-sm | 12px / 0.75rem | 400 Regular | Captions, timestamps, metadata, helper text |
+| label | 12px / 0.75rem | 500 Medium | Form labels, status badges, nav labels |
+| mono | 13px / 0.8125rem | 400 Regular | IDs, routes, code, env variable names |
+
+### 3.2 Typography Rules
+* Line height: 1.5 for body text, 1.2 for headings
+* Letter spacing: -0.01em for headings, 0 for body, 0.05em for all-caps labels
+* Text colours: headings use Deep Navy (#0D2137), body text uses Neutral Grey (#374151), muted text uses Steel Mid (#6BAED6)
+* Never use pure black (#000000) for text — always use Deep Navy or Neutral Grey
+* Maximum line length (measure): 72 characters for body text blocks — use max-w-prose
+
+## 4. Spacing & Layout
+
+### 4.1 Spacing Scale
+All spacing uses a base-4 scale. Use only values from this scale — no arbitrary pixel values.
+
+| Token | Value | Common Use |
+|---|---|---|
+| space-1 | 4px | Icon padding, tight inline gaps |
+| space-2 | 8px | Compact element padding, badge padding |
+| space-3 | 12px | Input field vertical padding |
+| space-4 | 16px | Standard component padding, card inner padding |
+| space-5 | 20px | Section element gaps |
+| space-6 | 24px | Card padding, form field gaps |
+| space-8 | 32px | Section padding, large component gaps |
+| space-10 | 40px | Major section spacing |
+| space-12 | 48px | Page section padding |
+| space-16 | 64px | Hero section padding, large page gaps |
+
+### 4.2 Layout Grid
+* Public website: max-width 1280px centred, 24px horizontal padding on mobile
+* Client portal: left sidebar 240px fixed + main content area fluid
+* Internal dashboard: left sidebar 240px fixed + main content area fluid
+* Admin panel: left sidebar 240px + optional right detail panel 360px
+* Mobile: full-width layout, no sidebar — bottom tab bar navigation
+* Content cards: 12-column grid on desktop, 6-column on tablet, 4-column on mobile
+
+## 5. Component Specifications
+
+### 5.1 Buttons
+| Variant | Style | Usage |
+|---|---|---|
+| Primary | Fill #2B7BC4, white text, 8px radius, 16px/24px padding | Main CTAs: 'Get Started', 'Approve', 'Submit', 'Pay Now' |
+| Secondary | Outline #2B7BC4, brand text, 8px radius | Supporting actions: 'Download', 'Edit', 'View All' |
+| Destructive | Fill #991B1B, white text, 8px radius | Irreversible actions: 'Reject', 'Delete', 'Cancel subscription' |
+| Ghost | No border, brand text, hover shows light fill | Inline actions: 'Cancel', 'Skip', nav text links |
+| Icon | Square, 36px, ghost or secondary style | Icon-only actions in toolbars and table rows |
+| Loading | Primary/Secondary with spinner, disabled state | Any async action — prevent double-clicks |
+
+* Hover state: 10% darker fill for primary/destructive, light fill background for ghost
+* Focus state: 2px offset focus ring in #0EA5E9 — always visible for accessibility
+* Disabled state: 40% opacity, not-allowed cursor
+* Minimum touch target: 44x44px on all interactive elements
+
+### 5.2 Form Inputs
+* Height: 40px (standard), 36px (compact for dense forms)
+* Border: 1px solid #C9DFF0 default, #2B7BC4 on focus, #991B1B on error
+* Border radius: 6px
+* Background: #FFFFFF, disabled: #F4F9FD
+* Placeholder text colour: #6BAED6 (Steel Mid)
+* Label: above the input, body-sm / 500 Medium weight
+* Error message: below the input, body-sm, #991B1B, with error icon
+* Helper text: below the input, body-sm, Steel Mid
+* Required fields: asterisk (*) in Brand Blue after the label
+
+### 5.3 Cards
+* Background: #FFFFFF
+* Border: 1px solid #C9DFF0
+* Border radius: 12px
+* Shadow: 0 1px 3px rgba(13, 33, 55, 0.08) — subtle, not heavy
+* Hover state (clickable cards): border colour → #6BAED6, shadow slightly elevated
+* Padding: 24px internal
+* Client portal cards: slightly larger padding (28px) for easier touch interaction
+
+### 5.4 Status Badges
+| Status | Style | Used For |
+|---|---|---|
+| Approved / Complete | Green fill (#D1FAE5), green text (#065F46) | Approved deliverables, resolved tickets, confirmed payments |
+| Pending / In Progress | Amber fill (#FEF3C7), amber text (#92400E) | Pending approval, in progress tasks, awaiting response |
+| Rejected / Failed | Red fill (#FEE2E2), red text (#991B1B) | Rejected deliverables, failed payments, overdue tasks |
+| Draft / Scheduled | Sky fill (#E8F4FD), brand text (#2B7BC4) | Draft calendar entries, scheduled content, new tickets |
+| Revision | Purple fill (#F5F3FF), purple text (#7C3AED) | Deliverables in revision, rework tasks |
+| Add-on | Teal fill (#F0FDFA), teal text (#0D9488) | Add-on tagged deliverables and tasks |
+
+* Badge shape: pill (9999px border radius), 4px vertical padding, 8px horizontal padding
+* Font: body-sm / 500 Medium weight, uppercase
+
+### 5.5 Tables
+* Header row: Sky Wash background (#E8F4FD), heading-3 weight, Brand Blue text
+* Body rows: alternating white (#FFFFFF) and Neutral Light (#F9FAFB)
+* Row hover: Sky Wash (#E8F4FD) tint
+* Borders: horizontal dividers only (no vertical cell borders in body)
+* Cell padding: 12px vertical, 16px horizontal
+* Sticky header on scroll for long tables
+
+### 5.6 Navigation
+**Sidebar (Desktop)**
+* Width: 240px fixed
+* Background: Deep Navy (#0D2137) — creates contrast between nav and content
+* Active item: Brand Blue (#2B7BC4) left border (3px) + Sky Wash background tint
+* Inactive items: Steel Mid (#6BAED6) text, hover shows subtle background tint
+* Logo area: 64px height at top of sidebar
+* Bottom of sidebar: user avatar, name, role badge, and logout button
+
+**Top Navigation (Public Website)**
+* Background: white with 1px bottom border (#C9DFF0) on scroll
+* Transparent before scroll — shows hero content behind nav
+* Height: 64px
+
+**Bottom Tab Bar (Mobile Client Portal)**
+* Height: 56px + safe area inset
+* Background: white, 1px top border (#C9DFF0)
+* Active tab: Brand Blue icon + label
+* Inactive tab: Steel Mid icon + label
+
+## 6. Motion & Interaction Design
+
+### 6.1 Animation Principles
+* Motion should be purposeful — every animation communicates state, not decoration
+* Duration: micro-interactions 100–150ms, component transitions 200–250ms, page transitions 300ms
+* Easing: ease-out for elements entering the screen, ease-in for elements leaving
+* No motion on purely decorative elements
+* Respect prefers-reduced-motion: all animations must be disabled or minimised when the user has enabled reduced motion in their OS settings.
+
+### 6.2 Key Transitions
+| Interaction | Animation |
+|---|---|
+| Page navigation | Fade in (opacity 0→1) over 200ms — no sliding. Keeps feel stable. |
+| Modal / Dialog open | Scale from 0.96→1.0 + fade in over 200ms. Overlay fades in 150ms. |
+| Drawer open (tickets, leave requests) | Slide in from right over 250ms with ease-out. |
+| Toast notification | Slide up from bottom-right, auto-dismiss after 4s with fade out. |
+| Status badge update | Brief pulse animation (scale 1→1.05→1) to draw attention to changed state. |
+| Button loading state | Spinner replaces text with fade crossfade — no layout shift. |
+| Skeleton → content | Fade in content over 150ms as data loads — skeletons fade out. |
+| Onboarding progress bar | Smooth width transition (300ms ease-out) when step completes. |
+| Sidebar collapse (mobile) | Slide and fade over 250ms. |
+| Deliverable approval | Green checkmark animation on approve action — subtle celebratory moment. |
+
+## 7. Surface-Specific Design Guidelines
+
+### 7.1 Public Website
+* Aesthetic: bold and expressive — this is a marketing surface, not a tool
+* Hero section: full-width gradient background (Brand Blue → Sky Wash), large display text, prominent CTAs
+* Section alternation: white and Sky Wash (#E8F4FD) backgrounds alternating between sections
+* Portfolio gallery: masonry grid with subtle hover lift (shadow elevation increase)
+* Testimonials: card carousel with client photo, quote, name, business type, and result metric
+* Pricing cards: Growth tier elevated with Brand Blue border and 'Most Popular' badge
+* FAQ: accordion-style — question rows expand to reveal answers, chevron rotates 180° on expand
+* Sticky bottom CTA bar: gradient background matching hero, fixed 48px height
+* Exit intent popup: centred modal with semi-transparent dark overlay
+
+### 7.2 Onboarding Flow
+* Clean, minimal, focused — one task per screen (no sidebar, no nav distractions)
+* Progress indicator: numbered steps at top with connecting line — completed steps filled Brand Blue
+* Background: Sky Wash (#E8F4FD) — calm, reassuring
+* Card container: white, 12px radius, max-width 560px centred — feels like a form, not a dashboard
+* Payment screen: Razorpay/Stripe modal overlay on the Creo background — do not embed payment in the page
+* Questionnaire: step-within-step indicator shows Step 1/2/3 of the questionnaire inside the overall onboarding step
+
+### 7.3 Client Portal
+* Aesthetic: consumer-grade polish — clean, generous whitespace, large readable text
+* Background: Sky Wash (#E8F4FD) page background, white card surfaces
+* Dashboard: metric cards in a 2-column grid (mobile: 1 column), each card white with subtle border
+* Onboarding progress tracker (first 7 days): prominent blue card at top of dashboard with step indicators
+* Brand summary card: Sky Wash background, Brand Blue accent left border, italic brand one-liner
+* Deliverables grid: cards with thumbnail preview, status badge, and action buttons — 3 columns desktop, 1 mobile
+* Calendar: month grid with colour-coded entry dots, list view as an alternate tab
+* Notification bell: in the top-right of the portal header, with red unread count badge
+* Empty states: illustrated (simple SVG illustration) + helpful copy + primary action button
+
+### 7.4 Internal Team Dashboard
+* Aesthetic: dense and efficient — more information per screen, smaller components
+* Background: light grey (#F9FAFB) page background, white card surfaces
+* Sidebar: Deep Navy (#0D2137) — creates clear separation from content
+* Task dashboard: compact list view by default with status colour bars on left edge of each row
+* Daily goal metrics: progress bar per deliverable type (poster/reel/story) at top of dashboard — always visible
+* Calendar: same month grid as client view but with 1-day advance pre-assignment entries highlighted in amber
+* Overdue tasks: red left border on task cards, floated to top of list
+* Team lead view: additional columns in task table showing team member workload
+
+### 7.5 Admin Panel
+* Aesthetic: data-dense, report-like — optimised for scanning and action
+* Background: light grey (#F9FAFB), white tables and cards
+* Escalation alerts: red banner at top of admin dashboard when active escalations exist
+* KPI dashboard: large metric numbers with trend indicators, colour-coded thresholds
+* Client profile page: two-panel layout — client info on left, activity timeline on right
+* Reports: print-friendly layout — clean tables, no decorative elements, Creo logo in header
+
+## 8. Iconography
+
+| Category | Details |
+|---|---|
+| Library | Lucide React — consistent, clean, open source |
+| Size | 16px (small inline), 20px (standard UI), 24px (feature icons), 32px (empty state icons) |
+| Colour | Inherits text colour by default. Active/branded icons use Brand Blue (#2B7BC4). |
+| Stroke width | 1.5px throughout — matches the clean, modern aesthetic |
+| Usage | Icons always accompanied by a text label (never icon-only) except in toolbars and mobile tab bars |
+
+### 8.1 Key Icon Assignments
+| UI Element | Lucide Icon |
+|---|---|
+| Deliverables (nav) | ImageIcon or LayoutGrid |
+| Calendar (nav) | CalendarDays |
+| Support / Tickets (nav) | MessageSquare |
+| Account (nav) | User |
+| Payments (nav) | CreditCard |
+| Add-ons (nav) | Plus or ShoppingBag |
+| Admin Panel | Shield or Settings2 |
+| KPI Dashboard | BarChart3 |
+| Escalation | AlertTriangle |
+| Approved status | CheckCircle2 |
+| Rejected status | XCircle |
+| Pending status | Clock |
+| Revision status | RefreshCw |
+| Notification bell | Bell |
+| Leave request | CalendarOff |
+| Task assignment | ClipboardList |
+| Instagram connect | Instagram (Lucide) |
+| Download | Download |
+| Upload / Submit | Upload |
+| Live chat | MessagesSquare |
+
+## 9. Accessibility
+
+| Category | Details |
+|---|---|
+| Standard | WCAG 2.1 AA minimum compliance throughout |
+| Colour Contrast | All text on backgrounds must meet 4.5:1 contrast ratio (7:1 for small text) |
+| Focus Indicators | Visible 2px focus ring in #0EA5E9 on all interactive elements — never removed |
+| Keyboard Navigation | All interactive elements navigable via keyboard; modal traps focus correctly |
+| Screen Readers | Semantic HTML throughout; aria-label on icon-only buttons; aria-live for toast notifications |
+| Reduced Motion | All animations wrapped in @media (prefers-reduced-motion: reduce) |
+| Touch Targets | Minimum 44x44px on all interactive elements — enforced in client portal and mobile views |
+| Form Errors | Errors announced to screen readers via aria-describedby linking input to error message |
+
+## 10. Responsive Breakpoints
+
+| Breakpoint | Width | Layout Behaviour |
+|---|---|---|
+| xs | < 480px | Single column, stacked layout. Bottom tab bar on portal. Full-screen modals. |
+| sm | 480px–767px | Single column with slightly more breathing room. Cards at full width. |
+| md | 768px–1023px | Two-column grid for cards. Sidebar hidden, hamburger menu shown. |
+| lg | 1024px–1279px | Sidebar visible (240px). Main content fluid. 3-column card grids. |
+| xl | ≥ 1280px | Full layout. Optional right detail panel (admin). Max-width 1440px on public site. |
+
+## 11. Quick Reference — Design Token Summary
+Copy this into your Tailwind CSS v4 configuration as CSS custom properties.
+
+| Token Name | Value | Description |
+|---|---|---|
+| --color-brand | #2B7BC4 | Primary brand blue |
+| --color-brand-dark | #0D2137 | Deep navy — headings and sidebar |
+| --color-brand-light | #E8F4FD | Sky wash — backgrounds and banners |
+| --color-brand-mid | #6BAED6 | Steel mid — borders and muted text |
+| --color-accent | #0EA5E9 | Ocean accent — hover and highlights |
+| --color-text | #374151 | Body text on white |
+| --color-text-muted | #6BAED6 | Muted / secondary text |
+| --color-border | #C9DFF0 | Default border colour |
+| --color-surface | #FFFFFF | Card and modal background |
+| --color-bg | #E8F4FD | Page background (client portal) |
+| --color-bg-internal | #F9FAFB | Page background (internal dashboard) |
+| --radius-sm | 6px | Input, small component radius |
+| --radius-md | 8px | Button radius |
+| --radius-lg | 12px | Card radius |
+| --radius-xl | 16px | Modal, large panel radius |
+| --shadow-card | 0 1px 3px rgba(13,33,55,0.08) | Standard card shadow |
+| --shadow-modal | 0 8px 32px rgba(13,33,55,0.16) | Modal / elevated shadow |
+| --font-sans | Inter, system-ui, sans-serif | Primary font stack |
+| --font-mono | JetBrains Mono, monospace | Monospace font stack |
+| --sidebar-width | 240px | Fixed sidebar width |
+| --topnav-height | 64px | Top navigation bar height |
+| --bottomtab-height | 56px | Mobile bottom tab bar height |
+
+End of UI/UX Design Brief — Document 04 of 06
+Next: Document 05 — Backend Schema
