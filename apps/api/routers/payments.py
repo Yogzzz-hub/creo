@@ -46,7 +46,9 @@ async def create_subscription(
             detail="Plan not found or inactive",
         )
 
-    result = create_gateway_subscription(current_user, plan, payload.billing_country)
+    result = await run_in_threadpool(
+        create_gateway_subscription, current_user, plan, payload.billing_country
+    )
 
     if current_user.razorpay_customer_id is None and result["gateway"] == "razorpay":
         current_user.razorpay_customer_id = result["gateway_customer_id"]
