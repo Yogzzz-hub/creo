@@ -36,7 +36,7 @@ async def create_subscription(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     plan_result = await db.execute(
-        select(Plan).where(Plan.id == payload.plan_id, Plan.is_active == True)
+        select(Plan).where(Plan.id == payload.plan_id, Plan.is_active)
     )
     plan = plan_result.scalar_one_or_none()
 
