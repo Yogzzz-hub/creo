@@ -57,12 +57,13 @@ async def _mark_subscription_past_due(db: AsyncSession, subscription_id: str):
         await db.commit()
 
 
-async def _find_subscription_by_gateway_id(
-    db: AsyncSession, gateway_subscription_id: str
+async def _find_subscription_by_user_id_and_status(
+    db: AsyncSession, user_id: str, status: str
 ) -> Subscription | None:
     result = await db.execute(
         select(Subscription).where(
-            Subscription.gateway_subscription_id == gateway_subscription_id
+            Subscription.user_id == user_id,
+            Subscription.status == status,
         )
     )
     return result.scalar_one_or_none()
@@ -99,10 +100,12 @@ async def razorpay_webhook(request: Request):
             if event_type == "payment.captured":
                 payment_entity = payload.get("payment", {}).get("entity", {})
                 notes = payment_entity.get("notes", {})
-                subscription_id = notes.get("subscription_id", "")
+                user_id = notes.get("user_id", "")
 
-                if subscription_id:
-                    subscription = await _find_subscription_by_gateway_id(db, subscription_id)
+                if user_id:
+                    subscription = await _find_subscription_by_user_id_and_status(
+                        db, user_id, "pending_payment"
+                    )
                     if subscription:
                         await _activate_user_account(
                             db, subscription.user_id, subscription.id
@@ -114,10 +117,12 @@ async def razorpay_webhook(request: Request):
             elif event_type == "payment.failed":
                 payment_entity = payload.get("payment", {}).get("entity", {})
                 notes = payment_entity.get("notes", {})
-                subscription_id = notes.get("subscription_id", "")
+                user_id = notes.get("user_id", "")
 
-                if subscription_id:
-                    subscription = await _find_subscription_by_gateway_id(db, subscription_id)
+                if user_id:
+                    subscription = await _find_subscription_by_user_id_and_status(
+                        db, user_id, "pending_payment"
+                    )
                     if subscription:
                         await _mark_subscription_past_due(db, subscription.id)
                         logger.info(

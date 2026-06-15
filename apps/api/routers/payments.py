@@ -46,6 +46,23 @@ async def create_subscription(
             detail="Plan not found or inactive",
         )
 
+    existing_result = await db.execute(
+        select(Subscription).where(
+            Subscription.user_id == current_user.id,
+            Subscription.plan_id == plan.id,
+            Subscription.status == "pending_payment",
+        )
+    )
+    existing_subscription = existing_result.scalar_one_or_none()
+
+    if existing_subscription:
+        return CreateSubscriptionResponse(
+            gateway=existing_subscription.gateway.value,
+            subscription_id=existing_subscription.gateway_subscription_id,
+            client_secret=None,
+            gateway_customer_id=existing_subscription.gateway_customer_id,
+        )
+
     result = create_gateway_subscription(current_user, plan, payload.billing_country)
 
     if current_user.razorpay_customer_id is None and result["gateway"] == "razorpay":

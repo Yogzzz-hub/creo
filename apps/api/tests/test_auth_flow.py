@@ -21,7 +21,7 @@ async def auth_client(mock_db_session: AsyncMock):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
-    app.dependency_overrides.clear()
+    app.dependency_overrides.pop(get_db, None)
 
 
 def _setup_no_existing_user(mock_db_session: AsyncMock):

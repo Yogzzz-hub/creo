@@ -91,7 +91,7 @@ async def test_client(mock_db_session: AsyncMock):
     transport = ASGITransport(app=test_app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
-    test_app.dependency_overrides.clear()
+    test_app.dependency_overrides.pop(get_db, None)
 
 
 class TestUnauthenticatedAccess:

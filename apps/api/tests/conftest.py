@@ -78,7 +78,7 @@ async def client(mock_db_session: AsyncMock) -> AsyncGenerator[AsyncClient, None
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
-    app.dependency_overrides.clear()
+    app.dependency_overrides.pop(get_db, None)
 
 
 @pytest.fixture

@@ -37,6 +37,7 @@ def create_razorpay_subscription(user: User, plan: Plan, razorpay_customer_id: s
         total_count=12,
         notify_by_sms=False,
         notify_by_email=False,
+        notes={"user_id": user.id},
     )
 
     return {
