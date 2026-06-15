@@ -44,8 +44,16 @@ def create_razorpay_subscription(user: User, plan: Plan, razorpay_customer_id: s
         "subscription_id": subscription["id"],
         "gateway_customer_id": razorpay_customer_id,
         "status": subscription.get("status", "pending"),
-        "current_period_start": datetime.now(timezone.utc),
-        "current_period_end": datetime.now(timezone.utc),
+        "current_period_start": (
+            datetime.fromtimestamp(subscription["current_start"], tz=timezone.utc)
+            if subscription.get("current_start")
+            else None
+        ),
+        "current_period_end": (
+            datetime.fromtimestamp(subscription["current_end"], tz=timezone.utc)
+            if subscription.get("current_end")
+            else None
+        ),
     }
 
 
