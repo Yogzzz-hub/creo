@@ -36,7 +36,7 @@ async def create_subscription(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     plan_result = await db.execute(
-        select(Plan).where(Plan.id == payload.plan_id, Plan.is_active == True)
+        select(Plan).where(Plan.id == payload.plan_id, Plan.is_active)
     )
     plan = plan_result.scalar_one_or_none()
 
@@ -63,7 +63,9 @@ async def create_subscription(
             gateway_customer_id=existing_subscription.gateway_customer_id,
         )
 
-    result = create_gateway_subscription(current_user, plan, payload.billing_country)
+    result = await run_in_threadpool(
+        create_gateway_subscription, current_user, plan, payload.billing_country
+    )
 
     if current_user.razorpay_customer_id is None and result["gateway"] == "razorpay":
         current_user.razorpay_customer_id = result["gateway_customer_id"]

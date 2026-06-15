@@ -41,9 +41,27 @@ async def _process_questionnaire(questionnaire_id: str):
             prompt = generate_brand_analysis_prompt(questionnaire_data)
             ai_result = call_openai_gpt4o(prompt)
 
-            questionnaire.ai_analysis = ai_result
-            questionnaire.ai_summary_line = ai_result.get("ai_summary_line", "")
+            prompt = generate_brand_analysis_prompt(questionnaire_data)
+            ai_result = call_openai_gpt4o(prompt)
 
+            required_keys = {
+                "brand_tone",
+                "content_themes",
+                "audience_persona",
+                "goal_alignment",
+                "ai_summary_line",
+            }
+            if not isinstance(ai_result, dict):
+                raise ValueError("AI result must be a JSON object")
+            missing = required_keys - set(ai_result.keys())
+            if missing:
+                raise ValueError(f"AI result missing required keys: {sorted(missing)}")
+            summary_line = ai_result.get("ai_summary_line")
+            if not isinstance(summary_line, str) or not summary_line.strip():
+                raise ValueError("ai_summary_line must be a non-empty string")
+
+            questionnaire.ai_analysis = ai_result
+            questionnaire.ai_summary_line = summary_line
             db.add(questionnaire)
             await db.commit()
 

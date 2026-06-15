@@ -30,6 +30,8 @@ def create_razorpay_subscription(user: User, plan: Plan, razorpay_customer_id: s
         "pro": settings.RAZORPAY_PRO_PLAN_ID,
     }
     gateway_plan_id = plan_id_map.get(plan.name.value, "")
+    if not gateway_plan_id:
+        raise ValueError(f"Missing Razorpay plan mapping for plan: {plan.name.value}")
 
     subscription = razorpay_client.subscription.create(
         plan_id=gateway_plan_id,
@@ -45,8 +47,16 @@ def create_razorpay_subscription(user: User, plan: Plan, razorpay_customer_id: s
         "subscription_id": subscription["id"],
         "gateway_customer_id": razorpay_customer_id,
         "status": subscription.get("status", "pending"),
-        "current_period_start": datetime.now(timezone.utc),
-        "current_period_end": datetime.now(timezone.utc),
+        "current_period_start": (
+            datetime.fromtimestamp(subscription["current_start"], tz=timezone.utc)
+            if subscription.get("current_start")
+            else None
+        ),
+        "current_period_end": (
+            datetime.fromtimestamp(subscription["current_end"], tz=timezone.utc)
+            if subscription.get("current_end")
+            else None
+        ),
     }
 
 
@@ -127,9 +137,10 @@ def verify_razorpay_signature(payload_body: bytes, signature: str) -> dict:
     )
 
 
-def verify_stripe_signature(payload_body: bytes, signature: str, timestamp: str) -> stripe.Event:
+def verify_stripe_signature(payload_body: bytes, signature_header: str) -> stripe.Event:
     return stripe.Webhook.construct_event(
         payload_body,
-        f"{timestamp},{signature}",
+        signature_header,
         settings.STRIPE_WEBHOOK_SECRET,
+    )
     )
