@@ -88,9 +88,9 @@
 - [ ] 4.18 Build admin-configurable scarcity counter — reads from platform settings API
 
 ## Phase 5: Onboarding Flow
-- [ ] 5.1 Build shared onboarding layout — step indicator, no sidebar, Sky Wash background
-- [ ] 5.2 Build /onboarding/verify page — email sent message, resend button, auto-redirect on verify
-- [ ] 5.3 Build /onboarding/terms page — scrollable T&C panel, scroll-gated 'I Agree' button
+- [x] 5.1 Build shared onboarding layout — step indicator, no sidebar, Sky Wash background
+- [x] 5.2 Build /onboarding/verify page — email sent message, resend button, auto-redirect on verify
+- [x] 5.3 Build /onboarding/terms page — scrollable T&C panel, scroll-gated 'I Agree' button
 - [ ] 5.4 Create FastAPI endpoint POST /api/v1/onboarding/accept-terms
 - [ ] 5.5 Wire /onboarding/terms to 5.4 — on accept, updates DB and advances to payment step
 - [ ] 5.6 Create FastAPI endpoint POST /api/v1/payments/create-subscription
