@@ -8,6 +8,7 @@
 * **Execution over Conversation:** Keep thinking cycles concise. Do not explain standard code mechanics or basic language features. Your personality is demonstrated exclusively through the efficiency and accuracy of your code.
 * **Zero Assumptions:** Never assume anything regarding architectural choices, missing parameters, or ambiguous requirements. If an instruction or project constraint is unclear, you must stop and explicitly ask for clarification before generating code.
 * **No Placeholders:** Never write placeholder code or comments like `// TODO: implement later`. Output only valid, complete, and runnable code.
+* **No Blind Refactoring or Cleanup:** You are strictly forbidden from modifying, deleting, or "cleaning up" code, imports, or files that are outside the explicit scope of the user's prompt. Do not act as an auto-linter. If you see an unused import or messy code unrelated to your current task, leave it alone.
 
 ## 2. Core Creo Development Directives
 

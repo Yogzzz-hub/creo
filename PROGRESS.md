@@ -1,6 +1,7 @@
 # Creo — Implementation Progress
 
 ## Phase 1: Project Setup & Monorepo
+
 - [x] 1.1 Initialise monorepo — create root directory creo/ with apps/ and packages/ folders
 - [x] 1.2 Initialise Next.js 15 app in apps/web/ with TypeScript and App Router
 - [x] 1.3 Initialise FastAPI project in apps/api/ with uvicorn, pydantic-settings, and folder structure per TRD
@@ -18,6 +19,7 @@
 - [x] 1.15 Configure apps/web/package.json with all packages listed in TRD Section 11.1
 
 ## Phase 2: Database & Migrations
+
 - [x] 2.1 Create Supabase project — note project URL, anon key, service role key, and JWT secret. Add to .env files.
 - [x] 2.2 Write migration 001 — create all enum types listed in Schema Document Section 2
 - [x] 2.3 Write migration 002 — create users table with all columns from Schema Section 3.1
@@ -37,15 +39,16 @@
 - [x] 2.17 Write migration 016 — create escalations table
 - [x] 2.18 Write migration 017 — create announcements table
 - [x] 2.19 Write migration 018 — create custom_pricing table
-- [x] 2.20 Write migration 019 — create all indexes listed in Schema Section 5
-- [x] 2.21 Write migration 020 — enable RLS on all tables and create all policies from Schema Section 6
-- [x] 2.22 Write migration 021 — create updated_at auto-update trigger function and apply to all tables
+- [ ] 2.20 Write migration 021 — enable RLS on all tables and create all policies from Schema Section 6
+- [ ] 2.21 Write migration 022 — create updated_at auto-update trigger function and apply to all tables
+- [ ] 2.22 Write migration 023 — create all indexes listed in Schema Section 5
 - [x] 2.23 Run alembic upgrade head against Supabase — verify all tables created correctly in Supabase dashboard
 - [x] 2.24 Create SQLAlchemy async models in apps/api/models/ for every table — one file per table
 - [x] 2.25 Create Pydantic v2 schemas in apps/api/schemas/ for request and response types for all entities
 - [x] 2.26 Set up Supabase Storage buckets: deliverables, portfolio, avatars, announcements, ticket-attachments, content-plans
 
 ## Phase 3: Authentication
+
 - [x] 3.1 Configure Supabase Auth in Supabase dashboard — enable Google OAuth provider and Phone/OTP provider
 - [ ] 3.2 Configure Google OAuth — create Google Cloud project, set OAuth credentials, add redirect URI (Deferred to later phase)
 - [ ] 3.3 Configure MSG91 for OTP SMS delivery — set up Supabase Auth custom SMS provider hook to use MSG91 (Deferred to later phase)
@@ -89,6 +92,7 @@
 - [x] 4.18 Build admin-configurable scarcity counter — reads from platform settings API
 
 ## Phase 5: Onboarding Flow
+
 - [ ] 5.1 Build shared onboarding layout — step indicator, no sidebar, Sky Wash background
 - [ ] 5.2 Build /onboarding/verify page — email sent message, resend button, auto-redirect on verify
 - [ ] 5.3 Build /onboarding/terms page — scrollable T&C panel, scroll-gated 'I Agree' button
@@ -111,6 +115,7 @@
 - [x] 5.20 Test complete onboarding flow end-to-end
 
 ## Phase 6: Client Portal
+
 - [ ] 6.1 Build client portal layout — left sidebar (desktop), bottom tab bar (mobile)
 - [ ] 6.2 Build portal Dashboard — activity summary strip, brand summary card, onboarding tracker
 - [x] 6.3 Create FastAPI endpoint GET /api/v1/portal/dashboard
@@ -132,39 +137,41 @@
 - [ ] 6.19 Implement add-on purchase — payment, task auto-creation on webhook
 - [ ] 6.20 Build contextual upsell prompts
 - [ ] 6.21 Build Support page — ticket list, new ticket form, ticket detail with chat thread
-- [ ] 6.22 Create FastAPI endpoints: tickets CRUD + messages
+- [x] 6.22 Create FastAPI endpoints: tickets CRUD + messages
 - [~] 6.23 Implement Supabase Realtime for live chat — backend infra complete (migration + encryption), frontend wiring pending
 - [ ] 6.24 Build Account Settings pages — business profile, password, Instagram, 2FA
 - [~] 6.25 Implement Instagram OAuth flow — backend service complete (token exchange + encrypted storage), frontend wiring pending
-- [ ] 6.26 Create FastAPI endpoint POST /api/v1/account/instagram
+- [x] 6.26 Create FastAPI endpoint POST /api/v1/account/instagram
 - [ ] 6.27 Build in-portal notification system — bell icon, dropdown, mark-as-read
 - [x] 6.28 Create FastAPI endpoint GET /api/v1/notifications
 - [ ] 6.29 Wire all portal pages to loading skeletons
 - [ ] 6.30 Test all client portal flows
 
 ## Phase 7: Internal Dashboard
+
 - [ ] 7.1 Build internal dashboard layout — Deep Navy sidebar, role-filtered navigation
 - [ ] 7.2 Build team member Dashboard — daily goal metrics, today's tasks
-- [ ] 7.3 Create FastAPI endpoint GET /api/v1/dashboard/team
+- [x] 7.3 Create FastAPI endpoint GET /api/v1/dashboard/team
 - [ ] 7.4 Build Tasks list page — Today/Upcoming/All tabs, priority-sorted
 - [ ] 7.5 Build Task detail page — client info, brief, file upload
-- [ ] 7.6 Create FastAPI endpoints: tasks CRUD + submit
+- [x] 7.6 Create FastAPI endpoints: tasks CRUD + submit
 - [x] 7.7 Implement deliverable file submission from task card
 - [ ] 7.8 Build team member Calendar page — 1-day pre-assignment view
 - [ ] 7.9 Create FastAPI endpoint GET /api/v1/calendar/team
-- [ ] 7.10 Build Live Chat page — assigned client threads, real-time chat
-- [ ] 7.11 Wire live chat to Supabase Realtime
+- [x] 7.10 Build Live Chat page — assigned client threads, real-time chat
+- [x] 7.11 Wire live chat to Supabase Realtime
 - [ ] 7.12 Build Leave Requests page — list + new request form
-- [ ] 7.13 Create FastAPI endpoints: GET /api/v1/leave, POST /api/v1/leave
+- [x] 7.13 Create FastAPI endpoints: GET /api/v1/leave, POST /api/v1/leave
 - [ ] 7.14 Build Team Overview page (team leads only) — per-member metrics
 - [ ] 7.15 Create FastAPI endpoint GET /api/v1/team/overview
 - [ ] 7.16 Implement task self-assignment from pending queue
-- [ ] 7.17 Create FastAPI endpoints: request-assignment, approve-assignment
+- [x] 7.17 Create FastAPI endpoints: request-assignment, approve-assignment
 - [ ] 7.18 Build Sales dashboard — client pipeline, custom pricing form
 - [ ] 7.19 Create FastAPI endpoints: GET /api/v1/sales/clients, POST custom-pricing-request
 - [ ] 7.20 Test all internal dashboard flows
 
 ## Phase 8: Admin Panel & KPI
+
 - [ ] 8.1 Build admin panel layout — Deep Navy sidebar, admin-specific navigation
 - [ ] 8.2 Build Admin Dashboard — platform health overview
 - [ ] 8.3 Create FastAPI endpoint GET /api/v1/admin/dashboard
@@ -197,6 +204,7 @@
 - [ ] 8.30 Test admin panel end-to-end
 
 ## Phase 9: Third-party Integrations
+
 - [ ] 9.1 Build Resend email service in services/email.py
 - [ ] 9.2 Create React Email templates in apps/web/emails/
 - [ ] 9.3 Wire all notification trigger points to Resend
@@ -219,6 +227,7 @@
 - [ ] 9.20 Test Instagram publishing
 
 ## Phase 10: Hardening & Deployment
+
 - [ ] 10.1 Add global error boundary in Next.js
 - [ ] 10.2 Add FastAPI global exception handler
 - [ ] 10.3 Implement rate limiting on auth endpoints
@@ -246,6 +255,7 @@
 - [ ] 10.25 Post-deploy smoke test
 
 ## Integration Point 1: PR Review Fixes
+
 - [x] Fixed idempotency in payments router
 - [x] Fixed Razorpay webhook notes payload mapping
 - [x] Fixed dependency override leaks and relative imports in tests
