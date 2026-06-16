@@ -64,6 +64,7 @@ def upgrade() -> None:
         sa.Column("deliverable_id", sa.UUID(), sa.ForeignKey("deliverables.id"), nullable=False),
         sa.Column("author_id", sa.UUID(), sa.ForeignKey("users.id"), nullable=False),
         sa.Column("comment_text", sa.Text(), nullable=False),
+        sa.Column("is_rejection_reason", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
     )
 
