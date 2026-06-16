@@ -34,9 +34,8 @@ async def get_addon_pricing(
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(AddonPricing).where(AddonPricing.is_active == True)
+        select(AddonPricing).where(AddonPricing.is_active.is_(True))
     )
-    pricing = result.scalars().all()
     return pricing
 
 
