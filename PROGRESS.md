@@ -64,8 +64,8 @@
 - [x] 3.16 Implement logout — clears Supabase session, clears cookies, redirects to /login
 - [x] 3.17 Create /signup and /signup/plan pages — account creation and plan selection forms with validation
 - [x] 3.18 Wire sign-up form to Supabase Auth signUp() — creates auth user, then calls /api/v1/auth/register
-- [ ] 3.19 Write Pytest tests for auth middleware — test each role accessing allowed and forbidden routes
-- [ ] 3.20 Test full auth flow end-to-end: Google sign-in → role redirect → logout → OTP sign-in → role redirect
+- [x] 3.19 Write Pytest tests for auth middleware — test each role accessing allowed and forbidden routes
+- [x] 3.20 Test full auth flow end-to-end: Google sign-in → role redirect → logout → OTP sign-in → role redirect
 
 ## Phase 4: Public Website
 - [ ] 4.1 Build shared public layout — top navigation bar with links and 'Get Started' CTA button
@@ -93,17 +93,17 @@
 - [ ] 5.3 Build /onboarding/terms page — scrollable T&C panel, scroll-gated 'I Agree' button
 - [x] 5.4 Create FastAPI endpoint POST /api/v1/onboarding/accept-terms
 - [x] 5.5 Wire /onboarding/terms to 5.4 — on accept, updates DB and advances to payment step
-- [ ] 5.6 Create FastAPI endpoint POST /api/v1/payments/create-subscription
+- [x] 5.6 Create FastAPI endpoint POST /api/v1/payments/create-subscription
 - [ ] 5.7 Build /onboarding/payment page — detects country, renders Razorpay or Stripe payment modal
-- [ ] 5.8 Implement Razorpay payment modal integration
-- [ ] 5.9 Implement Stripe payment modal integration
-- [ ] 5.10 Create FastAPI Razorpay webhook handler at /api/webhooks/razorpay
-- [ ] 5.11 Create FastAPI Stripe webhook handler at /api/webhooks/stripe
+- [x] 5.8 Implement Razorpay payment modal integration
+- [x] 5.9 Implement Stripe payment modal integration
+- [x] 5.10 Create FastAPI Razorpay webhook handler at /api/webhooks/razorpay
+- [x] 5.11 Create FastAPI Stripe webhook handler at /api/webhooks/stripe
 - [ ] 5.12 Build /onboarding/questionnaire page — 3-step form with step indicator
 - [x] 5.13 Create FastAPI endpoint POST /api/v1/questionnaire
-- [ ] 5.14 Set up Celery app in workers/celery_app.py — connect to Redis broker
-- [ ] 5.15 Write Celery task generate_ai_analysis() — calls OpenAI GPT-4o, stores result in DB
-- [ ] 5.16 Write OpenAI prompt in services/ai_analysis.py
+- [x] 5.14 Set up Celery app in workers/celery_app.py — connect to Redis broker
+- [x] 5.15 Write Celery task generate_ai_analysis() — calls OpenAI GPT-4o, stores result in DB
+- [x] 5.16 Write OpenAI prompt in services/ai_analysis.py
 - [ ] 5.17 Build /onboarding/complete page — confirmation message, animated progress indicator
 - [x] 5.18 Wire questionnaire submission — POST to 5.13, poll for AI completion
 - [x] 5.19 Add 'Not satisfied with pricing?' link on /onboarding/payment
@@ -243,3 +243,8 @@
 - [ ] 10.23 Set up Celery beat scheduler in Railway
 - [ ] 10.24 Deploy to production
 - [ ] 10.25 Post-deploy smoke test
+
+## Integration Point 1: PR Review Fixes
+- [x] Fixed idempotency in payments router
+- [x] Fixed Razorpay webhook notes payload mapping
+- [x] Fixed dependency override leaks and relative imports in tests
