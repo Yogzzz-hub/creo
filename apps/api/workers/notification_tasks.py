@@ -12,6 +12,6 @@ def notify_sales_pricing_issue(user_id: str) -> None:
         "pricing help requested during onboarding",
         user_id,
     )
-    print(
-        f"[Celery] Notifying sales team: user {user_id} requested pricing help"
+    logger.debug(
+        "[Celery] Notifying sales team: user %s requested pricing help", user_id
     )
