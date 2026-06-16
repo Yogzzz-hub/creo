@@ -68,23 +68,24 @@
 - [x] 3.20 Test full auth flow end-to-end: Google sign-in → role redirect → logout → OTP sign-in → role redirect
 
 ## Phase 4: Public Website
-- [ ] 4.1 Build shared public layout — top navigation bar with links and 'Get Started' CTA button
-- [ ] 4.2 Build sticky bottom CTA bar — desktop/tablet only, disappears at footer
-- [ ] 4.3 Build footer component with all links, contact options, and legal links
-- [ ] 4.4 Build exit intent popup — triggers on cursor-to-close-button on desktop, once per session
-- [ ] 4.5 Build Home page (/) — hero section, How It Works, stats strip, lead magnet banner
-- [ ] 4.6 Build About Us page (/about) — mission, team section, differentiators, bottom CTA
-- [ ] 4.7 Build Portfolio page (/portfolio) — case study cards + filterable creative gallery
-- [ ] 4.8 Build Our Clients page (/clients) — logo wall, testimonials, success stats, team profiles
-- [ ] 4.9 Build Pricing page (/pricing) — 3 plan cards with urgency triggers, scarcity indicator
-- [ ] 4.10 Build FAQ page (/faq) — accordion FAQ with objection-handling copy, bottom CTA
+
+- [x] 4.1 Build shared public layout — top navigation bar with links and 'Get Started' CTA button
+- [x] 4.2 Build sticky bottom CTA bar — desktop/tablet only, disappears at footer
+- [x] 4.3 Build footer component with all links, contact options, and legal links
+- [x] 4.4 Build exit intent popup — triggers on cursor-to-close-button on desktop, once per session
+- [x] 4.5 Build Home page (/) — hero section, How It Works, stats strip, lead magnet banner
+- [x] 4.6 Build About Us page (/about) — mission, team section, differentiators, bottom CTA
+- [x] 4.7 Build Portfolio page (/portfolio) — case study cards + filterable creative gallery
+- [x] 4.8 Build Our Clients page (/clients) — logo wall, testimonials, success stats, team profiles
+- [x] 4.9 Build Pricing page (/pricing) — 3 plan cards with urgency triggers, scarcity indicator
+- [x] 4.10 Build FAQ page (/faq) — accordion FAQ with objection-handling copy, bottom CTA
 - [x] 4.11 Create FastAPI endpoint GET /api/v1/plans — returns plan data for pricing page
 - [x] 4.12 Wire pricing page to /api/v1/plans — plan cards populated from database
-- [ ] 4.13 Implement plan pre-selection — /signup?plan=growth pre-selects Growth on sign-up plan step
-- [ ] 4.14 Add meta titles, descriptions, and OpenGraph tags to all public pages
-- [ ] 4.15 Add LocalBusiness JSON-LD schema markup to home page
-- [ ] 4.16 Implement full mobile responsiveness for all public pages — hamburger menu, stacked layouts
-- [ ] 4.17 Configure Next.js Image component for all portfolio and team images — optimise and lazy-load
+- [x] 4.13 Implement plan pre-selection — /signup?plan=growth pre-selects Growth on sign-up plan step
+- [x] 4.14 Add meta titles, descriptions, and OpenGraph tags to all public pages
+- [x] 4.15 Add LocalBusiness JSON-LD schema markup to home page
+- [x] 4.16 Implement full mobile responsiveness for all public pages — hamburger menu, stacked layouts
+- [x] 4.17 Configure Next.js Image component for all portfolio and team images — optimise and lazy-load
 - [x] 4.18 Build admin-configurable scarcity counter — reads from platform settings API
 
 ## Phase 5: Onboarding Flow
