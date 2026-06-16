@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     INSTAGRAM_APP_ID: str = ""
     INSTAGRAM_APP_SECRET: str = ""
+    INSTAGRAM_REDIRECT_URI: str = ""
+    ENCRYPTION_KEY: str = ""
     REDIS_URL: str = "redis://localhost:6379/0"
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     SECRET_KEY: str = ""

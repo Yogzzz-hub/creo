@@ -12,6 +12,7 @@ from routers.calendar import router as calendar_router
 from routers.payments import router as payments_router
 from routers.addons import router as addons_router
 from routers.notifications import router as notifications_router
+from routers.tasks import router as tasks_router
 from routers.webhooks import router as webhooks_router
 
 app = FastAPI(
@@ -39,6 +40,7 @@ app.include_router(calendar_router)
 app.include_router(payments_router)
 app.include_router(addons_router)
 app.include_router(notifications_router)
+app.include_router(tasks_router)
 app.include_router(webhooks_router)
 
 

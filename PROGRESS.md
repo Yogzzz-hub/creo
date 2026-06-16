@@ -120,7 +120,7 @@
 - [x] 6.7 Create FastAPI endpoints: GET /api/v1/deliverables, approve, reject
 - [ ] 6.8 Wire deliverables pages to API
 - [ ] 6.9 Implement rejection flow — mandatory comment box, revision ticket created
-- [ ] 6.10 Implement download — signed Supabase Storage URL
+- [x] 6.10 Implement download — signed Supabase Storage URL
 - [ ] 6.11 Build Content Calendar page — monthly grid + list view toggle
 - [x] 6.12 Create FastAPI endpoint GET /api/v1/calendar
 - [ ] 6.13 Wire calendar to API
@@ -133,9 +133,9 @@
 - [ ] 6.20 Build contextual upsell prompts
 - [ ] 6.21 Build Support page — ticket list, new ticket form, ticket detail with chat thread
 - [ ] 6.22 Create FastAPI endpoints: tickets CRUD + messages
-- [ ] 6.23 Implement Supabase Realtime for live chat
+- [~] 6.23 Implement Supabase Realtime for live chat — backend infra complete (migration + encryption), frontend wiring pending
 - [ ] 6.24 Build Account Settings pages — business profile, password, Instagram, 2FA
-- [ ] 6.25 Implement Instagram OAuth flow
+- [~] 6.25 Implement Instagram OAuth flow — backend service complete (token exchange + encrypted storage), frontend wiring pending
 - [ ] 6.26 Create FastAPI endpoint POST /api/v1/account/instagram
 - [ ] 6.27 Build in-portal notification system — bell icon, dropdown, mark-as-read
 - [x] 6.28 Create FastAPI endpoint GET /api/v1/notifications
@@ -149,7 +149,7 @@
 - [ ] 7.4 Build Tasks list page — Today/Upcoming/All tabs, priority-sorted
 - [ ] 7.5 Build Task detail page — client info, brief, file upload
 - [ ] 7.6 Create FastAPI endpoints: tasks CRUD + submit
-- [ ] 7.7 Implement deliverable file submission from task card
+- [x] 7.7 Implement deliverable file submission from task card
 - [ ] 7.8 Build team member Calendar page — 1-day pre-assignment view
 - [ ] 7.9 Create FastAPI endpoint GET /api/v1/calendar/team
 - [ ] 7.10 Build Live Chat page — assigned client threads, real-time chat
