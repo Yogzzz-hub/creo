@@ -34,19 +34,11 @@ class UserUpdate(BaseModel):
     phone: Optional[str] = None
     plan_name: Optional[PlanName] = None
     account_status: Optional[AccountStatus] = None
-    instagram_access_token: Optional[str] = None
-    instagram_user_id: Optional[str] = None
-    razorpay_customer_id: Optional[str] = None
-    stripe_customer_id: Optional[str] = None
     two_fa_enabled: Optional[bool] = None
 
 
 class UserOut(UserBase):
     id: str
-    auth_id: str
-    instagram_user_id: Optional[str] = None
-    razorpay_customer_id: Optional[str] = None
-    stripe_customer_id: Optional[str] = None
     deleted_at: Optional[datetime] = None
     created_at: datetime
     updated_at: Optional[datetime] = None

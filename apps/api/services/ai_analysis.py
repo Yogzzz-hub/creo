@@ -71,10 +71,6 @@ Return the analysis as a JSON object with the required keys."""
 
 
 def call_openai_gpt4o(system_message: str, user_message: str) -> dict:
-    messages=[
-        {"role": "system", "content": system_message},
-        {"role": "user", "content": user_message},
-    ],
     client = _get_openai_client()
     response = client.chat.completions.create(
         model="gpt-4o",

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.concurrency import run_in_threadpool
 
 from core.config import settings
 from core.database import async_session
@@ -75,7 +76,7 @@ async def razorpay_webhook(request: Request):
     signature = request.headers.get("X-Razorpay-Signature", "")
 
     try:
-        verify_razorpay_signature(payload_body, signature)
+        await run_in_threadpool(verify_razorpay_signature, payload_body, signature)
     except Exception:
         logger.warning("Invalid Razorpay webhook signature")
         raise HTTPException(
@@ -140,31 +141,18 @@ async def razorpay_webhook(request: Request):
 @router.post("/stripe")
 async def stripe_webhook(request: Request):
     payload_body = await request.body()
-    signature_header = request.headers.get("Stripe-Signature", "")
+    sig_header = request.headers.get("Stripe-Signature", "")
 
-    if not signature_header:
+    if not sig_header:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Missing Stripe-Signature header",
         )
 
-    parts = signature_header.split(",")
-    timestamp = None
-    signature = None
-    for part in parts:
-        if part.startswith("t="):
-            timestamp = part[2:]
-        elif part.startswith("v1="):
-            signature = part[3:]
-
-    if not timestamp or not signature:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid Stripe-Signature format",
-        )
-
     try:
-        event = verify_stripe_signature(payload_body, signature, timestamp)
+        event = await run_in_threadpool(
+            verify_stripe_signature, payload_body, sig_header
+        )
     except Exception:
         logger.warning("Invalid Stripe webhook signature")
         raise HTTPException(
@@ -176,7 +164,6 @@ async def stripe_webhook(request: Request):
         try:
             if event.type == "invoice.payment_succeeded":
                 invoice = event.data.object
-                stripe_customer_id = invoice.customer
                 stripe_subscription_id = invoice.subscription
 
                 if stripe_subscription_id:

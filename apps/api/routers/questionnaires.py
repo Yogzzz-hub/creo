@@ -1,12 +1,14 @@
 from datetime import datetime, timezone
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import CurrentUser
+from core.security import require_client
 from models.questionnaire import Questionnaire
+from models.user import User
 from schemas.questionnaire import QuestionnaireCreate, QuestionnaireStatusResponse
 
 router = APIRouter(prefix="/api/v1/questionnaire", tags=["questionnaire"])
@@ -15,7 +17,7 @@ router = APIRouter(prefix="/api/v1/questionnaire", tags=["questionnaire"])
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def submit_questionnaire(
     payload: QuestionnaireCreate,
-    current_user: CurrentUser,
+    current_user: Annotated[User, Depends(require_client)],
     db: AsyncSession = Depends(get_db),
 ):
     existing = await db.execute(
@@ -56,7 +58,7 @@ async def submit_questionnaire(
 
 @router.get("/status", response_model=QuestionnaireStatusResponse)
 async def get_questionnaire_status(
-    current_user: CurrentUser,
+    current_user: Annotated[User, Depends(require_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(

@@ -5,9 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.concurrency import run_in_threadpool
 
 from core.database import get_db
-from core.security import CurrentUser
+from core.security import CurrentUser, require_client
 from models.enums import AccountStatus, PaymentGateway, PlanName
 from models.plan import Plan
 from models.subscription import Subscription
@@ -20,7 +21,7 @@ router = APIRouter(prefix="/api/v1/payments", tags=["payments"])
 
 @router.get("/history", response_model=list[PaymentHistoryResponse])
 async def get_payment_history(
-    current_user: CurrentUser,
+    current_user: Annotated[User, Depends(require_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -35,7 +36,7 @@ async def get_payment_history(
 @router.post("/change-plan")
 async def change_plan(
     payload: PlanChangeRequest,
-    current_user: CurrentUser,
+    current_user: Annotated[User, Depends(require_client)],
     db: AsyncSession = Depends(get_db),
 ):
     plan_result = await db.execute(
@@ -84,7 +85,7 @@ class CreateSubscriptionResponse(BaseModel):
 @router.post("/create-subscription", response_model=CreateSubscriptionResponse)
 async def create_subscription(
     payload: CreateSubscriptionRequest,
-    current_user: CurrentUser,
+    current_user: Annotated[User, Depends(require_client)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     plan_result = await db.execute(
@@ -135,4 +136,13 @@ async def create_subscription(
         gateway_customer_id=result["gateway_customer_id"],
         current_period_start=result["current_period_start"],
         current_period_end=result["current_period_end"],
+    )
+    db.add(subscription)
+    await db.commit()
+
+    return CreateSubscriptionResponse(
+        gateway=result["gateway"],
+        subscription_id=result["subscription_id"],
+        client_secret=result.get("client_secret"),
+        gateway_customer_id=result["gateway_customer_id"],
     )

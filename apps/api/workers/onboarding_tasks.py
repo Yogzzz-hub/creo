@@ -38,11 +38,8 @@ async def _process_questionnaire(questionnaire_id: str):
                 "topics_to_avoid": questionnaire.topics_to_avoid,
             }
 
-            prompt = generate_brand_analysis_prompt(questionnaire_data)
-            ai_result = call_openai_gpt4o(prompt)
-
-            prompt = generate_brand_analysis_prompt(questionnaire_data)
-            ai_result = call_openai_gpt4o(prompt)
+            system_prompt, user_prompt = generate_brand_analysis_prompt(questionnaire_data)
+            ai_result = call_openai_gpt4o(system_prompt, user_prompt)
 
             required_keys = {
                 "brand_tone",
@@ -76,10 +73,30 @@ async def _process_questionnaire(questionnaire_id: str):
             raise
 
 
-@celery_app.task(name="generate_ai_analysis", bind=True, max_retries=3)
+RETRYABLE_EXCEPTIONS = (
+    ConnectionError,
+    TimeoutError,
+    OSError,
+)
+
+
+@celery_app.task(
+    name="generate_ai_analysis",
+    bind=True,
+    max_retries=3,
+    default_retry_backoff=True,
+    default_retry_backoff_max=600,
+)
 def generate_ai_analysis(self, questionnaire_id: str):
     try:
         asyncio.run(_process_questionnaire(questionnaire_id))
+    except RETRYABLE_EXCEPTIONS as exc:
+        logger.warning(
+            f"Retryable error for questionnaire {questionnaire_id}: {exc}"
+        )
+        raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
     except Exception as exc:
-        logger.error(f"Task failed for questionnaire {questionnaire_id}: {exc}")
-        raise self.retry(exc=exc, countdown=60)
+        logger.error(
+            f"Non-retryable failure for questionnaire {questionnaire_id}: {exc}"
+        )
+        raise

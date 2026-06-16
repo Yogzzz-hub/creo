@@ -37,7 +37,7 @@ class DeliverableResponse(BaseModel):
 
 
 class DeliverableRejectRequest(BaseModel):
-    comment_text: str = Field(..., min_length=1)
+    comment_text: str = Field(..., min_length=1, max_length=2000)
 
 
 class CalendarEntryResponse(BaseModel):

@@ -1,4 +1,5 @@
 from uuid import uuid4
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -6,9 +7,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import CurrentUser
+from core.security import require_client
 from models.addon import Addon, AddonPricing
 from models.enums import AddonStatus, DeliverableType
+from models.user import User
 
 router = APIRouter(prefix="/api/v1/addons", tags=["addons"])
 
@@ -30,25 +32,26 @@ class AddonPurchaseRequest(BaseModel):
 
 @router.get("/pricing", response_model=list[AddonPricingResponse])
 async def get_addon_pricing(
-    current_user: CurrentUser,
+    current_user: Annotated[User, Depends(require_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
         select(AddonPricing).where(AddonPricing.is_active.is_(True))
     )
-    return pricing
+    return result.scalars().all()
 
 
 @router.post("/purchase")
 async def purchase_addon(
     payload: AddonPurchaseRequest,
-    current_user: CurrentUser,
+    current_user: Annotated[User, Depends(require_client)],
     db: AsyncSession = Depends(get_db),
 ):
     pricing_result = await db.execute(
         select(AddonPricing).where(
             AddonPricing.deliverable_type == payload.deliverable_type,
             AddonPricing.is_active.is_(True),
+        )
     )
     pricing = pricing_result.scalar_one_or_none()
 

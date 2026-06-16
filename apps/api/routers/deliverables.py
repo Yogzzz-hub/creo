@@ -1,13 +1,15 @@
 from datetime import datetime, timezone
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import CurrentUser
+from core.security import require_client
 from models.deliverable import Deliverable, DeliverableComment
 from models.enums import DeliverableStatus
+from models.user import User
 from schemas.deliverable import DeliverableCommentCreate, DeliverableCommentOut
 from schemas.portal import (
     DeliverableRejectRequest,
@@ -19,7 +21,7 @@ router = APIRouter(prefix="/api/v1/deliverables", tags=["deliverables"])
 
 @router.get("", response_model=list[DeliverableResponse])
 async def list_deliverables(
-    current_user: CurrentUser,
+    current_user: Annotated[User, Depends(require_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -34,7 +36,7 @@ async def list_deliverables(
 @router.get("/{deliverable_id}", response_model=DeliverableResponse)
 async def get_deliverable(
     deliverable_id: str,
-    current_user: CurrentUser,
+    current_user: Annotated[User, Depends(require_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -57,7 +59,7 @@ async def get_deliverable(
 @router.post("/{deliverable_id}/approve", response_model=DeliverableResponse)
 async def approve_deliverable(
     deliverable_id: str,
-    current_user: CurrentUser,
+    current_user: Annotated[User, Depends(require_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -86,7 +88,7 @@ async def approve_deliverable(
 async def reject_deliverable(
     deliverable_id: str,
     payload: DeliverableRejectRequest,
-    current_user: CurrentUser,
+    current_user: Annotated[User, Depends(require_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(

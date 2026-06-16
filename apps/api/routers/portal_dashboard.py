@@ -1,9 +1,11 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import CurrentUser
+from core.security import require_client
 from models.deliverable import Deliverable
 from models.enums import DeliverableStatus, TicketStatus
 from models.questionnaire import Questionnaire
@@ -24,7 +26,7 @@ def _compute_onboarding_stage(user: User) -> int:
 
 @router.get("/dashboard", response_model=DashboardResponse)
 async def get_portal_dashboard(
-    current_user: CurrentUser,
+    current_user: Annotated[User, Depends(require_client)],
     db: AsyncSession = Depends(get_db),
 ):
     pending_deliverable_result = await db.execute(

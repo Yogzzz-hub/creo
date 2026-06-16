@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from models.enums import DeliverableStatus
 
@@ -54,11 +54,11 @@ class DeliverableCommentBase(BaseModel):
 
     deliverable_id: str
     author_id: str
-    comment_text: str
+    comment_text: str = Field(..., max_length=2000)
 
 
 class DeliverableCommentCreate(BaseModel):
-    comment_text: str
+    comment_text: str = Field(..., max_length=2000)
 
 
 class DeliverableCommentOut(DeliverableCommentBase):
