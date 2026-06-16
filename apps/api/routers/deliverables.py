@@ -25,7 +25,7 @@ async def list_deliverables(
     result = await db.execute(
         select(Deliverable)
         .where(Deliverable.client_id == current_user.id)
-        .order_by(Deliverable.submitted_at.desc())
+        .order_by(Deliverable.created_at.desc())
     )
     deliverables = result.scalars().all()
     return deliverables
