@@ -60,3 +60,8 @@ class QuestionnaireOut(QuestionnaireBase):
     ai_summary_line: Optional[str] = None
     submitted_at: datetime
     updated_at: Optional[datetime] = None
+
+
+class QuestionnaireStatusResponse(BaseModel):
+    status: str
+    summary_line: Optional[str] = None

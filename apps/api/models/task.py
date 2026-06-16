@@ -72,7 +72,7 @@ class Task(Base):
         "User", foreign_keys=[assigned_by], lazy="selectin"
     )
     calendar_entry: Mapped[Optional["ContentCalendar"]] = relationship(
-        "ContentCalendar", foreign_keys=[calendar_entry_id], back_populates="linked_task"
+        "ContentCalendar", foreign_keys=[calendar_entry_id], lazy="selectin", viewonly=True
     )
     deliverables: Mapped[list["Deliverable"]] = relationship(
         "Deliverable", back_populates="task", lazy="selectin"

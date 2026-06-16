@@ -1,8 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Shield, Zap, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Pricing | Creo - Digital Marketing Agency",
@@ -25,59 +32,87 @@ export const metadata: Metadata = {
   },
 };
 
-const PLANS = [
-  {
-    name: "Starter",
-    price: "TBD",
-    description: "For small businesses getting started",
-    features: [
-      "3 Posters / month",
-      "2 Reels / month",
-      "3 Stories / month",
-      "Content Calendar",
-      "Client Portal",
-      "1 Revision Round",
-    ],
-    cta: "Start Growing",
-    highlighted: false,
-    href: "/signup?plan=starter",
-  },
-  {
-    name: "Growth",
-    price: "TBD",
-    description: "Most popular for growing brands",
-    features: [
-      "6 Posters / month",
-      "4 Reels / month",
-      "6 Stories / month",
-      "Content Calendar",
-      "Client Portal",
-      "2 Revision Rounds",
-    ],
-    cta: "Start Growing",
-    highlighted: true,
-    href: "/signup?plan=growth",
-  },
-  {
-    name: "Pro",
-    price: "TBD",
-    description: "For brands that need dedicated attention",
-    features: [
-      "6 Posters / month",
-      "4 Reels / month",
-      "9 Stories / month",
-      "Content Calendar",
-      "Client Portal",
-      "Dedicated Manager",
-      "3 Revision Rounds",
-    ],
-    cta: "Start Growing",
-    highlighted: false,
-    href: "/signup?plan=pro",
-  },
-];
+interface Plan {
+  id: string;
+  name: string;
+  display_name: string;
+  monthly_price: number;
+  poster_quota: number;
+  reel_quota: number;
+  story_quota: number;
+  revision_rounds: number;
+  has_dedicated_manager: boolean;
+  is_active: boolean;
+}
 
-export default function PricingPage() {
+interface PublicSettings {
+  scarcity_slots_available: number;
+}
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+async function getPlans(): Promise<Plan[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/plans`, {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+async function getPublicSettings(): Promise<PublicSettings> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/settings/public`, {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return { scarcity_slots_available: 5 };
+    return res.json();
+  } catch {
+    return { scarcity_slots_available: 5 };
+  }
+}
+
+function formatPrice(price: number): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(price);
+}
+
+const planHighlights: Record<string, string[]> = {
+  starter: [
+    "Social media management for 1 platform",
+    "Basic content calendar",
+    "Monthly performance report",
+    "Email support",
+  ],
+  growth: [
+    "Social media management for 2 platforms",
+    "Advanced content calendar with revisions",
+    "Bi-weekly performance reports",
+    "Priority email & chat support",
+    "Dedicated account manager",
+  ],
+  pro: [
+    "Social media management for 3+ platforms",
+    "Full content calendar with unlimited revisions",
+    "Weekly performance reports & AI insights",
+    "Priority support with live chat",
+    "Instagram auto-publishing",
+  ],
+};
+
+export default async function PricingPage() {
+  const [plans, settings] = await Promise.all([
+    getPlans(),
+    getPublicSettings(),
+  ]);
+
   return (
     <>
       {/* Hero Section */}
@@ -90,73 +125,108 @@ export default function PricingPage() {
             <p className="mt-6 text-lg leading-relaxed text-neutral sm:text-xl">
               Pick the plan that fits your brand. Upgrade or downgrade anytime — no contracts, no surprises.
             </p>
-            <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm font-medium text-accent">
-              <Zap className="size-4" />
-              Joined by 50+ brands this year
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm font-medium text-accent">
+                <Zap className="size-4" />
+                Joined by 50+ brands this year
+              </div>
+              {settings.scarcity_slots_available > 0 && (
+                <div className="inline-flex items-center gap-2 rounded-full bg-warning/10 px-4 py-2 text-sm font-medium text-warning">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-warning" />
+                  </span>
+                  Only {settings.scarcity_slots_available} onboarding slots left this month
+                </div>
+              )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Pricing Cards */}
+      {/* Pricing Cards (Dynamically fetched from DB) */}
       <section id="plans" className="bg-white py-16 sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-8 lg:grid-cols-3">
-            {PLANS.map((plan) => (
-              <Card
-                key={plan.name}
-                className={`relative flex flex-col ${
-                  plan.highlighted
-                    ? "border-2 border-[#2B7BC4] shadow-lg"
-                    : "border-border"
-                }`}
-              >
-                {plan.highlighted && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-accent text-white text-xs font-semibold px-4 py-1.5 rounded-full">
-                      Most Popular
-                    </span>
-                  </div>
-                )}
-                <CardHeader className="text-center pt-8">
-                  <CardTitle className="text-xl text-brand-dark">
-                    {plan.name}
-                  </CardTitle>
-                  <div className="mt-3">
-                    <span className="text-4xl font-bold text-brand-dark">
-                      {plan.price}
-                    </span>
-                    <span className="text-neutral/60"> /month</span>
-                  </div>
-                  <p className="mt-2 text-sm text-neutral/60">
-                    {plan.description}
-                  </p>
-                </CardHeader>
-                <CardContent className="flex flex-1 flex-col px-6 pb-8">
-                  <ul className="flex-1 space-y-3">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-center gap-2 text-sm text-neutral">
-                        <Check className="h-4 w-4 text-success shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-6">
-                    <Button
-                      render={<Link href={plan.href} />}
-                      className={`w-full h-11 ${
-                        plan.highlighted
-                          ? "bg-[#2B7BC4] hover:bg-[#2B7BC4]/90 text-white"
-                          : "bg-brand-dark hover:bg-brand-dark/90 text-white"
-                      }`}
-                    >
-                      {plan.cta}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {plans.length === 0 ? (
+            <p className="text-center text-muted-foreground">
+              Plans are currently unavailable. Please check back later.
+            </p>
+          ) : (
+            <div className="grid gap-8 lg:grid-cols-3">
+              {plans.map((plan) => {
+                const isPopular = plan.name === "growth";
+                const highlights = planHighlights[plan.name] ?? [];
+
+                return (
+                  <Card
+                    key={plan.id}
+                    className={`relative flex flex-col ${
+                      isPopular
+                        ? "border-2 border-[#2B7BC4] shadow-lg"
+                        : "border-border shadow-card"
+                    }`}
+                  >
+                    {isPopular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span className="bg-[#2B7BC4] text-white text-xs font-semibold px-4 py-1.5 rounded-full">
+                          Most Popular
+                        </span>
+                      </div>
+                    )}
+                    <CardHeader className="text-center pt-8">
+                      <CardTitle className="text-2xl font-bold text-brand-dark">
+                        {plan.display_name}
+                      </CardTitle>
+                      <CardDescription className="mt-2">
+                        <span className="text-4xl font-bold text-brand-dark">
+                          {formatPrice(plan.monthly_price)}
+                        </span>
+                        <span className="text-muted-foreground"> /month</span>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-1 px-6 pb-8">
+                      <ul className="space-y-3">
+                        {highlights.map((item) => (
+                          <li key={item} className="flex items-start gap-2 text-sm text-text">
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                            {item}
+                          </li>
+                        ))}
+                        <li className="flex items-start gap-2 text-sm text-text">
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                          {plan.poster_quota} posters, {plan.reel_quota} reels, {plan.story_quota} stories per month
+                        </li>
+                        <li className="flex items-start gap-2 text-sm text-text">
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                          {plan.revision_rounds} revision round{plan.revision_rounds !== 1 ? "s" : ""} per deliverable
+                        </li>
+                        {plan.has_dedicated_manager && (
+                          <li className="flex items-start gap-2 text-sm text-text">
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                            Dedicated account manager
+                          </li>
+                        )}
+                      </ul>
+                    </CardContent>
+                    <CardFooter className="pt-4 px-6 pb-8">
+                      <Button
+                        asChild
+                        className={`w-full h-11 text-base font-semibold ${
+                          isPopular
+                            ? "bg-[#2B7BC4] hover:bg-[#2B7BC4]/90 text-white"
+                            : "bg-brand-dark hover:bg-brand-dark/90 text-white"
+                        }`}
+                      >
+                        <Link href={`/signup?plan=${plan.name}`}>
+                          Start Growing
+                        </Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
@@ -170,10 +240,10 @@ export default function PricingPage() {
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-brand-dark">
-                  Only 5 slots left
+                  Limited Availability
                 </h3>
                 <p className="mt-1 text-sm text-neutral/60">
-                  Only 5 onboarding slots available this month
+                  We cap onboarding to ensure high quality delivery.
                 </p>
               </div>
             </div>
@@ -231,10 +301,10 @@ export default function PricingPage() {
           </p>
           <div className="mt-8">
             <Button
-              render={<Link href="/signup?plan=growth" />}
+              asChild
               className="bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold"
             >
-              Get Started Today
+              <Link href="/signup?plan=growth">Get Started Today</Link>
             </Button>
           </div>
         </div>
