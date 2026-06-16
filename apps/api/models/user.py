@@ -98,11 +98,6 @@ class User(Base):
         foreign_keys="Task.client_id",
         lazy="selectin",
     )
-    tasks_assigned: Mapped[list["Task"]] = relationship(
-        "Task",
-        foreign_keys="Task.assigned_to",
-        lazy="selectin",
-    )
     deliverables: Mapped[list["Deliverable"]] = relationship(
         "Deliverable", back_populates="client", lazy="selectin"
     )
@@ -110,7 +105,7 @@ class User(Base):
         "DeliverableComment", back_populates="author", lazy="selectin"
     )
     tickets: Mapped[list["Ticket"]] = relationship(
-        "Ticket", back_populates="user", lazy="selectin"
+        "Ticket", back_populates="user", foreign_keys="Ticket.user_id", lazy="selectin"
     )
     ticket_messages_sent: Mapped[list["TicketMessage"]] = relationship(
         "TicketMessage", back_populates="sender", lazy="selectin"
