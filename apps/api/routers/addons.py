@@ -48,8 +48,7 @@ async def purchase_addon(
     pricing_result = await db.execute(
         select(AddonPricing).where(
             AddonPricing.deliverable_type == payload.deliverable_type,
-            AddonPricing.is_active == True,
-        )
+            AddonPricing.is_active.is_(True),
     )
     pricing = pricing_result.scalar_one_or_none()
 
