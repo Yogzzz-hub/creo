@@ -106,6 +106,7 @@ const handleKeyDown = React.useCallback(
       api.off("reInit", onSelect)
       api.off("select", onSelect)
     }
+  }, [api, onSelect])
 
   return (
     <CarouselContext.Provider

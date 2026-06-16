@@ -97,8 +97,13 @@ export default function SignupPage() {
       return;
     }
 
-    // Step D: Redirect to plan selection
-    router.push("/signup/plan");
+    // Step D: Redirect to plan selection, preserving any existing search params
+    const params = new URLSearchParams(window.location.search);
+    const planParam = params.get("plan");
+    const redirectUrl = planParam
+      ? `/signup/plan?plan=${encodeURIComponent(planParam)}`
+      : "/signup/plan";
+    router.push(redirectUrl);
   }
 
   return (

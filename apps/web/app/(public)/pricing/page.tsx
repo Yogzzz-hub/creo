@@ -210,16 +210,14 @@ export default async function PricingPage() {
                     </CardContent>
                     <CardFooter className="pt-4 px-6 pb-8">
                       <Button
-                        asChild
+                        render={<Link href={`/signup?plan=${plan.name}`} />}
                         className={`w-full h-11 text-base font-semibold ${
                           isPopular
                             ? "bg-[#2B7BC4] hover:bg-[#2B7BC4]/90 text-white"
                             : "bg-brand-dark hover:bg-brand-dark/90 text-white"
                         }`}
                       >
-                        <Link href={`/signup?plan=${plan.name}`}>
-                          Start Growing
-                        </Link>
+                        Start Growing
                       </Button>
                     </CardFooter>
                   </Card>
@@ -301,10 +299,10 @@ export default async function PricingPage() {
           </p>
           <div className="mt-8">
             <Button
-              asChild
+              render={<Link href="/signup?plan=growth" />}
               className="bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold"
             >
-              <Link href="/signup?plan=growth">Get Started Today</Link>
+              Get Started Today
             </Button>
           </div>
         </div>
