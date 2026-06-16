@@ -14,7 +14,7 @@ async def list_active_plans(
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(Plan).where(Plan.is_active == True).order_by(Plan.monthly_price)
+        select(Plan).where(Plan.is_active.is_(True)).order_by(Plan.monthly_price)
     )
     plans = result.scalars().all()
     return plans
