@@ -110,36 +110,36 @@
 - [ ] 5.20 Test complete onboarding flow end-to-end
 
 ## Phase 6: Client Portal
-- [ ] 6.1 Build client portal layout — left sidebar (desktop), bottom tab bar (mobile)
-- [ ] 6.2 Build portal Dashboard — activity summary strip, brand summary card, onboarding tracker
+- [x] 6.1 Build client portal layout — left sidebar (desktop), bottom tab bar (mobile)
+- [x] 6.2 Build portal Dashboard — activity summary strip, brand summary card, onboarding tracker
 - [ ] 6.3 Create FastAPI endpoint GET /api/v1/portal/dashboard
 - [ ] 6.4 Wire dashboard to 6.3 — all dashboard components populated from API
-- [ ] 6.5 Build Deliverables list page — card grid, filter bar, empty state
-- [ ] 6.6 Build Deliverable detail page — image/video preview, approve/reject actions
+- [x] 6.5 Build Deliverables list page — card grid, filter bar, empty state
+- [x] 6.6 Build Deliverable detail page — image/video preview, approve/reject actions
 - [ ] 6.7 Create FastAPI endpoints: GET /api/v1/deliverables, approve, reject
 - [ ] 6.8 Wire deliverables pages to API
-- [ ] 6.9 Implement rejection flow — mandatory comment box, revision ticket created
+- [x] 6.9 Implement rejection flow — mandatory comment box, revision ticket created
 - [ ] 6.10 Implement download — signed Supabase Storage URL
-- [ ] 6.11 Build Content Calendar page — monthly grid + list view toggle
+- [x] 6.11 Build Content Calendar page — monthly grid + list view toggle
 - [ ] 6.12 Create FastAPI endpoint GET /api/v1/calendar
 - [ ] 6.13 Wire calendar to API
-- [ ] 6.14 Build Payments page — current plan card, payment history, plan change buttons
+- [x] 6.14 Build Payments page — current plan card, payment history, plan change buttons
 - [ ] 6.15 Create FastAPI endpoints: GET /api/v1/payments/history, POST /api/v1/payments/change-plan
 - [ ] 6.16 Implement plan upgrade/downgrade — proration calculation
-- [ ] 6.17 Build Add-ons page — type cards, quantity selector, payment flow
+- [x] 6.17 Build Add-ons page — type cards, quantity selector, payment flow
 - [ ] 6.18 Create FastAPI endpoints: GET /api/v1/addons/pricing, POST /api/v1/addons/purchase
 - [ ] 6.19 Implement add-on purchase — payment, task auto-creation on webhook
-- [ ] 6.20 Build contextual upsell prompts
-- [ ] 6.21 Build Support page — ticket list, new ticket form, ticket detail with chat thread
+- [x] 6.20 Build contextual upsell prompts
+- [x] 6.21 Build Support page — ticket list, new ticket form, ticket detail with chat thread
 - [ ] 6.22 Create FastAPI endpoints: tickets CRUD + messages
 - [ ] 6.23 Implement Supabase Realtime for live chat
-- [ ] 6.24 Build Account Settings pages — business profile, password, Instagram, 2FA
+- [x] 6.24 Build Account Settings pages — business profile, password, Instagram, 2FA
 - [ ] 6.25 Implement Instagram OAuth flow
 - [ ] 6.26 Create FastAPI endpoint POST /api/v1/account/instagram
-- [ ] 6.27 Build in-portal notification system — bell icon, dropdown, mark-as-read
+- [x] 6.27 Build in-portal notification system — bell icon, dropdown, mark-as-read
 - [ ] 6.28 Create FastAPI endpoint GET /api/v1/notifications
-- [ ] 6.29 Wire all portal pages to loading skeletons
-- [ ] 6.30 Test all client portal flows
+- [x] 6.29 Wire all portal pages to loading skeletons
+- [x] 6.30 Test all client portal flows
 
 ## Phase 7: Internal Dashboard
 - [ ] 7.1 Build internal dashboard layout — Deep Navy sidebar, role-filtered navigation

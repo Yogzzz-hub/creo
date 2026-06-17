@@ -9,7 +9,8 @@ const STEPS = [
   { label: "Verify", href: "/onboarding/verify" },
   { label: "Terms", href: "/onboarding/terms" },
   { label: "Payment", href: "/onboarding/payment" },
-  { label: "Brand Profile", href: "/onboarding/brand-profile" },
+  { label: "Brand Profile", href: "/onboarding/questionnaire" },
+  { label: "Complete", href: "/onboarding/complete" },
 ];
 
 export default function OnboardingLayout({
