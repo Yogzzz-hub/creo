@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import RequireTeamMember
+from core.security import RequireTeamLead, RequireTeamMember
 from models.deliverable import Deliverable
 from models.enums import DeliverableStatus, TaskStatus
 from models.task import Task
@@ -17,6 +17,7 @@ from models.user import User
 from schemas.deliverable import DeliverableOut
 from schemas.task import (
     ClientInfo,
+    TaskAssignmentApproveRequest,
     TaskDetailResponse,
     TaskListResponse,
     TaskOut,
@@ -274,13 +275,49 @@ async def request_task_assignment(
         )
 
     task.assigned_to = team_member.id
-    task.status = TaskStatus.in_progress
+    task.requested_by = current_user.id
+    task.status = TaskStatus.assignment_requested
     task.assignment_date = datetime.now(timezone.utc).date()
 
     await db.commit()
     await db.refresh(task)
 
-    return {"task_id": task.id, "message": "Task assigned successfully"}
+    return {"task_id": task.id, "message": "Assignment requested successfully"}
+
+
+@router.post(
+    "/{task_id}/approve-assignment",
+)
+async def approve_task_assignment(
+    task_id: str,
+    payload: TaskAssignmentApproveRequest,
+    current_user: RequireTeamLead,
+    db: AsyncSession = Depends(get_db),
+):
+    task_result = await db.execute(select(Task).where(Task.id == task_id))
+    task = task_result.scalar_one_or_none()
+
+    if task is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found",
+        )
+
+    if task.status != TaskStatus.assignment_requested:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Task does not have a pending assignment request",
+        )
+
+    task.assigned_to = payload.team_member_id
+    task.assigned_by = current_user.id
+    task.status = TaskStatus.pending
+    task.requested_by = None
+
+    await db.commit()
+    await db.refresh(task)
+
+    return {"task_id": task.id, "message": "Assignment approved successfully"}
 
 
 @router.post(

@@ -162,13 +162,13 @@
 - [x] 7.11 Wire live chat to Supabase Realtime
 - [x] 7.12 Build Leave Requests page — list + new request form
 - [x] 7.13 Create FastAPI endpoints: GET /api/v1/leave, POST /api/v1/leave
-- [ ] 7.14 Build Team Overview page (team leads only) — per-member metrics
-- [ ] 7.15 Create FastAPI endpoint GET /api/v1/team/overview
-- [ ] 7.16 Implement task self-assignment from pending queue
+- [x] 7.14 Build Team Overview page (team leads only) — per-member metrics
+- [x] 7.15 Create FastAPI endpoint GET /api/v1/team/overview
+- [x] 7.16 Implement task self-assignment from pending queue
 - [x] 7.17 Create FastAPI endpoints: request-assignment, approve-assignment
-- [ ] 7.18 Build Sales dashboard — client pipeline, custom pricing form
-- [ ] 7.19 Create FastAPI endpoints: GET /api/v1/sales/clients, POST custom-pricing-request
-- [ ] 7.20 Test all internal dashboard flows
+- [x] 7.18 Build Sales dashboard — client pipeline, custom pricing form
+- [x] 7.19 Create FastAPI endpoints: GET /api/v1/sales/clients, POST custom-pricing-request
+- [x] 7.20 Test all internal dashboard flows
 
 ## Phase 8: Admin Panel & KPI
 

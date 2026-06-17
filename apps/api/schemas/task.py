@@ -95,3 +95,7 @@ class TaskSubmitRequest(BaseModel):
     file_url: str = Field(..., max_length=2048)
     file_type: str = Field(..., max_length=127)
     file_size_bytes: int = Field(..., ge=1)
+
+
+class TaskAssignmentApproveRequest(BaseModel):
+    team_member_id: str

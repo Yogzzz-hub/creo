@@ -11,6 +11,7 @@ import {
   Users,
   LogOut,
   FileText,
+  DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +52,12 @@ const NAV_ITEMS: NavItem[] = [
     href: "/dashboard/team",
     icon: Users,
     roles: ["team_lead"],
+  },
+  {
+    label: "Sales",
+    href: "/dashboard/sales",
+    icon: DollarSign,
+    roles: ["team_lead", "sales"],
   },
 ];
 

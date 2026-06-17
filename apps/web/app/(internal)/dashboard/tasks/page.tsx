@@ -3,7 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileText, AlertTriangle } from "lucide-react";
+import { Calendar, FileText, AlertTriangle, Inbox } from "lucide-react";
+import { UnassignedTasksTab } from "@/components/unassigned-tasks-tab";
 
 interface ClientInfo {
   id: string;
@@ -160,6 +161,10 @@ export default async function TasksPage() {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="queue">
+            <Inbox size={14} className="mr-1" />
+            Open Queue
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="mt-4 space-y-3">
@@ -184,6 +189,10 @@ export default async function TasksPage() {
           ) : (
             upcomingTasks.map((task) => <TaskCard key={task.id} task={task} />)
           )}
+        </TabsContent>
+
+        <TabsContent value="queue" className="mt-4">
+          <UnassignedTasksTab />
         </TabsContent>
       </Tabs>
     </div>

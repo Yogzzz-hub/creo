@@ -54,6 +54,9 @@ class Task(Base):
     submitted_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    requested_by: Mapped[Optional[str]] = mapped_column(
+        UUID(as_uuid=False), ForeignKey("users.id"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -70,6 +73,9 @@ class Task(Base):
     )
     assigned_by_user: Mapped[Optional["User"]] = relationship(
         "User", foreign_keys=[assigned_by], lazy="selectin"
+    )
+    requested_by_user: Mapped[Optional["User"]] = relationship(
+        "User", foreign_keys=[requested_by], lazy="selectin"
     )
     calendar_entry: Mapped[Optional["ContentCalendar"]] = relationship(
         "ContentCalendar", foreign_keys=[calendar_entry_id], lazy="selectin", viewonly=True

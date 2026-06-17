@@ -47,6 +47,7 @@ class TaskStatus(str, enum.Enum):
     approved = "approved"
     revision = "revision"
     overdue = "overdue"
+    assignment_requested = "assignment_requested"
 
 
 class TicketType(str, enum.Enum):
