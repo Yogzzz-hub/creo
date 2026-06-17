@@ -184,15 +184,15 @@
 - [ ] 8.18 Schedule Celery beat — weekly Monday 08:00, monthly 1st 08:00
 - [ ] 8.19 Implement PDF export using ReportLab or WeasyPrint
 - [ ] 8.20 Implement Excel export using openpyxl
-- [ ] 8.21 Build KPI Dashboard — live metric cards, delivery rate, capacity bars
+- [x] 8.21 Build KPI Dashboard — live metric cards, delivery rate, capacity bars
 - [ ] 8.22 Create FastAPI endpoint GET /api/v1/admin/kpi
 - [ ] 8.23 Implement KPI role filtering
-- [ ] 8.24 Build Announcements page — MoM, newsletter, general
+- [x] 8.24 Build Announcements page — MoM, newsletter, general
 - [ ] 8.25 Create FastAPI endpoints: announcements CRUD
-- [ ] 8.26 Build Platform Settings page — pricing editors, SLA thresholds
+- [x] 8.26 Build Platform Settings page — pricing editors, SLA thresholds
 - [ ] 8.27 Create FastAPI endpoints: settings CRUD
 - [ ] 8.28 Implement custom pricing approval flow
-- [ ] 8.29 Build Sales Admin section
+- [x] 8.29 Build Sales Admin section
 - [ ] 8.30 Test admin panel end-to-end
 
 ## Phase 9: Third-party Integrations
