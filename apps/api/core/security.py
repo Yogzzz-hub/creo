@@ -1,5 +1,6 @@
 from typing import Annotated
 
+from cryptography.fernet import Fernet
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
@@ -12,6 +13,28 @@ from models.enums import UserRole
 from models.user import User
 
 oauth2_scheme = HTTPBearer()
+
+_fernet: Fernet | None = None
+
+
+def _get_fernet() -> Fernet:
+    global _fernet
+    if _fernet is None:
+        key = settings.ENCRYPTION_KEY
+        if not key:
+            raise RuntimeError("ENCRYPTION_KEY is not set in environment")
+        _fernet = Fernet(key.encode() if isinstance(key, str) else key)
+    return _fernet
+
+
+def encrypt_token(token: str) -> str:
+    fernet = _get_fernet()
+    return fernet.encrypt(token.encode()).decode()
+
+
+def decrypt_token(encrypted_token: str) -> str:
+    fernet = _get_fernet()
+    return fernet.decrypt(encrypted_token.encode()).decode()
 
 
 async def get_current_user(

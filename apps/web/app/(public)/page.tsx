@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -11,27 +12,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-export const metadata: Metadata = {
-  title: "Home | Creo - Digital Marketing Agency",
-  description:
-    "Creo is a full-service digital marketing agency helping local businesses grow with weekly content, social media management, and performance marketing. Onboarded in 7 days.",
-  openGraph: {
-    title: "Creo - Digital Marketing Agency | Your Brand Growing Every Week",
-    description:
-      "Onboarded in 7 days. Content delivered every week. Join 50+ brands growing with Creo.",
-    url: "https://www.getcreo.in",
-    siteName: "Creo",
-    locale: "en_IN",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Creo - Digital Marketing Agency",
-    description:
-      "Onboarded in 7 days. Content delivered every week. Join 50+ brands growing with Creo.",
-  },
-};
 
 const LOCAL_BUSINESS_SCHEMA = {
   "@context": "https://schema.org",
@@ -149,7 +129,7 @@ export default function HomePage() {
                 </Button>
                 <Button
                   variant="outline"
-                  render={<Link href="/contact" />}
+                  render={<Link href="https://wa.me/" />}
                   className="border-white/30 text-white hover:bg-white/10 rounded-lg h-12 px-8 text-base font-semibold"
                 >
                   Book a Call

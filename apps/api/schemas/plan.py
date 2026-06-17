@@ -46,3 +46,18 @@ class PlanOut(PlanBase):
     id: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+
+class PlanResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    name: PlanName
+    display_name: str
+    monthly_price: float
+    poster_quota: int
+    reel_quota: int
+    story_quota: int
+    revision_rounds: int
+    has_dedicated_manager: bool
+    is_active: bool
