@@ -28,12 +28,12 @@ const ADMIN_NAV_ITEMS = [
   { label: "Reports", href: "/admin/reports", icon: BarChart3 },
   { label: "Announcements", href: "/admin/announcements", icon: Megaphone },
   { label: "Settings", href: "/admin/settings", icon: Settings },
-  { label: "KPI", href: "/kpi", icon: Activity },
+  { label: "KPI", href: "/admin/kpi", icon: Activity },
 ]
 
 function isActive(href: string, pathname: string) {
   if (href === "/admin") return pathname === "/admin"
-  if (href === "/kpi") return pathname.startsWith("/kpi")
+  if (href === "/admin/kpi") return pathname.startsWith("/admin/kpi")
   return pathname.startsWith(href)
 }
 
