@@ -164,10 +164,10 @@
 - [ ] 7.20 Test all internal dashboard flows
 
 ## Phase 8: Admin Panel & KPI
-- [ ] 8.1 Build admin panel layout — Deep Navy sidebar, admin-specific navigation
-- [ ] 8.2 Build Admin Dashboard — platform health overview
+- [x] 8.1 Build admin panel layout — Deep Navy sidebar, admin-specific navigation
+- [x] 8.2 Build Admin Dashboard — platform health overview
 - [ ] 8.3 Create FastAPI endpoint GET /api/v1/admin/dashboard
-- [ ] 8.4 Build Client Management page — full list with search and filter
+- [x] 8.4 Build Client Management page — full list with search and filter
 - [ ] 8.5 Build Client Profile page — two-panel layout
 - [ ] 8.6 Create FastAPI endpoints: GET /api/v1/admin/clients, GET /api/v1/admin/clients/{id}
 - [ ] 8.7 Build Team Management page — departments, employee list, daily cap
