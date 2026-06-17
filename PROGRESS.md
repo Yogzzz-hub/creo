@@ -149,18 +149,18 @@
 
 ## Phase 7: Internal Dashboard
 
-- [ ] 7.1 Build internal dashboard layout — Deep Navy sidebar, role-filtered navigation
-- [ ] 7.2 Build team member Dashboard — daily goal metrics, today's tasks
+- [x] 7.1 Build internal dashboard layout — Deep Navy sidebar, role-filtered navigation
+- [x] 7.2 Build team member Dashboard — daily goal metrics, today's tasks
 - [x] 7.3 Create FastAPI endpoint GET /api/v1/dashboard/team
-- [ ] 7.4 Build Tasks list page — Today/Upcoming/All tabs, priority-sorted
-- [ ] 7.5 Build Task detail page — client info, brief, file upload
+- [x] 7.4 Build Tasks list page — Today/Upcoming/All tabs, priority-sorted
+- [x] 7.5 Build Task detail page — client info, brief, file upload
 - [x] 7.6 Create FastAPI endpoints: tasks CRUD + submit
 - [x] 7.7 Implement deliverable file submission from task card
-- [ ] 7.8 Build team member Calendar page — 1-day pre-assignment view
-- [ ] 7.9 Create FastAPI endpoint GET /api/v1/calendar/team
+- [x] 7.8 Build team member Calendar page — 1-day pre-assignment view
+- [x] 7.9 Create FastAPI endpoint GET /api/v1/calendar/team
 - [x] 7.10 Build Live Chat page — assigned client threads, real-time chat
 - [x] 7.11 Wire live chat to Supabase Realtime
-- [ ] 7.12 Build Leave Requests page — list + new request form
+- [x] 7.12 Build Leave Requests page — list + new request form
 - [x] 7.13 Create FastAPI endpoints: GET /api/v1/leave, POST /api/v1/leave
 - [ ] 7.14 Build Team Overview page (team leads only) — per-member metrics
 - [ ] 7.15 Create FastAPI endpoint GET /api/v1/team/overview

@@ -1,8 +1,11 @@
+from datetime import datetime, timezone
+from typing import Annotated
+import json
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.concurrency import run_in_threadpool
 
 from core.database import get_db
 from core.security import RequireTeamMember
@@ -11,25 +14,21 @@ from models.enums import DeliverableStatus, TaskStatus
 from models.task import Task
 from models.team import TeamMember
 from models.user import User
-from schemas.deliverable import DeliverableOut, TaskSubmitRequest
-from schemas.task import TaskOut
-
-from datetime import datetime, timezone
-from typing import Annotated
+from schemas.deliverable import DeliverableOut
+from schemas.task import (
+    ClientInfo,
+    TaskDetailResponse,
+    TaskListResponse,
+    TaskOut,
+    TaskResponse,
+    TaskStatusUpdate,
+    TaskSubmitRequest,
+)
 
 router = APIRouter(prefix="/api/v1/tasks", tags=["tasks"])
 
 
-class TaskListResponse(BaseModel):
-    tasks: list[TaskOut]
-
-
-class RequestAssignmentResponse(BaseModel):
-    task: TaskOut
-    message: str
-
-
-@router.get("", response_model=TaskListResponse)
+@router.get("", response_model=list[TaskResponse])
 async def list_my_tasks(
     current_user: RequireTeamMember,
     db: AsyncSession = Depends(get_db),
@@ -40,19 +39,52 @@ async def list_my_tasks(
     team_member = team_result.scalar_one_or_none()
 
     if team_member is None:
-        return TaskListResponse(tasks=[])
+        return []
 
     tasks_result = await db.execute(
         select(Task)
         .where(Task.assigned_to == team_member.id)
-        .order_by(Task.created_at.desc())
+        .order_by(Task.priority.asc(), Task.due_date.asc().nullslast())
     )
     tasks = tasks_result.scalars().all()
 
-    return TaskListResponse(tasks=tasks)
+    responses = []
+    for task in tasks:
+        client_result = await db.execute(
+            select(User).where(User.id == task.client_id)
+        )
+        client = client_result.scalar_one_or_none()
+        client_info = None
+        if client:
+            client_info = ClientInfo(
+                id=client.id,
+                full_name=client.full_name,
+                business_name=client.business_name,
+                plan_name=client.plan_name.value if client.plan_name else None,
+            )
+        responses.append(
+            TaskResponse(
+                id=task.id,
+                client_id=task.client_id,
+                client=client_info,
+                assigned_to=task.assigned_to,
+                assigned_by=task.assigned_by,
+                deliverable_type=task.deliverable_type,
+                status=task.status,
+                priority=task.priority,
+                is_addon=task.is_addon,
+                assignment_date=task.assignment_date,
+                due_date=task.due_date,
+                submitted_at=task.submitted_at,
+                created_at=task.created_at,
+                updated_at=task.updated_at,
+            )
+        )
+
+    return responses
 
 
-@router.get("/pending", response_model=TaskListResponse)
+@router.get("/pending", response_model=list[TaskOut])
 async def list_pending_tasks(
     current_user: RequireTeamMember,
     db: AsyncSession = Depends(get_db),
@@ -60,16 +92,155 @@ async def list_pending_tasks(
     tasks_result = await db.execute(
         select(Task)
         .where(Task.assigned_to.is_(None))
-        .order_by(Task.priority.desc(), Task.created_at.desc())
+        .order_by(Task.priority.asc(), Task.created_at.desc())
     )
     tasks = tasks_result.scalars().all()
+    return tasks
 
-    return TaskListResponse(tasks=tasks)
+
+@router.get("/{task_id}", response_model=TaskDetailResponse)
+async def get_task_detail(
+    task_id: str,
+    current_user: RequireTeamMember,
+    db: AsyncSession = Depends(get_db),
+):
+    team_result = await db.execute(
+        select(TeamMember).where(TeamMember.user_id == current_user.id)
+    )
+    team_member = team_result.scalar_one_or_none()
+
+    if team_member is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User is not a registered team member",
+        )
+
+    task_result = await db.execute(select(Task).where(Task.id == task_id))
+    task = task_result.scalar_one_or_none()
+
+    if task is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found",
+        )
+
+    if task.assigned_to != team_member.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This task is not assigned to you",
+        )
+
+    client_result = await db.execute(
+        select(User).where(User.id == task.client_id)
+    )
+    client = client_result.scalar_one_or_none()
+    client_info = None
+    if client:
+        client_info = ClientInfo(
+            id=client.id,
+            full_name=client.full_name,
+            business_name=client.business_name,
+            plan_name=client.plan_name.value if client.plan_name else None,
+        )
+
+    ai_analysis_excerpt = None
+    if client and client.questionnaire:
+        if client.questionnaire.ai_summary_line:
+            ai_analysis_excerpt = client.questionnaire.ai_summary_line
+        elif client.questionnaire.ai_analysis:
+            ai_text = json.dumps(client.questionnaire.ai_analysis, indent=2)
+            ai_analysis_excerpt = ai_text[:500] if len(ai_text) > 500 else ai_text
+
+    return TaskDetailResponse(
+        id=task.id,
+        client_id=task.client_id,
+        client=client_info,
+        assigned_to=task.assigned_to,
+        assigned_by=task.assigned_by,
+        deliverable_type=task.deliverable_type,
+        status=task.status,
+        priority=task.priority,
+        is_addon=task.is_addon,
+        assignment_date=task.assignment_date,
+        due_date=task.due_date,
+        submitted_at=task.submitted_at,
+        created_at=task.created_at,
+        updated_at=task.updated_at,
+        content_brief=task.content_brief,
+        ai_analysis_excerpt=ai_analysis_excerpt,
+    )
+
+
+@router.patch("/{task_id}/status", response_model=TaskResponse)
+async def update_task_status(
+    task_id: str,
+    payload: TaskStatusUpdate,
+    current_user: RequireTeamMember,
+    db: AsyncSession = Depends(get_db),
+):
+    team_result = await db.execute(
+        select(TeamMember).where(TeamMember.user_id == current_user.id)
+    )
+    team_member = team_result.scalar_one_or_none()
+
+    if team_member is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User is not a registered team member",
+        )
+
+    task_result = await db.execute(select(Task).where(Task.id == task_id))
+    task = task_result.scalar_one_or_none()
+
+    if task is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found",
+        )
+
+    if task.assigned_to != team_member.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This task is not assigned to you",
+        )
+
+    task.status = payload.status
+    await db.commit()
+    await db.refresh(task)
+
+    client_result = await db.execute(
+        select(User).where(User.id == task.client_id)
+    )
+    client = client_result.scalar_one_or_none()
+    client_info = None
+    if client:
+        client_info = ClientInfo(
+            id=client.id,
+            full_name=client.full_name,
+            business_name=client.business_name,
+            plan_name=client.plan_name.value if client.plan_name else None,
+        )
+
+    return TaskResponse(
+        id=task.id,
+        client_id=task.client_id,
+        client=client_info,
+        assigned_to=task.assigned_to,
+        assigned_by=task.assigned_by,
+        deliverable_type=task.deliverable_type,
+        status=task.status,
+        priority=task.priority,
+        is_addon=task.is_addon,
+        assignment_date=task.assignment_date,
+        due_date=task.due_date,
+        submitted_at=task.submitted_at,
+        created_at=task.created_at,
+        updated_at=task.updated_at,
+    )
 
 
 @router.post(
     "/{task_id}/request-assignment",
-    response_model=RequestAssignmentResponse,
 )
 async def request_task_assignment(
     task_id: str,
@@ -109,10 +280,7 @@ async def request_task_assignment(
     await db.commit()
     await db.refresh(task)
 
-    return RequestAssignmentResponse(
-        task=task,
-        message="Task assigned successfully",
-    )
+    return {"task_id": task.id, "message": "Task assigned successfully"}
 
 
 @router.post(
