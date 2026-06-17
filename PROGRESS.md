@@ -168,13 +168,13 @@
 - [x] 8.2 Build Admin Dashboard — platform health overview
 - [ ] 8.3 Create FastAPI endpoint GET /api/v1/admin/dashboard
 - [x] 8.4 Build Client Management page — full list with search and filter
-- [ ] 8.5 Build Client Profile page — two-panel layout
+- [x] 8.5 Build Client Profile page — two-panel layout
 - [ ] 8.6 Create FastAPI endpoints: GET /api/v1/admin/clients, GET /api/v1/admin/clients/{id}
-- [ ] 8.7 Build Team Management page — departments, employee list, daily cap
+- [x] 8.7 Build Team Management page — departments, employee list, daily cap
 - [ ] 8.8 Create FastAPI endpoints: team CRUD
 - [ ] 8.9 Build Leave Approvals page — pending requests, approve/reject
 - [ ] 8.10 Create FastAPI endpoints: leave approve/reject
-- [ ] 8.11 Build Escalations page — active and historical
+- [x] 8.11 Build Escalations page — active and historical
 - [ ] 8.12 Create FastAPI endpoints: escalations CRUD
 - [ ] 8.13 Build Consolidated Calendar page — all client calendars
 - [ ] 8.14 Build Admin Reports page — weekly, monthly, financial with export
