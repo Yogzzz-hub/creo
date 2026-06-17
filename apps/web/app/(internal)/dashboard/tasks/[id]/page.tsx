@@ -15,6 +15,7 @@ import {
   Clock,
   AlertTriangle,
   Loader2,
+  Share2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +66,8 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
   const [uploadProgress, setUploadProgress] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [statusUpdating, setStatusUpdating] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
 
   const fetchTask = useCallback(async (taskId: string) => {
     try {
@@ -177,6 +180,49 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
       setUploadProgress("");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handlePublishToInstagram = async (deliverableId: string) => {
+    setPublishing(true);
+    setPublishSuccess(null);
+    setError(null);
+
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/deliverables/${deliverableId}/publish-instagram`,
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ caption: "" }),
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.detail || "Failed to publish to Instagram");
+      }
+
+      const data = await res.json();
+      setPublishSuccess(
+        `Published successfully! Post ID: ${data.instagram_post_id}`
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to publish to Instagram"
+      );
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -389,7 +435,28 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
                   Start Revision
                 </Button>
               )}
-              {(task.status === "submitted" || task.status === "approved") && (
+              {task.status === "approved" && (
+                <div className="space-y-2">
+                  {publishSuccess && (
+                    <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-700">
+                      {publishSuccess}
+                    </div>
+                  )}
+                  <Button
+                    onClick={() => handlePublishToInstagram(task.id)}
+                    disabled={publishing}
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600"
+                  >
+                    {publishing ? (
+                      <Loader2 size={16} className="animate-spin mr-2" />
+                    ) : (
+                      <Share2 size={16} className="mr-2" />
+                    )}
+                    {publishing ? "Publishing..." : "Publish to Instagram"}
+                  </Button>
+                </div>
+              )}
+              {task.status === "submitted" && (
                 <p className="text-xs text-[var(--color-text-muted)] text-center py-2">
                   No actions available for this status.
                 </p>

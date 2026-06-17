@@ -1,7 +1,14 @@
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
+
+
+class TargetAudience(str, Enum):
+    all = "all"
+    clients = "clients"
+    team = "team"
 
 
 class AnnouncementBase(BaseModel):
@@ -17,8 +24,7 @@ class AnnouncementBase(BaseModel):
 class AnnouncementCreate(BaseModel):
     title: str
     content: str
-    type: str
-    target_departments: Optional[list[str]] = None
+    target_audience: TargetAudience = TargetAudience.all
 
 
 class AnnouncementUpdate(BaseModel):
@@ -26,6 +32,18 @@ class AnnouncementUpdate(BaseModel):
     content: Optional[str] = None
     type: Optional[str] = None
     target_departments: Optional[list[str]] = None
+
+
+class AnnouncementResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    author_id: str
+    title: str
+    content: str
+    type: str
+    target_departments: Optional[list[str]] = None
+    created_at: datetime
 
 
 class AnnouncementOut(AnnouncementBase):

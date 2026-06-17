@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 
 from core.config import settings
 
@@ -18,5 +19,50 @@ celery_app.conf.update(
     task_acks_late=True,
     worker_prefetch_multiplier=1,
 )
+
+celery_app.conf.beat_schedule = {
+    # Reporting tasks
+    "generate-weekly-report": {
+        "task": "generate_weekly_report",
+        "schedule": crontab(hour=8, minute=0, day_of_week="monday"),
+        "options": {"queue": "default"},
+    },
+    "generate-monthly-report": {
+        "task": "generate_monthly_report",
+        "schedule": crontab(hour=8, minute=0, day_of_month=1),
+        "options": {"queue": "default"},
+    },
+    "generate-financial-report": {
+        "task": "generate_financial_report",
+        "schedule": crontab(hour=8, minute=0, day_of_month=1),
+        "options": {"queue": "default"},
+    },
+    # Automation tasks
+    "check-sla-breaches": {
+        "task": "check_sla_breaches",
+        "schedule": crontab(minute=0),  # every hour
+        "options": {"queue": "default"},
+    },
+    "auto-assign-tasks": {
+        "task": "auto_assign_tasks",
+        "schedule": crontab(minute="*/15"),  # every 15 minutes
+        "options": {"queue": "default"},
+    },
+    "send-renewal-reminders": {
+        "task": "send_renewal_reminders",
+        "schedule": crontab(hour=9, minute=0),  # daily at 09:00
+        "options": {"queue": "default"},
+    },
+    "check-quota-exhaustion": {
+        "task": "check_quota_exhaustion",
+        "schedule": crontab(hour=10, minute=0),  # daily at 10:00
+        "options": {"queue": "default"},
+    },
+    "generate-content-calendar": {
+        "task": "generate_content_calendar",
+        "schedule": crontab(hour=2, minute=0, day_of_month=25),  # 25th of every month
+        "options": {"queue": "default"},
+    },
+}
 
 celery_app.autodiscover_tasks(["workers"])

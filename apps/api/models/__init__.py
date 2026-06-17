@@ -32,6 +32,7 @@ from models.leave import LeaveRequest
 from models.escalation import Escalation
 from models.announcement import Announcement
 from models.custom_pricing import CustomPricing
+from models.platform_settings import PlatformSettings
 
 __all__ = [
     "UserRole",
@@ -69,4 +70,5 @@ __all__ = [
     "Escalation",
     "Announcement",
     "CustomPricing",
+    "PlatformSettings",
 ]

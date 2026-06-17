@@ -30,6 +30,7 @@ class Escalation(Base):
     severity: Mapped[int] = mapped_column(Integer, nullable=False, default=1, index=True)
     reason: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(Text, nullable=False, default="open", index=True)
+    resolution_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     resolved_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

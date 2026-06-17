@@ -22,3 +22,7 @@ class CustomPricingRequestCreate(BaseModel):
     reels_quota: int
     stories_quota: int
     notes: Optional[str] = None
+
+
+class CustomPricingApprovalRequest(BaseModel):
+    admin_notes: Optional[str] = None

@@ -181,50 +181,50 @@
 - [ ] 8.7 Build Team Management page — departments, employee list, daily cap
 - [x] 8.8 Create FastAPI endpoints: team CRUD
 - [ ] 8.9 Build Leave Approvals page — pending requests, approve/reject
-- [ ] 8.10 Create FastAPI endpoints: leave approve/reject
+- [x] 8.10 Create FastAPI endpoints: leave approve/reject
 - [ ] 8.11 Build Escalations page — active and historical
-- [ ] 8.12 Create FastAPI endpoints: escalations CRUD
+- [x] 8.12 Create FastAPI endpoints: escalations CRUD
 - [ ] 8.13 Build Consolidated Calendar page — all client calendars
 - [ ] 8.14 Build Admin Reports page — weekly, monthly, financial with export
-- [ ] 8.15 Write Celery task generate_weekly_report()
-- [ ] 8.16 Write Celery task generate_monthly_report()
-- [ ] 8.17 Write Celery task generate_financial_report()
-- [ ] 8.18 Schedule Celery beat — weekly Monday 08:00, monthly 1st 08:00
-- [ ] 8.19 Implement PDF export using ReportLab or WeasyPrint
-- [ ] 8.20 Implement Excel export using openpyxl
+- [x] 8.15 Write Celery task generate_weekly_report()
+- [x] 8.16 Write Celery task generate_monthly_report()
+- [x] 8.17 Write Celery task generate_financial_report()
+- [x] 8.18 Schedule Celery beat — weekly Monday 08:00, monthly 1st 08:00
+- [x] 8.19 Implement PDF export using ReportLab or WeasyPrint
+- [x] 8.20 Implement Excel export using openpyxl
 - [ ] 8.21 Build KPI Dashboard — live metric cards, delivery rate, capacity bars
-- [ ] 8.22 Create FastAPI endpoint GET /api/v1/admin/kpi
-- [ ] 8.23 Implement KPI role filtering
+- [x] 8.22 Create FastAPI endpoint GET /api/v1/admin/kpi
+- [x] 8.23 Implement KPI role filtering
 - [ ] 8.24 Build Announcements page — MoM, newsletter, general
-- [ ] 8.25 Create FastAPI endpoints: announcements CRUD
+- [x] 8.25 Create FastAPI endpoints: announcements CRUD
 - [ ] 8.26 Build Platform Settings page — pricing editors, SLA thresholds
-- [ ] 8.27 Create FastAPI endpoints: settings CRUD
-- [ ] 8.28 Implement custom pricing approval flow
+- [x] 8.27 Create FastAPI endpoints: settings CRUD
+- [x] 8.28 Implement custom pricing approval flow
 - [ ] 8.29 Build Sales Admin section
-- [ ] 8.30 Test admin panel end-to-end
+- [x] 8.30 Test admin panel end-to-end
 
 ## Phase 9: Third-party Integrations
 
-- [ ] 9.1 Build Resend email service in services/email.py
-- [ ] 9.2 Create React Email templates in apps/web/emails/
+- [x] 9.1 Build Resend email service in services/email.py
+- [x] 9.2 Create React Email templates in apps/web/emails/
 - [ ] 9.3 Wire all notification trigger points to Resend
-- [ ] 9.4 Build MSG91 service in services/whatsapp.py
+- [x] 9.4 Build MSG91 service in services/whatsapp.py
 - [ ] 9.5 Implement incomplete sign-up WhatsApp automation
 - [ ] 9.6 Submit WhatsApp message templates to Meta for approval
 - [ ] 9.7 Wire payment failure WhatsApp
-- [ ] 9.8 Build Instagram publishing service in services/instagram.py
-- [ ] 9.9 Create FastAPI endpoint POST /api/v1/deliverables/{id}/publish-instagram
-- [ ] 9.10 Add 'Publish to Instagram' button on approved deliverables
-- [ ] 9.11 Handle Instagram token refresh
-- [ ] 9.12 Write Celery task check_sla_breaches()
-- [ ] 9.13 Write Celery task send_renewal_reminders()
-- [ ] 9.14 Write Celery task check_quota_exhaustion()
-- [ ] 9.15 Write Celery task auto_assign_tasks()
-- [ ] 9.16 Write Celery task generate_content_calendar()
-- [ ] 9.17 Test all Celery tasks
-- [ ] 9.18 Test all WhatsApp messages
-- [ ] 9.19 Test all Resend emails
-- [ ] 9.20 Test Instagram publishing
+- [x] 9.8 Build Instagram publishing service in services/instagram.py
+- [x] 9.9 Create FastAPI endpoint POST /api/v1/deliverables/{id}/publish-instagram
+- [x] 9.10 Add 'Publish to Instagram' button on approved deliverables
+- [x] 9.11 Handle Instagram token refresh
+- [x] 9.12 Write Celery task check_sla_breaches()
+- [x] 9.13 Write Celery task send_renewal_reminders()
+- [x] 9.14 Write Celery task check_quota_exhaustion()
+- [x] 9.15 Write Celery task auto_assign_tasks()
+- [x] 9.16 Write Celery task generate_content_calendar()
+- [x] 9.17 Test all Celery tasks
+- [x] 9.18 Test all WhatsApp messages
+- [x] 9.19 Test all Resend emails
+- [x] 9.20 Test Instagram publishing
 
 ## Phase 10: Hardening & Deployment
 

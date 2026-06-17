@@ -1,13 +1,15 @@
+import logging
 from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
 from core.database import get_db
-from core.security import require_client
+from core.security import decrypt_token, encrypt_token, require_client, require_team_member
 from models.deliverable import Deliverable, DeliverableComment
 from models.enums import DeliverableStatus
 from models.user import User
@@ -20,7 +22,10 @@ from schemas.portal import (
     DeliverableRejectRequest,
     DeliverableResponse,
 )
+from services.instagram import publish_media, refresh_access_token
 from services.storage import generate_signed_download_url
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/deliverables", tags=["deliverables"])
 
@@ -164,3 +169,112 @@ async def reject_deliverable(
     await db.refresh(deliverable)
 
     return deliverable
+
+
+class PublishInstagramRequest(BaseModel):
+    caption: str = ""
+
+
+class PublishInstagramResponse(BaseModel):
+    success: bool
+    message: str
+    instagram_post_id: str | None = None
+
+
+@router.post(
+    "/{deliverable_id}/publish-instagram",
+    response_model=PublishInstagramResponse,
+)
+async def publish_deliverable_to_instagram(
+    deliverable_id: str,
+    payload: PublishInstagramRequest,
+    current_user: Annotated[User, Depends(require_team_member)],
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Deliverable).where(Deliverable.id == deliverable_id)
+    )
+    deliverable = result.scalar_one_or_none()
+
+    if deliverable is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deliverable not found",
+        )
+
+    if deliverable.status != DeliverableStatus.approved:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only approved deliverables can be published to Instagram",
+        )
+
+    client_result = await db.execute(
+        select(User).where(User.id == deliverable.client_id)
+    )
+    client_user = client_result.scalar_one_or_none()
+
+    if client_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Client user not found",
+        )
+
+    if not client_user.instagram_access_token or not client_user.instagram_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Client has not connected their Instagram account",
+        )
+
+    try:
+        decrypted_token = decrypt_token(client_user.instagram_access_token)
+    except Exception as exc:
+        logger.exception(
+            "Failed to decrypt Instagram token for client %s",
+            client_user.id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to decrypt Instagram access token",
+        )
+
+    try:
+        publish_result = await publish_media(
+            ig_user_id=client_user.instagram_user_id,
+            access_token=decrypted_token,
+            image_url=deliverable.file_url,
+            caption=payload.caption,
+        )
+    except Exception as exc:
+        logger.exception(
+            "Instagram publish failed for deliverable %s: %s",
+            deliverable_id,
+            exc,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to publish to Instagram: {exc}",
+        )
+
+    try:
+        refresh_result = await refresh_access_token(decrypted_token)
+        new_encrypted_token = encrypt_token(refresh_result["access_token"])
+        client_user.instagram_access_token = new_encrypted_token
+        db.add(client_user)
+    except Exception as exc:
+        logger.warning(
+            "Failed to refresh Instagram token for client %s: %s",
+            client_user.id,
+            exc,
+        )
+
+    deliverable.instagram_published_at = datetime.now(timezone.utc)
+    deliverable.instagram_post_id = publish_result["id"]
+
+    await db.commit()
+    await db.refresh(deliverable)
+
+    return PublishInstagramResponse(
+        success=True,
+        message="Deliverable published to Instagram successfully",
+        instagram_post_id=publish_result["id"],
+    )

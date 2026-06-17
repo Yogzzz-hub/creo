@@ -24,6 +24,12 @@ from routers.sales import router as sales_router
 from routers.admin_dashboard import router as admin_dashboard_router
 from routers.admin_clients import router as admin_clients_router
 from routers.admin_team import router as admin_team_router
+from routers.admin_leave import router as admin_leave_router
+from routers.admin_escalations import router as admin_escalations_router
+from routers.admin_announcements import router as admin_announcements_router
+from routers.admin_settings import router as admin_settings_router
+from routers.admin_kpi import router as admin_kpi_router
+from routers.admin_sales import router as admin_sales_router
 from routers.webhooks import router as webhooks_router
 
 app = FastAPI(
@@ -65,6 +71,12 @@ app.include_router(sales_router)
 app.include_router(admin_dashboard_router)
 app.include_router(admin_clients_router)
 app.include_router(admin_team_router)
+app.include_router(admin_leave_router)
+app.include_router(admin_escalations_router)
+app.include_router(admin_announcements_router)
+app.include_router(admin_settings_router)
+app.include_router(admin_kpi_router)
+app.include_router(admin_sales_router)
 app.include_router(webhooks_router)
 
 
