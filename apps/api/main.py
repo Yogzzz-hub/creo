@@ -21,6 +21,9 @@ from routers.leave import router as leave_router
 from routers.team_calendar import router as team_calendar_router
 from routers.team_overview import router as team_overview_router
 from routers.sales import router as sales_router
+from routers.admin_dashboard import router as admin_dashboard_router
+from routers.admin_clients import router as admin_clients_router
+from routers.admin_team import router as admin_team_router
 from routers.webhooks import router as webhooks_router
 
 app = FastAPI(
@@ -59,6 +62,9 @@ app.include_router(leave_router)
 app.include_router(team_calendar_router)
 app.include_router(team_overview_router)
 app.include_router(sales_router)
+app.include_router(admin_dashboard_router)
+app.include_router(admin_clients_router)
+app.include_router(admin_team_router)
 app.include_router(webhooks_router)
 
 
