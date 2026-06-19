@@ -1,36 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { CardContent } from "@/components/ui/card";
+import { Download, Loader2, ShieldCheck } from "lucide-react";
 
 export default function TermsPage() {
   const router = useRouter();
   const supabase = createClient();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [scrolledToBottom, setScrolledToBottom] = useState(false);
 
-  function handleScroll(e: React.UIEvent<HTMLDivElement>) {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (scrollHeight - scrollTop - clientHeight < 20) {
-      setScrolledToBottom(true);
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const { scrollTop, clientHeight, scrollHeight } = el;
+    // 20px threshold to be forgiving on different screen sizes
+    if (scrollTop + clientHeight >= scrollHeight - 20) {
+      setAgreed(true);
     }
-  }
+  }, []);
 
-  async function handleAccept() {
-    setLoading(true);
+  const handleAgree = async () => {
+    setIsSubmitting(true);
     setError(null);
 
     const {
@@ -39,7 +37,7 @@ export default function TermsPage() {
 
     if (!session?.access_token) {
       setError("You must be logged in to accept terms.");
-      setLoading(false);
+      setIsSubmitting(false);
       return;
     }
 
@@ -57,162 +55,282 @@ export default function TermsPage() {
       if (!res.ok) {
         const data = await res.json();
         setError(data.detail || "Failed to accept terms. Please try again.");
-        setLoading(false);
+        setIsSubmitting(false);
         return;
       }
 
+      // Success - proceed to payment step
       router.push("/onboarding/payment");
     } catch {
       setError("Failed to connect to server. Please try again.");
-      setLoading(false);
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg px-4 py-8">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-brand-light">
-            <ShieldCheck className="h-6 w-6 text-brand" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-brand-dark">
-            Terms &amp; Conditions
-          </CardTitle>
-          <CardDescription>
-            Please read and accept our terms to continue
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div
-            onScroll={handleScroll}
-            className="h-72 overflow-y-auto rounded-md border border-border bg-surface p-5 text-sm leading-relaxed text-text"
-          >
-            <h3 className="mb-3 text-base font-semibold text-brand-dark">
-              Creo Digital Marketing Services — Terms of Service
+    <CardContent className="py-2">
+      <div className="mb-4 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-light">
+          <ShieldCheck className="h-6 w-6 text-brand" />
+        </div>
+        <h2 className="text-xl font-bold text-brand-dark">
+          Terms & Conditions
+        </h2>
+        <p className="mt-1 text-sm text-text-muted">
+          Please review and accept our terms to continue.
+        </p>
+      </div>
+
+      <div className="flex justify-end mb-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-brand hover:bg-brand/5"
+        >
+          <Download className="mr-1.5 size-3.5" />
+          Download PDF
+        </Button>
+      </div>
+
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="h-[400px] overflow-y-auto rounded-lg border border-border bg-bg-internal p-5 text-sm text-text leading-relaxed"
+      >
+        <div className="space-y-6">
+          <section>
+            <h3 className="text-base font-semibold text-brand-dark mb-2">
+              1. Acceptance of Terms
             </h3>
-
-            <p className="mb-3">
-              Welcome to Creo. By accessing or using our digital marketing
-              platform and services, you agree to be bound by these Terms and
-              Conditions. Please read them carefully before proceeding.
+            <p>
+              By accessing and using the Creo platform (&quot;Service&quot;), you
+              agree to be bound by these Terms and Conditions (&quot;Terms&quot;).
+              If you do not agree to all of these Terms, you may not access or
+              use the Service. These Terms constitute a legally binding agreement
+              between you (&quot;Client&quot;, &quot;you&quot;, or &quot;your&quot;)
+              and Creo Digital Marketing Agency (&quot;Creo&quot;, &quot;we&quot;,
+              &quot;us&quot;, or &quot;our&quot;).
             </p>
+          </section>
 
-            <h4 className="mb-2 font-semibold text-brand-dark">
-              1. Services
-            </h4>
-            <p className="mb-3">
-              Creo provides digital marketing services including but not limited
-              to social media management, content creation, content calendar
-              planning, performance reporting, and Instagram publishing. The
-              specific deliverables and quotas are determined by your selected
-              subscription plan.
+          <section>
+            <h3 className="text-base font-semibold text-brand-dark mb-2">
+              2. Service Description
+            </h3>
+            <p>
+              Creo provides a managed digital marketing service that includes
+              content creation, social media management, content calendar
+              planning, and brand strategy. The specific deliverables, posting
+              cadence, and support level vary based on the subscription plan
+              you select. We deliver content weekly and provide a client portal
+              for reviewing, approving, and managing all deliverables.
             </p>
+          </section>
 
-            <h4 className="mb-2 font-semibold text-brand-dark">
-              2. Subscription &amp; Payment
-            </h4>
-            <p className="mb-3">
-              Your subscription begins upon successful payment and continues on a
-              monthly basis. Payments are processed through our secure payment
-              partners (Razorpay for India, Stripe for international). You may
-              upgrade or downgrade your plan at any time, with proration applied
-              to the current billing cycle.
+          <section>
+            <h3 className="text-base font-semibold text-brand-dark mb-2">
+              3. Account Registration
+            </h3>
+            <p>
+              To use the Service, you must create an account and provide
+              accurate, current, and complete information during the registration
+              process. You are responsible for safeguarding your account
+              credentials and for all activities that occur under your account.
+              You agree to notify Creo immediately of any unauthorized use of
+              your account. Creo reserves the right to suspend or terminate
+              accounts that are found to contain inaccurate or misleading
+              information.
             </p>
+          </section>
 
-            <h4 className="mb-2 font-semibold text-brand-dark">
-              3. Content &amp; Deliverables
-            </h4>
-            <p className="mb-3">
-              All content created by Creo is delivered for your review before
-              publishing. You retain the right to approve, reject, or request
-              revisions on any deliverable, subject to the revision rounds
-              included in your plan. Approved content may be published to your
-              connected Instagram account upon your explicit consent.
+          <section>
+            <h3 className="text-base font-semibold text-brand-dark mb-2">
+              4. Subscription Plans &amp; Payment
+            </h3>
+            <p>
+              Creo offers tiered subscription plans (Starter, Growth, and Pro)
+              with different content allowances and support levels. All pricing
+              is displayed in Indian Rupees (INR) unless otherwise noted.
+              Subscriptions are billed on a monthly basis and are automatically
+              renewed unless cancelled before the billing cycle ends. We accept
+              payments through Razorpay (for Indian clients) and Stripe (for
+              international clients). All payments are processed securely and we
+              do not store your payment card details on our servers.
             </p>
+          </section>
 
-            <h4 className="mb-2 font-semibold text-brand-dark">
-              4. Client Responsibilities
-            </h4>
-            <p className="mb-3">
-              You are responsible for providing accurate business information,
-              timely feedback on deliverables, and maintaining access to your
-              social media accounts. Delays in feedback may affect the delivery
-              schedule of your content calendar.
+          <section>
+            <h3 className="text-base font-semibold text-brand-dark mb-2">
+              5. Content Creation &amp; Ownership
+            </h3>
+            <p>
+              All content created by Creo for your brand, including but not
+              limited to graphics, videos, reels, stories, captions, and text
+              content, becomes your property upon approval and payment. Creo
+              retains the right to showcase approved content in its portfolio
+              and marketing materials unless you explicitly request otherwise in
+              writing. You grant Creo a limited, non-exclusive license to use
+              your brand assets (logos, images, product photos) solely for the
+              purpose of creating content for your account.
             </p>
+          </section>
 
-            <h4 className="mb-2 font-semibold text-brand-dark">
-              5. Data &amp; Privacy
-            </h4>
-            <p className="mb-3">
-              We take your privacy seriously. Your business data, social media
-              credentials, and personal information are stored securely and never
-              shared with third parties without your explicit consent. Instagram
-              access tokens are encrypted at rest.
+          <section>
+            <h3 className="text-base font-semibold text-brand-dark mb-2">
+              6. Content Approval &amp; Revisions
+            </h3>
+            <p>
+              Each subscription plan includes a specific number of revision
+              rounds per deliverable. Revisions must be requested through the
+              client portal within 48 hours of content delivery. If revisions
+              are not requested within this window, the content is considered
+              approved. Additional revision rounds beyond your plan allowance
+              may be purchased as add-ons. Creo will make reasonable efforts to
+              accommodate all revision requests, but reserves the right to
+              decline requests that fall outside the scope of the original brief
+              or brand guidelines.
             </p>
+          </section>
 
-            <h4 className="mb-2 font-semibold text-brand-dark">
-              6. Cancellation &amp; Refunds
-            </h4>
-            <p className="mb-3">
-              You may cancel your subscription at any time. Cancellation takes
-              effect at the end of the current billing period. Refund requests
-              are handled on a case-by-case basis by our support team.
+          <section>
+            <h3 className="text-base font-semibold text-brand-dark mb-2">
+              7. Cancellation &amp; Refunds
+            </h3>
+            <p>
+              You may cancel your subscription at any time through your account
+              settings or by contacting our support team. Cancellations take
+              effect at the end of the current billing cycle. We do not offer
+              prorated refunds for partial months. If you cancel during an
+              onboarding period before the first content delivery, a full
+              refund will be issued within 5-7 business days. After the first
+              content delivery, no refunds will be provided for the current
+              billing period.
             </p>
+          </section>
 
-            <h4 className="mb-2 font-semibold text-brand-dark">
-              7. Limitation of Liability
-            </h4>
-            <p className="mb-3">
-              Creo shall not be liable for any indirect, incidental, or
-              consequential damages arising from the use of our services. Our
-              total liability shall not exceed the amount paid by you for the
-              services during the twelve months preceding the claim.
+          <section>
+            <h3 className="text-base font-semibold text-brand-dark mb-2">
+              8. Intellectual Property
+            </h3>
+            <p>
+              All content, design, code, and materials on the Creo platform are
+              the intellectual property of Creo or its licensors and are
+              protected by copyright, trademark, and other intellectual property
+              laws. You may not reproduce, distribute, modify, create derivative
+              works of, publicly display, or in any way exploit any of the
+              Service content without prior written consent from Creo.
             </p>
+          </section>
 
-            <h4 className="mb-2 font-semibold text-brand-dark">
-              8. Amendments
-            </h4>
-            <p className="mb-3">
-              We reserve the right to modify these terms at any time. You will be
-              notified of significant changes via email or through the platform.
-              Continued use of our services after such changes constitutes
-              acceptance of the updated terms.
+          <section>
+            <h3 className="text-base font-semibold text-brand-dark mb-2">
+              9. Limitation of Liability
+            </h3>
+            <p>
+              To the maximum extent permitted by law, Creo shall not be liable
+              for any indirect, incidental, special, consequential, or punitive
+              damages, or any loss of profits or revenue, whether incurred
+              directly or indirectly, or any loss of data, use, goodwill, or
+              other intangible losses resulting from your use of the Service.
+              Creo&apos;s total liability for any claims arising from these
+              Terms or the Service shall not exceed the amount you paid to Creo
+              in the twelve (12) months preceding the claim.
             </p>
+          </section>
 
-            <p className="mt-4 text-xs text-text-muted">
-              Last updated: June 2026
+          <section>
+            <h3 className="text-base font-semibold text-brand-dark mb-2">
+              10. Privacy &amp; Data Protection
+            </h3>
+            <p>
+              Your use of the Service is also governed by our Privacy Policy,
+              which describes how we collect, use, and protect your personal
+              information. By using the Service, you consent to the collection
+              and use of information as outlined in our Privacy Policy. We comply
+              with applicable data protection laws, including the Information
+              Technology Act, 2000 and the Digital Personal Data Protection Act,
+              2023 (DPDP Act) for Indian users.
             </p>
-          </div>
+          </section>
 
-          {!scrolledToBottom && (
-            <p className="mt-2 text-xs text-text-muted text-center">
-              Please scroll to the bottom to continue
+          <section>
+            <h3 className="text-base font-semibold text-brand-dark mb-2">
+              11. Termination
+            </h3>
+            <p>
+              Creo reserves the right to suspend or terminate your access to the
+              Service at any time, with or without cause, and with or without
+              notice. Upon termination, your right to use the Service will
+              immediately cease. Creo shall not be liable to you or any third
+              party for any termination of your access to the Service. All
+              provisions of these Terms which by their nature should survive
+              termination shall survive, including ownership provisions,
+              warranty disclaimers, and limitations of liability.
             </p>
+          </section>
+
+          <section>
+            <h3 className="text-base font-semibold text-brand-dark mb-2">
+              12. Changes to Terms
+            </h3>
+            <p>
+              Creo reserves the right to modify these Terms at any time. We will
+              notify you of any material changes by posting the new Terms on
+              this page and updating the &quot;Last Updated&quot; date at the top.
+              Your continued use of the Service after any such changes
+              constitutes your acceptance of the new Terms. It is your
+              responsibility to review these Terms periodically for changes.
+            </p>
+          </section>
+
+          <section>
+            <h3 className="text-base font-semibold text-brand-dark mb-2">
+              13. Contact Information
+            </h3>
+            <p>
+              If you have any questions about these Terms, please contact us at:
+            </p>
+            <ul className="mt-2 list-disc list-inside space-y-1">
+              <li>Email: legal@creo.in</li>
+              <li>Phone: +91-XXXXXXXXXX</li>
+              <li>Address: Creo Digital Marketing Agency, India</li>
+            </ul>
+          </section>
+
+          <p className="text-xs text-text-muted pt-4 border-t border-border">
+            Last Updated: June 2026
+          </p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mt-4 text-sm text-error bg-error-light p-3 rounded-md">
+          {error}
+        </div>
+      )}
+
+      <div className="mt-6 flex flex-col items-center gap-4">
+        <Button
+          className="w-full bg-brand hover:bg-brand/90 text-white h-11"
+          disabled={!agreed || isSubmitting}
+          onClick={handleAgree}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Accepting...
+            </>
+          ) : (
+            "I Agree & Continue"
           )}
+        </Button>
 
-          {error && (
-            <div className="mt-3 text-sm text-error bg-error-light p-3 rounded-md">
-              {error}
-            </div>
-          )}
-        </CardContent>
-        <CardFooter>
-          <Button
-            onClick={handleAccept}
-            disabled={!scrolledToBottom || loading}
-            className="w-full bg-brand hover:bg-brand/90 text-white h-11 text-base font-semibold"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Accepting...
-              </>
-            ) : (
-              "I Agree — Continue to Payment"
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+        {!agreed && (
+          <p className="text-xs text-text-muted text-center animate-pulse">
+            Please scroll to the bottom of the terms to continue.
+          </p>
+        )}
+      </div>
+    </CardContent>
   );
 }

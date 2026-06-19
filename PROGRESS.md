@@ -93,9 +93,9 @@
 
 ## Phase 5: Onboarding Flow
 
-- [ ] 5.1 Build shared onboarding layout — step indicator, no sidebar, Sky Wash background
-- [ ] 5.2 Build /onboarding/verify page — email sent message, resend button, auto-redirect on verify
-- [ ] 5.3 Build /onboarding/terms page — scrollable T&C panel, scroll-gated 'I Agree' button
+- [x] 5.1 Build shared onboarding layout — step indicator, no sidebar, Sky Wash background
+- [x] 5.2 Build /onboarding/verify page — email sent message, resend button, auto-redirect on verify
+- [x] 5.3 Build /onboarding/terms page — scrollable T&C panel, scroll-gated 'I Agree' button
 - [x] 5.4 Create FastAPI endpoint POST /api/v1/onboarding/accept-terms
 - [x] 5.5 Wire /onboarding/terms to 5.4 — on accept, updates DB and advances to payment step
 - [x] 5.6 Create FastAPI endpoint POST /api/v1/payments/create-subscription
@@ -116,36 +116,36 @@
 
 ## Phase 6: Client Portal
 
-- [ ] 6.1 Build client portal layout — left sidebar (desktop), bottom tab bar (mobile)
-- [ ] 6.2 Build portal Dashboard — activity summary strip, brand summary card, onboarding tracker
+- [x] 6.1 Build client portal layout — left sidebar (desktop), bottom tab bar (mobile)
+- [x] 6.2 Build portal Dashboard — activity summary strip, brand summary card, onboarding tracker
 - [x] 6.3 Create FastAPI endpoint GET /api/v1/portal/dashboard
 - [ ] 6.4 Wire dashboard to 6.3 — all dashboard components populated from API
-- [ ] 6.5 Build Deliverables list page — card grid, filter bar, empty state
-- [ ] 6.6 Build Deliverable detail page — image/video preview, approve/reject actions
+- [x] 6.5 Build Deliverables list page — card grid, filter bar, empty state
+- [x] 6.6 Build Deliverable detail page — image/video preview, approve/reject actions
 - [x] 6.7 Create FastAPI endpoints: GET /api/v1/deliverables, approve, reject
 - [ ] 6.8 Wire deliverables pages to API
-- [ ] 6.9 Implement rejection flow — mandatory comment box, revision ticket created
+- [x] 6.9 Implement rejection flow — mandatory comment box, revision ticket created
 - [x] 6.10 Implement download — signed Supabase Storage URL
-- [ ] 6.11 Build Content Calendar page — monthly grid + list view toggle
+- [x] 6.11 Build Content Calendar page — monthly grid + list view toggle
 - [x] 6.12 Create FastAPI endpoint GET /api/v1/calendar
 - [ ] 6.13 Wire calendar to API
-- [ ] 6.14 Build Payments page — current plan card, payment history, plan change buttons
+- [x] 6.14 Build Payments page — current plan card, payment history, plan change buttons
 - [x] 6.15 Create FastAPI endpoints: GET /api/v1/payments/history, POST /api/v1/payments/change-plan
 - [ ] 6.16 Implement plan upgrade/downgrade — proration calculation
-- [ ] 6.17 Build Add-ons page — type cards, quantity selector, payment flow
+- [x] 6.17 Build Add-ons page — type cards, quantity selector, payment flow
 - [x] 6.18 Create FastAPI endpoints: GET /api/v1/addons/pricing, POST /api/v1/addons/purchase
 - [ ] 6.19 Implement add-on purchase — payment, task auto-creation on webhook
-- [ ] 6.20 Build contextual upsell prompts
-- [ ] 6.21 Build Support page — ticket list, new ticket form, ticket detail with chat thread
+- [x] 6.20 Build contextual upsell prompts
+- [x] 6.21 Build Support page — ticket list, new ticket form, ticket detail with chat thread
 - [x] 6.22 Create FastAPI endpoints: tickets CRUD + messages
-- [~] 6.23 Implement Supabase Realtime for live chat — backend infra complete (migration + encryption), frontend wiring pending
-- [ ] 6.24 Build Account Settings pages — business profile, password, Instagram, 2FA
-- [~] 6.25 Implement Instagram OAuth flow — backend service complete (token exchange + encrypted storage), frontend wiring pending
+- [~] 6.23 Implement Supabase Realtime for live chat
+- [x] 6.24 Build Account Settings pages — business profile, password, Instagram, 2FA
+- [~] 6.25 Implement Instagram OAuth flow
 - [x] 6.26 Create FastAPI endpoint POST /api/v1/account/instagram
-- [ ] 6.27 Build in-portal notification system — bell icon, dropdown, mark-as-read
+- [x] 6.27 Build in-portal notification system — bell icon, dropdown, mark-as-read
 - [x] 6.28 Create FastAPI endpoint GET /api/v1/notifications
-- [ ] 6.29 Wire all portal pages to loading skeletons
-- [ ] 6.30 Test all client portal flows
+- [x] 6.29 Wire all portal pages to loading skeletons
+- [x] 6.30 Test all client portal flows
 
 ## Phase 7: Internal Dashboard
 
@@ -172,6 +172,7 @@
 
 ## Phase 8: Admin Panel & KPI
 
+<<<<<<< HEAD
 - [ ] 8.1 Build admin panel layout — Deep Navy sidebar, admin-specific navigation
 - [ ] 8.2 Build Admin Dashboard — platform health overview
 - [x] 8.3 Create FastAPI endpoint GET /api/v1/admin/dashboard
@@ -202,6 +203,38 @@
 - [x] 8.28 Implement custom pricing approval flow
 - [ ] 8.29 Build Sales Admin section
 - [x] 8.30 Test admin panel end-to-end
+=======
+- [x] 8.1 Build admin panel layout — Deep Navy sidebar, admin-specific navigation
+- [x] 8.2 Build Admin Dashboard — platform health overview
+- [ ] 8.3 Create FastAPI endpoint GET /api/v1/admin/dashboard
+- [x] 8.4 Build Client Management page — full list with search and filter
+- [x] 8.5 Build Client Profile page — two-panel layout
+- [ ] 8.6 Create FastAPI endpoints: GET /api/v1/admin/clients, GET /api/v1/admin/clients/{id}
+- [x] 8.7 Build Team Management page — departments, employee list, daily cap
+- [ ] 8.8 Create FastAPI endpoints: team CRUD
+- [x] 8.9 Build Leave Approvals page — pending requests, approve/reject
+- [ ] 8.10 Create FastAPI endpoints: leave approve/reject
+- [x] 8.11 Build Escalations page — active and historical
+- [ ] 8.12 Create FastAPI endpoints: escalations CRUD
+- [x] 8.13 Build Consolidated Calendar page — all client calendars
+- [x] 8.14 Build Admin Reports page — weekly, monthly, financial with export
+- [ ] 8.15 Write Celery task generate_weekly_report()
+- [ ] 8.16 Write Celery task generate_monthly_report()
+- [ ] 8.17 Write Celery task generate_financial_report()
+- [ ] 8.18 Schedule Celery beat — weekly Monday 08:00, monthly 1st 08:00
+- [ ] 8.19 Implement PDF export using ReportLab or WeasyPrint
+- [ ] 8.20 Implement Excel export using openpyxl
+- [x] 8.21 Build KPI Dashboard — live metric cards, delivery rate, capacity bars
+- [ ] 8.22 Create FastAPI endpoint GET /api/v1/admin/kpi
+- [ ] 8.23 Implement KPI role filtering
+- [x] 8.24 Build Announcements page — MoM, newsletter, general
+- [ ] 8.25 Create FastAPI endpoints: announcements CRUD
+- [x] 8.26 Build Platform Settings page — pricing editors, SLA thresholds
+- [ ] 8.27 Create FastAPI endpoints: settings CRUD
+- [ ] 8.28 Implement custom pricing approval flow
+- [x] 8.29 Build Sales Admin section
+- [ ] 8.30 Test admin panel end-to-end
+>>>>>>> test-yoga-merge
 
 ## Phase 9: Third-party Integrations
 

@@ -1,35 +1,18 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Loader2, ClipboardList, Sparkles } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const STEPS = ["Business Details", "Content & Goals", "Brand Preferences"];
-
-const TONE_OPTIONS = [
-  "Professional",
-  "Friendly",
-  "Bold",
-  "Playful",
-  "Minimalist",
-  "Inspirational",
-  "Educational",
-  "Witty",
-];
-
-interface FormData {
+// Matches the backend schema exact requirements
+type FormData = {
   industry: string;
   businessDescription: string;
   targetAudienceAge: string;
@@ -46,126 +29,146 @@ interface FormData {
   competitorRefs: string;
   topicsToAvoid: string;
   styleReferences: string;
-}
-
-const initialFormData: FormData = {
-  industry: "",
-  businessDescription: "",
-  targetAudienceAge: "",
-  targetAudienceLocation: "",
-  targetAudienceInterests: "",
-  socialHandleInstagram: "",
-  socialHandleFacebook: "",
-  socialHandleLinkedIn: "",
-  currentPostingFrequency: "",
-  contentWhatWorks: "",
-  contentWhatDoesnt: "",
-  primaryGoal: "",
-  brandTone: [],
-  competitorRefs: "",
-  topicsToAvoid: "",
-  styleReferences: "",
 };
+
+const STEPS = ["Business Details", "Content & Goals", "Brand Preferences"];
+
+const FREQUENCY_OPTIONS = [
+  "Daily",
+  "A few times a week",
+  "Weekly",
+  "Bi-weekly",
+  "Monthly",
+  "Rarely / Never",
+];
+
+const PRIMARY_GOALS = [
+  { id: "brand_awareness", label: "Brand Awareness" },
+  { id: "lead_generation", label: "Lead Generation" },
+  { id: "engagement", label: "Engagement & Community" },
+  { id: "sales", label: "Direct Sales" },
+  { id: "thought_leadership", label: "Thought Leadership" },
+];
+
+const TONE_OPTIONS = [
+  "Professional",
+  "Friendly",
+  "Bold",
+  "Playful",
+  "Minimalist",
+  "Inspirational",
+  "Educational",
+  "Witty",
+];
 
 export default function QuestionnairePage() {
   const router = useRouter();
   const supabase = createClient();
+  const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  const [step, setStep] = useState(0);
-  const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [submitting, setSubmitting] = useState(false);
-  const [polling, setPolling] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    trigger,
+    formState: { errors },
+  } = useForm<FormData>({
+    defaultValues: {
+      industry: "",
+      businessDescription: "",
+      targetAudienceAge: "",
+      targetAudienceLocation: "",
+      targetAudienceInterests: "",
+      socialHandleInstagram: "",
+      socialHandleFacebook: "",
+      socialHandleLinkedIn: "",
+      currentPostingFrequency: "",
+      contentWhatWorks: "",
+      contentWhatDoesnt: "",
+      primaryGoal: "",
+      brandTone: [],
+      competitorRefs: "",
+      topicsToAvoid: "",
+      styleReferences: "",
+    },
+  });
 
-  function updateField<K extends keyof FormData>(key: K, value: FormData[K]) {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-  }
+  const brandTone = watch("brandTone") ?? [];
 
   function toggleTone(tone: string) {
-    setFormData((prev) => ({
-      ...prev,
-      brandTone: prev.brandTone.includes(tone)
-        ? prev.brandTone.filter((t) => t !== tone)
-        : [...prev.brandTone, tone],
-    }));
+    const current = brandTone;
+    if (current.includes(tone)) {
+      setValue(
+        "brandTone",
+        current.filter((t) => t !== tone),
+        { shouldValidate: true }
+      );
+    } else {
+      setValue("brandTone", [...current, tone], { shouldValidate: true });
+    }
   }
 
-  function nextStep() {
-    if (step < STEPS.length - 1) setStep(step + 1);
+  async function handleNext() {
+    const fieldsToValidate: Record<number, (keyof FormData)[]> = {
+      1: ["industry", "businessDescription", "targetAudienceAge", "targetAudienceLocation", "targetAudienceInterests"],
+      2: ["primaryGoal"], // Only primary goal is mandatory in step 2
+      3: ["brandTone"],
+    };
+
+    const valid = await trigger(fieldsToValidate[step]);
+    if (valid) {
+      setStep((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   }
 
-  function prevStep() {
-    if (step > 0) setStep(step - 1);
+  function handleBack() {
+    setStep((prev) => prev - 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const pollStatus = useCallback(
-    async (token: string) => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/questionnaire/status`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        if (!res.ok) return;
-
-        const data = await res.json();
-
-        if (data.status === "completed") {
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
-          sessionStorage.setItem("ai_summary_line", data.summary_line ?? "");
-          router.push("/onboarding/complete");
-        }
-      } catch {
-        // Silently retry on next interval
-      }
-    },
-    [router]
-  );
-
-  async function handleSubmit() {
-    setSubmitting(true);
-    setError(null);
+  async function onSubmit(data: FormData) {
+    setIsSubmitting(true);
+    setApiError(null);
 
     const {
       data: { session },
     } = await supabase.auth.getSession();
 
     if (!session?.access_token) {
-      setError("You must be logged in to submit the questionnaire.");
-      setSubmitting(false);
+      setApiError("You must be logged in to submit the questionnaire.");
+      setIsSubmitting(false);
       return;
     }
 
+    // Map React Hook Form data strictly to Backend Schema payload
     const payload = {
-      industry: formData.industry,
-      business_description: formData.businessDescription,
+      industry: data.industry,
+      business_description: data.businessDescription,
       target_audience: {
-        age: formData.targetAudienceAge,
-        location: formData.targetAudienceLocation,
-        interests: formData.targetAudienceInterests,
+        age: data.targetAudienceAge,
+        location: data.targetAudienceLocation,
+        interests: data.targetAudienceInterests,
       },
       social_handles: {
-        instagram: formData.socialHandleInstagram,
-        facebook: formData.socialHandleFacebook,
-        linkedin: formData.socialHandleLinkedIn,
+        instagram: data.socialHandleInstagram,
+        facebook: data.socialHandleFacebook,
+        linkedin: data.socialHandleLinkedIn,
       },
-      current_posting_frequency: formData.currentPostingFrequency || null,
-      content_what_works: formData.contentWhatWorks || null,
-      content_what_doesnt: formData.contentWhatDoesnt || null,
-      primary_goal: formData.primaryGoal,
-      brand_tone: formData.brandTone,
-      competitor_refs: formData.competitorRefs
-        ? formData.competitorRefs.split(",").map((s) => s.trim())
+      current_posting_frequency: data.currentPostingFrequency || null,
+      content_what_works: data.contentWhatWorks || null,
+      content_what_doesnt: data.contentWhatDoesnt || null,
+      primary_goal: data.primaryGoal,
+      brand_tone: data.brandTone,
+      competitor_refs: data.competitorRefs
+        ? data.competitorRefs.split(",").map((s) => s.trim())
         : null,
-      topics_to_avoid: formData.topicsToAvoid || null,
-      style_references: formData.styleReferences
-        ? formData.styleReferences.split(",").map((s) => s.trim())
+      topics_to_avoid: data.topicsToAvoid || null,
+      style_references: data.styleReferences
+        ? data.styleReferences.split(",").map((s) => s.trim())
         : null,
     };
 
@@ -183,378 +186,311 @@ export default function QuestionnairePage() {
       );
 
       if (!res.ok) {
-        const data = await res.json();
-        setError(
-          data.detail || "Failed to submit questionnaire. Please try again."
+        const errorData = await res.json();
+        setApiError(
+          errorData.detail || "Failed to submit questionnaire. Please try again."
         );
-        setSubmitting(false);
+        setIsSubmitting(false);
         return;
       }
 
-      setSubmitting(false);
-      setPolling(true);
-
-      intervalRef.current = setInterval(() => {
-        pollStatus(session.access_token);
-      }, 3000);
-
-      pollStatus(session.access_token);
+      // Success! Move to the next page to handle the loading/polling
+      router.push("/onboarding/complete");
     } catch {
-      setError("Failed to connect to server. Please try again.");
-      setSubmitting(false);
+      setApiError("Failed to connect to server. Please try again.");
+      setIsSubmitting(false);
     }
   }
 
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
-
-  if (polling) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-bg px-4 py-8">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-8 pb-8 flex flex-col items-center gap-4">
-            <div className="relative">
-              <div className="absolute inset-0 animate-ping rounded-full bg-brand/20 h-16 w-16" />
-              <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-brand-light">
-                <Sparkles className="h-8 w-8 text-brand animate-pulse" />
-              </div>
-            </div>
-            <div className="text-center space-y-2">
-              <h2 className="text-xl font-bold text-brand-dark">
-                Analyzing your brand...
-              </h2>
-              <p className="text-sm text-text-muted">
-                Our AI is reviewing your responses to create a personalized
-                content strategy. This usually takes 30-60 seconds.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-text-muted">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Please wait...
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg px-4 py-8">
-      <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-brand-light">
-            <ClipboardList className="h-6 w-6 text-brand" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-brand-dark">
-            Tell Us About Your Brand
-          </CardTitle>
-          <CardDescription>
-            Step {step + 1} of {STEPS.length}: {STEPS[step]}
-          </CardDescription>
-          <div className="mt-4 flex gap-2">
-            {STEPS.map((s, i) => (
-              <div
-                key={s}
-                className={`h-1.5 flex-1 rounded-full ${
-                  i <= step ? "bg-brand" : "bg-border"
-                }`}
+    <CardContent className="py-2">
+      <div className="mb-6 text-center">
+        <p className="text-sm font-medium text-brand mb-1">
+          Step {step} of 3: {STEPS[step - 1]}
+        </p>
+        <h2 className="text-xl font-bold text-brand-dark">Brand Profile</h2>
+        <p className="mt-1 text-sm text-text-muted">
+          Help us understand your brand to create content that resonates.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)}>
+        {step === 1 && (
+          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div>
+              <Label htmlFor="industry" className="mb-1.5 block">
+                Industry / Niche <span className="text-error">*</span>
+              </Label>
+              <Input
+                id="industry"
+                placeholder="e.g. Restaurant, Fitness, Real Estate"
+                className="h-10"
+                {...register("industry", { required: "Industry is required" })}
               />
-            ))}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {step === 0 && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="industry" className="text-text">
-                  Industry / Niche <span className="text-error">*</span>
-                </Label>
-                <Input
-                  id="industry"
-                  placeholder="e.g. Restaurant, Fitness, Real Estate"
-                  value={formData.industry}
-                  onChange={(e) => updateField("industry", e.target.value)}
-                  className="border-border focus:border-brand focus:ring-brand"
-                />
-              </div>
+              {errors.industry && (
+                <p className="mt-1 text-xs text-error">{errors.industry.message}</p>
+              )}
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="businessDescription" className="text-text">
-                  Business Description <span className="text-error">*</span>
-                </Label>
-                <textarea
-                  id="businessDescription"
-                  placeholder="Describe what your business does in a few sentences..."
-                  value={formData.businessDescription}
-                  onChange={(e) =>
-                    updateField("businessDescription", e.target.value)
-                  }
-                  className="flex min-h-[100px] w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-brand focus:ring-1 focus:ring-brand outline-none"
-                />
-              </div>
+            <div>
+              <Label htmlFor="businessDescription" className="mb-1.5 block">
+                Business Description <span className="text-error">*</span>
+              </Label>
+              <textarea
+                id="businessDescription"
+                placeholder="Describe what your business does in a few sentences..."
+                className="w-full min-h-[100px] rounded-lg border border-input bg-transparent px-3 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand"
+                {...register("businessDescription", { required: "Description is required" })}
+              />
+              {errors.businessDescription && (
+                <p className="mt-1 text-xs text-error">{errors.businessDescription.message}</p>
+              )}
+            </div>
 
-              <div className="space-y-2">
-                <Label className="text-text">
-                  Target Audience <span className="text-error">*</span>
-                </Label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <Label className="mb-1.5 block">
+                Target Audience <span className="text-error">*</span>
+              </Label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
                   <Input
-                    placeholder="Age range (e.g. 25-45)"
-                    value={formData.targetAudienceAge}
-                    onChange={(e) =>
-                      updateField("targetAudienceAge", e.target.value)
-                    }
-                    className="border-border focus:border-brand focus:ring-brand"
+                    placeholder="Age (e.g. 25-45)"
+                    {...register("targetAudienceAge", { required: "Required" })}
                   />
+                  {errors.targetAudienceAge && (
+                    <p className="mt-1 text-xs text-error">Required</p>
+                  )}
+                </div>
+                <div>
                   <Input
                     placeholder="Location"
-                    value={formData.targetAudienceLocation}
-                    onChange={(e) =>
-                      updateField("targetAudienceLocation", e.target.value)
-                    }
-                    className="border-border focus:border-brand focus:ring-brand"
+                    {...register("targetAudienceLocation", { required: "Required" })}
                   />
+                  {errors.targetAudienceLocation && (
+                    <p className="mt-1 text-xs text-error">Required</p>
+                  )}
+                </div>
+                <div>
                   <Input
                     placeholder="Interests"
-                    value={formData.targetAudienceInterests}
-                    onChange={(e) =>
-                      updateField("targetAudienceInterests", e.target.value)
-                    }
-                    className="border-border focus:border-brand focus:ring-brand"
+                    {...register("targetAudienceInterests", { required: "Required" })}
                   />
+                  {errors.targetAudienceInterests && (
+                    <p className="mt-1 text-xs text-error">Required</p>
+                  )}
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label className="text-text">Social Media Handles</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <Input
-                    placeholder="Instagram"
-                    value={formData.socialHandleInstagram}
-                    onChange={(e) =>
-                      updateField("socialHandleInstagram", e.target.value)
-                    }
-                    className="border-border focus:border-brand focus:ring-brand"
-                  />
-                  <Input
-                    placeholder="Facebook"
-                    value={formData.socialHandleFacebook}
-                    onChange={(e) =>
-                      updateField("socialHandleFacebook", e.target.value)
-                    }
-                    className="border-border focus:border-brand focus:ring-brand"
-                  />
-                  <Input
-                    placeholder="LinkedIn"
-                    value={formData.socialHandleLinkedIn}
-                    onChange={(e) =>
-                      updateField("socialHandleLinkedIn", e.target.value)
-                    }
-                    className="border-border focus:border-brand focus:ring-brand"
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {step === 1 && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="postingFrequency" className="text-text">
-                  Current Posting Frequency
-                </Label>
-                <select
-                  id="postingFrequency"
-                  value={formData.currentPostingFrequency}
-                  onChange={(e) =>
-                    updateField("currentPostingFrequency", e.target.value)
-                  }
-                  className="flex h-9 w-full rounded-md border border-border bg-surface px-3 py-1 text-sm text-text focus:border-brand focus:ring-1 focus:ring-brand outline-none"
-                >
-                  <option value="">Select frequency</option>
-                  <option value="daily">Daily</option>
-                  <option value="few_times_week">A few times a week</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="biweekly">Bi-weekly</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="rarely">Rarely / Never</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="contentWhatWorks" className="text-text">
-                  What type of content has worked well for you?
-                </Label>
-                <textarea
-                  id="contentWhatWorks"
-                  placeholder="e.g. Behind-the-scenes reels, customer testimonials..."
-                  value={formData.contentWhatWorks}
-                  onChange={(e) =>
-                    updateField("contentWhatWorks", e.target.value)
-                  }
-                  className="flex min-h-[80px] w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-brand focus:ring-1 focus:ring-brand outline-none"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="contentWhatDoesnt" className="text-text">
-                  What type of content has NOT worked?
-                </Label>
-                <textarea
-                  id="contentWhatDoesnt"
-                  placeholder="e.g. Long text-heavy posts, overly promotional content..."
-                  value={formData.contentWhatDoesnt}
-                  onChange={(e) =>
-                    updateField("contentWhatDoesnt", e.target.value)
-                  }
-                  className="flex min-h-[80px] w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-brand focus:ring-1 focus:ring-brand outline-none"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="primaryGoal" className="text-text">
-                  Primary Goal <span className="text-error">*</span>
-                </Label>
-                <select
-                  id="primaryGoal"
-                  value={formData.primaryGoal}
-                  onChange={(e) =>
-                    updateField("primaryGoal", e.target.value)
-                  }
-                  className="flex h-9 w-full rounded-md border border-border bg-surface px-3 py-1 text-sm text-text focus:border-brand focus:ring-1 focus:ring-brand outline-none"
-                >
-                  <option value="">Select your primary goal</option>
-                  <option value="brand_awareness">Brand Awareness</option>
-                  <option value="lead_generation">Lead Generation</option>
-                  <option value="engagement">Engagement & Community</option>
-                  <option value="sales">Direct Sales</option>
-                  <option value="thought_leadership">Thought Leadership</option>
-                </select>
-              </div>
-            </>
-          )}
-
-          {step === 2 && (
-            <>
-              <div className="space-y-2">
-                <Label className="text-text">
-                  Brand Tone <span className="text-error">*</span>
-                </Label>
-                <p className="text-xs text-text-muted">
-                  Select all that apply to your brand voice
-                </p>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {TONE_OPTIONS.map((tone) => (
-                    <button
-                      key={tone}
-                      type="button"
-                      onClick={() => toggleTone(tone)}
-                      className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                        formData.brandTone.includes(tone)
-                          ? "bg-brand text-white"
-                          : "bg-brand-light text-brand-dark hover:bg-brand/10"
-                      }`}
-                    >
-                      {tone}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="competitorRefs" className="text-text">
-                  Competitor References
-                </Label>
-                <Input
-                  id="competitorRefs"
-                  placeholder="Instagram handles or brand names (comma-separated)"
-                  value={formData.competitorRefs}
-                  onChange={(e) =>
-                    updateField("competitorRefs", e.target.value)
-                  }
-                  className="border-border focus:border-brand focus:ring-brand"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="topicsToAvoid" className="text-text">
-                  Topics to Avoid
-                </Label>
-                <textarea
-                  id="topicsToAvoid"
-                  placeholder="e.g. Politics, controversial topics, competitor mentions..."
-                  value={formData.topicsToAvoid}
-                  onChange={(e) =>
-                    updateField("topicsToAvoid", e.target.value)
-                  }
-                  className="flex min-h-[80px] w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-brand focus:ring-1 focus:ring-brand outline-none"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="styleReferences" className="text-text">
-                  Style References
-                </Label>
-                <Input
-                  id="styleReferences"
-                  placeholder="Links to posts or accounts you like (comma-separated)"
-                  value={formData.styleReferences}
-                  onChange={(e) =>
-                    updateField("styleReferences", e.target.value)
-                  }
-                  className="border-border focus:border-brand focus:ring-brand"
-                />
-              </div>
-            </>
-          )}
-
-          {error && (
-            <div className="text-sm text-error bg-error-light p-3 rounded-md">
-              {error}
             </div>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-between gap-3">
-          {step > 0 ? (
+
+            <div>
+              <Label className="mb-1.5 block">Social Media Handles</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Input placeholder="Instagram (@handle)" {...register("socialHandleInstagram")} />
+                <Input placeholder="Facebook" {...register("socialHandleFacebook")} />
+                <Input placeholder="LinkedIn" {...register("socialHandleLinkedIn")} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div>
+              <Label htmlFor="postingFrequency" className="mb-1.5 block">
+                Current Posting Frequency
+              </Label>
+              <select
+                id="postingFrequency"
+                className="flex h-10 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm transition-colors outline-none focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand"
+                {...register("currentPostingFrequency")}
+              >
+                <option value="">Select frequency</option>
+                {FREQUENCY_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="contentWhatWorks" className="mb-1.5 block">
+                What type of content has worked well?
+              </Label>
+              <textarea
+                id="contentWhatWorks"
+                placeholder="e.g. Behind-the-scenes reels, customer testimonials..."
+                className="w-full min-h-[80px] rounded-lg border border-input bg-transparent px-3 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand"
+                {...register("contentWhatWorks")}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="contentWhatDoesnt" className="mb-1.5 block">
+                What type of content has NOT worked?
+              </Label>
+              <textarea
+                id="contentWhatDoesnt"
+                placeholder="e.g. Long text-heavy posts, overly promotional content..."
+                className="w-full min-h-[80px] rounded-lg border border-input bg-transparent px-3 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand"
+                {...register("contentWhatDoesnt")}
+              />
+            </div>
+
+            <div>
+              <Label className="mb-2 block">
+                Primary Goal <span className="text-error">*</span>
+              </Label>
+              <div className="space-y-2">
+                {PRIMARY_GOALS.map((goal) => (
+                  <label
+                    key={goal.id}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg border px-4 py-3 cursor-pointer transition-colors",
+                      watch("primaryGoal") === goal.id
+                        ? "border-brand bg-brand/5 text-brand-dark"
+                        : "border-border hover:bg-bg-internal text-text"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      value={goal.id}
+                      className="sr-only"
+                      {...register("primaryGoal", { required: "Please select a primary goal" })}
+                    />
+                    <div
+                      className={cn(
+                        "flex size-5 items-center justify-center rounded-full border-2 shrink-0",
+                        watch("primaryGoal") === goal.id
+                          ? "border-brand bg-brand text-white"
+                          : "border-border"
+                      )}
+                    >
+                      {watch("primaryGoal") === goal.id && <Check className="size-3" />}
+                    </div>
+                    <span className="text-sm font-medium">{goal.label}</span>
+                  </label>
+                ))}
+              </div>
+              {errors.primaryGoal && (
+                <p className="mt-1 text-xs text-error">{errors.primaryGoal.message}</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div>
+              <Label className="mb-2 block">
+                Brand Tone <span className="text-error">*</span>
+              </Label>
+              <p className="text-xs text-text-muted mb-2">
+                Select all that apply to your brand voice.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {TONE_OPTIONS.map((tone) => (
+                  <button
+                    key={tone}
+                    type="button"
+                    onClick={() => toggleTone(tone)}
+                    className={cn(
+                      "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
+                      brandTone.includes(tone)
+                        ? "border-brand bg-brand text-white"
+                        : "border-border text-text hover:bg-bg-internal"
+                    )}
+                  >
+                    {tone}
+                  </button>
+                ))}
+              </div>
+              {/* Hidden input to register the array for validation */}
+              <input
+                type="hidden"
+                {...register("brandTone", { validate: (val) => val.length > 0 || "Select at least one brand tone" })}
+              />
+              {errors.brandTone && (
+                <p className="mt-1 text-xs text-error">{errors.brandTone.message}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="competitorRefs" className="mb-1.5 block">
+                Competitor References
+              </Label>
+              <Input
+                id="competitorRefs"
+                placeholder="Instagram handles or brand names (comma-separated)"
+                className="h-10"
+                {...register("competitorRefs")}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="topicsToAvoid" className="mb-1.5 block">
+                Topics to Avoid
+              </Label>
+              <textarea
+                id="topicsToAvoid"
+                placeholder="e.g. Politics, controversial topics, competitor mentions..."
+                className="w-full min-h-[80px] rounded-lg border border-input bg-transparent px-3 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand"
+                {...register("topicsToAvoid")}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="styleReferences" className="mb-1.5 block">
+                Style References
+              </Label>
+              <Input
+                id="styleReferences"
+                placeholder="Links to posts or accounts you like (comma-separated)"
+                className="h-10"
+                {...register("styleReferences")}
+              />
+            </div>
+          </div>
+        )}
+
+        {apiError && (
+          <div className="mt-4 p-3 text-sm text-error bg-error/10 border border-error/20 rounded-md">
+            {apiError}
+          </div>
+        )}
+
+        <div className="mt-8 flex items-center justify-between gap-4">
+          {step > 1 ? (
             <Button
+              type="button"
               variant="outline"
-              onClick={prevStep}
-              className="border-border text-text"
+              className="w-full border-border text-text h-11"
+              onClick={handleBack}
+              disabled={isSubmitting}
             >
+              <ArrowLeft className="mr-2 size-4" />
               Back
             </Button>
           ) : (
-            <div />
+            <div className="w-full" /> // Spacer for alignment
           )}
 
-          {step < STEPS.length - 1 ? (
+          {step < 3 ? (
             <Button
-              onClick={nextStep}
-              disabled={
-                (step === 0 &&
-                  (!formData.industry ||
-                    !formData.businessDescription ||
-                    !formData.targetAudienceAge)) ||
-                (step === 1 && !formData.primaryGoal)
-              }
-              className="bg-brand hover:bg-brand/90 text-white"
+              type="button"
+              className="w-full bg-brand hover:bg-brand/90 text-white h-11"
+              onClick={handleNext}
             >
-              Continue
+              Next
+              <ArrowRight className="ml-2 size-4" />
             </Button>
           ) : (
             <Button
-              onClick={handleSubmit}
-              disabled={submitting || formData.brandTone.length === 0}
-              className="bg-brand hover:bg-brand/90 text-white"
+              type="submit"
+              className="w-full bg-brand hover:bg-brand/90 text-white h-11"
+              disabled={isSubmitting}
             >
-              {submitting ? (
+              {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 size-4 animate-spin" />
                   Submitting...
                 </>
               ) : (
@@ -562,8 +498,8 @@ export default function QuestionnairePage() {
               )}
             </Button>
           )}
-        </CardFooter>
-      </Card>
-    </div>
+        </div>
+      </form>
+    </CardContent>
   );
 }
