@@ -1,3 +1,4 @@
+```text
 # CREO — BACKEND SCHEMA
 ## Creo Backend Schema — Data Model & Auth Architecture
 
@@ -12,7 +13,8 @@
 | Audience | Development Team / AI Coding Agent |
 
 ## 1. Overview
-This document defines the complete database schema for Creo. Every table, column, data type, constraint, relationship, index, and Row Level Security policy is specified here. The AI coding agent must use this document as the authoritative reference for writing SQLAlchemy models, Alembic migrations, and Supabase RLS policies.
+This document defines the complete database schema for Creo. Every table, column, data type, constraint, relationship, index, and Row Level Security policy is specified here.
+The AI coding agent must use this document as the authoritative reference for writing SQLAlchemy models, Alembic migrations, and Supabase RLS policies.
 
 | Category | Details |
 |---|---|
@@ -262,7 +264,8 @@ Maps clients to their assigned creative team members. A client can have one assi
 | is_active | BOOLEAN | NOT NULL, default true | Whether assignment is current |
 | created_at | TIMESTAMPTZ | NOT NULL, default now() | Record creation timestamp |
 
-A client will have at minimum 2 active assignments: one designer (poster + story) and one video editor (reel). Pro plan clients may also have a dedicated manager assignment.
+A client will have at minimum 2 active assignments: one designer (poster + story) and one video editor (reel).
+Pro plan clients may also have a dedicated manager assignment.
 
 ### 3.7 content_plans
 The content plan document shared with the client during the 7-day onboarding window. One plan per client per month.
@@ -298,7 +301,8 @@ Individual calendar entries — one per deliverable scheduled for a client. Link
 | updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
 
 ### 3.9 tasks
-Individual work items assigned to creative team members. Created automatically on day 7 of onboarding and at each monthly cycle start. Also created for add-on orders.
+Individual work items assigned to creative team members. Created automatically on day 7 of onboarding and at each monthly cycle start.
+Also created for add-on orders.
 
 | Column | Type | Constraints | Description |
 |---|---|---|---|
@@ -342,4 +346,301 @@ The actual content files produced by the creative team and submitted for client 
 | updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
 
 ### 3.11 deliverable_comments
-Comments left on deliverables by clients and team members. Required on rejection; optional on approval
+Comments left on deliverables by clients and team members. Required on rejection; optional on approval.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| deliverable_id | UUID | FK → deliverables.id, NOT NULL | The deliverable being commented on |
+| author_id | UUID | FK → users.id, NOT NULL | User who wrote the comment |
+| comment_text | TEXT | NOT NULL | Comment content |
+| is_rejection_reason | BOOLEAN | NOT NULL, default false | True if this comment is the rejection reason |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Comment timestamp |
+
+### 3.12 tickets
+Support tickets raised by clients. Covers deliverable revisions, general support, billing issues, and content brief updates.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| ticket_number | TEXT | UNIQUE, NOT NULL | Human-readable ID — e.g. TKT-0042 |
+| client_id | UUID | FK → users.id, NOT NULL | Client who raised the ticket |
+| ticket_type | ticket_type | NOT NULL | Type of support request |
+| subject | TEXT | NOT NULL | Ticket subject line |
+| description | TEXT | NOT NULL | Initial ticket description |
+| status | ticket_status | NOT NULL, default 'open' | Current ticket status |
+| assigned_to | UUID | FK → users.id, NULLABLE | Team member or admin assigned to this ticket |
+| linked_deliverable_id | UUID | FK → deliverables.id, NULLABLE | Deliverable linked to revision tickets |
+| resolved_at | TIMESTAMPTZ | NULLABLE | When ticket was marked resolved |
+| reopened_at | TIMESTAMPTZ | NULLABLE | When ticket was last reopened |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Ticket creation timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
+
+### 3.13 ticket_messages
+Individual messages within a ticket thread — used for both live chat and ticket communication.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| ticket_id | UUID | FK → tickets.id, NOT NULL | Parent ticket |
+| sender_id | UUID | FK → users.id, NOT NULL | User who sent the message |
+| message_text | TEXT | NULLABLE | Text content of the message |
+| file_url | TEXT | NULLABLE | Supabase Storage URL if message includes a file |
+| file_name | TEXT | NULLABLE | Original filename of attached file |
+| file_size_bytes | BIGINT | NULLABLE | Attached file size in bytes |
+| is_read | BOOLEAN | NOT NULL, default false | Whether recipient has read this message |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Message timestamp |
+
+### 3.14 addons
+One-time add-on purchase orders placed by clients for extra deliverables beyond their plan quota.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| client_id | UUID | FK → users.id, NOT NULL | Client who placed the order |
+| deliverable_type | deliverable_type | NOT NULL | Type of add-on ordered |
+| quantity | INTEGER | NOT NULL | Number of units ordered (1–10) |
+| unit_price | NUMERIC(10,2) | NOT NULL | Price per unit at time of purchase |
+| total_price | NUMERIC(10,2) | NOT NULL | Total charged — quantity × unit_price |
+| gateway | payment_gateway | NOT NULL | Payment gateway used |
+| gateway_payment_id | TEXT | UNIQUE, NOT NULL | Razorpay/Stripe payment ID |
+| status | addon_status | NOT NULL, default 'pending' | Order fulfillment status |
+| content_brief | TEXT | NULLABLE | Optional brief provided by client at time of order |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Order creation timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
+
+### 3.15 notifications
+In-portal notification records for all users. Email notifications are dispatched via Resend and not stored here.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| user_id | UUID | FK → users.id, NOT NULL | Recipient user |
+| type | TEXT | NOT NULL | Notification type key — e.g. 'deliverable_ready', 'ticket_update' |
+| title | TEXT | NOT NULL | Short notification title |
+| message | TEXT | NOT NULL | Notification body text |
+| link | TEXT | NULLABLE | Deep link URL — e.g. /portal/deliverables/[id] |
+| is_read | BOOLEAN | NOT NULL, default false | Whether user has read this notification |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Notification creation timestamp |
+
+### 3.16 leave_requests
+Leave requests submitted by team members and approved or rejected by admins.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| team_member_id | UUID | FK → team_members.id, NOT NULL | Team member requesting leave |
+| start_date | DATE | NOT NULL | First day of leave |
+| end_date | DATE | NOT NULL | Last day of leave |
+| reason | TEXT | NULLABLE | Optional reason for leave |
+| status | leave_status | NOT NULL, default 'pending' | Approval status |
+| reviewed_by | UUID | FK → users.id, NULLABLE | Admin who approved or rejected |
+| reviewed_at | TIMESTAMPTZ | NULLABLE | When admin reviewed the request |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Request submission timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
+
+### 3.17 escalations
+Logs all SLA breaches and escalation events. Used for the admin escalations panel and included in weekly reports.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| type | TEXT | NOT NULL | Escalation type — e.g. 'sla_breach_delivery', 'sla_breach_revision', 'client_rejection_limit' |
+| severity | TEXT | NOT NULL | low / medium / high |
+| client_id | UUID | FK → users.id, NULLABLE | Related client |
+| task_id | UUID | FK → tasks.id, NULLABLE | Related task |
+| ticket_id | UUID | FK → tickets.id, NULLABLE | Related ticket |
+| assigned_to | UUID | FK → users.id, NULLABLE | Admin handling this escalation |
+| description | TEXT | NOT NULL | What triggered the escalation |
+| status | TEXT | NOT NULL, default 'active' | active / resolved |
+| resolved_at | TIMESTAMPTZ | NULLABLE | When escalation was resolved |
+| resolved_by | UUID | FK → users.id, NULLABLE | Admin who resolved it |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Escalation creation timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
+
+### 3.18 announcements
+Internal announcements posted by admins — includes MoM uploads, newsletter relays, and general announcements.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| author_id | UUID | FK → users.id, NOT NULL | Admin who posted this |
+| title | TEXT | NOT NULL | Announcement title |
+| content | TEXT | NOT NULL | Rich text content body |
+| type | TEXT | NOT NULL | mom / newsletter / general |
+| target_departments | department[] | NULLABLE | Array of target departments — null means all |
+| file_url | TEXT | NULLABLE | Supabase Storage URL for MoM PDF or attachment |
+| file_name | TEXT | NULLABLE | Original filename of attachment |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Post timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
+
+### 3.19 custom_pricing
+Records custom pricing arrangements negotiated by the sales team and approved by admins.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| client_id | UUID | FK → users.id, NOT NULL | The client receiving custom pricing |
+| plan_id | UUID | FK → plans.id, NOT NULL | Which plan tier this custom price is for |
+| custom_price | NUMERIC(10,2) | NOT NULL | Agreed custom monthly price |
+| standard_price | NUMERIC(10,2) | NOT NULL | Standard price at time of agreement (for audit) |
+| discount_percent | NUMERIC(5,2) | NOT NULL | Discount percentage applied |
+| requested_by | UUID | FK → users.id, NOT NULL | Sales team member who submitted the request |
+| approved_by | UUID | FK → users.id, NULLABLE | Admin who approved the custom price |
+| status | custom_pricing_status | NOT NULL, default 'pending' | Approval status |
+| valid_from | DATE | NULLABLE | Start date of custom pricing |
+| valid_until | DATE | NULLABLE | End date — max 3 months from valid_from |
+| notes | TEXT | NULLABLE | Sales team justification notes |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Request creation timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
+
+### 3.20 addon_pricing
+Admin-configurable pricing for add-on deliverable types. One record per deliverable type.
+
+| Column | Type | Constraints | Description |
+|---|---|---|---|
+| id | UUID | PK | Primary key |
+| deliverable_type | deliverable_type | UNIQUE, NOT NULL | Add-on type this price applies to |
+| unit_price | NUMERIC(10,2) | NOT NULL | Current price per unit |
+| is_active | BOOLEAN | NOT NULL, default true | Whether this add-on type is currently available |
+| updated_by | UUID | FK → users.id, NULLABLE | Admin who last updated this price |
+| created_at | TIMESTAMPTZ | NOT NULL, default now() | Record creation timestamp |
+| updated_at | TIMESTAMPTZ | NOT NULL, default now() | Last updated |
+
+## 4. Key Relationships
+
+| Relationship | Type | Description |
+|---|---|---|
+| users → subscriptions | 1 : many | A user can have multiple subscriptions (historical) |
+| users → questionnaires | 1 : 1 | Each client has exactly one questionnaire |
+| users → team_members | 1 : 1 | Each team member has one extended profile |
+| users → client_assignments | 1 : many (as client) | A client has multiple assignments (designer, video editor) |
+| team_members → client_assignments | 1 : many | A team member can be assigned to multiple clients |
+| users → content_plans | 1 : many | A client has one plan per month |
+| content_plans → content_calendar | 1 : many | A plan generates multiple calendar entries |
+| content_calendar → tasks | 1 : 1 | Each calendar entry links to one task |
+| tasks → deliverables | 1 : many | A task can have multiple deliverables (revisions) |
+| deliverables → deliverable_comments | 1 : many | Each deliverable can have multiple comments |
+| deliverables → deliverables | self-reference | parent_deliverable_id links revisions to originals |
+| users → tickets | 1 : many | A client can have multiple tickets |
+| tickets → ticket_messages | 1 : many | A ticket thread has multiple messages |
+| addons → tasks | 1 : many | Each add-on unit generates one task |
+| plans → custom_pricing | 1 : many | A plan can have multiple custom pricing arrangements |
+
+## 5. Indexes
+All primary keys are automatically indexed. The following additional indexes are required for query performance.
+
+| Table | Column(s) | Reason |
+|---|---|---|
+| users | email | Frequent lookup by email on login |
+| users | auth_id | JWT validation requires fast user lookup by Supabase auth ID |
+| users | role | Role-based filtering across many queries |
+| tasks | assigned_to, status | Team member dashboard — tasks by member and status |
+| tasks | client_id, status | Client deliverables tracking |
+| tasks | due_date | SLA monitoring and overdue detection |
+| deliverables | client_id, status | Client portal deliverables list |
+| deliverables | task_id | Task → deliverable lookup |
+| content_calendar | client_id, scheduled_date | Calendar view queries |
+| notifications | user_id, is_read | Unread notification count and list |
+| tickets | client_id, status | Client ticket list |
+| ticket_messages | ticket_id | Thread message retrieval |
+| escalations | status, created_at | Admin escalations panel |
+| subscriptions | user_id, status | Active subscription lookup |
+| addons | client_id, status | Client add-on order history |
+| leave_requests | team_member_id, status | Leave management queries |
+
+## 6. Row Level Security (RLS) Policies
+Row Level Security is enabled on all tables as a secondary guard. The primary security layer is FastAPI middleware (JWT role validation). RLS policies provide defence-in-depth — a bug in the API layer cannot expose other users' data.
+
+All RLS policies use auth.uid() to match against users.auth_id. The Supabase service role key (used by FastAPI) bypasses RLS — this is expected and correct. Client-side Supabase calls (if any) are fully governed by RLS.
+
+| Table | Operation | Policy |
+|---|---|---|
+| users | SELECT | Users can read their own row only. Admins can read all rows. |
+| users | UPDATE | Users can update their own row only (except role and account_status — admin only). |
+| questionnaires | SELECT | Clients read their own row. Assigned team members and admins read all. |
+| questionnaires | UPDATE | Clients can update within 7 days of submitted_at. Admins can update anytime. |
+| deliverables | SELECT | Clients read their own deliverables. Team members read deliverables they produced or are assigned to. Admins read all. |
+| deliverables | UPDATE | Team members can update status on deliverables they produced. Clients can update status (approve/reject) on their own deliverables. Admins can update all. |
+| tickets | SELECT | Clients read their own tickets. Assigned team members and admins read all. |
+| ticket_messages | SELECT | Participants of the ticket (client + assigned team) can read. Admins read all. |
+| ticket_messages | INSERT | Participants of the ticket can insert. Admins can insert on any ticket. |
+| notifications | SELECT | Users read their own notifications only. |
+| notifications | UPDATE | Users can update is_read on their own notifications only. |
+| tasks | SELECT | Team members read tasks assigned to them. Admins and team leads read all. Clients have no direct task access. |
+| announcements | SELECT | All authenticated internal users (non-client roles) can read. Clients have no access. |
+| content_calendar | SELECT | Clients read their own calendar. Team members read calendar entries linked to their assigned clients. Admins read all. |
+| escalations | SELECT | Admins and team leads read all. Other roles have no access. |
+| leave_requests | SELECT | Team members read their own requests. Team leads read their department. Admins read all. |
+
+## 7. File Storage Structure
+All files are stored in Supabase Storage. Buckets are organised by content type. Public buckets serve files directly via CDN; private buckets require signed URLs.
+
+| Bucket | Access | Max File Size | Contents |
+|---|---|---|---|
+| deliverables | Private | 500MB | Client deliverable files — images and videos. Accessed via signed URLs with 1-hour expiry. |
+| portfolio | Public | 50MB | Agency portfolio items shown on public website. Publicly accessible via CDN. |
+| avatars | Public | 5MB | User profile photos. Publicly accessible. |
+| announcements | Private | 50MB | MoM PDFs and announcement attachments. Internal team access only. |
+| ticket-attachments | Private | 25MB | Files attached to ticket messages. Signed URLs for participants. |
+| content-plans | Private | 10MB | Content plan PDF exports. Signed URLs for client + admin. |
+
+### 7.1 File Path Conventions
+* deliverables: deliverables/{client_id}/{task_id}/{revision_round}/{filename}
+* portfolio: portfolio/{category}/{filename}
+* avatars: avatars/{user_id}/{filename}
+* announcements: announcements/{announcement_id}/{filename}
+* ticket-attachments: ticket-attachments/{ticket_id}/{message_id}/{filename}
+* content-plans: content-plans/{client_id}/{year}/{month}/{filename}
+
+## 8. Webhook Events
+Payment webhooks are received by FastAPI and trigger database state changes. All webhook endpoints validate the provider signature before processing.
+
+| Provider | Event | Action Taken |
+|---|---|---|
+| Razorpay | payment.captured | Update subscriptions.status → active. Update users.account_status → active. Trigger onboarding questionnaire step. |
+| Razorpay | payment.failed | Update subscriptions.status → past_due. Send failure email + in-portal notification. |
+| Razorpay | subscription.charged | Update current_period_start/end. Record payment in payment history. |
+| Razorpay | subscription.cancelled | Update subscriptions.status → cancelled. Update users.account_status → lapsed. |
+| Stripe | payment_intent.succeeded | Same as Razorpay payment.captured for international clients. |
+| Stripe | payment_intent.payment_failed | Same as Razorpay payment.failed for international clients. |
+| Stripe | customer.subscription.deleted | Same as Razorpay subscription.cancelled for international clients. |
+| Stripe | invoice.payment_succeeded | Update period dates and record payment. |
+
+## 9. Alembic Migration Strategy
+
+| Tool | Alembic — versioned migration files in apps/api/alembic/versions/ |
+|---|---|
+| Naming | Sequential with description — e.g. 001_create_users_table.py, 002_create_plans_table.py |
+| Run on deploy | Alembic upgrade head runs automatically on Railway deployment before API starts |
+| Never edit past migrations | Once a migration is deployed, never edit it. Create a new migration for changes. |
+| Seed data | Seed script populates plans table with Starter, Growth, Pro defaults and addon_pricing table with placeholder prices |
+| Test database | Separate Supabase project for testing — migrations run in CI before deploying to production |
+
+### 9.1 Migration Order
+* 001 — create_enums: all PostgreSQL enum types
+* 002 — create_users: users table + auth trigger
+* 003 — create_plans: plans table + seed data
+* 004 — create_subscriptions: subscriptions table
+* 005 — create_questionnaires: questionnaires table
+* 006 — create_team_members: team_members table
+* 007 — create_client_assignments: client_assignments table
+* 008 — create_content_plans: content_plans table
+* 009 — create_content_calendar: content_calendar table
+* 010 — create_tasks: tasks table
+* 011 — create_deliverables: deliverables + deliverable_comments tables
+* 012 — create_tickets: tickets + ticket_messages tables
+* 013 — create_addons: addons + addon_pricing tables
+* 014 — create_notifications: notifications table
+* 015 — create_leave_requests: leave_requests table
+* 016 — create_escalations: escalations table
+* 017 — create_announcements: announcements table
+* 018 — create_custom_pricing: custom_pricing table
+* 019 — create_indexes: all performance indexes
+* 020 — enable_rls: enable RLS + create all policies
+* 021 — create_updated_at_trigger: auto-update trigger on all tables
+
+End of Backend Schema — Document 05 of 06
+Next: Document 06 — Implementation Plan
+
+```

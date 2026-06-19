@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from models.enums import DeliverableStatus
 
@@ -49,16 +49,27 @@ class DeliverableOut(DeliverableBase):
     updated_at: Optional[datetime] = None
 
 
+class TaskSubmitRequest(BaseModel):
+    file_url: str = Field(..., max_length=2048)
+    file_type: str = Field(..., max_length=127)
+    file_size_bytes: int = Field(..., ge=1)
+
+
+class DownloadResponse(BaseModel):
+    download_url: str
+    expires_in: int = 3600
+
+
 class DeliverableCommentBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     deliverable_id: str
     author_id: str
-    comment_text: str
+    comment_text: str = Field(..., max_length=2000)
 
 
 class DeliverableCommentCreate(BaseModel):
-    comment_text: str
+    comment_text: str = Field(..., max_length=2000)
 
 
 class DeliverableCommentOut(DeliverableCommentBase):

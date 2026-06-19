@@ -56,7 +56,7 @@ class ContentCalendar(Base):
         "ContentPlan", back_populates="calendar_entries"
     )
     linked_task: Mapped[Optional["Task"]] = relationship(
-        "Task", foreign_keys=[linked_task_id], lazy="selectin"
+        "Task", foreign_keys=[linked_task_id], lazy="selectin", viewonly=True
     )
     linked_deliverable: Mapped[Optional["Deliverable"]] = relationship(
         "Deliverable", foreign_keys=[linked_deliverable_id], lazy="selectin"

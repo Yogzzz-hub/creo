@@ -17,7 +17,6 @@ class RegisterResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: str
-    auth_id: str
     email: str
     full_name: str
     role: UserRole

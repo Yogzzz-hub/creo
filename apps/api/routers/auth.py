@@ -45,7 +45,6 @@ async def register_user(
 
     return RegisterResponse(
         id=user.id,
-        auth_id=user.auth_id,
         email=user.email,
         full_name=user.full_name,
         role=user.role,

@@ -2,40 +2,77 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, ShieldCheck } from "lucide-react";
 
 export default function TermsPage() {
   const router = useRouter();
+  const supabase = createClient();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [agreed, setAgreed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
 
     const { scrollTop, clientHeight, scrollHeight } = el;
-    if (scrollTop + clientHeight >= scrollHeight - 10) {
+    // 20px threshold to be forgiving on different screen sizes
+    if (scrollTop + clientHeight >= scrollHeight - 20) {
       setAgreed(true);
     }
   }, []);
 
-  const handleAgree = useCallback(() => {
+  const handleAgree = async () => {
     setIsSubmitting(true);
+    setError(null);
 
-    // TODO: Wire to API — POST /api/v1/onboarding/accept-terms
-    setTimeout(() => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      setError("You must be logged in to accept terms.");
       setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/onboarding/accept-terms`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.detail || "Failed to accept terms. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Success - proceed to payment step
       router.push("/onboarding/payment");
-    }, 800);
-  }, [router]);
+    } catch {
+      setError("Failed to connect to server. Please try again.");
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <CardContent className="py-2">
       <div className="mb-4 text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-light">
+          <ShieldCheck className="h-6 w-6 text-brand" />
+        </div>
         <h2 className="text-xl font-bold text-brand-dark">
           Terms & Conditions
         </h2>
@@ -266,6 +303,12 @@ export default function TermsPage() {
         </div>
       </div>
 
+      {error && (
+        <div className="mt-4 text-sm text-error bg-error-light p-3 rounded-md">
+          {error}
+        </div>
+      )}
+
       <div className="mt-6 flex flex-col items-center gap-4">
         <Button
           className="w-full bg-brand hover:bg-brand/90 text-white h-11"
@@ -275,7 +318,7 @@ export default function TermsPage() {
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 size-4 animate-spin" />
-              Processing...
+              Accepting...
             </>
           ) : (
             "I Agree & Continue"
@@ -283,7 +326,7 @@ export default function TermsPage() {
         </Button>
 
         {!agreed && (
-          <p className="text-xs text-text-muted text-center">
+          <p className="text-xs text-text-muted text-center animate-pulse">
             Please scroll to the bottom of the terms to continue.
           </p>
         )}
