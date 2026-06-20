@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Target,
@@ -230,12 +230,15 @@ export default function AboutPage() {
             Join 50+ businesses that chose Creo as their growth partner.
           </p>
           <div className="mt-8">
-            <Button
-              render={<Link href="/signup" />}
-              className="bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold"
+            <Link
+              href="/signup"
+              className={buttonVariants({
+                className:
+                  "bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold",
+              })}
             >
               Get Started Today
-            </Button>
+            </Link>
           </div>
         </div>
       </section>

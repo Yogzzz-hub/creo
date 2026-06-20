@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, ThumbsUp, TrendingUp } from "lucide-react";
 import { TestimonialsCarousel } from "@/components/public/testimonials-carousel";
@@ -243,19 +243,25 @@ export default function ClientsPage() {
             Start your brand&apos;s growth journey with Creo today.
           </p>
           <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Button
-              render={<Link href="/signup" />}
-              className="bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold"
+            <Link
+              href="/signup"
+              className={buttonVariants({
+                className:
+                  "bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold",
+              })}
             >
               Get Started
-            </Button>
-            <Button
-              variant="outline"
-              render={<Link href="/pricing" />}
-              className="border-white/30 text-white hover:bg-white/10 rounded-lg h-12 px-8 text-base font-semibold"
+            </Link>
+            <Link
+              href="/pricing"
+              className={buttonVariants({
+                variant: "outline",
+                className:
+                  "border-white/30 text-white hover:bg-white/10 rounded-lg h-12 px-8 text-base font-semibold",
+              })}
             >
               View Pricing
-            </Button>
+            </Link>
           </div>
         </div>
       </section>

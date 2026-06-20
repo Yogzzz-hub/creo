@@ -33,8 +33,8 @@ export function Footer() {
               Quick Links
             </h3>
             <ul className="mt-4 flex flex-col gap-2.5">
-              {QUICK_LINKS.map((link) => (
-                <li key={link.href}>
+              {QUICK_LINKS.map((link, index) => (
+                <li key={index}>
                   <Link
                     href={link.href}
                     className="text-sm text-white/70 hover:text-white transition-colors"
@@ -132,8 +132,8 @@ export function Footer() {
             &copy; {new Date().getFullYear()} Creo. All rights reserved.
           </p>
           <ul className="flex gap-6">
-            {LEGAL_LINKS.map((link) => (
-              <li key={link.href}>
+            {LEGAL_LINKS.map((link, index) => (
+              <li key={index}>
                 <Link
                   href={link.href}
                   className="text-xs text-white/40 hover:text-white/70 transition-colors"

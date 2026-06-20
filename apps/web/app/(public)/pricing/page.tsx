@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, Shield, Zap, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -209,16 +209,18 @@ export default async function PricingPage() {
                       </ul>
                     </CardContent>
                     <CardFooter className="pt-4 px-6 pb-8">
-                      <Button
-                        render={<Link href={`/signup?plan=${plan.name}`} />}
-                        className={`w-full h-11 text-base font-semibold ${
-                          isPopular
-                            ? "bg-[#2B7BC4] hover:bg-[#2B7BC4]/90 text-white"
-                            : "bg-brand-dark hover:bg-brand-dark/90 text-white"
-                        }`}
+                      <Link
+                        href={`/signup?plan=${plan.name}`}
+                        className={buttonVariants({
+                          className: `w-full h-11 text-base font-semibold ${
+                            isPopular
+                              ? "bg-[#2B7BC4] hover:bg-[#2B7BC4]/90 text-white"
+                              : "bg-brand-dark hover:bg-brand-dark/90 text-white"
+                          }`,
+                        })}
                       >
                         Start Growing
-                      </Button>
+                      </Link>
                     </CardFooter>
                   </Card>
                 );
@@ -298,12 +300,15 @@ export default async function PricingPage() {
             Join 50+ businesses that chose Creo as their growth partner.
           </p>
           <div className="mt-8">
-            <Button
-              render={<Link href="/signup?plan=growth" />}
-              className="bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold"
+            <Link
+              href="/signup?plan=growth"
+              className={buttonVariants({
+                className:
+                  "bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold",
+              })}
             >
               Get Started Today
-            </Button>
+            </Link>
           </div>
         </div>
       </section>

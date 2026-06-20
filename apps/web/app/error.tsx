@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, Home, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 export default function Error({
   error,
@@ -41,14 +41,17 @@ export default function Error({
                 <RefreshCw className="mr-2 size-4" />
                 Try Again
               </Button>
-              <Button
-                variant="outline"
-                render={<Link href="/" />}
-                className="h-11 rounded-lg border-gray-200 px-6 text-sm font-semibold text-[#0D2137] hover:bg-gray-50"
+              <Link
+                href="/"
+                className={buttonVariants({
+                  variant: "outline",
+                  className:
+                    "h-11 rounded-lg border-gray-200 px-6 text-sm font-semibold text-[#0D2137] hover:bg-gray-50",
+                })}
               >
                 <Home className="mr-2 size-4" />
                 Return Home
-              </Button>
+              </Link>
             </div>
 
             {error.digest && (
