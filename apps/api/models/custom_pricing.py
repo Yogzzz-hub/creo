@@ -46,9 +46,15 @@ class CustomPricing(Base):
 
     # Relationships
     user: Mapped["User"] = relationship(
-        "User", foreign_keys=[user_id], lazy="selectin"
+        "User", 
+        foreign_keys=[user_id], 
+        lazy="selectin",
+        overlaps="custom_pricing_requests"
     )
     plan: Mapped["Plan"] = relationship("Plan", back_populates="custom_pricing")
     approver: Mapped[Optional["User"]] = relationship(
-        "User", foreign_keys=[approved_by], lazy="selectin"
+        "User", 
+        foreign_keys=[approved_by], 
+        lazy="selectin",
+        overlaps="custom_pricing_approved"
     )

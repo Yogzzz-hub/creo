@@ -2,7 +2,6 @@ import logging
 from typing import Optional
 
 import resend
-from resend.exceptions import APIError
 
 from core.config import settings
 
@@ -54,17 +53,6 @@ async def send_email(
             response.get("id", "unknown"),
         )
         return response
-
-    except APIError as exc:
-        logger.error(
-            "Resend API error sending email to=%s: status=%s message=%s",
-            to_email,
-            exc.status_code,
-            exc.message,
-        )
-        raise RuntimeError(
-            f"Failed to send email to {to_email}: {exc.message}"
-        ) from exc
 
     except Exception as exc:
         logger.exception("Unexpected error sending email to=%s", to_email)
