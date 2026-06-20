@@ -172,69 +172,36 @@
 
 ## Phase 8: Admin Panel & KPI
 
-<<<<<<< HEAD
-- [ ] 8.1 Build admin panel layout — Deep Navy sidebar, admin-specific navigation
-- [ ] 8.2 Build Admin Dashboard — platform health overview
+- [x] 8.1 Build admin panel layout — Deep Navy sidebar, admin-specific navigation
+- [x] 8.2 Build Admin Dashboard — platform health overview
 - [x] 8.3 Create FastAPI endpoint GET /api/v1/admin/dashboard
-- [ ] 8.4 Build Client Management page — full list with search and filter
-- [ ] 8.5 Build Client Profile page — two-panel layout
+- [x] 8.4 Build Client Management page — full list with search and filter
+- [x] 8.5 Build Client Profile page — two-panel layout
 - [x] 8.6 Create FastAPI endpoints: GET /api/v1/admin/clients, GET /api/v1/admin/clients/{id}
-- [ ] 8.7 Build Team Management page — departments, employee list, daily cap
+- [x] 8.7 Build Team Management page — departments, employee list, daily cap
 - [x] 8.8 Create FastAPI endpoints: team CRUD
-- [ ] 8.9 Build Leave Approvals page — pending requests, approve/reject
+- [x] 8.9 Build Leave Approvals page — pending requests, approve/reject
 - [x] 8.10 Create FastAPI endpoints: leave approve/reject
-- [ ] 8.11 Build Escalations page — active and historical
+- [x] 8.11 Build Escalations page — active and historical
 - [x] 8.12 Create FastAPI endpoints: escalations CRUD
-- [ ] 8.13 Build Consolidated Calendar page — all client calendars
-- [ ] 8.14 Build Admin Reports page — weekly, monthly, financial with export
+- [x] 8.13 Build Consolidated Calendar page — all client calendars
+- [x] 8.14 Build Admin Reports page — weekly, monthly, financial with export
 - [x] 8.15 Write Celery task generate_weekly_report()
 - [x] 8.16 Write Celery task generate_monthly_report()
 - [x] 8.17 Write Celery task generate_financial_report()
 - [x] 8.18 Schedule Celery beat — weekly Monday 08:00, monthly 1st 08:00
 - [x] 8.19 Implement PDF export using ReportLab or WeasyPrint
 - [x] 8.20 Implement Excel export using openpyxl
-- [ ] 8.21 Build KPI Dashboard — live metric cards, delivery rate, capacity bars
+- [x] 8.21 Build KPI Dashboard — live metric cards, delivery rate, capacity bars
 - [x] 8.22 Create FastAPI endpoint GET /api/v1/admin/kpi
 - [x] 8.23 Implement KPI role filtering
-- [ ] 8.24 Build Announcements page — MoM, newsletter, general
+- [x] 8.24 Build Announcements page — MoM, newsletter, general
 - [x] 8.25 Create FastAPI endpoints: announcements CRUD
-- [ ] 8.26 Build Platform Settings page — pricing editors, SLA thresholds
+- [x] 8.26 Build Platform Settings page — pricing editors, SLA thresholds
 - [x] 8.27 Create FastAPI endpoints: settings CRUD
 - [x] 8.28 Implement custom pricing approval flow
-- [ ] 8.29 Build Sales Admin section
-- [x] 8.30 Test admin panel end-to-end
-=======
-- [x] 8.1 Build admin panel layout — Deep Navy sidebar, admin-specific navigation
-- [x] 8.2 Build Admin Dashboard — platform health overview
-- [ ] 8.3 Create FastAPI endpoint GET /api/v1/admin/dashboard
-- [x] 8.4 Build Client Management page — full list with search and filter
-- [x] 8.5 Build Client Profile page — two-panel layout
-- [ ] 8.6 Create FastAPI endpoints: GET /api/v1/admin/clients, GET /api/v1/admin/clients/{id}
-- [x] 8.7 Build Team Management page — departments, employee list, daily cap
-- [ ] 8.8 Create FastAPI endpoints: team CRUD
-- [x] 8.9 Build Leave Approvals page — pending requests, approve/reject
-- [ ] 8.10 Create FastAPI endpoints: leave approve/reject
-- [x] 8.11 Build Escalations page — active and historical
-- [ ] 8.12 Create FastAPI endpoints: escalations CRUD
-- [x] 8.13 Build Consolidated Calendar page — all client calendars
-- [x] 8.14 Build Admin Reports page — weekly, monthly, financial with export
-- [ ] 8.15 Write Celery task generate_weekly_report()
-- [ ] 8.16 Write Celery task generate_monthly_report()
-- [ ] 8.17 Write Celery task generate_financial_report()
-- [ ] 8.18 Schedule Celery beat — weekly Monday 08:00, monthly 1st 08:00
-- [ ] 8.19 Implement PDF export using ReportLab or WeasyPrint
-- [ ] 8.20 Implement Excel export using openpyxl
-- [x] 8.21 Build KPI Dashboard — live metric cards, delivery rate, capacity bars
-- [ ] 8.22 Create FastAPI endpoint GET /api/v1/admin/kpi
-- [ ] 8.23 Implement KPI role filtering
-- [x] 8.24 Build Announcements page — MoM, newsletter, general
-- [ ] 8.25 Create FastAPI endpoints: announcements CRUD
-- [x] 8.26 Build Platform Settings page — pricing editors, SLA thresholds
-- [ ] 8.27 Create FastAPI endpoints: settings CRUD
-- [ ] 8.28 Implement custom pricing approval flow
 - [x] 8.29 Build Sales Admin section
 - [ ] 8.30 Test admin panel end-to-end
->>>>>>> test-yoga-merge
 
 ## Phase 9: Third-party Integrations
 
@@ -264,13 +231,13 @@
 - [x] 10.1 Add global error boundary in Next.js
 - [ ] 10.2 Add FastAPI global exception handler
 - [ ] 10.3 Implement rate limiting on auth endpoints
-- [ ] 10.4 Audit all API endpoints — role dependencies
+- [x] 10.4 Audit all API endpoints — role dependencies
 - [ ] 10.5 Add webhook signature validation tests
-- [ ] 10.6 Encrypt Instagram access tokens at rest
+- [x] 10.6 Encrypt Instagram access tokens at rest
 - [x] 10.7 Run Lighthouse audit on all public pages
 - [x] 10.8 Add TanStack Query caching strategy
 - [x] 10.9 Implement optimistic updates on approve/reject
-- [ ] 10.10 Write Pytest integration tests
+- [x] 10.10 Write Pytest integration tests
 - [x] 10.11 Write Playwright E2E tests
 - [ ] 10.12 Manual QA pass — all 7 user journeys
 - [ ] 10.13 Set up Vercel project
