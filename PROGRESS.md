@@ -99,17 +99,17 @@
 - [x] 5.4 Create FastAPI endpoint POST /api/v1/onboarding/accept-terms
 - [x] 5.5 Wire /onboarding/terms to 5.4 — on accept, updates DB and advances to payment step
 - [x] 5.6 Create FastAPI endpoint POST /api/v1/payments/create-subscription
-- [ ] 5.7 Build /onboarding/payment page — detects country, renders Razorpay or Stripe payment modal
+- [x] 5.7 Build /onboarding/payment page — detects country, renders Razorpay or Stripe payment modal
 - [x] 5.8 Implement Razorpay payment modal integration
 - [x] 5.9 Implement Stripe payment modal integration
 - [x] 5.10 Create FastAPI Razorpay webhook handler at /api/webhooks/razorpay
 - [x] 5.11 Create FastAPI Stripe webhook handler at /api/webhooks/stripe
-- [ ] 5.12 Build /onboarding/questionnaire page — 3-step form with step indicator
+- [x] 5.12 Build /onboarding/questionnaire page — 3-step form with step indicator
 - [x] 5.13 Create FastAPI endpoint POST /api/v1/questionnaire
 - [x] 5.14 Set up Celery app in workers/celery_app.py — connect to Redis broker
 - [x] 5.15 Write Celery task generate_ai_analysis() — calls OpenAI GPT-4o, stores result in DB
 - [x] 5.16 Write OpenAI prompt in services/ai_analysis.py
-- [ ] 5.17 Build /onboarding/complete page — confirmation message, animated progress indicator
+- [x] 5.17 Build /onboarding/complete page — confirmation message, animated progress indicator
 - [x] 5.18 Wire questionnaire submission — POST to 5.13, poll for AI completion
 - [x] 5.19 Add 'Not satisfied with pricing?' link on /onboarding/payment
 - [x] 5.20 Test complete onboarding flow end-to-end
@@ -134,7 +134,7 @@
 - [ ] 6.16 Implement plan upgrade/downgrade — proration calculation
 - [x] 6.17 Build Add-ons page — type cards, quantity selector, payment flow
 - [x] 6.18 Create FastAPI endpoints: GET /api/v1/addons/pricing, POST /api/v1/addons/purchase
-- [ ] 6.19 Implement add-on purchase — payment, task auto-creation on webhook
+- [x] 6.19 Implement add-on purchase — payment, task auto-creation on webhook
 - [x] 6.20 Build contextual upsell prompts
 - [x] 6.21 Build Support page — ticket list, new ticket form, ticket detail with chat thread
 - [x] 6.22 Create FastAPI endpoints: tickets CRUD + messages
@@ -207,11 +207,11 @@
 
 - [x] 9.1 Build Resend email service in services/email.py
 - [x] 9.2 Create React Email templates in apps/web/emails/
-- [ ] 9.3 Wire all notification trigger points to Resend
+- [x] 9.3 Wire all notification trigger points to Resend
 - [x] 9.4 Build MSG91 service in services/whatsapp.py
-- [ ] 9.5 Implement incomplete sign-up WhatsApp automation
-- [ ] 9.6 Submit WhatsApp message templates to Meta for approval
-- [ ] 9.7 Wire payment failure WhatsApp
+- [x] 9.5 Implement incomplete sign-up WhatsApp automation
+- [x] 9.6 Submit WhatsApp message templates to Meta for approval
+- [x] 9.7 Wire payment failure WhatsApp
 - [x] 9.8 Build Instagram publishing service in services/instagram.py
 - [x] 9.9 Create FastAPI endpoint POST /api/v1/deliverables/{id}/publish-instagram
 - [x] 9.10 Add 'Publish to Instagram' button on approved deliverables
@@ -229,8 +229,8 @@
 ## Phase 10: Hardening & Deployment
 
 - [x] 10.1 Add global error boundary in Next.js
-- [ ] 10.2 Add FastAPI global exception handler
-- [ ] 10.3 Implement rate limiting on auth endpoints
+- [x] 10.2 Add FastAPI global exception handler
+- [x] 10.3 Implement rate limiting on auth endpoints
 - [x] 10.4 Audit all API endpoints — role dependencies
 - [ ] 10.5 Add webhook signature validation tests
 - [x] 10.6 Encrypt Instagram access tokens at rest
