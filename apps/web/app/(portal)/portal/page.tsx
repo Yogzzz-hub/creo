@@ -1,11 +1,9 @@
-"use client"
-
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/server"
 import {
   FileImage,
   Film,
   Layers,
-
   MessageSquareWarning,
   CheckCircle2,
   Circle,
@@ -19,18 +17,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-const METRICS = [
-  { label: "Posters Delivered", value: 24, icon: FileImage, color: "#2B7BC4" },
-  { label: "Reels Delivered", value: 12, icon: Film, color: "#0EA5E9" },
-  { label: "Stories Delivered", value: 36, icon: Layers, color: "#6BAED6" },
-  { label: "Open Tickets", value: 2, icon: MessageSquareWarning, color: "#D97706" },
-]
+interface DashboardData {
+  pending_deliverable_count: number
+  open_ticket_count: number
+  ai_summary_line: string | null
+  onboarding_stage: number
+}
 
 const ONBOARDING_STEPS = [
-  { label: "Account Created", completed: true },
-  { label: "Payment", completed: true },
-  { label: "Content Plan Received", completed: false },
-  { label: "Plan Approved", completed: false },
+  { label: "Account Created", stage: 1 },
+  { label: "Terms Accepted", stage: 2 },
+  { label: "Payment Done", stage: 3 },
+  { label: "Active", stage: 4 },
 ]
 
 const QUICK_ACCESS = [
@@ -40,7 +38,41 @@ const QUICK_ACCESS = [
   { label: "Raise a Ticket", href: "/portal/support", icon: Ticket },
 ]
 
-export default function PortalDashboard() {
+async function getDashboardData(): Promise<DashboardData> {
+  const supabase = await createClient()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  const headers: Record<string, string> = {}
+  if (session?.access_token) {
+    headers["Authorization"] = `Bearer ${session.access_token}`
+  }
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/portal/dashboard`,
+    { cache: "no-store", headers }
+  )
+
+  if (!res.ok) {
+    return {
+      pending_deliverable_count: 0,
+      open_ticket_count: 0,
+      ai_summary_line: null,
+      onboarding_stage: 1,
+    }
+  }
+  return res.json()
+}
+
+export default async function PortalDashboard() {
+  const data = await getDashboardData()
+
+  const completedSteps = ONBOARDING_STEPS.filter(
+    (s) => s.stage <= data.onboarding_stage
+  ).length
+  const progressPercent = (completedSteps / ONBOARDING_STEPS.length) * 100
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
@@ -53,30 +85,61 @@ export default function PortalDashboard() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {METRICS.map((metric) => (
-          <Card
-            key={metric.label}
-            className="rounded-xl shadow-[var(--shadow-card)]"
-          >
-            <CardContent className="flex items-center gap-3 p-4">
-              <div
-                className="flex size-10 shrink-0 items-center justify-center rounded-lg"
-                style={{ backgroundColor: `${metric.color}15` }}
-              >
-                <metric.icon
-                  className="size-5"
-                  style={{ color: metric.color }}
-                />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-[#0D2137]">
-                  {metric.value}
-                </p>
-                <p className="text-xs text-gray-500">{metric.label}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <Card className="rounded-xl shadow-[var(--shadow-card)]">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#2B7BC4]/10">
+              <FileImage className="size-5 text-[#2B7BC4]" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-[#0D2137]">
+                {data.pending_deliverable_count}
+              </p>
+              <p className="text-xs text-gray-500">Pending Deliverables</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl shadow-[var(--shadow-card)]">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#0EA5E9]/10">
+              <MessageSquareWarning className="size-5 text-[#0EA5E9]" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-[#0D2137]">
+                {data.open_ticket_count}
+              </p>
+              <p className="text-xs text-gray-500">Open Tickets</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl shadow-[var(--shadow-card)]">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#6BAED6]/10">
+              <Layers className="size-5 text-[#6BAED6]" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-[#0D2137]">
+                {data.onboarding_stage >= 4 ? "Active" : `${data.onboarding_stage}/4`}
+              </p>
+              <p className="text-xs text-gray-500">Account Status</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl shadow-[var(--shadow-card)]">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#D97706]/10">
+              <Film className="size-5 text-[#D97706]" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-[#0D2137]">
+                {data.pending_deliverable_count > 0 ? "Review" : "All Clear"}
+              </p>
+              <p className="text-xs text-gray-500">Action Needed</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -91,8 +154,9 @@ export default function PortalDashboard() {
                   Brand Summary
                 </p>
                 <p className="mt-2 text-sm italic text-[#0D2137] leading-relaxed">
-                  &ldquo;Energetic voice, targeting gen-z fitness enthusiasts,
-                  focused on engagement.&rdquo;
+                  {data.ai_summary_line
+                    ? `\u201C${data.ai_summary_line}\u201D`
+                    : "\u201CYour brand analysis will appear here after onboarding.\u201D"}
                 </p>
                 <Link
                   href="/portal/account"
@@ -117,41 +181,44 @@ export default function PortalDashboard() {
               <div className="absolute left-0 top-3 h-0.5 w-full bg-gray-200">
                 <div
                   className="h-full bg-[#065F46] transition-all"
-                  style={{ width: "50%" }}
+                  style={{ width: `${progressPercent}%` }}
                 />
               </div>
 
-              {ONBOARDING_STEPS.map((step, index) => (
-                <div
-                  key={step.label}
-                  className="relative z-10 flex flex-col items-center"
-                >
+              {ONBOARDING_STEPS.map((step) => {
+                const completed = step.stage <= data.onboarding_stage
+                return (
                   <div
-                    className={cn(
-                      "flex size-6 items-center justify-center rounded-full border-2",
-                      step.completed
-                        ? "border-[#065F46] bg-[#065F46] text-white"
-                        : "border-gray-300 bg-white text-gray-400"
-                    )}
+                    key={step.label}
+                    className="relative z-10 flex flex-col items-center"
                   >
-                    {step.completed ? (
-                      <CheckCircle2 className="size-3.5" />
-                    ) : (
-                      <Circle className="size-3" />
-                    )}
+                    <div
+                      className={cn(
+                        "flex size-6 items-center justify-center rounded-full border-2",
+                        completed
+                          ? "border-[#065F46] bg-[#065F46] text-white"
+                          : "border-gray-300 bg-white text-gray-400"
+                      )}
+                    >
+                      {completed ? (
+                        <CheckCircle2 className="size-3.5" />
+                      ) : (
+                        <Circle className="size-3" />
+                      )}
+                    </div>
+                    <p
+                      className={cn(
+                        "mt-2 w-16 text-center text-[10px] leading-tight",
+                        completed
+                          ? "font-medium text-[#065F46]"
+                          : "text-gray-400"
+                      )}
+                    >
+                      {step.label}
+                    </p>
                   </div>
-                  <p
-                    className={cn(
-                      "mt-2 w-16 text-center text-[10px] leading-tight",
-                      step.completed
-                        ? "font-medium text-[#065F46]"
-                        : "text-gray-400"
-                    )}
-                  >
-                    {step.label}
-                  </p>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </CardContent>
         </Card>
@@ -164,23 +231,37 @@ export default function PortalDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-                <MessageSquareWarning className="size-5 shrink-0 text-amber-600" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-[#0D2137]">
-                    1 Deliverable awaiting approval
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    &ldquo;Instagram Reel — Gym Transformation&rdquo;
-                  </p>
+              {data.pending_deliverable_count > 0 ? (
+                <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                  <MessageSquareWarning className="size-5 shrink-0 text-amber-600" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-[#0D2137]">
+                      {data.pending_deliverable_count} Deliverable{data.pending_deliverable_count !== 1 ? "s" : ""} awaiting approval
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Review your latest content submissions.
+                    </p>
+                  </div>
+                  <Link href="/portal/deliverables">
+                    <Button variant="ghost" size="sm">
+                      Review
+                      <ArrowRight className="size-3" />
+                    </Button>
+                  </Link>
                 </div>
-                <Link href="/portal/deliverables">
-                  <Button variant="ghost" size="sm">
-                    Review
-                    <ArrowRight className="size-3" />
-                  </Button>
-                </Link>
-              </div>
+              ) : (
+                <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+                  <CheckCircle2 className="size-5 shrink-0 text-green-600" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-[#0D2137]">
+                      All caught up!
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      No pending deliverables to review.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

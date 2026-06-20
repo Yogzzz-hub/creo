@@ -119,16 +119,16 @@
 - [x] 6.1 Build client portal layout — left sidebar (desktop), bottom tab bar (mobile)
 - [x] 6.2 Build portal Dashboard — activity summary strip, brand summary card, onboarding tracker
 - [x] 6.3 Create FastAPI endpoint GET /api/v1/portal/dashboard
-- [ ] 6.4 Wire dashboard to 6.3 — all dashboard components populated from API
+- [x] 6.4 Wire dashboard to 6.3 — all dashboard components populated from API
 - [x] 6.5 Build Deliverables list page — card grid, filter bar, empty state
 - [x] 6.6 Build Deliverable detail page — image/video preview, approve/reject actions
 - [x] 6.7 Create FastAPI endpoints: GET /api/v1/deliverables, approve, reject
-- [ ] 6.8 Wire deliverables pages to API
+- [x] 6.8 Wire deliverables pages to API
 - [x] 6.9 Implement rejection flow — mandatory comment box, revision ticket created
 - [x] 6.10 Implement download — signed Supabase Storage URL
 - [x] 6.11 Build Content Calendar page — monthly grid + list view toggle
 - [x] 6.12 Create FastAPI endpoint GET /api/v1/calendar
-- [ ] 6.13 Wire calendar to API
+- [x] 6.13 Wire calendar to API
 - [x] 6.14 Build Payments page — current plan card, payment history, plan change buttons
 - [x] 6.15 Create FastAPI endpoints: GET /api/v1/payments/history, POST /api/v1/payments/change-plan
 - [ ] 6.16 Implement plan upgrade/downgrade — proration calculation
