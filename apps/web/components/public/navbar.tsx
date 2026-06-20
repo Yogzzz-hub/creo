@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Sheet,
   SheetTrigger,
@@ -68,12 +68,14 @@ export function Navbar() {
           >
             Log In
           </Link>
-          <Button
-            render={<Link href="/signup" />}
-            className="bg-brand text-white hover:bg-brand/90 rounded-lg px-5 h-9"
+          <Link
+            href="/signup"
+            className={buttonVariants({
+              className: "bg-brand text-white hover:bg-brand/90 rounded-lg px-5 h-9",
+            })}
           >
             Get Started
-          </Button>
+          </Link>
         </div>
 
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -115,12 +117,15 @@ export function Navbar() {
               >
                 Log In
               </SheetClose>
-              <Button
-                render={<Link href="/signup" />}
-                className="bg-brand text-white hover:bg-brand/90 rounded-lg w-full h-10"
+              <Link
+                href="/signup"
+                className={buttonVariants({
+                  className:
+                    "bg-brand text-white hover:bg-brand/90 rounded-lg w-full h-10",
+                })}
               >
                 Get Started
-              </Button>
+              </Link>
             </div>
           </SheetContent>
         </Sheet>
