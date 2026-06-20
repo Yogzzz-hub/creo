@@ -201,7 +201,7 @@
 - [x] 8.27 Create FastAPI endpoints: settings CRUD
 - [x] 8.28 Implement custom pricing approval flow
 - [x] 8.29 Build Sales Admin section
-- [ ] 8.30 Test admin panel end-to-end
+- [x] 8.30 Test admin panel end-to-end
 
 ## Phase 9: Third-party Integrations
 

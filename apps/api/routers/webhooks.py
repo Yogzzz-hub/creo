@@ -47,15 +47,31 @@ async def _activate_user_account(db: AsyncSession, user_id: str, subscription_id
 
 
 async def _mark_subscription_past_due(db: AsyncSession, subscription_id: str):
+    # Join User to get email, phone, and name for the notification
     result = await db.execute(
-        select(Subscription).where(Subscription.id == subscription_id)
+        select(Subscription, User)
+        .join(User, User.id == Subscription.user_id)
+        .where(Subscription.id == subscription_id)
     )
-    subscription = result.scalar_one_or_none()
+    row = result.first()
 
-    if subscription:
+    if row:
+        subscription, user = row
         subscription.status = "past_due"
         db.add(subscription)
         await db.commit()
+
+        # Trigger Celery Task
+        from workers.notification_tasks import notify_payment_failure
+        
+        first_name = user.full_name.split()[0] if user.full_name else "Valued Client"
+        
+        notify_payment_failure.delay(
+            email=user.email,
+            phone_number=user.phone,
+            first_name=first_name
+        )
+        logger.info(f"[Webhooks] Dispatched payment failure notification for user {user.id}")
 
 
 async def _find_subscription_by_user_id_and_status(

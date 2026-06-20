@@ -64,17 +64,35 @@ async def purchase_addon(
     unit_price = float(pricing.unit_price)
     total_price = unit_price * payload.quantity
 
+    # 1. Create the Addon receipt
     addon = Addon(
         user_id=current_user.id,
         deliverable_type=payload.deliverable_type,
         quantity=payload.quantity,
         unit_price=unit_price,
         total_price=total_price,
-        status=AddonStatus.pending,
+        status=AddonStatus.pending, # Assuming mock payment is immediate, we could set this to completed
         payment_id=f"mock_addon_pay_{uuid4().hex[:8]}",
     )
-
     db.add(addon)
+    await db.flush() # flush to get addon.id
+
+    # 2. Automatically generate the actual Tasks for the creative team
+    new_tasks = []
+    for _ in range(payload.quantity):
+        new_tasks.append(
+            Task(
+                client_id=current_user.id,
+                deliverable_type=payload.deliverable_type,
+                content_brief=payload.content_brief or f"Add-on Order: {payload.deliverable_type.value}",
+                status=TaskStatus.pending, # Your auto-assign worker will pick this up!
+                priority=2,
+                is_addon=True,
+                addon_id=addon.id,
+            )
+        )
+    db.add_all(new_tasks)
+    
     await db.commit()
     await db.refresh(addon)
 
