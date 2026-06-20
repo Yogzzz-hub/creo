@@ -17,8 +17,39 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Creo",
-  description: "Digital Marketing Agency Platform",
+  title: {
+    default: "Creo - Digital Marketing Agency Platform",
+    template: "%s | Creo",
+  },
+  description:
+    "Full-service digital marketing agency helping local businesses grow with weekly content, social media management, and performance marketing.",
+  metadataBase: new URL("https://www.getcreo.in"),
+  openGraph: {
+    title: "Creo - Digital Marketing Agency Platform",
+    description:
+      "Full-service digital marketing agency helping local businesses grow with weekly content, social media management, and performance marketing.",
+    url: "https://www.getcreo.in",
+    siteName: "Creo",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Creo - Digital Marketing Agency Platform",
+    description:
+      "Full-service digital marketing agency helping local businesses grow with weekly content, social media management, and performance marketing.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({
