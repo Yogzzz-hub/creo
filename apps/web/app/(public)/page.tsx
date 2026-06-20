@@ -10,7 +10,7 @@ import {
   ThumbsUp,
   Rocket,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const LOCAL_BUSINESS_SCHEMA = {
@@ -121,19 +121,25 @@ export default function HomePage() {
               </div>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-                <Button
-                  render={<Link href="/pricing#plans" />}
-                  className="bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold"
+                <Link
+                  href="/pricing#plans"
+                  className={buttonVariants({
+                    className:
+                      "bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold",
+                  })}
                 >
                   See Our Plans
-                </Button>
-                <Button
-                  variant="outline"
-                  render={<Link href="https://wa.me/" />}
-                  className="border-white/30 text-white hover:bg-white/10 rounded-lg h-12 px-8 text-base font-semibold"
+                </Link>
+                <Link
+                  href="https://wa.me/"
+                  className={buttonVariants({
+                    variant: "outline",
+                    className:
+                      "border-white/30 text-white hover:bg-white/10 rounded-lg h-12 px-8 text-base font-semibold",
+                  })}
                 >
                   Book a Call
-                </Button>
+                </Link>
               </div>
             </div>
 

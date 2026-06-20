@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Accordion,
   AccordionItem,
@@ -117,12 +117,15 @@ export default function FAQPage() {
             Join 50+ brands growing with Creo every week.
           </p>
           <div className="mt-8">
-            <Button
-              render={<Link href="/signup?plan=growth" />}
-              className="bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold"
+            <Link
+              href="/signup?plan=growth"
+              className={buttonVariants({
+                className:
+                  "bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold",
+              })}
             >
               Get Started Today
-            </Button>
+            </Link>
           </div>
         </div>
       </section>
