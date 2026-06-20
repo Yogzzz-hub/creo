@@ -6,6 +6,7 @@ from core.database import get_db
 from models.enums import AccountStatus, UserRole
 from models.user import User
 from schemas.auth import RegisterRequest, RegisterResponse
+from workers.notification_tasks import notify_incomplete_signup
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
@@ -42,6 +43,16 @@ async def register_user(
     db.add(user)
     await db.commit()
     await db.refresh(user)
+
+    # Schedule abandoned cart recovery WhatsApp for 1 hour (3600 seconds) from now.
+    # (If they complete onboarding before this, our Celery task or webhook should theoretically cancel/ignore it, 
+    # but for now, let's just get the trigger scheduled!)
+    if user.phone:
+        checkout_url = f"{settings.FRONTEND_URL}/onboarding/verify" # Assuming you add FRONTEND_URL to config
+        notify_incomplete_signup.apply_async(
+            args=[user.phone, user.full_name, checkout_url],
+            countdown=3600  
+        )
 
     return RegisterResponse(
         id=user.id,

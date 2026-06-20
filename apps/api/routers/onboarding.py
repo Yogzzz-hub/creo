@@ -33,6 +33,13 @@ async def pricing_help(
 ):
     from workers.notification_tasks import notify_sales_pricing_issue
 
-    notify_sales_pricing_issue.delay(current_user.id)
+    # Pass the required arguments to the Celery task
+    plan_name = current_user.plan_name.value if current_user.plan_name else "Unknown Plan"
+    
+    notify_sales_pricing_issue.delay(
+        str(current_user.id), 
+        current_user.full_name, 
+        plan_name
+    )
 
     return {"status": "success", "message": "Sales team notified"}
