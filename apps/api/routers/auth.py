@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
+from core.exceptions import limiter  
 from models.enums import AccountStatus, UserRole
 from models.user import User
 from schemas.auth import RegisterRequest, RegisterResponse
@@ -10,9 +11,10 @@ from workers.notification_tasks import notify_incomplete_signup
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
-
 @router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")  
 async def register_user(
+    request: Request,
     payload: RegisterRequest,
     db: AsyncSession = Depends(get_db),
 ):
@@ -45,10 +47,9 @@ async def register_user(
     await db.refresh(user)
 
     # Schedule abandoned cart recovery WhatsApp for 1 hour (3600 seconds) from now.
-    # (If they complete onboarding before this, our Celery task or webhook should theoretically cancel/ignore it, 
-    # but for now, let's just get the trigger scheduled!)
     if user.phone:
-        checkout_url = f"{settings.FRONTEND_URL}/onboarding/verify" # Assuming you add FRONTEND_URL to config
+        from core.config import settings
+        checkout_url = f"{settings.FRONTEND_URL}/onboarding/verify" if hasattr(settings, 'FRONTEND_URL') else "https://creo.app/onboarding/verify"
         notify_incomplete_signup.apply_async(
             args=[user.phone, user.full_name, checkout_url],
             countdown=3600  
