@@ -31,12 +31,15 @@ from routers.admin_settings import router as admin_settings_router
 from routers.admin_kpi import router as admin_kpi_router
 from routers.admin_sales import router as admin_sales_router
 from routers.webhooks import router as webhooks_router
+from core.exceptions import setup_global_middleware_and_exceptions
 
 app = FastAPI(
     title="Creo API",
     description="Digital Marketing Agency Platform — Backend API",
-    version="0.1.0",
+    version="1.0.0",
 )
+
+setup_global_middleware_and_exceptions(app)
 
 app.add_middleware(
     CORSMiddleware,
