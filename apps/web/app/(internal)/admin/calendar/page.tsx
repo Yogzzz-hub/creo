@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import {
   Select,
   SelectContent,
@@ -8,88 +8,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { adminFetch } from "@/lib/admin-api"
 
-const CLIENTS = [
-  { id: "all", name: "All Clients" },
-  { id: "1", name: "Brew & Bloom Cafe" },
-  { id: "2", name: "TechNova Solutions" },
-  { id: "3", name: "FreshCart" },
-  { id: "4", name: "StyleHaus" },
-  { id: "5", name: "Urban Eats" },
-]
-
-const TEAM_MEMBERS = [
-  { id: "all", name: "All Team Members" },
-  { id: "1", name: "Priya Sharma" },
-  { id: "2", name: "Rahul Mehta" },
-  { id: "3", name: "Ananya Kumar" },
-  { id: "4", name: "Vikram Desai" },
-  { id: "5", name: "Neha Gupta" },
-]
-
-const CLIENT_COLORS: Record<string, string> = {
-  "1": "border-l-rose-400 bg-rose-50 text-rose-800",
-  "2": "border-l-blue-400 bg-blue-50 text-blue-800",
-  "3": "border-l-emerald-400 bg-emerald-50 text-emerald-800",
-  "4": "border-l-violet-400 bg-violet-50 text-violet-800",
-  "5": "border-l-amber-400 bg-amber-50 text-amber-800",
+interface CalendarEntry {
+  id: string
+  client_id: string
+  scheduled_date: string
+  deliverable_type: string
+  content_topic: string | null
+  status: string
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  Poster: "border-l-rose-400 bg-rose-50 text-rose-800",
-  Reel: "border-l-blue-400 bg-blue-50 text-blue-800",
-  Carousel: "border-l-emerald-400 bg-emerald-50 text-emerald-800",
-  Story: "border-l-violet-400 bg-violet-50 text-violet-800",
-  Blog: "border-l-amber-400 bg-amber-50 text-amber-800",
-  Ad: "border-l-pink-400 bg-pink-50 text-pink-800",
+  poster: "border-l-rose-400 bg-rose-50 text-rose-800",
+  reel: "border-l-blue-400 bg-blue-50 text-blue-800",
+  carousel: "border-l-emerald-400 bg-emerald-50 text-emerald-800",
+  story: "border-l-violet-400 bg-violet-50 text-violet-800",
+  blog: "border-l-amber-400 bg-amber-50 text-amber-800",
+  ad: "border-l-pink-400 bg-pink-50 text-pink-800",
 }
 
-interface CalendarEvent {
-  day: number
-  clientId: string
-  clientName: string
-  type: string
-  assignee: string
-}
-
-const MOCK_EVENTS: CalendarEvent[] = [
-  { day: 2, clientId: "1", clientName: "B&B", type: "Poster", assignee: "Priya S." },
-  { day: 2, clientId: "2", clientName: "TN", type: "Blog", assignee: "Ananya K." },
-  { day: 3, clientId: "3", clientName: "FC", type: "Reel", assignee: "Rahul M." },
-  { day: 4, clientId: "1", clientName: "B&B", type: "Story", assignee: "Neha G." },
-  { day: 5, clientId: "4", clientName: "SH", type: "Carousel", assignee: "Priya S." },
-  { day: 5, clientId: "5", clientName: "UE", type: "Poster", assignee: "Vikram D." },
-  { day: 6, clientId: "2", clientName: "TN", type: "Ad", assignee: "Ananya K." },
-  { day: 7, clientId: "3", clientName: "FC", type: "Poster", assignee: "Priya S." },
-  { day: 9, clientId: "1", clientName: "B&B", type: "Reel", assignee: "Rahul M." },
-  { day: 9, clientId: "5", clientName: "UE", type: "Carousel", assignee: "Neha G." },
-  { day: 10, clientId: "4", clientName: "SH", type: "Story", assignee: "Neha G." },
-  { day: 10, clientId: "2", clientName: "TN", type: "Poster", assignee: "Priya S." },
-  { day: 11, clientId: "3", clientName: "FC", type: "Blog", assignee: "Ananya K." },
-  { day: 12, clientId: "1", clientName: "B&B", type: "Poster", assignee: "Priya S." },
-  { day: 12, clientId: "5", clientName: "UE", type: "Reel", assignee: "Rahul M." },
-  { day: 13, clientId: "4", clientName: "SH", type: "Ad", assignee: "Ananya K." },
-  { day: 14, clientId: "2", clientName: "TN", type: "Reel", assignee: "Rahul M." },
-  { day: 16, clientId: "1", clientName: "B&B", type: "Carousel", assignee: "Priya S." },
-  { day: 16, clientId: "3", clientName: "FC", type: "Poster", assignee: "Neha G." },
-  { day: 17, clientId: "5", clientName: "UE", type: "Story", assignee: "Neha G." },
-  { day: 18, clientId: "4", clientName: "SH", type: "Reel", assignee: "Rahul M." },
-  { day: 19, clientId: "2", clientName: "TN", type: "Carousel", assignee: "Ananya K." },
-  { day: 19, clientId: "1", clientName: "B&B", type: "Ad", assignee: "Priya S." },
-  { day: 20, clientId: "3", clientName: "FC", type: "Reel", assignee: "Rahul M." },
-  { day: 23, clientId: "1", clientName: "B&B", type: "Poster", assignee: "Priya S." },
-  { day: 23, clientId: "5", clientName: "UE", type: "Blog", assignee: "Ananya K." },
-  { day: 24, clientId: "4", clientName: "SH", type: "Poster", assignee: "Neha G." },
-  { day: 25, clientId: "2", clientName: "TN", type: "Ad", assignee: "Ananya K." },
-  { day: 25, clientId: "3", clientName: "FC", type: "Story", assignee: "Neha G." },
-  { day: 26, clientId: "1", clientName: "B&B", type: "Reel", assignee: "Rahul M." },
-  { day: 27, clientId: "5", clientName: "UE", type: "Poster", assignee: "Priya S." },
-  { day: 28, clientId: "4", clientName: "SH", type: "Carousel", assignee: "Ananya K." },
-  { day: 28, clientId: "2", clientName: "TN", type: "Blog", assignee: "Ananya K." },
-  { day: 29, clientId: "3", clientName: "FC", type: "Reel", assignee: "Rahul M." },
-  { day: 30, clientId: "1", clientName: "B&B", type: "Story", assignee: "Neha G." },
+const CLIENT_COLORS = [
+  "border-l-rose-400 bg-rose-50 text-rose-800",
+  "border-l-blue-400 bg-blue-50 text-blue-800",
+  "border-l-emerald-400 bg-emerald-50 text-emerald-800",
+  "border-l-violet-400 bg-violet-50 text-violet-800",
+  "border-l-amber-400 bg-amber-50 text-amber-800",
 ]
 
 function getDaysInMonth(year: number, month: number) {
@@ -109,20 +55,36 @@ const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 export default function AdminCalendarPage() {
   const [clientFilter, setClientFilter] = useState("all")
-  const [teamFilter, setTeamFilter] = useState("all")
-  const [currentMonth, setCurrentMonth] = useState(5)
-  const [currentYear, setCurrentYear] = useState(2026)
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth())
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear())
+  const [events, setEvents] = useState<CalendarEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchCalendar = useCallback(() => {
+    setLoading(true)
+    setError(null)
+    adminFetch<CalendarEntry[]>("/api/v1/admin/calendar")
+      .then(setEvents)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    fetchCalendar()
+  }, [fetchCalendar])
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth)
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth)
 
-  const filteredEvents = MOCK_EVENTS.filter((ev) => {
-    const matchesClient =
-      clientFilter === "all" || ev.clientId === clientFilter
-    const matchesTeam =
-      teamFilter === "all" || ev.assignee === TEAM_MEMBERS.find((t) => t.id === teamFilter)?.name
-    return matchesClient && matchesTeam
+  const filteredEvents = events.filter((ev) => {
+    const d = new Date(ev.scheduled_date)
+    const matchesMonth = d.getMonth() === currentMonth && d.getFullYear() === currentYear
+    const matchesClient = clientFilter === "all" || ev.client_id === clientFilter
+    return matchesMonth && matchesClient
   })
+
+  const uniqueClients = [...new Set(events.map((e) => e.client_id))]
 
   function prevMonth() {
     if (currentMonth === 0) {
@@ -146,8 +108,8 @@ export default function AdminCalendarPage() {
   for (let i = 0; i < firstDay; i++) calendarDays.push(null)
   for (let d = 1; d <= daysInMonth; d++) calendarDays.push(d)
 
-  const today = 17
-  const isJune = currentMonth === 5 && currentYear === 2026
+  const today = new Date()
+  const isCurrentMonth = currentMonth === today.getMonth() && currentYear === today.getFullYear()
 
   return (
     <div className="space-y-6">
@@ -169,24 +131,10 @@ export default function AdminCalendarPage() {
               <SelectValue placeholder="Client Filter" />
             </SelectTrigger>
             <SelectContent>
-              {CLIENTS.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={teamFilter}
-            onValueChange={(v) => setTeamFilter(v ?? "all")}
-          >
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Team Member" />
-            </SelectTrigger>
-            <SelectContent>
-              {TEAM_MEMBERS.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.name}
+              <SelectItem value="all">All Clients</SelectItem>
+              {uniqueClients.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c.slice(0, 8)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -194,75 +142,91 @@ export default function AdminCalendarPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-white p-4">
-        <div className="mb-4 flex items-center justify-between">
-          <Button variant="ghost" size="icon-sm" onClick={prevMonth}>
-            <ChevronLeft className="size-4" />
-          </Button>
-          <h2 className="text-base font-semibold text-[#0D2137]">
-            {MONTH_NAMES[currentMonth]} {currentYear}
-          </h2>
-          <Button variant="ghost" size="icon-sm" onClick={nextMonth}>
-            <ChevronRight className="size-4" />
-          </Button>
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
+      ) : error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      ) : (
+        <div className="rounded-lg border bg-white p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <Button variant="ghost" size="icon-sm" onClick={prevMonth}>
+              <ChevronLeft className="size-4" />
+            </Button>
+            <h2 className="text-base font-semibold text-[#0D2137]">
+              {MONTH_NAMES[currentMonth]} {currentYear}
+            </h2>
+            <Button variant="ghost" size="icon-sm" onClick={nextMonth}>
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
 
-        <div className="grid grid-cols-7 gap-px rounded-lg border bg-border">
-          {DAY_NAMES.map((day) => (
-            <div
-              key={day}
-              className="bg-[#F9FAFB] px-2 py-2 text-center text-xs font-semibold uppercase text-muted-foreground"
-            >
-              {day}
-            </div>
-          ))}
-
-          {calendarDays.map((day, idx) => {
-            if (day === null) {
-              return (
-                <div key={`empty-${idx}`} className="min-h-[100px] bg-white" />
-              )
-            }
-
-            const dayEvents = filteredEvents.filter((ev) => ev.day === day)
-            const isToday = isJune && day === today
-
-            return (
+          <div className="grid grid-cols-7 gap-px rounded-lg border bg-border">
+            {DAY_NAMES.map((day) => (
               <div
                 key={day}
-                className={`min-h-[100px] bg-white p-1.5 ${
-                  isToday ? "ring-2 ring-inset ring-[#2B7BC4]" : ""
-                }`}
+                className="bg-[#F9FAFB] px-2 py-2 text-center text-xs font-semibold uppercase text-muted-foreground"
               >
-                <span
-                  className={`mb-1 inline-flex size-6 items-center justify-center rounded-full text-xs font-medium ${
-                    isToday
-                      ? "bg-[#2B7BC4] text-white"
-                      : "text-[#0D2137]"
+                {day}
+              </div>
+            ))}
+
+            {calendarDays.map((day, idx) => {
+              if (day === null) {
+                return (
+                  <div key={`empty-${idx}`} className="min-h-[100px] bg-white" />
+                )
+              }
+
+              const dayEvents = filteredEvents.filter((ev) => {
+                const d = new Date(ev.scheduled_date)
+                return d.getDate() === day
+              })
+              const isToday = isCurrentMonth && day === today.getDate()
+
+              return (
+                <div
+                  key={day}
+                  className={`min-h-[100px] bg-white p-1.5 ${
+                    isToday ? "ring-2 ring-inset ring-[#2B7BC4]" : ""
                   }`}
                 >
-                  {day}
-                </span>
-                <div className="space-y-0.5">
-                  {dayEvents.map((ev, evIdx) => {
-                    const colorClass = TYPE_COLORS[ev.type] || CLIENT_COLORS[ev.clientId] || "border-l-gray-400 bg-gray-50 text-gray-800"
-                    return (
-                      <div
-                        key={evIdx}
-                        className={`border-l-2 rounded-r px-1 py-0.5 text-[10px] leading-tight font-medium ${colorClass}`}
-                        title={`${ev.clientName} — ${ev.type} (${ev.assignee})`}
-                      >
-                        <span className="hidden xl:inline">{ev.clientName} </span>
-                        {ev.type}
-                      </div>
-                    )
-                  })}
+                  <span
+                    className={`mb-1 inline-flex size-6 items-center justify-center rounded-full text-xs font-medium ${
+                      isToday
+                        ? "bg-[#2B7BC4] text-white"
+                        : "text-[#0D2137]"
+                    }`}
+                  >
+                    {day}
+                  </span>
+                  <div className="space-y-0.5">
+                    {dayEvents.map((ev, evIdx) => {
+                      const colorClass =
+                        TYPE_COLORS[ev.deliverable_type] ||
+                        CLIENT_COLORS[ev.client_id.charCodeAt(0) % CLIENT_COLORS.length] ||
+                        "border-l-gray-400 bg-gray-50 text-gray-800"
+                      return (
+                        <div
+                          key={evIdx}
+                          className={`border-l-2 rounded-r px-1 py-0.5 text-[10px] leading-tight font-medium ${colorClass}`}
+                          title={`${ev.client_id.slice(0, 8)} — ${ev.deliverable_type}`}
+                        >
+                          <span className="hidden xl:inline">{ev.client_id.slice(0, 4)} </span>
+                          {ev.deliverable_type}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

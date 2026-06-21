@@ -1,38 +1,39 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Save } from "lucide-react"
+import { Save, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { adminFetch } from "@/lib/admin-api"
 
-interface SettingRow {
-  label: string
-  value: string
+interface PlatformSettings {
+  id: string
+  sla_delivery_days: number
+  sla_revision_hours: number
+  updated_at: string | null
 }
 
 function EditableSettingRow({
   label,
   value,
   onSave,
+  saving,
 }: {
   label: string
   value: string
   onSave: (val: string) => void
+  saving: boolean
 }) {
   const [local, setLocal] = useState(value)
   const [dirty, setDirty] = useState(false)
+
+  useEffect(() => {
+    setLocal(value)
+  }, [value])
 
   return (
     <div className="flex items-center gap-3">
@@ -51,15 +52,17 @@ function EditableSettingRow({
         <Button
           variant="ghost"
           size="sm"
+          disabled={saving}
           onClick={() => {
             onSave(local)
             setDirty(false)
-            toast.success("Setting saved", {
-              description: `${label} updated to "${local}"`,
-            })
           }}
         >
-          <Save className="size-3.5" />
+          {saving ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Save className="size-3.5" />
+          )}
           Save
         </Button>
       )}
@@ -67,41 +70,52 @@ function EditableSettingRow({
   )
 }
 
-const INITIAL_PRICING: SettingRow[] = [
-  { label: "Starter — Monthly Price", value: "₹7,999" },
-  { label: "Growth — Monthly Price", value: "₹14,999" },
-  { label: "Pro — Monthly Price", value: "₹29,999" },
-]
-
-const INITIAL_ADDON_PRICING: SettingRow[] = [
-  { label: "Poster — Add-on Price", value: "₹1,500" },
-  { label: "Reel — Add-on Price", value: "₹2,500" },
-  { label: "Story — Add-on Price", value: "₹1,000" },
-]
-
-const INITIAL_SLA: SettingRow[] = [
-  { label: "Standard Delivery Time", value: "3 days" },
-  { label: "Revision Turnaround", value: "24 hours" },
-]
-
-const INITIAL_MISC: SettingRow[] = [
-  { label: "Scarcity Counter (Public Page)", value: "5 slots remaining" },
-]
-
 export default function SettingsPage() {
-  const [pricing, setPricing] = useState(INITIAL_PRICING)
-  const [addonPricing, setAddonPricing] = useState(INITIAL_ADDON_PRICING)
-  const [sla, setSla] = useState(INITIAL_SLA)
-  const [misc, setMisc] = useState(INITIAL_MISC)
+  const [settings, setSettings] = useState<PlatformSettings | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
-  function updateRow(
-    setter: React.Dispatch<React.SetStateAction<SettingRow[]>>,
-    idx: number,
-    newVal: string
-  ) {
-    setter((prev) =>
-      prev.map((r, i) => (i === idx ? { ...r, value: newVal } : r))
-    )
+  const fetchSettings = useCallback(() => {
+    setLoading(true)
+    setError(null)
+    adminFetch<PlatformSettings>("/api/v1/admin/settings")
+      .then(setSettings)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    fetchSettings()
+  }, [fetchSettings])
+
+  async function handleSave(field: string, value: string) {
+    setSaving(true)
+    try {
+      const numValue = parseInt(value.replace(/\D/g, ""), 10)
+      if (isNaN(numValue)) {
+        toast.error("Invalid number")
+        return
+      }
+      const payload: Record<string, number> = {}
+      if (field === "sla_delivery_days") payload.sla_delivery_days = numValue
+      if (field === "sla_revision_hours") payload.sla_revision_hours = numValue
+
+      const updated = await adminFetch<PlatformSettings>("/api/v1/admin/settings", {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      })
+      setSettings(updated)
+      toast.success("Setting saved", {
+        description: `${field.replace(/_/g, " ")} updated to ${value}`,
+      })
+    } catch (err) {
+      toast.error("Failed to save", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      })
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -111,100 +125,51 @@ export default function SettingsPage() {
           Platform Settings
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage pricing, SLAs, and platform configuration
+          Manage SLAs and platform configuration
         </p>
       </div>
 
-      <Tabs defaultValue="pricing">
-        <TabsList variant="line">
-          <TabsTrigger value="pricing">Pricing & Plans</TabsTrigger>
-          <TabsTrigger value="sla">System SLAs</TabsTrigger>
-        </TabsList>
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      ) : (
+        <Tabs defaultValue="sla">
+          <TabsList variant="line">
+            <TabsTrigger value="sla">System SLAs</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="pricing" className="mt-6 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-semibold text-[#0D2137]">
-                Subscription Plans
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {pricing.map((row, idx) => (
+          <TabsContent value="sla" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-semibold text-[#0D2137]">
+                  Service Level Agreements
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
                   <EditableSettingRow
-                    key={idx}
-                    label={row.label}
-                    value={row.value}
-                    onSave={(v) => updateRow(setPricing, idx, v)}
+                    label="Standard Delivery Time (days)"
+                    value={String(settings?.sla_delivery_days ?? 3)}
+                    onSave={(v) => handleSave("sla_delivery_days", v)}
+                    saving={saving}
                   />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-semibold text-[#0D2137]">
-                Add-on Pricing
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {addonPricing.map((row, idx) => (
                   <EditableSettingRow
-                    key={idx}
-                    label={row.label}
-                    value={row.value}
-                    onSave={(v) => updateRow(setAddonPricing, idx, v)}
+                    label="Revision Turnaround (hours)"
+                    value={String(settings?.sla_revision_hours ?? 48)}
+                    onSave={(v) => handleSave("sla_revision_hours", v)}
+                    saving={saving}
                   />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-semibold text-[#0D2137]">
-                Public Page Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {misc.map((row, idx) => (
-                  <EditableSettingRow
-                    key={idx}
-                    label={row.label}
-                    value={row.value}
-                    onSave={(v) => updateRow(setMisc, idx, v)}
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="sla" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-semibold text-[#0D2137]">
-                Service Level Agreements
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {sla.map((row, idx) => (
-                  <EditableSettingRow
-                    key={idx}
-                    label={row.label}
-                    value={row.value}
-                    onSave={(v) => updateRow(setSla, idx, v)}
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   )
 }

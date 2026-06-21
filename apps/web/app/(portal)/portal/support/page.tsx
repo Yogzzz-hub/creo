@@ -37,8 +37,8 @@ import {
 } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 
-type TicketType = "revision" | "billing" | "general"
-type TicketStatus = "open" | "resolved"
+type TicketType = "deliverable_revision" | "billing_issue" | "general_support" | "content_brief_update"
+type TicketStatus = "open" | "in_progress" | "awaiting_client" | "resolved" | "escalated"
 
 interface Ticket {
   id: string
@@ -49,17 +49,21 @@ interface Ticket {
 }
 
 const TYPE_CONFIG: Record<TicketType, { label: string; className: string }> = {
-  revision: {
+  deliverable_revision: {
     label: "Revision",
     className: "bg-purple-100 text-purple-700 border-purple-200",
   },
-  billing: {
+  billing_issue: {
     label: "Billing",
     className: "bg-amber-100 text-amber-700 border-amber-200",
   },
-  general: {
+  general_support: {
     label: "General",
     className: "bg-sky-100 text-sky-700 border-sky-200",
+  },
+  content_brief_update: {
+    label: "Brief Update",
+    className: "bg-orange-100 text-orange-700 border-orange-200",
   },
 }
 
@@ -72,9 +76,24 @@ const STATUS_CONFIG: Record<
     className: "bg-emerald-100 text-emerald-700 border-emerald-200",
     icon: Clock,
   },
+  in_progress: {
+    label: "In Progress",
+    className: "bg-blue-100 text-blue-700 border-blue-200",
+    icon: Clock,
+  },
+  awaiting_client: {
+    label: "Awaiting Client",
+    className: "bg-amber-100 text-amber-700 border-amber-200",
+    icon: Clock,
+  },
   resolved: {
     label: "Resolved",
     className: "bg-gray-100 text-gray-600 border-gray-200",
+    icon: CheckCircle2,
+  },
+  escalated: {
+    label: "Escalated",
+    className: "bg-red-100 text-red-700 border-red-200",
     icon: CheckCircle2,
   },
 }
@@ -90,8 +109,13 @@ function formatDateTime(dateString: string): string {
 }
 
 function mapTicketType(t: string): TicketType {
-  if (t === "revision" || t === "billing" || t === "general") return t
-  return "general"
+  if (
+    t === "deliverable_revision" ||
+    t === "billing_issue" ||
+    t === "general_support" ||
+    t === "content_brief_update"
+  ) return t
+  return "general_support"
 }
 
 function mapTicketStatus(s: string): TicketStatus {
@@ -104,7 +128,7 @@ export default function SupportPage() {
   const [loading, setLoading] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [ticketType, setTicketType] = useState<string>("general")
+  const [ticketType, setTicketType] = useState<string>("general_support")
   const [subject, setSubject] = useState("")
   const [description, setDescription] = useState("")
 
@@ -217,7 +241,7 @@ export default function SupportPage() {
       ])
 
       setDrawerOpen(false)
-      setTicketType("general")
+      setTicketType("general_support")
       setSubject("")
       setDescription("")
       toast.success("Ticket raised successfully. Our team will respond shortly.")
@@ -344,14 +368,15 @@ export default function SupportPage() {
               <Label>
                 Type <span className="text-red-500">*</span>
               </Label>
-              <Select value={ticketType} onValueChange={(v) => setTicketType(v ?? "general")}>
+              <Select value={ticketType} onValueChange={(v) => setTicketType(v ?? "general_support")}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="revision">Revision</SelectItem>
-                  <SelectItem value="billing">Billing</SelectItem>
-                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="deliverable_revision">Revision</SelectItem>
+                  <SelectItem value="billing_issue">Billing</SelectItem>
+                  <SelectItem value="general_support">General</SelectItem>
+                  <SelectItem value="content_brief_update">Brief Update</SelectItem>
                 </SelectContent>
               </Select>
             </div>

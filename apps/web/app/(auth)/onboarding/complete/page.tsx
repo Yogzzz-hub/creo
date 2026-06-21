@@ -64,9 +64,9 @@ export default function CompletePage() {
       const data = await res.json();
 
       // Check if the backend worker has finished
-      if (data.status === "completed" || data.ai_summary_line) {
+      if (data.status === "completed" || data.summary_line) {
         if (intervalRef.current) clearInterval(intervalRef.current);
-        setSummaryLine(data.ai_summary_line || "Your brand profile has been optimized.");
+        setSummaryLine(data.summary_line || "Your brand profile has been optimized.");
         setPhase("success");
       }
     } catch (error) {
