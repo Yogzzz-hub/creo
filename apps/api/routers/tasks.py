@@ -19,7 +19,6 @@ from schemas.task import (
     ClientInfo,
     TaskAssignmentApproveRequest,
     TaskDetailResponse,
-    TaskListResponse,
     TaskOut,
     TaskResponse,
     TaskStatusUpdate,

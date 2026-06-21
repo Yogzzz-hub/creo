@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const SESSION_KEY = "creo_exit_intent_shown";
@@ -93,19 +93,27 @@ export function ExitIntentPopup() {
         </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Button
-            render={<Link href="/portfolio" onClick={dismiss} />}
-            className="flex-1 bg-brand text-white hover:bg-brand/90 rounded-lg h-11 px-6"
+          <Link
+            href="/portfolio"
+            onClick={dismiss}
+            className={buttonVariants({
+              className:
+                "flex-1 bg-brand text-white hover:bg-brand/90 rounded-lg h-11 px-6",
+            })}
           >
             View Our Work
-          </Button>
-          <Button
-            variant="ghost"
-            render={<Link href="/contact" onClick={dismiss} />}
-            className="flex-1 rounded-lg h-11 px-6 text-brand border border-border hover:bg-brand-light"
+          </Link>
+          <Link
+            href="/contact"
+            onClick={dismiss}
+            className={buttonVariants({
+              variant: "ghost",
+              className:
+                "flex-1 rounded-lg h-11 px-6 text-brand border border-border hover:bg-brand-light",
+            })}
           >
             Book a Free Call
-          </Button>
+          </Link>
         </div>
       </div>
     </div>

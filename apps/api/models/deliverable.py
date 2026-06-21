@@ -68,13 +68,19 @@ class Deliverable(Base):
         "Deliverable", remote_side="Deliverable.id", lazy="selectin"
     )
     revisions: Mapped[list["Deliverable"]] = relationship(
-        "Deliverable", remote_side="Deliverable.parent_deliverable_id", lazy="selectin"
+        "Deliverable", 
+        remote_side="Deliverable.parent_deliverable_id", 
+        lazy="selectin",
+        overlaps="parent_deliverable"
     )
     comments: Mapped[list["DeliverableComment"]] = relationship(
         "DeliverableComment", back_populates="deliverable", lazy="selectin"
     )
     calendar_entries: Mapped[list["ContentCalendar"]] = relationship(
-        "ContentCalendar", foreign_keys="ContentCalendar.linked_deliverable_id", lazy="selectin"
+        "ContentCalendar", 
+        foreign_keys="ContentCalendar.linked_deliverable_id", 
+        lazy="selectin",
+        overlaps="linked_deliverable"
     )
 
 

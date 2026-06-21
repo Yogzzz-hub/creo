@@ -25,47 +25,47 @@ from tests.conftest import (
 )
 
 
-test_app = FastAPI()
+mock_app = FastAPI()
 
 
 @pytest.mark.asyncio
-@test_app.get("/test/client", dependencies=[Depends(require_client)])
+@mock_app.get("/test/client", dependencies=[Depends(require_client)])
 async def test_client_endpoint():
     return {"role": "client"}
 
 
 @pytest.mark.asyncio
-@test_app.get("/test/team-member", dependencies=[Depends(require_team_member)])
+@mock_app.get("/test/team-member", dependencies=[Depends(require_team_member)])
 async def test_team_member_endpoint():
     return {"role": "team_member"}
 
 
 @pytest.mark.asyncio
-@test_app.get("/test/team-lead", dependencies=[Depends(require_team_lead)])
+@mock_app.get("/test/team-lead", dependencies=[Depends(require_team_lead)])
 async def test_team_lead_endpoint():
     return {"role": "team_lead"}
 
 
 @pytest.mark.asyncio
-@test_app.get("/test/sales", dependencies=[Depends(require_sales)])
+@mock_app.get("/test/sales", dependencies=[Depends(require_sales)])
 async def test_sales_endpoint():
     return {"role": "sales"}
 
 
 @pytest.mark.asyncio
-@test_app.get("/test/admin", dependencies=[Depends(require_admin)])
+@mock_app.get("/test/admin", dependencies=[Depends(require_admin)])
 async def test_admin_endpoint():
     return {"role": "admin"}
 
 
 @pytest.mark.asyncio
-@test_app.get("/test/super-admin", dependencies=[Depends(require_super_admin)])
+@mock_app.get("/test/super-admin", dependencies=[Depends(require_super_admin)])
 async def test_super_admin_endpoint():
     return {"role": "super_admin"}
 
 
 @pytest.mark.asyncio
-@test_app.get("/test/investor-relations", dependencies=[Depends(require_investor_relations)])
+@mock_app.get("/test/investor-relations", dependencies=[Depends(require_investor_relations)])
 async def test_investor_relations_endpoint():
     return {"role": "investor_relations"}
 
@@ -87,11 +87,11 @@ async def test_client(mock_db_session: AsyncMock):
     async def override_db():
         yield mock_db_session
 
-    test_app.dependency_overrides[get_db] = override_db
-    transport = ASGITransport(app=test_app)
+    mock_app.dependency_overrides[get_db] = override_db
+    transport = ASGITransport(app=mock_app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
-    test_app.dependency_overrides.pop(get_db, None)
+    mock_app.dependency_overrides.pop(get_db, None)
 
 
 class TestUnauthenticatedAccess:

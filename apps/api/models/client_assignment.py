@@ -45,5 +45,8 @@ class ClientAssignment(Base):
     )
     team_member: Mapped["TeamMember"] = relationship("TeamMember", lazy="selectin")
     assigned_by_user: Mapped[Optional["User"]] = relationship(
-        "User", foreign_keys=[assigned_by], lazy="selectin"
+        "User", 
+        foreign_keys=[assigned_by], 
+        lazy="selectin",
+        overlaps="assigned_by_assignments"
     )
