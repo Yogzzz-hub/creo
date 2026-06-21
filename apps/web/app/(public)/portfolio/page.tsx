@@ -192,7 +192,7 @@ export default function PortfolioPage() {
               className={buttonVariants({
                 variant: "outline",
                 className:
-                  "bg-blue-500 text-white hover:bg-blue-600 rounded-lg h-12 px-8 text-base font-semibold transition-colors",
+                  "bg-brand text-white hover:bg-brand/90 rounded-lg h-12 px-8 text-base font-semibold transition-colors",
               })}
             >
               Book a Call

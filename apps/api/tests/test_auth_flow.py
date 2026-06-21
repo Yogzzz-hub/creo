@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import pytest_asyncio
@@ -64,7 +64,8 @@ def _setup_successful_insert(mock_db_session: AsyncMock):
 
 class TestRegisterEndpoint:
     @pytest.mark.asyncio
-    async def test_register_creates_user_successfully(self, auth_client, mock_db_session):
+    @patch("routers.auth.notify_incomplete_signup.apply_async") # <-- Mock Celery here
+    async def test_register_creates_user_successfully(self, mock_celery, auth_client, mock_db_session):
         _setup_successful_insert(mock_db_session)
 
         response = await auth_client.post(
@@ -86,6 +87,7 @@ class TestRegisterEndpoint:
         assert data["account_status"] == "pending_verification"
         mock_db_session.add.assert_called_once()
         mock_db_session.commit.assert_called_once()
+        mock_celery.assert_called_once() # Verify the task was triggered
 
     @pytest.mark.asyncio
     async def test_register_minimal_fields(self, auth_client, mock_db_session):
@@ -180,7 +182,8 @@ class TestRegisterEndpoint:
         assert response.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_register_sets_correct_defaults(self, auth_client, mock_db_session):
+    @patch("routers.auth.notify_incomplete_signup.apply_async") # <-- Mock Celery here too!
+    async def test_register_sets_correct_defaults(self, mock_celery, auth_client, mock_db_session):
         _setup_successful_insert(mock_db_session)
 
         response = await auth_client.post(

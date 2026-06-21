@@ -9,7 +9,7 @@
 - [x] 1.5 Install and configure shadcn/ui — add Button, Card, Table, Dialog, Form, Input, Badge, Toast components
 - [x] 1.6 Set up Inter and JetBrains Mono fonts via Google Fonts in Next.js layout
 - [x] 1.7 Create shared packages/types/ with TypeScript interfaces for all major entities
-- [x] 1.8 Create .env.example at root with all variables listed in TRD Section 9
+- [ ] 1.8 Create .env.example at root with all variables listed in TRD Section 9
 - [x] 1.9 Set up GitHub repository with main and dev branches. Add .gitignore for both Next.js and Python
 - [ ] 1.10 Configure GitHub Actions CI workflow — runs Next.js build check and Python pytest on every push
 - [x] 1.11 Create docker-compose.yml for local development: PostgreSQL + Redis services
@@ -39,9 +39,9 @@
 - [x] 2.17 Write migration 016 — create escalations table
 - [x] 2.18 Write migration 017 — create announcements table
 - [x] 2.19 Write migration 018 — create custom_pricing table
-- [ ] 2.20 Write migration 021 — enable RLS on all tables and create all policies from Schema Section 6
-- [ ] 2.21 Write migration 022 — create updated_at auto-update trigger function and apply to all tables
-- [ ] 2.22 Write migration 023 — create all indexes listed in Schema Section 5
+- [x] 2.20 Write migration 021 — enable RLS on all tables and create all policies from Schema Section 6
+- [x] 2.21 Write migration 022 — create updated_at auto-update trigger function and apply to all tables
+- [x] 2.22 Write migration 023 — create all indexes listed in Schema Section 5
 - [x] 2.23 Run alembic upgrade head against Supabase — verify all tables created correctly in Supabase dashboard
 - [x] 2.24 Create SQLAlchemy async models in apps/api/models/ for every table — one file per table
 - [x] 2.25 Create Pydantic v2 schemas in apps/api/schemas/ for request and response types for all entities
@@ -68,7 +68,7 @@
 - [x] 3.17 Create /signup and /signup/plan pages — account creation and plan selection forms with validation
 - [x] 3.18 Wire sign-up form to Supabase Auth signUp() — creates auth user, then calls /api/v1/auth/register
 - [x] 3.19 Write Pytest tests for auth middleware — test each role accessing allowed and forbidden routes
-- [x] 3.20 Test full auth flow end-to-end: Google sign-in → role redirect → logout → OTP sign-in → role redirect
+- [ ] 3.20 Test full auth flow end-to-end: Google sign-in → role redirect → logout → OTP sign-in → role redirect
 
 ## Phase 4: Public Website
 
@@ -100,8 +100,8 @@
 - [x] 5.5 Wire /onboarding/terms to 5.4 — on accept, updates DB and advances to payment step
 - [x] 5.6 Create FastAPI endpoint POST /api/v1/payments/create-subscription
 - [x] 5.7 Build /onboarding/payment page — detects country, renders Razorpay or Stripe payment modal
-- [x] 5.8 Implement Razorpay payment modal integration
-- [x] 5.9 Implement Stripe payment modal integration
+- [ ] 5.8 Implement Razorpay payment modal integration
+- [ ] 5.9 Implement Stripe payment modal integration
 - [x] 5.10 Create FastAPI Razorpay webhook handler at /api/webhooks/razorpay
 - [x] 5.11 Create FastAPI Stripe webhook handler at /api/webhooks/stripe
 - [x] 5.12 Build /onboarding/questionnaire page — 3-step form with step indicator
@@ -119,16 +119,16 @@
 - [x] 6.1 Build client portal layout — left sidebar (desktop), bottom tab bar (mobile)
 - [x] 6.2 Build portal Dashboard — activity summary strip, brand summary card, onboarding tracker
 - [x] 6.3 Create FastAPI endpoint GET /api/v1/portal/dashboard
-- [ ] 6.4 Wire dashboard to 6.3 — all dashboard components populated from API
+- [x] 6.4 Wire dashboard to 6.3 — all dashboard components populated from API
 - [x] 6.5 Build Deliverables list page — card grid, filter bar, empty state
 - [x] 6.6 Build Deliverable detail page — image/video preview, approve/reject actions
 - [x] 6.7 Create FastAPI endpoints: GET /api/v1/deliverables, approve, reject
-- [ ] 6.8 Wire deliverables pages to API
+- [x] 6.8 Wire deliverables pages to API
 - [x] 6.9 Implement rejection flow — mandatory comment box, revision ticket created
 - [x] 6.10 Implement download — signed Supabase Storage URL
 - [x] 6.11 Build Content Calendar page — monthly grid + list view toggle
 - [x] 6.12 Create FastAPI endpoint GET /api/v1/calendar
-- [ ] 6.13 Wire calendar to API
+- [x] 6.13 Wire calendar to API
 - [x] 6.14 Build Payments page — current plan card, payment history, plan change buttons
 - [x] 6.15 Create FastAPI endpoints: GET /api/v1/payments/history, POST /api/v1/payments/change-plan
 - [ ] 6.16 Implement plan upgrade/downgrade — proration calculation
@@ -138,11 +138,13 @@
 - [x] 6.20 Build contextual upsell prompts
 - [x] 6.21 Build Support page — ticket list, new ticket form, ticket detail with chat thread
 - [x] 6.22 Create FastAPI endpoints: tickets CRUD + messages
-- [~] 6.23 Implement Supabase Realtime for live chat
+
+- [x] 6.23 Implement Supabase Realtime for live chat
+
 - [x] 6.24 Build Account Settings pages — business profile, password, Instagram, 2FA
 - [~] 6.25 Implement Instagram OAuth flow
 - [x] 6.26 Create FastAPI endpoint POST /api/v1/account/instagram
-- [x] 6.27 Build in-portal notification system — bell icon, dropdown, mark-as-read
+- [ ] 6.27 Build in-portal notification system — bell icon, dropdown, mark-as-read
 - [x] 6.28 Create FastAPI endpoint GET /api/v1/notifications
 - [x] 6.29 Wire all portal pages to loading skeletons
 - [x] 6.30 Test all client portal flows
@@ -201,7 +203,7 @@
 - [x] 8.27 Create FastAPI endpoints: settings CRUD
 - [x] 8.28 Implement custom pricing approval flow
 - [x] 8.29 Build Sales Admin section
-- [x] 8.30 Test admin panel end-to-end
+- [ ] 8.30 Test admin panel end-to-end
 
 ## Phase 9: Third-party Integrations
 
@@ -221,10 +223,10 @@
 - [x] 9.14 Write Celery task check_quota_exhaustion()
 - [x] 9.15 Write Celery task auto_assign_tasks()
 - [x] 9.16 Write Celery task generate_content_calendar()
-- [x] 9.17 Test all Celery tasks
-- [x] 9.18 Test all WhatsApp messages
-- [x] 9.19 Test all Resend emails
-- [x] 9.20 Test Instagram publishing
+- [ ] 9.17 Test all Celery tasks
+- [ ] 9.18 Test all WhatsApp messages
+- [ ] 9.19 Test all Resend emails
+- [ ] 9.20 Test Instagram publishing
 
 ## Phase 10: Hardening & Deployment
 
@@ -234,9 +236,9 @@
 - [x] 10.4 Audit all API endpoints — role dependencies
 - [ ] 10.5 Add webhook signature validation tests
 - [x] 10.6 Encrypt Instagram access tokens at rest
-- [x] 10.7 Run Lighthouse audit on all public pages
-- [x] 10.8 Add TanStack Query caching strategy
-- [x] 10.9 Implement optimistic updates on approve/reject
+- [ ] 10.7 Run Lighthouse audit on all public pages
+- [ ] 10.8 Add TanStack Query caching strategy
+- [ ] 10.9 Implement optimistic updates on approve/reject
 - [x] 10.10 Write Pytest integration tests
 - [x] 10.11 Write Playwright E2E tests
 - [ ] 10.12 Manual QA pass — all 7 user journeys

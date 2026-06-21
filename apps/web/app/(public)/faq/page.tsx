@@ -121,7 +121,7 @@ export default function FAQPage() {
               href="/signup?plan=growth"
               className={buttonVariants({
                 className:
-                  "bg-brands text-blue-950 hover:bg-brand/90 rounded-lg h-12 px-8 text-base font-semibold transition-colors",
+                  "bg-brand text-white hover:bg-brand/90 rounded-lg h-12 px-8 text-base font-semibold transition-colors",
               })}
             >
               Get Started Today

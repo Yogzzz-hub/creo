@@ -44,5 +44,8 @@ class LeaveRequest(Base):
     # Relationships
     team_member: Mapped["TeamMember"] = relationship("TeamMember", lazy="selectin")
     approver: Mapped[Optional["User"]] = relationship(
-        "User", foreign_keys=[approved_by], lazy="selectin"
+        "User", 
+        foreign_keys=[approved_by], 
+        lazy="selectin",
+        overlaps="leave_requests_approved"
     )

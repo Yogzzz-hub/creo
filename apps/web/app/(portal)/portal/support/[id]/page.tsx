@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { use } from "react"
 import {
@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Loader2,
 } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -25,7 +26,6 @@ interface Ticket {
   subject: string
   type: TicketType
   status: TicketStatus
-  lastUpdated: string
 }
 
 interface ChatMessage {
@@ -34,160 +34,6 @@ interface ChatMessage {
   senderName: string
   content: string
   timestamp: string
-}
-
-const MOCK_TICKETS: Record<string, Ticket> = {
-  "TKT-1042": {
-    id: "TKT-1042",
-    subject: "Reel color grading too dark",
-    type: "revision",
-    status: "open",
-    lastUpdated: "2026-06-16T14:30:00",
-  },
-  "TKT-1039": {
-    id: "TKT-1039",
-    subject: "Invoice discrepancy for May billing",
-    type: "billing",
-    status: "resolved",
-    lastUpdated: "2026-06-14T10:15:00",
-  },
-  "TKT-1035": {
-    id: "TKT-1035",
-    subject: "Request for content calendar access",
-    type: "general",
-    status: "resolved",
-    lastUpdated: "2026-06-10T09:00:00",
-  },
-  "TKT-1028": {
-    id: "TKT-1028",
-    subject: "Story format not matching brand guidelines",
-    type: "revision",
-    status: "resolved",
-    lastUpdated: "2026-06-07T16:45:00",
-  },
-}
-
-const MOCK_MESSAGES: Record<string, ChatMessage[]> = {
-  "TKT-1042": [
-    {
-      id: "msg1",
-      sender: "client",
-      senderName: "You",
-      content: "Hi, the latest reel looks a bit too dark. The color grading doesn't match our usual vibrant style. Can you look into this?",
-      timestamp: "2026-06-16T10:00:00",
-    },
-    {
-      id: "msg2",
-      sender: "team",
-      senderName: "Priya (Designer)",
-      content: "Thanks for flagging this! Let me check the grading settings. Can you share a reference of the tone you prefer?",
-      timestamp: "2026-06-16T10:30:00",
-    },
-    {
-      id: "msg3",
-      sender: "client",
-      senderName: "You",
-      content: "Sure — check the reel from last week (Client Transformation). That brightness level is perfect.",
-      timestamp: "2026-06-16T11:00:00",
-    },
-    {
-      id: "msg4",
-      sender: "team",
-      senderName: "Priya (Designer)",
-      content: "Got it! I'll re-grade it with warmer tones and higher exposure. Updated version will be ready by tomorrow EOD.",
-      timestamp: "2026-06-16T14:30:00",
-    },
-  ],
-  "TKT-1039": [
-    {
-      id: "msg1",
-      sender: "client",
-      senderName: "You",
-      content: "I noticed my May invoice shows ₹4,999 but I was charged ₹5,499. Can you clarify?",
-      timestamp: "2026-06-14T08:00:00",
-    },
-    {
-      id: "msg2",
-      sender: "team",
-      senderName: "Ankit (Billing)",
-      content: "Hi! Let me look into this right away. I'll pull up your payment records.",
-      timestamp: "2026-06-14T08:30:00",
-    },
-    {
-      id: "msg3",
-      sender: "team",
-      senderName: "Ankit (Billing)",
-      content: "You're right — the extra ₹500 was an add-on charge for 1 extra poster that was processed on May 28. This wasn't reflected on the invoice. I've issued a corrected invoice.",
-      timestamp: "2026-06-14T09:15:00",
-    },
-    {
-      id: "msg4",
-      sender: "client",
-      senderName: "You",
-      content: "Thanks for the quick resolution!",
-      timestamp: "2026-06-14T09:30:00",
-    },
-    {
-      id: "msg5",
-      sender: "team",
-      senderName: "Ankit (Billing)",
-      content: "Happy to help! I've also sent the corrected invoice to your email. Let me know if you need anything else.",
-      timestamp: "2026-06-14T10:00:00",
-    },
-    {
-      id: "msg6",
-      sender: "team",
-      senderName: "Ankit (Billing)",
-      content: "Marking this as resolved. Feel free to reopen if you have more questions!",
-      timestamp: "2026-06-14T10:15:00",
-    },
-  ],
-  "TKT-1035": [
-    {
-      id: "msg1",
-      sender: "client",
-      senderName: "You",
-      content: "Can I get access to the content calendar view? I'd like to see what's planned for next month.",
-      timestamp: "2026-06-10T08:00:00",
-    },
-    {
-      id: "msg2",
-      sender: "team",
-      senderName: "Team Creo",
-      content: "Absolutely! I've updated your permissions. You should now see the full calendar in your portal.",
-      timestamp: "2026-06-10T08:30:00",
-    },
-    {
-      id: "msg3",
-      sender: "team",
-      senderName: "Team Creo",
-      content: "Resolved! Let us know if you have any other access requests.",
-      timestamp: "2026-06-10T09:00:00",
-    },
-  ],
-  "TKT-1028": [
-    {
-      id: "msg1",
-      sender: "client",
-      senderName: "You",
-      content: "The story designs are not following our brand guidelines. The fonts are off.",
-      timestamp: "2026-06-07T12:00:00",
-    },
-    {
-      id: "msg2",
-      sender: "team",
-      senderName: "Riya (Designer)",
-      content: "Apologies for the oversight! I'll update all pending stories with the correct brand fonts (Inter for headings, Montserrat for body).",
-      timestamp: "2026-06-07T13:00:00",
-    },
-    {
-      id: "msg3",
-      sender: "client",
-      senderName: "You",
-      content: "Perfect, thank you!",
-      timestamp: "2026-06-07T13:15:00",
-    },
-  ],
 }
 
 const TYPE_CONFIG: Record<TicketType, { label: string; className: string }> = {
@@ -245,18 +91,181 @@ function formatDateLabel(dateString: string): string {
   })
 }
 
+function mapTicketType(t: string): TicketType {
+  if (t === "revision" || t === "billing" || t === "general") return t
+  return "general"
+}
+
+function mapTicketStatus(s: string): TicketStatus {
+  if (s === "resolved") return "resolved"
+  return "open"
+}
+
 export default function TicketDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const ticket = MOCK_TICKETS[id]
-  const messages = MOCK_MESSAGES[id] || []
-
+  const [ticket, setTicket] = useState<Ticket | null>(null)
+  const [localMessages, setLocalMessages] = useState<ChatMessage[]>([])
+  const [loading, setLoading] = useState(true)
   const [chatInput, setChatInput] = useState("")
-  const [localMessages, setLocalMessages] = useState<ChatMessage[]>(messages)
   const [isSending, setIsSending] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    async function fetchTicket() {
+      try {
+        const supabase = createClient()
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        if (!session?.access_token) {
+          setLoading(false)
+          return
+        }
+
+        const ticketRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tickets`,
+          {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }
+        )
+
+        if (!ticketRes.ok) {
+          setLoading(false)
+          return
+        }
+
+        const tickets: {
+          id: string
+          subject: string
+          ticket_type: string
+          status: string
+        }[] = await ticketRes.json()
+
+        const found = tickets.find((t) => t.id === id)
+        if (!found) {
+          setLoading(false)
+          return
+        }
+
+        setTicket({
+          id: found.id,
+          subject: found.subject,
+          type: mapTicketType(found.ticket_type),
+          status: mapTicketStatus(found.status),
+        })
+
+        const msgRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tickets/${id}/messages`,
+          {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }
+        )
+
+        if (msgRes.ok) {
+          const msgs: {
+            id: string
+            sender_id: string
+            message_text: string
+            created_at: string
+          }[] = await msgRes.json()
+
+          const userId = (await supabase.auth.getUser()).data.user?.id
+          setLocalMessages(
+            msgs.map((m) => ({
+              id: m.id,
+              sender: m.sender_id === userId ? ("client" as const) : ("team" as const),
+              senderName: m.sender_id === userId ? "You" : "Team Creo",
+              content: m.message_text,
+              timestamp: m.created_at,
+            }))
+          )
+        }
+      } catch {
+        // Silent fail
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchTicket()
+  }, [id])
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [localMessages])
+
+  async function handleSendMessage() {
+    if (!chatInput.trim() || !ticket) return
+    setIsSending(true)
+
+    try {
+      const supabase = createClient()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        throw new Error("Not authenticated")
+      }
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tickets/${ticket.id}/messages`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ message_text: chatInput.trim() }),
+        }
+      )
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.detail || "Failed to send message")
+      }
+
+      const newMsg: {
+        id: string
+        sender_id: string
+        message_text: string
+        created_at: string
+      } = await res.json()
+
+      const userId = (await supabase.auth.getUser()).data.user?.id
+      setLocalMessages((prev) => [
+        ...prev,
+        {
+          id: newMsg.id,
+          sender: newMsg.sender_id === userId ? ("client" as const) : ("team" as const),
+          senderName: newMsg.sender_id === userId ? "You" : "Team Creo",
+          content: newMsg.message_text,
+          timestamp: newMsg.created_at,
+        },
+      ])
+      setChatInput("")
+    } catch (err) {
+      const { toast } = await import("sonner")
+      toast.error(err instanceof Error ? err.message : "Failed to send")
+    } finally {
+      setIsSending(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-4xl space-y-6">
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <Loader2 className="size-4 animate-spin" />
+          Loading ticket...
+        </div>
+      </div>
+    )
+  }
 
   if (!ticket) {
     return (
@@ -286,24 +295,6 @@ export default function TicketDetailPage({
   const statusConfig = STATUS_CONFIG[ticket.status]
   const StatusIcon = statusConfig.icon
 
-  function handleSendMessage() {
-    if (!chatInput.trim()) return
-    setIsSending(true)
-
-    setTimeout(() => {
-      const newMessage: ChatMessage = {
-        id: `msg-${Date.now()}`,
-        sender: "client",
-        senderName: "You",
-        content: chatInput.trim(),
-        timestamp: new Date().toISOString(),
-      }
-      setLocalMessages((prev) => [...prev, newMessage])
-      setChatInput("")
-      setIsSending(false)
-    }, 500)
-  }
-
   let lastDateLabel = ""
 
   return (
@@ -319,7 +310,7 @@ export default function TicketDetailPage({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-gray-400">{ticket.id}</span>
+            <span className="font-mono text-xs text-gray-400">{ticket.id.slice(0, 8)}</span>
             <Badge
               className={cn(
                 "border text-[10px] font-medium",
@@ -347,6 +338,11 @@ export default function TicketDetailPage({
       <Card className="rounded-xl shadow-[var(--shadow-card)]">
         <CardContent className="flex flex-col" style={{ height: "min(500px, 70vh)" }}>
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {localMessages.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-8">
+                <p className="text-sm text-gray-400">No messages yet. Start the conversation.</p>
+              </div>
+            )}
             {localMessages.map((message) => {
               const isClient = message.sender === "client"
               const dateLabel = formatDateLabel(message.timestamp)
@@ -402,6 +398,7 @@ export default function TicketDetailPage({
                 </div>
               )
             })}
+            <div ref={messagesEndRef} />
           </div>
 
           <div className="border-t border-gray-200 p-4">

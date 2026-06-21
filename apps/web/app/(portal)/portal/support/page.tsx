@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 
 import { toast } from "sonner"
@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Loader2,
 } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -44,44 +45,8 @@ interface Ticket {
   subject: string
   type: TicketType
   status: TicketStatus
-  lastUpdated: string
-  messageCount: number
+  createdAt: string
 }
-
-const MOCK_TICKETS: Ticket[] = [
-  {
-    id: "TKT-1042",
-    subject: "Reel color grading too dark",
-    type: "revision",
-    status: "open",
-    lastUpdated: "2026-06-16T14:30:00",
-    messageCount: 4,
-  },
-  {
-    id: "TKT-1039",
-    subject: "Invoice discrepancy for May billing",
-    type: "billing",
-    status: "resolved",
-    lastUpdated: "2026-06-14T10:15:00",
-    messageCount: 6,
-  },
-  {
-    id: "TKT-1035",
-    subject: "Request for content calendar access",
-    type: "general",
-    status: "resolved",
-    lastUpdated: "2026-06-10T09:00:00",
-    messageCount: 3,
-  },
-  {
-    id: "TKT-1028",
-    subject: "Story format not matching brand guidelines",
-    type: "revision",
-    status: "resolved",
-    lastUpdated: "2026-06-07T16:45:00",
-    messageCount: 8,
-  },
-]
 
 const TYPE_CONFIG: Record<TicketType, { label: string; className: string }> = {
   revision: {
@@ -124,28 +89,143 @@ function formatDateTime(dateString: string): string {
   })
 }
 
+function mapTicketType(t: string): TicketType {
+  if (t === "revision" || t === "billing" || t === "general") return t
+  return "general"
+}
+
+function mapTicketStatus(s: string): TicketStatus {
+  if (s === "resolved") return "resolved"
+  return "open"
+}
+
 export default function SupportPage() {
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [loading, setLoading] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [ticketType, setTicketType] = useState<string>("general")
   const [subject, setSubject] = useState("")
   const [description, setDescription] = useState("")
 
-  function handleSubmit() {
+  useEffect(() => {
+    async function fetchTickets() {
+      try {
+        const supabase = createClient()
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        if (!session?.access_token) {
+          setLoading(false)
+          return
+        }
+
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tickets`,
+          {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }
+        )
+
+        if (!res.ok) {
+          setLoading(false)
+          return
+        }
+
+        const data: {
+          id: string
+          subject: string
+          ticket_type: string
+          status: string
+          created_at: string
+        }[] = await res.json()
+
+        setTickets(
+          data.map((t) => ({
+            id: t.id,
+            subject: t.subject,
+            type: mapTicketType(t.ticket_type),
+            status: mapTicketStatus(t.status),
+            createdAt: t.created_at,
+          }))
+        )
+      } catch {
+        // Silent fail
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchTickets()
+  }, [])
+
+  async function handleSubmit() {
     if (!subject.trim() || !description.trim()) {
       toast.error("Please fill in all required fields.")
       return
     }
 
     setIsSubmitting(true)
-    setTimeout(() => {
-      setIsSubmitting(false)
+    try {
+      const supabase = createClient()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        throw new Error("Not authenticated")
+      }
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tickets`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ticket_type: ticketType,
+            subject: subject.trim(),
+            description: description.trim(),
+          }),
+        }
+      )
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.detail || "Failed to create ticket")
+      }
+
+      const newTicket: {
+        id: string
+        subject: string
+        ticket_type: string
+        status: string
+        created_at: string
+      } = await res.json()
+
+      setTickets((prev) => [
+        {
+          id: newTicket.id,
+          subject: newTicket.subject,
+          type: mapTicketType(newTicket.ticket_type),
+          status: mapTicketStatus(newTicket.status),
+          createdAt: newTicket.created_at,
+        },
+        ...prev,
+      ])
+
       setDrawerOpen(false)
       setTicketType("general")
       setSubject("")
       setDescription("")
       toast.success("Ticket raised successfully. Our team will respond shortly.")
-    }, 1200)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create ticket")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -175,7 +255,14 @@ export default function SupportPage() {
         </Button>
       </div>
 
-      {MOCK_TICKETS.length === 0 ? (
+      {loading ? (
+        <Card className="rounded-xl shadow-[var(--shadow-card)]">
+          <CardContent className="flex items-center justify-center py-12">
+            <Loader2 className="size-5 animate-spin text-gray-400" />
+            <span className="ml-2 text-sm text-gray-500">Loading tickets...</span>
+          </CardContent>
+        </Card>
+      ) : tickets.length === 0 ? (
         <Card className="rounded-xl shadow-[var(--shadow-card)]">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <MessageSquare className="size-12 text-gray-300" />
@@ -189,7 +276,7 @@ export default function SupportPage() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {MOCK_TICKETS.map((ticket) => {
+          {tickets.map((ticket) => {
             const typeConfig = TYPE_CONFIG[ticket.type]
             const statusConfig = STATUS_CONFIG[ticket.status]
             const StatusIcon = statusConfig.icon
@@ -205,15 +292,14 @@ export default function SupportPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-xs text-gray-400">
-                            {ticket.id}
+                            {ticket.id.slice(0, 8)}
                           </span>
                         </div>
                         <h3 className="mt-0.5 truncate text-sm font-semibold text-[#0D2137] group-hover:text-[#2B7BC4]">
                           {ticket.subject}
                         </h3>
                         <p className="mt-1 text-xs text-gray-500">
-                          {ticket.messageCount} messages · Updated{" "}
-                          {formatDateTime(ticket.lastUpdated)}
+                          Created {formatDateTime(ticket.createdAt)}
                         </p>
                       </div>
                     </div>

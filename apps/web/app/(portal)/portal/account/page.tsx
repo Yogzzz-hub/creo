@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import {
   ArrowLeft,
@@ -14,6 +14,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,6 +25,13 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+
+interface UserProfile {
+  fullName: string
+  businessName: string
+  phone: string
+  email: string
+}
 
 export default function AccountPage() {
   return (
@@ -77,25 +85,86 @@ export default function AccountPage() {
 
 function BusinessProfileTab() {
   const [isSaving, setIsSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({
-    businessName: "FitZone Studios",
-    industry: "Fitness & Wellness",
-    targetAudience: "Gen-Z fitness enthusiasts, ages 18-28, urban areas",
-    brandTone: "Energetic, motivational, conversational",
-    website: "https://fitzonestudios.in",
-    phone: "+91 98765 43210",
+    fullName: "",
+    businessName: "",
+    phone: "",
+    email: "",
   })
 
-  function handleSave() {
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const supabase = createClient()
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        if (!session?.access_token) {
+          setLoading(false)
+          return
+        }
+
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/portal/dashboard`,
+          {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }
+        )
+
+        const user = await supabase.auth.getUser()
+        const userData = user.data.user
+
+        setForm({
+          fullName: userData?.user_metadata?.full_name ?? "",
+          businessName: userData?.user_metadata?.business_name ?? "",
+          phone: userData?.phone ?? "",
+          email: userData?.email ?? "",
+        })
+      } catch {
+        // Use defaults
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProfile()
+  }, [])
+
+  async function handleSave() {
     setIsSaving(true)
-    setTimeout(() => {
-      setIsSaving(false)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          full_name: form.fullName,
+          business_name: form.businessName,
+        },
+      })
+
+      if (error) throw error
+
       toast.success("Profile updated successfully.")
-    }, 800)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update profile")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   function updateField(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  if (loading) {
+    return (
+      <Card className="rounded-xl shadow-[var(--shadow-card)]">
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="size-5 animate-spin text-gray-400" />
+          <span className="ml-2 text-sm text-gray-500">Loading profile...</span>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -108,6 +177,14 @@ function BusinessProfileTab() {
       <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
+            <Label htmlFor="full-name">Full Name</Label>
+            <Input
+              id="full-name"
+              value={form.fullName}
+              onChange={(e) => updateField("fullName", e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="business-name">Business Name</Label>
             <Input
               id="business-name"
@@ -115,45 +192,16 @@ function BusinessProfileTab() {
               onChange={(e) => updateField("businessName", e.target.value)}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="industry">Industry</Label>
-            <Input
-              id="industry"
-              value={form.industry}
-              onChange={(e) => updateField("industry", e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="target-audience">Target Audience</Label>
-          <Textarea
-            id="target-audience"
-            rows={3}
-            className="resize-none"
-            value={form.targetAudience}
-            onChange={(e) => updateField("targetAudience", e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="brand-tone">Brand Tone</Label>
-          <Textarea
-            id="brand-tone"
-            rows={2}
-            className="resize-none"
-            value={form.brandTone}
-            onChange={(e) => updateField("brandTone", e.target.value)}
-          />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="website">Website</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
-              id="website"
-              value={form.website}
-              onChange={(e) => updateField("website", e.target.value)}
+              id="email"
+              value={form.email}
+              disabled
+              className="bg-gray-50 text-gray-500"
             />
           </div>
           <div className="space-y-2">
@@ -161,7 +209,8 @@ function BusinessProfileTab() {
             <Input
               id="phone"
               value={form.phone}
-              onChange={(e) => updateField("phone", e.target.value)}
+              disabled
+              className="bg-gray-50 text-gray-500"
             />
           </div>
         </div>
@@ -199,7 +248,7 @@ function SecurityTab() {
     confirm: "",
   })
 
-  function handleChangePassword() {
+  async function handleChangePassword() {
     if (!passwords.current || !passwords.new || !passwords.confirm) {
       toast.error("Please fill in all password fields.")
       return
@@ -214,11 +263,21 @@ function SecurityTab() {
     }
 
     setIsChanging(true)
-    setTimeout(() => {
-      setIsChanging(false)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.updateUser({
+        password: passwords.new,
+      })
+
+      if (error) throw error
+
       setPasswords({ current: "", new: "", confirm: "" })
       toast.success("Password changed successfully.")
-    }, 800)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to change password")
+    } finally {
+      setIsChanging(false)
+    }
   }
 
   function handleToggle2FA(checked: boolean) {
@@ -363,13 +422,32 @@ function IntegrationsTab() {
   const [instagramConnected, setInstagramConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
 
+  useEffect(() => {
+    async function checkInstagram() {
+      try {
+        const supabase = createClient()
+        const user = await supabase.auth.getUser()
+        const token = user.data.user?.user_metadata?.instagram_access_token
+        setInstagramConnected(!!token)
+      } catch {
+        // Default to disconnected
+      }
+    }
+    checkInstagram()
+  }, [])
+
   function handleConnect() {
-    setIsConnecting(true)
-    setTimeout(() => {
-      setInstagramConnected(true)
-      setIsConnecting(false)
-      toast.success("Instagram account connected successfully.")
-    }, 1500)
+    const appId = process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID
+    const redirectUri = `${window.location.origin}/auth/instagram/callback`
+
+    if (!appId) {
+      toast.error("Instagram integration not configured.")
+      return
+    }
+
+    const scopes = ["instagram_basic", "instagram_content_publish", "pages_show_list"]
+    const url = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes.join(",")}&response_type=code`
+    window.location.href = url
   }
 
   function handleDisconnect() {
@@ -414,13 +492,6 @@ function IntegrationsTab() {
                 ? "Your Instagram account is connected. Content can be published directly."
                 : "Connect your Instagram Business account to enable direct publishing of approved content."}
             </p>
-
-            {instagramConnected && (
-              <p className="mt-2 text-xs text-gray-600">
-                Connected as{" "}
-                <span className="font-medium text-[#0D2137]">@creo_client</span>
-              </p>
-            )}
 
             <div className="mt-4">
               {instagramConnected ? (

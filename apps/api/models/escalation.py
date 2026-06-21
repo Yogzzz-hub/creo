@@ -44,8 +44,14 @@ class Escalation(Base):
     # Relationships
     task: Mapped["Task"] = relationship("Task", lazy="selectin")
     client: Mapped["User"] = relationship(
-        "User", foreign_keys=[client_id], lazy="selectin"
+        "User", 
+        foreign_keys=[client_id], 
+        lazy="selectin",
+        overlaps="escalations_as_client"
     )
     assigned_to_user: Mapped[Optional["User"]] = relationship(
-        "User", foreign_keys=[assigned_to], lazy="selectin"
+        "User", 
+        foreign_keys=[assigned_to], 
+        lazy="selectin",
+        overlaps="escalations_assigned"
     )
