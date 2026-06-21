@@ -100,8 +100,8 @@
 - [x] 5.5 Wire /onboarding/terms to 5.4 — on accept, updates DB and advances to payment step
 - [x] 5.6 Create FastAPI endpoint POST /api/v1/payments/create-subscription
 - [x] 5.7 Build /onboarding/payment page — detects country, renders Razorpay or Stripe payment modal
-- [x] 5.8 Implement Razorpay payment modal integration
-- [x] 5.9 Implement Stripe payment modal integration
+- [ ] 5.8 Implement Razorpay payment modal integration
+- [ ] 5.9 Implement Stripe payment modal integration
 - [x] 5.10 Create FastAPI Razorpay webhook handler at /api/webhooks/razorpay
 - [x] 5.11 Create FastAPI Stripe webhook handler at /api/webhooks/stripe
 - [x] 5.12 Build /onboarding/questionnaire page — 3-step form with step indicator
@@ -138,11 +138,13 @@
 - [x] 6.20 Build contextual upsell prompts
 - [x] 6.21 Build Support page — ticket list, new ticket form, ticket detail with chat thread
 - [x] 6.22 Create FastAPI endpoints: tickets CRUD + messages
-- [~] 6.23 Implement Supabase Realtime for live chat
+
+- [x] 6.23 Implement Supabase Realtime for live chat
+
 - [x] 6.24 Build Account Settings pages — business profile, password, Instagram, 2FA
 - [~] 6.25 Implement Instagram OAuth flow
 - [x] 6.26 Create FastAPI endpoint POST /api/v1/account/instagram
-- [x] 6.27 Build in-portal notification system — bell icon, dropdown, mark-as-read
+- [ ] 6.27 Build in-portal notification system — bell icon, dropdown, mark-as-read
 - [x] 6.28 Create FastAPI endpoint GET /api/v1/notifications
 - [x] 6.29 Wire all portal pages to loading skeletons
 - [x] 6.30 Test all client portal flows
@@ -201,7 +203,7 @@
 - [x] 8.27 Create FastAPI endpoints: settings CRUD
 - [x] 8.28 Implement custom pricing approval flow
 - [x] 8.29 Build Sales Admin section
-- [x] 8.30 Test admin panel end-to-end
+- [ ] 8.30 Test admin panel end-to-end
 
 ## Phase 9: Third-party Integrations
 

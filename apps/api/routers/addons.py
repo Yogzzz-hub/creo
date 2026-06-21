@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_db
 from core.security import require_client
 from models.addon import Addon, AddonPricing
-from models.enums import AddonStatus, DeliverableType
+from models.enums import AddonStatus, DeliverableType, TaskStatus
+from models.task import Task
 from models.user import User
 
 router = APIRouter(prefix="/api/v1/addons", tags=["addons"])

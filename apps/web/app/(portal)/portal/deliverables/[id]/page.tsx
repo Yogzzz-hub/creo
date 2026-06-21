@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, use } from "react"
+import { useState, useEffect, use } from "react"
 import Link from "next/link"
 import {
   ArrowLeft,
@@ -19,6 +19,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod/v4"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
+import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -37,52 +38,51 @@ import { cn } from "@/lib/utils"
 type DeliverableType = "poster" | "reel" | "story"
 type DeliverableStatus = "pending" | "approved" | "revision" | "rejected"
 
+interface ApiDeliverable {
+  id: string
+  task_id: string
+  file_url: string
+  file_type: string
+  file_size_bytes: number
+  status: string
+  revision_round: number
+  created_at: string
+  approved_at: string | null
+  rejected_at: string | null
+}
+
 interface Deliverable {
   id: string
   title: string
   type: DeliverableType
   status: DeliverableStatus
   uploadDate: string
-  description: string
+  fileUrl: string
 }
 
-const MOCK_DELIVERABLES: Record<string, Deliverable> = {
-  "1": {
-    id: "1",
-    title: "Summer Fitness Tips Reel",
-    type: "reel",
-    status: "pending",
-    uploadDate: "2026-06-15",
-    description:
-      "A 30-second reel showcasing 5 quick fitness tips for the summer. Features upbeat music, dynamic transitions, and bold text overlays.",
-  },
-  "2": {
-    id: "2",
-    title: "Gym Membership Promo Poster",
-    type: "poster",
-    status: "approved",
-    uploadDate: "2026-06-14",
-    description:
-      "High-impact promotional poster for the summer gym membership offer. Bold typography, energetic color palette, and clear CTA.",
-  },
-  "3": {
-    id: "3",
-    title: "Workout Motivation Story",
-    type: "story",
-    status: "revision",
-    uploadDate: "2026-06-13",
-    description:
-      "Instagram story series with motivational quotes and workout clips. Designed for maximum engagement with swipe-up link.",
-  },
-  "4": {
-    id: "4",
-    title: "Personal Training Ad Poster",
-    type: "poster",
-    status: "rejected",
-    uploadDate: "2026-06-12",
-    description:
-      "Advertisement poster for personal training services. Clean layout with trainer photo placeholder and pricing details.",
-  },
+function inferType(fileUrl: string, fileType: string): DeliverableType {
+  const ext = fileUrl.split(".").pop()?.toLowerCase() ?? ""
+  if (fileType.includes("video") || ext === "mp4" || ext === "mov") return "reel"
+  if (fileType.includes("image") || ["jpg", "jpeg", "png", "webp"].includes(ext)) {
+    return "poster"
+  }
+  return "story"
+}
+
+function mapStatus(apiStatus: string): DeliverableStatus {
+  switch (apiStatus) {
+    case "pending_approval":
+    case "pending":
+      return "pending"
+    case "approved":
+      return "approved"
+    case "rejected":
+      return "rejected"
+    case "revision":
+      return "revision"
+    default:
+      return "pending"
+  }
 }
 
 const TYPE_ICONS: Record<DeliverableType, typeof FileImage> = {
@@ -131,15 +131,41 @@ function formatDate(dateString: string): string {
   })
 }
 
+async function apiFetch(path: string, options?: RequestInit) {
+  const supabase = createClient()
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session?.access_token) {
+    throw new Error("Not authenticated")
+  }
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      "Content-Type": "application/json",
+      ...options?.headers,
+    },
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.detail || `Request failed (${res.status})`)
+  }
+
+  return res.json()
+}
+
 export default function DeliverableDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
-  const [deliverable, setDeliverable] = useState<Deliverable | null>(
-    MOCK_DELIVERABLES[id] || null
-  )
+  const [deliverable, setDeliverable] = useState<Deliverable | null>(null)
+  const [loading, setLoading] = useState(true)
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [isRejecting, setIsRejecting] = useState(false)
   const [isApproving, setIsApproving] = useState(false)
@@ -155,31 +181,94 @@ export default function DeliverableDetailPage({
     defaultValues: { reason: "" },
   })
 
-  function handleApprove() {
+  useEffect(() => {
+    async function fetchDeliverable() {
+      try {
+        const data: ApiDeliverable = await apiFetch(
+          `/api/v1/deliverables/${id}`
+        )
+        setDeliverable({
+          id: data.id,
+          title: `Deliverable — Round ${data.revision_round}`,
+          type: inferType(data.file_url, data.file_type),
+          status: mapStatus(data.status),
+          uploadDate: data.created_at,
+          fileUrl: data.file_url,
+        })
+      } catch {
+        setDeliverable(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchDeliverable()
+  }, [id])
+
+  async function handleApprove() {
     if (!deliverable) return
     setIsApproving(true)
-    setTimeout(() => {
-      setDeliverable((prev) =>
-        prev ? { ...prev, status: "approved" as const } : prev
+    try {
+      const data: ApiDeliverable = await apiFetch(
+        `/api/v1/deliverables/${deliverable.id}/approve`,
+        { method: "POST" }
       )
-      setIsApproving(false)
+      setDeliverable((prev) =>
+        prev ? { ...prev, status: mapStatus(data.status) } : prev
+      )
       setShowUpsell(true)
       toast.success("Deliverable approved!")
-    }, 800)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to approve")
+    } finally {
+      setIsApproving(false)
+    }
   }
 
-  function handleRejectSubmit(data: RejectionFormData) {
+  async function handleRejectSubmit(data: RejectionFormData) {
     if (!deliverable) return
     setIsRejecting(true)
-    setTimeout(() => {
-      setDeliverable((prev) =>
-        prev ? { ...prev, status: "revision" as const } : prev
+    try {
+      const res: ApiDeliverable = await apiFetch(
+        `/api/v1/deliverables/${deliverable.id}/reject`,
+        {
+          method: "POST",
+          body: JSON.stringify({ comment_text: data.reason }),
+        }
       )
-      setIsRejecting(false)
+      setDeliverable((prev) =>
+        prev ? { ...prev, status: mapStatus(res.status) } : prev
+      )
       setRejectDialogOpen(false)
       reset()
       toast.success("Deliverable rejected. Revision ticket created.")
-    }, 1000)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to reject")
+    } finally {
+      setIsRejecting(false)
+    }
+  }
+
+  async function handleDownload() {
+    if (!deliverable) return
+    try {
+      const data: { download_url: string } = await apiFetch(
+        `/api/v1/deliverables/${deliverable.id}/download`
+      )
+      window.open(data.download_url, "_blank")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Download failed")
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-4xl space-y-6">
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <Loader2 className="size-4 animate-spin" />
+          Loading deliverable...
+        </div>
+      </div>
+    )
   }
 
   if (!deliverable) {
@@ -304,17 +393,6 @@ export default function DeliverableDetailPage({
         </div>
       )}
 
-      <Card className="rounded-xl shadow-[var(--shadow-card)]">
-        <CardContent className="space-y-4 p-5">
-          <div>
-            <h3 className="text-sm font-semibold text-[#0D2137]">Description</h3>
-            <p className="mt-1 text-sm text-gray-600 leading-relaxed">
-              {deliverable.description}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
       {!isTerminal && (
         <Card className="rounded-xl shadow-[var(--shadow-card)]">
           <CardContent className="p-5">
@@ -347,6 +425,7 @@ export default function DeliverableDetailPage({
               <Button
                 variant="outline"
                 disabled={!canDownload}
+                onClick={handleDownload}
                 className={cn(
                   !canDownload && "cursor-not-allowed opacity-40"
                 )}
@@ -376,7 +455,10 @@ export default function DeliverableDetailPage({
                   Your deliverable is ready for download.
                 </p>
               </div>
-              <Button className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90">
+              <Button
+                onClick={handleDownload}
+                className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90"
+              >
                 <Download className="size-4" />
                 Download
               </Button>
