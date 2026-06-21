@@ -180,8 +180,9 @@ export default function PortfolioPage() {
             <Link
               href="/pricing"
               className={buttonVariants({
+                variant: "outline",
                 className:
-                  "bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold",
+                  "bg-white text-deep navy hover:bg-brand/90 rounded-lg h-12 px-8 text-base font-semibold",
               })}
             >
               See Our Plans
@@ -191,7 +192,7 @@ export default function PortfolioPage() {
               className={buttonVariants({
                 variant: "outline",
                 className:
-                  "bg-brand text-blue-950 hover:bg-brand/90 rounded-lg h-12 px-8 text-base font-semibold transition-colors",
+                  "bg-blue-500 text-white hover:bg-blue-600 rounded-lg h-12 px-8 text-base font-semibold transition-colors",
               })}
             >
               Book a Call

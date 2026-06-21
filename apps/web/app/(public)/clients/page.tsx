@@ -257,7 +257,7 @@ export default function ClientsPage() {
               className={buttonVariants({
                 variant: "outline",
                 className:
-                  "border-white/30 text-white hover:bg-white/10 rounded-lg h-12 px-8 text-base font-semibold",
+                  "border-white/30 text-deep navy hover:bg-white/10 rounded-lg h-12 px-8 text-base font-semibold",
               })}
             >
               View Pricing
