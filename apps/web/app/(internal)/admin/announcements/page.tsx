@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,7 +21,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import {
   Select,
   SelectContent,
@@ -29,113 +28,88 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Plus, Download, Megaphone } from "lucide-react"
+import { Plus, Megaphone, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { adminFetch } from "@/lib/admin-api"
 
 interface Announcement {
   id: string
+  author_id: string
   title: string
+  content: string
   type: string
-  target: string
-  date: string
-  hasFile: boolean
+  target_departments: string[] | null
+  created_at: string
 }
 
-const INITIAL_ANNOUNCEMENTS: Announcement[] = [
-  {
-    id: "ANN-012",
-    title: "June All-Hands Meeting Minutes",
-    type: "MoM",
-    target: "All Departments",
-    date: "Jun 15, 2026",
-    hasFile: true,
-  },
-  {
-    id: "ANN-011",
-    title: "Q2 Performance Newsletter",
-    type: "Newsletter",
-    target: "All Departments",
-    date: "Jun 10, 2026",
-    hasFile: true,
-  },
-  {
-    id: "ANN-010",
-    title: "New SLA Policy Effective July 1",
-    type: "General Alert",
-    target: "Graphics, Video, Content",
-    date: "Jun 8, 2026",
-    hasFile: false,
-  },
-  {
-    id: "ANN-009",
-    title: "May Team Outing Photos & Recap",
-    type: "Newsletter",
-    target: "All Departments",
-    date: "Jun 3, 2026",
-    hasFile: true,
-  },
-  {
-    id: "ANN-008",
-    title: "Updated Content Guidelines v3.2",
-    type: "General Alert",
-    target: "Content",
-    date: "May 28, 2026",
-    hasFile: true,
-  },
-  {
-    id: "ANN-007",
-    title: "May All-Hands Meeting Minutes",
-    type: "MoM",
-    target: "All Departments",
-    date: "May 25, 2026",
-    hasFile: true,
-  },
-  {
-    id: "ANN-006",
-    title: "Holiday Calendar — Q3 2026",
-    type: "General Alert",
-    target: "All Departments",
-    date: "May 20, 2026",
-    hasFile: false,
-  },
-]
+const DEPARTMENTS = ["graphics", "video", "content_writing", "social_media", "sales", "admin"]
 
-const DEPARTMENTS = ["Graphics", "Video", "Content", "Sales", "Admin"]
+function formatDepartment(d: string) {
+  return d.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+}
 
 function getTypeBadge(type: string) {
   switch (type) {
-    case "MoM":
+    case "mom":
       return (
         <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
           MoM
         </span>
       )
-    case "Newsletter":
+    case "newsletter":
       return (
         <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
           Newsletter
         </span>
       )
-    case "General Alert":
+    case "general":
       return (
         <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-          General Alert
+          General
         </span>
       )
     default:
-      return <Badge variant="outline">{type}</Badge>
+      return (
+        <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-700">
+          {type}
+        </span>
+      )
   }
 }
 
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })
+}
+
 export default function AnnouncementsPage() {
-  const [announcements, setAnnouncements] = useState(INITIAL_ANNOUNCEMENTS)
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
     type: "",
     departments: [] as string[],
     description: "",
   })
+
+  const fetchAnnouncements = useCallback(() => {
+    setLoading(true)
+    setError(null)
+    adminFetch<Announcement[]>("/api/v1/admin/announcements")
+      .then(setAnnouncements)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    fetchAnnouncements()
+  }, [fetchAnnouncements])
 
   function handleToggleDept(dept: string) {
     setFormData((prev) => ({
@@ -146,34 +120,42 @@ export default function AnnouncementsPage() {
     }))
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!formData.title || !formData.type) {
       toast.error("Please fill in all required fields")
       return
     }
-    const newAnnouncement: Announcement = {
-      id: `ANN-${String(announcements.length + 1).padStart(3, "0")}`,
-      title: formData.title,
-      type: formData.type,
-      target:
-        formData.departments.length === 0 || formData.departments.length === DEPARTMENTS.length
-          ? "All Departments"
-          : formData.departments.join(", "),
-      date: "Jun 17, 2026",
-      hasFile: false,
+    setSubmitting(true)
+    try {
+      const typeMap: Record<string, string> = {
+        MoM: "mom",
+        Newsletter: "newsletter",
+        "General Alert": "general",
+      }
+      await adminFetch("/api/v1/admin/announcements", {
+        method: "POST",
+        body: JSON.stringify({
+          title: formData.title,
+          content: formData.description || formData.title,
+          target_audience:
+            formData.departments.length === 0 || formData.departments.length === DEPARTMENTS.length
+              ? "all"
+              : "team",
+        }),
+      })
+      toast.success("Announcement published", {
+        description: `"${formData.title}" has been published.`,
+      })
+      setFormData({ title: "", type: "", departments: [], description: "" })
+      setDialogOpen(false)
+      fetchAnnouncements()
+    } catch (err) {
+      toast.error("Failed to publish", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      })
+    } finally {
+      setSubmitting(false)
     }
-    setAnnouncements([newAnnouncement, ...announcements])
-    toast.success("Announcement published", {
-      description: `"${formData.title}" has been sent to the selected departments.`,
-    })
-    setFormData({ title: "", type: "", departments: [], description: "" })
-    setDialogOpen(false)
-  }
-
-  function handleDownload(title: string) {
-    toast.success("Download started", {
-      description: `Downloading "${title}"...`,
-    })
   }
 
   return (
@@ -193,57 +175,64 @@ export default function AnnouncementsPage() {
         </Button>
       </div>
 
-      <div className="rounded-lg border bg-white">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="hidden md:table-cell">
-                Target Audience
-              </TableHead>
-              <TableHead className="hidden lg:table-cell">Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {announcements.map((ann) => (
-              <TableRow key={ann.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Megaphone className="size-4 shrink-0 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium text-[#0D2137]">{ann.title}</p>
-                      <p className="text-xs text-muted-foreground">{ann.id}</p>
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>{getTypeBadge(ann.type)}</TableCell>
-                <TableCell className="hidden md:table-cell text-muted-foreground">
-                  {ann.target}
-                </TableCell>
-                <TableCell className="hidden lg:table-cell text-muted-foreground">
-                  {ann.date}
-                </TableCell>
-                <TableCell className="text-right">
-                  {ann.hasFile ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDownload(ann.title)}
-                    >
-                      <Download className="size-3.5" />
-                      Download
-                    </Button>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                </TableCell>
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      ) : (
+        <div className="rounded-lg border bg-white">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Target
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">Date</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {announcements.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No announcements yet.
+                    </p>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                announcements.map((ann) => (
+                  <TableRow key={ann.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Megaphone className="size-4 shrink-0 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium text-[#0D2137]">{ann.title}</p>
+                          <p className="text-xs text-muted-foreground">{ann.id.slice(0, 8)}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{getTypeBadge(ann.type)}</TableCell>
+                    <TableCell className="hidden md:table-cell text-muted-foreground">
+                      {ann.target_departments
+                        ? ann.target_departments.map(formatDepartment).join(", ")
+                        : "All Departments"}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell text-muted-foreground">
+                      {formatDate(ann.created_at)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg">
@@ -302,7 +291,7 @@ export default function AnnouncementsPage() {
                           : "border-border bg-white text-muted-foreground hover:bg-muted"
                       }`}
                     >
-                      {dept}
+                      {formatDepartment(dept)}
                     </button>
                   )
                 })}
@@ -323,30 +312,16 @@ export default function AnnouncementsPage() {
                 rows={3}
               />
             </div>
-
-            <div className="space-y-2">
-              <Label>Attachment</Label>
-              <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 px-6 py-8 text-center">
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    Drag and drop a file here, or{" "}
-                    <button className="font-medium text-[#2B7BC4] hover:underline">
-                      browse
-                    </button>
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    PDF, DOCX, or images up to 10MB
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={submitting}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit}>Publish Announcement</Button>
+            <Button onClick={handleSubmit} disabled={submitting}>
+              {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
+              Publish Announcement
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

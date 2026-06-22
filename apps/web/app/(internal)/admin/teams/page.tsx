@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
@@ -29,112 +29,58 @@ import {
   SheetDescription,
   SheetFooter,
 } from "@/components/ui/sheet"
-import { Users, Plus, Pencil } from "lucide-react"
+import { Users, Plus, Pencil, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { adminFetch } from "@/lib/admin-api"
 
 const employeeSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  full_name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   department: z.string().min(1, "Department is required"),
   role: z.string().min(1, "Role is required"),
-  dailyCap: z.number().min(1, "Daily cap must be at least 1"),
+  daily_poster_cap: z.number().min(0),
+  daily_reel_cap: z.number().min(0),
+  daily_story_cap: z.number().min(0),
 })
 
 type EmployeeFormData = z.infer<typeof employeeSchema>
 
-const MOCK_EMPLOYEES = [
-  {
-    id: "1",
-    name: "Priya Sharma",
-    email: "priya@creo.agency",
-    department: "Graphics",
-    role: "Senior Graphic Designer",
-    dailyCap: 6,
-    activeClients: 4,
-    currentLoad: 4,
-  },
-  {
-    id: "2",
-    name: "Rahul Mehta",
-    email: "rahul@creo.agency",
-    department: "Video",
-    role: "Video Editor",
-    dailyCap: 4,
-    activeClients: 3,
-    currentLoad: 3,
-  },
-  {
-    id: "3",
-    name: "Ananya Kumar",
-    email: "ananya@creo.agency",
-    department: "Content",
-    role: "Content Writer",
-    dailyCap: 5,
-    activeClients: 5,
-    currentLoad: 4,
-  },
-  {
-    id: "4",
-    name: "Vikram Desai",
-    email: "vikram@creo.agency",
-    department: "Video",
-    role: "Motion Graphics Artist",
-    dailyCap: 3,
-    activeClients: 2,
-    currentLoad: 3,
-  },
-  {
-    id: "5",
-    name: "Neha Gupta",
-    email: "neha@creo.agency",
-    department: "Graphics",
-    role: "Junior Graphic Designer",
-    dailyCap: 6,
-    activeClients: 3,
-    currentLoad: 2,
-  },
-  {
-    id: "6",
-    name: "Arjun Reddy",
-    email: "arjun@creo.agency",
-    department: "Sales",
-    role: "Account Manager",
-    dailyCap: 8,
-    activeClients: 6,
-    currentLoad: 5,
-  },
-  {
-    id: "7",
-    name: "Kavitha Nair",
-    email: "kavitha@creo.agency",
-    department: "Content",
-    role: "Social Media Strategist",
-    dailyCap: 5,
-    activeClients: 4,
-    currentLoad: 4,
-  },
-  {
-    id: "8",
-    name: "Sanjay Joshi",
-    email: "sanjay@creo.agency",
-    department: "Admin",
-    role: "Operations Manager",
-    dailyCap: 10,
-    activeClients: 0,
-    currentLoad: 0,
-  },
-]
+interface TeamMember {
+  team_member_id: string
+  user_id: string
+  full_name: string
+  email: string
+  role: string
+  department: string
+  daily_cap_posters: number
+  daily_cap_reels: number
+  daily_cap_stories: number
+  is_active: boolean
+  joined_at: string
+}
 
-function getLoadColor(current: number, cap: number) {
-  const ratio = current / cap
-  if (ratio >= 1) return "text-red-600"
-  if (ratio >= 0.75) return "text-amber-600"
-  return "text-emerald-600"
+function formatDepartment(dept: string) {
+  return dept
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function formatRole(role: string) {
+  return role
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function totalCap(m: TeamMember) {
+  return m.daily_cap_posters + m.daily_cap_reels + m.daily_cap_stories
 }
 
 export default function TeamManagementPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [employees, setEmployees] = useState(MOCK_EMPLOYEES)
+  const [employees, setEmployees] = useState<TeamMember[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   const {
     register,
@@ -145,33 +91,77 @@ export default function TeamManagementPage() {
     formState: { errors },
   } = useForm<EmployeeFormData>({
     defaultValues: {
-      name: "",
+      full_name: "",
       email: "",
       department: "",
       role: "",
-      dailyCap: 6,
+      daily_poster_cap: 6,
+      daily_reel_cap: 4,
+      daily_story_cap: 3,
     },
   })
 
   const departmentValue = watch("department")
 
-  function onSubmit(data: EmployeeFormData) {
-    const newEmployee = {
-      id: String(employees.length + 1),
-      name: data.name,
-      email: data.email,
-      department: data.department,
-      role: data.role,
-      dailyCap: data.dailyCap,
-      activeClients: 0,
-      currentLoad: 0,
+  function fetchTeam() {
+    adminFetch<TeamMember[]>("/api/v1/admin/team")
+      .then(setEmployees)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    fetchTeam()
+  }, [])
+
+  async function onSubmit(data: EmployeeFormData) {
+    setSubmitting(true)
+    try {
+      const newMember = await adminFetch<TeamMember>("/api/v1/admin/team", {
+        method: "POST",
+        body: JSON.stringify({
+          full_name: data.full_name,
+          email: data.email,
+          role: data.role,
+          department: data.department,
+          daily_poster_cap: data.daily_poster_cap,
+          daily_reel_cap: data.daily_reel_cap,
+          daily_story_cap: data.daily_story_cap,
+        }),
+      })
+      setEmployees((prev) =>
+        [...prev, newMember].sort((a, b) =>
+          a.full_name.localeCompare(b.full_name)
+        )
+      )
+      toast.success("Employee added successfully", {
+        description: `${data.full_name} has been added to the ${formatDepartment(data.department)} team.`,
+      })
+      reset()
+      setDrawerOpen(false)
+    } catch (err) {
+      toast.error("Failed to add employee", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      })
+    } finally {
+      setSubmitting(false)
     }
-    setEmployees([...employees, newEmployee])
-    toast.success("Employee added successfully", {
-      description: `${data.name} has been added to the ${data.department} team.`,
-    })
-    reset()
-    setDrawerOpen(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        Failed to load team: {error}
+      </div>
+    )
   }
 
   return (
@@ -201,53 +191,62 @@ export default function TeamManagementPage() {
               <TableHead className="hidden md:table-cell">
                 Daily Cap
               </TableHead>
-              <TableHead className="hidden md:table-cell">
-                Active Clients
-              </TableHead>
+              <TableHead className="hidden md:table-cell">Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {employees.map((emp) => (
-              <TableRow key={emp.id}>
-                <TableCell>
-                  <div>
-                    <p className="font-medium text-[#0D2137]">{emp.name}</p>
-                    <p className="text-xs text-muted-foreground">{emp.email}</p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium">
-                    {emp.department}
-                  </span>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {emp.role}
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  <span
-                    className={`text-sm font-semibold ${getLoadColor(
-                      emp.currentLoad,
-                      emp.dailyCap
-                    )}`}
-                  >
-                    {emp.currentLoad}
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    /{emp.dailyCap} tasks
-                  </span>
-                </TableCell>
-                <TableCell className="hidden md:table-cell text-muted-foreground">
-                  {emp.activeClients}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="sm">
-                    <Pencil className="size-3.5" />
-                    Edit
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {employees.map((emp) => {
+              const cap = totalCap(emp)
+              return (
+                <TableRow key={emp.team_member_id}>
+                  <TableCell>
+                    <div>
+                      <p className="font-medium text-[#0D2137]">
+                        {emp.full_name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {emp.email}
+                      </p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium">
+                      {formatDepartment(emp.department)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {formatRole(emp.role)}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <span className="text-sm font-semibold text-[#0D2137]">
+                      {cap}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {" "}
+                      tasks/day
+                    </span>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
+                        emp.is_active
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : "border-gray-200 bg-gray-50 text-gray-500"
+                      }`}
+                    >
+                      {emp.is_active ? "Active" : "Inactive"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm">
+                      <Pencil className="size-3.5" />
+                      Edit
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       </div>
@@ -266,14 +265,16 @@ export default function TeamManagementPage() {
             className="flex flex-1 flex-col gap-4 px-4"
           >
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="full_name">Name</Label>
               <Input
-                id="name"
+                id="full_name"
                 placeholder="e.g. John Doe"
-                {...register("name", { required: "Name is required" })}
+                {...register("full_name", { required: "Name is required" })}
               />
-              {errors.name && (
-                <p className="text-xs text-red-600">{errors.name.message}</p>
+              {errors.full_name && (
+                <p className="text-xs text-red-600">
+                  {errors.full_name.message}
+                </p>
               )}
             </div>
 
@@ -306,11 +307,14 @@ export default function TeamManagementPage() {
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Graphics">Graphics</SelectItem>
-                  <SelectItem value="Video">Video</SelectItem>
-                  <SelectItem value="Content">Content</SelectItem>
-                  <SelectItem value="Sales">Sales</SelectItem>
-                  <SelectItem value="Admin">Admin</SelectItem>
+                  <SelectItem value="graphics">Graphics</SelectItem>
+                  <SelectItem value="video">Video</SelectItem>
+                  <SelectItem value="content_writing">
+                    Content Writing
+                  </SelectItem>
+                  <SelectItem value="social_media">Social Media</SelectItem>
+                  <SelectItem value="sales">Sales</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
               {errors.department && (
@@ -321,34 +325,61 @@ export default function TeamManagementPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Input
-                id="role"
-                placeholder="e.g. Senior Graphic Designer"
-                {...register("role", { required: "Role is required" })}
-              />
+              <Label>Role</Label>
+              <Select
+                value={watch("role")}
+                onValueChange={(v) => setValue("role", v ?? "")}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="team_member">Team Member</SelectItem>
+                  <SelectItem value="team_lead">Team Lead</SelectItem>
+                </SelectContent>
+              </Select>
               {errors.role && (
                 <p className="text-xs text-red-600">{errors.role.message}</p>
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="dailyCap">Daily Cap (tasks)</Label>
-              <Input
-                id="dailyCap"
-                type="number"
-                min={1}
-                {...register("dailyCap", {
-                  required: "Daily cap is required",
-                  valueAsNumber: true,
-                  min: { value: 1, message: "Must be at least 1" },
-                })}
-              />
-              {errors.dailyCap && (
-                <p className="text-xs text-red-600">
-                  {errors.dailyCap.message}
-                </p>
-              )}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="daily_poster_cap">Posters</Label>
+                <Input
+                  id="daily_poster_cap"
+                  type="number"
+                  min={0}
+                  {...register("daily_poster_cap", {
+                    valueAsNumber: true,
+                    min: { value: 0, message: "Min 0" },
+                  })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="daily_reel_cap">Reels</Label>
+                <Input
+                  id="daily_reel_cap"
+                  type="number"
+                  min={0}
+                  {...register("daily_reel_cap", {
+                    valueAsNumber: true,
+                    min: { value: 0, message: "Min 0" },
+                  })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="daily_story_cap">Stories</Label>
+                <Input
+                  id="daily_story_cap"
+                  type="number"
+                  min={0}
+                  {...register("daily_story_cap", {
+                    valueAsNumber: true,
+                    min: { value: 0, message: "Min 0" },
+                  })}
+                />
+              </div>
             </div>
 
             <SheetFooter>
@@ -356,10 +387,20 @@ export default function TeamManagementPage() {
                 type="button"
                 variant="outline"
                 onClick={() => setDrawerOpen(false)}
+                disabled={submitting}
               >
                 Cancel
               </Button>
-              <Button type="submit">Add Employee</Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  "Add Employee"
+                )}
+              </Button>
             </SheetFooter>
           </form>
         </SheetContent>

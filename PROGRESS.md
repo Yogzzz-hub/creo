@@ -9,9 +9,9 @@
 - [x] 1.5 Install and configure shadcn/ui — add Button, Card, Table, Dialog, Form, Input, Badge, Toast components
 - [x] 1.6 Set up Inter and JetBrains Mono fonts via Google Fonts in Next.js layout
 - [x] 1.7 Create shared packages/types/ with TypeScript interfaces for all major entities
-- [ ] 1.8 Create .env.example at root with all variables listed in TRD Section 9
+- [x] 1.8 Create .env.example at root with all variables listed in TRD Section 9
 - [x] 1.9 Set up GitHub repository with main and dev branches. Add .gitignore for both Next.js and Python
-- [ ] 1.10 Configure GitHub Actions CI workflow — runs Next.js build check and Python pytest on every push
+- [x] 1.10 Configure GitHub Actions CI workflow — runs Next.js build check and Python pytest on every push
 - [x] 1.11 Create docker-compose.yml for local development: PostgreSQL + Redis services
 - [x] 1.12 Set up Alembic in apps/api/alembic/ — configure env.py to read DATABASE_URL from environment
 - [x] 1.13 Configure FastAPI main.py — CORS, router registration, health check endpoint at /health
@@ -100,8 +100,8 @@
 - [x] 5.5 Wire /onboarding/terms to 5.4 — on accept, updates DB and advances to payment step
 - [x] 5.6 Create FastAPI endpoint POST /api/v1/payments/create-subscription
 - [x] 5.7 Build /onboarding/payment page — detects country, renders Razorpay or Stripe payment modal
-- [ ] 5.8 Implement Razorpay payment modal integration
-- [ ] 5.9 Implement Stripe payment modal integration
+- [x] 5.8 Implement Razorpay payment modal integration
+- [x] 5.9 Implement Stripe payment modal integration
 - [x] 5.10 Create FastAPI Razorpay webhook handler at /api/webhooks/razorpay
 - [x] 5.11 Create FastAPI Stripe webhook handler at /api/webhooks/stripe
 - [x] 5.12 Build /onboarding/questionnaire page — 3-step form with step indicator
@@ -144,7 +144,7 @@
 - [x] 6.24 Build Account Settings pages — business profile, password, Instagram, 2FA
 - [~] 6.25 Implement Instagram OAuth flow
 - [x] 6.26 Create FastAPI endpoint POST /api/v1/account/instagram
-- [ ] 6.27 Build in-portal notification system — bell icon, dropdown, mark-as-read
+- [x] 6.27 Build in-portal notification system — bell icon, dropdown, mark-as-read
 - [x] 6.28 Create FastAPI endpoint GET /api/v1/notifications
 - [x] 6.29 Wire all portal pages to loading skeletons
 - [x] 6.30 Test all client portal flows

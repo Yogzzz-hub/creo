@@ -8,6 +8,7 @@ from starlette.concurrency import run_in_threadpool
 
 from core.config import settings
 from core.database import async_session
+from core.exceptions import limiter
 from models.enums import AccountStatus
 from models.subscription import Subscription
 from models.user import User
@@ -87,6 +88,7 @@ async def _find_subscription_by_user_id_and_status(
 
 
 @router.post("/razorpay")
+@limiter.limit("100/minute")
 async def razorpay_webhook(request: Request):
     payload_body = await request.body()
     signature = request.headers.get("X-Razorpay-Signature", "")
@@ -155,6 +157,7 @@ async def razorpay_webhook(request: Request):
 
 
 @router.post("/stripe")
+@limiter.limit("100/minute")
 async def stripe_webhook(request: Request):
     payload_body = await request.body()
     sig_header = request.headers.get("Stripe-Signature", "")

@@ -32,3 +32,17 @@ class LeaveRequestOut(LeaveRequestBase):
     id: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+
+class AdminLeaveResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    team_member_id: str
+    employee_name: str
+    department: str
+    start_date: date
+    end_date: date
+    reason: str
+    status: LeaveStatus
+    created_at: datetime

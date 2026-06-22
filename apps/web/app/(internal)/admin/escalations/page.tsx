@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -27,105 +27,33 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { adminFetch } from "@/lib/admin-api"
 
 interface Escalation {
   id: string
-  client: string
-  severity: string
-  trigger: string
-  assignedTo: string
+  task_id: string
+  client_id: string
+  assigned_to: string | null
+  severity: number
+  reason: string
   status: string
-  createdAt: string
-  resolutionNotes?: string
+  resolution_notes: string | null
+  resolved_at: string | null
+  created_at: string
 }
 
-const INITIAL_ESCALATIONS: Escalation[] = [
-  {
-    id: "ESC-042",
-    client: "Brew & Bloom Cafe",
-    severity: "High",
-    trigger: "SLA Breach: 3-day delivery missed",
-    assignedTo: "Priya Sharma",
-    status: "Open",
-    createdAt: "Jun 12, 2026",
-  },
-  {
-    id: "ESC-041",
-    client: "TechNova Solutions",
-    severity: "Critical",
-    trigger: "Deliverable rejected 3 times — quality concern",
-    assignedTo: "Rahul Mehta",
-    status: "Open",
-    createdAt: "Jun 10, 2026",
-  },
-  {
-    id: "ESC-040",
-    client: "FreshCart",
-    severity: "Medium",
-    trigger: "Client unresponsive for 48 hours",
-    assignedTo: "Ananya Kumar",
-    status: "Open",
-    createdAt: "Jun 8, 2026",
-  },
-  {
-    id: "ESC-039",
-    client: "Urban Eats",
-    severity: "High",
-    trigger: "SLA Breach: Calendar not updated in 5 days",
-    assignedTo: "Vikram Desai",
-    status: "Open",
-    createdAt: "Jun 7, 2026",
-  },
-  {
-    id: "ESC-038",
-    client: "StyleHaus",
-    severity: "Medium",
-    trigger: "Instagram post published with wrong hashtag",
-    assignedTo: "Neha Gupta",
-    status: "Resolved",
-    createdAt: "Jun 5, 2026",
-    resolutionNotes:
-      "Hashtags corrected. Client informed. Updated brand guidelines document.",
-  },
-  {
-    id: "ESC-037",
-    client: "Brew & Bloom Cafe",
-    severity: "Low",
-    trigger: "Minor color palette adjustment requested",
-    assignedTo: "Priya Sharma",
-    status: "Resolved",
-    createdAt: "Jun 3, 2026",
-    resolutionNotes:
-      "Color palette updated per client request. New palette saved to brand kit.",
-  },
-  {
-    id: "ESC-036",
-    client: "TechNova Solutions",
-    severity: "High",
-    trigger: "SLA Breach: Blog post delayed by 4 days",
-    assignedTo: "Ananya Kumar",
-    status: "Resolved",
-    createdAt: "Jun 1, 2026",
-    resolutionNotes:
-      "Blog post published. Root cause: content writer overload. Daily cap reviewed.",
-  },
-  {
-    id: "ESC-035",
-    client: "FreshCart",
-    severity: "Medium",
-    trigger: "Deliverable format not matching brief specs",
-    assignedTo: "Neha Gupta",
-    status: "Resolved",
-    createdAt: "May 28, 2026",
-    resolutionNotes:
-      "Deliverable reformatted. Brief template updated to include file specs.",
-  },
-]
+function getSeverityLabel(severity: number) {
+  if (severity >= 4) return "Critical"
+  if (severity >= 3) return "High"
+  if (severity >= 2) return "Medium"
+  return "Low"
+}
 
-function getSeverityColor(severity: string) {
-  switch (severity) {
+function getSeverityColor(severity: number) {
+  const label = getSeverityLabel(severity)
+  switch (label) {
     case "Critical":
       return "bg-red-100 text-red-800 border-red-200"
     case "High":
@@ -141,26 +69,56 @@ function getSeverityColor(severity: string) {
 
 function getStatusColor(status: string) {
   switch (status) {
-    case "Open":
+    case "open":
       return "bg-red-50 text-red-700 border-red-200"
-    case "Resolved":
+    case "in_progress":
+      return "bg-amber-50 text-amber-700 border-amber-200"
+    case "resolved":
       return "bg-emerald-50 text-emerald-700 border-emerald-200"
     default:
       return ""
   }
 }
 
+function formatStatus(status: string) {
+  return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })
+}
+
 export default function EscalationsPage() {
   const [severityFilter, setSeverityFilter] = useState("all")
-  const [escalations, setEscalations] = useState(INITIAL_ESCALATIONS)
+  const [escalations, setEscalations] = useState<Escalation[]>([])
   const [resolveDialogOpen, setResolveDialogOpen] = useState(false)
   const [selectedEscalation, setSelectedEscalation] =
     useState<Escalation | null>(null)
   const [resolutionNotes, setResolutionNotes] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [resolving, setResolving] = useState(false)
+
+  const fetchEscalations = useCallback(() => {
+    setLoading(true)
+    setError(null)
+    adminFetch<Escalation[]>("/api/v1/admin/escalations")
+      .then(setEscalations)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    fetchEscalations()
+  }, [fetchEscalations])
 
   const filteredEscalations = escalations.filter((esc) => {
     if (severityFilter === "all") return true
-    return esc.severity === severityFilter
+    return getSeverityLabel(esc.severity) === severityFilter
   })
 
   function handleResolveClick(esc: Escalation) {
@@ -169,24 +127,37 @@ export default function EscalationsPage() {
     setResolveDialogOpen(true)
   }
 
-  function handleResolveSubmit() {
-    if (!resolutionNotes.trim()) return
-
-    setEscalations((prev) =>
-      prev.map((esc) =>
-        esc.id === selectedEscalation?.id
-          ? { ...esc, status: "Resolved", resolutionNotes: resolutionNotes }
-          : esc
+  async function handleResolveSubmit() {
+    if (!resolutionNotes.trim() || !selectedEscalation) return
+    setResolving(true)
+    try {
+      await adminFetch(
+        `/api/v1/admin/escalations/${selectedEscalation.id}/resolve`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ resolution_notes: resolutionNotes }),
+        }
       )
-    )
-
-    toast.success("Escalation resolved", {
-      description: `${selectedEscalation?.id} has been marked as resolved.`,
-    })
-
-    setResolveDialogOpen(false)
-    setSelectedEscalation(null)
-    setResolutionNotes("")
+      setEscalations((prev) =>
+        prev.map((esc) =>
+          esc.id === selectedEscalation.id
+            ? { ...esc, status: "resolved", resolution_notes: resolutionNotes }
+            : esc
+        )
+      )
+      toast.success("Escalation resolved", {
+        description: `${selectedEscalation.id.slice(0, 8)} has been marked as resolved.`,
+      })
+      setResolveDialogOpen(false)
+      setSelectedEscalation(null)
+      setResolutionNotes("")
+    } catch (err) {
+      toast.error("Failed to resolve", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      })
+    } finally {
+      setResolving(false)
+    }
   }
 
   return (
@@ -203,7 +174,7 @@ export default function EscalationsPage() {
             <AlertTriangle className="size-4 text-amber-500" />
             <span>
               <span className="font-semibold text-red-600">
-                {escalations.filter((e) => e.status === "Open").length}
+                {escalations.filter((e) => e.status === "open").length}
               </span>{" "}
               open escalations
             </span>
@@ -226,69 +197,79 @@ export default function EscalationsPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-white">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Severity</TableHead>
-              <TableHead className="hidden lg:table-cell">Trigger</TableHead>
-              <TableHead className="hidden md:table-cell">
-                Assigned To
-              </TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredEscalations.map((esc) => (
-              <TableRow key={esc.id}>
-                <TableCell className="font-mono text-xs">{esc.id}</TableCell>
-                <TableCell className="font-medium">{esc.client}</TableCell>
-                <TableCell>
-                  <span
-                    className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${getSeverityColor(
-                      esc.severity
-                    )}`}
-                  >
-                    {esc.severity}
-                  </span>
-                </TableCell>
-                <TableCell className="hidden lg:table-cell max-w-[280px] truncate text-muted-foreground">
-                  {esc.trigger}
-                </TableCell>
-                <TableCell className="hidden md:table-cell text-muted-foreground">
-                  {esc.assignedTo}
-                </TableCell>
-                <TableCell>
-                  <span
-                    className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(
-                      esc.status
-                    )}`}
-                  >
-                    {esc.status}
-                  </span>
-                </TableCell>
-                <TableCell className="text-right">
-                  {esc.status === "Open" ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleResolveClick(esc)}
-                      className="text-[#2B7BC4] hover:text-[#2B7BC4]"
-                    >
-                      Resolve
-                    </Button>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                </TableCell>
+      {loading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      ) : (
+        <div className="rounded-lg border bg-white">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Severity</TableHead>
+                <TableHead className="hidden lg:table-cell">Trigger</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Assigned To
+                </TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {filteredEscalations.map((esc) => (
+                <TableRow key={esc.id}>
+                  <TableCell className="font-mono text-xs">{esc.id.slice(0, 8)}</TableCell>
+                  <TableCell className="font-medium">{esc.client_id.slice(0, 8)}</TableCell>
+                  <TableCell>
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${getSeverityColor(
+                        esc.severity
+                      )}`}
+                    >
+                      {getSeverityLabel(esc.severity)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell max-w-[280px] truncate text-muted-foreground">
+                    {esc.reason}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell text-muted-foreground">
+                    {esc.assigned_to?.slice(0, 8) ?? "—"}
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusColor(
+                        esc.status
+                      )}`}
+                    >
+                      {formatStatus(esc.status)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {esc.status === "open" || esc.status === "in_progress" ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleResolveClick(esc)}
+                        className="text-[#2B7BC4] hover:text-[#2B7BC4]"
+                      >
+                        Resolve
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       <Dialog open={resolveDialogOpen} onOpenChange={setResolveDialogOpen}>
         <DialogContent className="sm:max-w-md">
@@ -297,9 +278,8 @@ export default function EscalationsPage() {
             <DialogDescription>
               Log the resolution notes for{" "}
               <span className="font-semibold text-foreground">
-                {selectedEscalation?.id}
-              </span>{" "}
-              — {selectedEscalation?.client}
+                {selectedEscalation?.id.slice(0, 8)}
+              </span>
             </DialogDescription>
           </DialogHeader>
 
@@ -318,13 +298,17 @@ export default function EscalationsPage() {
             <Button
               variant="outline"
               onClick={() => setResolveDialogOpen(false)}
+              disabled={resolving}
             >
               Cancel
             </Button>
             <Button
               onClick={handleResolveSubmit}
-              disabled={!resolutionNotes.trim()}
+              disabled={!resolutionNotes.trim() || resolving}
             >
+              {resolving ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : null}
               Mark as Resolved
             </Button>
           </DialogFooter>

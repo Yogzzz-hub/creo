@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import {
@@ -18,108 +18,86 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Search, Users } from "lucide-react"
+import { Search, Users, Loader2 } from "lucide-react"
+import { adminFetch } from "@/lib/admin-api"
 
-const MOCK_CLIENTS = [
-  {
-    id: "1",
-    name: "Brew & Bloom Cafe",
-    ownerName: "Sarah Chen",
-    status: "Active",
-    plan: "Growth",
-    onboardingStage: "Complete",
-    monthlyRevenue: "₹14,999",
-  },
-  {
-    id: "2",
-    name: "TechNova Solutions",
-    ownerName: "Amit Patel",
-    status: "Active",
-    plan: "Pro",
-    onboardingStage: "Complete",
-    monthlyRevenue: "₹29,999",
-  },
-  {
-    id: "3",
-    name: "FreshCart",
-    ownerName: "Meera Iyer",
-    status: "Active",
-    plan: "Starter",
-    onboardingStage: "Complete",
-    monthlyRevenue: "₹7,999",
-  },
-  {
-    id: "4",
-    name: "StyleHaus",
-    ownerName: "Rohan Gupta",
-    status: "Pending Payment",
-    plan: "Growth",
-    onboardingStage: "Payment",
-    monthlyRevenue: "—",
-  },
-  {
-    id: "5",
-    name: "Urban Eats",
-    ownerName: "Nisha Sharma",
-    status: "Active",
-    plan: "Pro",
-    onboardingStage: "Complete",
-    monthlyRevenue: "₹29,999",
-  },
-  {
-    id: "6",
-    name: "GreenLeaf Organics",
-    ownerName: "Arjun Reddy",
-    status: "Lapsed",
-    plan: "Starter",
-    onboardingStage: "Complete",
-    monthlyRevenue: "₹0",
-  },
-]
-
-function getStatusVariant(status: string) {
-  switch (status) {
-    case "Active":
-      return "default"
-    case "Pending Payment":
-      return "secondary"
-    case "Lapsed":
-      return "destructive"
-    default:
-      return "outline"
-  }
+interface Client {
+  user_id: string
+  business_name: string | null
+  email: string
+  plan_name: string | null
+  status: string
+  created_at: string
 }
 
 function getStatusColor(status: string) {
   switch (status) {
-    case "Active":
+    case "active":
       return "bg-emerald-50 text-emerald-700 border-emerald-200"
-    case "Pending Payment":
+    case "pending_payment":
       return "bg-amber-50 text-amber-700 border-amber-200"
-    case "Lapsed":
+    case "lapsed":
       return "bg-red-50 text-red-700 border-red-200"
     default:
       return ""
   }
 }
 
+function formatStatus(status: string) {
+  return status
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function formatPlan(plan: string | null) {
+  if (!plan) return "—"
+  return plan.charAt(0).toUpperCase() + plan.slice(1)
+}
+
 export default function AdminClientsPage() {
+  const [clients, setClients] = useState<Client[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [planFilter, setPlanFilter] = useState("all")
 
-  const filteredClients = MOCK_CLIENTS.filter((client) => {
+  useEffect(() => {
+    adminFetch<Client[]>("/api/v1/admin/clients")
+      .then(setClients)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filteredClients = clients.filter((client) => {
+    const name = client.business_name ?? client.email
     const matchesSearch =
       search === "" ||
-      client.name.toLowerCase().includes(search.toLowerCase()) ||
-      client.ownerName.toLowerCase().includes(search.toLowerCase())
+      name.toLowerCase().includes(search.toLowerCase()) ||
+      client.email.toLowerCase().includes(search.toLowerCase())
     const matchesStatus =
       statusFilter === "all" || client.status === statusFilter
     const matchesPlan =
-      planFilter === "all" || client.plan === planFilter
+      planFilter === "all" ||
+      (client.plan_name ?? "").toLowerCase() === planFilter
     return matchesSearch && matchesStatus && matchesPlan
   })
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        Failed to load clients: {error}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -148,9 +126,9 @@ export default function AdminClientsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="Active">Active</SelectItem>
-            <SelectItem value="Pending Payment">Pending Payment</SelectItem>
-            <SelectItem value="Lapsed">Lapsed</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="pending_payment">Pending Payment</SelectItem>
+            <SelectItem value="lapsed">Lapsed</SelectItem>
           </SelectContent>
         </Select>
         <Select value={planFilter} onValueChange={(v) => setPlanFilter(v ?? "all")}>
@@ -159,9 +137,9 @@ export default function AdminClientsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Plans</SelectItem>
-            <SelectItem value="Starter">Starter</SelectItem>
-            <SelectItem value="Growth">Growth</SelectItem>
-            <SelectItem value="Pro">Pro</SelectItem>
+            <SelectItem value="starter">Starter</SelectItem>
+            <SelectItem value="growth">Growth</SelectItem>
+            <SelectItem value="pro">Pro</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -178,7 +156,7 @@ export default function AdminClientsPage() {
             <p className="mt-1 max-w-sm text-sm text-muted-foreground">
               {search || statusFilter !== "all" || planFilter !== "all"
                 ? "Try adjusting your search or filters."
-                : "No clients yet. Share your pricing page to get started."}
+                : "No clients yet."}
             </p>
           </div>
         ) : (
@@ -188,30 +166,23 @@ export default function AdminClientsPage() {
                 <TableHead>Client Name</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Plan</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Onboarding Stage
-                </TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  Monthly Revenue
-                </TableHead>
+                <TableHead className="hidden md:table-cell">Email</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredClients.map((client) => (
-                <TableRow key={client.id}>
+                <TableRow key={client.user_id}>
                   <TableCell>
-                    <div>
-                      <Link
-                        href={`/admin/clients/${client.id}`}
-                        className="font-medium text-[#0D2137] hover:underline"
-                      >
-                        {client.name}
-                      </Link>
-                      <p className="text-xs text-muted-foreground">
-                        {client.ownerName}
-                      </p>
-                    </div>
+                    <Link
+                      href={`/admin/clients/${client.user_id}`}
+                      className="font-medium text-[#0D2137] hover:underline"
+                    >
+                      {client.business_name ?? "Unnamed"}
+                    </Link>
+                    <p className="text-xs text-muted-foreground">
+                      {client.email}
+                    </p>
                   </TableCell>
                   <TableCell>
                     <span
@@ -219,21 +190,16 @@ export default function AdminClientsPage() {
                         client.status
                       )}`}
                     >
-                      {client.status}
+                      {formatStatus(client.status)}
                     </span>
                   </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{client.plan}</Badge>
-                  </TableCell>
+                  <TableCell>{formatPlan(client.plan_name)}</TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground">
-                    {client.onboardingStage}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell font-medium">
-                    {client.monthlyRevenue}
+                    {client.email}
                   </TableCell>
                   <TableCell className="text-right">
                     <Link
-                      href={`/admin/clients/${client.id}`}
+                      href={`/admin/clients/${client.user_id}`}
                       className="text-sm font-medium text-[#2B7BC4] hover:underline"
                     >
                       View

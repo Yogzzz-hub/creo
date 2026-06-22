@@ -34,3 +34,16 @@ class CustomPricingOut(CustomPricingBase):
     id: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+
+class AdminCustomPricingResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    client_name: str
+    business_name: Optional[str] = None
+    plan_name: Optional[str] = None
+    custom_price: float
+    status: str
+    reason: Optional[str] = None
+    created_at: datetime
