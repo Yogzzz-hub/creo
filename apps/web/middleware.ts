@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/portal", "/dashboard", "/admin", "/kpi", "/sales"];
+const PROTECTED_PREFIXES = ["/portal", "/dashboard", "/admin", "/kpi", "/sales", "/onboarding"];
 
 const ROLE_HOMES: Record<string, string> = {
   client: "/portal",

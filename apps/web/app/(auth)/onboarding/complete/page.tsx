@@ -64,9 +64,9 @@ export default function CompletePage() {
       const data = await res.json();
 
       // Check if the backend worker has finished
-      if (data.status === "completed" || data.ai_summary_line) {
+      if (data.status === "completed" || data.summary_line) {
         if (intervalRef.current) clearInterval(intervalRef.current);
-        setSummaryLine(data.ai_summary_line || "Your brand profile has been optimized.");
+        setSummaryLine(data.summary_line || "Your brand profile has been optimized.");
         setPhase("success");
       }
     } catch (error) {
@@ -77,8 +77,20 @@ export default function CompletePage() {
 
   // 3. Start polling on mount
   useEffect(() => {
+    const MAX_RETRIES = 60; // 3 minutes maximum
+    let retries = 0;
+
     // Poll every 3 seconds
-    intervalRef.current = setInterval(pollStatus, 3000);
+    intervalRef.current = setInterval(() => {
+      retries++;
+      if (retries > MAX_RETRIES) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setPhase("error");
+        setErrorMessage("Analysis is taking longer than expected. Please check back later.");
+        return;
+      }
+      pollStatus();
+    }, 3000);
 
     // Do an immediate first check
     pollStatus();

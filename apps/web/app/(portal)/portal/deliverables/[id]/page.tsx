@@ -114,7 +114,7 @@ const STATUS_CONFIG: Record<
 }
 
 const rejectionSchema = z.object({
-  reason: z
+  comment_text: z
     .string()
     .min(1, "Please provide a reason for rejection")
     .min(10, "Please provide at least 10 characters"),
