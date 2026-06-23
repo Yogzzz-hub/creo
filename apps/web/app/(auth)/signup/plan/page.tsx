@@ -1,75 +1,194 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Info } from "lucide-react";
+import { Check, Info, Loader2 } from "lucide-react";
 
-const plans = [
-  {
-    name: "Starter",
-    price: "₹4,999",
-    description: "For small businesses getting started",
-    features: [
-      "3 Posters / month",
-      "2 Reels / month",
-      "3 Stories / month",
-      "Content Calendar",
-      "Client Portal",
-      "1 Revision Round",
-    ],
-    highlighted: false,
-  },
-  {
-    name: "Growth",
-    price: "₹9,999",
-    description: "Most popular for growing brands",
-    features: [
-      "6 Posters / month",
-      "4 Reels / month",
-      "6 Stories / month",
-      "Content Calendar",
-      "Client Portal",
-      "2 Revision Rounds",
-    ],
-    highlighted: true,
-  },
-  {
-    name: "Pro",
-    price: "₹19,999",
-    description: "For brands that need dedicated attention",
-    features: [
-      "6 Posters / month",
-      "4 Reels / month",
-      "9 Stories / month",
-      "Content Calendar",
-      "Client Portal",
-      "Dedicated Manager",
-      "3 Revision Rounds",
-    ],
-    highlighted: false,
-  },
-];
+interface Plan {
+  id: string;
+  name: string;
+  display_name: string;
+  monthly_price: number;
+  poster_quota: number;
+  reel_quota: number;
+  story_quota: number;
+  revision_rounds: number;
+  has_dedicated_manager: boolean;
+  is_active: boolean;
+}
+
+function buildFeatures(plan: Plan): string[] {
+  const features: string[] = [
+    `${plan.poster_quota} Posters / month`,
+    `${plan.reel_quota} Reels / month`,
+    `${plan.story_quota} Stories / month`,
+    "Content Calendar",
+    "Client Portal",
+    `${plan.revision_rounds} Revision Round${plan.revision_rounds !== 1 ? "s" : ""}`,
+  ];
+  if (plan.has_dedicated_manager) {
+    features.push("Dedicated Manager");
+  }
+  return features;
+}
+
+function formatPrice(price: number): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(price);
+}
+
+function PlansSkeleton() {
+  return (
+    <div className="grid md:grid-cols-3 gap-6">
+      {[1, 2, 3].map((i) => (
+        <Card key={i} className="relative border-border">
+          <CardHeader className="text-center pt-8">
+            <div className="mx-auto h-6 w-24 animate-pulse rounded bg-gray-200" />
+            <div className="mt-3 mx-auto h-8 w-28 animate-pulse rounded bg-gray-200" />
+            <div className="mt-2 mx-auto h-4 w-40 animate-pulse rounded bg-gray-200" />
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-3">
+              {[1, 2, 3, 4, 5].map((j) => (
+                <li key={j} className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-pulse rounded bg-gray-200" />
+                  <div className="h-4 animate-pulse rounded bg-gray-200" style={{ width: `${60 + j * 8}%` }} />
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+          <CardFooter>
+            <div className="mx-auto h-10 w-full animate-pulse rounded bg-gray-200" />
+          </CardFooter>
+        </Card>
+      ))}
+    </div>
+  );
+}
 
 function PlanSelectionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const planParam = searchParams.get("plan");
 
-  const validPlanNames = ["starter", "growth", "pro"] as const;
-  const preselectedPlan =
-    planParam && validPlanNames.includes(planParam as typeof validPlanNames[number])
-      ? planParam.charAt(0).toUpperCase() + planParam.slice(1)
-      : null;
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
 
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(preselectedPlan);
+  useEffect(() => {
+    async function fetchPlans() {
+      try {
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-  function handleSelectPlan(planName: string) {
-    setSelectedPlan(planName);
+        const headers: Record<string, string> = {};
+        if (session?.access_token) {
+          headers["Authorization"] = `Bearer ${session.access_token}`;
+        }
+
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/plans`,
+          { headers }
+        );
+
+        if (!res.ok) {
+          throw new Error("Failed to load plans");
+        }
+
+        const data: Plan[] = await res.json();
+        const active = data.filter((p) => p.is_active);
+        setPlans(active);
+
+        if (planParam) {
+          const match = active.find(
+            (p) => p.name.toLowerCase() === planParam.toLowerCase()
+          );
+          if (match) {
+            setSelectedPlanId(match.id);
+          }
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPlans();
+  }, [planParam]);
+
+  function handleSelectPlan(planId: string) {
+    setSelectedPlanId(planId);
     // Phase 5: Wire to payment gateway
     // For now, redirect to portal
     router.push("/portal");
+  }
+
+  const selectedPlan = plans.find((p) => p.id === selectedPlanId);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-bg px-4 py-12">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-brand-dark">Choose Your Plan</h1>
+            <p className="text-text-muted mt-2">
+              Select the plan that best fits your brand&apos;s needs
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
+            <span className="text-sm text-text-muted">Loading plans...</span>
+          </div>
+          <PlansSkeleton />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center px-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="flex flex-col items-center py-12">
+            <p className="text-sm text-red-600 font-medium">{error}</p>
+            <p className="mt-2 text-xs text-text-muted">
+              Please try refreshing the page.
+            </p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (plans.length === 0) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center px-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="flex flex-col items-center py-12">
+            <p className="text-sm text-text-muted">
+              No plans available at the moment. Please check back later.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -82,30 +201,34 @@ function PlanSelectionContent() {
           </p>
         </div>
 
-        {preselectedPlan && (
+        {selectedPlan && (
           <div className="mb-8 mx-auto max-w-md rounded-lg border border-accent/30 bg-accent/5 px-4 py-3 flex items-center gap-3">
             <Info className="h-5 w-5 text-accent shrink-0" />
             <p className="text-sm text-brand-dark">
-              <span className="font-semibold">{preselectedPlan}</span> plan pre-selected based on your selection.
+              <span className="font-semibold">{selectedPlan.display_name}</span>{" "}
+              plan pre-selected based on your selection.
             </p>
           </div>
         )}
 
         <div className="grid md:grid-cols-3 gap-6">
           {plans.map((plan) => {
-            const isSelected = selectedPlan === plan.name;
+            const isSelected = selectedPlanId === plan.id;
+            const isPopular = plan.name.toLowerCase() === "growth";
+            const features = buildFeatures(plan);
+
             return (
               <Card
-                key={plan.name}
+                key={plan.id}
                 className={`relative transition-all ${
                   isSelected
                     ? "border-2 border-accent shadow-lg ring-2 ring-accent/20"
-                    : plan.highlighted
+                    : isPopular
                       ? "border-2 border-brand shadow-lg"
                       : "border-border"
                 }`}
               >
-                {plan.highlighted && !isSelected && (
+                {isPopular && !isSelected && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <span className="bg-brand text-white text-xs font-medium px-3 py-1 rounded-full">
                       Most Popular
@@ -121,21 +244,25 @@ function PlanSelectionContent() {
                 )}
                 <CardHeader className="text-center pt-8">
                   <CardTitle className="text-xl text-brand-dark">
-                    {plan.name}
+                    {plan.display_name}
                   </CardTitle>
                   <div className="mt-2">
                     <span className="text-3xl font-bold text-brand-dark">
-                      {plan.price}
+                      {formatPrice(plan.monthly_price)}
                     </span>
                     <span className="text-text-muted"> /month</span>
                   </div>
                   <CardDescription className="mt-2">
-                    {plan.description}
+                    {plan.name === "starter"
+                      ? "For small businesses getting started"
+                      : plan.name === "growth"
+                        ? "Most popular for growing brands"
+                        : "For brands that need dedicated attention"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
-                    {plan.features.map((feature) => (
+                    {features.map((feature) => (
                       <li key={feature} className="flex items-center gap-2 text-sm text-text">
                         <Check className="h-4 w-4 text-success shrink-0" />
                         {feature}
@@ -148,13 +275,15 @@ function PlanSelectionContent() {
                     className={`w-full ${
                       isSelected
                         ? "bg-accent hover:bg-accent/90 text-white"
-                        : plan.highlighted
+                        : isPopular
                           ? "bg-brand hover:bg-brand/90 text-white"
                           : "bg-brand-dark hover:bg-brand-dark/90 text-white"
                     }`}
-                    onClick={() => handleSelectPlan(plan.name)}
+                    onClick={() => handleSelectPlan(plan.id)}
                   >
-                    {isSelected ? "Continue with " + plan.name : "Select " + plan.name}
+                    {isSelected
+                      ? `Continue with ${plan.display_name}`
+                      : `Select ${plan.display_name}`}
                   </Button>
                 </CardFooter>
               </Card>
