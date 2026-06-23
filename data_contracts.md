@@ -443,7 +443,35 @@
 { id, ticket_number, client_id, ticket_type, subject, description, status, assigned_to, linked_deliverable_id, created_at, resolved_at, reopened_at, updated_at }
 ```
 
+### POST /api/v1/tickets → `TicketOut`
+Request: `{ ticket_type, subject, description, linked_deliverable_id }`
+```
+{ id, ticket_number, client_id, ticket_type, subject, description, status, assigned_to, linked_deliverable_id, created_at, resolved_at, reopened_at, updated_at }
+```
+
 ### GET /api/v1/tickets/{id}/messages → `list[TicketMessageOut]`
+```
+{ id, ticket_id, sender_id, message_text, file_url, file_name, file_size_bytes, is_read, created_at }
+```
+
+### POST /api/v1/tickets/{id}/messages → `TicketMessageOut`
+Request: `{ message_text, file_url, file_name }`
+```
+{ id, ticket_id, sender_id, message_text, file_url, file_name, file_size_bytes, is_read, created_at }
+```
+
+### GET /api/v1/team/tickets → `list[TicketOut]`
+```
+{ id, ticket_number, client_id, ticket_type, subject, description, status, assigned_to, linked_deliverable_id, created_at, resolved_at, reopened_at, updated_at }
+```
+
+### GET /api/v1/team/tickets/{id}/messages → `list[TicketMessageOut]`
+```
+{ id, ticket_id, sender_id, message_text, file_url, file_name, file_size_bytes, is_read, created_at }
+```
+
+### POST /api/v1/team/tickets/{id}/messages → `TicketMessageOut`
+Request: `{ message_text, file_url, file_name }`
 ```
 { id, ticket_id, sender_id, message_text, file_url, file_name, file_size_bytes, is_read, created_at }
 ```
@@ -475,15 +503,21 @@
 
 ### GET /api/v1/team/overview → `TeamOverviewResponse`
 ```
-{ members: [{ team_member_id, name, role, active_tasks, overdue_tasks, today_completed, today_cap }] }
+{ members: [{ team_member_id, name, role, active_tasks, overdue_tasks, today_completed, daily_cap_posters, daily_cap_reels, daily_cap_stories }] }
 ```
 
 ### GET /api/v1/calendar/team → `list[TeamCalendarEntryResponse]`
 ```
-{ id, scheduled_date, display_date, deliverable_type, client_name, status, linked_task_id }
+{ id, scheduled_date, display_date, deliverable_type, client_name, content_topic, status, linked_task_id }
 ```
 
 ### GET /api/v1/leave → `list[LeaveRequestOut]`
+```
+{ id, team_member_id, start_date, end_date, reason, status, reviewed_by, reviewed_at, created_at, updated_at }
+```
+
+### POST /api/v1/leave → `LeaveRequestOut`
+Request: `{ start_date, end_date, reason }`
 ```
 { id, team_member_id, start_date, end_date, reason, status, reviewed_by, reviewed_at, created_at, updated_at }
 ```
@@ -528,7 +562,7 @@
 { id, email, phone, full_name, business_name, role, account_status, plan_name, two_fa_enabled, deleted_at, created_at, updated_at }
 ```
 
-### POST /api/v1/sales/clients → `list[SalesClientResponse]`
+### GET /api/v1/sales/clients → `list[SalesClientResponse]`
 ```
 { user_id, full_name, business_name, plan_name, account_status, created_at }
 ```

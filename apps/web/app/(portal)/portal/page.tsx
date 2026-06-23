@@ -1,5 +1,8 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/client"
 import {
   FileImage,
   Film,
@@ -15,6 +18,7 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
 interface DashboardData {
@@ -22,6 +26,13 @@ interface DashboardData {
   open_ticket_count: number
   ai_summary_line: string | null
   onboarding_stage: number
+}
+
+const EMPTY_DASHBOARD: DashboardData = {
+  pending_deliverable_count: 0,
+  open_ticket_count: 0,
+  ai_summary_line: null,
+  onboarding_stage: 1,
 }
 
 const ONBOARDING_STEPS = [
@@ -38,35 +49,90 @@ const QUICK_ACCESS = [
   { label: "Raise a Ticket", href: "/portal/support", icon: Ticket },
 ]
 
-async function getDashboardData(): Promise<DashboardData> {
-  const supabase = await createClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+function DashboardSkeleton() {
+  return (
+    <div className="mx-auto max-w-6xl space-y-6">
+      <div>
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="mt-2 h-4 w-56" />
+      </div>
 
-  const headers: Record<string, string> = {}
-  if (session?.access_token) {
-    headers["Authorization"] = `Bearer ${session.access_token}`
-  }
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="rounded-xl shadow-[var(--shadow-card)]">
+            <CardContent className="flex items-center gap-3 p-4">
+              <Skeleton className="size-10 shrink-0 rounded-lg" />
+              <div className="space-y-2">
+                <Skeleton className="h-7 w-12" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/portal/dashboard`,
-    { cache: "no-store", headers }
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="rounded-xl shadow-[var(--shadow-card)]">
+          <CardContent className="space-y-3 p-5">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </CardContent>
+        </Card>
+        <Card className="rounded-xl shadow-[var(--shadow-card)]">
+          <CardContent className="space-y-4 p-5">
+            <Skeleton className="h-4 w-32" />
+            <div className="flex justify-between">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="size-6 rounded-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
-
-  if (!res.ok) {
-    return {
-      pending_deliverable_count: 0,
-      open_ticket_count: 0,
-      ai_summary_line: null,
-      onboarding_stage: 1,
-    }
-  }
-  return res.json()
 }
 
-export default async function PortalDashboard() {
-  const data = await getDashboardData()
+export default function PortalDashboard() {
+  const [data, setData] = useState<DashboardData>(EMPTY_DASHBOARD)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchDashboard() {
+      const supabase = createClient()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        setLoading(false)
+        return
+      }
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/portal/dashboard`,
+        {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }
+      )
+
+      if (!res.ok) {
+        setLoading(false)
+        return
+      }
+
+      const result: DashboardData = await res.json()
+      setData(result)
+      setLoading(false)
+    }
+
+    fetchDashboard()
+  }, [])
+
+  if (loading) {
+    return <DashboardSkeleton />
+  }
 
   const completedSteps = ONBOARDING_STEPS.filter(
     (s) => s.stage <= data.onboarding_stage
