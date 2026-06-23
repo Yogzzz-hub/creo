@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
@@ -19,6 +19,12 @@ from schemas.ticket import (
 router = APIRouter(prefix="/api/v1/tickets", tags=["tickets"])
 
 
+async def _generate_ticket_number(db: AsyncSession) -> str:
+    result = await db.execute(select(func.count(Ticket.id)))
+    count = result.scalar() or 0
+    return f"TKT-{count + 1:04d}"
+
+
 @router.get("", response_model=list[TicketOut])
 async def list_tickets(
     current_user: RequireClient,
@@ -26,7 +32,7 @@ async def list_tickets(
 ):
     result = await db.execute(
         select(Ticket)
-        .where(Ticket.user_id == current_user.id)
+        .where(Ticket.client_id == current_user.id)
         .order_by(Ticket.created_at.desc())
     )
     tickets = result.scalars().all()
@@ -39,8 +45,10 @@ async def create_ticket(
     current_user: RequireClient,
     db: AsyncSession = Depends(get_db),
 ):
+    ticket_number = await _generate_ticket_number(db)
     ticket = Ticket(
-        user_id=current_user.id,
+        ticket_number=ticket_number,
+        client_id=current_user.id,
         ticket_type=payload.ticket_type,
         subject=payload.subject,
         description=payload.description,
@@ -61,7 +69,7 @@ async def list_ticket_messages(
     result = await db.execute(
         select(Ticket).where(
             Ticket.id == ticket_id,
-            Ticket.user_id == current_user.id,
+            Ticket.client_id == current_user.id,
         )
     )
     ticket = result.scalar_one_or_none()
@@ -95,7 +103,7 @@ async def create_ticket_message(
     result = await db.execute(
         select(Ticket).where(
             Ticket.id == ticket_id,
-            Ticket.user_id == current_user.id,
+            Ticket.client_id == current_user.id,
         )
     )
     ticket = result.scalar_one_or_none()

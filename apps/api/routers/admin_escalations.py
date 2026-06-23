@@ -63,7 +63,7 @@ async def resolve_escalation(
         )
 
     escalation.status = "resolved"
-    escalation.resolution_notes = payload.resolution_notes
+    escalation.resolved_by = payload.resolved_by
     escalation.resolved_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(escalation)

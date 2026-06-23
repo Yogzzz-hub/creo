@@ -12,20 +12,21 @@ class LeaveRequestBase(BaseModel):
     team_member_id: str
     start_date: date
     end_date: date
-    reason: str
+    reason: Optional[str] = None
     status: LeaveStatus = LeaveStatus.pending
-    approved_by: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
 
 
 class LeaveRequestCreate(BaseModel):
     start_date: date
     end_date: date
-    reason: str
+    reason: Optional[str] = None
 
 
 class LeaveRequestUpdate(BaseModel):
     status: LeaveStatus
-    approved_by: Optional[str] = None
+    reviewed_by: Optional[str] = None
 
 
 class LeaveRequestOut(LeaveRequestBase):

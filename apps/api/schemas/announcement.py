@@ -19,12 +19,16 @@ class AnnouncementBase(BaseModel):
     content: str
     type: str
     target_departments: Optional[list[str]] = None
+    file_url: Optional[str] = None
+    file_name: Optional[str] = None
 
 
 class AnnouncementCreate(BaseModel):
     title: str
     content: str
     target_audience: TargetAudience = TargetAudience.all
+    file_url: Optional[str] = None
+    file_name: Optional[str] = None
 
 
 class AnnouncementUpdate(BaseModel):
@@ -32,6 +36,8 @@ class AnnouncementUpdate(BaseModel):
     content: Optional[str] = None
     type: Optional[str] = None
     target_departments: Optional[list[str]] = None
+    file_url: Optional[str] = None
+    file_name: Optional[str] = None
 
 
 class AnnouncementResponse(BaseModel):
@@ -43,9 +49,13 @@ class AnnouncementResponse(BaseModel):
     content: str
     type: str
     target_departments: Optional[list[str]] = None
+    file_url: Optional[str] = None
+    file_name: Optional[str] = None
     created_at: datetime
+    updated_at: Optional[datetime] = None
 
 
 class AnnouncementOut(AnnouncementBase):
     id: str
     created_at: datetime
+    updated_at: Optional[datetime] = None

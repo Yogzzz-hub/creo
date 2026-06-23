@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_db
 from core.security import RequireClient, encrypt_token
 from models.user import User
+from schemas.user import UserOut, UserUpdate
 from services.instagram import exchange_instagram_token
 
 logger = logging.getLogger(__name__)
@@ -64,3 +65,17 @@ async def connect_instagram(
         success=True,
         message="Instagram account connected successfully",
     )
+
+
+@router.put("", response_model=UserOut)
+async def update_account_profile(
+    payload: UserUpdate,
+    current_user: RequireClient,
+    db: AsyncSession = Depends(get_db),
+):
+    update_data = payload.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(current_user, field, value)
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user

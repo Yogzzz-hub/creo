@@ -26,11 +26,19 @@ class AddonPricing(Base):
     )
     unit_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    updated_by: Mapped[Optional[str]] = mapped_column(
+        UUID(as_uuid=False), ForeignKey("users.id"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True
+    )
+
+    # Relationships
+    updater: Mapped[Optional["User"]] = relationship(
+        "User", foreign_keys=[updated_by], lazy="selectin"
     )
 
 
@@ -40,7 +48,7 @@ class Addon(Base):
     id: Mapped[str] = mapped_column(
         UUID(as_uuid=False), primary_key=True, server_default="gen_random_uuid()"
     )
-    user_id: Mapped[str] = mapped_column(
+    client_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False), ForeignKey("users.id"), nullable=False, index=True
     )
     deliverable_type: Mapped[DeliverableType] = mapped_column(
@@ -49,20 +57,26 @@ class Addon(Base):
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     unit_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     total_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    gateway: Mapped[PaymentGateway] = mapped_column(
+        Enum(PaymentGateway, name="payment_gateway", create_type=False), nullable=False
+    )
+    gateway_payment_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     status: Mapped[AddonStatus] = mapped_column(
         Enum(AddonStatus, name="addon_status", create_type=False),
         nullable=False,
         default=AddonStatus.pending,
         index=True,
     )
-    gateway: Mapped[Optional[PaymentGateway]] = mapped_column(
-        Enum(PaymentGateway, name="payment_gateway", create_type=False), nullable=True
-    )
-    payment_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    content_brief: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    updated_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True
+    )
 
     # Relationships
-    user: Mapped["User"] = relationship("User", back_populates="addons")
+    client: Mapped["User"] = relationship(
+        "User", back_populates="addons", foreign_keys=[client_id]
+    )
     tasks: Mapped[list["Task"]] = relationship("Task", back_populates="addon", lazy="selectin")

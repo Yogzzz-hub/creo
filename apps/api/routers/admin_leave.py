@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -75,7 +77,8 @@ async def approve_leave_request(
         )
 
     leave.status = LeaveStatus.approved
-    leave.approved_by = current_user.id
+    leave.reviewed_by = current_user.id
+    leave.reviewed_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(leave)
 
@@ -106,7 +109,8 @@ async def reject_leave_request(
         )
 
     leave.status = LeaveStatus.rejected
-    leave.approved_by = current_user.id
+    leave.reviewed_by = current_user.id
+    leave.reviewed_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(leave)
 

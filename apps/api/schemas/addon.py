@@ -28,14 +28,15 @@ class AddonPricingOut(AddonPricingBase):
 class AddonBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    user_id: str
+    client_id: str
     deliverable_type: DeliverableType
     quantity: int
     unit_price: float
     total_price: float
     status: AddonStatus = AddonStatus.pending
-    gateway: Optional[PaymentGateway] = None
-    payment_id: Optional[str] = None
+    gateway: PaymentGateway
+    gateway_payment_id: Optional[str] = None
+    content_brief: Optional[str] = None
 
 
 class AddonCreate(BaseModel):
@@ -46,9 +47,10 @@ class AddonCreate(BaseModel):
 class AddonUpdate(BaseModel):
     status: Optional[AddonStatus] = None
     gateway: Optional[PaymentGateway] = None
-    payment_id: Optional[str] = None
+    gateway_payment_id: Optional[str] = None
 
 
 class AddonOut(AddonBase):
     id: str
     created_at: datetime
+    updated_at: Optional[datetime] = None

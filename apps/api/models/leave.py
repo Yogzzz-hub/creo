@@ -24,15 +24,18 @@ class LeaveRequest(Base):
     )
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
     end_date: Mapped[date] = mapped_column(Date, nullable=False)
-    reason: Mapped[str] = mapped_column(Text, nullable=False)
+    reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     status: Mapped[LeaveStatus] = mapped_column(
         Enum(LeaveStatus, name="leave_status", create_type=False),
         nullable=False,
         default=LeaveStatus.pending,
         index=True,
     )
-    approved_by: Mapped[Optional[str]] = mapped_column(
+    reviewed_by: Mapped[Optional[str]] = mapped_column(
         UUID(as_uuid=False), ForeignKey("users.id"), nullable=True
+    )
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -43,9 +46,9 @@ class LeaveRequest(Base):
 
     # Relationships
     team_member: Mapped["TeamMember"] = relationship("TeamMember", lazy="selectin")
-    approver: Mapped[Optional["User"]] = relationship(
-        "User", 
-        foreign_keys=[approved_by], 
+    reviewer: Mapped[Optional["User"]] = relationship(
+        "User",
+        foreign_keys=[reviewed_by],
         lazy="selectin",
-        overlaps="leave_requests_approved"
+        overlaps="leave_requests_reviewed"
     )

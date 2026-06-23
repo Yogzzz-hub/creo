@@ -9,18 +9,25 @@ from models.enums import CustomPricingStatus
 class CustomPricingBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    user_id: str
+    client_id: str
     plan_id: str
     custom_price: float
+    standard_price: float
+    discount_percent: float
+    requested_by: str
     approved_by: Optional[str] = None
     valid_from: Optional[date] = None
     valid_until: Optional[date] = None
+    notes: Optional[str] = None
     status: CustomPricingStatus = CustomPricingStatus.pending
 
 
 class CustomPricingCreate(BaseModel):
     plan_id: str
     custom_price: float
+    standard_price: float
+    discount_percent: float
+    notes: Optional[str] = None
 
 
 class CustomPricingUpdate(BaseModel):
