@@ -1,9 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
-import { ArrowLeft, FileImage, Film, Layers, SlidersHorizontal, Zap, ArrowRight } from "lucide-react"
+import { ArrowLeft, FileImage, Film, Layers, SlidersHorizontal, Zap, ArrowRight, Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,26 +14,38 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/client"
 
 type DeliverableType = "poster" | "reel" | "story"
-type DisplayStatus = "pending" | "approved" | "revision" | "rejected"
+type DeliverableStatus = "pending" | "approved" | "revision" | "rejected"
 
+// 1. FIXED: Full 16-field interface matching the backend schema
 interface ApiDeliverable {
   id: string
   task_id: string
+  client_id: string
+  submitted_by: string
   file_url: string
   file_type: string
+  file_size_bytes: number
   status: string
   revision_round: number
+  parent_deliverable_id: string | null
+  approved_at: string | null
+  rejected_at: string | null
+  instagram_published_at: string | null
+  instagram_post_id: string | null
   created_at: string
+  updated_at: string | null
 }
 
-interface Deliverable {
+interface UIDeliverable {
   id: string
   title: string
   type: DeliverableType
-  status: DisplayStatus
+  status: DeliverableStatus
   uploadDate: string
+  thumbnail: string | null
 }
 
 const TYPE_ICONS: Record<DeliverableType, typeof FileImage> = {
@@ -44,7 +55,7 @@ const TYPE_ICONS: Record<DeliverableType, typeof FileImage> = {
 }
 
 const STATUS_CONFIG: Record<
-  DisplayStatus,
+  DeliverableStatus,
   { label: string; className: string }
 > = {
   pending: {
@@ -75,15 +86,18 @@ function inferType(fileUrl: string, fileType: string): DeliverableType {
   return "poster"
 }
 
-function mapStatus(apiStatus: string): DisplayStatus {
+// 2. FIXED: Catching the exact database Enum values
+function mapStatus(apiStatus: string): DeliverableStatus {
   switch (apiStatus) {
     case "pending_approval":
+    case "revised_pending_approval":
     case "pending":
       return "pending"
     case "approved":
       return "approved"
     case "rejected":
       return "rejected"
+    case "revision_in_progress":
     case "revision":
       return "revision"
     default:
@@ -103,43 +117,48 @@ function formatDate(dateString: string): string {
 export default function DeliverablesPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [deliverables, setDeliverables] = useState<Deliverable[]>([])
+  const [deliverables, setDeliverables] = useState<UIDeliverable[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null) // 3. FIXED: Added error state
 
   useEffect(() => {
     async function fetchDeliverables() {
-      const supabase = createClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      try {
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
 
-      if (!session?.access_token) {
-        setLoading(false)
-        return
-      }
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/deliverables`,
-        {
-          headers: { Authorization: `Bearer ${session.access_token}` },
+        if (!session?.access_token) {
+          throw new Error("Authentication required")
         }
-      )
 
-      if (!res.ok) {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/deliverables`, {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+        })
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch deliverables (${res.status})`)
+        }
+
+        const data: ApiDeliverable[] = await res.json()
+
+        const mappedData: UIDeliverable[] = data.map((item) => ({
+          id: item.id,
+          title: `Deliverable — Round ${item.revision_round}`,
+          type: inferType(item.file_url, item.file_type),
+          status: mapStatus(item.status),
+          uploadDate: item.created_at,
+          thumbnail: null,
+        }))
+
+        setDeliverables(mappedData)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load deliverables")
+      } finally {
         setLoading(false)
-        return
       }
-
-      const data: ApiDeliverable[] = await res.json()
-      const mapped: Deliverable[] = data.map((d) => ({
-        id: d.id,
-        title: `Deliverable — Round ${d.revision_round}`,
-        type: inferType(d.file_url, d.file_type),
-        status: mapStatus(d.status),
-        uploadDate: d.created_at,
-      }))
-      setDeliverables(mapped)
-      setLoading(false)
     }
 
     fetchDeliverables()
@@ -232,7 +251,9 @@ export default function DeliverablesPage() {
           {[1, 2, 3].map((i) => (
             <Card key={i} className="rounded-xl shadow-[var(--shadow-card)]">
               <CardContent className="p-0">
-                <div className="aspect-[4/3] animate-pulse bg-gray-100" />
+                <div className="aspect-[4/3] animate-pulse bg-gray-100 flex items-center justify-center">
+                  <Loader2 className="size-8 text-gray-300 animate-spin" />
+                </div>
                 <div className="space-y-3 p-4">
                   <div className="h-4 w-3/4 animate-pulse rounded bg-gray-100" />
                   <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
@@ -241,6 +262,19 @@ export default function DeliverablesPage() {
             </Card>
           ))}
         </div>
+      ) : error ? (
+        <Card className="rounded-xl shadow-[var(--shadow-card)] border-red-200">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <p className="text-sm text-red-600">{error}</p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => window.location.reload()}
+            >
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
       ) : filtered.length === 0 ? (
         <Card className="rounded-xl shadow-[var(--shadow-card)]">
           <CardContent className="flex flex-col items-center justify-center py-16">
