@@ -57,6 +57,7 @@ async def list_team_calendar_entries(
                 deliverable_type=entry.deliverable_type.value,
                 client_name=client_name,
                 status=entry.status.value,
+                content_topic=entry.content_topic,
                 linked_task_id=entry.linked_task_id,
             )
         )

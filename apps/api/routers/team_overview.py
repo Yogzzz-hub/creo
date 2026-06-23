@@ -58,12 +58,6 @@ async def get_team_overview(
         )
         today_completed = today_completed_result.scalar() or 0
 
-        today_cap = (
-            team_member.daily_cap_posters
-            + team_member.daily_cap_reels
-            + team_member.daily_cap_stories
-        )
-
         members.append(
             MemberMetrics(
                 team_member_id=team_member.id,
@@ -72,7 +66,9 @@ async def get_team_overview(
                 active_tasks=active_tasks,
                 overdue_tasks=overdue_tasks,
                 today_completed=today_completed,
-                today_cap=today_cap,
+                daily_cap_posters=team_member.daily_cap_posters,
+                daily_cap_reels=team_member.daily_cap_reels,
+                daily_cap_stories=team_member.daily_cap_stories,
             )
         )
 

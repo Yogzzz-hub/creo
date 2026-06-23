@@ -1,7 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class DailyMetrics(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     posters_completed: int
     posters_cap: int
     reels_completed: int
@@ -11,6 +13,8 @@ class DailyMetrics(BaseModel):
 
 
 class TeamDashboardResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     daily_metrics: DailyMetrics
     active_tasks_count: int
     overdue_tasks_count: int

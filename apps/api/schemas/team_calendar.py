@@ -13,4 +13,5 @@ class TeamCalendarEntryResponse(BaseModel):
     deliverable_type: str
     client_name: str
     status: str
+    content_topic: Optional[str] = None
     linked_task_id: Optional[str] = None
