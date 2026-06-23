@@ -24,13 +24,14 @@ import { adminFetch } from "@/lib/admin-api"
 interface LeaveRequest {
   id: string
   team_member_id: string
-  employee_name: string
-  department: string
   start_date: string
   end_date: string
   reason: string
   status: "pending" | "approved" | "rejected"
+  reviewed_by: string | null
+  reviewed_at: string | null
   created_at: string
+  updated_at: string | null
 }
 
 function getStatusBadge(status: LeaveRequest["status"]) {
@@ -103,11 +104,10 @@ export default function LeaveApprovalsPage() {
               : lr
           )
         )
-        const request = leaveRequests.find((lr) => lr.id === id)
         toast.success(
           action === "approve" ? "Leave request approved" : "Leave request rejected",
           {
-            description: `${request?.employee_name}'s leave has been ${action === "approve" ? "approved" : "rejected"}.`,
+            description: `Leave request ${id.slice(0, 8)} has been ${action === "approve" ? "approved" : "rejected"}.`,
           }
         )
       } catch (err) {
@@ -118,7 +118,7 @@ export default function LeaveApprovalsPage() {
         setProcessingId(null)
       }
     },
-    [leaveRequests]
+    []
   )
 
   return (
@@ -161,10 +161,7 @@ export default function LeaveApprovalsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Department
-                </TableHead>
+                <TableHead>Team Member</TableHead>
                 <TableHead>Dates</TableHead>
                 <TableHead className="hidden lg:table-cell">Reason</TableHead>
                 <TableHead>Status</TableHead>
@@ -174,7 +171,7 @@ export default function LeaveApprovalsPage() {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
+                  <TableCell colSpan={5} className="h-24 text-center">
                     <p className="text-sm text-muted-foreground">
                       No leave requests found.
                     </p>
@@ -186,15 +183,10 @@ export default function LeaveApprovalsPage() {
                     <TableCell>
                       <div>
                         <p className="font-medium text-[#0D2137]">
-                          {lr.employee_name}
+                          {lr.team_member_id.slice(0, 8)}
                         </p>
                         <p className="text-xs text-muted-foreground">{lr.id.slice(0, 8)}</p>
                       </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium">
-                        {lr.department}
-                      </span>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDate(lr.start_date)}

@@ -15,10 +15,15 @@ import { adminFetch } from "@/lib/admin-api"
 interface CalendarEntry {
   id: string
   client_id: string
+  content_plan_id: string | null
   scheduled_date: string
   deliverable_type: string
   content_topic: string | null
   status: string
+  linked_task_id: string | null
+  linked_deliverable_id: string | null
+  created_at: string
+  updated_at: string | null
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -64,7 +69,7 @@ export default function AdminCalendarPage() {
   const fetchCalendar = useCallback(() => {
     setLoading(true)
     setError(null)
-    adminFetch<CalendarEntry[]>("/api/v1/admin/calendar")
+    adminFetch<CalendarEntry[]>("/api/v1/calendar")
       .then(setEvents)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))

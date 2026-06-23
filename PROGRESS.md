@@ -234,7 +234,7 @@
 - [x] 10.2 Add FastAPI global exception handler
 - [x] 10.3 Implement rate limiting on auth endpoints
 - [x] 10.4 Audit all API endpoints — role dependencies
-- [ ] 10.5 Add webhook signature validation tests
+- [x] 10.5 Add webhook signature validation tests
 - [x] 10.6 Encrypt Instagram access tokens at rest
 - [ ] 10.7 Run Lighthouse audit on all public pages
 - [ ] 10.8 Add TanStack Query caching strategy
@@ -242,8 +242,8 @@
 - [x] 10.10 Write Pytest integration tests
 - [x] 10.11 Write Playwright E2E tests
 - [ ] 10.12 Manual QA pass — all 7 user journeys
-- [ ] 10.13 Set up Vercel project
-- [ ] 10.14 Set up Railway project
+- [~] 10.13 Set up Vercel project
+- [~] 10.14 Set up Railway project
 - [ ] 10.15 Configure Railway Redis service
 - [ ] 10.16 Update GitHub Actions CI — Railway deploy step
 - [ ] 10.17 Run alembic upgrade head against production Supabase

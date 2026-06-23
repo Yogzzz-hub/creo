@@ -38,9 +38,9 @@ const employeeSchema = z.object({
   email: z.string().email("Invalid email address"),
   department: z.string().min(1, "Department is required"),
   role: z.string().min(1, "Role is required"),
-  daily_poster_cap: z.number().min(0),
-  daily_reel_cap: z.number().min(0),
-  daily_story_cap: z.number().min(0),
+  daily_cap_posters: z.number().min(0),
+  daily_cap_reels: z.number().min(0),
+  daily_cap_stories: z.number().min(0),
 })
 
 type EmployeeFormData = z.infer<typeof employeeSchema>
@@ -95,9 +95,9 @@ export default function TeamManagementPage() {
       email: "",
       department: "",
       role: "",
-      daily_poster_cap: 6,
-      daily_reel_cap: 4,
-      daily_story_cap: 3,
+      daily_cap_posters: 6,
+      daily_cap_reels: 4,
+      daily_cap_stories: 3,
     },
   })
 
@@ -124,9 +124,9 @@ export default function TeamManagementPage() {
           email: data.email,
           role: data.role,
           department: data.department,
-          daily_poster_cap: data.daily_poster_cap,
-          daily_reel_cap: data.daily_reel_cap,
-          daily_story_cap: data.daily_story_cap,
+          daily_cap_posters: data.daily_cap_posters,
+          daily_cap_reels: data.daily_cap_reels,
+          daily_cap_stories: data.daily_cap_stories,
         }),
       })
       setEmployees((prev) =>
@@ -314,7 +314,9 @@ export default function TeamManagementPage() {
                   </SelectItem>
                   <SelectItem value="social_media">Social Media</SelectItem>
                   <SelectItem value="sales">Sales</SelectItem>
+                  <SelectItem value="investor_relations">Investor Relations</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="tech">Tech</SelectItem>
                 </SelectContent>
               </Select>
               {errors.department && (
@@ -345,36 +347,36 @@ export default function TeamManagementPage() {
 
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="daily_poster_cap">Posters</Label>
+                <Label htmlFor="daily_cap_posters">Posters</Label>
                 <Input
-                  id="daily_poster_cap"
+                  id="daily_cap_posters"
                   type="number"
                   min={0}
-                  {...register("daily_poster_cap", {
+                  {...register("daily_cap_posters", {
                     valueAsNumber: true,
                     min: { value: 0, message: "Min 0" },
                   })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="daily_reel_cap">Reels</Label>
+                <Label htmlFor="daily_cap_reels">Reels</Label>
                 <Input
-                  id="daily_reel_cap"
+                  id="daily_cap_reels"
                   type="number"
                   min={0}
-                  {...register("daily_reel_cap", {
+                  {...register("daily_cap_reels", {
                     valueAsNumber: true,
                     min: { value: 0, message: "Min 0" },
                   })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="daily_story_cap">Stories</Label>
+                <Label htmlFor="daily_cap_stories">Stories</Label>
                 <Input
-                  id="daily_story_cap"
+                  id="daily_cap_stories"
                   type="number"
                   min={0}
-                  {...register("daily_story_cap", {
+                  {...register("daily_cap_stories", {
                     valueAsNumber: true,
                     min: { value: 0, message: "Min 0" },
                   })}

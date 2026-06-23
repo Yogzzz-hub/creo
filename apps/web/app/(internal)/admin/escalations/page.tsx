@@ -33,25 +33,34 @@ import { adminFetch } from "@/lib/admin-api"
 
 interface Escalation {
   id: string
-  task_id: string
+  type: string
+  severity: string
   client_id: string
+  task_id: string
+  ticket_id: string | null
   assigned_to: string | null
-  severity: number
-  reason: string
+  description: string
   status: string
-  resolution_notes: string | null
   resolved_at: string | null
+  resolved_by: string | null
   created_at: string
+  updated_at: string | null
 }
 
-function getSeverityLabel(severity: number) {
-  if (severity >= 4) return "Critical"
-  if (severity >= 3) return "High"
-  if (severity >= 2) return "Medium"
-  return "Low"
+function getSeverityLabel(severity: string) {
+  switch (severity.toLowerCase()) {
+    case "critical":
+      return "Critical"
+    case "high":
+      return "High"
+    case "medium":
+      return "Medium"
+    default:
+      return "Low"
+  }
 }
 
-function getSeverityColor(severity: number) {
+function getSeverityColor(severity: string) {
   const label = getSeverityLabel(severity)
   switch (label) {
     case "Critical":
@@ -141,7 +150,7 @@ export default function EscalationsPage() {
       setEscalations((prev) =>
         prev.map((esc) =>
           esc.id === selectedEscalation.id
-            ? { ...esc, status: "resolved", resolution_notes: resolutionNotes }
+            ?             { ...esc, status: "resolved" }
             : esc
         )
       )
@@ -236,7 +245,7 @@ export default function EscalationsPage() {
                     </span>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell max-w-[280px] truncate text-muted-foreground">
-                    {esc.reason}
+                    {esc.description}
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground">
                     {esc.assigned_to?.slice(0, 8) ?? "—"}

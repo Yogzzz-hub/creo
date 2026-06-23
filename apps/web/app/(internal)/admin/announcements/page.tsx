@@ -137,10 +137,11 @@ export default function AnnouncementsPage() {
         body: JSON.stringify({
           title: formData.title,
           content: formData.description || formData.title,
-          target_audience:
+          type: typeMap[formData.type] ?? "general",
+          target_departments:
             formData.departments.length === 0 || formData.departments.length === DEPARTMENTS.length
-              ? "all"
-              : "team",
+              ? null
+              : formData.departments,
         }),
       })
       toast.success("Announcement published", {
