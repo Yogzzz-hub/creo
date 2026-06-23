@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Text, func
+from sqlalchemy import BigInteger, Boolean, DateTime, Enum, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -10,6 +10,7 @@ from models.enums import TicketStatus, TicketType
 
 if TYPE_CHECKING:
     from models.user import User
+    from models.deliverable import Deliverable
 
 
 class Ticket(Base):
@@ -18,7 +19,10 @@ class Ticket(Base):
     id: Mapped[str] = mapped_column(
         UUID(as_uuid=False), primary_key=True, server_default="gen_random_uuid()"
     )
-    user_id: Mapped[str] = mapped_column(
+    ticket_number: Mapped[str] = mapped_column(
+        String, unique=True, nullable=False, index=True
+    )
+    client_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False), ForeignKey("users.id"), nullable=False, index=True
     )
     ticket_type: Mapped[TicketType] = mapped_column(
@@ -35,19 +39,31 @@ class Ticket(Base):
     assigned_to: Mapped[Optional[str]] = mapped_column(
         UUID(as_uuid=False), ForeignKey("users.id"), nullable=True, index=True
     )
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+    linked_deliverable_id: Mapped[Optional[str]] = mapped_column(
+        UUID(as_uuid=False), ForeignKey("deliverables.id"), nullable=True
     )
     resolved_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    reopened_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True
+    )
 
     # Relationships
-    user: Mapped["User"] = relationship(
-        "User", back_populates="tickets", foreign_keys=[user_id]
+    client: Mapped["User"] = relationship(
+        "User", back_populates="tickets", foreign_keys=[client_id]
     )
     assigned_to_user: Mapped[Optional["User"]] = relationship(
         "User", foreign_keys=[assigned_to], lazy="selectin"
+    )
+    linked_deliverable: Mapped[Optional["Deliverable"]] = relationship(
+        "Deliverable", foreign_keys=[linked_deliverable_id], lazy="selectin"
     )
     messages: Mapped[list["TicketMessage"]] = relationship(
         "TicketMessage", back_populates="ticket", lazy="selectin"
@@ -66,8 +82,15 @@ class TicketMessage(Base):
     sender_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False), ForeignKey("users.id"), nullable=False, index=True
     )
-    message_text: Mapped[str] = mapped_column(Text, nullable=False)
+    message_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     file_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    file_name: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    file_size_bytes: Mapped[Optional[int]] = mapped_column(
+        BigInteger, nullable=True
+    )
+    is_read: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -19,8 +19,10 @@
 | `TicketStatus` | `open`, `in_progress`, `awaiting_client`, `resolved`, `escalated` |
 | `Department` | `graphics`, `video`, `content_writing`, `social_media`, `sales`, `investor_relations`, `admin`, `tech` |
 | `PaymentGateway` | `razorpay`, `stripe` |
+| `ContentPlanStatus` | `draft`, `submitted`, `approved`, `rejected` |
 | `CalendarEntryStatus` | `draft`, `scheduled`, `in_progress`, `ready_for_review`, `approved`, `rejected` |
 | `LeaveStatus` | `pending`, `approved`, `rejected` |
+| `CustomPricingStatus` | `pending`, `approved`, `rejected` |
 | `AddonStatus` | `pending`, `approved`, `rejected`, `completed` |
 
 ---
@@ -87,6 +89,56 @@
 
 ---
 
+## Table: `client_assignments`
+
+| Column | Type | Nullable |
+|--------|------|----------|
+| `id` | UUID | No (PK) |
+| `client_id` | UUID | No |
+| `team_member_id` | UUID | No |
+| `deliverable_type` | DeliverableType | No |
+| `assigned_at` | DateTime(tz) | No |
+| `assigned_by` | UUID | Yes |
+| `is_active` | Boolean | No |
+| `created_at` | DateTime(tz) | No |
+
+---
+
+## Table: `content_plans`
+
+| Column | Type | Nullable |
+|--------|------|----------|
+| `id` | UUID | No (PK) |
+| `client_id` | UUID | No |
+| `month` | Integer | No |
+| `year` | Integer | No |
+| `status` | ContentPlanStatus | No |
+| `pdf_url` | Text | Yes |
+| `submitted_at` | DateTime(tz) | Yes |
+| `approved_at` | DateTime(tz) | Yes |
+| `created_at` | DateTime(tz) | No |
+| `updated_at` | DateTime(tz) | Yes |
+
+---
+
+## Table: `content_calendar`
+
+| Column | Type | Nullable |
+|--------|------|----------|
+| `id` | UUID | No (PK) |
+| `client_id` | UUID | No |
+| `content_plan_id` | UUID | Yes |
+| `scheduled_date` | Date | No |
+| `deliverable_type` | DeliverableType | No |
+| `content_topic` | Text | Yes |
+| `status` | CalendarEntryStatus | No |
+| `linked_task_id` | UUID | Yes |
+| `linked_deliverable_id` | UUID | Yes |
+| `created_at` | DateTime(tz) | No |
+| `updated_at` | DateTime(tz) | Yes |
+
+---
+
 ## Table: `tasks`
 
 | Column | Type | Nullable |
@@ -134,19 +186,36 @@
 
 ---
 
+## Table: `deliverable_comments`
+
+| Column | Type | Nullable |
+|--------|------|----------|
+| `id` | UUID | No (PK) |
+| `deliverable_id` | UUID | No |
+| `author_id` | UUID | No |
+| `comment_text` | Text | No |
+| `is_rejection_reason` | Boolean | No |
+| `created_at` | DateTime(tz) | No |
+
+---
+
 ## Table: `tickets`
 
 | Column | Type | Nullable |
 |--------|------|----------|
 | `id` | UUID | No (PK) |
-| `user_id` | UUID | No |
+| `ticket_number` | Text | No |
+| `client_id` | UUID | No |
 | `ticket_type` | TicketType | No |
 | `subject` | Text | No |
 | `description` | Text | No |
 | `status` | TicketStatus | No |
 | `assigned_to` | UUID | Yes |
-| `created_at` | DateTime(tz) | No |
+| `linked_deliverable_id` | UUID | Yes |
 | `resolved_at` | DateTime(tz) | Yes |
+| `reopened_at` | DateTime(tz) | Yes |
+| `created_at` | DateTime(tz) | No |
+| `updated_at` | DateTime(tz) | Yes |
 
 ---
 
@@ -157,119 +226,12 @@
 | `id` | UUID | No (PK) |
 | `ticket_id` | UUID | No |
 | `sender_id` | UUID | No |
-| `message_text` | Text | No |
+| `message_text` | Text | Yes |
 | `file_url` | Text | Yes |
-| `created_at` | DateTime(tz) | No |
-
----
-
-## Table: `content_calendar`
-
-| Column | Type | Nullable |
-|--------|------|----------|
-| `id` | UUID | No (PK) |
-| `client_id` | UUID | No |
-| `content_plan_id` | UUID | Yes |
-| `scheduled_date` | Date | No |
-| `deliverable_type` | DeliverableType | No |
-| `content_topic` | Text | Yes |
-| `status` | CalendarEntryStatus | No |
-| `linked_task_id` | UUID | Yes |
-| `linked_deliverable_id` | UUID | Yes |
-| `created_at` | DateTime(tz) | No |
-| `updated_at` | DateTime(tz) | Yes |
-
----
-
-## Table: `leave_requests`
-
-| Column | Type | Nullable |
-|--------|------|----------|
-| `id` | UUID | No (PK) |
-| `team_member_id` | UUID | No |
-| `start_date` | Date | No |
-| `end_date` | Date | No |
-| `reason` | Text | No |
-| `status` | LeaveStatus | No |
-| `approved_by` | UUID | Yes |
-| `created_at` | DateTime(tz) | No |
-| `updated_at` | DateTime(tz) | Yes |
-
----
-
-## Table: `escalations`
-
-| Column | Type | Nullable |
-|--------|------|----------|
-| `id` | UUID | No (PK) |
-| `task_id` | UUID | No |
-| `client_id` | UUID | No |
-| `assigned_to` | UUID | Yes |
-| `severity` | Integer | No |
-| `reason` | Text | No |
-| `status` | Text | No |
-| `resolution_notes` | Text | Yes |
-| `resolved_at` | DateTime(tz) | Yes |
-| `created_at` | DateTime(tz) | No |
-| `updated_at` | DateTime(tz) | Yes |
-
----
-
-## Table: `notifications`
-
-| Column | Type | Nullable |
-|--------|------|----------|
-| `id` | UUID | No (PK) |
-| `user_id` | UUID | No |
-| `type` | Text | No |
-| `title` | Text | No |
-| `message` | Text | No |
+| `file_name` | Text | Yes |
+| `file_size_bytes` | BigInteger | Yes |
 | `is_read` | Boolean | No |
 | `created_at` | DateTime(tz) | No |
-
----
-
-## Table: `announcements`
-
-| Column | Type | Nullable |
-|--------|------|----------|
-| `id` | UUID | No (PK) |
-| `author_id` | UUID | No |
-| `title` | Text | No |
-| `content` | Text | No |
-| `type` | Text | No |
-| `target_departments` | ARRAY(Text) | Yes |
-| `created_at` | DateTime(tz) | No |
-
----
-
-## Table: `addons`
-
-| Column | Type | Nullable |
-|--------|------|----------|
-| `id` | UUID | No (PK) |
-| `user_id` | UUID | No |
-| `deliverable_type` | DeliverableType | No |
-| `quantity` | Integer | No |
-| `unit_price` | Numeric(10,2) | No |
-| `total_price` | Numeric(10,2) | No |
-| `status` | AddonStatus | No |
-| `gateway` | PaymentGateway | Yes |
-| `payment_id` | Text | Yes |
-| `created_at` | DateTime(tz) | No |
-
----
-
-## Table: `addon_pricing`
-
-| Column | Type | Nullable |
-|--------|------|----------|
-| `id` | UUID | No (PK) |
-| `deliverable_type` | DeliverableType | No |
-| `unit_price` | Numeric(10,2) | No |
-| `is_active` | Boolean | No |
-| `created_at` | DateTime(tz) | No |
-| `updated_at` | DateTime(tz) | Yes |
 
 ---
 
@@ -315,17 +277,123 @@
 
 ---
 
-## Table: `custom_pricing`
+## Table: `addons`
+
+| Column | Type | Nullable |
+|--------|------|----------|
+| `id` | UUID | No (PK) |
+| `client_id` | UUID | No |
+| `deliverable_type` | DeliverableType | No |
+| `quantity` | Integer | No |
+| `unit_price` | Numeric(10,2) | No |
+| `total_price` | Numeric(10,2) | No |
+| `gateway` | PaymentGateway | No |
+| `gateway_payment_id` | Text | Yes |
+| `status` | AddonStatus | No |
+| `content_brief` | Text | Yes |
+| `created_at` | DateTime(tz) | No |
+| `updated_at` | DateTime(tz) | Yes |
+
+---
+
+## Table: `addon_pricing`
+
+| Column | Type | Nullable |
+|--------|------|----------|
+| `id` | UUID | No (PK) |
+| `deliverable_type` | DeliverableType | No |
+| `unit_price` | Numeric(10,2) | No |
+| `is_active` | Boolean | No |
+| `updated_by` | UUID | Yes |
+| `created_at` | DateTime(tz) | No |
+| `updated_at` | DateTime(tz) | Yes |
+
+---
+
+## Table: `leave_requests`
+
+| Column | Type | Nullable |
+|--------|------|----------|
+| `id` | UUID | No (PK) |
+| `team_member_id` | UUID | No |
+| `start_date` | Date | No |
+| `end_date` | Date | No |
+| `reason` | Text | Yes |
+| `status` | LeaveStatus | No |
+| `reviewed_by` | UUID | Yes |
+| `reviewed_at` | DateTime(tz) | Yes |
+| `created_at` | DateTime(tz) | No |
+| `updated_at` | DateTime(tz) | Yes |
+
+---
+
+## Table: `escalations`
+
+| Column | Type | Nullable |
+|--------|------|----------|
+| `id` | UUID | No (PK) |
+| `type` | Text | No |
+| `severity` | Text | No |
+| `client_id` | UUID | Yes |
+| `task_id` | UUID | Yes |
+| `ticket_id` | UUID | Yes |
+| `assigned_to` | UUID | Yes |
+| `description` | Text | No |
+| `status` | Text | No |
+| `resolved_at` | DateTime(tz) | Yes |
+| `resolved_by` | UUID | Yes |
+| `created_at` | DateTime(tz) | No |
+| `updated_at` | DateTime(tz) | Yes |
+
+---
+
+## Table: `notifications`
 
 | Column | Type | Nullable |
 |--------|------|----------|
 | `id` | UUID | No (PK) |
 | `user_id` | UUID | No |
+| `type` | Text | No |
+| `title` | Text | No |
+| `message` | Text | No |
+| `link` | Text | Yes |
+| `is_read` | Boolean | No |
+| `created_at` | DateTime(tz) | No |
+
+---
+
+## Table: `announcements`
+
+| Column | Type | Nullable |
+|--------|------|----------|
+| `id` | UUID | No (PK) |
+| `author_id` | UUID | No |
+| `title` | Text | No |
+| `content` | Text | No |
+| `type` | Text | No |
+| `target_departments` | ARRAY(Text) | Yes |
+| `file_url` | Text | Yes |
+| `file_name` | Text | Yes |
+| `created_at` | DateTime(tz) | No |
+| `updated_at` | DateTime(tz) | Yes |
+
+---
+
+## Table: `custom_pricing`
+
+| Column | Type | Nullable |
+|--------|------|----------|
+| `id` | UUID | No (PK) |
+| `client_id` | UUID | No |
 | `plan_id` | UUID | No |
 | `custom_price` | Numeric(10,2) | No |
+| `standard_price` | Numeric(10,2) | No |
+| `discount_percent` | Numeric(5,2) | No |
+| `requested_by` | UUID | No |
 | `approved_by` | UUID | Yes |
 | `valid_from` | Date | Yes |
 | `valid_until` | Date | Yes |
+| `notes` | Text | Yes |
 | `status` | CustomPricingStatus | No |
 | `created_at` | DateTime(tz) | No |
 | `updated_at` | DateTime(tz) | Yes |
@@ -355,6 +423,16 @@
 { id, task_id, client_id, submitted_by, file_url, file_type, file_size_bytes, status, revision_round, parent_deliverable_id, approved_at, rejected_at, instagram_published_at, instagram_post_id, created_at, updated_at }
 ```
 
+### GET /api/v1/deliverables/{id}/comments → `list[DeliverableCommentOut]`
+```
+{ id, deliverable_id, author_id, comment_text, is_rejection_reason, created_at }
+```
+
+### POST /api/v1/deliverables/{id}/comments → `DeliverableCommentOut`
+```
+{ id, deliverable_id, author_id, comment_text, is_rejection_reason, created_at }
+```
+
 ### GET /api/v1/payments/history → `list[PaymentHistoryResponse]`
 ```
 { id, plan_id, status, gateway, gateway_subscription_id, gateway_customer_id, current_period_start, current_period_end, cancelled_at, created_at, updated_at }
@@ -362,12 +440,12 @@
 
 ### GET /api/v1/tickets → `list[TicketOut]`
 ```
-{ id, user_id, ticket_type, subject, description, status, assigned_to, created_at, resolved_at }
+{ id, ticket_number, client_id, ticket_type, subject, description, status, assigned_to, linked_deliverable_id, created_at, resolved_at, reopened_at, updated_at }
 ```
 
 ### GET /api/v1/tickets/{id}/messages → `list[TicketMessageOut]`
 ```
-{ id, ticket_id, sender_id, message_text, file_url, created_at }
+{ id, ticket_id, sender_id, message_text, file_url, file_name, file_size_bytes, is_read, created_at }
 ```
 
 ### GET /api/v1/calendar → `list[CalendarEntryResponse]`
@@ -407,10 +485,50 @@
 
 ### GET /api/v1/leave → `list[LeaveRequestOut]`
 ```
-{ id, team_member_id, start_date, end_date, reason, status, approved_by, created_at, updated_at }
+{ id, team_member_id, start_date, end_date, reason, status, reviewed_by, reviewed_at, created_at, updated_at }
 ```
 
-### GET /api/v1/sales/clients → `list[SalesClientResponse]`
+### GET /api/v1/client-assignments → `list[ClientAssignmentOut]`
+```
+{ id, client_id, team_member_id, deliverable_type, is_active, assigned_at, assigned_by, created_at }
+```
+
+### POST /api/v1/client-assignments → `ClientAssignmentOut`
+```
+{ id, client_id, team_member_id, deliverable_type, is_active, assigned_at, assigned_by, created_at }
+```
+
+### GET /api/v1/content-plans → `list[ContentPlanOut]`
+```
+{ id, client_id, month, year, status, pdf_url, submitted_at, approved_at, created_at, updated_at }
+```
+
+### POST /api/v1/content-plans → `ContentPlanOut`
+```
+{ id, client_id, month, year, status, pdf_url, submitted_at, approved_at, created_at, updated_at }
+```
+
+### PATCH /api/v1/content-plans/{id}/submit → `ContentPlanOut`
+```
+{ id, client_id, month, year, status, pdf_url, submitted_at, approved_at, created_at, updated_at }
+```
+
+### PATCH /api/v1/content-plans/{id}/approve → `ContentPlanOut`
+```
+{ id, client_id, month, year, status, pdf_url, submitted_at, approved_at, created_at, updated_at }
+```
+
+### PATCH /api/v1/content-plans/{id}/reject → `ContentPlanOut`
+```
+{ id, client_id, month, year, status, pdf_url, submitted_at, approved_at, created_at, updated_at }
+```
+
+### PUT /api/v1/account → `UserOut`
+```
+{ id, email, phone, full_name, business_name, role, account_status, plan_name, two_fa_enabled, deleted_at, created_at, updated_at }
+```
+
+### POST /api/v1/sales/clients → `list[SalesClientResponse]`
 ```
 { user_id, full_name, business_name, plan_name, account_status, created_at }
 ```
@@ -437,12 +555,12 @@
 
 ### GET /api/v1/admin/escalations → `list[EscalationResponse]`
 ```
-{ id, task_id, client_id, assigned_to, severity, reason, status, resolution_notes, resolved_at, created_at, updated_at }
+{ id, type, severity, client_id, task_id, ticket_id, assigned_to, description, status, resolved_at, resolved_by, created_at, updated_at }
 ```
 
 ### GET /api/v1/admin/announcements → `list[AnnouncementResponse]`
 ```
-{ id, author_id, title, content, type, target_departments, created_at }
+{ id, author_id, title, content, type, target_departments, file_url, file_name, created_at, updated_at }
 ```
 
 ### GET /api/v1/admin/settings → `PlatformSettingsResponse`
@@ -453,6 +571,16 @@
 ### GET /api/v1/admin/kpi → `KPIDashboardResponse`
 ```
 { delivery_rate_percentage, active_capacity_percentage, total_revenue, team_capacity_bars: [{ team_member_name, current_load, max_capacity }] }
+```
+
+### GET /api/v1/admin/custom-pricing → `list[AdminCustomPricingResponse]`
+```
+{ id, client_name, business_name, plan_name, custom_price, status, reason, created_at }
+```
+
+### POST /api/v1/admin/custom-pricing → `CustomPricingOut`
+```
+{ id, client_id, plan_id, custom_price, standard_price, discount_percent, requested_by, approved_by, valid_from, valid_until, notes, status, created_at, updated_at }
 ```
 
 ### GET /api/v1/plans → `list[PlanResponse]`
@@ -468,4 +596,9 @@
 ### POST /api/v1/auth/register → `RegisterResponse`
 ```
 { id, email, full_name, role, account_status }
+```
+
+### PATCH /api/v1/notifications/{id}/read → `NotificationOut`
+```
+{ id, user_id, type, title, message, link, is_read, created_at }
 ```

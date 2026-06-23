@@ -39,7 +39,7 @@ async def get_portal_dashboard(
 
     open_ticket_result = await db.execute(
         select(func.count(Ticket.id)).where(
-            Ticket.user_id == current_user.id,
+            Ticket.client_id == current_user.id,
             Ticket.status.notin_(
                 [TicketStatus.resolved, TicketStatus.escalated]
             ),

@@ -171,6 +171,71 @@ async def reject_deliverable(
     return deliverable
 
 
+@router.get("/{deliverable_id}/comments", response_model=list[DeliverableCommentOut])
+async def list_deliverable_comments(
+    deliverable_id: str,
+    current_user: Annotated[User, Depends(require_client)],
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Deliverable).where(
+            Deliverable.id == deliverable_id,
+            Deliverable.client_id == current_user.id,
+        )
+    )
+    deliverable = result.scalar_one_or_none()
+
+    if deliverable is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deliverable not found",
+        )
+
+    comments_result = await db.execute(
+        select(DeliverableComment)
+        .where(DeliverableComment.deliverable_id == deliverable_id)
+        .order_by(DeliverableComment.created_at.asc())
+    )
+    return comments_result.scalars().all()
+
+
+@router.post(
+    "/{deliverable_id}/comments",
+    response_model=DeliverableCommentOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_deliverable_comment(
+    deliverable_id: str,
+    payload: DeliverableCommentCreate,
+    current_user: Annotated[User, Depends(require_client)],
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Deliverable).where(
+            Deliverable.id == deliverable_id,
+            Deliverable.client_id == current_user.id,
+        )
+    )
+    deliverable = result.scalar_one_or_none()
+
+    if deliverable is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deliverable not found",
+        )
+
+    comment = DeliverableComment(
+        deliverable_id=deliverable_id,
+        author_id=current_user.id,
+        comment_text=payload.comment_text,
+        is_rejection_reason=False,
+    )
+    db.add(comment)
+    await db.commit()
+    await db.refresh(comment)
+    return comment
+
+
 class PublishInstagramRequest(BaseModel):
     caption: str = ""
 

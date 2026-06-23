@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Text, func
+from sqlalchemy import DateTime, ForeignKey, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -10,6 +10,7 @@ from core.database import Base
 if TYPE_CHECKING:
     from models.user import User
     from models.task import Task
+    from models.ticket import Ticket
 
 
 class Escalation(Base):
@@ -18,21 +19,27 @@ class Escalation(Base):
     id: Mapped[str] = mapped_column(
         UUID(as_uuid=False), primary_key=True, server_default="gen_random_uuid()"
     )
-    task_id: Mapped[str] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("tasks.id"), nullable=False, index=True
+    type: Mapped[str] = mapped_column(Text, nullable=False)
+    severity: Mapped[str] = mapped_column(Text, nullable=False, default="low", index=True)
+    client_id: Mapped[Optional[str]] = mapped_column(
+        UUID(as_uuid=False), ForeignKey("users.id"), nullable=True, index=True
     )
-    client_id: Mapped[str] = mapped_column(
-        UUID(as_uuid=False), ForeignKey("users.id"), nullable=False, index=True
+    task_id: Mapped[Optional[str]] = mapped_column(
+        UUID(as_uuid=False), ForeignKey("tasks.id"), nullable=True, index=True
+    )
+    ticket_id: Mapped[Optional[str]] = mapped_column(
+        UUID(as_uuid=False), ForeignKey("tickets.id"), nullable=True
     )
     assigned_to: Mapped[Optional[str]] = mapped_column(
         UUID(as_uuid=False), ForeignKey("users.id"), nullable=True
     )
-    severity: Mapped[int] = mapped_column(Integer, nullable=False, default=1, index=True)
-    reason: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[str] = mapped_column(Text, nullable=False, default="open", index=True)
-    resolution_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, default="active", index=True)
     resolved_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
+    )
+    resolved_by: Mapped[Optional[str]] = mapped_column(
+        UUID(as_uuid=False), ForeignKey("users.id"), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -42,16 +49,22 @@ class Escalation(Base):
     )
 
     # Relationships
-    task: Mapped["Task"] = relationship("Task", lazy="selectin")
-    client: Mapped["User"] = relationship(
-        "User", 
-        foreign_keys=[client_id], 
+    task: Mapped[Optional["Task"]] = relationship("Task", lazy="selectin")
+    ticket: Mapped[Optional["Ticket"]] = relationship("Ticket", lazy="selectin")
+    client: Mapped[Optional["User"]] = relationship(
+        "User",
+        foreign_keys=[client_id],
         lazy="selectin",
         overlaps="escalations_as_client"
     )
     assigned_to_user: Mapped[Optional["User"]] = relationship(
-        "User", 
-        foreign_keys=[assigned_to], 
+        "User",
+        foreign_keys=[assigned_to],
         lazy="selectin",
         overlaps="escalations_assigned"
+    )
+    resolver: Mapped[Optional["User"]] = relationship(
+        "User",
+        foreign_keys=[resolved_by],
+        lazy="selectin"
     )

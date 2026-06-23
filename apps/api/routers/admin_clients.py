@@ -113,7 +113,7 @@ async def get_client_detail(
 
     open_tickets_result = await db.execute(
         select(func.count(Ticket.id)).where(
-            Ticket.user_id == client_id,
+            Ticket.client_id == client_id,
             Ticket.status.in_([TicketStatus.open, TicketStatus.in_progress, TicketStatus.escalated]),
         )
     )

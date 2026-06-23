@@ -217,7 +217,7 @@ async def _check_quota_exhaustion_async():
         for subscription, user, plan in subscriptions:
             poster_count_result = await db.execute(
                 select(func.count(Addon.id)).where(
-                    Addon.user_id == user.id,
+                    Addon.client_id == user.id,
                     Addon.deliverable_type == DeliverableType.poster,
                     Addon.status == AddonStatus.completed,
                     Addon.created_at >= period_start,
@@ -228,7 +228,7 @@ async def _check_quota_exhaustion_async():
 
             reel_count_result = await db.execute(
                 select(func.count(Addon.id)).where(
-                    Addon.user_id == user.id,
+                    Addon.client_id == user.id,
                     Addon.deliverable_type == DeliverableType.reel,
                     Addon.status == AddonStatus.completed,
                     Addon.created_at >= period_start,
@@ -239,7 +239,7 @@ async def _check_quota_exhaustion_async():
 
             story_count_result = await db.execute(
                 select(func.count(Addon.id)).where(
-                    Addon.user_id == user.id,
+                    Addon.client_id == user.id,
                     Addon.deliverable_type == DeliverableType.story,
                     Addon.status == AddonStatus.completed,
                     Addon.created_at >= period_start,

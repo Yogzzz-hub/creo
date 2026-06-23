@@ -67,13 +67,14 @@ async def purchase_addon(
 
     # 1. Create the Addon receipt
     addon = Addon(
-        user_id=current_user.id,
+        client_id=current_user.id,
         deliverable_type=payload.deliverable_type,
         quantity=payload.quantity,
         unit_price=unit_price,
         total_price=total_price,
-        status=AddonStatus.pending, # Assuming mock payment is immediate, we could set this to completed
-        payment_id=f"mock_addon_pay_{uuid4().hex[:8]}",
+        status=AddonStatus.pending,
+        gateway=PaymentGateway.razorpay,
+        gateway_payment_id=f"mock_addon_pay_{uuid4().hex[:8]}",
     )
     db.add(addon)
     await db.flush() # flush to get addon.id

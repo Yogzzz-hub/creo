@@ -105,13 +105,13 @@ class User(Base):
         "DeliverableComment", back_populates="author", lazy="selectin"
     )
     tickets: Mapped[list["Ticket"]] = relationship(
-        "Ticket", back_populates="user", foreign_keys="Ticket.user_id", lazy="selectin"
+        "Ticket", back_populates="client", foreign_keys="Ticket.client_id", lazy="selectin"
     )
     ticket_messages_sent: Mapped[list["TicketMessage"]] = relationship(
         "TicketMessage", back_populates="sender", lazy="selectin"
     )
     addons: Mapped[list["Addon"]] = relationship(
-        "Addon", back_populates="user", lazy="selectin"
+        "Addon", back_populates="client", foreign_keys="Addon.client_id", lazy="selectin"
     )
     notifications: Mapped[list["Notification"]] = relationship(
         "Notification", back_populates="user", lazy="selectin"
@@ -126,12 +126,22 @@ class User(Base):
         foreign_keys="Escalation.assigned_to",
         lazy="selectin",
     )
+    escalations_resolved: Mapped[list["Escalation"]] = relationship(
+        "Escalation",
+        foreign_keys="Escalation.resolved_by",
+        lazy="selectin",
+    )
     announcements: Mapped[list["Announcement"]] = relationship(
         "Announcement", back_populates="author", lazy="selectin"
     )
     custom_pricing_requests: Mapped[list["CustomPricing"]] = relationship(
         "CustomPricing",
-        foreign_keys="CustomPricing.user_id",
+        foreign_keys="CustomPricing.client_id",
+        lazy="selectin",
+    )
+    custom_pricing_requested: Mapped[list["CustomPricing"]] = relationship(
+        "CustomPricing",
+        foreign_keys="CustomPricing.requested_by",
         lazy="selectin",
     )
     custom_pricing_approved: Mapped[list["CustomPricing"]] = relationship(
@@ -139,8 +149,8 @@ class User(Base):
         foreign_keys="CustomPricing.approved_by",
         lazy="selectin",
     )
-    leave_requests_approved: Mapped[list["LeaveRequest"]] = relationship(
+    leave_requests_reviewed: Mapped[list["LeaveRequest"]] = relationship(
         "LeaveRequest",
-        foreign_keys="LeaveRequest.approved_by",
+        foreign_keys="LeaveRequest.reviewed_by",
         lazy="selectin",
     )

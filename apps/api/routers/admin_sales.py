@@ -11,10 +11,40 @@ from models.custom_pricing import CustomPricing
 from models.plan import Plan
 from models.subscription import Subscription
 from models.user import User
-from schemas.custom_pricing import AdminCustomPricingResponse
+from schemas.custom_pricing import AdminCustomPricingResponse, CustomPricingCreate, CustomPricingOut
 from schemas.sales import CustomPricingApprovalRequest
 
 router = APIRouter(prefix="/api/v1/admin/custom-pricing", tags=["admin-sales"])
+
+
+@router.post("", response_model=CustomPricingOut, status_code=status.HTTP_201_CREATED)
+async def create_custom_pricing(
+    payload: CustomPricingCreate,
+    current_user: RequireAdmin,
+    db: AsyncSession = Depends(get_db),
+):
+    plan_result = await db.execute(select(Plan).where(Plan.id == payload.plan_id))
+    plan = plan_result.scalar_one_or_none()
+    if plan is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Plan not found",
+        )
+
+    pricing = CustomPricing(
+        client_id=current_user.id,
+        plan_id=payload.plan_id,
+        custom_price=payload.custom_price,
+        standard_price=payload.standard_price,
+        discount_percent=payload.discount_percent,
+        requested_by=current_user.id,
+        notes=payload.notes,
+        status=CustomPricingStatus.pending,
+    )
+    db.add(pricing)
+    await db.commit()
+    await db.refresh(pricing)
+    return pricing
 
 
 @router.get("", response_model=list[AdminCustomPricingResponse])
@@ -29,7 +59,7 @@ async def list_custom_pricing_requests(
 
     responses = []
     for cp in pricings:
-        user_result = await db.execute(select(User).where(User.id == cp.user_id))
+        user_result = await db.execute(select(User).where(User.id == cp.client_id))
         user = user_result.scalar_one_or_none()
 
         plan_result = await db.execute(select(Plan).where(Plan.id == cp.plan_id))
@@ -82,7 +112,7 @@ async def approve_custom_pricing(
     plan_result = await db.execute(select(Plan).where(Plan.id == pricing.plan_id))
     plan = plan_result.scalar_one_or_none()
 
-    user_result = await db.execute(select(User).where(User.id == pricing.user_id))
+    user_result = await db.execute(select(User).where(User.id == pricing.client_id))
     user = user_result.scalar_one_or_none()
 
     if user is None:
@@ -96,7 +126,7 @@ async def approve_custom_pricing(
     gateway_customer_id = user.stripe_customer_id or user.razorpay_customer_id or "pending"
 
     new_subscription = Subscription(
-        user_id=pricing.user_id,
+        user_id=pricing.client_id,
         plan_id=pricing.plan_id,
         status="active",
         gateway="stripe",

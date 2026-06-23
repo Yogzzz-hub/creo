@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -10,6 +11,7 @@ class NotificationBase(BaseModel):
     type: str
     title: str
     message: str
+    link: Optional[str] = None
     is_read: bool = False
 
 
@@ -18,6 +20,7 @@ class NotificationCreate(BaseModel):
     type: str
     title: str
     message: str
+    link: Optional[str] = None
 
 
 class NotificationUpdate(BaseModel):
