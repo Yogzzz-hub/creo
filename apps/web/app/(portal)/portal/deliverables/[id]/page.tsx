@@ -178,7 +178,7 @@ export default function DeliverableDetailPage({
     formState: { errors },
   } = useForm<RejectionFormData>({
     resolver: zodResolver(rejectionSchema),
-    defaultValues: { reason: "" },
+    defaultValues: { comment_text: "" },
   })
 
   useEffect(() => {
@@ -232,7 +232,7 @@ export default function DeliverableDetailPage({
         `/api/v1/deliverables/${deliverable.id}/reject`,
         {
           method: "POST",
-          body: JSON.stringify({ comment_text: data.reason }),
+          body: JSON.stringify({ comment_text: data.comment_text }),
         }
       )
       setDeliverable((prev) =>
@@ -509,12 +509,12 @@ export default function DeliverableDetailPage({
                 rows={4}
                 className={cn(
                   "resize-none",
-                  errors.reason && "border-red-500 focus-visible:ring-red-500"
+                  errors.comment_text && "border-red-500 focus-visible:ring-red-500"
                 )}
-                {...register("reason")}
+                {...register("comment_text")}
               />
-              {errors.reason && (
-                <p className="text-xs text-red-500">{errors.reason.message}</p>
+              {errors.comment_text && (
+                <p className="text-xs text-red-500">{errors.comment_text.message}</p>
               )}
             </div>
 
