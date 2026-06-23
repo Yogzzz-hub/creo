@@ -26,38 +26,32 @@ export const metadata: Metadata = {
   },
 };
 
-const CASE_STUDIES = [
+const CASE_STUDIES_PLACEHOLDER = [
   {
     industry: "Fashion & Apparel",
-    client: "StyleNest",
     challenge:
       "Low social engagement and inconsistent posting schedule despite a strong product line.",
     approach:
       "Built a 90-day content calendar with weekly reels, shoppable posts, and influencer collabs.",
     result: "3x reel reach in 30 days",
-    resultDetail: "Average reel views jumped from 2K to 6K within the first month.",
     color: "bg-brand-light",
   },
   {
     industry: "Food & Beverage",
-    client: "SpiceRoute Kitchen",
     challenge:
       "New restaurant struggling to build an online following and drive foot traffic.",
     approach:
       "Launched a behind-the-scenes content series, local food blogger partnerships, and geo-targeted reels.",
     result: "1,200+ new followers in 3 weeks",
-    resultDetail: "Foot traffic increased 40% with a direct lift from Instagram content.",
     color: "bg-accent/10",
   },
   {
     industry: "Health & Wellness",
-    client: "FitForge Studio",
     challenge:
       "Existing content felt generic and failed to differentiate from competitors.",
     approach:
       "Created a brand-first content strategy with client transformation stories, trainer spotlights, and weekly tips.",
     result: "85% content approval rate",
-    resultDetail: "Client retention improved and the studio became the top-reviewed gym in the area.",
     color: "bg-success-light",
   },
 ];
@@ -99,18 +93,15 @@ export default function PortfolioPage() {
           </div>
 
           <div className="mt-14 grid gap-8 lg:grid-cols-3">
-            {CASE_STUDIES.map((study) => (
+            {CASE_STUDIES_PLACEHOLDER.map((study) => (
               <Card
-                key={study.client}
+                key={study.industry}
                 className="border-border bg-white transition-shadow hover:shadow-lg"
               >
                 <CardContent className="p-6">
                   <span className="inline-block rounded-full bg-brand-light px-3 py-1 text-xs font-semibold text-brand">
                     {study.industry}
                   </span>
-                  <h3 className="mt-4 text-xl font-bold text-brand-dark">
-                    {study.client}
-                  </h3>
 
                   <div className="mt-4 space-y-4">
                     <div>
@@ -129,15 +120,12 @@ export default function PortfolioPage() {
                         {study.approach}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-brand-light p-4">
+                    <div className={`rounded-lg ${study.color} p-4`}>
                       <p className="text-xs font-semibold uppercase tracking-wider text-brand">
                         Key Result
                       </p>
                       <p className="mt-1 text-lg font-bold text-brand-dark">
                         {study.result}
-                      </p>
-                      <p className="mt-1 text-xs text-neutral/60">
-                        {study.resultDetail}
                       </p>
                     </div>
                   </div>
@@ -145,6 +133,10 @@ export default function PortfolioPage() {
               </Card>
             ))}
           </div>
+
+          <p className="mt-8 text-center text-xs text-neutral/40">
+            Illustrative examples. Real client case studies with specific metrics will be added after launch.
+          </p>
         </div>
       </section>
 
@@ -188,7 +180,7 @@ export default function PortfolioPage() {
               See Our Plans
             </Link>
             <Link
-              href="/contact"
+              href="/pricing"
               className={buttonVariants({
                 variant: "outline",
                 className:

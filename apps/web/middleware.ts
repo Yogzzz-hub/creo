@@ -42,6 +42,12 @@ function isOnboardingRoute(pathname: string): boolean {
   return pathname.startsWith("/onboarding");
 }
 
+const ONBOARDING_STEPS = ["/onboarding/verify", "/onboarding/terms", "/onboarding/payment", "/onboarding/questionnaire", "/onboarding/complete"];
+
+function getOnboardingStepIndex(pathname: string): number {
+  return ONBOARDING_STEPS.findIndex((step) => pathname.startsWith(step));
+}
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -83,6 +89,23 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = getClientHome(role);
       return NextResponse.redirect(url);
+    }
+
+    if (isOnboardingRoute(pathname) && role === "client") {
+      const stepIndex = getOnboardingStepIndex(pathname);
+      const emailVerified = !!user.email_confirmed_at;
+
+      if (!emailVerified && stepIndex > 0) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/onboarding/verify";
+        return NextResponse.redirect(url);
+      }
+
+      if (stepIndex > 1 && !emailVerified) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/onboarding/verify";
+        return NextResponse.redirect(url);
+      }
     }
   }
 

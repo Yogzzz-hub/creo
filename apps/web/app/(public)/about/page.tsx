@@ -202,7 +202,9 @@ export default function AboutPage() {
               >
                 <CardContent className="p-6">
                   <div className="mx-auto mb-4 flex size-24 items-center justify-center rounded-full bg-brand-light text-brand">
-                    <Users className="size-10" />
+                    <span className="text-2xl font-bold">
+                      {member.name.split(" ").map((n) => n[0]).join("")}
+                    </span>
                   </div>
                   <h3 className="text-lg font-semibold text-brand-dark">
                     {member.name}

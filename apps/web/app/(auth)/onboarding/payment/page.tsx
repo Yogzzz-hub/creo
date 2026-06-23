@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
@@ -163,8 +163,10 @@ function StripePaymentForm({
 }
 
 // ── Main page ───────────────────────────────────────────────────
-export default function PaymentPage() {
+function PaymentContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedPlan = useMemo(() => searchParams.get("plan") ?? "growth", [searchParams]);
 
   const [processing, setProcessing] = useState<"razorpay" | "stripe" | null>(
     null
@@ -180,6 +182,32 @@ export default function PaymentPage() {
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(
     null
   );
+
+  // Plan details from API
+  const [planDetails, setPlanDetails] = useState<{
+    display_name: string;
+    monthly_price: number;
+    poster_quota: number;
+    reel_quota: number;
+    story_quota: number;
+  } | null>(null);
+
+  useEffect(() => {
+    async function fetchPlanDetails() {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/plans`
+        );
+        if (!res.ok) return;
+        const plans: { name: string; display_name: string; monthly_price: number; poster_quota: number; reel_quota: number; story_quota: number }[] = await res.json();
+        const match = plans.find((p) => p.name === selectedPlan);
+        if (match) setPlanDetails(match);
+      } catch {
+        // Use fallback
+      }
+    }
+    fetchPlanDetails();
+  }, [selectedPlan]);
 
   // ── Razorpay handler ──────────────────────────────────────────
   const handleRazorpay = useCallback(async () => {
@@ -201,13 +229,13 @@ export default function PaymentPage() {
         return;
       }
 
-      const data = await apiCreateSubscription(token, "growth", "IN");
+      const data = await apiCreateSubscription(token, selectedPlan, "IN");
 
       const options: RazorpayOptions = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",
         subscription_id: data.subscription_id,
         name: "Creo",
-        description: "Growth Plan Subscription",
+        description: `${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan Subscription`,
         handler: () => {
           setProcessing(null);
           router.push("/onboarding/questionnaire");
@@ -227,7 +255,7 @@ export default function PaymentPage() {
       );
       setProcessing(null);
     }
-  }, [router]);
+  }, [router, selectedPlan]);
 
   // ── Stripe handler ────────────────────────────────────────────
   const handleStripe = useCallback(async () => {
@@ -242,7 +270,7 @@ export default function PaymentPage() {
         return;
       }
 
-      const data = await apiCreateSubscription(token, "growth", "US");
+      const data = await apiCreateSubscription(token, selectedPlan, "US");
 
       if (!data.client_secret) {
         setError("Failed to initialize Stripe payment.");
@@ -320,14 +348,18 @@ export default function PaymentPage() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-semibold text-brand-dark">
-              Growth Plan
+              {planDetails?.display_name ?? `${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan`}
             </h3>
             <p className="text-sm text-text-muted mt-0.5">
-              6 Posters &middot; 4 Reels &middot; 6 Stories / month
+              {planDetails
+                ? `${planDetails.poster_quota} Posters \u00B7 ${planDetails.reel_quota} Reels \u00B7 ${planDetails.story_quota} Stories / month`
+                : "Loading plan details..."}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xl font-bold text-brand-dark">₹9,999</p>
+            <p className="text-xl font-bold text-brand-dark">
+              {planDetails ? `\u20B9${planDetails.monthly_price.toLocaleString("en-IN")}` : "\u2014"}
+            </p>
             <p className="text-xs text-text-muted">/month</p>
           </div>
         </div>
@@ -441,5 +473,19 @@ export default function PaymentPage() {
         )}
       </div>
     </CardContent>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <PaymentContent />
+    </Suspense>
   );
 }

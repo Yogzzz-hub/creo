@@ -17,6 +17,8 @@ class PlanBase(BaseModel):
     story_quota: int
     revision_rounds: int
     has_dedicated_manager: bool = False
+    highlights: list[str] = []
+    is_recommended: bool = False
     is_active: bool = True
 
 
@@ -29,6 +31,8 @@ class PlanCreate(BaseModel):
     story_quota: int
     revision_rounds: int
     has_dedicated_manager: bool = False
+    highlights: list[str] = []
+    is_recommended: bool = False
 
 
 class PlanUpdate(BaseModel):
@@ -39,6 +43,8 @@ class PlanUpdate(BaseModel):
     story_quota: Optional[int] = None
     revision_rounds: Optional[int] = None
     has_dedicated_manager: Optional[bool] = None
+    highlights: Optional[list[str]] = None
+    is_recommended: Optional[bool] = None
     is_active: Optional[bool] = None
 
 
@@ -60,4 +66,6 @@ class PlanResponse(BaseModel):
     story_quota: int
     revision_rounds: int
     has_dedicated_manager: bool
+    highlights: list[str]
+    is_recommended: bool
     is_active: bool

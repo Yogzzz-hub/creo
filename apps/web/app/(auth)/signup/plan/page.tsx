@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Check, Info, Loader2 } from "lucide-react";
+import { Check, Info, Loader2, Users } from "lucide-react";
 
 interface Plan {
   id: string;
@@ -17,7 +17,13 @@ interface Plan {
   story_quota: number;
   revision_rounds: number;
   has_dedicated_manager: boolean;
+  highlights: string[];
+  is_recommended: boolean;
   is_active: boolean;
+}
+
+interface PublicSettings {
+  scarcity_slots_available: number;
 }
 
 function buildFeatures(plan: Plan): string[] {
@@ -79,6 +85,7 @@ function PlanSelectionContent() {
   const planParam = searchParams.get("plan");
 
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [settings, setSettings] = useState<PublicSettings>({ scarcity_slots_available: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
@@ -96,18 +103,23 @@ function PlanSelectionContent() {
           headers["Authorization"] = `Bearer ${session.access_token}`;
         }
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/plans`,
-          { headers }
-        );
+        const [plansRes, settingsRes] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/plans`, { headers }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/settings/public`),
+        ]);
 
-        if (!res.ok) {
+        if (!plansRes.ok) {
           throw new Error("Failed to load plans");
         }
 
-        const data: Plan[] = await res.json();
+        const data: Plan[] = await plansRes.json();
         const active = data.filter((p) => p.is_active);
         setPlans(active);
+
+        if (settingsRes.ok) {
+          const settingsData: PublicSettings = await settingsRes.json();
+          setSettings(settingsData);
+        }
 
         if (planParam) {
           const match = active.find(
@@ -128,9 +140,10 @@ function PlanSelectionContent() {
 
   function handleSelectPlan(planId: string) {
     setSelectedPlanId(planId);
-    // Phase 5: Wire to payment gateway
-    // For now, redirect to portal
-    router.push("/portal");
+    const plan = plans.find((p) => p.id === planId);
+    if (plan) {
+      router.push(`/onboarding/payment?plan=${plan.name}`);
+    }
   }
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
@@ -199,6 +212,15 @@ function PlanSelectionContent() {
           <p className="text-text-muted mt-2">
             Select the plan that best fits your brand&apos;s needs
           </p>
+          {settings.scarcity_slots_available > 0 && (
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-warning/10 px-4 py-2 text-sm font-medium text-warning">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-warning" />
+              </span>
+              Only {settings.scarcity_slots_available} onboarding slots left this month
+            </div>
+          )}
         </div>
 
         {selectedPlan && (
@@ -214,7 +236,7 @@ function PlanSelectionContent() {
         <div className="grid md:grid-cols-3 gap-6">
           {plans.map((plan) => {
             const isSelected = selectedPlanId === plan.id;
-            const isPopular = plan.name.toLowerCase() === "growth";
+            const isPopular = plan.is_recommended;
             const features = buildFeatures(plan);
 
             return (
@@ -270,7 +292,7 @@ function PlanSelectionContent() {
                     ))}
                   </ul>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex flex-col gap-3">
                   <Button
                     className={`w-full ${
                       isSelected
@@ -285,6 +307,12 @@ function PlanSelectionContent() {
                       ? `Continue with ${plan.display_name}`
                       : `Select ${plan.display_name}`}
                   </Button>
+                  {settings.scarcity_slots_available > 0 && (
+                    <div className="flex items-center gap-1.5 text-xs text-text-muted">
+                      <Users className="size-3" />
+                      <span>{settings.scarcity_slots_available} slots remaining</span>
+                    </div>
+                  )}
                 </CardFooter>
               </Card>
             );
