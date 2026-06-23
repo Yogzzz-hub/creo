@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,3 +26,29 @@ async def get_notifications(
     )
     notifications = result.scalars().all()
     return notifications
+
+
+@router.patch("/{notification_id}/read", response_model=NotificationOut)
+async def mark_notification_read(
+    notification_id: str,
+    current_user: Annotated[User, Depends(require_client)],
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Notification).where(
+            Notification.id == notification_id,
+            Notification.user_id == current_user.id,
+        )
+    )
+    notification = result.scalar_one_or_none()
+
+    if notification is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notification not found",
+        )
+
+    notification.is_read = True
+    await db.commit()
+    await db.refresh(notification)
+    return notification

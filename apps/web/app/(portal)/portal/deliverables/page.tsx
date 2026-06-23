@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
 import { ArrowLeft, FileImage, Film, Layers, SlidersHorizontal, Zap, ArrowRight } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -16,67 +17,25 @@ import {
 import { cn } from "@/lib/utils"
 
 type DeliverableType = "poster" | "reel" | "story"
-type DeliverableStatus = "pending" | "approved" | "revision" | "rejected"
+type DisplayStatus = "pending" | "approved" | "revision" | "rejected"
+
+interface ApiDeliverable {
+  id: string
+  task_id: string
+  file_url: string
+  file_type: string
+  status: string
+  revision_round: number
+  created_at: string
+}
 
 interface Deliverable {
   id: string
   title: string
   type: DeliverableType
-  status: DeliverableStatus
+  status: DisplayStatus
   uploadDate: string
-  thumbnail: string | null
 }
-
-const MOCK_DELIVERABLES: Deliverable[] = [
-  {
-    id: "1",
-    title: "Summer Fitness Tips Reel",
-    type: "reel",
-    status: "pending",
-    uploadDate: "2026-06-15",
-    thumbnail: null,
-  },
-  {
-    id: "2",
-    title: "Gym Membership Promo Poster",
-    type: "poster",
-    status: "approved",
-    uploadDate: "2026-06-14",
-    thumbnail: null,
-  },
-  {
-    id: "3",
-    title: "Workout Motivation Story",
-    type: "story",
-    status: "revision",
-    uploadDate: "2026-06-13",
-    thumbnail: null,
-  },
-  {
-    id: "4",
-    title: "Personal Training Ad Poster",
-    type: "poster",
-    status: "rejected",
-    uploadDate: "2026-06-12",
-    thumbnail: null,
-  },
-  {
-    id: "5",
-    title: "Client Transformation Reel",
-    type: "reel",
-    status: "approved",
-    uploadDate: "2026-06-11",
-    thumbnail: null,
-  },
-  {
-    id: "6",
-    title: "Morning Routine Story",
-    type: "story",
-    status: "pending",
-    uploadDate: "2026-06-10",
-    thumbnail: null,
-  },
-]
 
 const TYPE_ICONS: Record<DeliverableType, typeof FileImage> = {
   poster: FileImage,
@@ -85,7 +44,7 @@ const TYPE_ICONS: Record<DeliverableType, typeof FileImage> = {
 }
 
 const STATUS_CONFIG: Record<
-  DeliverableStatus,
+  DisplayStatus,
   { label: string; className: string }
 > = {
   pending: {
@@ -106,6 +65,32 @@ const STATUS_CONFIG: Record<
   },
 }
 
+function inferType(fileUrl: string, fileType: string): DeliverableType {
+  const ext = fileUrl.split(".").pop()?.toLowerCase() ?? ""
+  if (fileType.includes("video") || ext === "mp4" || ext === "mov") return "reel"
+  if (fileType.includes("image") || ["jpg", "jpeg", "png", "webp"].includes(ext)) {
+    if (ext === "png" && fileType.includes("story")) return "story"
+    return "poster"
+  }
+  return "poster"
+}
+
+function mapStatus(apiStatus: string): DisplayStatus {
+  switch (apiStatus) {
+    case "pending_approval":
+    case "pending":
+      return "pending"
+    case "approved":
+      return "approved"
+    case "rejected":
+      return "rejected"
+    case "revision":
+      return "revision"
+    default:
+      return "pending"
+  }
+}
+
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
   return date.toLocaleDateString("en-US", {
@@ -118,7 +103,47 @@ function formatDate(dateString: string): string {
 export default function DeliverablesPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [deliverables] = useState<Deliverable[]>(MOCK_DELIVERABLES)
+  const [deliverables, setDeliverables] = useState<Deliverable[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchDeliverables() {
+      const supabase = createClient()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        setLoading(false)
+        return
+      }
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/deliverables`,
+        {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }
+      )
+
+      if (!res.ok) {
+        setLoading(false)
+        return
+      }
+
+      const data: ApiDeliverable[] = await res.json()
+      const mapped: Deliverable[] = data.map((d) => ({
+        id: d.id,
+        title: `Deliverable — Round ${d.revision_round}`,
+        type: inferType(d.file_url, d.file_type),
+        status: mapStatus(d.status),
+        uploadDate: d.created_at,
+      }))
+      setDeliverables(mapped)
+      setLoading(false)
+    }
+
+    fetchDeliverables()
+  }, [])
 
   const filtered = deliverables.filter((d) => {
     if (typeFilter !== "all" && d.type !== typeFilter) return false
@@ -151,10 +176,10 @@ export default function DeliverablesPage() {
             </div>
             <div>
               <p className="text-sm font-semibold text-amber-900">
-                You&apos;ve used all your posters this month.
+                Need more content?
               </p>
               <p className="text-xs text-amber-700">
-                Need more? Purchase extra poster credits starting from ₹499.
+                Purchase extra credits for posters, reels, or stories.
               </p>
             </div>
           </div>
@@ -202,7 +227,21 @@ export default function DeliverablesPage() {
         </Select>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="rounded-xl shadow-[var(--shadow-card)]">
+              <CardContent className="p-0">
+                <div className="aspect-[4/3] animate-pulse bg-gray-100" />
+                <div className="space-y-3 p-4">
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-gray-100" />
+                  <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
         <Card className="rounded-xl shadow-[var(--shadow-card)]">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <div className="flex size-16 items-center justify-center rounded-full bg-gray-100">

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -18,18 +19,6 @@ interface CalendarEntry {
   topic: string
   status: CalendarStatus
 }
-
-const MOCK_ENTRIES: CalendarEntry[] = [
-  { id: "1", date: "2026-06-02", type: "poster", topic: "Welcome Post — Gym Opening", status: "approved" },
-  { id: "2", date: "2026-06-05", type: "reel", topic: "5 Min Home Workout", status: "approved" },
-  { id: "3", date: "2026-06-09", type: "story", topic: "Motivation Monday Quote", status: "ready_for_review" },
-  { id: "4", date: "2026-07-01", type: "poster", topic: "Summer Membership Offer", status: "scheduled" },
-  { id: "5", date: "2026-06-16", type: "reel", topic: "Client Transformation Story", status: "ready_for_review" },
-  { id: "6", date: "2026-06-19", type: "story", topic: "Behind The Scenes — Studio Tour", status: "scheduled" },
-  { id: "7", date: "2026-06-23", type: "poster", topic: "Personal Training Promo", status: "scheduled" },
-  { id: "8", date: "2026-06-26", type: "reel", topic: "Workout Tips For Beginners", status: "scheduled" },
-  { id: "9", date: "2026-06-30", type: "story", topic: "Monthly Recap Highlights", status: "scheduled" },
-]
 
 const STATUS_CONFIG: Record<CalendarStatus, { label: string; className: string; dotColor: string }> = {
   scheduled: {
@@ -60,6 +49,18 @@ const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ]
+
+function mapStatus(apiStatus: string): CalendarStatus {
+  switch (apiStatus) {
+    case "approved":
+      return "approved"
+    case "ready_for_review":
+    case "in_progress":
+      return "ready_for_review"
+    default:
+      return "scheduled"
+  }
+}
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate()
@@ -94,9 +95,58 @@ export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth())
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear())
   const [today] = useState(() => new Date())
+  const [entries, setEntries] = useState<CalendarEntry[]>([])
+  const [loading, setLoading] = useState(true)
+
   const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() === currentMonth
   const daysInMonth = getDaysInMonth(currentYear, currentMonth)
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth)
+
+  useEffect(() => {
+    async function fetchCalendar() {
+      const supabase = createClient()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        setLoading(false)
+        return
+      }
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/calendar`,
+        {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }
+      )
+
+      if (!res.ok) {
+        setLoading(false)
+        return
+      }
+
+      const data: {
+        id: string
+        scheduled_date: string
+        deliverable_type: string
+        content_topic: string | null
+        status: string
+      }[] = await res.json()
+
+      const mapped: CalendarEntry[] = data.map((e) => ({
+        id: e.id,
+        date: e.scheduled_date,
+        type: (e.deliverable_type as DeliverableType) || "poster",
+        topic: e.content_topic || "Untitled Content",
+        status: mapStatus(e.status),
+      }))
+      setEntries(mapped)
+      setLoading(false)
+    }
+
+    fetchCalendar()
+  }, [])
 
   function navigateMonth(direction: number) {
     const totalMonths = currentYear * 12 + currentMonth + direction
@@ -106,7 +156,7 @@ export default function CalendarPage() {
     setCurrentYear(newYear)
   }
 
-  const sortedEntries = [...MOCK_ENTRIES].sort(
+  const sortedEntries = [...entries].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   )
 
@@ -150,7 +200,17 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {viewMode === "month" && (
+      {loading ? (
+        <Card className="rounded-xl shadow-[var(--shadow-card)]">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-7 gap-2">
+              {Array.from({ length: 28 }).map((_, i) => (
+                <div key={i} className="h-20 animate-pulse rounded bg-gray-100" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : viewMode === "month" ? (
         <Card className="rounded-xl shadow-[var(--shadow-card)]">
           <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
@@ -188,7 +248,7 @@ export default function CalendarPage() {
                   return <div key={`empty-${index}`} className="bg-white min-h-[72px] sm:min-h-[88px]" />
                 }
 
-                const entries = getEntriesForDay(MOCK_ENTRIES, currentYear, currentMonth, day)
+                const dayEntries = getEntriesForDay(entries, currentYear, currentMonth, day)
                 const isToday = isCurrentMonth && today.getDate() === day
 
                 return (
@@ -213,7 +273,7 @@ export default function CalendarPage() {
                     </div>
 
                     <div className="mt-1 space-y-0.5">
-                      {entries.slice(0, 3).map((entry) => {
+                      {dayEntries.slice(0, 3).map((entry) => {
                         const config = STATUS_CONFIG[entry.status]
                         return (
                           <div
@@ -228,9 +288,9 @@ export default function CalendarPage() {
                           </div>
                         )
                       })}
-                      {entries.length > 3 && (
+                      {dayEntries.length > 3 && (
                         <span className="block px-1 text-[10px] text-gray-400">
-                          +{entries.length - 3} more
+                          +{dayEntries.length - 3} more
                         </span>
                       )}
                     </div>
@@ -249,9 +309,7 @@ export default function CalendarPage() {
             </div>
           </CardContent>
         </Card>
-      )}
-
-      {viewMode === "list" && (
+      ) : (
         <div className="space-y-3">
           {sortedEntries.length === 0 ? (
             <Card className="rounded-xl shadow-[var(--shadow-card)]">

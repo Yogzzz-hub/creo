@@ -247,7 +247,7 @@ export default function ClientsPage() {
               href="/signup"
               className={buttonVariants({
                 className:
-                  "bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold",
+                  "bg-brand text-white hover:bg-brand/90 rounded-lg h-12 px-8 text-base font-semibold",
               })}
             >
               Get Started
@@ -257,7 +257,7 @@ export default function ClientsPage() {
               className={buttonVariants({
                 variant: "outline",
                 className:
-                  "border-white/30 text-white hover:bg-white/10 rounded-lg h-12 px-8 text-base font-semibold",
+                  "border-white/30 text-deep navy hover:bg-white/10 rounded-lg h-12 px-8 text-base font-semibold",
               })}
             >
               View Pricing

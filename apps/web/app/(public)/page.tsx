@@ -124,8 +124,9 @@ export default function HomePage() {
                 <Link
                   href="/pricing#plans"
                   className={buttonVariants({
+                    variant: "outline",
                     className:
-                      "bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold",
+                      "h-12 rounded-lg bg-white px-6 text-deep navy hover:bg-white/90",
                   })}
                 >
                   See Our Plans
@@ -135,7 +136,7 @@ export default function HomePage() {
                   className={buttonVariants({
                     variant: "outline",
                     className:
-                      "border-white/30 text-white hover:bg-white/10 rounded-lg h-12 px-8 text-base font-semibold",
+                      "h-12 rounded-lg bg-brand px-6 text-white hover:bg-brand/90",
                   })}
                 >
                   Book a Call

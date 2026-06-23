@@ -1,15 +1,24 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { ShoppingCart, Plus, Minus, FileImage, Film, Layers, Loader2 } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 
+interface ApiAddonPricing {
+  id: string
+  deliverable_type: string
+  unit_price: number
+  is_active: boolean
+}
+
 interface AddonType {
   id: string
+  apiType: string
   name: string
   description: string
   unitPrice: number
@@ -17,32 +26,11 @@ interface AddonType {
   color: string
 }
 
-const ADDON_TYPES: AddonType[] = [
-  {
-    id: "poster",
-    name: "Extra Poster",
-    description: "Additional social media poster design for your campaign.",
-    unitPrice: 499,
-    icon: FileImage,
-    color: "#2B7BC4",
-  },
-  {
-    id: "reel",
-    name: "Extra Reel",
-    description: "Short-form video content edited and ready to post.",
-    unitPrice: 999,
-    icon: Film,
-    color: "#0EA5E9",
-  },
-  {
-    id: "story",
-    name: "Extra Story",
-    description: "Instagram/Facebook story design with animations.",
-    unitPrice: 349,
-    icon: Layers,
-    color: "#6BAED6",
-  },
-]
+const ICON_MAP: Record<string, { icon: typeof FileImage; color: string; name: string; description: string }> = {
+  poster: { icon: FileImage, color: "#2B7BC4", name: "Extra Poster", description: "Additional social media poster design for your campaign." },
+  reel: { icon: Film, color: "#0EA5E9", name: "Extra Reel", description: "Short-form video content edited and ready to post." },
+  story: { icon: Layers, color: "#6BAED6", name: "Extra Story", description: "Instagram/Facebook story design with animations." },
+}
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
@@ -53,12 +41,64 @@ function formatCurrency(amount: number): string {
 }
 
 export default function AddonsPage() {
-  const [quantities, setQuantities] = useState<Record<string, number>>({
-    poster: 0,
-    reel: 0,
-    story: 0,
-  })
+  const [addonTypes, setAddonTypes] = useState<AddonType[]>([])
+  const [loading, setLoading] = useState(true)
+  const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [isProcessing, setIsProcessing] = useState(false)
+
+  useEffect(() => {
+    async function fetchPricing() {
+      try {
+        const supabase = createClient()
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        if (!session?.access_token) {
+          setLoading(false)
+          return
+        }
+
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/addons/pricing`,
+          {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }
+        )
+
+        if (!res.ok) {
+          setLoading(false)
+          return
+        }
+
+        const data: ApiAddonPricing[] = await res.json()
+        const mapped: AddonType[] = data
+          .filter((p) => p.is_active)
+          .map((p) => {
+            const meta = ICON_MAP[p.deliverable_type] ?? ICON_MAP.poster
+            return {
+              id: p.id,
+              apiType: p.deliverable_type,
+              name: meta.name,
+              description: meta.description,
+              unitPrice: p.unit_price,
+              icon: meta.icon,
+              color: meta.color,
+            }
+          })
+
+        setAddonTypes(mapped)
+        const initial: Record<string, number> = {}
+        mapped.forEach((a) => { initial[a.id] = 0 })
+        setQuantities(initial)
+      } catch {
+        // Silent fail
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchPricing()
+  }, [])
 
   function updateQuantity(id: string, delta: number) {
     setQuantities((prev) => {
@@ -69,22 +109,72 @@ export default function AddonsPage() {
   }
 
   const totalItems = Object.values(quantities).reduce((sum, q) => sum + q, 0)
-  const totalPrice = ADDON_TYPES.reduce((sum, addon) => {
+  const totalPrice = addonTypes.reduce((sum, addon) => {
     return sum + (quantities[addon.id] || 0) * addon.unitPrice
   }, 0)
 
-  function handlePurchase() {
+  async function handlePurchase() {
     if (totalItems === 0) {
       toast.error("Please select at least one add-on.")
       return
     }
 
     setIsProcessing(true)
-    setTimeout(() => {
-      setIsProcessing(false)
-      setQuantities({ poster: 0, reel: 0, story: 0 })
+    try {
+      const supabase = createClient()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.access_token) {
+        throw new Error("Not authenticated")
+      }
+
+      const addonsToOrder = addonTypes.filter((a) => (quantities[a.id] || 0) > 0)
+
+      for (const addon of addonsToOrder) {
+        const qty = quantities[addon.id] || 0
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/addons/purchase`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              deliverable_type: addon.apiType,
+              quantity: qty,
+            }),
+          }
+        )
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          throw new Error(body.detail || `Failed to purchase ${addon.name}`)
+        }
+      }
+
+      const resetQuantities: Record<string, number> = {}
+      addonTypes.forEach((a) => { resetQuantities[a.id] = 0 })
+      setQuantities(resetQuantities)
       toast.success("Payment successful. Add-on tasks created.")
-    }, 1500)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Purchase failed")
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-6">
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <Loader2 className="size-4 animate-spin" />
+          Loading add-on pricing...
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -98,7 +188,7 @@ export default function AddonsPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {ADDON_TYPES.map((addon) => {
+          {addonTypes.map((addon) => {
             const qty = quantities[addon.id] || 0
             return (
               <Card
@@ -176,7 +266,7 @@ export default function AddonsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {ADDON_TYPES.map((addon) => {
+              {addonTypes.map((addon) => {
                 const qty = quantities[addon.id] || 0
                 if (qty === 0) return null
                 return (

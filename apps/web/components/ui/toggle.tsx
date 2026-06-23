@@ -35,6 +35,7 @@ function Toggle({
 }: TogglePrimitive.Props & VariantProps<typeof toggleVariants>) {
   return (
     <TogglePrimitive
+      suppressHydrationWarning
       data-slot="toggle"
       className={cn(toggleVariants({ variant, size, className }))}
       {...props}

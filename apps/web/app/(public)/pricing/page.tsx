@@ -304,7 +304,7 @@ export default async function PricingPage() {
               href="/signup?plan=growth"
               className={buttonVariants({
                 className:
-                  "bg-white text-brand-dark hover:bg-white/90 rounded-lg h-12 px-8 text-base font-semibold",
+                  "bg-brand text-white hover:bg-brand/90 rounded-lg h-12 px-8 text-base font-semibold",
               })}
             >
               Get Started Today
