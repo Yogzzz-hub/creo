@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_db
 from core.security import RequireClient, encrypt_token
 from models.user import User
+from schemas.payments import TwoFactorRequest
 from schemas.user import UserOut, UserUpdate
 from services.instagram import exchange_instagram_token
 
@@ -79,3 +80,52 @@ async def update_account_profile(
     await db.commit()
     await db.refresh(current_user)
     return current_user
+
+
+class TwoFactorResponse(BaseModel):
+    success: bool
+    two_fa_enabled: bool
+    message: str
+
+
+@router.patch("/2fa", response_model=TwoFactorResponse)
+async def toggle_two_factor(
+    payload: TwoFactorRequest,
+    current_user: RequireClient,
+    db: AsyncSession = Depends(get_db),
+):
+    current_user.two_fa_enabled = payload.enabled
+    db.add(current_user)
+    await db.commit()
+    await db.refresh(current_user)
+
+    return TwoFactorResponse(
+        success=True,
+        two_fa_enabled=current_user.two_fa_enabled,
+        message=(
+            "Two-factor authentication enabled."
+            if payload.enabled
+            else "Two-factor authentication disabled."
+        ),
+    )
+
+
+class InstagramDisconnectResponse(BaseModel):
+    success: bool
+    message: str
+
+
+@router.delete("/instagram", response_model=InstagramDisconnectResponse)
+async def disconnect_instagram(
+    current_user: RequireClient,
+    db: AsyncSession = Depends(get_db),
+):
+    current_user.instagram_access_token = None
+    current_user.instagram_user_id = None
+    db.add(current_user)
+    await db.commit()
+
+    return InstagramDisconnectResponse(
+        success=True,
+        message="Instagram account disconnected successfully",
+    )

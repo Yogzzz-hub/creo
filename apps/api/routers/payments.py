@@ -25,12 +25,30 @@ async def get_payment_history(
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(Subscription)
+        select(Subscription, Plan)
+        .join(Plan, Subscription.plan_id == Plan.id)
         .where(Subscription.user_id == current_user.id)
         .order_by(Subscription.created_at.desc())
     )
-    subscriptions = result.scalars().all()
-    return subscriptions
+    rows = result.all()
+
+    return [
+        PaymentHistoryResponse(
+            id=sub.id,
+            plan_id=sub.plan_id,
+            amount=float(plan.monthly_price),
+            status=sub.status,
+            gateway=sub.gateway,
+            gateway_subscription_id=sub.gateway_subscription_id,
+            gateway_customer_id=sub.gateway_customer_id,
+            current_period_start=sub.current_period_start,
+            current_period_end=sub.current_period_end,
+            cancelled_at=sub.cancelled_at,
+            created_at=sub.created_at,
+            updated_at=sub.updated_at,
+        )
+        for sub, plan in rows
+    ]
 
 
 @router.post("/change-plan")

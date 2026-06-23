@@ -11,6 +11,7 @@ class PaymentHistoryResponse(BaseModel):
 
     id: str
     plan_id: str
+    amount: float
     status: str
     gateway: PaymentGateway
     gateway_subscription_id: str
@@ -24,3 +25,7 @@ class PaymentHistoryResponse(BaseModel):
 
 class PlanChangeRequest(BaseModel):
     new_plan_id: str
+
+
+class TwoFactorRequest(BaseModel):
+    enabled: bool
