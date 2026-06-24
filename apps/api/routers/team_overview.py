@@ -30,33 +30,46 @@ async def get_team_overview(
     team_members = team_members_result.all()
 
     today = date.today()
+
+    active_member_ids = [tm.id for tm, _ in team_members]
+
+    task_counts_result = await db.execute(
+        select(
+            Task.assigned_to,
+            Task.status,
+            func.count(Task.id).label("cnt"),
+        )
+        .where(Task.assigned_to.in_(active_member_ids))
+        .group_by(Task.assigned_to, Task.status)
+    )
+    status_map: dict[str, dict[str, int]] = {}
+    for row in task_counts_result.all():
+        member_id = row.assigned_to
+        if member_id not in status_map:
+            status_map[member_id] = {}
+        status_map[member_id][row.status.value] = row.cnt
+
+    today_completed_result = await db.execute(
+        select(Task.assigned_to, func.count(Task.id).label("cnt"))
+        .where(
+            Task.assigned_to.in_(active_member_ids),
+            Task.status == TaskStatus.submitted,
+            func.date(Task.submitted_at) == today,
+        )
+        .group_by(Task.assigned_to)
+    )
+    today_map = {row.assigned_to: row.cnt for row in today_completed_result.all()}
+
     members = []
 
     for team_member, user in team_members:
-        active_result = await db.execute(
-            select(func.count(Task.id)).where(
-                Task.assigned_to == team_member.id,
-                Task.status.in_([TaskStatus.pending, TaskStatus.in_progress]),
-            )
+        tm_status = status_map.get(team_member.id, {})
+        active_tasks = (
+            tm_status.get(TaskStatus.pending.value, 0)
+            + tm_status.get(TaskStatus.in_progress.value, 0)
         )
-        active_tasks = active_result.scalar() or 0
-
-        overdue_result = await db.execute(
-            select(func.count(Task.id)).where(
-                Task.assigned_to == team_member.id,
-                Task.status == TaskStatus.overdue,
-            )
-        )
-        overdue_tasks = overdue_result.scalar() or 0
-
-        today_completed_result = await db.execute(
-            select(func.count(Task.id)).where(
-                Task.assigned_to == team_member.id,
-                Task.status == TaskStatus.submitted,
-                func.date(Task.submitted_at) == today,
-            )
-        )
-        today_completed = today_completed_result.scalar() or 0
+        overdue_tasks = tm_status.get(TaskStatus.overdue.value, 0)
+        today_completed = today_map.get(team_member.id, 0)
 
         members.append(
             MemberMetrics(

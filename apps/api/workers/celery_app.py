@@ -60,7 +60,17 @@ celery_app.conf.beat_schedule = {
     },
     "generate-content-calendar": {
         "task": "generate_content_calendar",
-        "schedule": crontab(hour=2, minute=0, day_of_month=25),  # 25th of every month
+        "schedule": crontab(hour=2, minute=0, day_of_month=24),  # 24th of every month (7 days before cycle)
+        "options": {"queue": "default"},
+    },
+    "check-content-plan-delivery-sla": {
+        "task": "check_content_plan_delivery_sla",
+        "schedule": crontab(hour=9, minute=0),  # Daily at 09:00
+        "options": {"queue": "default"},
+    },
+    "check-content-plan-approval-escalation": {
+        "task": "check_content_plan_approval_escalation",
+        "schedule": crontab(hour=10, minute=0),  # Daily at 10:00
         "options": {"queue": "default"},
     },
 }

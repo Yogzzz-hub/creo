@@ -99,3 +99,41 @@ class TaskSubmitRequest(BaseModel):
 
 class TaskAssignmentApproveRequest(BaseModel):
     team_member_id: str
+
+
+class TaskBulkReassignRequest(BaseModel):
+    """Schema for bulk reassignment of tasks to a new team member.
+
+    Used for emergency routing when a designer calls in sick or goes on leave.
+    """
+
+    task_ids: list[str] = Field(..., min_length=1, max_length=50)
+    new_assignee_id: str
+
+
+class TaskBulkReassignResponse(BaseModel):
+    updated_count: int
+    new_assignee_id: str
+
+
+class TaskTimeLogRequest(BaseModel):
+    """Schema for logging time spent on a task."""
+
+    minutes_spent: int = Field(..., gt=0, le=480)
+
+
+class TaskTimeLogResponse(BaseModel):
+    task_id: str
+    actual_minutes: int
+    estimated_minutes: Optional[int] = None
+
+
+class TaskExpediteRequest(BaseModel):
+    """Schema for toggling task expedite status."""
+
+    is_expedited: bool
+
+
+class TaskExpediteResponse(BaseModel):
+    task_id: str
+    is_expedited: bool

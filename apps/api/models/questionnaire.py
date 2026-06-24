@@ -34,6 +34,9 @@ class Questionnaire(Base):
     style_references: Mapped[Optional[list[str]]] = mapped_column(ARRAY(Text), nullable=True)
     ai_analysis: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     ai_summary_line: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    prompt_tokens: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    completion_tokens: Mapped[int] = mapped_column(nullable=False, server_default="0")
+    total_tokens: Mapped[int] = mapped_column(nullable=False, server_default="0")
     submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True

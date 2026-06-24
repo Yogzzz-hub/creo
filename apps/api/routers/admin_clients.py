@@ -1,19 +1,25 @@
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
+from core.exceptions import limiter
 from core.security import RequireAdmin
+from models.audit import QuestionnaireAuditLog
 from models.deliverable import Deliverable
 from models.enums import AccountStatus, UserRole
 from models.plan import Plan
+from models.questionnaire import Questionnaire
 from models.subscription import Subscription
 from models.ticket import Ticket
 from models.enums import TicketStatus
 from models.user import User
 from schemas.admin import AdminClientDetailResponse, AdminClientListResponse, SubscriptionSnapshot
+from schemas.questionnaire import AdminQuestionnaireOverride
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin-clients"])
 
@@ -131,4 +137,142 @@ async def get_client_detail(
         subscriptions=subscriptions,
         deliverables_count=deliverables_count,
         open_tickets_count=open_tickets_count,
+    )
+
+
+class AdminQuestionnaireOverrideResponse(BaseModel):
+    client_id: str
+    ai_analysis: Optional[dict] = None
+    ai_summary_line: Optional[str] = None
+    overridden_by: str
+
+
+@router.patch(
+    "/clients/{client_id}/questionnaire-override",
+    response_model=AdminQuestionnaireOverrideResponse,
+)
+async def override_questionnaire_analysis(
+    client_id: str,
+    payload: AdminQuestionnaireOverride,
+    current_user: RequireAdmin,
+    db: AsyncSession = Depends(get_db),
+):
+    user_result = await db.execute(
+        select(User).where(
+            User.id == client_id,
+            User.role == UserRole.client,
+            User.deleted_at.is_(None),
+        )
+    )
+    user = user_result.scalar_one_or_none()
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Client not found",
+        )
+
+    q_result = await db.execute(
+        select(Questionnaire).where(Questionnaire.user_id == client_id)
+    )
+    questionnaire = q_result.scalar_one_or_none()
+
+    if questionnaire is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No questionnaire found for this client",
+        )
+
+    old_analysis = questionnaire.ai_analysis
+    old_summary = questionnaire.ai_summary_line
+
+    audit_log = QuestionnaireAuditLog(
+        questionnaire_id=questionnaire.id,
+        changed_by_user_id=current_user.id,
+        change_source="admin_override",
+        old_ai_analysis=old_analysis,
+        new_ai_analysis=payload.ai_analysis,
+        old_summary_line=old_summary,
+        new_summary_line=payload.ai_summary_line,
+    )
+    db.add(audit_log)
+
+    questionnaire.ai_analysis = payload.ai_analysis
+    questionnaire.ai_summary_line = payload.ai_summary_line
+
+    await db.commit()
+
+    return AdminQuestionnaireOverrideResponse(
+        client_id=client_id,
+        ai_analysis=questionnaire.ai_analysis,
+        ai_summary_line=questionnaire.ai_summary_line,
+        overridden_by=current_user.id,
+    )
+
+
+class RegenerateAnalysisResponse(BaseModel):
+    client_id: str
+    status: str
+    message: str
+    requested_by: str
+
+
+REGENERATION_COOLDOWN_MINUTES = 5
+
+
+@router.post(
+    "/clients/{client_id}/questionnaire-regenerate",
+    response_model=RegenerateAnalysisResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+@limiter.limit("5/hour")
+async def regenerate_questionnaire_analysis(
+    request: Request,
+    client_id: str,
+    current_user: RequireAdmin,
+    db: AsyncSession = Depends(get_db),
+):
+    user_result = await db.execute(
+        select(User).where(
+            User.id == client_id,
+            User.role == UserRole.client,
+            User.deleted_at.is_(None),
+        )
+    )
+    user = user_result.scalar_one_or_none()
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Client not found",
+        )
+
+    q_result = await db.execute(
+        select(Questionnaire).where(Questionnaire.user_id == client_id)
+    )
+    questionnaire = q_result.scalar_one_or_none()
+
+    if questionnaire is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No questionnaire found for this client",
+        )
+
+    if questionnaire.updated_at is not None:
+        cooldown_expiry = questionnaire.updated_at + timedelta(minutes=REGENERATION_COOLDOWN_MINUTES)
+        if datetime.now(timezone.utc) < cooldown_expiry:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Cooldown active. Please wait {REGENERATION_COOLDOWN_MINUTES} minutes between regeneration requests.",
+            )
+
+    from workers.ai_tasks import generate_ai_analysis
+
+    generate_ai_analysis.delay(client_id)
+
+    return RegenerateAnalysisResponse(
+        client_id=client_id,
+        status="accepted",
+        message="AI analysis regeneration dispatched. The client will be notified when complete.",
+        requested_by=current_user.id,
     )

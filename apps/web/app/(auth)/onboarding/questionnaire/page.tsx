@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { createClient } from "@/lib/supabase/client";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, ArrowRight, ArrowLeft, Check } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, Check, Lock, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Matches the backend schema exact requirements
@@ -67,6 +67,43 @@ export default function QuestionnairePage() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockedLoading, setLockedLoading] = useState(true);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function checkLockStatus() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          if (!controller.signal.aborted) setLockedLoading(false);
+          return;
+        }
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/questionnaire/status`,
+          {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+            signal: controller.signal,
+          }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data.is_locked && !controller.signal.aborted) {
+            setIsLocked(true);
+          }
+        }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        // Ignore other errors — default is unlocked
+      } finally {
+        if (!controller.signal.aborted) setLockedLoading(false);
+      }
+    }
+    checkLockStatus();
+
+    return () => controller.abort();
+  }, [supabase]);
 
   const {
     register,
@@ -200,6 +237,41 @@ export default function QuestionnairePage() {
       setApiError("Failed to connect to server. Please try again.");
       setIsSubmitting(false);
     }
+  }
+
+  if (lockedLoading) {
+    return (
+      <CardContent className="py-2">
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      </CardContent>
+    );
+  }
+
+  if (isLocked) {
+    return (
+      <CardContent className="py-2">
+        <div className="flex flex-col items-center text-center py-10 space-y-4">
+          <div className="flex size-14 items-center justify-center rounded-full bg-amber-100">
+            <Lock className="size-7 text-amber-600" />
+          </div>
+          <h2 className="text-xl font-bold text-brand-dark">Questionnaire Locked</h2>
+          <p className="text-sm text-text-muted max-w-md">
+            Your brand questionnaire was submitted more than 7 days ago and is now locked.
+            To make changes, please contact our Support team.
+          </p>
+          <Button
+            variant="outline"
+            className="mt-2 border-border text-text"
+            onClick={() => router.push("/portal/support")}
+          >
+            Go to Support
+            <ExternalLink className="ml-2 size-4" />
+          </Button>
+        </div>
+      </CardContent>
+    );
   }
 
   return (

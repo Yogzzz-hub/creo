@@ -129,6 +129,71 @@ def create_gateway_subscription(user: User, plan: Plan, country_code: str) -> di
         return result
 
 
+def create_razorpay_payment_link(
+    user: User,
+    amount_paise: int,
+    description: str,
+    notes: dict | None = None,
+) -> dict:
+    payload = {
+        "amount": amount_paise,
+        "currency": "INR",
+        "accept_partial": False,
+        "description": description,
+        "customer": {
+            "name": user.full_name,
+            "email": user.email,
+        },
+        "notify": {"sms": False, "email": True},
+        "notes": notes or {},
+        "callback_url": "https://creo.app/portal/payments",
+        "callback_method": "get",
+    }
+    link = razorpay_client.payment_link.create(payload)
+    return {
+        "short_url": link["short_url"],
+        "payment_link_id": link["id"],
+    }
+
+
+def create_stripe_checkout_session(
+    user: User,
+    amount_paise: int,
+    description: str,
+    metadata: dict | None = None,
+) -> dict:
+    session = stripe.checkout.Session.create(
+        mode="payment",
+        customer_email=user.email,
+        line_items=[{
+            "price_data": {
+                "currency": "inr",
+                "unit_amount": amount_paise,
+                "product_data": {"name": description},
+            },
+            "quantity": 1,
+        }],
+        metadata=metadata or {},
+        success_url="https://creo.app/portal/payments?status=success",
+        cancel_url="https://creo.app/portal/payments?status=cancelled",
+    )
+    return {
+        "checkout_url": session.url,
+        "session_id": session.id,
+    }
+
+
+def create_custom_pricing_checkout(user: User, amount: float, pricing_id: str) -> dict:
+    amount_paise = int(float(amount) * 100)
+    description = f"Creo Custom Plan — ₹{amount:,.0f}/mo"
+    notes = {"user_id": user.id, "custom_pricing_id": pricing_id}
+
+    if user.razorpay_customer_id:
+        return create_razorpay_payment_link(user, amount_paise, description, notes)
+
+    return create_stripe_checkout_session(user, amount_paise, description, notes)
+
+
 def verify_razorpay_signature(payload_body: bytes, signature: str) -> dict:
     return razorpay_client.utility.verify_webhook_signature(
         payload_body.decode("utf-8"),

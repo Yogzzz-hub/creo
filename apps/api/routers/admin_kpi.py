@@ -61,6 +61,18 @@ async def get_kpi_dashboard(
     )
     team_rows = team_members_result.all()
 
+    active_member_ids = [tm.id for tm, _ in team_rows]
+
+    load_counts_result = await db.execute(
+        select(Task.assigned_to, func.count(Task.id).label("task_count"))
+        .where(
+            Task.assigned_to.in_(active_member_ids),
+            Task.status.in_([TaskStatus.pending, TaskStatus.in_progress]),
+        )
+        .group_by(Task.assigned_to)
+    )
+    load_map = {row.assigned_to: row.task_count for row in load_counts_result.all()}
+
     total_capacity = 0
     team_capacity_bars: list[TeamCapacityBar] = []
 
@@ -68,18 +80,10 @@ async def get_kpi_dashboard(
         member_capacity = tm.daily_cap_posters + tm.daily_cap_reels + tm.daily_cap_stories
         total_capacity += member_capacity
 
-        load_result = await db.execute(
-            select(func.count(Task.id)).where(
-                Task.assigned_to == tm.id,
-                Task.status.in_([TaskStatus.pending, TaskStatus.in_progress]),
-            )
-        )
-        current_load = load_result.scalar() or 0
-
         team_capacity_bars.append(
             TeamCapacityBar(
                 team_member_name=user.full_name,
-                current_load=current_load,
+                current_load=load_map.get(tm.id, 0),
                 max_capacity=member_capacity,
             )
         )

@@ -81,7 +81,15 @@ def call_openai_gpt4o(system_message: str, user_message: str) -> dict:
         response_format={"type": "json_object"},
         temperature=0.7,
         max_tokens=1000,
+        timeout=60,
     )
 
     content = response.choices[0].message.content
-    return json.loads(content)
+    usage = response.usage
+
+    return {
+        "analysis": json.loads(content),
+        "prompt_tokens": usage.prompt_tokens if usage else 0,
+        "completion_tokens": usage.completion_tokens if usage else 0,
+        "total_tokens": usage.total_tokens if usage else 0,
+    }

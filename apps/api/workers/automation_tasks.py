@@ -8,13 +8,17 @@ from sqlalchemy import and_, func, select, update
 from core.database import async_session
 from models.addon import Addon
 from models.content_calendar import ContentCalendar
+from models.content_plan import ContentPlan
 from models.enums import (
     AddonStatus,
     CalendarEntryStatus,
+    ContentPlanStatus,
     DeliverableType,
+    LeaveStatus,
     TaskStatus,
 )
 from models.escalation import Escalation
+from models.leave import LeaveRequest
 from models.plan import Plan
 from models.subscription import Subscription
 from models.task import Task
@@ -32,6 +36,30 @@ DELIVERABLE_MONTHLY_SCHEDULE = {
     DeliverableType.reel: 2,
     DeliverableType.story: 4,
 }
+
+
+def _count_business_days(start: date, end: date) -> int:
+    """Count business days (Mon-Fri) between two dates, inclusive of start, exclusive of end."""
+    if end <= start:
+        return 0
+    business_days = 0
+    current = start
+    while current < end:
+        if current.weekday() < 5:
+            business_days += 1
+        current += timedelta(days=1)
+    return business_days
+
+
+def _business_days_ago(ref: date, business_days: int) -> date:
+    """Walk backwards from ref date, skipping weekends, to find the date that is N business days before ref."""
+    remaining = business_days
+    current = ref
+    while remaining > 0:
+        current -= timedelta(days=1)
+        if current.weekday() < 5:
+            remaining -= 1
+    return current
 
 
 def _run_async(coro):
@@ -79,15 +107,15 @@ async def _check_sla_breaches_async():
             if existing.scalar_one_or_none() is not None:
                 continue
 
-            overdue_days = (today - task.due_date).days
-            severity = min(3, max(1, overdue_days // 2))
+            overdue_bdays = _count_business_days(task.due_date, today)
+            severity = min(3, max(1, overdue_bdays // 2))
 
             escalation = Escalation(
                 task_id=task.id,
                 client_id=task.client_id,
                 severity=severity,
-                reason=(
-                    f"Auto-escalated: Task is {overdue_days} day(s) overdue "
+                description=(
+                    f"Auto-escalated: Task is {overdue_bdays} business day(s) overdue "
                     f"(due {task.due_date.isoformat()})."
                 ),
                 status="open",
@@ -96,6 +124,42 @@ async def _check_sla_breaches_async():
             breaches_found += 1
 
             task.status = TaskStatus.overdue
+
+        revision_result = await db.execute(
+            select(Task).where(
+                Task.status == TaskStatus.revision,
+                Task.updated_at.isnot(None),
+            )
+        )
+        revision_tasks = revision_result.scalars().all()
+
+        for task in revision_tasks:
+            existing = await db.execute(
+                select(Escalation).where(
+                    Escalation.task_id == task.id,
+                    Escalation.status != "resolved",
+                )
+            )
+            if existing.scalar_one_or_none() is not None:
+                continue
+
+            revision_start = task.updated_at.date() if task.updated_at.tzinfo else task.updated_at.replace(tzinfo=timezone.utc).date()
+            bdays_since_revision = _count_business_days(revision_start, today)
+
+            if bdays_since_revision > 1:
+                escalation = Escalation(
+                    task_id=task.id,
+                    client_id=task.client_id,
+                    severity="high",
+                    description=(
+                        f"Auto-escalated: Revision pending for {bdays_since_revision} "
+                        f"business day(s) (since {revision_start.isoformat()}). "
+                        f"Exceeds 24-business-hour SLA."
+                    ),
+                    status="open",
+                )
+                db.add(escalation)
+                breaches_found += 1
 
         await db.commit()
 
@@ -344,7 +408,11 @@ async def _auto_assign_tasks_async():
             select(Task).where(
                 Task.assigned_to.is_(None),
                 Task.status.in_([TaskStatus.pending, TaskStatus.assignment_requested]),
-            ).order_by(Task.priority.asc(), Task.created_at.asc())
+            ).order_by(
+                Task.is_expedited.desc(),
+                Task.priority.asc(),
+                Task.created_at.asc(),
+            )
         )
         unassigned_tasks = unassigned_result.scalars().all()
 
@@ -361,8 +429,27 @@ async def _auto_assign_tasks_async():
             logger.info("auto_assign_tasks — no active team members found")
             return 0
 
+        on_leave_ids: set[str] = set()
+        if team_members:
+            leave_result = await db.execute(
+                select(LeaveRequest.team_member_id).where(
+                    LeaveRequest.status == LeaveStatus.approved,
+                    LeaveRequest.start_date <= today,
+                    LeaveRequest.end_date >= today,
+                )
+            )
+            on_leave_ids = {row[0] for row in leave_result.all()}
+
+        available_members = [m for m in team_members if m.id not in on_leave_ids]
+
+        if not available_members:
+            logger.info(
+                "auto_assign_tasks — all active team members are on leave"
+            )
+            return 0
+
         member_caps: dict[str, dict[str, int]] = {}
-        for member in team_members:
+        for member in available_members:
             posters_result = await db.execute(
                 select(func.count(Task.id)).where(
                     Task.assigned_to == member.id,
@@ -396,11 +483,22 @@ async def _auto_assign_tasks_async():
                 "stories_remaining": max(0, member.daily_cap_stories - stories_used),
             }
 
+        skill_map = {
+            DeliverableType.poster: "poster",
+            DeliverableType.reel: "reel",
+            DeliverableType.story: "story",
+        }
+
         for task in unassigned_tasks:
             best_member = None
             best_remaining = -1
+            required_skill = skill_map.get(task.deliverable_type)
 
-            for member in team_members:
+            for member in available_members:
+                member_skills = member.skills or []
+                if required_skill and member_skills and required_skill not in member_skills:
+                    continue
+
                 caps = member_caps[member.id]
 
                 if task.deliverable_type == DeliverableType.poster:
@@ -461,6 +559,15 @@ async def _generate_content_calendar_async():
 
     entries_created = 0
 
+    all_dates = []
+    current_date = next_month_start
+    while current_date <= next_month_end:
+        all_dates.append(current_date)
+        current_date += timedelta(days=1)
+
+    weekend_dates = [d for d in all_dates if d.weekday() >= 5]
+    weekday_dates = [d for d in all_dates if d.weekday() < 5]
+
     async with async_session() as db:
         active_subs_result = await db.execute(
             select(Subscription, User, Plan)
@@ -483,23 +590,71 @@ async def _generate_content_calendar_async():
             if existing_count > 0:
                 continue
 
-            quota_map = {
-                DeliverableType.poster: plan.poster_quota,
-                DeliverableType.reel: plan.reel_quota,
-                DeliverableType.story: plan.story_quota,
-            }
+            content_plan = ContentPlan(
+                client_id=user.id,
+                month=next_month_start.month,
+                year=next_month_start.year,
+                status=ContentPlanStatus.draft,
+            )
+            db.add(content_plan)
+            await db.flush()
 
-            days_in_month = (next_month_end - next_month_start).days + 1
+            reel_quota = plan.reel_quota
+            poster_quota = plan.poster_quota
+            story_quota = plan.story_quota
 
-            for del_type, quota in quota_map.items():
-                if quota <= 0:
-                    continue
+            used_dates: set[date_type] = set()
 
-                spacing = max(1, days_in_month // quota)
-                for i in range(quota):
-                    scheduled_date = next_month_start + timedelta(days=i * spacing)
-                    if scheduled_date > next_month_end:
+            if reel_quota > 0 and weekend_dates:
+                reel_spacing = max(1, len(weekend_dates) // reel_quota)
+                for i in range(reel_quota):
+                    idx = i * reel_spacing
+                    if idx >= len(weekend_dates):
                         break
+                    scheduled_date = weekend_dates[idx]
+                    if scheduled_date in used_dates:
+                        continue
+
+                    existing_check = await db.execute(
+                        select(ContentCalendar.id).where(
+                            ContentCalendar.client_id == user.id,
+                            ContentCalendar.scheduled_date == scheduled_date,
+                            ContentCalendar.deliverable_type == DeliverableType.reel,
+                        )
+                    )
+                    if existing_check.scalar_one_or_none() is not None:
+                        continue
+
+                    entry = ContentCalendar(
+                        client_id=user.id,
+                        content_plan_id=content_plan.id,
+                        scheduled_date=scheduled_date,
+                        deliverable_type=DeliverableType.reel,
+                        content_topic=f"Auto-generated reel for {user.business_name or user.full_name}",
+                        status=CalendarEntryStatus.draft,
+                    )
+                    db.add(entry)
+                    used_dates.add(scheduled_date)
+                    entries_created += 1
+
+            remaining_weekdays = [d for d in weekday_dates if d not in used_dates]
+            remaining_dates = remaining_weekdays + [d for d in weekend_dates if d not in used_dates]
+
+            poster_stories = []
+            for _ in range(poster_quota):
+                poster_stories.append(DeliverableType.poster)
+            for _ in range(story_quota):
+                poster_stories.append(DeliverableType.story)
+
+            if poster_stories and remaining_dates:
+                ps_spacing = max(1, len(remaining_dates) // len(poster_stories))
+                for i, del_type in enumerate(poster_stories):
+                    idx = i * ps_spacing
+                    if idx >= len(remaining_dates):
+                        break
+                    scheduled_date = remaining_dates[idx]
+                    if scheduled_date in used_dates:
+                        continue
 
                     existing_check = await db.execute(
                         select(ContentCalendar.id).where(
@@ -513,12 +668,14 @@ async def _generate_content_calendar_async():
 
                     entry = ContentCalendar(
                         client_id=user.id,
+                        content_plan_id=content_plan.id,
                         scheduled_date=scheduled_date,
                         deliverable_type=del_type,
                         content_topic=f"Auto-generated {del_type.value} for {user.business_name or user.full_name}",
                         status=CalendarEntryStatus.draft,
                     )
                     db.add(entry)
+                    used_dates.add(scheduled_date)
                     entries_created += 1
 
         await db.commit()

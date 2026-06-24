@@ -31,6 +31,7 @@ from routers.admin_settings import router as admin_settings_router
 from routers.admin_kpi import router as admin_kpi_router
 from routers.admin_sales import router as admin_sales_router
 from routers.admin_calendar import router as admin_calendar_router
+from routers.admin_reports import router as admin_reports_router
 from routers.client_assignments import router as client_assignments_router
 from routers.content_plans import router as content_plans_router
 from routers.webhooks import router as webhooks_router
@@ -84,6 +85,7 @@ app.include_router(admin_settings_router)
 app.include_router(admin_kpi_router)
 app.include_router(admin_sales_router)
 app.include_router(admin_calendar_router)
+app.include_router(admin_reports_router)
 app.include_router(client_assignments_router)
 app.include_router(content_plans_router)
 app.include_router(webhooks_router)

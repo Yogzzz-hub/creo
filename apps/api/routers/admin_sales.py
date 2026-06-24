@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from core.database import get_db
 from core.security import RequireAdmin
@@ -13,6 +14,7 @@ from models.subscription import Subscription
 from models.user import User
 from schemas.custom_pricing import AdminCustomPricingResponse, CustomPricingCreate, CustomPricingOut
 from schemas.sales import CustomPricingApprovalRequest
+from services.payments import create_custom_pricing_checkout
 
 router = APIRouter(prefix="/api/v1/admin/custom-pricing", tags=["admin-sales"])
 
@@ -53,17 +55,16 @@ async def list_custom_pricing_requests(
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(CustomPricing).order_by(CustomPricing.created_at.desc())
+        select(CustomPricing)
+        .options(selectinload(CustomPricing.plan), selectinload(CustomPricing.client))
+        .order_by(CustomPricing.created_at.desc())
     )
-    pricings = result.scalars().all()
+    pricings = result.scalars().unique().all()
 
     responses = []
     for cp in pricings:
-        user_result = await db.execute(select(User).where(User.id == cp.client_id))
-        user = user_result.scalar_one_or_none()
-
-        plan_result = await db.execute(select(Plan).where(Plan.id == cp.plan_id))
-        plan = plan_result.scalar_one_or_none()
+        user = cp.client
+        plan = cp.plan
 
         responses.append(
             AdminCustomPricingResponse(
@@ -105,13 +106,6 @@ async def approve_custom_pricing(
             detail=f"Custom pricing request is already {pricing.status.value}",
         )
 
-    pricing.status = CustomPricingStatus.approved
-    pricing.approved_by = current_user.id
-    pricing.valid_from = datetime.now(timezone.utc).date()
-
-    plan_result = await db.execute(select(Plan).where(Plan.id == pricing.plan_id))
-    plan = plan_result.scalar_one_or_none()
-
     user_result = await db.execute(select(User).where(User.id == pricing.client_id))
     user = user_result.scalar_one_or_none()
 
@@ -121,30 +115,43 @@ async def approve_custom_pricing(
             detail="Associated user not found",
         )
 
+    try:
+        checkout = create_custom_pricing_checkout(user, float(pricing.custom_price), pricing_id)
+    except Exception as exc:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Payment provider error: {exc}",
+        )
+
+    checkout_url = checkout.get("short_url") or checkout.get("checkout_url")
+
+    pricing.status = CustomPricingStatus.approved
+    pricing.approved_by = current_user.id
+    pricing.valid_from = datetime.now(timezone.utc).date()
+
     now = datetime.now(timezone.utc)
-    gateway_sub_id = f"custom_{pricing_id}"
-    gateway_customer_id = user.stripe_customer_id or user.razorpay_customer_id or "pending"
 
     new_subscription = Subscription(
         user_id=pricing.client_id,
         plan_id=pricing.plan_id,
-        status="active",
-        gateway="stripe",
-        gateway_subscription_id=gateway_sub_id,
-        gateway_customer_id=gateway_customer_id,
+        status="pending_payment",
+        gateway="razorpay" if user.razorpay_customer_id else "stripe",
+        gateway_subscription_id=f"custom_{pricing_id}",
+        gateway_customer_id=user.stripe_customer_id or user.razorpay_customer_id or "pending",
         current_period_start=now,
         current_period_end=now + timedelta(days=30),
     )
     db.add(new_subscription)
-
     await db.commit()
     await db.refresh(pricing)
 
     return {
         "status": "success",
-        "message": "Custom pricing approved and subscription created",
+        "message": "Custom pricing approved. Send the checkout link to the client.",
         "pricing_id": pricing.id,
         "subscription_id": new_subscription.id,
+        "checkout_url": checkout_url,
         "admin_notes": payload.admin_notes,
     }
 

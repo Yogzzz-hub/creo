@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
@@ -27,6 +27,7 @@ class TeamMember(Base):
     daily_cap_posters: Mapped[int] = mapped_column(Integer, nullable=False, default=6)
     daily_cap_reels: Mapped[int] = mapped_column(Integer, nullable=False, default=4)
     daily_cap_stories: Mapped[int] = mapped_column(Integer, nullable=False, default=3)
+    skills: Mapped[list[str]] = mapped_column(JSONB, nullable=False, server_default="[]")
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, index=True)
     joined_at: Mapped[date] = mapped_column(Date, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
