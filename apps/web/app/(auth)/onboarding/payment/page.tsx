@@ -45,6 +45,16 @@ const stripePromise = loadStripe(
 );
 
 // ── Helpers ─────────────────────────────────────────────────────
+function getSelectedPlan(): { id: string; name: string; display_name: string } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("creo_selected_plan");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 function getAccessToken(): Promise<string | null> {
   return createClient()
     .auth.getSession()
@@ -201,13 +211,16 @@ export default function PaymentPage() {
         return;
       }
 
-      const data = await apiCreateSubscription(token, "growth", "IN");
+      const plan = getSelectedPlan();
+      const planId = plan?.name?.toLowerCase() || "growth";
+      const country = planId === "starter" ? "IN" : "IN";
+      const data = await apiCreateSubscription(token, planId, country);
 
       const options: RazorpayOptions = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",
         subscription_id: data.subscription_id,
         name: "Creo",
-        description: "Growth Plan Subscription",
+        description: `${plan?.display_name || "Growth"} Plan Subscription`,
         handler: () => {
           setProcessing(null);
           router.push("/onboarding/questionnaire");
@@ -242,7 +255,10 @@ export default function PaymentPage() {
         return;
       }
 
-      const data = await apiCreateSubscription(token, "growth", "US");
+      const plan = getSelectedPlan();
+      const planId = plan?.name?.toLowerCase() || "growth";
+      const country = planId === "starter" ? "IN" : "US";
+      const data = await apiCreateSubscription(token, planId, country);
 
       if (!data.client_secret) {
         setError("Failed to initialize Stripe payment.");

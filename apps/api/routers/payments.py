@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from typing import Annotated
 
@@ -7,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
+from core.config import settings
 from core.database import get_db
 from core.security import CurrentUser, require_client
 from models.enums import AccountStatus, PaymentGateway, PlanName
@@ -14,7 +16,12 @@ from models.plan import Plan
 from models.subscription import Subscription
 from models.user import User
 from schemas.payments import PaymentHistoryResponse, PlanChangeRequest
-from services.payments import create_gateway_subscription
+from services.payments import (
+    create_gateway_subscription,
+    update_stripe_subscription_plan,
+)
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/payments", tags=["payments"])
 
@@ -60,31 +67,85 @@ async def change_plan(
     plan_result = await db.execute(
         select(Plan).where(Plan.id == payload.new_plan_id)
     )
-    plan = plan_result.scalar_one_or_none()
+    new_plan = plan_result.scalar_one_or_none()
 
-    if plan is None:
+    if new_plan is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Plan not found",
         )
 
-    if not plan.is_active:
+    if not new_plan.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Plan is not active",
         )
 
-    user_update = await db.execute(
-        select(User).where(User.id == current_user.id)
+    sub_result = await db.execute(
+        select(Subscription).where(
+            Subscription.user_id == current_user.id,
+            Subscription.status.in_(["active", "pending_payment"]),
+        ).order_by(Subscription.created_at.desc())
     )
-    user = user_update.scalar_one()
+    subscription = sub_result.scalar_one_or_none()
 
-    user.plan_name = PlanName(plan.name.value)
-    await db.commit()
+    if subscription is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No active subscription found. Please create a new subscription first.",
+        )
+
+    if subscription.plan_id == new_plan.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You are already on this plan.",
+        )
+
+    try:
+        if subscription.gateway == PaymentGateway.stripe:
+            plan_id_map = {
+                "starter": settings.RAZORPAY_STARTER_PLAN_ID,
+                "growth": settings.RAZORPAY_GROWTH_PLAN_ID,
+                "pro": settings.RAZORPAY_PRO_PLAN_ID,
+            }
+            stripe_price_id = plan_id_map.get(new_plan.name.value)
+            if not stripe_price_id:
+                raise ValueError(f"Missing Stripe price mapping for plan: {new_plan.name.value}")
+
+            await run_in_threadpool(
+                update_stripe_subscription_plan,
+                subscription.gateway_subscription_id,
+                stripe_price_id,
+            )
+
+        elif subscription.gateway == PaymentGateway.razorpay:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Razorpay does not support in-place plan changes. "
+                    "Please contact support to switch plans."
+                ),
+            )
+
+        subscription.plan_id = new_plan.id
+        current_user.plan_name = PlanName(new_plan.name.value)
+        db.add(subscription)
+        db.add(current_user)
+        await db.commit()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Plan change failed for user {current_user.id}: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to update subscription with payment gateway. Please try again or contact support.",
+        )
 
     return {
         "status": "success",
-        "message": "Plan updated successfully. Proration applied to next billing cycle.",
+        "message": f"Plan changed to {new_plan.display_name}. Proration applied to next billing cycle.",
     }
 
 
@@ -139,9 +200,9 @@ async def create_subscription(
     )
 
     if current_user.razorpay_customer_id is None and result["gateway"] == "razorpay":
-        current_user.razorpay_customer_id = result["gateway_customer_id"]
+        current_user.razorpay_customer_id = encrypt_gateway_id(result["gateway_customer_id"])
     elif current_user.stripe_customer_id is None and result["gateway"] == "stripe":
-        current_user.stripe_customer_id = result["gateway_customer_id"]
+        current_user.stripe_customer_id = encrypt_gateway_id(result["gateway_customer_id"])
 
     gateway = PaymentGateway(result["gateway"])
 

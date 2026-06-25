@@ -198,3 +198,9 @@ async def delete_team_member(
     tm.is_active = False
 
     await db.commit()
+
+    try:
+        from services.storage import delete_user_files
+        delete_user_files(str(user.id))
+    except Exception:
+        pass

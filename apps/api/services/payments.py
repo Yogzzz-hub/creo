@@ -109,13 +109,16 @@ def create_stripe_subscription(user: User, plan: Plan, stripe_customer_id: str) 
 
 
 def create_gateway_subscription(user: User, plan: Plan, country_code: str) -> dict:
+    from core.security import decrypt_gateway_id
+
     if country_code.upper() == "IN":
         if not user.razorpay_customer_id:
             customer = create_razorpay_customer(user)
             user.razorpay_customer_id = customer["id"]
 
+        decrypted_id = decrypt_gateway_id(user.razorpay_customer_id) or user.razorpay_customer_id
         result = create_razorpay_subscription(
-            user, plan, user.razorpay_customer_id
+            user, plan, decrypted_id
         )
         return result
     else:
@@ -123,10 +126,59 @@ def create_gateway_subscription(user: User, plan: Plan, country_code: str) -> di
             customer = create_stripe_customer(user)
             user.stripe_customer_id = customer.id
 
+        decrypted_id = decrypt_gateway_id(user.stripe_customer_id) or user.stripe_customer_id
         result = create_stripe_subscription(
-            user, plan, user.stripe_customer_id
+            user, plan, decrypted_id
         )
         return result
+
+
+def create_razorpay_order(amount: float, currency: str, receipt: str, notes: dict) -> dict:
+    order = razorpay_client.order.create({
+        "amount": int(amount * 100),
+        "currency": currency,
+        "receipt": receipt,
+        "payment_capture": True,
+        "notes": notes,
+    })
+    return order
+
+
+def update_razorpay_subscription_plan(
+    gateway_subscription_id: str,
+    new_gateway_plan_id: str,
+) -> dict:
+    razorpay_client.subscription.cancel(gateway_subscription_id, {"cancel_at_cycle_end": 0})
+    raise ValueError(
+        "Razorpay does not support in-place plan changes on active subscriptions. "
+        "A new subscription must be created for the new plan."
+    )
+
+
+def update_stripe_subscription_plan(
+    gateway_subscription_id: str,
+    new_gateway_plan_id: str,
+) -> dict:
+    current_sub = stripe.Subscription.retrieve(gateway_subscription_id)
+    item_id = current_sub["items"]["data"][0]["id"]
+
+    updated_sub = stripe.Subscription.modify(
+        gateway_subscription_id,
+        items=[{"id": item_id, "price": new_gateway_plan_id}],
+        proration_behavior="create_prorations",
+        expand=["latest_invoice.payment_intent"],
+    )
+    return {
+        "gateway": "stripe",
+        "subscription_id": updated_sub.id,
+        "status": updated_sub.status,
+        "current_period_start": datetime.fromtimestamp(
+            updated_sub.current_period_start, tz=timezone.utc
+        ),
+        "current_period_end": datetime.fromtimestamp(
+            updated_sub.current_period_end, tz=timezone.utc
+        ),
+    }
 
 
 def verify_razorpay_signature(payload_body: bytes, signature: str) -> dict:

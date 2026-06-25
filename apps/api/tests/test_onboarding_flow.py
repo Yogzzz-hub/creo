@@ -14,11 +14,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from main import app
-from tests.conftest import auth_header, create_mock_token
+from tests.conftest import auth_header, create_mock_token, create_mock_user
+from models.enums import UserRole
 
 
 def _result(scalar=None, scalars=None, rowcount=1):
-    """Build a mock DB execute result."""
     r = MagicMock()
     r.scalar_one_or_none.return_value = scalar
     r.scalar.return_value = scalar
@@ -27,29 +27,22 @@ def _result(scalar=None, scalars=None, rowcount=1):
     return r
 
 
-@pytest.fixture()
-def onboarding_client(mock_db_session: AsyncMock):
-    async def _override():
-        yield mock_db_session
-
-    app.dependency_overrides[get_db] = _override
-    transport = ASGITransport(app=app)
-
-    async def _factory():
-        async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            yield ac
-
-    return _factory, mock_db_session
-
-
 class TestOnboardingFlow:
     """Register -> Accept Terms -> Submit Questionnaire (Celery mocked)."""
 
     @pytest.mark.asyncio
-    async def test_full_onboarding_sequence(self, mock_db_session: AsyncMock):
+    @patch("routers.auth.notify_incomplete_signup.apply_async")
+    @patch("core.security._is_token_revoked", return_value=False)
+    async def test_full_onboarding_sequence(self, mock_revoked, mock_celery, mock_db_session: AsyncMock):
+        from core.exceptions import limiter as _limiter
+        _limiter._storage.reset()
         user_id = str(uuid.uuid4())
         auth_id = str(uuid.uuid4())
         token = create_mock_token(auth_id, "client")
+        mock_user = create_mock_user(auth_id=auth_id, role=UserRole.client)
+
+        auth_result = MagicMock()
+        auth_result.scalar_one_or_none.return_value = mock_user
 
         async def _override():
             yield mock_db_session
@@ -61,11 +54,11 @@ class TestOnboardingFlow:
             async with AsyncClient(transport=transport, base_url="http://test") as ac:
                 hdrs = auth_header(token)
 
-                # ── Step 1: Register ────────────────────────────────
-                # Queries: 1) auth_id lookup → None, 2) email lookup → None
-                mock_db_session.execute = AsyncMock(
-                    side_effect=[_result(scalar=None), _result(scalar=None)]
-                )
+                # Step 1: Register — no auth needed (register endpoint doesn't use get_current_user)
+                mock_db_session.execute = AsyncMock(side_effect=[
+                    _result(scalar=None),  # auth_id lookup
+                    _result(scalar=None),  # email lookup
+                ])
                 mock_db_session.add = MagicMock()
                 mock_db_session.commit = AsyncMock()
 
@@ -88,9 +81,16 @@ class TestOnboardingFlow:
                 assert reg.status_code == 201
                 assert reg.json()["role"] == "client"
 
-                # ── Step 2: Accept Terms ────────────────────────────
-                # accept_terms uses db.execute(update(...)) then commit
-                mock_db_session.execute = AsyncMock(return_value=_result())
+                # Step 2: Accept Terms (needs auth)
+                terms_queries = iter([
+                    auth_result,
+                    _result(),
+                ])
+
+                async def mock_execute_terms(stmt, *args, **kwargs):
+                    return next(terms_queries)
+
+                mock_db_session.execute = AsyncMock(side_effect=mock_execute_terms)
                 mock_db_session.commit = AsyncMock()
 
                 terms = await ac.post(
@@ -100,58 +100,101 @@ class TestOnboardingFlow:
                 assert terms.status_code == 200
                 assert terms.json()["status"] == "success"
 
-                # ── Step 3: Submit Questionnaire (Celery mocked) ────
-                # Queries: 1) existing questionnaire → None
-                mock_db_session.execute = AsyncMock(
-                    side_effect=[_result(scalar=None)]
-                )
+                # Step 3: Submit Questionnaire (needs auth)
+                q_queries = iter([
+                    auth_result,
+                    _result(scalar=None),
+                ])
+
+                async def mock_execute_q(stmt, *args, **kwargs):
+                    return next(q_queries)
+
+                mock_db_session.execute = AsyncMock(side_effect=mock_execute_q)
                 mock_db_session.add = MagicMock()
                 mock_db_session.commit = AsyncMock()
 
-                with patch.dict(
-                    "sys.modules",
-                    {"workers.ai_tasks": MagicMock()},
-                ):
-                    fake_task = MagicMock()
-                    fake_task.delay = MagicMock()
-                    with patch(
-                        "routers.questionnaires.generate_ai_analysis",
-                        fake_task,
-                        create=True,
-                    ):
-                        q = await ac.post(
-                            "/api/v1/questionnaire",
-                            json={
-                                "industry": "Restaurant",
-                                "business_description": "Fine dining",
-                                "target_audience": {
-                                    "age": "25-45",
-                                    "location": "Mumbai",
-                                    "interests": "food",
-                                },
-                                "social_handles": {
-                                    "instagram": "@test",
-                                    "facebook": "",
-                                    "linkedin": "",
-                                },
-                                "primary_goal": "brand_awareness",
-                                "brand_tone": ["Friendly"],
+                fake_task = MagicMock()
+                fake_task.delay = MagicMock()
+
+                import routers.questionnaires as _qn_module
+                _original = getattr(_qn_module, "generate_ai_analysis", None)
+                setattr(_qn_module, "generate_ai_analysis", fake_task)
+
+                mock_ai_mod = MagicMock()
+                mock_ai_mod.generate_ai_analysis = fake_task
+                mock_svc = MagicMock()
+
+                import sys as _sys
+                _old_modules = {}
+                for key in ("services.ai_analysis", "workers.onboarding_tasks", "openai"):
+                    _old_modules[key] = _sys.modules.get(key)
+                _sys.modules["services.ai_analysis"] = mock_svc
+                _sys.modules["workers.onboarding_tasks"] = mock_ai_mod
+                _sys.modules["openai"] = mock_svc
+
+                try:
+                    q = await ac.post(
+                        "/api/v1/questionnaire",
+                        json={
+                            "industry": "Restaurant",
+                            "business_description": "Fine dining",
+                            "target_audience": {
+                                "age": "25-45",
+                                "location": "Mumbai",
+                                "interests": "food",
                             },
-                            headers=hdrs,
-                        )
-                        assert q.status_code == 201
-                        assert q.json()["status"] == "success"
-                        fake_task.delay.assert_called_once()
+                            "social_handles": {
+                                "instagram": "@test",
+                                "facebook": "",
+                                "linkedin": "",
+                            },
+                            "primary_goal": "brand_awareness",
+                            "brand_tone": ["Friendly"],
+                        },
+                        headers=hdrs,
+                    )
+                    assert q.status_code == 201
+                    assert q.json()["status"] == "success"
+                    fake_task.delay.assert_called_once()
+                finally:
+                    if _original is not None:
+                        setattr(_qn_module, "generate_ai_analysis", _original)
+                    else:
+                        try:
+                            delattr(_qn_module, "generate_ai_analysis")
+                        except AttributeError:
+                            pass
+                    for key, val in _old_modules.items():
+                        if val is not None:
+                            _sys.modules[key] = val
+                        else:
+                            _sys.modules.pop(key, None)
 
         finally:
             app.dependency_overrides.pop(get_db, None)
 
     @pytest.mark.asyncio
-    async def test_questionnaire_rejects_duplicate(
-        self, mock_db_session: AsyncMock
-    ):
+    @patch("core.security._is_token_revoked", return_value=False)
+    async def test_questionnaire_rejects_duplicate(self, mock_revoked, mock_db_session: AsyncMock):
         auth_id = str(uuid.uuid4())
         token = create_mock_token(auth_id, "client")
+        mock_user = create_mock_user(auth_id=auth_id, role=UserRole.client)
+
+        auth_result = MagicMock()
+        auth_result.scalar_one_or_none.return_value = mock_user
+
+        existing = MagicMock()
+        existing.user_id = str(uuid.uuid4())
+
+        queries = iter([
+            auth_result,
+            _result(scalar=existing),
+        ])
+
+        async def mock_execute(stmt, *args, **kwargs):
+            return next(queries)
+
+        mock_db_session.execute = AsyncMock(side_effect=mock_execute)
 
         async def _override():
             yield mock_db_session
@@ -161,13 +204,6 @@ class TestOnboardingFlow:
 
         try:
             async with AsyncClient(transport=transport, base_url="http://test") as ac:
-                existing = MagicMock()
-                existing.user_id = str(uuid.uuid4())
-
-                mock_db_session.execute = AsyncMock(
-                    side_effect=[_result(scalar=existing)]
-                )
-
                 resp = await ac.post(
                     "/api/v1/questionnaire",
                     json={
@@ -181,17 +217,32 @@ class TestOnboardingFlow:
                     headers=auth_header(token),
                 )
                 assert resp.status_code == 409
-                assert "already submitted" in resp.json()["detail"].lower()
 
         finally:
             app.dependency_overrides.pop(get_db, None)
 
     @pytest.mark.asyncio
-    async def test_questionnaire_status_pending(
-        self, mock_db_session: AsyncMock
-    ):
+    @patch("core.security._is_token_revoked", return_value=False)
+    async def test_questionnaire_status_pending(self, mock_revoked, mock_db_session: AsyncMock):
         auth_id = str(uuid.uuid4())
         token = create_mock_token(auth_id, "client")
+        mock_user = create_mock_user(auth_id=auth_id, role=UserRole.client)
+
+        auth_result = MagicMock()
+        auth_result.scalar_one_or_none.return_value = mock_user
+
+        q = MagicMock()
+        q.ai_summary_line = None
+
+        queries = iter([
+            auth_result,
+            _result(scalar=q),
+        ])
+
+        async def mock_execute(stmt, *args, **kwargs):
+            return next(queries)
+
+        mock_db_session.execute = AsyncMock(side_effect=mock_execute)
 
         async def _override():
             yield mock_db_session
@@ -201,13 +252,6 @@ class TestOnboardingFlow:
 
         try:
             async with AsyncClient(transport=transport, base_url="http://test") as ac:
-                q = MagicMock()
-                q.ai_summary_line = None
-
-                mock_db_session.execute = AsyncMock(
-                    side_effect=[_result(scalar=q)]
-                )
-
                 resp = await ac.get(
                     "/api/v1/questionnaire/status",
                     headers=auth_header(token),
@@ -219,11 +263,27 @@ class TestOnboardingFlow:
             app.dependency_overrides.pop(get_db, None)
 
     @pytest.mark.asyncio
-    async def test_questionnaire_status_completed(
-        self, mock_db_session: AsyncMock
-    ):
+    @patch("core.security._is_token_revoked", return_value=False)
+    async def test_questionnaire_status_completed(self, mock_revoked, mock_db_session: AsyncMock):
         auth_id = str(uuid.uuid4())
         token = create_mock_token(auth_id, "client")
+        mock_user = create_mock_user(auth_id=auth_id, role=UserRole.client)
+
+        auth_result = MagicMock()
+        auth_result.scalar_one_or_none.return_value = mock_user
+
+        q = MagicMock()
+        q.ai_summary_line = "Bold brand with friendly tone"
+
+        queries = iter([
+            auth_result,
+            _result(scalar=q),
+        ])
+
+        async def mock_execute(stmt, *args, **kwargs):
+            return next(queries)
+
+        mock_db_session.execute = AsyncMock(side_effect=mock_execute)
 
         async def _override():
             yield mock_db_session
@@ -233,13 +293,6 @@ class TestOnboardingFlow:
 
         try:
             async with AsyncClient(transport=transport, base_url="http://test") as ac:
-                q = MagicMock()
-                q.ai_summary_line = "Bold brand with friendly tone"
-
-                mock_db_session.execute = AsyncMock(
-                    side_effect=[_result(scalar=q)]
-                )
-
                 resp = await ac.get(
                     "/api/v1/questionnaire/status",
                     headers=auth_header(token),

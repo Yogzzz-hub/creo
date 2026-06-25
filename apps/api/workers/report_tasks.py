@@ -1,8 +1,17 @@
+import asyncio
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from celery import shared_task
+from sqlalchemy import func, select
+
+from core.database import async_session
+from models.deliverable import Deliverable
+from models.enums import AccountStatus, DeliverableStatus, TaskStatus
+from models.subscription import Subscription
+from models.task import Task
+from models.user import User
 
 logger = logging.getLogger(__name__)
 
@@ -25,39 +34,91 @@ def generate_weekly_report() -> str:
 
     logger.info("Starting weekly report generation...")
 
-    # Mock aggregation of weekly active tasks and deliverables
-    mock_data = {
-        "Report Period": {
-            "Generated At": datetime.now(timezone.utc).isoformat(),
-            "Report Type": "Weekly Operations Summary",
-        },
-        "Active Tasks": {
-            "Total Tasks": 42,
-            "Completed This Week": 35,
-            "Pending Review": 5,
-            "Overdue": 2,
-        },
-        "Deliverables": {
-            "Total Submitted": 28,
-            "Approved": 22,
-            "Rejected": 3,
-            "Pending Approval": 3,
-        },
-        "Team Performance": {
-            "Active Team Members": 8,
-            "Average Tasks Per Member": 5.25,
-            "On-Time Delivery Rate": "88.5%",
-        },
-    }
+    data = asyncio.run(_fetch_weekly_data())
 
     result_path = generate_pdf_report(
         title="Creo Weekly Report",
-        data=mock_data,
+        data=data,
         output_path=output_path,
     )
 
     logger.info("Weekly report generated successfully: %s", result_path)
     return result_path
+
+
+async def _fetch_weekly_data() -> dict:
+    now = datetime.now(timezone.utc)
+    week_ago = now - timedelta(days=7)
+
+    async with async_session() as db:
+        active_tasks_result = await db.execute(
+            select(func.count(Task.id)).where(
+                Task.status.in_([TaskStatus.pending, TaskStatus.in_progress])
+            )
+        )
+        active_tasks = active_tasks_result.scalar() or 0
+
+        completed_result = await db.execute(
+            select(func.count(Task.id)).where(
+                Task.status == TaskStatus.approved,
+                Task.updated_at >= week_ago,
+            )
+        )
+        completed_this_week = completed_result.scalar() or 0
+
+        pending_review_result = await db.execute(
+            select(func.count(Deliverable.id)).where(
+                Deliverable.status == DeliverableStatus.pending_approval
+            )
+        )
+        pending_review = pending_review_result.scalar() or 0
+
+        overdue_result = await db.execute(
+            select(func.count(Task.id)).where(Task.status == TaskStatus.overdue)
+        )
+        overdue = overdue_result.scalar() or 0
+
+        submitted_result = await db.execute(
+            select(func.count(Deliverable.id)).where(
+                Deliverable.created_at >= week_ago
+            )
+        )
+        total_submitted = submitted_result.scalar() or 0
+
+        approved_result = await db.execute(
+            select(func.count(Deliverable.id)).where(
+                Deliverable.status == DeliverableStatus.approved,
+                Deliverable.approved_at >= week_ago,
+            )
+        )
+        approved = approved_result.scalar() or 0
+
+        rejected_result = await db.execute(
+            select(func.count(Deliverable.id)).where(
+                Deliverable.status == DeliverableStatus.rejected,
+                Deliverable.rejected_at >= week_ago,
+            )
+        )
+        rejected = rejected_result.scalar() or 0
+
+    return {
+        "Report Period": {
+            "Generated At": now.isoformat(),
+            "Report Type": "Weekly Operations Summary",
+        },
+        "Active Tasks": {
+            "Total Tasks": active_tasks,
+            "Completed This Week": completed_this_week,
+            "Pending Review": pending_review,
+            "Overdue": overdue,
+        },
+        "Deliverables": {
+            "Total Submitted": total_submitted,
+            "Approved": approved,
+            "Rejected": rejected,
+            "Pending Approval": pending_review,
+        },
+    }
 
 
 @shared_task(name="generate_monthly_report")
@@ -70,38 +131,11 @@ def generate_monthly_report() -> str:
 
     logger.info("Starting monthly report generation...")
 
-    mock_data = {
-        "Report Period": {
-            "Generated At": datetime.now(timezone.utc).isoformat(),
-            "Report Type": "Monthly Business Summary",
-        },
-        "Client Growth": {
-            "New Clients This Month": 12,
-            "Total Active Clients": 87,
-            "Churned Clients": 2,
-            "Net Growth": 10,
-        },
-        "SLA Performance": {
-            "Total Deliverables": 156,
-            "Delivered On Time": 140,
-            "SLA Breaches": 8,
-            "SLA Compliance Rate": "94.9%",
-        },
-        "Plan Distribution": {
-            "Starter Plan": 32,
-            "Growth Plan": 38,
-            "Pro Plan": 17,
-        },
-        "Support & Escalations": {
-            "Tickets Opened": 24,
-            "Tickets Resolved": 21,
-            "Open Escalations": 3,
-        },
-    }
+    data = asyncio.run(_fetch_monthly_data())
 
     result_path = generate_pdf_report(
         title="Creo Monthly Report",
-        data=mock_data,
+        data=data,
         output_path=output_path,
     )
 
@@ -109,46 +143,104 @@ def generate_monthly_report() -> str:
     return result_path
 
 
+async def _fetch_monthly_data() -> dict:
+    now = datetime.now(timezone.utc)
+    month_ago = now - timedelta(days=30)
+
+    async with async_session() as db:
+        new_clients_result = await db.execute(
+            select(func.count(User.id)).where(
+                User.role == "client",
+                User.created_at >= month_ago,
+                User.deleted_at.is_(None),
+            )
+        )
+        new_clients = new_clients_result.scalar() or 0
+
+        active_clients_result = await db.execute(
+            select(func.count(User.id)).where(
+                User.role == "client",
+                User.account_status == AccountStatus.active,
+                User.deleted_at.is_(None),
+            )
+        )
+        total_active = active_clients_result.scalar() or 0
+
+        churned_result = await db.execute(
+            select(func.count(User.id)).where(
+                User.role == "client",
+                User.account_status == AccountStatus.lapsed,
+                User.updated_at >= month_ago,
+                User.deleted_at.is_(None),
+            )
+        )
+        churned = churned_result.scalar() or 0
+
+        sla_breaches_result = await db.execute(
+            select(func.count(Task.id)).where(
+                Task.status == TaskStatus.overdue,
+                Task.updated_at >= month_ago,
+            )
+        )
+        sla_breaches = sla_breaches_result.scalar() or 0
+
+        total_deliverables_result = await db.execute(
+            select(func.count(Deliverable.id)).where(
+                Deliverable.created_at >= month_ago
+            )
+        )
+        total_deliverables = total_deliverables_result.scalar() or 0
+
+        on_time_result = await db.execute(
+            select(func.count(Deliverable.id)).where(
+                Deliverable.status == DeliverableStatus.approved,
+                Deliverable.created_at >= month_ago,
+            )
+        )
+        on_time = on_time_result.scalar() or 0
+
+    return {
+        "Report Period": {
+            "Generated At": now.isoformat(),
+            "Report Type": "Monthly Business Summary",
+        },
+        "Client Growth": {
+            "New Clients This Month": new_clients,
+            "Total Active Clients": total_active,
+            "Churned Clients": churned,
+            "Net Growth": new_clients - churned,
+        },
+        "SLA Performance": {
+            "Total Deliverables": total_deliverables,
+            "Delivered On Time": on_time,
+            "SLA Breaches": sla_breaches,
+            "SLA Compliance Rate": (
+                f"{(on_time / total_deliverables * 100):.1f}%"
+                if total_deliverables > 0
+                else "N/A"
+            ),
+        },
+    }
+
+
 @shared_task(name="generate_financial_report")
 def generate_financial_report() -> str:
-    from utils.exports import generate_excel_report
-
     reports_dir = _ensure_reports_dir()
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     output_path = os.path.join(reports_dir, f"financial_report_{timestamp}.xlsx")
 
     logger.info("Starting financial report generation...")
 
-    # Mock aggregation of MRR and custom pricing totals
-    summary_data = [
-        {"Metric": "Total MRR (INR)", "Value": 485000},
-        {"Metric": "Active Subscriptions", "Value": 87},
-        {"Metric": "Average Revenue Per User", "Value": 5574.71},
-        {"Metric": "Custom Pricing Subscriptions", "Value": 5},
-        {"Metric": "Custom Pricing Revenue", "Value": 42500},
-    ]
-
-    revenue_by_plan = [
-        {"Plan": "Starter", "Subscribers": 32, "Monthly Price": 2999, "Total Revenue": 95968},
-        {"Plan": "Growth", "Subscribers": 38, "Monthly Price": 5999, "Total Revenue": 227962},
-        {"Plan": "Pro", "Subscribers": 12, "Monthly Price": 9999, "Total Revenue": 119988},
-        {"Plan": "Custom", "Subscribers": 5, "Monthly Price": 8500, "Total Revenue": 42500},
-    ]
-
-    payment_methods = [
-        {"Gateway": "Razorpay", "Transactions": 62, "Amount (INR)": 328500, "Percentage": "67.7%"},
-        {"Gateway": "Stripe", "Transactions": 25, "Amount (INR)": 156500, "Percentage": "32.3%"},
-    ]
+    summary_data, revenue_by_plan = asyncio.run(_fetch_financial_data())
 
     from openpyxl import Workbook
-    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.styles import Font, PatternFill
 
     wb = Workbook()
 
-    # Sheet 1: Summary
     ws_summary = wb.active
     ws_summary.title = "Summary"
-    headers = list(summary_data[0].keys())
+    headers = list(summary_data[0].keys()) if summary_data else ["Metric", "Value"]
     header_font = Font(bold=True, color="FFFFFF")
     header_fill = PatternFill(start_color="2B7BC4", end_color="2B7BC4", fill_type="solid")
 
@@ -161,9 +253,8 @@ def generate_financial_report() -> str:
         for col_idx, header in enumerate(headers, start=1):
             ws_summary.cell(row=row_idx, column=col_idx, value=row_data.get(header, ""))
 
-    # Sheet 2: Revenue by Plan
     ws_plan = wb.create_sheet("Revenue by Plan")
-    plan_headers = list(revenue_by_plan[0].keys())
+    plan_headers = list(revenue_by_plan[0].keys()) if revenue_by_plan else ["Plan", "Subscribers", "Monthly Price", "Total Revenue"]
 
     for col_idx, header in enumerate(plan_headers, start=1):
         cell = ws_plan.cell(row=1, column=col_idx, value=header)
@@ -174,19 +265,61 @@ def generate_financial_report() -> str:
         for col_idx, header in enumerate(plan_headers, start=1):
             ws_plan.cell(row=row_idx, column=col_idx, value=row_data.get(header, ""))
 
-    # Sheet 3: Payment Methods
-    ws_payment = wb.create_sheet("Payment Methods")
-    payment_headers = list(payment_methods[0].keys())
-
-    for col_idx, header in enumerate(payment_headers, start=1):
-        cell = ws_payment.cell(row=1, column=col_idx, value=header)
-        cell.font = header_font
-        cell.fill = header_fill
-
-    for row_idx, row_data in enumerate(payment_methods, start=2):
-        for col_idx, header in enumerate(payment_headers, start=1):
-            ws_payment.cell(row=row_idx, column=col_idx, value=row_data.get(header, ""))
-
     wb.save(output_path)
     logger.info("Financial report generated successfully: %s", output_path)
     return output_path
+
+
+async def _fetch_financial_data() -> tuple[list[dict], list[dict]]:
+    from models.plan import Plan
+
+    now = datetime.now(timezone.utc)
+
+    async with async_session() as db:
+        active_subs_result = await db.execute(
+            select(func.count(Subscription.id)).where(
+                Subscription.status == "active"
+            )
+        )
+        active_subs = active_subs_result.scalar() or 0
+
+        mrr_result = await db.execute(
+            select(func.sum(Plan.monthly_price))
+            .join(Subscription, Subscription.plan_id == Plan.id)
+            .where(Subscription.status == "active")
+        )
+        mrr = mrr_result.scalar() or 0.0
+
+        arpu = (mrr / active_subs) if active_subs > 0 else 0.0
+
+        plan_breakdown_result = await db.execute(
+            select(
+                Plan.name,
+                Plan.monthly_price,
+                func.count(Subscription.id).label("subscribers"),
+            )
+            .join(Subscription, Subscription.plan_id == Plan.id)
+            .where(Subscription.status == "active")
+            .group_by(Plan.id, Plan.name, Plan.monthly_price)
+        )
+        plan_rows = plan_breakdown_result.all()
+
+    summary_data = [
+        {"Metric": "Total MRR (INR)", "Value": round(mrr, 2)},
+        {"Metric": "Active Subscriptions", "Value": active_subs},
+        {"Metric": "Average Revenue Per User", "Value": round(arpu, 2)},
+        {"Metric": "Report Generated", "Value": now.isoformat()},
+    ]
+
+    revenue_by_plan = []
+    for row in plan_rows:
+        subscribers = row.subscribers
+        price = float(row.monthly_price) if row.monthly_price else 0.0
+        revenue_by_plan.append({
+            "Plan": row.name,
+            "Subscribers": subscribers,
+            "Monthly Price": price,
+            "Total Revenue": round(price * subscribers, 2),
+        })
+
+    return summary_data, revenue_by_plan

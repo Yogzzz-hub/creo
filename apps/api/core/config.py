@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     SECRET_KEY: str = ""
     ENVIRONMENT: str = "development"
+    FRONTEND_URL: str = "http://localhost:3000"
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
