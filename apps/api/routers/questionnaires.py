@@ -52,7 +52,7 @@ async def submit_questionnaire(
     db.add(questionnaire)
     await db.commit()
 
-    from workers.ai_tasks import generate_ai_analysis
+    from workers.onboarding_tasks import generate_ai_analysis
 
     generate_ai_analysis.delay(str(current_user.id))
 

@@ -128,9 +128,15 @@ function PlanSelectionContent() {
 
   function handleSelectPlan(planId: string) {
     setSelectedPlanId(planId);
-    // Phase 5: Wire to payment gateway
-    // For now, redirect to portal
-    router.push("/portal");
+    const selected = plans.find((p) => p.id === planId);
+    if (selected) {
+      localStorage.setItem("creo_selected_plan", JSON.stringify({
+        id: selected.id,
+        name: selected.name,
+        display_name: selected.display_name,
+      }));
+    }
+    router.push("/onboarding/payment");
   }
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);

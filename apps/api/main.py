@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from core.config import settings
 from routers.auth import router as auth_router
 from routers.plans import router as plans_router
 from routers.onboarding import router as onboarding_router
@@ -35,6 +36,7 @@ from routers.client_assignments import router as client_assignments_router
 from routers.content_plans import router as content_plans_router
 from routers.webhooks import router as webhooks_router
 from core.exceptions import setup_global_middleware_and_exceptions
+from core.security import role_router
 
 app = FastAPI(
     title="Creo API",
@@ -46,12 +48,14 @@ setup_global_middleware_and_exceptions(app)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", 
-    "http://127.0.0.1:3000",
-    "http://192.168.29.212:3000"],
+    allow_origins=[
+        settings.FRONTEND_URL,
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
 app.include_router(auth_router)
@@ -87,6 +91,7 @@ app.include_router(admin_calendar_router)
 app.include_router(client_assignments_router)
 app.include_router(content_plans_router)
 app.include_router(webhooks_router)
+app.include_router(role_router)
 
 
 @app.get("/health")

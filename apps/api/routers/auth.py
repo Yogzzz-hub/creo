@@ -1,18 +1,57 @@
+import json
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import settings
 from core.database import get_db
-from core.exceptions import limiter  
+from core.exceptions import limiter
 from models.enums import AccountStatus, UserRole
 from models.user import User
 from schemas.auth import RegisterRequest, RegisterResponse
 from workers.notification_tasks import notify_incomplete_signup
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
+REDIS_ABANDONED_CART_PREFIX = "abandoned_cart:"
+
+
+def _store_task_ids(user_id: str, task_ids: list[str]) -> None:
+    try:
+        import redis
+        r = redis.from_url(settings.REDIS_URL, decode_responses=True)
+        key = f"{REDIS_ABANDONED_CART_PREFIX}{user_id}"
+        r.set(key, json.dumps(task_ids), ex=14400)
+        r.close()
+    except Exception as exc:
+        logger.warning("Failed to store abandoned cart task IDs for user %s: %s", user_id, exc)
+
+
+def revoke_abandoned_cart_tasks(user_id: str) -> None:
+    try:
+        import redis
+        from celery import Celery
+        r = redis.from_url(settings.REDIS_URL, decode_responses=True)
+        key = f"{REDIS_ABANDONED_CART_PREFIX}{user_id}"
+        task_ids_raw = r.get(key)
+        if task_ids_raw:
+            task_ids = json.loads(task_ids_raw)
+            celery = Celery("creo_worker", broker=settings.CELERY_BROKER_URL)
+            for tid in task_ids:
+                celery.control.revoke(tid, terminate=True)
+            r.delete(key)
+            logger.info("Revoked %d abandoned cart tasks for user %s", len(task_ids), user_id)
+        r.close()
+    except Exception as exc:
+        logger.warning("Failed to revoke abandoned cart tasks for user %s: %s", user_id, exc)
+
+
 @router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
-@limiter.limit("5/minute")  
+@limiter.limit("5/minute")
 async def register_user(
     request: Request,
     payload: RegisterRequest,
@@ -46,14 +85,16 @@ async def register_user(
     await db.commit()
     await db.refresh(user)
 
-    # Schedule abandoned cart recovery WhatsApp for 1 hour (3600 seconds) from now.
     if user.phone:
-        from core.config import settings
-        checkout_url = f"{settings.FRONTEND_URL}/onboarding/verify" if hasattr(settings, 'FRONTEND_URL') else "https://creo.app/onboarding/verify"
-        notify_incomplete_signup.apply_async(
-            args=[user.phone, user.full_name, checkout_url],
-            countdown=3600  
-        )
+        checkout_url = f"{settings.FRONTEND_URL}/onboarding/verify"
+        task_ids = []
+        for countdown in [3600, 7200, 14400]:
+            result = notify_incomplete_signup.apply_async(
+                args=[user.phone, user.full_name, checkout_url],
+                countdown=countdown,
+            )
+            task_ids.append(result.id)
+        _store_task_ids(str(user.id), task_ids)
 
     return RegisterResponse(
         id=user.id,

@@ -1,4 +1,5 @@
 import asyncio
+import html as html_mod
 import logging
 from datetime import date, datetime, timedelta, timezone
 
@@ -32,6 +33,19 @@ DELIVERABLE_MONTHLY_SCHEDULE = {
     DeliverableType.reel: 2,
     DeliverableType.story: 4,
 }
+
+
+def _mask_email(email: str) -> str:
+    if not email or "@" not in email:
+        return "***"
+    local, domain = email.split("@", 1)
+    return f"{local[:3]}***@{domain}"
+
+
+def _mask_phone(phone: str) -> str:
+    if not phone or len(phone) < 4:
+        return "***"
+    return f"***{phone[-4:]}"
 
 
 def _run_async(coro):
@@ -113,7 +127,7 @@ async def _check_sla_breaches_async():
                     ),
                 )
             except Exception as exc:
-                logger.error("Failed to send SLA breach email to %s: %s", admin_email, exc)
+                logger.error("Failed to send SLA breach email to %s: %s", _mask_email(admin_email), exc)
 
     logger.info("check_sla_breaches completed — %d breach(es) found", breaches_found)
     return breaches_found
@@ -155,7 +169,7 @@ async def _send_renewal_reminders_async():
                 portal_url = "https://creo.app/portal/payments"
                 html_content = (
                     f"<h2>Renewal Reminder</h2>"
-                    f"<p>Hi {user.full_name},</p>"
+                    f"<p>Hi {html_mod.escape(user.full_name)},</p>"
                     f"<p>Your <strong>{plan.display_name}</strong> subscription "
                     f"will renew on <strong>"
                     f"{subscription.current_period_end.strftime('%B %d, %Y')}</strong>.</p>"
@@ -173,7 +187,7 @@ async def _send_renewal_reminders_async():
                 reminders_sent += 1
             except Exception as exc:
                 logger.error(
-                    "Failed to send renewal reminder to %s: %s", user.email, exc
+                    "Failed to send renewal reminder to user %s: %s", user.id, exc
                 )
 
     logger.info(
@@ -282,7 +296,7 @@ async def _check_quota_exhaustion_async():
 
             html_content = (
                 f"<h2>Quota Usage Alert</h2>"
-                f"<p>Hi {user.full_name},</p>"
+                f"<p>Hi {html_mod.escape(user.full_name)},</p>"
                 f"<p>You're approaching your monthly content quota:</p>"
                 f"<ul>{warning_list}</ul>"
                 f"<p>Consider purchasing Add-ons to keep your content pipeline running:</p>"
@@ -300,7 +314,7 @@ async def _check_quota_exhaustion_async():
                 notifications_sent += 1
             except Exception as exc:
                 logger.error(
-                    "Failed to send quota email to %s: %s", user.email, exc
+                    "Failed to send quota email to user %s: %s", user.id, exc
                 )
 
             if user.phone:
@@ -315,7 +329,7 @@ async def _check_quota_exhaustion_async():
                     )
                 except Exception as exc:
                     logger.warning(
-                        "Failed to send quota WhatsApp to %s: %s", user.phone, exc
+                        "Failed to send quota WhatsApp to user %s: %s", user.id, exc
                     )
 
     logger.info(
@@ -470,7 +484,8 @@ async def _generate_content_calendar_async():
         )
         active_subs = active_subs_result.all()
 
-        for subscription, user, plan in active_subs:
+    for subscription, user, plan in active_subs:
+        async with async_session() as db:
             existing_result = await db.execute(
                 select(func.count(ContentCalendar.id)).where(
                     ContentCalendar.client_id == user.id,
@@ -490,6 +505,7 @@ async def _generate_content_calendar_async():
             }
 
             days_in_month = (next_month_end - next_month_start).days + 1
+            client_entries = 0
 
             for del_type, quota in quota_map.items():
                 if quota <= 0:
@@ -515,13 +531,15 @@ async def _generate_content_calendar_async():
                         client_id=user.id,
                         scheduled_date=scheduled_date,
                         deliverable_type=del_type,
-                        content_topic=f"Auto-generated {del_type.value} for {user.business_name or user.full_name}",
+                        content_topic=f"Auto-generated {del_type.value} for {html_mod.escape(user.business_name or user.full_name)}",
                         status=CalendarEntryStatus.draft,
                     )
                     db.add(entry)
-                    entries_created += 1
+                    client_entries += 1
 
-        await db.commit()
+            if client_entries > 0:
+                await db.commit()
+                entries_created += client_entries
 
     logger.info(
         "generate_content_calendar completed — %d draft entry(ies) created",
