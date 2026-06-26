@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import { useSubscription } from "@/context/subscription-context"
 
 interface ApiAddonPricing {
   id: string
@@ -45,6 +46,7 @@ export default function AddonsPage() {
   const [loading, setLoading] = useState(true)
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const [isProcessing, setIsProcessing] = useState(false)
+  const { isLapsed } = useSubscription()
 
   useEffect(() => {
     async function fetchPricing() {
@@ -177,6 +179,30 @@ export default function AddonsPage() {
     )
   }
 
+  if (addonTypes.length === 0) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-[#0D2137]">Add-ons</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Purchase additional content beyond your plan quota.
+          </p>
+        </div>
+        <Card className="rounded-xl shadow-[var(--shadow-card)]">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <ShoppingCart className="size-12 text-gray-300" />
+            <h3 className="mt-4 text-base font-semibold text-[#0D2137]">
+              No add-ons available right now
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Check back later for additional content options.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div>
@@ -303,10 +329,10 @@ export default function AddonsPage() {
 
               <Button
                 onClick={handlePurchase}
-                disabled={isProcessing || totalItems === 0}
+                disabled={isProcessing || totalItems === 0 || isLapsed}
                 className={cn(
                   "mt-2 w-full bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90",
-                  totalItems === 0 && "cursor-not-allowed opacity-50"
+                  (totalItems === 0 || isLapsed) && "cursor-not-allowed opacity-50"
                 )}
               >
                 {isProcessing ? (

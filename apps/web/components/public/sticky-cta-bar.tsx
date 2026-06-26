@@ -1,33 +1,49 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function StickyCTABar() {
+  const [mounted, setMounted] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const footerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    function onScroll() {
-      const footer = document.querySelector("[data-footer]");
-      if (!footer) {
-        setHidden(false);
-        return;
-      }
-      const footerRect = footer.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      setHidden(footerRect.top <= viewportHeight);
-    }
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
+    const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+    if (!isDesktop) return;
+    setMounted(true);
   }, []);
+
+  const checkFooter = useCallback(() => {
+    const footer = footerRef.current;
+    if (!footer) {
+      setHidden(false);
+      return;
+    }
+    const footerRect = footer.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    setHidden(footerRect.top <= viewportHeight);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    footerRef.current = document.querySelector("footer");
+    if (!footerRef.current) return;
+
+    window.addEventListener("scroll", checkFooter, { passive: true });
+    checkFooter();
+    return () => window.removeEventListener("scroll", checkFooter);
+  }, [mounted, checkFooter]);
+
+  if (!mounted) return null;
 
   return (
     <div
       className={cn(
-        "hidden md:flex fixed bottom-0 left-0 right-0 z-30 h-12 items-center justify-center gap-3 text-sm text-white transition-transform duration-300",
+        "fixed bottom-0 left-0 right-0 z-30 h-12 items-center justify-center gap-3 text-sm text-white transition-transform duration-300 flex",
         hidden ? "translate-y-full" : "translate-y-0"
       )}
       style={{
