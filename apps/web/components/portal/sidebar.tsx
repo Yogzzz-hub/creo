@@ -1,7 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
+import { useState } from "react"
+import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
@@ -10,6 +12,7 @@ import {
   LifeBuoy,
   UserCog,
   CreditCard,
+  LogOut,
 } from "lucide-react"
 
 const NAV_ITEMS = [
@@ -36,6 +39,16 @@ function isActive(href: string, pathname: string) {
 
 export function DesktopSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const supabase = createClient()
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  async function handleLogout() {
+    setLoggingOut(true)
+    await supabase.auth.signOut()
+    router.push("/login")
+    router.refresh()
+  }
 
   return (
     <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-[--sidebar-width] lg:flex-col">
@@ -65,6 +78,15 @@ export function DesktopSidebar() {
               </Link>
             )
           })}
+
+          <button
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="flex items-center gap-3 rounded-r-lg px-3 py-2.5 text-sm font-medium border-l-[3px] border-transparent text-[#6BAED6] hover:bg-[#1a3a5c]/50 hover:text-white transition-colors mt-auto"
+          >
+            <LogOut className="size-4 shrink-0" />
+            {loggingOut ? "Logging out..." : "Log out"}
+          </button>
         </nav>
       </div>
     </aside>

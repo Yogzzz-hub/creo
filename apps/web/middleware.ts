@@ -58,16 +58,12 @@ async function fetchUserRole(accessToken: string): Promise<string> {
 
 const ONBOARDING_STEPS = ["/onboarding/verify", "/onboarding/terms", "/onboarding/payment", "/onboarding/questionnaire", "/onboarding/complete"];
 
-function isOnboardingRoute(pathname: string): boolean {
-  return ONBOARDING_STEPS.some((step) => pathname.startsWith(step));
-}
-
 function getOnboardingStepIndex(pathname: string): number {
   return ONBOARDING_STEPS.findIndex((step) => pathname.startsWith(step));
 }
 
 function isOnboardingRoute(pathname: string): boolean {
-  return pathname.startsWith("/onboarding");
+  return ONBOARDING_STEPS.some((step) => pathname.startsWith(step));
 }
 
 export async function middleware(request: NextRequest) {
