@@ -1,15 +1,15 @@
 """enable_missing_rls
 
-Revision ID: 024
-Revises: 023
+Revision ID: 026
+Revises: 025
 Create Date: 2026-06-24
 
 """
 from alembic import op
 
 
-revision = "024"
-down_revision = "023"
+revision = "026"
+down_revision = "025"
 branch_labels = None
 depends_on = None
 
