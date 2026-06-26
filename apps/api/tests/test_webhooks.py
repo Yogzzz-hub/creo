@@ -2,8 +2,8 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 from unittest.mock import patch
 
-# Assuming your FastAPI app instance is importable from main
 from main import app
+
 
 @pytest.mark.asyncio
 async def test_stripe_webhook_missing_signature():
@@ -11,12 +11,13 @@ async def test_stripe_webhook_missing_signature():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post(
-            "/api/webhooks/stripe", 
+            "/api/webhooks/stripe",
             json={"type": "invoice.payment_succeeded"}
         )
-        
+
     assert response.status_code == 400
-    assert "Missing Stripe-Signature header" in response.json()["detail"]
+    error = response.json()
+    assert "Missing Stripe-Signature header" in error.get("error", {}).get("message", error.get("detail", ""))
 
 
 @pytest.mark.asyncio
@@ -24,7 +25,7 @@ async def test_stripe_webhook_missing_signature():
 async def test_stripe_webhook_invalid_signature(mock_verify):
     """Test that Stripe webhook rejects requests with an invalid signature."""
     mock_verify.side_effect = Exception("Signature mismatch")
-    
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post(
@@ -32,9 +33,10 @@ async def test_stripe_webhook_invalid_signature(mock_verify):
             json={"type": "invoice.payment_succeeded"},
             headers={"Stripe-Signature": "t=forged_signature,v1=forged"}
         )
-        
+
     assert response.status_code == 400
-    assert response.json()["detail"] == "Invalid signature"
+    error = response.json()
+    assert "Invalid signature" in error.get("error", {}).get("message", error.get("detail", ""))
 
 
 @pytest.mark.asyncio
@@ -42,7 +44,7 @@ async def test_stripe_webhook_invalid_signature(mock_verify):
 async def test_razorpay_webhook_invalid_signature(mock_verify):
     """Test that Razorpay webhook rejects requests with an invalid signature."""
     mock_verify.side_effect = Exception("Signature mismatch")
-    
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post(
@@ -50,9 +52,10 @@ async def test_razorpay_webhook_invalid_signature(mock_verify):
             json={"event": "payment.captured", "payload": {}},
             headers={"X-Razorpay-Signature": "forged_signature"}
         )
-        
+
     assert response.status_code == 400
-    assert response.json()["detail"] == "Invalid signature"
+    error = response.json()
+    assert "Invalid signature" in error.get("error", {}).get("message", error.get("detail", ""))
 
 
 @pytest.mark.asyncio
@@ -65,5 +68,5 @@ async def test_razorpay_webhook_malformed_json():
             content="This is not JSON",
             headers={"X-Razorpay-Signature": "some_sig"}
         )
-    
+
     assert response.status_code == 400

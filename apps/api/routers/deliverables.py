@@ -1,4 +1,5 @@
 import logging
+import uuid
 from datetime import datetime, timezone
 from typing import Annotated
 
@@ -22,14 +23,70 @@ from schemas.portal import (
     DeliverableRejectRequest,
     DeliverableResponse,
 )
+from schemas.upload import (
+    ALLOWED_MIME_TYPES,
+    ALLOWED_VIDEO_MIME_TYPES,
+    MAX_IMAGE_SIZE_BYTES,
+    MAX_VIDEO_SIZE_BYTES,
+    UploadURLRequest,
+    UploadURLResponse,
+)
 from services.instagram import publish_media, refresh_access_token
-from services.storage import generate_signed_download_url
+from services.storage import generate_signed_download_url, generate_signed_upload_url
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/deliverables", tags=["deliverables"])
 
 DELIVERABLES_BUCKET = "deliverables"
+
+
+@router.post("/upload-url", response_model=UploadURLResponse)
+async def get_upload_url(
+    payload: UploadURLRequest,
+    current_user: Annotated[User, Depends(require_team_member)],
+):
+    if payload.mime_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported file type: {payload.mime_type}. Allowed: {', '.join(sorted(ALLOWED_MIME_TYPES))}",
+        )
+
+    if payload.mime_type in ALLOWED_VIDEO_MIME_TYPES:
+        max_size = MAX_VIDEO_SIZE_BYTES
+        size_label = "500MB"
+    else:
+        max_size = MAX_IMAGE_SIZE_BYTES
+        size_label = "10MB"
+
+    if payload.file_size_bytes > max_size:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File too large. Maximum size for this type is {size_label}.",
+        )
+
+    ext = payload.file_name.rsplit(".", 1)[-1] if "." in payload.file_name else "bin"
+    file_path = f"{current_user.id}/{uuid.uuid4().hex}.{ext}"
+
+    try:
+        upload_url = await run_in_threadpool(
+            generate_signed_upload_url,
+            DELIVERABLES_BUCKET,
+            file_path,
+            3600,
+        )
+    except Exception as exc:
+        logger.exception("Failed to generate upload URL for user %s", current_user.id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate upload URL.",
+        )
+
+    return UploadURLResponse(
+        upload_url=upload_url,
+        file_path=file_path,
+        expires_in=3600,
+    )
 
 
 @router.get("", response_model=list[DeliverableResponse])

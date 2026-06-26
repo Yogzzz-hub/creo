@@ -53,6 +53,33 @@ def create_mock_user(
     return user
 
 
+class MockResponseManager:
+    """Manages sequential mock responses for db.execute calls.
+
+    Usage:
+        manager = MockResponseManager()
+        manager.add(_result(scalar=42))
+        mock_db_session.execute = manager.as_side_effect()
+    """
+
+    def __init__(self):
+        self._responses = []
+
+    def add(self, response) -> "MockResponseManager":
+        self._responses.append(response)
+        return self
+
+    def as_side_effect(self):
+        responses = list(self._responses)
+
+        async def _execute(*args, **kwargs):
+            if responses:
+                return responses.pop(0)
+            return MagicMock()
+
+        return _execute
+
+
 @pytest.fixture
 def mock_db_session():
     session = AsyncMock(spec=AsyncSession)

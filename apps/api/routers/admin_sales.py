@@ -131,6 +131,10 @@ async def approve_custom_pricing(
     pricing.valid_from = datetime.now(timezone.utc).date()
 
     now = datetime.now(timezone.utc)
+    gateway_sub_id = f"custom_{pricing_id}"
+    from core.security import decrypt_gateway_id
+    gateway_customer_id_raw = user.stripe_customer_id or user.razorpay_customer_id or "pending"
+    gateway_customer_id = decrypt_gateway_id(gateway_customer_id_raw) or gateway_customer_id_raw
 
     new_subscription = Subscription(
         user_id=pricing.client_id,

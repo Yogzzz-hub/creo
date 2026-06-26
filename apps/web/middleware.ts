@@ -41,8 +41,19 @@ function canAccessRoute(role: string, pathname: string): boolean {
   return false;
 }
 
-function isOnboardingRoute(pathname: string): boolean {
-  return pathname.startsWith("/onboarding");
+async function fetchUserRole(accessToken: string): Promise<string> {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      next: { revalidate: 300 },
+    } as RequestInit);
+    if (!res.ok) return "client";
+    const data = await res.json();
+    return data.role ?? "client";
+  } catch {
+    return "client";
+  }
 }
 
 export async function middleware(request: NextRequest) {
@@ -81,7 +92,11 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && isProtectedRoute(pathname)) {
-    const role = user.user_metadata?.role ?? "client";
+    const metadataRole = user.user_metadata?.role ?? "client";
+    const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
+    const backendRole = accessToken ? await fetchUserRole(accessToken) : metadataRole;
+    const role = backendRole !== "client" ? backendRole : metadataRole;
+
     if (!canAccessRoute(role, pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = getClientHome(role);
@@ -90,7 +105,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user && (pathname === "/login" || pathname === "/signup")) {
-    const role = user.user_metadata?.role ?? "client";
+    const metadataRole = user.user_metadata?.role ?? "client";
+    const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
+    const backendRole = accessToken ? await fetchUserRole(accessToken) : metadataRole;
+    const role = backendRole !== "client" ? backendRole : metadataRole;
     const url = request.nextUrl.clone();
     url.pathname = getClientHome(role);
     return NextResponse.redirect(url);

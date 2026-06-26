@@ -10,6 +10,12 @@ logger = logging.getLogger(__name__)
 MSG91_API_BASE = "https://api.msg91.com/api/v5/whatsapp"
 
 
+def _mask_phone(phone: str) -> str:
+    if not phone or len(phone) < 4:
+        return "***"
+    return f"***{phone[-4:]}"
+
+
 async def send_whatsapp_message(
     phone_number: str,
     template_id: str,
@@ -67,7 +73,7 @@ async def send_whatsapp_message(
 
     logger.info(
         "Sending WhatsApp message to=%s template=%s",
-        full_phone,
+        _mask_phone(phone_number),
         template_id,
     )
 
@@ -81,41 +87,38 @@ async def send_whatsapp_message(
 
             if response.status_code != 200:
                 logger.error(
-                    "MSG91 API error: status=%d body=%s",
+                    "MSG91 API error: status=%d",
                     response.status_code,
-                    response.text,
                 )
                 raise RuntimeError(
-                    f"MSG91 API returned status {response.status_code}: "
-                    f"{response.text}"
+                    f"MSG91 API returned status {response.status_code}"
                 )
 
             result = response.json()
             logger.info(
-                "WhatsApp message sent to=%s response=%s",
-                full_phone,
-                result,
+                "WhatsApp message sent to=%s",
+                _mask_phone(phone_number),
             )
             return result
 
         except httpx.HTTPStatusError as exc:
             logger.error(
                 "HTTP error sending WhatsApp message to=%s: %s",
-                full_phone,
+                _mask_phone(phone_number),
                 exc,
             )
             raise RuntimeError(
-                f"HTTP error sending WhatsApp message to {full_phone}: {exc}"
+                f"HTTP error sending WhatsApp message: {exc}"
             ) from exc
 
         except httpx.RequestError as exc:
             logger.error(
                 "Request error sending WhatsApp message to=%s: %s",
-                full_phone,
+                _mask_phone(phone_number),
                 exc,
             )
             raise RuntimeError(
-                f"Network error sending WhatsApp message to {full_phone}: {exc}"
+                f"Network error sending WhatsApp message: {exc}"
             ) from exc
 
 
@@ -145,7 +148,7 @@ async def send_otp_sms(
     if not auth_key:
         raise RuntimeError("MSG91_AUTH_KEY is not configured")
 
-    url = f"https://api.msg91.com/api/v5/otp"
+    url = "https://api.msg91.com/api/v5/otp"
     payload = {
         "mobile": full_phone,
         "otp": otp,
@@ -155,7 +158,7 @@ async def send_otp_sms(
         "authkey": auth_key,
     }
 
-    logger.info("Sending OTP SMS to=%s", full_phone)
+    logger.info("Sending OTP SMS to=%s", _mask_phone(phone_number))
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
@@ -163,27 +166,25 @@ async def send_otp_sms(
 
             if response.status_code != 200:
                 logger.error(
-                    "MSG91 OTP SMS error: status=%d body=%s",
+                    "MSG91 OTP SMS error: status=%d",
                     response.status_code,
-                    response.text,
                 )
                 raise RuntimeError(
-                    f"MSG91 OTP SMS returned status {response.status_code}: "
-                    f"{response.text}"
+                    f"MSG91 OTP SMS returned status {response.status_code}"
                 )
 
             result = response.json()
-            logger.info("OTP SMS sent to=%s", full_phone)
+            logger.info("OTP SMS sent to=%s", _mask_phone(phone_number))
             return result
 
         except httpx.HTTPStatusError as exc:
-            logger.error("HTTP error sending OTP to=%s: %s", full_phone, exc)
+            logger.error("HTTP error sending OTP to=%s: %s", _mask_phone(phone_number), exc)
             raise RuntimeError(
-                f"HTTP error sending OTP to {full_phone}: {exc}"
+                f"HTTP error sending OTP: {exc}"
             ) from exc
 
         except httpx.RequestError as exc:
-            logger.error("Network error sending OTP to=%s: %s", full_phone, exc)
+            logger.error("Network error sending OTP to=%s: %s", _mask_phone(phone_number), exc)
             raise RuntimeError(
-                f"Network error sending OTP to {full_phone}: {exc}"
+                f"Network error sending OTP: {exc}"
             ) from exc

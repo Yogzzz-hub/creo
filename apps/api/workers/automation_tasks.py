@@ -1,4 +1,5 @@
 import asyncio
+import html as html_mod
 import logging
 from datetime import date, datetime, timedelta, timezone
 
@@ -38,28 +39,17 @@ DELIVERABLE_MONTHLY_SCHEDULE = {
 }
 
 
-def _count_business_days(start: date, end: date) -> int:
-    """Count business days (Mon-Fri) between two dates, inclusive of start, exclusive of end."""
-    if end <= start:
-        return 0
-    business_days = 0
-    current = start
-    while current < end:
-        if current.weekday() < 5:
-            business_days += 1
-        current += timedelta(days=1)
-    return business_days
+def _mask_email(email: str) -> str:
+    if not email or "@" not in email:
+        return "***"
+    local, domain = email.split("@", 1)
+    return f"{local[:3]}***@{domain}"
 
 
-def _business_days_ago(ref: date, business_days: int) -> date:
-    """Walk backwards from ref date, skipping weekends, to find the date that is N business days before ref."""
-    remaining = business_days
-    current = ref
-    while remaining > 0:
-        current -= timedelta(days=1)
-        if current.weekday() < 5:
-            remaining -= 1
-    return current
+def _mask_phone(phone: str) -> str:
+    if not phone or len(phone) < 4:
+        return "***"
+    return f"***{phone[-4:]}"
 
 
 def _run_async(coro):
@@ -177,7 +167,7 @@ async def _check_sla_breaches_async():
                     ),
                 )
             except Exception as exc:
-                logger.error("Failed to send SLA breach email to %s: %s", admin_email, exc)
+                logger.error("Failed to send SLA breach email to %s: %s", _mask_email(admin_email), exc)
 
     logger.info("check_sla_breaches completed — %d breach(es) found", breaches_found)
     return breaches_found
@@ -219,7 +209,7 @@ async def _send_renewal_reminders_async():
                 portal_url = "https://creo.app/portal/payments"
                 html_content = (
                     f"<h2>Renewal Reminder</h2>"
-                    f"<p>Hi {user.full_name},</p>"
+                    f"<p>Hi {html_mod.escape(user.full_name)},</p>"
                     f"<p>Your <strong>{plan.display_name}</strong> subscription "
                     f"will renew on <strong>"
                     f"{subscription.current_period_end.strftime('%B %d, %Y')}</strong>.</p>"
@@ -237,7 +227,7 @@ async def _send_renewal_reminders_async():
                 reminders_sent += 1
             except Exception as exc:
                 logger.error(
-                    "Failed to send renewal reminder to %s: %s", user.email, exc
+                    "Failed to send renewal reminder to user %s: %s", user.id, exc
                 )
 
     logger.info(
@@ -346,7 +336,7 @@ async def _check_quota_exhaustion_async():
 
             html_content = (
                 f"<h2>Quota Usage Alert</h2>"
-                f"<p>Hi {user.full_name},</p>"
+                f"<p>Hi {html_mod.escape(user.full_name)},</p>"
                 f"<p>You're approaching your monthly content quota:</p>"
                 f"<ul>{warning_list}</ul>"
                 f"<p>Consider purchasing Add-ons to keep your content pipeline running:</p>"
@@ -364,7 +354,7 @@ async def _check_quota_exhaustion_async():
                 notifications_sent += 1
             except Exception as exc:
                 logger.error(
-                    "Failed to send quota email to %s: %s", user.email, exc
+                    "Failed to send quota email to user %s: %s", user.id, exc
                 )
 
             if user.phone:
@@ -379,7 +369,7 @@ async def _check_quota_exhaustion_async():
                     )
                 except Exception as exc:
                     logger.warning(
-                        "Failed to send quota WhatsApp to %s: %s", user.phone, exc
+                        "Failed to send quota WhatsApp to user %s: %s", user.id, exc
                     )
 
     logger.info(
@@ -577,7 +567,8 @@ async def _generate_content_calendar_async():
         )
         active_subs = active_subs_result.all()
 
-        for subscription, user, plan in active_subs:
+    for subscription, user, plan in active_subs:
+        async with async_session() as db:
             existing_result = await db.execute(
                 select(func.count(ContentCalendar.id)).where(
                     ContentCalendar.client_id == user.id,
@@ -590,40 +581,18 @@ async def _generate_content_calendar_async():
             if existing_count > 0:
                 continue
 
-            content_plan = ContentPlan(
-                client_id=user.id,
-                month=next_month_start.month,
-                year=next_month_start.year,
-                status=ContentPlanStatus.draft,
-            )
-            db.add(content_plan)
-            await db.flush()
+            quota_map = {
+                DeliverableType.poster: plan.poster_quota,
+                DeliverableType.reel: plan.reel_quota,
+                DeliverableType.story: plan.story_quota,
+            }
 
-            reel_quota = plan.reel_quota
-            poster_quota = plan.poster_quota
-            story_quota = plan.story_quota
+            days_in_month = (next_month_end - next_month_start).days + 1
+            client_entries = 0
 
-            used_dates: set[date_type] = set()
-
-            if reel_quota > 0 and weekend_dates:
-                reel_spacing = max(1, len(weekend_dates) // reel_quota)
-                for i in range(reel_quota):
-                    idx = i * reel_spacing
-                    if idx >= len(weekend_dates):
-                        break
-                    scheduled_date = weekend_dates[idx]
-                    if scheduled_date in used_dates:
-                        continue
-
-                    existing_check = await db.execute(
-                        select(ContentCalendar.id).where(
-                            ContentCalendar.client_id == user.id,
-                            ContentCalendar.scheduled_date == scheduled_date,
-                            ContentCalendar.deliverable_type == DeliverableType.reel,
-                        )
-                    )
-                    if existing_check.scalar_one_or_none() is not None:
-                        continue
+            for del_type, quota in quota_map.items():
+                if quota <= 0:
+                    continue
 
                     entry = ContentCalendar(
                         client_id=user.id,
@@ -671,14 +640,15 @@ async def _generate_content_calendar_async():
                         content_plan_id=content_plan.id,
                         scheduled_date=scheduled_date,
                         deliverable_type=del_type,
-                        content_topic=f"Auto-generated {del_type.value} for {user.business_name or user.full_name}",
+                        content_topic=f"Auto-generated {del_type.value} for {html_mod.escape(user.business_name or user.full_name)}",
                         status=CalendarEntryStatus.draft,
                     )
                     db.add(entry)
-                    used_dates.add(scheduled_date)
-                    entries_created += 1
+                    client_entries += 1
 
-        await db.commit()
+            if client_entries > 0:
+                await db.commit()
+                entries_created += client_entries
 
     logger.info(
         "generate_content_calendar completed — %d draft entry(ies) created",
