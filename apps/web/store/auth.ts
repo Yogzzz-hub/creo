@@ -11,6 +11,7 @@ interface User {
   role: string;
   full_name: string;
   account_status: string;
+  avatar_url?: string;
 }
 
 interface AuthState {
@@ -49,6 +50,7 @@ export function useAuthListener() {
             role: user.user_metadata?.role ?? "client",
             full_name: user.user_metadata?.full_name ?? "",
             account_status: user.user_metadata?.account_status ?? "pending_verification",
+            avatar_url: user.user_metadata?.avatar_url ?? undefined,
           });
         } else {
           setUser(null);
