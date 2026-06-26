@@ -1,7 +1,14 @@
+import dynamic from "next/dynamic";
 import { Navbar } from "@/components/public/navbar";
-import { StickyCTABar } from "@/components/public/sticky-cta-bar";
 import { Footer } from "@/components/public/footer";
-import { ExitIntentPopup } from "@/components/public/exit-intent-popup";
+
+const StickyCTABar = dynamic(
+  () => import("@/components/public/sticky-cta-bar").then((mod) => mod.StickyCTABar)
+);
+
+const ExitIntentPopup = dynamic(
+  () => import("@/components/public/exit-intent-popup").then((mod) => mod.ExitIntentPopup)
+);
 
 export default function PublicLayout({
   children,

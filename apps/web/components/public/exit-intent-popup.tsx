@@ -7,9 +7,15 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const SESSION_KEY = "creo_exit_intent_shown";
+const TIMER_TRIGGER_MS = 40_000;
 
 export function ExitIntentPopup() {
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const dismiss = useCallback(() => {
     setOpen(false);
@@ -26,6 +32,16 @@ export function ExitIntentPopup() {
       if (sessionStorage.getItem(SESSION_KEY)) return;
     } catch {
       return;
+    }
+
+    let triggered = false;
+
+    function trigger() {
+      if (triggered) return;
+      triggered = true;
+      setOpen(true);
+      window.removeEventListener("mousemove", onMouseMove);
+      clearTimeout(timerId);
     }
 
     let lastY = 0;
@@ -46,16 +62,20 @@ export function ExitIntentPopup() {
       const nearTop = e.clientY < 80;
 
       if (isDesktop && movingUpward && nearTop) {
-        setOpen(true);
-        window.removeEventListener("mousemove", onMouseMove);
+        trigger();
       }
     }
 
+    const timerId = setTimeout(trigger, TIMER_TRIGGER_MS);
+
     window.addEventListener("mousemove", onMouseMove, { passive: true });
-    return () => window.removeEventListener("mousemove", onMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      clearTimeout(timerId);
+    };
   }, []);
 
-  if (!open) return null;
+  if (!mounted || !open) return null;
 
   return (
     <div
@@ -104,7 +124,7 @@ export function ExitIntentPopup() {
             View Our Work
           </Link>
           <Link
-            href="/contact"
+            href="/pricing"
             onClick={dismiss}
             className={buttonVariants({
               variant: "ghost",
@@ -112,7 +132,7 @@ export function ExitIntentPopup() {
                 "flex-1 rounded-lg h-11 px-6 text-brand border border-border hover:bg-brand-light",
             })}
           >
-            Book a Free Call
+            See Our Plans
           </Link>
         </div>
       </div>

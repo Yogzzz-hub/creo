@@ -32,45 +32,44 @@ export default function OnboardingLayout({
               {STEPS.map((step, index) => {
                 const isActive = index === currentIndex;
                 const isCompleted = currentIndex > index;
+                const isFuture = index > currentIndex;
+                const isClickable = isCompleted || isActive;
 
                 return (
                   <li
                     key={step.label}
                     className="flex flex-1 items-center"
                   >
-                    <Link
-                      href={step.href}
-                      className="flex flex-col items-center gap-2 w-full"
-                    >
-                      <div
-                        className={cn(
-                          "flex size-8 items-center justify-center rounded-full text-xs font-semibold transition-colors",
-                          isCompleted &&
-                            "bg-brand text-white",
-                          isActive &&
-                            "bg-brand/10 text-brand ring-2 ring-brand",
-                          !isActive &&
-                            !isCompleted &&
-                            "bg-bg-internal text-text-muted"
-                        )}
+                    {isClickable ? (
+                      <Link
+                        href={step.href}
+                        className="flex flex-col items-center gap-2 w-full"
                       >
-                        {isCompleted ? (
-                          <Check className="size-4" />
-                        ) : (
-                          index + 1
-                        )}
+                        <StepCircle
+                          index={index}
+                          isCompleted={isCompleted}
+                          isActive={isActive}
+                        />
+                        <StepLabel
+                          label={step.label}
+                          isActive={isActive}
+                          isCompleted={isCompleted}
+                        />
+                      </Link>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 w-full cursor-not-allowed opacity-50">
+                        <StepCircle
+                          index={index}
+                          isCompleted={isCompleted}
+                          isActive={isActive}
+                        />
+                        <StepLabel
+                          label={step.label}
+                          isActive={isActive}
+                          isCompleted={isCompleted}
+                        />
                       </div>
-                      <span
-                        className={cn(
-                          "text-xs font-medium whitespace-nowrap",
-                          isActive && "text-brand",
-                          isCompleted && "text-text",
-                          !isActive && !isCompleted && "text-text-muted"
-                        )}
-                      >
-                        {step.label}
-                      </span>
-                    </Link>
+                    )}
                     {index < STEPS.length - 1 && (
                       <div
                         className={cn(
@@ -91,5 +90,51 @@ export default function OnboardingLayout({
         </div>
       </div>
     </div>
+  );
+}
+
+function StepCircle({
+  index,
+  isCompleted,
+  isActive,
+}: {
+  index: number;
+  isCompleted: boolean;
+  isActive: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex size-8 items-center justify-center rounded-full text-xs font-semibold transition-colors",
+        isCompleted && "bg-brand text-white",
+        isActive && "bg-brand/10 text-brand ring-2 ring-brand",
+        !isActive && !isCompleted && "bg-bg-internal text-text-muted"
+      )}
+    >
+      {isCompleted ? <Check className="size-4" /> : index + 1}
+    </div>
+  );
+}
+
+function StepLabel({
+  label,
+  isActive,
+  isCompleted,
+}: {
+  label: string;
+  isActive: boolean;
+  isCompleted: boolean;
+}) {
+  return (
+    <span
+      className={cn(
+        "text-xs font-medium whitespace-nowrap",
+        isActive && "text-brand",
+        isCompleted && "text-text",
+        !isActive && !isCompleted && "text-text-muted"
+      )}
+    >
+      {label}
+    </span>
   );
 }

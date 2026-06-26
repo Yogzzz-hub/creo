@@ -2,17 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, ThumbsUp, TrendingUp } from "lucide-react";
-import { TestimonialsCarousel } from "@/components/public/testimonials-carousel";
+import { Users, ThumbsUp, TrendingUp, Building2 } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Our Clients | Creo - Digital Marketing Agency",
   description:
-    "See why 50+ brands trust Creo. Read client testimonials, explore success stats, and meet the team behind your growth.",
+    "See why brands trust Creo. Explore client success stories, stats, and the team behind your growth.",
   openGraph: {
     title: "Our Clients - Creo Digital Marketing Agency",
     description:
-      "Trusted by 50+ growing brands. Real testimonials and results from real businesses.",
+      "Trusted by growing brands. Real testimonials and results from real businesses.",
     url: "https://www.getcreo.in/clients",
     siteName: "Creo",
     locale: "en_IN",
@@ -22,42 +21,27 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Our Clients - Creo Digital Marketing Agency",
     description:
-      "Trusted by 50+ growing brands. Real testimonials and results from real businesses.",
+      "Trusted by growing brands. Real testimonials and results from real businesses.",
   },
 };
-
-const CLIENT_LOGOS = [
-  { name: "StyleNest", industry: "Fashion" },
-  { name: "SpiceRoute", industry: "Food & Beverage" },
-  { name: "FitForge", industry: "Health & Wellness" },
-  { name: "GreenLeaf", industry: "Sustainability" },
-  { name: "UrbanEdge", industry: "Real Estate" },
-  { name: "PetPals", industry: "Pet Care" },
-  { name: "TechNova", industry: "Technology" },
-  { name: "ArtisanBrew", industry: "Coffee & Cafe" },
-  { name: "GlowUp", industry: "Beauty" },
-  { name: "FreshBite", industry: "Food Delivery" },
-  { name: "ZenSpace", industry: "Interior Design" },
-  { name: "PlayZone", industry: "Kids & Family" },
-];
 
 const SUCCESS_STATS = [
   {
     icon: TrendingUp,
-    value: "1,200+",
-    label: "Reels Delivered",
-    description: "Professionally crafted and published across client accounts.",
+    value: "3x",
+    label: "Average Engagement Boost",
+    description: "Typical improvement in social media engagement within 60 days.",
   },
   {
     icon: Users,
     value: "50+",
     label: "Clients Served",
-    description: "Growing businesses across 12+ industries nationwide.",
+    description: "Growing businesses across multiple industries nationwide.",
   },
   {
     icon: ThumbsUp,
     value: "98%",
-    label: "Approval Rate",
+    label: "Content Approval Rate",
     description: "Content that clients love — first time, every time.",
   },
 ];
@@ -85,6 +69,30 @@ const TEAM = [
   },
 ];
 
+const TESTIMONIALS_PLACEHOLDER = [
+  {
+    quote:
+      "Creo transformed our social media from a chore into our biggest growth channel.",
+    name: "Client A",
+    business: "Fashion & Apparel",
+    result: "3x engagement in 60 days",
+  },
+  {
+    quote:
+      "The team truly understands our brand voice. Every piece of content feels authentic.",
+    name: "Client B",
+    business: "Food & Beverage",
+    result: "1,200+ new followers in 3 weeks",
+  },
+  {
+    quote:
+      "We tried two agencies before Creo. The difference? They actually care about results.",
+    name: "Client C",
+    business: "Health & Wellness",
+    result: "40% increase in foot traffic",
+  },
+];
+
 export default function ClientsPage() {
   return (
     <>
@@ -95,7 +103,7 @@ export default function ClientsPage() {
             <h1 className="text-4xl font-extrabold tracking-tight text-brand-dark sm:text-5xl">
               Trusted by
               <br />
-              <span className="text-brand">50+ Growing Brands</span>
+              <span className="text-brand">Growing Brands</span>
             </h1>
             <p className="mt-6 text-lg leading-relaxed text-neutral sm:text-xl">
               From local startups to established businesses — we partner with
@@ -105,7 +113,7 @@ export default function ClientsPage() {
         </div>
       </section>
 
-      {/* Logo Wall */}
+      {/* Client Logos — Placeholder */}
       <section className="bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
@@ -117,28 +125,21 @@ export default function ClientsPage() {
             </h2>
           </div>
 
-          <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {CLIENT_LOGOS.map((logo) => (
-              <div
-                key={logo.name}
-                className="flex flex-col items-center justify-center rounded-xl border border-border bg-neutral-light p-6 transition-all hover:border-brand/30 hover:shadow-md"
-              >
-                <div className="mb-2 flex size-12 items-center justify-center rounded-full bg-brand-light text-brand">
-                  <span className="text-lg font-bold">
-                    {logo.name.charAt(0)}
-                  </span>
-                </div>
-                <span className="text-sm font-semibold text-brand-dark">
-                  {logo.name}
-                </span>
-                <span className="text-xs text-neutral/50">{logo.industry}</span>
-              </div>
-            ))}
+          <div className="mt-12 flex items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 py-12">
+            <div className="text-center">
+              <Building2 className="mx-auto size-10 text-gray-300" />
+              <p className="mt-3 text-sm font-medium text-gray-400">
+                Client logos coming soon
+              </p>
+              <p className="mt-1 text-xs text-gray-300">
+                Real client logos will be displayed here after launch.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials Carousel */}
+      {/* Testimonials — Placeholder */}
       <section className="bg-neutral-light py-16 sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
@@ -150,7 +151,35 @@ export default function ClientsPage() {
             </h2>
           </div>
 
-          <TestimonialsCarousel />
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {TESTIMONIALS_PLACEHOLDER.map((t, i) => (
+              <Card
+                key={i}
+                className="border-border bg-white"
+              >
+                <CardContent className="flex h-full flex-col p-6">
+                  <p className="flex-1 text-sm leading-relaxed text-neutral/70 italic">
+                    &ldquo;{t.quote}&rdquo;
+                  </p>
+                  <div className="mt-6 border-t border-border pt-4">
+                    <p className="text-sm font-semibold text-brand-dark">
+                      {t.name}
+                    </p>
+                    <p className="text-xs text-neutral/50">{t.business}</p>
+                  </div>
+                  <div className="mt-3 rounded-lg bg-success-light px-3 py-2">
+                    <p className="text-xs font-semibold text-success">
+                      {t.result}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <p className="mt-8 text-center text-xs text-neutral/40">
+            Real client testimonials will replace these placeholders after launch.
+          </p>
         </div>
       </section>
 
@@ -215,7 +244,9 @@ export default function ClientsPage() {
               >
                 <CardContent className="p-6">
                   <div className="mx-auto mb-4 flex size-20 items-center justify-center rounded-full bg-brand-light text-brand">
-                    <Users className="size-8" />
+                    <span className="text-xl font-bold">
+                      {member.name.split(" ").map((n) => n[0]).join("")}
+                    </span>
                   </div>
                   <h3 className="text-base font-semibold text-brand-dark">
                     {member.name}
@@ -257,7 +288,7 @@ export default function ClientsPage() {
               className={buttonVariants({
                 variant: "outline",
                 className:
-                  "border-white/30 text-deep navy hover:bg-white/10 rounded-lg h-12 px-8 text-base font-semibold",
+                  "border-white/30 text-white hover:bg-white/10 rounded-lg h-12 px-8 text-base font-semibold",
               })}
             >
               View Pricing
