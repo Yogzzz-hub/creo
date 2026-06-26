@@ -32,14 +32,19 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
+import { useSubscription } from "@/context/subscription-context"
 
 interface Plan {
   id: string
   name: string
-  price: number
-  period: string
-  features: string[]
-  recommended?: boolean
+  display_name: string
+  monthly_price: number
+  poster_quota: number
+  reel_quota: number
+  story_quota: number
+  revision_rounds: number
+  has_dedicated_manager: boolean
+  highlights: string[]
 }
 
 interface PaymentRecord {
@@ -49,50 +54,6 @@ interface PaymentRecord {
   status: string
   gateway: string
 }
-
-const AVAILABLE_PLANS: Plan[] = [
-  {
-    id: "starter",
-    name: "Starter Plan",
-    price: 2499,
-    period: "month",
-    features: [
-      "6 Posters / month",
-      "3 Reels / month",
-      "6 Stories / month",
-      "Content Calendar",
-    ],
-  },
-  {
-    id: "growth",
-    name: "Growth Plan",
-    price: 4999,
-    period: "month",
-    features: [
-      "12 Posters / month",
-      "6 Reels / month",
-      "12 Stories / month",
-      "Content Calendar",
-      "Priority Support",
-    ],
-    recommended: true,
-  },
-  {
-    id: "pro",
-    name: "Pro Plan",
-    price: 9999,
-    period: "month",
-    features: [
-      "24 Posters / month",
-      "12 Reels / month",
-      "24 Stories / month",
-      "Content Calendar",
-      "Priority Support",
-      "Dedicated Manager",
-      "Instagram Publishing",
-    ],
-  },
-]
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
@@ -120,11 +81,13 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
 
 export default function PaymentsPage() {
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null)
+  const [availablePlans, setAvailablePlans] = useState<Plan[]>([])
   const [paymentHistory, setPaymentHistory] = useState<PaymentRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [planChangeOpen, setPlanChangeOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
   const [isChangingPlan, setIsChangingPlan] = useState(false)
+  const { isLapsed } = useSubscription()
 
   useEffect(() => {
     async function fetchPayments() {
@@ -139,14 +102,22 @@ export default function PaymentsPage() {
           return
         }
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/history`,
-          {
+        const [plansRes, historyRes] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/plans`, {
             headers: { Authorization: `Bearer ${session.access_token}` },
-          }
-        )
+          }),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/history`, {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }),
+        ])
 
-        if (!res.ok) {
+        let plans: Plan[] = []
+        if (plansRes.ok) {
+          plans = await plansRes.json()
+          setAvailablePlans(plans)
+        }
+
+        if (!historyRes.ok) {
           setLoading(false)
           return
         }
@@ -159,11 +130,11 @@ export default function PaymentsPage() {
           current_period_start: string
           current_period_end: string
           created_at: string
-        }[] = await res.json()
+        }[] = await historyRes.json()
 
         const activeSub = data.find((s) => s.status === "active")
         if (activeSub) {
-          const plan = AVAILABLE_PLANS.find((p) => p.id === activeSub.plan_id)
+          const plan = plans.find((p) => p.id === activeSub.plan_id)
           if (plan) setCurrentPlan(plan)
         }
 
@@ -171,7 +142,7 @@ export default function PaymentsPage() {
           data.map((s) => ({
             id: s.id,
             date: s.created_at,
-            amount: AVAILABLE_PLANS.find((p) => p.id === s.plan_id)?.price ?? 0,
+            amount: plans.find((p) => p.id === s.plan_id)?.monthly_price ?? 0,
             status: s.status,
             gateway: s.gateway,
           }))
@@ -223,9 +194,9 @@ export default function PaymentsPage() {
         throw new Error(body.detail || "Failed to change plan")
       }
 
-      const plan = AVAILABLE_PLANS.find((p) => p.id === selectedPlan)
+      const plan = availablePlans.find((p) => p.id === selectedPlan)
       setCurrentPlan(plan ?? currentPlan)
-      toast.success(`Plan changed to ${plan?.name}. Changes take effect next billing cycle.`)
+      toast.success(`Plan changed to ${plan?.display_name}. Changes take effect next billing cycle.`)
       setPlanChangeOpen(false)
       setSelectedPlan(null)
     } catch (err) {
@@ -282,11 +253,11 @@ export default function PaymentsPage() {
       <Card className="rounded-xl shadow-[var(--shadow-card)] overflow-hidden">
         <div className="border-l-4 border-[#2B7BC4] bg-[#E8F4FD] p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-2">
+              <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Crown className="size-5 text-[#2B7BC4]" />
                 <h2 className="text-lg font-bold text-[#0D2137]">
-                  {currentPlan.name}
+                  {currentPlan.display_name}
                 </h2>
                 <Badge className="border bg-[#2B7BC4]/10 text-[#2B7BC4] border-[#2B7BC4]/20 text-xs">
                   Active
@@ -294,10 +265,10 @@ export default function PaymentsPage() {
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl font-bold text-[#0D2137]">
-                  {formatCurrency(currentPlan.price)}
+                  {formatCurrency(currentPlan.monthly_price)}
                 </span>
                 <span className="text-sm text-gray-500">
-                  / {currentPlan.period}
+                  / month
                 </span>
               </div>
             </div>
@@ -305,6 +276,7 @@ export default function PaymentsPage() {
             <Button
               variant="outline"
               className="border-[#2B7BC4] text-[#2B7BC4] hover:bg-[#2B7BC4] hover:text-white"
+              disabled={isLapsed}
               onClick={() => {
                 setSelectedPlan(currentPlan.id)
                 setPlanChangeOpen(true)
@@ -320,7 +292,7 @@ export default function PaymentsPage() {
             Included in your plan
           </h3>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {currentPlan.features.map((feature) => (
+            {currentPlan.highlights.map((feature) => (
               <div key={feature} className="flex items-center gap-2 text-sm text-gray-600">
                 <Check className="size-4 shrink-0 text-[#2B7BC4]" />
                 {feature}
@@ -339,7 +311,13 @@ export default function PaymentsPage() {
         <CardContent className="p-0">
           {paymentHistory.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <p className="text-sm text-gray-500">No payment history yet.</p>
+              <Download className="size-10 text-gray-300" />
+              <h3 className="mt-3 text-sm font-semibold text-[#0D2137]">
+                No payment history yet
+              </h3>
+              <p className="mt-1 text-xs text-gray-500">
+                Your transactions will appear here once you make a payment.
+              </p>
             </div>
           ) : (
             <Table>
@@ -408,7 +386,7 @@ export default function PaymentsPage() {
           </DialogHeader>
 
           <div className="space-y-3">
-            {AVAILABLE_PLANS.map((plan) => (
+            {availablePlans.map((plan) => (
               <button
                 key={plan.id}
                 onClick={() => setSelectedPlan(plan.id)}
@@ -423,11 +401,11 @@ export default function PaymentsPage() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    {plan.recommended && (
+                    {plan.name === "growth" && (
                       <Sparkles className="size-4 text-amber-500" />
                     )}
                     <span className="text-sm font-semibold text-[#0D2137]">
-                      {plan.name}
+                      {plan.display_name}
                     </span>
                     {plan.id === currentPlan.id && (
                       <Badge className="text-[10px] bg-gray-100 text-gray-500 border-gray-200">
@@ -437,14 +415,14 @@ export default function PaymentsPage() {
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-lg font-bold text-[#0D2137]">
-                      {formatCurrency(plan.price)}
+                      {formatCurrency(plan.monthly_price)}
                     </span>
                     <span className="text-xs text-gray-500">/mo</span>
                   </div>
                 </div>
 
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {plan.features.slice(0, 3).map((feature) => (
+                  {plan.highlights.slice(0, 3).map((feature) => (
                     <span
                       key={feature}
                       className="rounded-md bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600"
@@ -452,9 +430,9 @@ export default function PaymentsPage() {
                       {feature}
                     </span>
                   ))}
-                  {plan.features.length > 3 && (
+                  {plan.highlights.length > 3 && (
                     <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[10px] text-gray-400">
-                      +{plan.features.length - 3} more
+                      +{plan.highlights.length - 3} more
                     </span>
                   )}
                 </div>

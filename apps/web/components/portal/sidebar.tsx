@@ -42,7 +42,7 @@ export function DesktopSidebar() {
       <div className="flex grow flex-col gap-y-6 bg-[#0D2137] px-4 pt-6 pb-4">
         <Link href="/portal" className="flex items-center gap-2 px-2">
           <span className="text-xl font-bold text-white tracking-tight">
-            creo
+            Creo
           </span>
         </Link>
 
@@ -54,7 +54,7 @@ export function DesktopSidebar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-r-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-r-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0EA5E9]/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D2137]",
                   active
                     ? "border-l-[3px] border-[#2B7BC4] bg-[#1a3a5c] text-white"
                     : "border-l-[3px] border-transparent text-[#6BAED6] hover:bg-[#1a3a5c]/50 hover:text-white"

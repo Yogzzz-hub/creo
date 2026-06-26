@@ -2,16 +2,21 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
 import { MailCheck, Loader2, RefreshCw } from "lucide-react";
 
+const RESEND_COOLDOWN = 60;
+
 export default function VerifyPage() {
   const router = useRouter();
+  const supabase = createClient();
 
-  const [cooldown, setCooldown] = useState(60);
+  const [cooldown, setCooldown] = useState(RESEND_COOLDOWN);
   const [isResending, setIsResending] = useState(false);
   const [canResend, setCanResend] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
 
   useEffect(() => {
     if (cooldown <= 0) {
@@ -32,18 +37,28 @@ export default function VerifyPage() {
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  const handleResend = useCallback(() => {
+  const handleResend = useCallback(async () => {
     if (!canResend) return;
 
     setIsResending(true);
     setCanResend(false);
 
-    // TODO: Wire to API — POST /api/v1/auth/resend-verification
-    setTimeout(() => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        await supabase.auth.resend({
+          type: "signup",
+          email: user.email,
+        });
+      }
+      setResendSent(true);
+    } catch {
+      // Silent fail — cooldown still resets
+    } finally {
       setIsResending(false);
-      setCooldown(60);
-    }, 1500);
-  }, [canResend]);
+      setCooldown(RESEND_COOLDOWN);
+    }
+  }, [canResend, supabase]);
 
   const formatCooldown = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -82,7 +97,7 @@ export default function VerifyPage() {
           ) : canResend ? (
             <>
               <RefreshCw className="mr-2 size-4" />
-              Resend Email
+              {resendSent ? "Resend Again" : "Resend Email"}
             </>
           ) : (
             `Resend in ${formatCooldown(cooldown)}`
@@ -103,15 +118,17 @@ export default function VerifyPage() {
         </div>
       </div>
 
-      <div className="mt-8 pt-4 border-t border-dashed border-border">
-        <Button
-          variant="outline"
-          className="w-full text-text-muted border-dashed hover:bg-bg-internal"
-          onClick={() => router.push("/onboarding/terms")}
-        >
-          [DEV] Simulate Verification
-        </Button>
-      </div>
+      {process.env.NODE_ENV === "development" && (
+        <div className="mt-8 pt-4 border-t border-dashed border-border">
+          <Button
+            variant="outline"
+            className="w-full text-text-muted border-dashed hover:bg-bg-internal"
+            onClick={() => router.push("/onboarding/terms")}
+          >
+            [DEV] Simulate Verification
+          </Button>
+        </div>
+      )}
     </CardContent>
   );
 }

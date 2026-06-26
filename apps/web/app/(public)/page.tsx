@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import {
   ArrowRight,
@@ -10,8 +8,8 @@ import {
   ThumbsUp,
   Rocket,
 } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { buttonVariants } from "@/components/ui/button";
+import { LeadMagnetForm } from "@/components/public/lead-magnet-form";
 
 const LOCAL_BUSINESS_SCHEMA = {
   "@context": "https://schema.org",
@@ -85,6 +83,8 @@ const STEPS = [
   },
 ];
 
+const WHATSAPP_NUMBER = "919876543210";
+
 export default function HomePage() {
   return (
     <>
@@ -132,7 +132,9 @@ export default function HomePage() {
                   See Our Plans
                 </Link>
                 <Link
-                  href="https://wa.me/"
+                  href={`https://wa.me/${WHATSAPP_NUMBER}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={buttonVariants({
                     variant: "outline",
                     className:
@@ -145,12 +147,37 @@ export default function HomePage() {
             </div>
 
             <div className="hidden lg:block">
-              <div className="aspect-video rounded-2xl bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-                <div className="text-center text-white/60">
-                  <Rocket className="mx-auto size-12 mb-3" />
-                  <p className="text-sm font-medium">
-                    Looping video / creative collage
-                  </p>
+              <div className="aspect-video rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 overflow-hidden">
+                <div className="grid grid-cols-3 gap-3 p-6">
+                  <div className="space-y-3">
+                    <div className="aspect-square rounded-xl bg-white/15 flex items-center justify-center">
+                      <span className="text-3xl font-bold text-white/80">50+</span>
+                    </div>
+                    <div className="aspect-[4/3] rounded-xl bg-white/10" />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="aspect-[4/3] rounded-xl bg-white/10" />
+                    <div className="aspect-square rounded-xl bg-white/15 flex items-center justify-center">
+                      <span className="text-3xl font-bold text-white/80">3x</span>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="aspect-square rounded-xl bg-white/15 flex items-center justify-center">
+                      <span className="text-3xl font-bold text-white/80">98%</span>
+                    </div>
+                    <div className="aspect-[4/3] rounded-xl bg-white/10" />
+                  </div>
+                </div>
+                <div className="px-6 pb-6">
+                  <Link
+                    href="/signup?plan=growth"
+                    className={buttonVariants({
+                      className:
+                        "w-full bg-white text-brand-dark hover:bg-white/90 rounded-lg px-6 h-10 text-sm font-semibold",
+                    })}
+                  >
+                    Get Started <ArrowRight className="ml-1 size-4" />
+                  </Link>
                 </div>
               </div>
             </div>
@@ -219,20 +246,8 @@ export default function HomePage() {
               businesses. Plan 30 days of posts in under an hour.
             </p>
 
-            <form
-              onSubmit={(e) => e.preventDefault()}
-              className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center"
-            >
-              <Input
-                type="email"
-                placeholder="you@business.com"
-                className="h-12 flex-1 sm:max-w-xs rounded-lg border-border bg-white px-4 text-sm"
-              />
-              <Button className="h-12 rounded-lg bg-brand px-6 text-white hover:bg-brand/90">
-                Get the Template
-                <ArrowRight className="ml-1 size-4" />
-              </Button>
-            </form>
+            <LeadMagnetForm />
+
             <p className="mt-3 text-xs text-neutral/40">
               No spam. Unsubscribe anytime.
             </p>

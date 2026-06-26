@@ -50,7 +50,7 @@ export default function AdminLayout({
         <div className="flex grow flex-col gap-y-6 bg-[#0D2137] px-4 pt-6 pb-4">
           <Link href="/admin" className="flex items-center gap-2 px-2">
             <span className="text-xl font-bold text-white tracking-tight">
-              creo
+              Creo
             </span>
             <span className="ml-1 rounded bg-[#2B7BC4] px-1.5 py-0.5 text-[10px] font-semibold text-white uppercase">
               Admin

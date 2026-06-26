@@ -20,14 +20,29 @@ const signupSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+const phoneSchema = z.object({
+  fullName: z.string().min(2, "Full name must be at least 2 characters"),
+  businessName: z.string().optional(),
+  phone: z.string().min(10, "Please enter a valid phone number"),
+});
+
 type SignupFormData = z.infer<typeof signupSchema>;
+type PhoneFormData = z.infer<typeof phoneSchema>;
+
+type AuthMode = "email" | "phone";
 
 export default function SignupPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  const [mode, setMode] = useState<AuthMode>("email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Phone OTP state
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [phoneData, setPhoneData] = useState<PhoneFormData | null>(null);
 
   const {
     register,
@@ -41,7 +56,6 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
 
-    // Step A: Create Supabase auth user
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
@@ -65,10 +79,8 @@ export default function SignupPage() {
       return;
     }
 
-    // Step B: Extract auth_id (Supabase user.id)
     const authId = authData.user.id;
 
-    // Step C: Register user in FastAPI backend
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/register`,
@@ -97,7 +109,86 @@ export default function SignupPage() {
       return;
     }
 
-    // Step D: Redirect to plan selection, preserving any existing search params
+    const params = new URLSearchParams(window.location.search);
+    const planParam = params.get("plan");
+    const redirectUrl = planParam
+      ? `/signup/plan?plan=${encodeURIComponent(planParam)}`
+      : "/signup/plan";
+    router.push(redirectUrl);
+  }
+
+  async function handleSendPhoneOtp(data: PhoneFormData) {
+    setLoading(true);
+    setError(null);
+
+    const { error } = await supabase.auth.signInWithOtp({
+      phone: data.phone,
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
+
+    setPhoneData(data);
+    setOtpSent(true);
+    setLoading(false);
+  }
+
+  async function handleVerifyPhoneOtp(e: React.FormEvent) {
+    e.preventDefault();
+    if (!phoneData) return;
+
+    setLoading(true);
+    setError(null);
+
+    const { data: authData, error: verifyError } = await supabase.auth.verifyOtp({
+      phone: phoneData.phone,
+      token: otp,
+      type: "sms",
+    });
+
+    if (verifyError) {
+      setError(verifyError.message);
+      setLoading(false);
+      return;
+    }
+
+    if (!authData.user) {
+      setError("Verification failed. Please try again.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/register`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            auth_id: authData.user.id,
+            email: authData.user.email || null,
+            phone: phoneData.phone,
+            full_name: phoneData.fullName,
+            business_name: phoneData.businessName || null,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const result = await response.json();
+        setError(result.detail || "Registration failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError("Failed to connect to server. Please try again.");
+      setLoading(false);
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const planParam = params.get("plan");
     const redirectUrl = planParam
@@ -118,100 +209,227 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-text">
-                Full Name <span className="text-error">*</span>
-              </Label>
-              <Input
-                id="fullName"
-                placeholder="John Doe"
-                {...register("fullName")}
-                className="border-border focus:border-brand focus:ring-brand"
-              />
-              {errors.fullName && (
-                <p className="text-sm text-error">{errors.fullName.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="businessName" className="text-text">
-                Business Name
-              </Label>
-              <Input
-                id="businessName"
-                placeholder="Your Business (optional)"
-                {...register("businessName")}
-                className="border-border focus:border-brand focus:ring-brand"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="text-text">
-                Phone Number
-              </Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="+91 98765 43210 (optional)"
-                {...register("phone")}
-                className="border-border focus:border-brand focus:ring-brand"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-text">
-                Email <span className="text-error">*</span>
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                {...register("email")}
-                className="border-border focus:border-brand focus:ring-brand"
-              />
-              {errors.email && (
-                <p className="text-sm text-error">{errors.email.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-text">
-                Password <span className="text-error">*</span>
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="At least 6 characters"
-                {...register("password")}
-                className="border-border focus:border-brand focus:ring-brand"
-              />
-              {errors.password && (
-                <p className="text-sm text-error">{errors.password.message}</p>
-              )}
-            </div>
-
-            {error && (
-              <div className="text-sm text-error bg-error-light p-3 rounded-md">
-                {error}
+          {mode === "email" ? (
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName" className="text-text">
+                  Full Name <span className="text-error">*</span>
+                </Label>
+                <Input
+                  id="fullName"
+                  placeholder="John Doe"
+                  {...register("fullName")}
+                  className="border-border focus:border-brand focus:ring-brand"
+                />
+                {errors.fullName && (
+                  <p className="text-sm text-error">{errors.fullName.message}</p>
+                )}
               </div>
-            )}
 
-            <Button
-              type="submit"
-              className="w-full bg-brand hover:bg-brand/90 text-white"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
-                </>
-              ) : (
-                "Create Account"
+              <div className="space-y-2">
+                <Label htmlFor="businessName" className="text-text">
+                  Business Name
+                </Label>
+                <Input
+                  id="businessName"
+                  placeholder="Your Business (optional)"
+                  {...register("businessName")}
+                  className="border-border focus:border-brand focus:ring-brand"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-text">
+                  Phone Number
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+91 98765 43210 (optional)"
+                  {...register("phone")}
+                  className="border-border focus:border-brand focus:ring-brand"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-text">
+                  Email <span className="text-error">*</span>
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  {...register("email")}
+                  className="border-border focus:border-brand focus:ring-brand"
+                />
+                {errors.email && (
+                  <p className="text-sm text-error">{errors.email.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-text">
+                  Password <span className="text-error">*</span>
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="At least 6 characters"
+                  {...register("password")}
+                  className="border-border focus:border-brand focus:ring-brand"
+                />
+                {errors.password && (
+                  <p className="text-sm text-error">{errors.password.message}</p>
+                )}
+              </div>
+
+              {error && (
+                <div className="text-sm text-error bg-error-light p-3 rounded-md">
+                  {error}
+                </div>
               )}
-            </Button>
-          </form>
+
+              <Button
+                type="submit"
+                className="w-full bg-brand hover:bg-brand/90 text-white"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  "Create Account"
+                )}
+              </Button>
+            </form>
+          ) : !otpSent ? (
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const form = e.target as HTMLFormElement;
+              const fullName = (form.elements.namedItem("fullNamePhone") as HTMLInputElement).value;
+              const businessName = (form.elements.namedItem("businessNamePhone") as HTMLInputElement).value;
+              const phone = (form.elements.namedItem("phoneSignup") as HTMLInputElement).value;
+              handleSendPhoneOtp({ fullName, businessName: businessName || undefined, phone });
+            }} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullNamePhone" className="text-text">
+                  Full Name <span className="text-error">*</span>
+                </Label>
+                <Input
+                  id="fullNamePhone"
+                  placeholder="John Doe"
+                  required
+                  className="border-border focus:border-brand focus:ring-brand"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="businessNamePhone" className="text-text">
+                  Business Name
+                </Label>
+                <Input
+                  id="businessNamePhone"
+                  placeholder="Your Business (optional)"
+                  className="border-border focus:border-brand focus:ring-brand"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phoneSignup" className="text-text">
+                  Phone Number <span className="text-error">*</span>
+                </Label>
+                <Input
+                  id="phoneSignup"
+                  type="tel"
+                  placeholder="+91 98765 43210"
+                  required
+                  className="border-border focus:border-brand focus:ring-brand"
+                />
+                <p className="text-xs text-text-muted">
+                  We&apos;ll send a one-time password to verify your number.
+                </p>
+              </div>
+
+              {error && (
+                <div className="text-sm text-error bg-error-light p-3 rounded-md">
+                  {error}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full bg-brand hover:bg-brand/90 text-white"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending OTP...
+                  </>
+                ) : (
+                  "Send OTP"
+                )}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyPhoneOtp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp" className="text-text">
+                  Enter OTP
+                </Label>
+                <Input
+                  id="otp"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="6-digit code"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  required
+                  maxLength={6}
+                  className="border-border focus:border-brand focus:ring-brand"
+                />
+                <p className="text-xs text-text-muted">
+                  OTP sent to {phoneData?.phone}
+                </p>
+              </div>
+
+              {error && (
+                <div className="text-sm text-error bg-error-light p-3 rounded-md">
+                  {error}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                className="w-full bg-brand hover:bg-brand/90 text-white"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  "Verify & Create Account"
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full text-text-muted"
+                onClick={() => {
+                  setOtpSent(false);
+                  setOtp("");
+                  setError(null);
+                }}
+              >
+                Use a different number
+              </Button>
+            </form>
+          )}
 
           <div className="relative mt-6">
             <div className="absolute inset-0 flex items-center">
@@ -233,11 +451,16 @@ export default function SignupPage() {
             </Button>
             <Button
               variant="outline"
-              disabled
-              className="border-border text-text-muted cursor-not-allowed opacity-50"
+              onClick={() => {
+                setMode(mode === "email" ? "phone" : "email");
+                setError(null);
+                setOtpSent(false);
+                setOtp("");
+              }}
+              className="border-border"
             >
               <Phone className="mr-2 h-4 w-4" />
-              Phone
+              {mode === "email" ? "Phone" : "Email"}
             </Button>
           </div>
         </CardContent>

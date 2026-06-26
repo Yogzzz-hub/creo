@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Boolean, DateTime, Enum, Numeric, Integer, Text, func
+from sqlalchemy import Boolean, DateTime, Enum, JSON, Numeric, Integer, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -29,6 +29,8 @@ class Plan(Base):
     story_quota: Mapped[int] = mapped_column(Integer, nullable=False)
     revision_rounds: Mapped[int] = mapped_column(Integer, nullable=False)
     has_dedicated_manager: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    highlights: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    is_recommended: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

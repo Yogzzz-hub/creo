@@ -42,6 +42,8 @@ interface Plan {
   story_quota: number;
   revision_rounds: number;
   has_dedicated_manager: boolean;
+  highlights: string[];
+  is_recommended: boolean;
   is_active: boolean;
 }
 
@@ -83,29 +85,6 @@ function formatPrice(price: number): string {
     maximumFractionDigits: 0,
   }).format(price);
 }
-
-const planHighlights: Record<string, string[]> = {
-  starter: [
-    "Social media management for 1 platform",
-    "Basic content calendar",
-    "Monthly performance report",
-    "Email support",
-  ],
-  growth: [
-    "Social media management for 2 platforms",
-    "Advanced content calendar with revisions",
-    "Bi-weekly performance reports",
-    "Priority email & chat support",
-    "Dedicated account manager",
-  ],
-  pro: [
-    "Social media management for 3+ platforms",
-    "Full content calendar with unlimited revisions",
-    "Weekly performance reports & AI insights",
-    "Priority support with live chat",
-    "Instagram auto-publishing",
-  ],
-};
 
 export default async function PricingPage() {
   const [plans, settings] = await Promise.all([
@@ -154,8 +133,8 @@ export default async function PricingPage() {
           ) : (
             <div className="grid gap-8 lg:grid-cols-3">
               {plans.map((plan) => {
-                const isPopular = plan.name === "growth";
-                const highlights = planHighlights[plan.name] ?? [];
+                const isPopular = plan.is_recommended;
+                const highlights = plan.highlights ?? [];
 
                 return (
                   <Card

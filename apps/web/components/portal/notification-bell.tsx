@@ -164,8 +164,14 @@ export function NotificationBell() {
               Loading...
             </div>
           ) : notifications.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-gray-400">
-              No notifications yet.
+            <div className="flex flex-col items-center px-4 py-8 text-center">
+              <Bell className="size-8 text-gray-300" />
+              <p className="mt-2 text-sm font-medium text-[#0D2137]">
+                No notifications yet
+              </p>
+              <p className="mt-0.5 text-xs text-gray-400">
+                Updates about your content and account will appear here.
+              </p>
             </div>
           ) : (
             notifications.map((notification) => (
