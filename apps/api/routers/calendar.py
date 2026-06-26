@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import require_client
+from core.security import require_active_client
 from models.content_calendar import ContentCalendar
 from models.user import User
 from schemas.portal import CalendarEntryResponse
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/v1/calendar", tags=["calendar"])
 
 @router.get("", response_model=list[CalendarEntryResponse])
 async def list_calendar_entries(
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(

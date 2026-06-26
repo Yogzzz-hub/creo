@@ -1,7 +1,7 @@
 """add_scarcity_slots_to_platform_settings
 
-Revision ID: 028
-Revises: 027
+Revision ID: 029
+Revises: 028
 Create Date: 2026-06-26
 
 """
@@ -9,8 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "028"
-down_revision = "027"
+revision = "029"
+down_revision = "028"
 branch_labels = None
 depends_on = None
 

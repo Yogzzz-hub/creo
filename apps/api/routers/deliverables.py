@@ -1,6 +1,6 @@
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -10,9 +10,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
 from core.database import get_db
-from core.security import decrypt_token, encrypt_token, require_client, require_team_member
+from core.security import decrypt_token, encrypt_token, require_active_client, require_team_member
 from models.deliverable import Deliverable, DeliverableComment
-from models.enums import DeliverableStatus
+from models.enums import DeliverableStatus, TaskStatus
+from models.platform_settings import PlatformSettings
+from models.task import Task
 from models.user import User
 from schemas.deliverable import (
     DeliverableCommentCreate,
@@ -35,6 +37,8 @@ from services.instagram import publish_media, refresh_access_token
 from services.storage import generate_signed_download_url, generate_signed_upload_url
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_REVISION_SLA_HOURS = 24
 
 router = APIRouter(prefix="/api/v1/deliverables", tags=["deliverables"])
 
@@ -91,7 +95,7 @@ async def get_upload_url(
 
 @router.get("", response_model=list[DeliverableResponse])
 async def list_deliverables(
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -106,7 +110,7 @@ async def list_deliverables(
 @router.get("/{deliverable_id}", response_model=DeliverableResponse)
 async def get_deliverable(
     deliverable_id: str,
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -129,7 +133,7 @@ async def get_deliverable(
 @router.get("/{deliverable_id}/download", response_model=DownloadResponse)
 async def download_deliverable(
     deliverable_id: str,
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -165,7 +169,7 @@ async def download_deliverable(
 @router.post("/{deliverable_id}/approve", response_model=DeliverableResponse)
 async def approve_deliverable(
     deliverable_id: str,
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -182,8 +186,27 @@ async def approve_deliverable(
             detail="Deliverable not found",
         )
 
+    if deliverable.status not in (
+        DeliverableStatus.pending_approval,
+        DeliverableStatus.revised_pending_approval,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot approve deliverable in '{deliverable.status.value}' status",
+        )
+
+    now = datetime.now(timezone.utc)
     deliverable.status = DeliverableStatus.approved
-    deliverable.approved_at = datetime.now(timezone.utc)
+    deliverable.approved_at = now
+
+    task_result = await db.execute(
+        select(Task).where(Task.id == deliverable.task_id)
+    )
+    task = task_result.scalar_one_or_none()
+
+    if task is not None:
+        task.status = TaskStatus.approved
+
     await db.commit()
     await db.refresh(deliverable)
 
@@ -194,7 +217,7 @@ async def approve_deliverable(
 async def reject_deliverable(
     deliverable_id: str,
     payload: DeliverableRejectRequest,
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -211,8 +234,18 @@ async def reject_deliverable(
             detail="Deliverable not found",
         )
 
+    if deliverable.status not in (
+        DeliverableStatus.pending_approval,
+        DeliverableStatus.revised_pending_approval,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot reject deliverable in '{deliverable.status.value}' status",
+        )
+
+    now = datetime.now(timezone.utc)
     deliverable.status = DeliverableStatus.rejected
-    deliverable.rejected_at = datetime.now(timezone.utc)
+    deliverable.rejected_at = now
 
     rejection_comment = DeliverableComment(
         deliverable_id=deliverable.id,
@@ -221,6 +254,25 @@ async def reject_deliverable(
         is_rejection_reason=True,
     )
     db.add(rejection_comment)
+
+    task_result = await db.execute(
+        select(Task).where(Task.id == deliverable.task_id)
+    )
+    task = task_result.scalar_one_or_none()
+
+    if task is not None:
+        task.status = TaskStatus.revision
+
+        settings_result = await db.execute(
+            select(PlatformSettings).where(PlatformSettings.id == "default")
+        )
+        platform_settings = settings_result.scalar_one_or_none()
+        sla_hours = (
+            platform_settings.sla_revision_hours
+            if platform_settings
+            else DEFAULT_REVISION_SLA_HOURS
+        )
+        task.due_date = (now + timedelta(hours=sla_hours)).date()
 
     await db.commit()
     await db.refresh(deliverable)
@@ -231,7 +283,7 @@ async def reject_deliverable(
 @router.get("/{deliverable_id}/comments", response_model=list[DeliverableCommentOut])
 async def list_deliverable_comments(
     deliverable_id: str,
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -264,7 +316,7 @@ async def list_deliverable_comments(
 async def create_deliverable_comment(
     deliverable_id: str,
     payload: DeliverableCommentCreate,
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(

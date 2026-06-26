@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from starlette.concurrency import run_in_threadpool
 
 from core.database import get_db
-from core.security import require_client
+from core.security import require_active_client
 from models.addon import Addon, AddonPricing
 from models.enums import AddonStatus, DeliverableType, PaymentGateway, TaskStatus
 from models.task import Task
@@ -88,7 +88,7 @@ async def _check_monthly_quota(
 
 @router.get("/pricing", response_model=list[AddonPricingResponse])
 async def get_addon_pricing(
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -100,7 +100,7 @@ async def get_addon_pricing(
 @router.post("/purchase")
 async def purchase_addon(
     payload: AddonPurchaseRequest,
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     pricing_result = await db.execute(
@@ -197,7 +197,7 @@ async def purchase_addon(
 @router.post("/purchase-batch")
 async def purchase_addon_batch(
     payload: BatchAddonPurchaseRequest,
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     results = []
