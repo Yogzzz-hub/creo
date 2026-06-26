@@ -15,6 +15,7 @@ class PlatformSettings(Base):
     )
     sla_delivery_days: Mapped[int] = mapped_column(Integer, nullable=False, default=3)
     sla_revision_hours: Mapped[int] = mapped_column(Integer, nullable=False, default=48)
+    scarcity_slots_available: Mapped[int] = mapped_column(Integer, nullable=False, server_default="5")
     updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True
     )

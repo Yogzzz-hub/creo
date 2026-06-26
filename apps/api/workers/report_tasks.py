@@ -7,8 +7,16 @@ from celery import shared_task
 from sqlalchemy import func, select
 
 from core.database import async_session
+from models.addon import Addon
+from models.custom_pricing import CustomPricing
 from models.deliverable import Deliverable
-from models.enums import AccountStatus, DeliverableStatus, TaskStatus
+from models.enums import (
+    AccountStatus,
+    AddonStatus,
+    CustomPricingStatus,
+    DeliverableStatus,
+    TaskStatus,
+)
 from models.subscription import Subscription
 from models.task import Task
 from models.user import User
@@ -288,8 +296,23 @@ async def _fetch_financial_data() -> tuple[list[dict], list[dict]]:
             .join(Subscription, Subscription.plan_id == Plan.id)
             .where(Subscription.status == "active")
         )
-        mrr = mrr_result.scalar() or 0.0
+        mrr = float(mrr_result.scalar() or 0.0)
 
+        addon_revenue_result = await db.execute(
+            select(func.coalesce(func.sum(Addon.total_price), 0)).where(
+                Addon.status.in_([AddonStatus.completed, AddonStatus.approved])
+            )
+        )
+        addon_revenue = float(addon_revenue_result.scalar() or 0.0)
+
+        custom_pricing_revenue_result = await db.execute(
+            select(func.coalesce(func.sum(CustomPricing.custom_price), 0)).where(
+                CustomPricing.status == CustomPricingStatus.approved
+            )
+        )
+        custom_pricing_revenue = float(custom_pricing_revenue_result.scalar() or 0.0)
+
+        total_revenue = mrr + addon_revenue + custom_pricing_revenue
         arpu = (mrr / active_subs) if active_subs > 0 else 0.0
 
         plan_breakdown_result = await db.execute(
@@ -306,6 +329,9 @@ async def _fetch_financial_data() -> tuple[list[dict], list[dict]]:
 
     summary_data = [
         {"Metric": "Total MRR (INR)", "Value": round(mrr, 2)},
+        {"Metric": "Addon Revenue (INR)", "Value": round(addon_revenue, 2)},
+        {"Metric": "Custom Pricing Revenue (INR)", "Value": round(custom_pricing_revenue, 2)},
+        {"Metric": "Total Revenue (INR)", "Value": round(total_revenue, 2)},
         {"Metric": "Active Subscriptions", "Value": active_subs},
         {"Metric": "Average Revenue Per User", "Value": round(arpu, 2)},
         {"Metric": "Report Generated", "Value": now.isoformat()},
