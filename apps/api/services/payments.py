@@ -154,7 +154,6 @@ def update_razorpay_subscription_plan(
         "A new subscription must be created for the new plan."
     )
 
-
 def update_stripe_subscription_plan(
     gateway_subscription_id: str,
     new_gateway_plan_id: str,

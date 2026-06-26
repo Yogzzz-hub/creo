@@ -55,6 +55,7 @@ class TicketType(str, enum.Enum):
     general_support = "general_support"
     billing_issue = "billing_issue"
     content_brief_update = "content_brief_update"
+    calendar_request = "calendar_request"
 
 
 class TicketStatus(str, enum.Enum):
