@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
 from core.database import get_db
-from core.security import RequireClient, encrypt_token
+from core.security import RequireActiveClient, encrypt_token
 from models.user import User
 from schemas.payments import TwoFactorRequest
 from schemas.user import UserOut, UserUpdate
@@ -31,7 +31,7 @@ class InstagramConnectResponse(BaseModel):
 @router.post("/instagram", response_model=InstagramConnectResponse)
 async def connect_instagram(
     payload: InstagramConnectRequest,
-    current_user: RequireClient,
+    current_user: RequireActiveClient,
     db: AsyncSession = Depends(get_db),
 ):
     try:
@@ -86,7 +86,7 @@ async def connect_instagram(
 @router.put("", response_model=UserOut)
 async def update_account_profile(
     payload: UserUpdate,
-    current_user: RequireClient,
+    current_user: RequireActiveClient,
     db: AsyncSession = Depends(get_db),
 ):
     update_data = payload.model_dump(exclude_unset=True)
@@ -120,7 +120,7 @@ class TwoFactorResponse(BaseModel):
 @router.patch("/2fa", response_model=TwoFactorResponse)
 async def toggle_two_factor(
     payload: TwoFactorRequest,
-    current_user: RequireClient,
+    current_user: RequireActiveClient,
     db: AsyncSession = Depends(get_db),
 ):
     current_user.two_fa_enabled = payload.enabled
@@ -160,7 +160,7 @@ class InstagramDisconnectResponse(BaseModel):
 
 @router.delete("/instagram", response_model=InstagramDisconnectResponse)
 async def disconnect_instagram(
-    current_user: RequireClient,
+    current_user: RequireActiveClient,
     db: AsyncSession = Depends(get_db),
 ):
     current_user.instagram_access_token = None

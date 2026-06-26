@@ -1,15 +1,15 @@
 """create_platform_settings
 
-Revision ID: 030
-Revises: 029
+Revision ID: 031
+Revises: 030
 Create Date: 2026-06-26
 
 """
 from alembic import op
 import sqlalchemy as sa
 
-revision = "030"
-down_revision = "029"
+revision = "031"
+down_revision = "030"
 branch_labels = None
 depends_on = None
 

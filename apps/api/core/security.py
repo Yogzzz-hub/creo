@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
 from core.database import get_db
-from models.enums import UserRole
+from models.enums import AccountStatus, UserRole
 from models.user import User
 
 oauth2_scheme = HTTPBearer()
@@ -89,7 +89,7 @@ async def get_current_user(
     token = credentials.credentials
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail={"error_code": "token_invalid", "message": "Could not validate credentials"},
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
@@ -113,11 +113,22 @@ async def get_current_user(
         raise credentials_exception
     if user.deleted_at is not None:
         raise credentials_exception
-    if user.account_status.value in ("lapsed", "suspended"):
+
+    if user.account_status == AccountStatus.lapsed:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Account is not active. Please contact support.",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error_code": "account_lapsed",
+                "message": "Your subscription has lapsed. Renew to restore full access.",
+            },
+        )
+    if user.account_status == AccountStatus.suspended:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error_code": "account_suspended",
+                "message": "Your account has been suspended. Please contact support.",
+            },
         )
 
     if issued_at is not None:
@@ -126,7 +137,7 @@ async def get_current_user(
         if token_age > max_age:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Session expired. Please sign in again.",
+                detail={"error_code": "session_expired", "message": "Session expired. Please sign in again."},
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
@@ -156,7 +167,27 @@ require_super_admin = require_role(UserRole.super_admin)
 require_investor_relations = require_role(UserRole.investor_relations)
 require_admin_or_kpi = require_role(UserRole.admin, UserRole.super_admin, UserRole.team_lead, UserRole.investor_relations)
 
+
+async def require_active_client(current_user: CurrentUser) -> User:
+    if current_user.role != UserRole.client:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Role '{current_user.role.value}' is not authorized to access this resource",
+        )
+    if current_user.account_status != AccountStatus.active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error_code": "pending_onboarding",
+                "message": "Please complete onboarding before accessing this resource.",
+                "account_status": current_user.account_status.value,
+            },
+        )
+    return current_user
+
+
 RequireClient = Annotated[User, Depends(require_client)]
+RequireActiveClient = Annotated[User, Depends(require_active_client)]
 RequireTeamMember = Annotated[User, Depends(require_team_member)]
 RequireTeamLead = Annotated[User, Depends(require_team_lead)]
 RequireSales = Annotated[User, Depends(require_sales)]

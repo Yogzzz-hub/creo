@@ -1,15 +1,15 @@
 """add_notifications_user_id_index
 
-Revision ID: 029
-Revises: 028
+Revision ID: 030
+Revises: 029
 Create Date: 2026-06-24
 
 """
 from alembic import op
 
 
-revision = "029"
-down_revision = "028"
+revision = "030"
+down_revision = "029"
 branch_labels = None
 depends_on = None
 

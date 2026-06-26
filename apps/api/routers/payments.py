@@ -10,7 +10,7 @@ from starlette.concurrency import run_in_threadpool
 
 from core.config import settings
 from core.database import get_db
-from core.security import CurrentUser, require_client
+from core.security import CurrentUser, require_active_client
 from models.enums import AccountStatus, PaymentGateway, PlanName
 from models.plan import Plan
 from models.subscription import Subscription
@@ -28,7 +28,7 @@ router = APIRouter(prefix="/api/v1/payments", tags=["payments"])
 
 @router.get("/history", response_model=list[PaymentHistoryResponse])
 async def get_payment_history(
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -61,7 +61,7 @@ async def get_payment_history(
 @router.post("/change-plan")
 async def change_plan(
     payload: PlanChangeRequest,
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     plan_result = await db.execute(
@@ -164,7 +164,7 @@ class CreateSubscriptionResponse(BaseModel):
 @router.post("/create-subscription", response_model=CreateSubscriptionResponse)
 async def create_subscription(
     payload: CreateSubscriptionRequest,
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     plan_result = await db.execute(

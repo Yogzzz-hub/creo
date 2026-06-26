@@ -23,14 +23,18 @@ def setup_global_middleware_and_exceptions(app: FastAPI) -> None:
     # 2. Handle Starlette/FastAPI HTTPException (4xx) — standardized envelope
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+        if isinstance(exc.detail, dict):
+            error_body = exc.detail
+        else:
+            error_body = {
+                "code": exc.status_code,
+                "message": exc.detail if isinstance(exc.detail, str) else str(exc.detail),
+            }
         return JSONResponse(
             status_code=exc.status_code,
             content={
                 "data": None,
-                "error": {
-                    "code": exc.status_code,
-                    "message": exc.detail if isinstance(exc.detail, str) else str(exc.detail),
-                },
+                "error": error_body,
                 "meta": None,
             },
         )
