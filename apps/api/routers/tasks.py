@@ -27,6 +27,26 @@ from schemas.task import (
 
 router = APIRouter(prefix="/api/v1/tasks", tags=["tasks"])
 
+VALID_TASK_TRANSITIONS: dict[TaskStatus, set[TaskStatus]] = {
+    TaskStatus.pending: {TaskStatus.in_progress, TaskStatus.assignment_requested},
+    TaskStatus.in_progress: {TaskStatus.submitted, TaskStatus.overdue},
+    TaskStatus.submitted: {TaskStatus.approved, TaskStatus.revision},
+    TaskStatus.revision: {TaskStatus.in_progress, TaskStatus.submitted},
+    TaskStatus.assignment_requested: {TaskStatus.pending},
+    TaskStatus.overdue: {TaskStatus.in_progress},
+    TaskStatus.approved: set(),
+}
+
+
+def _validate_task_transition(current: TaskStatus, target: TaskStatus) -> None:
+    allowed = VALID_TASK_TRANSITIONS.get(current, set())
+    if target not in allowed:
+        allowed_names = ", ".join(s.value for s in allowed) if allowed else "none (terminal state)"
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot transition task from '{current.value}' to '{target.value}'. Allowed transitions: {allowed_names}",
+        )
+
 
 @router.get("", response_model=list[TaskResponse])
 async def list_my_tasks(
@@ -204,6 +224,8 @@ async def update_task_status(
             detail="This task is not assigned to you",
         )
 
+    _validate_task_transition(task.status, payload.status)
+
     task.status = payload.status
     await db.commit()
     await db.refresh(task)
@@ -355,6 +377,8 @@ async def submit_task_deliverable(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="This task is not assigned to you",
         )
+
+    _validate_task_transition(task.status, TaskStatus.submitted)
 
     revision_result = await db.execute(
         select(func.coalesce(func.max(Deliverable.revision_round), 0)).where(

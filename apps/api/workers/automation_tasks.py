@@ -551,3 +551,87 @@ async def _generate_content_calendar_async():
 @shared_task(name="generate_content_calendar")
 def generate_content_calendar():
     return _run_async(_generate_content_calendar_async())
+
+
+async def _cleanup_failed_payments_async() -> int:
+    """Move users stuck in pending_payment for >48 hours to lapsed."""
+    from models.enums import AccountStatus
+
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(hours=48)
+
+    async with async_session() as db:
+        result = await db.execute(
+            select(User).where(
+                User.account_status == AccountStatus.pending_payment,
+                User.created_at < cutoff,
+                User.deleted_at.is_(None),
+            )
+        )
+        stuck_users = result.scalars().all()
+
+        if not stuck_users:
+            return 0
+
+        for user in stuck_users:
+            user.account_status = AccountStatus.lapsed
+
+        await db.commit()
+        return len(stuck_users)
+
+
+@shared_task(name="cleanup_failed_payments")
+def cleanup_failed_payments():
+    count = _run_async(_cleanup_failed_payments_async())
+    if count:
+        logger.info("[cleanup_failed_payments] Marked %d stuck users as lapsed", count)
+
+
+async def _proactive_token_refresh_async() -> int:
+    """Refresh Instagram tokens expiring within 7 days for active users."""
+    from core.security import decrypt_token, encrypt_token
+    from services.instagram import refresh_access_token
+
+    now = datetime.now(timezone.utc)
+    expires_soon = now + timedelta(days=7)
+
+    async with async_session() as db:
+        result = await db.execute(
+            select(User).where(
+                User.instagram_access_token.isnot(None),
+                User.instagram_user_id.isnot(None),
+                User.account_status == AccountStatus.active,
+                User.deleted_at.is_(None),
+                User.instagram_token_expires_at.isnot(None),
+                User.instagram_token_expires_at < expires_soon,
+            )
+        )
+        users_with_tokens = result.scalars().all()
+
+        if not users_with_tokens:
+            return 0
+
+        refreshed = 0
+        for user in users_with_tokens:
+            try:
+                decrypted = decrypt_token(user.instagram_access_token)
+                refreshed_data = _run_async(refresh_access_token(decrypted))
+                user.instagram_access_token = encrypt_token(refreshed_data["access_token"])
+                user.instagram_token_expires_at = now + timedelta(
+                    seconds=refreshed_data.get("expires_in", 5184000)
+                )
+                refreshed += 1
+            except Exception:
+                logger.warning(
+                    "[proactive_token_refresh] Failed to refresh token for user %s",
+                    user.id,
+                )
+
+        await db.commit()
+        return refreshed
+
+
+@shared_task(name="proactive_token_refresh")
+def proactive_token_refresh():
+    count = _run_async(_proactive_token_refresh_async())
+    logger.info("[proactive_token_refresh] Refreshed %d Instagram tokens", count)

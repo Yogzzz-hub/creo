@@ -59,6 +59,10 @@ function getOnboardingStepIndex(pathname: string): number {
   return ONBOARDING_STEPS.findIndex((step) => pathname.startsWith(step));
 }
 
+function isOnboardingRoute(pathname: string): boolean {
+  return pathname.startsWith("/onboarding");
+}
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 

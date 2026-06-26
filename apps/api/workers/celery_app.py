@@ -67,6 +67,23 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(hour=2, minute=0, day_of_month=25),  # 25th of every month
         "options": {"queue": "default"},
     },
+    # Sign-up recovery
+    "process-abandoned-signups": {
+        "task": "process_abandoned_signups",
+        "schedule": crontab(minute="*/15"),  # every 15 minutes
+        "options": {"queue": "default"},
+    },
+    # Edge case cleanup
+    "cleanup-failed-payments": {
+        "task": "cleanup_failed_payments",
+        "schedule": crontab(hour=0, minute=0),  # daily at midnight
+        "options": {"queue": "default"},
+    },
+    "proactive-token-refresh": {
+        "task": "proactive_token_refresh",
+        "schedule": crontab(hour=3, minute=0),  # daily at 03:00
+        "options": {"queue": "default"},
+    },
 }
 
 celery_app.autodiscover_tasks(["workers"])
