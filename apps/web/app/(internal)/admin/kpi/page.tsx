@@ -12,7 +12,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts"
-import { IndianRupee, Truck, Users, Loader2 } from "lucide-react"
+import { IndianRupee, Truck, Users, Loader2, AlertTriangle } from "lucide-react"
 import { adminFetch } from "@/lib/admin-api"
 
 interface KPIData {
@@ -88,6 +88,21 @@ export default function KpiDashboardPage() {
           Live platform performance metrics and capacity overview
         </p>
       </div>
+
+      {data && data.delivery_rate_percentage < 75 && (
+        <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
+          <AlertTriangle className="mt-0.5 size-5 shrink-0 text-red-600" />
+          <div>
+            <p className="text-sm font-semibold text-red-800">
+              Low Delivery Rate Alert
+            </p>
+            <p className="mt-1 text-sm text-red-700">
+              The 30-day delivery rate is <strong>{data.delivery_rate_percentage}%</strong>, which is below the 75% threshold.
+              Review pending tasks and team capacity to improve throughput.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {metrics.map((metric) => (

@@ -37,15 +37,20 @@ async def list_team_calendar_entries(
     )
     entries = result.scalars().all()
 
+    client_ids = {entry.client_id for entry in entries}
+    clients_map: dict[str, User] = {}
+    if client_ids:
+        clients_result = await db.execute(
+            select(User).where(User.id.in_(client_ids))
+        )
+        clients_map = {u.id: u for u in clients_result.scalars().all()}
+
     response = []
     for entry in entries:
-        client_result = await db.execute(
-            select(User.full_name, User.business_name).where(User.id == entry.client_id)
-        )
-        client_row = client_result.first()
+        client = clients_map.get(entry.client_id)
         client_name = ""
-        if client_row:
-            client_name = client_row.business_name or client_row.full_name
+        if client:
+            client_name = client.business_name or client.full_name
 
         display_date = entry.scheduled_date - timedelta(days=1)
 

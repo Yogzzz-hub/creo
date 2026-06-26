@@ -8,21 +8,28 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import RequireTeamLead, RequireTeamMember
+from core.security import RequireAdmin, RequireTeamLead, RequireTeamMember
 from models.deliverable import Deliverable
 from models.enums import DeliverableStatus, TaskStatus
 from models.task import Task
+from models.task_history import TaskStatusHistory
 from models.team import TeamMember
 from models.user import User
 from schemas.deliverable import DeliverableOut
 from schemas.task import (
     ClientInfo,
     TaskAssignmentApproveRequest,
+    TaskBulkReassignRequest,
+    TaskBulkReassignResponse,
     TaskDetailResponse,
+    TaskExpediteRequest,
+    TaskExpediteResponse,
     TaskOut,
     TaskResponse,
     TaskStatusUpdate,
     TaskSubmitRequest,
+    TaskTimeLogRequest,
+    TaskTimeLogResponse,
 )
 
 router = APIRouter(prefix="/api/v1/tasks", tags=["tasks"])
@@ -68,12 +75,17 @@ async def list_my_tasks(
     )
     tasks = tasks_result.scalars().all()
 
+    client_ids = {task.client_id for task in tasks}
+    clients_map: dict[str, User] = {}
+    if client_ids:
+        clients_result = await db.execute(
+            select(User).where(User.id.in_(client_ids))
+        )
+        clients_map = {u.id: u for u in clients_result.scalars().all()}
+
     responses = []
     for task in tasks:
-        client_result = await db.execute(
-            select(User).where(User.id == task.client_id)
-        )
-        client = client_result.scalar_one_or_none()
+        client = clients_map.get(task.client_id)
         client_info = None
         if client:
             client_info = ClientInfo(
@@ -226,6 +238,18 @@ async def update_task_status(
 
     _validate_task_transition(task.status, payload.status)
 
+    old_status = task.status
+
+    if old_status != payload.status:
+        history = TaskStatusHistory(
+            task_id=task.id,
+            changed_by_user_id=current_user.id,
+            old_status=old_status.value if hasattr(old_status, "value") else str(old_status),
+            new_status=payload.status.value if hasattr(payload.status, "value") else str(payload.status),
+        )
+        db.add(history)
+        
+        task.status = payload.status
     task.status = payload.status
     await db.commit()
     await db.refresh(task)
@@ -295,6 +319,18 @@ async def request_task_assignment(
             detail="Task is already assigned",
         )
 
+    old_status = task.status
+    new_status = TaskStatus.assignment_requested
+
+    if old_status != new_status:
+        history = TaskStatusHistory(
+            task_id=task.id,
+            changed_by_user_id=current_user.id,
+            old_status=old_status.value if hasattr(old_status, "value") else str(old_status),
+            new_status=new_status.value,
+        )
+        db.add(history)
+
     task.assigned_to = team_member.id
     task.requested_by = current_user.id
     task.status = TaskStatus.assignment_requested
@@ -330,9 +366,21 @@ async def approve_task_assignment(
             detail="Task does not have a pending assignment request",
         )
 
+    old_status = task.status
+    new_status = TaskStatus.pending
+
+    if old_status != new_status:
+        history = TaskStatusHistory(
+            task_id=task.id,
+            changed_by_user_id=current_user.id,
+            old_status=old_status.value if hasattr(old_status, "value") else str(old_status),
+            new_status=new_status.value,
+        )
+        db.add(history)
+
     task.assigned_to = payload.team_member_id
     task.assigned_by = current_user.id
-    task.status = TaskStatus.pending
+    task.status = new_status
     task.requested_by = None
 
     await db.commit()
@@ -400,10 +448,141 @@ async def submit_task_deliverable(
     )
     db.add(deliverable)
 
-    task.status = TaskStatus.submitted
+    old_status = task.status
+    new_status = TaskStatus.submitted
+
+    if old_status != new_status:
+        history = TaskStatusHistory(
+            task_id=task.id,
+            changed_by_user_id=current_user.id,
+            old_status=old_status.value if hasattr(old_status, "value") else str(old_status),
+            new_status=new_status.value,
+        )
+        db.add(history)
+
+    task.status = new_status
     task.submitted_at = datetime.now(timezone.utc)
 
     await db.commit()
     await db.refresh(deliverable)
 
     return deliverable
+
+
+@router.post(
+    "/bulk-reassign",
+    response_model=TaskBulkReassignResponse,
+)
+async def bulk_reassign_tasks(
+    payload: TaskBulkReassignRequest,
+    current_user: RequireTeamLead,
+    db: AsyncSession = Depends(get_db),
+):
+    new_member_result = await db.execute(
+        select(TeamMember).where(TeamMember.id == payload.new_assignee_id)
+    )
+    new_member = new_member_result.scalar_one_or_none()
+
+    if new_member is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Target team member not found",
+        )
+
+    tasks_result = await db.execute(
+        select(Task).where(Task.id.in_(payload.task_ids))
+    )
+    tasks = tasks_result.scalars().all()
+
+    if not tasks:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No tasks found matching the provided IDs",
+        )
+
+    today = datetime.now(timezone.utc).date()
+    for task in tasks:
+        task.assigned_to = payload.new_assignee_id
+        task.assigned_by = current_user.id
+        task.assignment_date = today
+
+    await db.commit()
+
+    return TaskBulkReassignResponse(
+        updated_count=len(tasks),
+        new_assignee_id=payload.new_assignee_id,
+    )
+
+
+@router.patch(
+    "/{task_id}/log-time",
+    response_model=TaskTimeLogResponse,
+)
+async def log_task_time(
+    task_id: str,
+    payload: TaskTimeLogRequest,
+    current_user: RequireTeamMember,
+    db: AsyncSession = Depends(get_db),
+):
+    task_result = await db.execute(select(Task).where(Task.id == task_id))
+    task = task_result.scalar_one_or_none()
+
+    if task is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found",
+        )
+
+    team_result = await db.execute(
+        select(TeamMember).where(TeamMember.user_id == current_user.id)
+    )
+    team_member = team_result.scalar_one_or_none()
+
+    is_admin = current_user.role in ("admin", "super_admin")
+    is_assigned = team_member is not None and task.assigned_to == team_member.id
+    is_team_lead = current_user.role == "team_lead"
+
+    if not is_admin and not is_assigned and not is_team_lead:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only log time on tasks assigned to you",
+        )
+
+    task.actual_minutes = (task.actual_minutes or 0) + payload.minutes_spent
+
+    await db.commit()
+
+    return TaskTimeLogResponse(
+        task_id=task.id,
+        actual_minutes=task.actual_minutes,
+        estimated_minutes=task.estimated_minutes,
+    )
+
+
+@router.patch(
+    "/{task_id}/expedite",
+    response_model=TaskExpediteResponse,
+)
+async def expedite_task(
+    task_id: str,
+    payload: TaskExpediteRequest,
+    current_user: RequireTeamLead,
+    db: AsyncSession = Depends(get_db),
+):
+    task_result = await db.execute(select(Task).where(Task.id == task_id))
+    task = task_result.scalar_one_or_none()
+
+    if task is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found",
+        )
+
+    task.is_expedited = payload.is_expedited
+
+    await db.commit()
+
+    return TaskExpediteResponse(
+        task_id=task.id,
+        is_expedited=task.is_expedited,
+    )

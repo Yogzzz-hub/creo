@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,14 +15,16 @@ const MESSAGES = [
 
 export default function CompletePage() {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
-  const [phase, setPhase] = useState<"loading" | "success" | "error">("loading");
+  const [phase, setPhase] = useState<"loading" | "success" | "error" | "timeout">("loading");
   const [messageIndex, setMessageIndex] = useState(0);
   const [summaryLine, setSummaryLine] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const retriesRef = useRef(0);
+  const mountedRef = useRef(true);
 
   // 1. Handle the cycling text animation during loading
   useEffect(() => {
@@ -30,7 +32,7 @@ export default function CompletePage() {
 
     const msgInterval = setInterval(() => {
       setMessageIndex((prev) => (prev < MESSAGES.length - 1 ? prev + 1 : prev));
-    }, 2500); // Slower cycle so they can read it while AI processes
+    }, 2500);
 
     return () => clearInterval(msgInterval);
   }, [phase]);
@@ -41,8 +43,10 @@ export default function CompletePage() {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session?.access_token) {
-        setPhase("error");
-        setErrorMessage("Authentication error. Please log in again.");
+        if (mountedRef.current) {
+          setPhase("error");
+          setErrorMessage("Authentication error. Please log in again.");
+        }
         return;
       }
 
@@ -54,7 +58,6 @@ export default function CompletePage() {
       );
 
       if (!res.ok) {
-        // If it's a 404, it means the questionnaire isn't in the DB yet, just keep polling
         if (res.status !== 404) {
           throw new Error("Failed to fetch status");
         }
@@ -63,40 +66,44 @@ export default function CompletePage() {
 
       const data = await res.json();
 
-      // Check if the backend worker has finished
       if (data.status === "completed" || data.summary_line) {
         if (intervalRef.current) clearInterval(intervalRef.current);
-        setSummaryLine(data.summary_line || "Your brand profile has been optimized.");
-        setPhase("success");
+        if (mountedRef.current) {
+          setSummaryLine(data.summary_line || "Your brand profile has been optimized.");
+          setPhase("success");
+        }
       }
     } catch (error) {
       console.error("Polling error:", error);
-      // We don't immediately fail on one network blip, but you could add a retry counter here
     }
   }, [supabase.auth]);
 
-  // 3. Start polling on mount
+  // 3. Start polling on mount — retriesRef persists across renders
   useEffect(() => {
+    mountedRef.current = true;
     const MAX_RETRIES = 60; // 3 minutes maximum
-    let retries = 0;
+
+    // Reset counter on fresh mount
+    retriesRef.current = 0;
+
+    // Do an immediate first check
+    pollStatus();
 
     // Poll every 3 seconds
     intervalRef.current = setInterval(() => {
-      retries++;
-      if (retries > MAX_RETRIES) {
+      retriesRef.current++;
+      if (retriesRef.current > MAX_RETRIES) {
         if (intervalRef.current) clearInterval(intervalRef.current);
-        setPhase("error");
-        setErrorMessage("Analysis is taking longer than expected. Please check back later.");
+        if (mountedRef.current) {
+          setPhase("timeout");
+        }
         return;
       }
       pollStatus();
     }, 3000);
 
-    // Do an immediate first check
-    pollStatus();
-
-    // Cleanup on unmount
     return () => {
+      mountedRef.current = false;
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [pollStatus]);
@@ -118,6 +125,39 @@ export default function CompletePage() {
           >
             Try Again
           </Button>
+        </div>
+      </CardContent>
+    );
+  }
+
+  if (phase === "timeout") {
+    return (
+      <CardContent className="py-8">
+        <div className="flex flex-col items-center text-center gap-4">
+          <div className="flex size-16 items-center justify-center rounded-full bg-amber-100">
+            <AlertCircle className="size-8 text-amber-600" />
+          </div>
+          <h2 className="text-xl font-bold text-brand-dark">Analysis is taking a while</h2>
+          <p className="text-sm text-text-muted max-w-sm">
+            The AI analysis is still processing. This usually completes within a few minutes.
+            You can check back later or continue to your dashboard.
+          </p>
+          <div className="flex flex-col gap-2 w-full max-w-xs mt-2">
+            <Button
+              onClick={() => router.push("/portal")}
+              className="bg-brand hover:bg-brand/90 text-white"
+            >
+              Go to Dashboard
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => window.location.reload()}
+              className="border-border text-text"
+            >
+              Check Again
+            </Button>
+          </div>
         </div>
       </CardContent>
     );

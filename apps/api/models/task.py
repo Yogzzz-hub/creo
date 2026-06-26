@@ -43,6 +43,7 @@ class Task(Base):
     )
     priority: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     is_addon: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_expedited: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     addon_id: Mapped[Optional[str]] = mapped_column(
         UUID(as_uuid=False), ForeignKey("addons.id"), nullable=True
     )
@@ -51,6 +52,8 @@ class Task(Base):
     )
     assignment_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     due_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True, index=True)
+    estimated_minutes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    actual_minutes: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     submitted_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

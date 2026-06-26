@@ -154,7 +154,6 @@ def update_razorpay_subscription_plan(
         "A new subscription must be created for the new plan."
     )
 
-
 def update_stripe_subscription_plan(
     gateway_subscription_id: str,
     new_gateway_plan_id: str,
@@ -178,6 +177,28 @@ def update_stripe_subscription_plan(
         "current_period_end": datetime.fromtimestamp(
             updated_sub.current_period_end, tz=timezone.utc
         ),
+    }
+
+
+def create_custom_pricing_checkout(user: User, amount: float, pricing_id: str) -> dict:
+    order = create_razorpay_order(
+        amount=amount,
+        currency="INR",
+        receipt=f"custom_pricing_{pricing_id}",
+        notes={"pricing_id": pricing_id, "user_id": user.id},
+    )
+    checkout = razorpay_client.payment_link.create({
+        "amount": int(amount * 100),
+        "currency": "INR",
+        "description": f"Custom Pricing - {pricing_id}",
+        "customer": {"email": user.email, "contact": user.phone or None},
+        "notes": {"pricing_id": pricing_id},
+        "notify": {"sms": True, "email": True},
+    })
+    return {
+        "short_url": checkout.get("short_url"),
+        "checkout_url": checkout.get("short_url"),
+        "order_id": order.get("id"),
     }
 
 

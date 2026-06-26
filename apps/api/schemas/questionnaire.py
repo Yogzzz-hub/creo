@@ -38,6 +38,12 @@ class QuestionnaireCreate(BaseModel):
 
 
 class QuestionnaireUpdate(BaseModel):
+    """Schema for client-facing questionnaire updates.
+
+    NOTE: ai_analysis and ai_summary_line are deliberately excluded —
+    these fields are written exclusively by the Celery AI worker.
+    """
+
     industry: Optional[str] = Field(None, max_length=200)
     business_description: Optional[str] = Field(None, max_length=2000)
     target_audience: Optional[dict[str, Any]] = None
@@ -50,8 +56,6 @@ class QuestionnaireUpdate(BaseModel):
     competitor_refs: Optional[list[str]] = Field(None, max_length=20)
     topics_to_avoid: Optional[str] = Field(None, max_length=1000)
     style_references: Optional[list[str]] = Field(None, max_length=20)
-    ai_analysis: Optional[dict[str, Any]] = None
-    ai_summary_line: Optional[str] = Field(None, max_length=200)
 
 
 class QuestionnaireOut(QuestionnaireBase):
@@ -65,3 +69,24 @@ class QuestionnaireOut(QuestionnaireBase):
 class QuestionnaireStatusResponse(BaseModel):
     status: str
     summary_line: Optional[str] = None
+    submitted_at: Optional[datetime] = None
+    is_locked: bool = False
+
+
+class AdminQuestionnaireOverride(BaseModel):
+    """Schema for admin override of AI-generated brand analysis.
+
+    Used when OpenAI hallucinates or produces inaccurate results.
+    Allows admins to manually set the ai_analysis JSON and summary line.
+    """
+
+    ai_analysis: dict[str, Any] = Field(
+        ...,
+        description="Full AI analysis JSON with keys: brand_tone, content_themes, audience_persona, goal_alignment, ai_summary_line",
+    )
+    ai_summary_line: str = Field(
+        ...,
+        min_length=1,
+        max_length=200,
+        description="One-line brand summary, e.g. 'Bold voice, targeting Gen Z, focused on engagement'",
+    )

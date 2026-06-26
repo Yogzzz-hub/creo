@@ -24,6 +24,9 @@ function getClientHome(role: string): string {
 function canAccessRoute(role: string, pathname: string): boolean {
   if (role === "admin" || role === "super_admin") return true;
   if (pathname.startsWith("/admin") || pathname.startsWith("/kpi")) {
+    if (role === "investor_relations") {
+      return pathname === "/admin/reports" || pathname.startsWith("/admin/reports");
+    }
     return role === "admin" || role === "super_admin" || role === "investor_relations" || role === "team_lead";
   }
   if (pathname.startsWith("/dashboard")) {
@@ -54,6 +57,10 @@ async function fetchUserRole(accessToken: string): Promise<string> {
 }
 
 const ONBOARDING_STEPS = ["/onboarding/verify", "/onboarding/terms", "/onboarding/payment", "/onboarding/questionnaire", "/onboarding/complete"];
+
+function isOnboardingRoute(pathname: string): boolean {
+  return ONBOARDING_STEPS.some((step) => pathname.startsWith(step));
+}
 
 function getOnboardingStepIndex(pathname: string): number {
   return ONBOARDING_STEPS.findIndex((step) => pathname.startsWith(step));

@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import RequireTeamLead
+from core.security import RequireSales
 from models.enums import UserRole
 from models.user import User
 from schemas.sales import CustomPricingRequestCreate, SalesClientResponse
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/v1/sales", tags=["sales"])
 
 @router.get("/clients", response_model=list[SalesClientResponse])
 async def list_sales_clients(
-    current_user: RequireTeamLead,
+    current_user: RequireSales,
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -39,7 +39,7 @@ async def list_sales_clients(
 @router.post("/custom-pricing")
 async def create_custom_pricing(
     payload: CustomPricingRequestCreate,
-    current_user: RequireTeamLead,
+    current_user: RequireSales,
     db: AsyncSession = Depends(get_db),
 ):
     from models.custom_pricing import CustomPricing
