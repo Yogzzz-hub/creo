@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Mail, Phone, ArrowLeft } from "lucide-react";
+import { Loader2, Mail, Phone, ArrowLeft, Eye, EyeOff } from "lucide-react";
 
 type AuthMode = "email" | "phone";
 
@@ -14,6 +14,7 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
+  const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState<AuthMode>("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -115,15 +116,25 @@ export default function LoginPage() {
                 <label htmlFor="password" className="text-sm font-medium text-text">
                   Password
                 </label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="border-border focus:border-brand focus:ring-brand"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="border-border focus:border-brand focus:ring-brand pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
               {error && (
