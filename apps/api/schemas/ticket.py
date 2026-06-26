@@ -57,6 +57,7 @@ class TicketMessageCreate(BaseModel):
     message_text: Optional[str] = Field(None, max_length=5000)
     file_url: Optional[str] = Field(None, max_length=2048)
     file_name: Optional[str] = None
+    file_size_bytes: Optional[int] = None
 
 
 class TicketMessageOut(TicketMessageBase):

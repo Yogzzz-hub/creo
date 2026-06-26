@@ -97,6 +97,8 @@ function DashboardSkeleton() {
 export default function PortalDashboard() {
   const [data, setData] = useState<DashboardData>(EMPTY_DASHBOARD)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [createdAt, setCreatedAt] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchDashboard() {
@@ -106,25 +108,36 @@ export default function PortalDashboard() {
       } = await supabase.auth.getSession()
 
       if (!session?.access_token) {
+        setError("Please log in to view your dashboard.")
         setLoading(false)
         return
       }
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/portal/dashboard`,
-        {
-          headers: { Authorization: `Bearer ${session.access_token}` },
+      if (session.user?.created_at) {
+        setCreatedAt(session.user.created_at)
+      }
+
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/portal/dashboard`,
+          {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+          }
+        )
+
+        if (!res.ok) {
+          setError("Could not load dashboard data. Please try again.")
+          setLoading(false)
+          return
         }
-      )
 
-      if (!res.ok) {
+        const result: DashboardData = await res.json()
+        setData(result)
+      } catch {
+        setError("Something went wrong. Please check your connection and try again.")
+      } finally {
         setLoading(false)
-        return
       }
-
-      const result: DashboardData = await res.json()
-      setData(result)
-      setLoading(false)
     }
 
     fetchDashboard()
@@ -133,6 +146,15 @@ export default function PortalDashboard() {
   if (loading) {
     return <DashboardSkeleton />
   }
+
+  const elapsedDays = createdAt
+    ? Math.floor(
+        (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)
+      )
+    : 0
+  const onboardingComplete = data.onboarding_stage >= 4
+  const withinWindow = elapsedDays < 7
+  const showTracker = !onboardingComplete && withinWindow
 
   const completedSteps = ONBOARDING_STEPS.filter(
     (s) => s.stage <= data.onboarding_stage
@@ -209,85 +231,125 @@ export default function PortalDashboard() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="rounded-xl shadow-[var(--shadow-card)]">
-          <CardContent className="p-0">
-            <div className="flex items-start gap-4 border-l-4 border-[#2B7BC4] bg-[#E8F4FD] p-5">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#2B7BC4]/10">
-                <span className="text-lg">🏋️</span>
+        {error ? (
+          <Card className="rounded-xl shadow-[var(--shadow-card)]">
+            <CardContent className="p-0">
+              <div className="flex items-start gap-4 border-l-4 border-amber-400 bg-amber-50 p-5">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                  <span className="text-lg">⚠️</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium uppercase tracking-wider text-amber-700">
+                    Brand Summary
+                  </p>
+                  <p className="mt-2 text-sm text-amber-800 leading-relaxed">
+                    {error}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium uppercase tracking-wider text-[#2B7BC4]">
-                  Brand Summary
-                </p>
-                <p className="mt-2 text-sm italic text-[#0D2137] leading-relaxed">
-                  {data.ai_summary_line
-                    ? `\u201C${data.ai_summary_line}\u201D`
-                    : "\u201CYour brand analysis will appear here after onboarding.\u201D"}
-                </p>
-                <Link
-                  href="/portal/account"
-                  className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#2B7BC4] hover:underline"
-                >
-                  Update profile
-                  <ArrowRight className="size-3" />
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-xl shadow-[var(--shadow-card)]">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold text-[#0D2137]">
-              Onboarding Progress
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="relative flex items-center justify-between">
-              <div className="absolute left-0 top-3 h-0.5 w-full bg-gray-200">
-                <div
-                  className="h-full bg-[#065F46] transition-all"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-
-              {ONBOARDING_STEPS.map((step) => {
-                const completed = step.stage <= data.onboarding_stage
-                return (
-                  <div
-                    key={step.label}
-                    className="relative z-10 flex flex-col items-center"
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="rounded-xl shadow-[var(--shadow-card)]">
+            <CardContent className="p-0">
+              <div className="flex items-start gap-4 border-l-4 border-[#2B7BC4] bg-[#E8F4FD] p-5">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#2B7BC4]/10">
+                  <span className="text-lg">🏋️</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium uppercase tracking-wider text-[#2B7BC4]">
+                    Brand Summary
+                  </p>
+                  <p className="mt-2 text-sm italic text-[#0D2137] leading-relaxed">
+                    {data.ai_summary_line
+                      ? `\u201C${data.ai_summary_line}\u201D`
+                      : "\u201CYour brand analysis will appear here after onboarding.\u201D"}
+                  </p>
+                  <Link
+                    href="/portal/account"
+                    className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#2B7BC4] hover:underline"
                   >
+                    Update profile
+                    <ArrowRight className="size-3" />
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {showTracker && (
+          <Card className="rounded-xl shadow-[var(--shadow-card)]">
+            <CardHeader>
+              <CardTitle className="text-base font-semibold text-[#0D2137]">
+                Onboarding Progress
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="relative flex items-center justify-between">
+                <div className="absolute left-0 top-3 h-0.5 w-full bg-gray-200">
+                  <div
+                    className="h-full bg-[#065F46] transition-all"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+
+                {ONBOARDING_STEPS.map((step) => {
+                  const completed = step.stage <= data.onboarding_stage
+                  return (
                     <div
-                      className={cn(
-                        "flex size-6 items-center justify-center rounded-full border-2",
-                        completed
-                          ? "border-[#065F46] bg-[#065F46] text-white"
-                          : "border-gray-300 bg-white text-gray-400"
-                      )}
+                      key={step.label}
+                      className="relative z-10 flex flex-col items-center"
                     >
-                      {completed ? (
-                        <CheckCircle2 className="size-3.5" />
-                      ) : (
-                        <Circle className="size-3" />
-                      )}
+                      <div
+                        className={cn(
+                          "flex size-6 items-center justify-center rounded-full border-2",
+                          completed
+                            ? "border-[#065F46] bg-[#065F46] text-white"
+                            : "border-gray-300 bg-white text-gray-400"
+                        )}
+                      >
+                        {completed ? (
+                          <CheckCircle2 className="size-3.5" />
+                        ) : (
+                          <Circle className="size-3" />
+                        )}
+                      </div>
+                      <p
+                        className={cn(
+                          "mt-2 w-16 text-center text-[10px] leading-tight",
+                          completed
+                            ? "font-medium text-[#065F46]"
+                            : "text-gray-400"
+                        )}
+                      >
+                        {step.label}
+                      </p>
                     </div>
-                    <p
-                      className={cn(
-                        "mt-2 w-16 text-center text-[10px] leading-tight",
-                        completed
-                          ? "font-medium text-[#065F46]"
-                          : "text-gray-400"
-                      )}
-                    >
-                      {step.label}
-                    </p>
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                  )
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {onboardingComplete && (
+          <Card className="rounded-xl shadow-[var(--shadow-card)]">
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#065F46]/10">
+                <CheckCircle2 className="size-5 text-[#065F46]" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[#0D2137]">
+                  You&apos;re all set!
+                </p>
+                <p className="text-xs text-gray-500">
+                  Onboarding is complete. Welcome to Creo.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="rounded-xl shadow-[var(--shadow-card)]">
           <CardHeader>

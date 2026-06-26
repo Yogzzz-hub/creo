@@ -1,3 +1,14 @@
+AI Assistant need to be included
+
+Have to set an eye opener in password in the sign up page 
+
+Have to set the log out option
+
+
+
+
+
+
 # Creo Platform — Full Audit Report
 
 ---
@@ -450,6 +461,182 @@ This report shows that the core "rules" of your agency are mostly holding up wel
 
 ---
 
+# Domain 4 Health Report — Ticketing & Live Chat UI
+
+---
+
+## Phase 1: Routing (Ticket Type Dispatch)
+
+### Current State
+
+The ticket creation drawer in `apps/web/app/(portal)/portal/support/page.tsx:360-453` uses a `Sheet` component with a `Select` dropdown offering 4 ticket types: `deliverable_revision`, `billing_issue`, `general_support`, `content_brief_update`. These map to a `TYPE_CONFIG` object (lines 52-69) that provides label and styling per type. The `handleSubmit` function (lines 188-255) sends the selected `ticket_type` in the POST body to `POST /api/v1/tickets`.
+
+The backend `TicketCreate` schema (`apps/api/schemas/ticket.py:21-25`) accepts `ticket_type: TicketType` and validates against the `TicketType` enum (`apps/api/models/enums.py:53-57`) which defines exactly the same 4 values.
+
+### The Gap
+
+**Correctly implemented.** The frontend sends the ticket type to the backend, and the backend validates it against the enum. The ticket is created with the correct type and stored in the database.
+
+**Status mapping — FIXED.** The `mapTicketStatus` function now correctly passes through all 5 backend statuses (`open`, `in_progress`, `awaiting_client`, `resolved`, `escalated`) to the frontend, preserving the granular status visibility from the backend.
+
+### Why it Matters
+
+Ticket type routing and status visibility are now both working correctly. Clients see the exact status their ticket has in the system — "In Progress" when the team is working, "Awaiting Client" when input is needed, and "Escalated" for urgent issues.
+
+### Required Action
+
+No further action needed. Status mapping is complete.
+
+---
+
+## Phase 2: Schema Integration (TicketMessageOut in Chat Thread)
+
+### Current State
+
+The backend `TicketMessageOut` schema (`apps/api/schemas/ticket.py:62-64`) extends `TicketMessageBase` and returns: `id`, `created_at`, `ticket_id`, `sender_id`, `message_text`, `file_url`, `file_name`, `file_size_bytes`, `is_read`.
+
+The frontend chat thread (`apps/web/app/(portal)/portal/support/[id]/page.tsx`) now maps all file-related fields from the API response. The `ChatMessage` interface includes `fileUrl`, `fileName`, and `fileSizeBytes`. The chat bubble rendering displays image attachments inline (with click-to-open) and non-image files as downloadable cards with file name, size, and download icon. File-only messages (`message_text === null`) render correctly without empty bubbles.
+
+### The Gap
+
+**FIXED.** All 4 issues have been resolved:
+
+1. **`file_url`, `file_name`, `file_size_bytes` are now consumed.** The frontend maps these from the API response in both the initial fetch and the post-send handler.
+
+2. **Attachment rendering is implemented.** Image files (png, jpg, gif, webp, svg) render as clickable inline previews. Non-image files render as downloadable cards with file name, formatted size, and download icon.
+
+3. **File-only messages handled.** When `message_text` is null but `file_url` is set, the attachment renders without an empty text bubble. A fallback "Empty message" is shown only when both text and file are absent.
+
+4. **`is_read` remains unused** — read receipts are a separate feature not part of this phase.  
+
+### Why it Matters
+
+Clients can now see file attachments sent by the team, and the team can see files sent by clients (once the upload mechanism from Phase 3 is implemented). The chat thread is no longer a text-only system.
+
+### Required Action
+
+No further action needed for schema integration. Phase 3 (file upload) must still be implemented to allow clients to send files.
+
+---
+
+## Phase 3: File Limits (>25MB Upload Blocking)
+
+### Current State
+
+The support page (`page.tsx`) now has a functional file upload flow. A hidden `<input type="file">` is triggered by clicking the upload area or the Paperclip button in the chat view. Files are validated client-side against a 25MB limit before upload. Selected files are uploaded to Supabase Storage (`ticket-attachments` bucket) and the public URL is sent with the message via `POST /api/v1/tickets/{id}/messages`. The chat view (`[id]/page.tsx`) shows a file preview card with name and size before sending, and allows removal before submission.
+
+### The Gap
+
+**FIXED.** All 4 issues have been resolved:
+
+1. **Real `<input type="file">` element added.** Both the ticket creation drawer and chat view now have a hidden file input that opens on click. The input accepts `.png,.jpg,.jpeg,.gif,.webp,.pdf,.doc,.docx`.
+
+2. **25MB client-side validation implemented.** `MAX_FILE_SIZE = 25 * 1024 * 1024` is checked before upload. Files exceeding the limit show a toast error with the file size.
+
+3. **Supabase Storage upload implemented.** Files upload to the `ticket-attachments` bucket with path `ticket-attachments/{ticket_id}/{timestamp}-{filename}`. The public URL is sent with the message payload.
+
+4. **Paperclip button wired.** The chat view's Paperclip icon now opens the file picker. A file preview card appears above the input showing file name, size, and a remove button.
+
+5. **UI text updated** from "10MB" to "25MB".
+
+### Why it Matters
+
+Clients can now send screenshots, design references, and documents to the support team. The 25MB limit prevents abuse while allowing most creative files. The upload flows through Supabase Storage, keeping the FastAPI thread unblocked.
+
+### Required Action
+
+No further action needed for file upload in the client portal. The `ticket-attachments` Supabase Storage bucket must exist with appropriate RLS policies.
+
+---
+
+## Phase 4: Security (Tiptap Rich-Text XSS Sanitization)
+
+### Current State
+
+A Tiptap rich-text editor (`components/ui/rich-text-editor.tsx`) is now integrated into both the ticket creation drawer (description field) and the chat view (message input). The editor uses:
+
+- **Tiptap StarterKit** with Underline, TextAlign, and Link extensions
+- **DOMPurify** sanitization on every content change (`onUpdate` callback)
+- **Allowlisted tags**: `p`, `br`, `strong`, `em`, `u`, `s`, `code`, `pre`, `ul`, `ol`, `li`, `a`, `h1`, `h2`, `h3`, `blockquote`, `hr`
+- **Allowlisted attributes**: `href`, `target`, `rel`, `class`
+- **Render-time sanitization**: Chat bubbles use `dangerouslySetInnerHTML` with a second `sanitizeHtml()` pass (defense in depth)
+- **Prose styling**: Messages render with `prose prose-sm` Tailwind typography classes
+
+### The Gap
+
+**FIXED.** All security concerns have been addressed:
+
+1. **Tiptap editor integrated.** Both the ticket creation description and chat message input now use the `RichTextEditor` component with a formatting toolbar (bold, italic, underline, lists, alignment, links).
+
+2. **XSS sanitization on input.** DOMPurify strips all disallowed tags and attributes on every keystroke via the `onUpdate` callback. The editor cannot produce unsafe HTML.
+
+3. **XSS sanitization on render.** Chat bubbles use `sanitizeHtml()` before `dangerouslySetInnerHTML`, providing defense-in-depth even if stored content is tampered with.
+
+4. **Link safety.** The Tiptap Link extension is configured with `openOnClick: false` and forces `target="_blank" rel="noopener noreferrer"` on all links.
+
+5. **No `dangerouslySetInnerHTML` without sanitization.** Every usage of `dangerouslySetInnerHTML` in the chat thread is wrapped with `sanitizeHtml()`.
+
+### Why it Matters
+
+The ticketing system now supports rich-text formatting (bold, italic, lists, links) while maintaining XSS protection through DOMPurify sanitization at both input and render time. Malicious HTML is stripped before storage and before display.
+
+### Required Action
+
+No further action needed. The sanitization layer is complete and follows defense-in-depth principles.
+
+---
+
+## Phase 5: Auto-scroll (Realtime Message Insertions)
+
+### Current State
+
+The client portal chat (`apps/web/app/(portal)/portal/support/[id]/page.tsx`) now subscribes to Supabase Realtime for `INSERT` events on the `ticket_messages` table, filtered by `ticket_id`. Incoming messages from the team are appended to `localMessages` with deduplication (skips if message ID already exists from optimistic updates). The channel is cleaned up on unmount via `supabase.removeChannel()`. The auto-scroll effect triggers on `localMessages` changes, scrolling to the bottom on new messages.
+
+The internal team dashboard (`internal/dashboard/chat/page.tsx`) already had a working Realtime subscription. The missing `Authorization` header on the POST request has been fixed — it now retrieves the session token and includes it in the headers.
+
+### The Gap
+
+**FIXED.** All issues have been resolved:
+
+1. **Supabase Realtime subscription added to client portal.** The client portal now listens for new messages via `supabase.channel('ticket:{id}').on('postgres_changes', ...)`. Team replies appear instantly without page refresh.
+
+2. **Deduplication implemented.** When the client sends a message, it's added optimistically to `localMessages`. The Realtime handler checks `prev.some(m => m.id === newMsg.id)` before appending, preventing duplicate messages.
+
+3. **Channel cleanup on unmount.** The `useEffect` returns a cleanup function that calls `supabase.removeChannel(channel)` and nulls the ref, preventing memory leaks and stale subscriptions.
+
+4. **Auto-scroll works for both local and realtime messages.** The existing `useEffect` on `localMessages` triggers `scrollIntoView` for all message additions — whether from the client sending or from team replies arriving via Realtime.
+
+5. **Internal dashboard auth fixed.** The `handleSendMessage` function now retrieves the Supabase session and includes `Authorization: Bearer {token}` in the POST headers.
+
+### Why it Matters
+
+The chat is now truly "live." Clients see team replies instantly without refreshing. The Realtime subscription is properly cleaned up to prevent memory leaks. The internal dashboard can now send messages without crashing in production due to missing auth.
+
+### Required Action
+
+No further action needed. The Supabase Realtime configuration requires that the `ticket_messages` table has Realtime enabled in the Supabase dashboard (Database → Replication).
+
+---
+
+## Summary Scorecard
+
+| Phase | Component | Status | Audit Findings |
+|---|---|---|---|
+| **1. Routing** | Ticket type dispatch | 🟢 Working | Types correctly mapped frontend→backend; status mapping now passes through all 5 backend statuses |
+| **2. Schema** | TicketMessageOut integration | 🟢 Working | `file_url`, `file_name`, `file_size_bytes` now mapped and rendered; image previews + download cards implemented; null text handled |
+| **3. File Limits** | Upload blocking >25MB | 🟢 Working | Real `<input type="file">` with 25MB validation; uploads to Supabase Storage; Paperclip button wired; file preview before send |
+| **4. Security** | Tiptap XSS sanitization | 🟢 Working | Tiptap editor integrated; DOMPurify sanitization on input + render; allowlisted tags/attrs; link safety configured |
+| **5. Auto-scroll** | Realtime message scroll | 🟢 Working | Supabase Realtime subscription added; deduplication; channel cleanup on unmount; auto-scroll works for local + realtime messages; internal dashboard auth fixed |
+
+---
+
+## Additional Findings
+
+| Finding | Severity | Location |
+|---|---|---|
+| Attachment display missing in internal dashboard chat UI | 🟠 High | `internal/dashboard/chat/page.tsx` |
+
+---
 
 <!-- explanation of domain 4 -->
 
@@ -487,3 +674,14 @@ Why it Matters: If a client sees "Open" for 3 days, they think nobody is looking
 The Fix: Tell the UI to display the exact, detailed status from the backend.
 
 <!-- completion of domain 4 -->
+
+## Domain 4 Summary Scorecard
+
+| Phase | Status | Blocking Issues |
+|---|---|---|
+| **1. Routing** | 🟢 Working | Ticket types correctly dispatched; status mapping passes through all 5 backend states |
+| **2. Schema Integration** | 🟢 Working | `TicketMessageOut` file fields now mapped and rendered in chat UI; image previews + download cards; null text handled |
+| **3. File Limits** | 🟢 Working | Real file input with 25MB validation; Supabase Storage upload; Paperclip wired; file preview + remove before send |
+| **4. XSS Security** | 🟢 Working | Tiptap editor with DOMPurify sanitization; allowlisted tags/attrs; defense-in-depth on render; link safety configured |
+| **5. Auto-scroll** | 🟢 Working | Supabase Realtime subscription with deduplication; channel cleanup; auto-scroll for local + realtime; internal dashboard auth fixed |
+

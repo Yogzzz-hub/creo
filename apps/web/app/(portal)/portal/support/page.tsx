@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 
 import { toast } from "sonner"
@@ -12,14 +12,16 @@ import {
   CheckCircle2,
   MessageSquare,
   Loader2,
+  FileText,
+  X,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { RichTextEditor } from "@/components/ui/rich-text-editor"
 import {
   Select,
   SelectContent,
@@ -36,6 +38,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
+import { useSubscription } from "@/context/subscription-context"
 
 type TicketType = "deliverable_revision" | "billing_issue" | "general_support" | "content_brief_update"
 type TicketStatus = "open" | "in_progress" | "awaiting_client" | "resolved" | "escalated"
@@ -98,6 +101,14 @@ const STATUS_CONFIG: Record<
   },
 }
 
+const MAX_FILE_SIZE = 25 * 1024 * 1024
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 function formatDateTime(dateString: string): string {
   const date = new Date(dateString)
   return date.toLocaleDateString("en-US", {
@@ -119,7 +130,10 @@ function mapTicketType(t: string): TicketType {
 }
 
 function mapTicketStatus(s: string): TicketStatus {
+  if (s === "in_progress") return "in_progress"
+  if (s === "awaiting_client") return "awaiting_client"
   if (s === "resolved") return "resolved"
+  if (s === "escalated") return "escalated"
   return "open"
 }
 
@@ -131,6 +145,9 @@ export default function SupportPage() {
   const [ticketType, setTicketType] = useState<string>("general_support")
   const [subject, setSubject] = useState("")
   const [description, setDescription] = useState("")
+  const [attachment, setAttachment] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { isLapsed } = useSubscription()
 
   useEffect(() => {
     async function fetchTickets() {
@@ -182,6 +199,24 @@ export default function SupportPage() {
     }
     fetchTickets()
   }, [])
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(`File too large. Maximum size is 25MB. Your file: ${formatFileSize(file.size)}`)
+      e.target.value = ""
+      return
+    }
+
+    setAttachment(file)
+    e.target.value = ""
+  }
+
+  function handleRemoveFile() {
+    setAttachment(null)
+  }
 
   async function handleSubmit() {
     if (!subject.trim() || !description.trim()) {
@@ -240,10 +275,43 @@ export default function SupportPage() {
         ...prev,
       ])
 
+      if (attachment) {
+        const filePath = `ticket-attachments/${newTicket.id}/${Date.now()}-${attachment.name}`
+        const { error: uploadError } = await supabase.storage
+          .from("ticket-attachments")
+          .upload(filePath, attachment)
+
+        if (uploadError) {
+          toast.error("Ticket created but attachment upload failed. You can resend it in the chat.")
+        } else {
+          const { data: urlData } = supabase.storage
+            .from("ticket-attachments")
+            .getPublicUrl(filePath)
+
+          await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tickets/${newTicket.id}/messages`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                message_text: null,
+                file_url: urlData.publicUrl,
+                file_name: attachment.name,
+                file_size_bytes: attachment.size,
+              }),
+            }
+          )
+        }
+      }
+
       setDrawerOpen(false)
       setTicketType("general_support")
       setSubject("")
       setDescription("")
+      setAttachment(null)
       toast.success("Ticket raised successfully. Our team will respond shortly.")
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create ticket")
@@ -273,6 +341,7 @@ export default function SupportPage() {
         <Button
           onClick={() => setDrawerOpen(true)}
           className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90"
+          disabled={isLapsed}
         >
           <Plus className="size-4" />
           Raise a Ticket
@@ -394,32 +463,57 @@ export default function SupportPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="ticket-description">
+              <Label>
                 Description <span className="text-red-500">*</span>
               </Label>
-              <Textarea
-                id="ticket-description"
-                placeholder="Please provide details about your issue..."
-                rows={5}
-                className="resize-none"
+              <RichTextEditor
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={setDescription}
+                placeholder="Please provide details about your issue..."
               />
             </div>
 
             <div className="space-y-2">
               <Label>Attachments</Label>
-              <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 p-6 transition-colors hover:border-[#2B7BC4]/40 hover:bg-[#E8F4FD]/50 cursor-pointer">
-                <div className="flex flex-col items-center gap-2">
-                  <Upload className="size-6 text-gray-400" />
-                  <p className="text-xs text-gray-500">
-                    Click to upload or drag & drop
-                  </p>
-                  <p className="text-[10px] text-gray-400">
-                    PNG, JPG, PDF up to 10MB
-                  </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.doc,.docx"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+              {attachment ? (
+                <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  <FileText className="size-8 shrink-0 text-[#2B7BC4]" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-[#0D2137]">{attachment.name}</p>
+                    <p className="text-xs text-gray-400">{formatFileSize(attachment.size)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveFile}
+                    className="shrink-0 rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
+                  >
+                    <X className="size-4" />
+                  </button>
                 </div>
-              </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 p-6 transition-colors hover:border-[#2B7BC4]/40 hover:bg-[#E8F4FD]/50"
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <Upload className="size-6 text-gray-400" />
+                    <p className="text-xs text-gray-500">
+                      Click to upload or drag & drop
+                    </p>
+                    <p className="text-[10px] text-gray-400">
+                      PNG, JPG, PDF up to 25MB
+                    </p>
+                  </div>
+                </button>
+              )}
             </div>
           </div>
 

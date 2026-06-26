@@ -32,6 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
+import { useSubscription } from "@/context/subscription-context"
 
 interface Plan {
   id: string
@@ -86,6 +87,7 @@ export default function PaymentsPage() {
   const [planChangeOpen, setPlanChangeOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
   const [isChangingPlan, setIsChangingPlan] = useState(false)
+  const { isLapsed } = useSubscription()
 
   useEffect(() => {
     async function fetchPayments() {
@@ -274,6 +276,7 @@ export default function PaymentsPage() {
             <Button
               variant="outline"
               className="border-[#2B7BC4] text-[#2B7BC4] hover:bg-[#2B7BC4] hover:text-white"
+              disabled={isLapsed}
               onClick={() => {
                 setSelectedPlan(currentPlan.id)
                 setPlanChangeOpen(true)
@@ -308,7 +311,13 @@ export default function PaymentsPage() {
         <CardContent className="p-0">
           {paymentHistory.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <p className="text-sm text-gray-500">No payment history yet.</p>
+              <Download className="size-10 text-gray-300" />
+              <h3 className="mt-3 text-sm font-semibold text-[#0D2137]">
+                No payment history yet
+              </h3>
+              <p className="mt-1 text-xs text-gray-500">
+                Your transactions will appear here once you make a payment.
+              </p>
             </div>
           ) : (
             <Table>

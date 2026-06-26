@@ -10,7 +10,12 @@ const SESSION_KEY = "creo_exit_intent_shown";
 const TIMER_TRIGGER_MS = 40_000;
 
 export function ExitIntentPopup() {
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const dismiss = useCallback(() => {
     setOpen(false);
@@ -70,7 +75,7 @@ export function ExitIntentPopup() {
     };
   }, []);
 
-  if (!open) return null;
+  if (!mounted || !open) return null;
 
   return (
     <div

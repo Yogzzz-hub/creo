@@ -34,6 +34,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import { useSubscription } from "@/context/subscription-context"
 
 type DeliverableType = "poster" | "reel" | "story"
 type DeliverableStatus = "pending" | "approved" | "revision" | "rejected"
@@ -166,8 +167,11 @@ export default function DeliverableDetailPage({
   const { id } = use(params)
   const [deliverable, setDeliverable] = useState<Deliverable | null>(null)
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<"forbidden" | "not_found" | "generic" | null>(null)
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [isRejecting, setIsRejecting] = useState(false)
+  const [videoPlaying, setVideoPlaying] = useState(false)
+  const { isLapsed } = useSubscription()
   const [isApproving, setIsApproving] = useState(false)
   const [showUpsell, setShowUpsell] = useState(false)
 
@@ -195,8 +199,15 @@ export default function DeliverableDetailPage({
           uploadDate: data.created_at,
           fileUrl: data.file_url,
         })
-      } catch {
-        setDeliverable(null)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : ""
+        if (msg.includes("403")) {
+          setFetchError("forbidden")
+        } else if (msg.includes("404")) {
+          setFetchError("not_found")
+        } else {
+          setFetchError("generic")
+        }
       } finally {
         setLoading(false)
       }
@@ -272,6 +283,9 @@ export default function DeliverableDetailPage({
   }
 
   if (!deliverable) {
+    const isForbidden = fetchError === "forbidden"
+    const isNotFound = fetchError === "not_found" || fetchError === null
+
     return (
       <div className="mx-auto max-w-4xl space-y-6">
         <Link
@@ -285,10 +299,14 @@ export default function DeliverableDetailPage({
           <CardContent className="flex flex-col items-center justify-center py-16">
             <FileImage className="size-12 text-gray-300" />
             <h3 className="mt-4 text-base font-semibold text-[#0D2137]">
-              Deliverable not found
+              {isForbidden ? "Access Denied" : "Deliverable not found"}
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              This deliverable may have been removed.
+              {isForbidden
+                ? "You don't have permission to view this deliverable."
+                : isNotFound
+                  ? "This deliverable may have been removed."
+                  : "Something went wrong. Please try again later."}
             </p>
           </CardContent>
         </Card>
@@ -338,9 +356,19 @@ export default function DeliverableDetailPage({
       <Card className="rounded-xl shadow-[var(--shadow-card)]">
         <CardContent className="p-0">
           <div className="relative aspect-[16/10] bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center overflow-hidden rounded-t-xl">
-            {deliverable.type === "reel" ? (
+            {deliverable.type === "reel" && videoPlaying ? (
+              <video
+                src={deliverable.fileUrl}
+                controls
+                autoPlay
+                className="size-full object-contain bg-black"
+              />
+            ) : deliverable.type === "reel" ? (
               <div className="flex flex-col items-center gap-3">
-                <button className="flex size-16 items-center justify-center rounded-full bg-black/80 text-white transition-transform hover:scale-110">
+                <button
+                  onClick={() => setVideoPlaying(true)}
+                  className="flex size-16 items-center justify-center rounded-full bg-black/80 text-white transition-transform hover:scale-110"
+                >
                   <Play className="size-7 ml-0.5" />
                 </button>
                 <span className="text-sm text-gray-400">
@@ -402,7 +430,7 @@ export default function DeliverableDetailPage({
             <div className="flex flex-wrap gap-3">
               <Button
                 onClick={handleApprove}
-                disabled={isApproving}
+                disabled={isApproving || isLapsed}
                 className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90"
               >
                 {isApproving ? (
@@ -416,6 +444,7 @@ export default function DeliverableDetailPage({
               <Button
                 variant="destructive"
                 onClick={() => setRejectDialogOpen(true)}
+                disabled={isLapsed}
                 className="bg-red-600 text-white hover:bg-red-700"
               >
                 <X className="size-4" />

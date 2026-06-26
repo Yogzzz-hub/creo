@@ -119,6 +119,8 @@ async def create_ticket_message(
         sender_id=current_user.id,
         message_text=payload.message_text,
         file_url=payload.file_url,
+        file_name=payload.file_name,
+        file_size_bytes=payload.file_size_bytes,
     )
     db.add(message)
     await db.commit()
