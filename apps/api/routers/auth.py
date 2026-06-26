@@ -4,6 +4,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from core.config import settings
 from core.database import get_db
@@ -82,8 +83,22 @@ async def register_user(
     )
 
     db.add(user)
-    await db.commit()
-    await db.refresh(user)
+    try:
+        await db.commit()
+        await db.refresh(user)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database constraint violation."
+        )
+    except Exception:
+        await db.rollback()
+        logger.exception("Transaction failed during user registration")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database transaction failed."
+        )
 
     if user.phone:
         checkout_url = f"{settings.FRONTEND_URL}/onboarding/verify"

@@ -3,6 +3,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
+import logging
+
+logger = logging.getLogger(__name__)
 
 from core.database import get_db
 from core.security import RequireClient
@@ -55,8 +59,22 @@ async def create_ticket(
         status=TicketStatus.open,
     )
     db.add(ticket)
-    await db.commit()
-    await db.refresh(ticket)
+    try:
+        await db.commit()
+        await db.refresh(ticket)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database constraint violation."
+        )
+    except Exception:
+        await db.rollback()
+        logger.exception("Transaction failed during ticket creation")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database transaction failed."
+        )
     return ticket
 
 
@@ -121,6 +139,20 @@ async def create_ticket_message(
         file_url=payload.file_url,
     )
     db.add(message)
-    await db.commit()
-    await db.refresh(message)
+    try:
+        await db.commit()
+        await db.refresh(message)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database constraint violation."
+        )
+    except Exception:
+        await db.rollback()
+        logger.exception("Transaction failed during ticket message creation")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database transaction failed."
+        )
     return message

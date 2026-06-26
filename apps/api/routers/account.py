@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from core.database import get_db
 from core.security import RequireClient, encrypt_token
@@ -60,7 +61,21 @@ async def connect_instagram(
 
     current_user.instagram_access_token = encrypt_token(long_lived_token)
     db.add(current_user)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database constraint violation."
+        )
+    except Exception:
+        await db.rollback()
+        logger.exception("Transaction failed during Instagram connect")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database transaction failed."
+        )
 
     return InstagramConnectResponse(
         success=True,
@@ -77,8 +92,22 @@ async def update_account_profile(
     update_data = payload.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(current_user, field, value)
-    await db.commit()
-    await db.refresh(current_user)
+    try:
+        await db.commit()
+        await db.refresh(current_user)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database constraint violation."
+        )
+    except Exception:
+        await db.rollback()
+        logger.exception("Transaction failed during profile update")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database transaction failed."
+        )
     return current_user
 
 
@@ -96,8 +125,22 @@ async def toggle_two_factor(
 ):
     current_user.two_fa_enabled = payload.enabled
     db.add(current_user)
-    await db.commit()
-    await db.refresh(current_user)
+    try:
+        await db.commit()
+        await db.refresh(current_user)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database constraint violation."
+        )
+    except Exception:
+        await db.rollback()
+        logger.exception("Transaction failed during 2FA toggle")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database transaction failed."
+        )
 
     return TwoFactorResponse(
         success=True,
@@ -123,7 +166,21 @@ async def disconnect_instagram(
     current_user.instagram_access_token = None
     current_user.instagram_user_id = None
     db.add(current_user)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database constraint violation."
+        )
+    except Exception:
+        await db.rollback()
+        logger.exception("Transaction failed during Instagram disconnect")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database transaction failed."
+        )
 
     return InstagramDisconnectResponse(
         success=True,

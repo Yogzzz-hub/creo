@@ -10,6 +10,20 @@ GRAPH_API_VERSION = "v21.0"
 GRAPH_API_BASE = f"https://graph.facebook.com/{GRAPH_API_VERSION}"
 
 
+def _sanitize_meta_response(data: dict) -> dict:
+    if not isinstance(data, dict):
+        return data
+    sanitized = {}
+    for k, v in data.items():
+        if k in ("access_token", "fb_exchange_token", "client_secret", "user_id"):
+            sanitized[k] = "***MASKED***"
+        elif isinstance(v, dict):
+            sanitized[k] = _sanitize_meta_response(v)
+        else:
+            sanitized[k] = v
+    return sanitized
+
+
 async def exchange_instagram_token(code: str, redirect_uri: str) -> str:
     """Exchange a short-lived OAuth code for a long-lived Instagram access token.
 
@@ -41,7 +55,7 @@ async def _get_short_lived_token(
 
     access_token = data.get("access_token")
     if not access_token:
-        logger.error("Meta OAuth response missing access_token: %s", data)
+        logger.error("Meta OAuth response missing access_token: %s", _sanitize_meta_response(data))
         raise ValueError("Failed to obtain short-lived access token from Meta")
 
     logger.info("Successfully obtained short-lived Instagram access token")
@@ -63,7 +77,7 @@ async def _get_long_lived_token(client: httpx.AsyncClient, short_lived_token: st
 
     long_lived_token = data.get("access_token")
     if not long_lived_token:
-        logger.error("Meta token exchange response missing access_token: %s", data)
+        logger.error("Meta token exchange response missing access_token: %s", _sanitize_meta_response(data))
         raise ValueError("Failed to exchange for long-lived Instagram access token")
 
     expires_in = data.get("expires_in", "unknown")
@@ -99,7 +113,7 @@ async def refresh_access_token(current_token: str) -> dict:
 
     new_token = data.get("access_token")
     if not new_token:
-        logger.error("Meta token refresh response missing access_token: %s", data)
+        logger.error("Meta token refresh response missing access_token: %s", _sanitize_meta_response(data))
         raise ValueError("Failed to refresh Instagram access token")
 
     expires_in = data.get("expires_in", "unknown")
@@ -193,7 +207,7 @@ async def _create_media_container(
     data = response.json()
     container_id = data.get("id")
     if not container_id:
-        logger.error("Instagram container response missing id: %s", data)
+        logger.error("Instagram container response missing id: %s", _sanitize_meta_response(data))
         raise ValueError("Instagram media container response missing id field")
 
     logger.info("Created Instagram media container: id=%s", container_id)
@@ -229,7 +243,7 @@ async def _publish_container(
     data = response.json()
     published_id = data.get("id")
     if not published_id:
-        logger.error("Instagram publish response missing id: %s", data)
+        logger.error("Instagram publish response missing id: %s", _sanitize_meta_response(data))
         raise ValueError("Instagram media publish response missing id field")
 
     return published_id

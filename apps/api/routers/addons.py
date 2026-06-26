@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 from starlette.concurrency import run_in_threadpool
 
 from core.database import get_db
@@ -133,44 +134,56 @@ async def purchase_addon(
                 "quantity": str(payload.quantity),
             },
         )
-
-        addon = Addon(
-            client_id=current_user.id,
-            deliverable_type=payload.deliverable_type,
-            quantity=payload.quantity,
-            unit_price=unit_price,
-            total_price=total_price,
-            status=AddonStatus.pending,
-            gateway=PaymentGateway.razorpay,
-            gateway_payment_id=order["id"],
-        )
-        db.add(addon)
-        await db.flush()
-
-        new_tasks = []
-        for _ in range(payload.quantity):
-            new_tasks.append(
-                Task(
-                    client_id=current_user.id,
-                    deliverable_type=payload.deliverable_type,
-                    content_brief=payload.content_brief or f"Add-on Order: {payload.deliverable_type.value}",
-                    status=TaskStatus.pending,
-                    priority=2,
-                    is_addon=True,
-                    addon_id=addon.id,
-                )
-            )
-        db.add_all(new_tasks)
-
-        await db.commit()
-        await db.refresh(addon)
-
     except Exception as e:
         logger.error(f"Addon purchase failed for user {current_user.id}: {e}")
-        await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Failed to process addon payment. No charges were made.",
+        )
+
+    addon = Addon(
+        client_id=current_user.id,
+        deliverable_type=payload.deliverable_type,
+        quantity=payload.quantity,
+        unit_price=unit_price,
+        total_price=total_price,
+        status=AddonStatus.pending,
+        gateway=PaymentGateway.razorpay,
+        gateway_payment_id=order["id"],
+    )
+    db.add(addon)
+    await db.flush()
+
+    new_tasks = []
+    for _ in range(payload.quantity):
+        new_tasks.append(
+            Task(
+                client_id=current_user.id,
+                deliverable_type=payload.deliverable_type,
+                content_brief=payload.content_brief or f"Add-on Order: {payload.deliverable_type.value}",
+                status=TaskStatus.pending,
+                priority=2,
+                is_addon=True,
+                addon_id=addon.id,
+            )
+        )
+    db.add_all(new_tasks)
+
+    try:
+        await db.commit()
+        await db.refresh(addon)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database constraint violation."
+        )
+    except Exception:
+        await db.rollback()
+        logger.exception("Transaction failed during addon purchase")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database transaction failed."
         )
 
     return {
@@ -205,8 +218,7 @@ async def purchase_addon_batch(
             )
         total_amount += float(pricing.unit_price) * item.quantity
 
-    await db.commit()
-
+    # Remove the empty db.commit() here
     for item in payload.items:
         pricing_result = await db.execute(
             select(AddonPricing).where(
@@ -232,53 +244,64 @@ async def purchase_addon_batch(
                     "quantity": str(item.quantity),
                 },
             )
-
-            addon = Addon(
-                client_id=current_user.id,
-                deliverable_type=item.deliverable_type,
-                quantity=item.quantity,
-                unit_price=unit_price,
-                total_price=item_total,
-                status=AddonStatus.pending,
-                gateway=PaymentGateway.razorpay,
-                gateway_payment_id=order["id"],
-            )
-            db.add(addon)
-            await db.flush()
-
-            new_tasks = []
-            for _ in range(item.quantity):
-                new_tasks.append(
-                    Task(
-                        client_id=current_user.id,
-                        deliverable_type=item.deliverable_type,
-                        content_brief=item.content_brief or f"Add-on Order: {item.deliverable_type.value}",
-                        status=TaskStatus.pending,
-                        priority=2,
-                        is_addon=True,
-                        addon_id=addon.id,
-                    )
-                )
-            db.add_all(new_tasks)
-            await db.commit()
-            await db.refresh(addon)
-
-            results.append({
-                "deliverable_type": item.deliverable_type.value,
-                "quantity": item.quantity,
-                "total_price": item_total,
-                "razorpay_order_id": order["id"],
-            })
-
-        except HTTPException:
-            raise
         except Exception as e:
             logger.error("Batch addon purchase failed for user %s: %s", current_user.id, e)
-            await db.rollback()
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="Failed to process addon payment. No charges were made.",
             )
+
+        addon = Addon(
+            client_id=current_user.id,
+            deliverable_type=item.deliverable_type,
+            quantity=item.quantity,
+            unit_price=unit_price,
+            total_price=item_total,
+            status=AddonStatus.pending,
+            gateway=PaymentGateway.razorpay,
+            gateway_payment_id=order["id"],
+        )
+        db.add(addon)
+        await db.flush()
+
+        new_tasks = []
+        for _ in range(item.quantity):
+            new_tasks.append(
+                Task(
+                    client_id=current_user.id,
+                    deliverable_type=item.deliverable_type,
+                    content_brief=item.content_brief or f"Add-on Order: {item.deliverable_type.value}",
+                    status=TaskStatus.pending,
+                    priority=2,
+                    is_addon=True,
+                    addon_id=addon.id,
+                )
+            )
+        db.add_all(new_tasks)
+
+        try:
+            await db.commit()
+            await db.refresh(addon)
+        except IntegrityError:
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Database constraint violation."
+            )
+        except Exception:
+            await db.rollback()
+            logger.exception("Transaction failed during batch addon purchase")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database transaction failed."
+            )
+
+        results.append({
+            "deliverable_type": item.deliverable_type.value,
+            "quantity": item.quantity,
+            "total_price": item_total,
+            "razorpay_order_id": order["id"],
+        })
 
     return {
         "status": "success",
