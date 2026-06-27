@@ -67,6 +67,7 @@
 - [x] 3.16 Implement logout — clears Supabase session, clears cookies, redirects to /login
 - [x] 3.17 Create /signup and /signup/plan pages — account creation and plan selection forms with validation
 - [x] 3.18 Wire sign-up form to Supabase Auth signUp() — creates auth user, then calls /api/v1/auth/register
+- [x] 3.18a Enforce strong password policy on signup — min 8 chars, uppercase, lowercase, number, special char with real-time strength indicator
 - [x] 3.19 Write Pytest tests for auth middleware — test each role accessing allowed and forbidden routes
 - [ ] 3.20 Test full auth flow end-to-end: Google sign-in → role redirect → logout → OTP sign-in → role redirect
 
@@ -145,6 +146,7 @@
 - [~] 6.25 Implement Instagram OAuth flow
 - [x] 6.26 Create FastAPI endpoint POST /api/v1/account/instagram
 - [x] 6.27 Build in-portal notification system — bell icon, dropdown, mark-as-read
+- [x] 6.28 Build account dropdown with user identity and workspace context
 - [x] 6.28 Create FastAPI endpoint GET /api/v1/notifications
 - [x] 6.29 Wire all portal pages to loading skeletons
 - [x] 6.30 Test all client portal flows

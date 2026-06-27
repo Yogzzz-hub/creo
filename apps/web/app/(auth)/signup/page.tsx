@@ -17,7 +17,13 @@ const signupSchema = z.object({
   businessName: z.string().optional(),
   phone: z.string().optional(),
   email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least 1 uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least 1 lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least 1 number")
+    .regex(/[^A-Za-z0-9]/, "Password must contain at least 1 special character"),
 });
 
 const phoneSchema = z.object({
@@ -30,6 +36,31 @@ type SignupFormData = z.infer<typeof signupSchema>;
 type PhoneFormData = z.infer<typeof phoneSchema>;
 
 type AuthMode = "email" | "phone";
+
+function getPasswordStrength(password: string): { level: "weak" | "medium" | "strong"; color: string } {
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[a-z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+
+  if (score <= 2) return { level: "weak", color: "text-error" };
+  if (score <= 4) return { level: "medium", color: "text-amber-600" };
+  return { level: "strong", color: "text-green-600" };
+}
+
+function PasswordRequirement({ met, label }: { met: boolean; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5 text-xs">
+      <span className={met ? "text-green-600" : "text-text-muted"}>
+        {met ? "✓" : "○"}
+      </span>
+      <span className={met ? "text-green-600" : "text-text-muted"}>{label}</span>
+    </div>
+  );
+}
 
 export default function SignupPage() {
   const router = useRouter();
@@ -48,10 +79,14 @@ export default function SignupPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
   });
+
+  const passwordValue = watch("password", "");
+  const passwordStrength = getPasswordStrength(passwordValue);
 
   async function onSubmit(data: SignupFormData) {
     setLoading(true);
@@ -276,7 +311,7 @@ export default function SignupPage() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="At least 6 characters"
+                    placeholder="Min. 8 characters"
                     {...register("password")}
                     className="border-border focus:border-brand focus:ring-brand pr-10"
                   />
@@ -289,6 +324,22 @@ export default function SignupPage() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+
+                {passwordValue && (
+                  <div className="space-y-1.5">
+                    <p className={`text-xs font-medium ${passwordStrength.color}`}>
+                      Password strength: {passwordStrength.level.charAt(0).toUpperCase() + passwordStrength.level.slice(1)}
+                    </p>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                      <PasswordRequirement met={passwordValue.length >= 8} label="8+ characters" />
+                      <PasswordRequirement met={/[A-Z]/.test(passwordValue)} label="1 uppercase letter" />
+                      <PasswordRequirement met={/[a-z]/.test(passwordValue)} label="1 lowercase letter" />
+                      <PasswordRequirement met={/[0-9]/.test(passwordValue)} label="1 number" />
+                      <PasswordRequirement met={/[^A-Za-z0-9]/.test(passwordValue)} label="1 special character" />
+                    </div>
+                  </div>
+                )}
+
                 {errors.password && (
                   <p className="text-sm text-error">{errors.password.message}</p>
                 )}

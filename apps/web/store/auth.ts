@@ -10,6 +10,7 @@ interface User {
   email: string;
   role: string;
   full_name: string;
+  business_name?: string;
   account_status: string;
   avatar_url?: string;
 }
@@ -49,6 +50,7 @@ export function useAuthListener() {
             email: user.email ?? "",
             role: user.user_metadata?.role ?? "client",
             full_name: user.user_metadata?.full_name ?? "",
+            business_name: user.user_metadata?.business_name ?? undefined,
             account_status: user.user_metadata?.account_status ?? "pending_verification",
             avatar_url: user.user_metadata?.avatar_url ?? undefined,
           });
