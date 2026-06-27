@@ -1,6 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 import {
   ArrowLeft,
@@ -25,6 +28,15 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+
+const businessProfileSchema = z.object({
+  fullName: z.string().min(2, "Full name must be at least 2 characters."),
+  businessName: z.string().min(2, "Business name must be at least 2 characters."),
+  phone: z.string().min(10, "Phone number must be at least 10 characters."),
+  email: z.string().email(),
+})
+
+type BusinessProfileValues = z.infer<typeof businessProfileSchema>
 
 interface UserProfile {
   fullName: string
@@ -86,41 +98,32 @@ export default function AccountPage() {
 function BusinessProfileTab() {
   const [isSaving, setIsSaving] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [form, setForm] = useState({
-    fullName: "",
-    businessName: "",
-    phone: "",
-    email: "",
+  const [email, setEmail] = useState("")
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<BusinessProfileValues>({
+    resolver: zodResolver(businessProfileSchema),
+    defaultValues: { fullName: "", businessName: "", phone: "", email: "" },
   })
 
   useEffect(() => {
     async function fetchProfile() {
       try {
         const supabase = createClient()
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (!session?.access_token) {
-          setLoading(false)
-          return
-        }
-
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/portal/dashboard`,
-          {
-            headers: { Authorization: `Bearer ${session.access_token}` },
-          }
-        )
-
         const user = await supabase.auth.getUser()
         const userData = user.data.user
+        const emailValue = userData?.email ?? ""
+        setEmail(emailValue)
 
-        setForm({
+        reset({
           fullName: userData?.user_metadata?.full_name ?? "",
           businessName: userData?.user_metadata?.business_name ?? "",
           phone: userData?.phone ?? "",
-          email: userData?.email ?? "",
+          email: emailValue,
         })
       } catch {
         // Use defaults
@@ -129,16 +132,16 @@ function BusinessProfileTab() {
       }
     }
     fetchProfile()
-  }, [])
+  }, [reset])
 
-  async function handleSave() {
+  async function onSubmit(values: BusinessProfileValues) {
     setIsSaving(true)
     try {
       const supabase = createClient()
       const { error } = await supabase.auth.updateUser({
         data: {
-          full_name: form.fullName,
-          business_name: form.businessName,
+          full_name: values.fullName,
+          business_name: values.businessName,
         },
       })
 
@@ -150,10 +153,6 @@ function BusinessProfileTab() {
     } finally {
       setIsSaving(false)
     }
-  }
-
-  function updateField(field: string, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }))
   }
 
   if (loading) {
@@ -174,61 +173,75 @@ function BusinessProfileTab() {
           Business Information
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="full-name">Full Name</Label>
-            <Input
-              id="full-name"
-              value={form.fullName}
-              onChange={(e) => updateField("fullName", e.target.value)}
-            />
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="full-name">Full Name <span className="text-red-500">*</span></Label>
+              <Input
+                id="full-name"
+                {...register("fullName")}
+                className={cn(errors.fullName && "border-red-500 focus-visible:ring-red-500")}
+              />
+              {errors.fullName && (
+                <p className="text-sm text-red-500">{errors.fullName.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="business-name">Business Name <span className="text-red-500">*</span></Label>
+              <Input
+                id="business-name"
+                {...register("businessName")}
+                className={cn(errors.businessName && "border-red-500 focus-visible:ring-red-500")}
+              />
+              {errors.businessName && (
+                <p className="text-sm text-red-500">{errors.businessName.message}</p>
+              )}
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="business-name">Business Name</Label>
-            <Input
-              id="business-name"
-              value={form.businessName}
-              onChange={(e) => updateField("businessName", e.target.value)}
-            />
-          </div>
-        </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              value={form.email}
-              disabled
-              className="bg-gray-50 text-gray-500"
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                value={email}
+                readOnly
+                disabled
+                className="bg-gray-50 text-gray-500"
+              />
+              <p className="text-sm text-muted-foreground">
+                Email address is linked to your account login and cannot be changed here.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone <span className="text-red-500">*</span></Label>
+              <Input
+                id="phone"
+                {...register("phone")}
+                className={cn(errors.phone && "border-red-500 focus-visible:ring-red-500")}
+              />
+              {errors.phone && (
+                <p className="text-sm text-red-500">{errors.phone.message}</p>
+              )}
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              value={form.phone}
-              disabled
-              className="bg-gray-50 text-gray-500"
-            />
-          </div>
-        </div>
 
-        <div className="flex justify-end pt-2">
-          <Button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90"
-          >
-            {isSaving ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Save className="size-4" />
-            )}
-            Save Changes
-          </Button>
-        </div>
+          <div className="flex justify-end pt-2">
+            <Button
+              type="submit"
+              disabled={isSaving}
+              className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90"
+            >
+              {isSaving ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
+              Save Changes
+            </Button>
+          </div>
+        </form>
       </CardContent>
     </Card>
   )
