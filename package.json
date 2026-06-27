@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "@stripe/react-stripe-js": "^6.6.0",
-    "@stripe/stripe-js": "^9.8.0",
-    "sonner": "^2.0.7"
-  }
-}

@@ -1,7 +1,7 @@
 """Add is_recommended column to plans table
 
-Revision ID: 025
-Revises: 024
+Revision ID: b2c3d4e5
+Revises: a1b2c3d4
 Create Date: 2026-06-23
 
 """
@@ -9,8 +9,8 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "025"
-down_revision = "024"
+revision = "b2c3d4e5"
+down_revision = "a1b2c3d4"
 branch_labels = None
 depends_on = None
 
