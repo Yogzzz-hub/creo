@@ -1,15 +1,15 @@
 """create_auth_sync_trigger
 
-Revision ID: 027
-Revises: 026
+Revision ID: d4e5f6a7
+Revises: c3d4e5f6
 Create Date: 2026-06-24
 
 """
 from alembic import op
 
 
-revision = "027"
-down_revision = "026"
+revision = "d4e5f6a7"
+down_revision = "c3d4e5f6"
 branch_labels = None
 depends_on = None
 

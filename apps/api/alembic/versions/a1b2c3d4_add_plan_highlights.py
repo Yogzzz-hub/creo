@@ -1,6 +1,6 @@
 """Add highlights column to plans table
 
-Revision ID: 024
+Revision ID: a1b2c3d4
 Revises: 023
 Create Date: 2026-06-23
 
@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 
-revision = "024"
+revision = "a1b2c3d4"
 down_revision = "023"
 branch_labels = None
 depends_on = None
@@ -46,7 +46,7 @@ def upgrade() -> None:
         END
     """)
 
-    op.alter_column("plans", "highlights", nullable=False, server_default="'[]'::json")
+    op.alter_column("plans", "highlights", nullable=False, server_default=sa.text("'[]'::json"))
 
 
 def downgrade() -> None:

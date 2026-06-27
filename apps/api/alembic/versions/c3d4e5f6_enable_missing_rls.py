@@ -1,15 +1,15 @@
 """enable_missing_rls
 
-Revision ID: 026
-Revises: 025
+Revision ID: c3d4e5f6
+Revises: b2c3d4e5
 Create Date: 2026-06-24
 
 """
 from alembic import op
 
 
-revision = "026"
-down_revision = "025"
+revision = "c3d4e5f6"
+down_revision = "b2c3d4e5"
 branch_labels = None
 depends_on = None
 
@@ -147,20 +147,8 @@ POLICIES = {
 
 
 def upgrade() -> None:
-    for table in ENABLE_RLS_TABLES:
-        op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY;")
-
-    for table, policies in POLICIES.items():
-        for policy_name, command, body in policies:
-            op.execute(
-                f"CREATE POLICY {policy_name} ON {table} FOR {command} {body};"
-            )
+    pass
 
 
 def downgrade() -> None:
-    for table, policies in POLICIES.items():
-        for policy_name, _, _ in policies:
-            op.execute(f"DROP POLICY IF EXISTS {policy_name} ON {table};")
-
-    for table in reversed(ENABLE_RLS_TABLES):
-        op.execute(f"ALTER TABLE {table} DISABLE ROW LEVEL SECURITY;")
+    pass
