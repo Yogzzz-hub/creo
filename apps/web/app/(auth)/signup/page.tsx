@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +17,14 @@ import Link from "next/link";
 
 const signupSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  businessName: z.string().optional(),
-  phone: z.string().optional(),
+  businessName: z.string().min(1, "Business name is required"),
+  phone: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || isValidPhoneNumber(val),
+      "Please enter a valid phone number."
+    ),
   email: z.string().email("Please enter a valid email address"),
   password: z
     .string()
@@ -29,8 +37,14 @@ const signupSchema = z.object({
 
 const phoneSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  businessName: z.string().optional(),
-  phone: z.string().min(10, "Please enter a valid phone number"),
+  businessName: z.string().min(1, "Business name is required"),
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .refine(
+      (val) => isValidPhoneNumber(val),
+      "Please enter a valid phone number."
+    ),
 });
 
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -71,6 +85,7 @@ export default function SignupPage() {
   const [mode, setMode] = useState<AuthMode>("email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailConfirmationPending, setEmailConfirmationPending] = useState(false);
 
   async function handleGoogleSignUp() {
     await supabase.auth.signInWithOAuth({
@@ -85,11 +100,14 @@ export default function SignupPage() {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [phoneData, setPhoneData] = useState<PhoneFormData | null>(null);
+  const [phoneValue, setPhoneValue] = useState("");
 
   const {
     register,
     handleSubmit,
     watch,
+    control,
+    reset,
     formState: { errors },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -125,6 +143,12 @@ export default function SignupPage() {
 
     if (!authData.user) {
       setError("Failed to create account. Please try again.");
+      setLoading(false);
+      return;
+    }
+
+    if (!authData.session) {
+      setEmailConfirmationPending(true);
       setLoading(false);
       return;
     }
@@ -259,7 +283,32 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {mode === "email" ? (
+          {emailConfirmationPending ? (
+            <div className="text-center space-y-4 py-4">
+              <div className="mx-auto w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
+                <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-text">Check your email</h3>
+                <p className="text-sm text-text-muted mt-1">
+                  We sent a verification link to your email address. Please click the link to verify your account before logging in.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-4"
+                onClick={() => {
+                  setEmailConfirmationPending(false);
+                  reset();
+                }}
+              >
+                Back to sign up
+              </Button>
+            </div>
+          ) : mode === "email" ? (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName" className="text-text">
@@ -278,27 +327,43 @@ export default function SignupPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="businessName" className="text-text">
-                  Business Name
+                  Business Name <span className="text-error">*</span>
                 </Label>
                 <Input
                   id="businessName"
-                  placeholder="Your Business (optional)"
+                  placeholder="Your Business"
                   {...register("businessName")}
                   className="border-border focus:border-brand focus:ring-brand"
                 />
+                {errors.businessName && (
+                  <p className="text-sm text-error">{errors.businessName.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-text">
                   Phone Number
                 </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+91 98765 43210 (optional)"
-                  {...register("phone")}
-                  className="border-border focus:border-brand focus:ring-brand"
+                <Controller
+                  name="phone"
+                  control={control}
+                  render={({ field }) => (
+                    <PhoneInput
+                      id="phone"
+                      placeholder="Enter phone number"
+                      defaultCountry="IN"
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      international
+                      countryCallingCodeEditable={false}
+                      inputComponent={Input}
+                      className="PhoneInput"
+                    />
+                  )}
                 />
+                {errors.phone && (
+                  <p className="text-sm text-error">{errors.phone.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -395,8 +460,7 @@ export default function SignupPage() {
               const form = e.target as HTMLFormElement;
               const fullName = (form.elements.namedItem("fullNamePhone") as HTMLInputElement).value;
               const businessName = (form.elements.namedItem("businessNamePhone") as HTMLInputElement).value;
-              const phone = (form.elements.namedItem("phoneSignup") as HTMLInputElement).value;
-              handleSendPhoneOtp({ fullName, businessName: businessName || undefined, phone });
+              handleSendPhoneOtp({ fullName, businessName: businessName || undefined, phone: phoneValue });
             }} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="fullNamePhone" className="text-text">
@@ -412,11 +476,12 @@ export default function SignupPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="businessNamePhone" className="text-text">
-                  Business Name
+                  Business Name <span className="text-error">*</span>
                 </Label>
                 <Input
                   id="businessNamePhone"
-                  placeholder="Your Business (optional)"
+                  placeholder="Your Business"
+                  required
                   className="border-border focus:border-brand focus:ring-brand"
                 />
               </div>
@@ -425,12 +490,16 @@ export default function SignupPage() {
                 <Label htmlFor="phoneSignup" className="text-text">
                   Phone Number <span className="text-error">*</span>
                 </Label>
-                <Input
+                <PhoneInput
                   id="phoneSignup"
-                  type="tel"
-                  placeholder="+91 98765 43210"
-                  required
-                  className="border-border focus:border-brand focus:ring-brand"
+                  placeholder="Enter phone number"
+                  defaultCountry="IN"
+                  value={phoneValue}
+                  onChange={(val) => setPhoneValue(val ?? "")}
+                  international
+                  countryCallingCodeEditable={false}
+                  inputComponent={Input}
+                  className="PhoneInput"
                 />
                 <p className="text-xs text-text-muted">
                   We&apos;ll send a one-time password to verify your number.
