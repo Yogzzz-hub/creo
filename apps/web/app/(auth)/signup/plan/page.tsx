@@ -247,13 +247,12 @@ function PlanSelectionContent() {
             return (
               <Card
                 key={plan.id}
-                className={`relative transition-all ${
-                  isSelected
+                className={`relative transition-all ${isSelected
                     ? "border-2 border-accent shadow-lg ring-2 ring-accent/20"
                     : isPopular
                       ? "border-2 border-brand shadow-lg"
                       : "border-border"
-                }`}
+                  }`}
               >
                 {isPopular && !isSelected && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -299,13 +298,12 @@ function PlanSelectionContent() {
                 </CardContent>
                 <CardFooter className="flex flex-col gap-3">
                   <Button
-                    className={`w-full ${
-                      isSelected
+                    className={`w-full ${isSelected
                         ? "bg-accent hover:bg-accent/90 text-white"
                         : isPopular
                           ? "bg-brand hover:bg-brand/90 text-white"
                           : "bg-brand-dark hover:bg-brand-dark/90 text-white"
-                    }`}
+                      }`}
                     onClick={() => handleSelectPlan(plan.id)}
                   >
                     {isSelected
@@ -328,7 +326,7 @@ function PlanSelectionContent() {
           <p className="text-sm text-text-muted">
             Not sure?{" "}
             <a
-              href="https://wa.me/919876543210"
+              href="https://wa.me/9876543210"
               target="_blank"
               rel="noopener noreferrer"
               className="text-brand hover:underline"
