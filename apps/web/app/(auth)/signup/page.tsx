@@ -85,6 +85,7 @@ export default function SignupPage() {
   const [mode, setMode] = useState<AuthMode>("email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailConfirmationPending, setEmailConfirmationPending] = useState(false);
 
   async function handleGoogleSignUp() {
     await supabase.auth.signInWithOAuth({
@@ -106,6 +107,7 @@ export default function SignupPage() {
     handleSubmit,
     watch,
     control,
+    reset,
     formState: { errors },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -141,6 +143,12 @@ export default function SignupPage() {
 
     if (!authData.user) {
       setError("Failed to create account. Please try again.");
+      setLoading(false);
+      return;
+    }
+
+    if (!authData.session) {
+      setEmailConfirmationPending(true);
       setLoading(false);
       return;
     }
@@ -275,7 +283,32 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {mode === "email" ? (
+          {emailConfirmationPending ? (
+            <div className="text-center space-y-4 py-4">
+              <div className="mx-auto w-12 h-12 rounded-full bg-green-50 flex items-center justify-center">
+                <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-text">Check your email</h3>
+                <p className="text-sm text-text-muted mt-1">
+                  We sent a verification link to your email address. Please click the link to verify your account before logging in.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-4"
+                onClick={() => {
+                  setEmailConfirmationPending(false);
+                  reset();
+                }}
+              >
+                Back to sign up
+              </Button>
+            </div>
+          ) : mode === "email" ? (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName" className="text-text">
