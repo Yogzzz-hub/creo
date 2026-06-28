@@ -17,7 +17,7 @@ import Link from "next/link";
 
 const signupSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  businessName: z.string().optional(),
+  businessName: z.string().min(1, "Business name is required"),
   phone: z
     .string()
     .optional()
@@ -37,7 +37,7 @@ const signupSchema = z.object({
 
 const phoneSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  businessName: z.string().optional(),
+  businessName: z.string().min(1, "Business name is required"),
   phone: z
     .string()
     .min(1, "Phone number is required")
@@ -327,14 +327,17 @@ export default function SignupPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="businessName" className="text-text">
-                  Business Name
+                  Business Name <span className="text-error">*</span>
                 </Label>
                 <Input
                   id="businessName"
-                  placeholder="Your Business (optional)"
+                  placeholder="Your Business"
                   {...register("businessName")}
                   className="border-border focus:border-brand focus:ring-brand"
                 />
+                {errors.businessName && (
+                  <p className="text-sm text-error">{errors.businessName.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -473,11 +476,12 @@ export default function SignupPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="businessNamePhone" className="text-text">
-                  Business Name
+                  Business Name <span className="text-error">*</span>
                 </Label>
                 <Input
                   id="businessNamePhone"
-                  placeholder="Your Business (optional)"
+                  placeholder="Your Business"
+                  required
                   className="border-border focus:border-brand focus:ring-brand"
                 />
               </div>
