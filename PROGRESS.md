@@ -69,6 +69,7 @@
 - [x] 3.18 Wire sign-up form to Supabase Auth signUp() — creates auth user, then calls /api/v1/auth/register
 - [x] 3.18a Enforce strong password policy on signup — min 8 chars, uppercase, lowercase, number, special char with real-time strength indicator
 - [x] 3.19 Write Pytest tests for auth middleware — test each role accessing allowed and forbidden routes
+- [x] 3.21 Implement forgot password flow — /portal/forgot-password page, /portal/reset-password page with Zod validation, middleware exemptions for public auth routes
 - [ ] 3.20 Test full auth flow end-to-end: Google sign-in → role redirect → logout → OTP sign-in → role redirect
 
 ## Phase 4: Public Website

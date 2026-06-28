@@ -3,6 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const PROTECTED_PREFIXES = ["/portal", "/dashboard", "/admin", "/kpi", "/sales", "/onboarding"];
 
+const PUBLIC_ROUTES = ["/forgot-password", "/reset-password"];
+
 const ROLE_HOMES: Record<string, string> = {
   client: "/portal",
   team_member: "/dashboard",
@@ -14,6 +16,7 @@ const ROLE_HOMES: Record<string, string> = {
 };
 
 function isProtectedRoute(pathname: string): boolean {
+  if (PUBLIC_ROUTES.some((route) => pathname === route)) return false;
   return PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
