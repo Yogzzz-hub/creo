@@ -20,11 +20,8 @@ const signupSchema = z.object({
   businessName: z.string().min(1, "Business name is required"),
   phone: z
     .string()
-    .optional()
-    .refine(
-      (val) => !val || isValidPhoneNumber(val),
-      "Please enter a valid phone number."
-    ),
+    .min(1, "Phone number is required")
+    .refine(isValidPhoneNumber, "Please enter a valid phone number"),
   email: z.string().email("Please enter a valid email address"),
   password: z
     .string()
@@ -342,7 +339,7 @@ export default function SignupPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-text">
-                  Phone Number
+                  Phone Number <span className="text-error">*</span>
                 </Label>
                 <Controller
                   name="phone"
