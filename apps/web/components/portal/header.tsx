@@ -40,11 +40,11 @@ export function PortalHeader() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [loggingOut, setLoggingOut] = useState(false)
-  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(user?.avatar_url)
+  const [avatarUrl, setAvatarUrl] = useState<string | null | undefined>(user?.avatar_url)
   const [displayName, setDisplayName] = useState(user?.full_name || "")
 
   useEffect(() => {
-    setAvatarUrl(user?.avatar_url)
+    setAvatarUrl(user?.avatar_url ?? null)
     setDisplayName(resolveDisplayName(user as unknown as Record<string, unknown> | undefined, user?.email))
   }, [user?.avatar_url, user?.full_name, user?.email])
 
@@ -55,14 +55,15 @@ export function PortalHeader() {
       console.log("User Email:", authUser?.email)
       if (authUser) {
         const name = resolveDisplayName(authUser.user_metadata, authUser.email)
+        const dbAvatarUrl = authUser.user_metadata?.avatar_url ?? null
         setUser({
           ...user!,
           full_name: name,
           business_name: authUser.user_metadata?.business_name ?? user?.business_name,
-          avatar_url: authUser.user_metadata?.avatar_url ?? user?.avatar_url,
+          avatar_url: dbAvatarUrl ?? undefined,
         })
         setDisplayName(name)
-        setAvatarUrl(authUser.user_metadata?.avatar_url ?? user?.avatar_url)
+        setAvatarUrl(dbAvatarUrl)
       }
     })
   }, [user, setUser])
@@ -135,16 +136,38 @@ export function PortalHeader() {
   async function handleRemove() {
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.updateUser({
+
+      if (avatarUrl) {
+        const rawUrl = avatarUrl.split('?')[0];
+        const marker = '/avatars/';
+        const idx = rawUrl.indexOf(marker);
+        const filePath = idx !== -1
+          ? decodeURIComponent(rawUrl.substring(idx + marker.length))
+          : null;
+
+        if (filePath) {
+          console.log('Removing storage file:', filePath);
+          const { error: storageError } = await supabase.storage
+            .from('avatars')
+            .remove([filePath]);
+          if (storageError) {
+            alert(`Failed to delete file: ${storageError.message}`);
+            return;
+          }
+        }
+      }
+
+      const { error: metaError } = await supabase.auth.updateUser({
         data: { avatar_url: null },
       });
-      if (error) {
-        console.error('Remove avatar error:', error);
+      if (metaError) {
+        alert(`Failed to clear profile: ${metaError.message}`);
         return;
       }
-      setAvatarUrl(undefined);
-    } catch (err) {
-      console.error('Unexpected error removing avatar:', err);
+
+      setAvatarUrl(null);
+    } catch (err: any) {
+      alert(`Error removing avatar: ${err.message}`);
     }
   }
 
@@ -167,7 +190,7 @@ export function PortalHeader() {
             }
           >
             <Avatar>
-              <AvatarImage src={avatarUrl} alt={displayName || "User"} />
+              <AvatarImage src={avatarUrl ?? undefined} alt={displayName || "User"} />
               <AvatarFallback>{initial}</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
@@ -175,7 +198,7 @@ export function PortalHeader() {
             <DropdownMenuLabel>
               <div className="relative inline-block mb-2">
                 <Avatar className="size-16">
-                  <AvatarImage src={avatarUrl} alt={displayName || "User"} />
+                  <AvatarImage src={avatarUrl ?? undefined} alt={displayName || "User"} />
                   <AvatarFallback className="text-xl">{initial}</AvatarFallback>
                 </Avatar>
                 <button
