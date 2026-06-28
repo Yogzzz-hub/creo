@@ -1,15 +1,15 @@
 """add_missing_indexes
 
-Revision ID: 028
-Revises: 027
+Revision ID: e5f6a7b8
+Revises: d4e5f6a7
 Create Date: 2026-06-24
 
 """
 from alembic import op
 
 
-revision = "028"
-down_revision = "027"
+revision = "e5f6a7b8"
+down_revision = "d4e5f6a7"
 branch_labels = None
 depends_on = None
 

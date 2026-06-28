@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { Bell, Check, X } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { BellRing, Check, X } from "lucide-react"
 import {
   Popover,
   PopoverContent,
@@ -64,7 +63,7 @@ export function NotificationBell() {
         setNotifications(data)
       }
     } catch {
-      // Silent fail — show empty state
+      // Silent fail
     } finally {
       setLoading(false)
     }
@@ -129,14 +128,33 @@ export function NotificationBell() {
     }
   }
 
+  const triggerRef = useRef<HTMLButtonElement>(null)
+
+  function handleShake() {
+    const el = triggerRef.current
+    if (!el) return
+    el.style.animation = "none"
+    void el.offsetHeight
+    el.style.animation = "shake 0.4s ease-in-out"
+    setTimeout(() => {
+      el.style.animation = "none"
+    }, 400)
+  }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
+        ref={triggerRef}
+        onMouseDown={handleShake}
         render={
-          <button className="relative rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700" />
+          <button className="relative rounded-lg p-2 transition-colors hover:bg-gray-100" />
         }
       >
-        <Bell className="size-5" />
+        <BellRing
+          size={24}
+          strokeWidth={1.5}
+          style={{ color: "#2B7BC4", fill: "#2B7BC4", stroke: "#2B7BC4" }}
+        />
         {unreadCount > 0 && (
           <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
             {unreadCount}
@@ -165,7 +183,7 @@ export function NotificationBell() {
             </div>
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center px-4 py-8 text-center">
-              <Bell className="size-8 text-gray-300" />
+              <BellRing className="size-8 text-gray-300" />
               <p className="mt-2 text-sm font-medium text-[#0D2137]">
                 No notifications yet
               </p>

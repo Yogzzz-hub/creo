@@ -151,6 +151,12 @@ body {
   --sidebar-ring: #0EA5E9;
 }
 
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -168,6 +174,8 @@ body {
   }
 }
 
+
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -178,3 +186,5 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+
