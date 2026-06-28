@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Phone, MessageCircle } from "lucide-react";
+import { SITE } from "@/lib/constants";
 
 const QUICK_LINKS = [
   { label: "About Us", href: "/about" },
@@ -53,7 +54,7 @@ export function Footer() {
             <ul className="mt-4 flex flex-col gap-3">
               <li>
                 <a
-                  href="https://wa.me/919999999999"
+                  href={`https://wa.me/${SITE.whatsapp}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
@@ -64,11 +65,11 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="tel:+919999999999"
+                  href={`tel:${SITE.phone}`}
                   className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
                 >
                   <Phone className="size-4" />
-                  +91 999 999 9999
+                  {SITE.phoneDisplay}
                 </a>
               </li>
             </ul>
