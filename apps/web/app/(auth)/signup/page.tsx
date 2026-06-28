@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +18,13 @@ import Link from "next/link";
 const signupSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   businessName: z.string().optional(),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || isValidPhoneNumber(val),
+      "Please enter a valid phone number."
+    ),
   email: z.string().email("Please enter a valid email address"),
   password: z
     .string()
@@ -30,7 +38,13 @@ const signupSchema = z.object({
 const phoneSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   businessName: z.string().optional(),
-  phone: z.string().min(10, "Please enter a valid phone number"),
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .refine(
+      (val) => isValidPhoneNumber(val),
+      "Please enter a valid phone number."
+    ),
 });
 
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -85,11 +99,13 @@ export default function SignupPage() {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [phoneData, setPhoneData] = useState<PhoneFormData | null>(null);
+  const [phoneValue, setPhoneValue] = useState("");
 
   const {
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -292,13 +308,26 @@ export default function SignupPage() {
                 <Label htmlFor="phone" className="text-text">
                   Phone Number
                 </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+91 98765 43210 (optional)"
-                  {...register("phone")}
-                  className="border-border focus:border-brand focus:ring-brand"
+                <Controller
+                  name="phone"
+                  control={control}
+                  render={({ field }) => (
+                    <PhoneInput
+                      id="phone"
+                      placeholder="Enter phone number"
+                      defaultCountry="IN"
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      international
+                      countryCallingCodeEditable={false}
+                      inputComponent={Input}
+                      className="PhoneInput"
+                    />
+                  )}
                 />
+                {errors.phone && (
+                  <p className="text-sm text-error">{errors.phone.message}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -395,8 +424,7 @@ export default function SignupPage() {
               const form = e.target as HTMLFormElement;
               const fullName = (form.elements.namedItem("fullNamePhone") as HTMLInputElement).value;
               const businessName = (form.elements.namedItem("businessNamePhone") as HTMLInputElement).value;
-              const phone = (form.elements.namedItem("phoneSignup") as HTMLInputElement).value;
-              handleSendPhoneOtp({ fullName, businessName: businessName || undefined, phone });
+              handleSendPhoneOtp({ fullName, businessName: businessName || undefined, phone: phoneValue });
             }} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="fullNamePhone" className="text-text">
@@ -425,12 +453,16 @@ export default function SignupPage() {
                 <Label htmlFor="phoneSignup" className="text-text">
                   Phone Number <span className="text-error">*</span>
                 </Label>
-                <Input
+                <PhoneInput
                   id="phoneSignup"
-                  type="tel"
-                  placeholder="+91 98765 43210"
-                  required
-                  className="border-border focus:border-brand focus:ring-brand"
+                  placeholder="Enter phone number"
+                  defaultCountry="IN"
+                  value={phoneValue}
+                  onChange={(val) => setPhoneValue(val ?? "")}
+                  international
+                  countryCallingCodeEditable={false}
+                  inputComponent={Input}
+                  className="PhoneInput"
                 />
                 <p className="text-xs text-text-muted">
                   We&apos;ll send a one-time password to verify your number.
