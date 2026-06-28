@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { LeadMagnetForm } from "@/components/public/lead-magnet-form";
+import { SITE } from "@/lib/constants";
 
 const LOCAL_BUSINESS_SCHEMA = {
   "@context": "https://schema.org",
@@ -83,8 +84,6 @@ const STEPS = [
   },
 ];
 
-const WHATSAPP_NUMBER = "919876543210";
-
 export default function HomePage() {
   return (
     <>
@@ -131,8 +130,8 @@ export default function HomePage() {
                 >
                   See Our Plans
                 </Link>
-                <Link
-                  href={`https://wa.me/${WHATSAPP_NUMBER}`}
+                <a
+                  href={`https://wa.me/${SITE.whatsapp}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className={buttonVariants({
@@ -142,7 +141,7 @@ export default function HomePage() {
                   })}
                 >
                   Book a Call
-                </Link>
+                </a>
               </div>
             </div>
 
