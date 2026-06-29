@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,8 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Phone, Eye, EyeOff } from "lucide-react";
+import { Loader2, Phone, Mail, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const signupSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
@@ -83,6 +84,8 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailConfirmationPending, setEmailConfirmationPending] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   async function handleGoogleSignUp() {
     await supabase.auth.signInWithOAuth({
@@ -112,6 +115,27 @@ export default function SignupPage() {
 
   const passwordValue = watch("password", "");
   const passwordStrength = getPasswordStrength(passwordValue);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
+  const handleResendEmail = useCallback(async () => {
+    if (!submittedEmail || resendCooldown > 0) return;
+    const supabase = createClient();
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: submittedEmail,
+    });
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Verification email resent successfully!");
+      setResendCooldown(30);
+    }
+  }, [submittedEmail, resendCooldown]);
 
   async function onSubmit(data: SignupFormData) {
     setLoading(true);
@@ -145,6 +169,7 @@ export default function SignupPage() {
     }
 
     if (!authData.session) {
+      setSubmittedEmail(data.email);
       setEmailConfirmationPending(true);
       setLoading(false);
       return;
@@ -292,6 +317,16 @@ export default function SignupPage() {
                 <p className="text-sm text-text-muted mt-1">
                   We sent a verification link to your email address. Please click the link to verify your account before logging in.
                 </p>
+                <button
+                  type="button"
+                  onClick={handleResendEmail}
+                  disabled={resendCooldown > 0}
+                  className="mt-3 text-sm text-blue-600 hover:underline cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {resendCooldown > 0
+                    ? `Resend email in ${resendCooldown}s`
+                    : "Didn't receive the email? Resend email"}
+                </button>
               </div>
               <Button
                 type="button"
@@ -457,7 +492,7 @@ export default function SignupPage() {
               const form = e.target as HTMLFormElement;
               const fullName = (form.elements.namedItem("fullNamePhone") as HTMLInputElement).value;
               const businessName = (form.elements.namedItem("businessNamePhone") as HTMLInputElement).value;
-              handleSendPhoneOtp({ fullName, businessName: businessName || undefined, phone: phoneValue });
+              handleSendPhoneOtp({ fullName, businessName, phone: phoneValue });
             }} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="fullNamePhone" className="text-text">
@@ -615,7 +650,7 @@ export default function SignupPage() {
               }}
               className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-white px-4 py-2.5 text-sm font-medium text-text transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/80 focus-visible:ring-offset-2"
             >
-              <Phone className="h-4 w-4" />
+              {mode === "email" ? <Phone className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
               {mode === "email" ? "Phone" : "Email"}
             </button>
           </div>

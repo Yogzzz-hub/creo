@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Phone, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Loader2, Phone, Mail, ArrowLeft, Eye, EyeOff } from "lucide-react";
 
 type AuthMode = "email" | "phone";
 
@@ -278,7 +278,7 @@ export default function LoginPage() {
               }}
               className="border-border"
             >
-              <Phone className="mr-2 h-4 w-4" />
+              {mode === "email" ? <Phone className="mr-2 h-4 w-4" /> : <Mail className="mr-2 h-4 w-4" />}
               {mode === "email" ? "Phone" : "Email"}
             </Button>
           </div>
