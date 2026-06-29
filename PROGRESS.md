@@ -92,6 +92,10 @@
 - [x] 4.16 Implement full mobile responsiveness for all public pages — hamburger menu, stacked layouts
 - [x] 4.17 Configure Next.js Image component for all portfolio and team images — optimise and lazy-load
 - [x] 4.18 Build admin-configurable scarcity counter — reads from platform settings API
+- [x] 4.19 Build Privacy Policy page (/privacy) — data handling, OAuth, encryption, multi-tenant isolation
+- [x] 4.20 Build Terms & Conditions page (/terms) — plans, payments, SLAs, revision policy, add-ons
+- [x] 4.21 Update footer legal links — link Privacy Policy and Terms & Conditions to /privacy and /terms
+- [x] 4.22 Implement Lead Magnet email dispatch — React Email template (LeadMagnetEmail.tsx), backend POST /api/v1/lead-magnet endpoint with Celery background task, Resend email delivery, sales team notification, frontend form with loading/success states
 
 ## Phase 5: Onboarding Flow
 

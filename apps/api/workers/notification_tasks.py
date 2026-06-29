@@ -206,3 +206,136 @@ async def _process_abandoned_signups_async() -> None:
         r.close()
 
     logger.info("[AbandonedSignups] Processed %d users, sent %d reminders", len(incomplete_users), sent_count)
+
+
+LEAD_MAGNET_DOWNLOAD_URL = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+
+CALENDAR_ROWS = [
+    ("Monday", "Story", "Behind-the-scenes of your workspace or team"),
+    ("Tuesday", "Poster", "Educational tip or FAQ carousel"),
+    ("Wednesday", "Story", "Poll or question sticker to boost engagement"),
+    ("Thursday", "Poster", "Customer testimonial or case study"),
+    ("Friday", "Story", "Product/service spotlight with a CTA"),
+    ("Saturday", "Reel", "Trending audio or how-to tutorial"),
+    ("Sunday", "Reel", "Brand story or lifestyle content"),
+]
+
+
+def _build_lead_magnet_html(email: str) -> str:
+    username = email.split("@")[0]
+    calendar_rows_html = "\n".join(
+        f"""
+        <tr style="border-bottom:1px solid #C9DFF0;">
+          <td style="padding:10px 8px;font-size:13px;font-weight:600;color:#0D2137;">{day}</td>
+          <td style="padding:10px 8px;font-size:13px;font-weight:600;color:#2B7BC4;">{typ}</td>
+          <td style="padding:10px 8px;font-size:13px;color:#374151;">{tip}</td>
+        </tr>"""
+        for day, typ, tip in CALENDAR_ROWS
+    )
+
+    return f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="background:#E8F4FD;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;margin:0;padding:0;">
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:40px auto;max-width:600px;background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(13,33,55,0.08);overflow:hidden;">
+  <tr>
+    <td style="background:#0D2137;padding:32px 40px;text-align:center;">
+      <div style="color:#2B7BC4;font-size:28px;font-weight:700;">Creo</div>
+      <div style="color:#6BAED6;font-size:13px;letter-spacing:1px;text-transform:uppercase;margin-top:4px;">Digital Marketing, Delivered.</div>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:40px;">
+      <h1 style="color:#0D2137;font-size:24px;font-weight:700;margin:0 0 16px;text-align:center;">Your 30-Day Content Calendar is Ready</h1>
+      <p style="color:#374151;font-size:15px;line-height:24px;margin:0 0 16px;">Hi {username},</p>
+      <p style="color:#374151;font-size:15px;line-height:24px;margin:0 0 16px;">You just made a smart move. This isn't a generic spreadsheet — it's the exact content framework our agency uses to manage <strong>50+ local businesses</strong> and deliver over <strong>1,200 pieces of content every month</strong>.</p>
+      <p style="color:#374151;font-size:15px;line-height:24px;margin:0 0 16px;">Inside, you'll find a structured 30-day posting schedule designed specifically for local businesses like yours — with the right content types on the right days to maximize reach and engagement.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;text-align:center;width:100%;">
+        <tr><td>
+          <a href="{LEAD_MAGNET_DOWNLOAD_URL}" style="background:#2B7BC4;color:#fff;font-size:16px;font-weight:600;padding:14px 32px;border-radius:8px;text-decoration:none;display:inline-block;">Download Your Free Template</a>
+        </td></tr>
+      </table>
+      <hr style="border:none;border-top:1px solid #C9DFF0;margin:0;">
+      <h2 style="color:#0D2137;font-size:18px;font-weight:600;margin:24px 0 12px;">Your Weekly Content Framework</h2>
+      <p style="color:#374151;font-size:15px;line-height:24px;margin:0 0 16px;">Each week follows this proven rhythm — posters and stories on weekdays for consistency, high-reach reels on weekends for growth.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;background:#E8F4FD;border-radius:8px;padding:16px;margin:16px 0;">
+        <tr style="border-bottom:1px solid #C9DFF0;">
+          <td style="padding:10px 8px;font-size:13px;font-weight:600;color:#0D2137;">Day</td>
+          <td style="padding:10px 8px;font-size:13px;font-weight:600;color:#0D2137;">Type</td>
+          <td style="padding:10px 8px;font-size:13px;font-weight:600;color:#0D2137;">Content Idea</td>
+        </tr>
+        {calendar_rows_html}
+      </table>
+      <hr style="border:none;border-top:1px solid #C9DFF0;margin:0;">
+      <h2 style="color:#0D2137;font-size:18px;font-weight:600;margin:24px 0 12px;">What Happens Next?</h2>
+      <p style="color:#374151;font-size:15px;line-height:24px;margin:0 0 8px;">&#10003; Use the calendar to plan your first 30 days of content</p>
+      <p style="color:#374151;font-size:15px;line-height:24px;margin:0 0 8px;">&#10003; Customize the topics to match your brand and audience</p>
+      <p style="color:#374151;font-size:15px;line-height:24px;margin:0 0 8px;">&#10003; Schedule posts in advance for a consistent presence</p>
+      <p style="color:#374151;font-size:15px;line-height:24px;margin:0 0 16px;">&#10003; See measurable growth within the first month</p>
+      <p style="color:#374151;font-size:15px;line-height:24px;margin:0 0 16px;">Want us to handle this for you? Creo manages everything — strategy, creation, scheduling, and analytics — so you can focus on running your business.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;text-align:center;width:100%;">
+        <tr><td>
+          <a href="https://creo.app/pricing" style="background:#0D2137;color:#fff;font-size:16px;font-weight:600;padding:14px 32px;border-radius:8px;text-decoration:none;display:inline-block;">See Our Plans</a>
+        </td></tr>
+      </table>
+      <p style="color:#374151;font-size:15px;line-height:24px;margin:24px 0 0;">Cheers,<br>The Creo Team</p>
+    </td>
+  </tr>
+  <tr><td><hr style="border:none;border-top:1px solid #C9DFF0;margin:0;"></td></tr>
+  <tr>
+    <td style="padding:24px 40px;text-align:center;">
+      <p style="color:#6BAED6;font-size:12px;line-height:18px;margin:0 0 4px;">&copy; {datetime.now(timezone.utc).year} Creo &mdash; Digital Marketing Agency Platform</p>
+      <p style="color:#6BAED6;font-size:12px;line-height:18px;margin:0 0 4px;">You received this because you downloaded our free content calendar template at creo.app.</p>
+      <p style="color:#6BAED6;font-size:12px;line-height:18px;margin:0;"><a href="https://creo.app/unsubscribe" style="color:#6BAED6;text-decoration:underline;">Unsubscribe</a></p>
+    </td>
+  </tr>
+</table>
+</body>
+</html>"""
+
+
+@shared_task(name="send_lead_magnet_email", bind=True, max_retries=3)
+def send_lead_magnet_email(self, email: str) -> None:
+    """Send the 30-day content calendar template email to a lead magnet subscriber."""
+    try:
+        logger.info("[Celery] Sending lead magnet email to=%s", _mask_email(email))
+        html_body = _build_lead_magnet_html(email)
+        _run_async(
+            send_email(
+                to_email=email,
+                subject="Your Free 30-Day Content Calendar Template",
+                html_content=html_body,
+            )
+        )
+        logger.info("[Celery] Lead magnet email sent to=%s", _mask_email(email))
+    except Exception as exc:
+        logger.error("[Celery] Failed to send lead magnet email to=%s. Retrying...", _mask_email(email))
+        raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
+
+
+@shared_task(name="notify_sales_lead_capture", bind=True, max_retries=3)
+def notify_sales_lead_capture(self, email: str) -> None:
+    """Log lead capture for the sales team pipeline context."""
+    try:
+        logger.info("[Celery] Notifying sales team of new lead: %s", _mask_email(email))
+        sales_email = "sales@creo.app"
+        html_body = f"""
+        <h2>New Lead Magnet Capture</h2>
+        <p>A new lead has been captured from the landing page content calendar download.</p>
+        <p><b>Email:</b> {email}</p>
+        <p><b>Source:</b> Landing Page — Lead Magnet Banner</p>
+        <p><b>Action:</b> Add to CRM pipeline for follow-up. This user downloaded our free content calendar template, indicating interest in social media content management.</p>
+        <p><a href="https://creo.app/admin/sales">View Sales Pipeline</a></p>
+        """
+        _run_async(
+            send_email(
+                to_email=sales_email,
+                subject=f"New Lead: {email} downloaded Content Calendar",
+                html_content=html_body,
+            )
+        )
+        logger.info("[Celery] Sales notification sent for lead=%s", _mask_email(email))
+    except Exception as exc:
+        logger.error("[Celery] Failed to notify sales team for lead=%s. Retrying...", _mask_email(email))
+        raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
