@@ -1,8 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
+<<<<<<< HEAD
 
+=======
+import { createClient } from "@/lib/supabase/client"
+import { portalFetch, AuthError } from "@/lib/portal-api"
+>>>>>>> 4994cb2c65f2afff6f456371c6f2969f354a165c
 import {
   FileImage,
   Film,
@@ -116,10 +121,53 @@ export default function PortalDashboard() {
   const effectiveStage = termsAccepted ? 2 : data.onboarding_stage
 
   useEffect(() => {
+<<<<<<< HEAD
     if (!loading && effectiveStage === 1 && !termsAccepted) {
       setTermsModalOpen(true)
     }
   }, [loading, effectiveStage, termsAccepted])
+=======
+    let cancelled = false
+
+    async function fetchDashboard() {
+      try {
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
+
+        if (cancelled) return
+
+        if (!session?.access_token) {
+          setLoading(false)
+          return
+        }
+
+        if (session.user?.created_at) {
+          setCreatedAt(session.user.created_at)
+        }
+
+        const result = await portalFetch<DashboardData>("/api/v1/portal/dashboard")
+
+        if (!cancelled) {
+          setData(result)
+          setLoading(false)
+        }
+      } catch (err) {
+        if (cancelled) return
+        if (err instanceof AuthError) {
+          setLoading(false)
+          return
+        }
+        if (!cancelled) {
+          setError("Something went wrong. Please check your connection and try again.")
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchDashboard()
+    return () => { cancelled = true }
+  }, [])
+>>>>>>> 4994cb2c65f2afff6f456371c6f2969f354a165c
 
   if (loading) {
     return <DashboardSkeleton />

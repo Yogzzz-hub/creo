@@ -1,9 +1,10 @@
 "use client"
 
+import { memo } from "react"
 import { AlertTriangle } from "lucide-react"
 import { useSubscription } from "@/context/subscription-context"
 
-export function SubscriptionGuard() {
+export const SubscriptionGuard = memo(function SubscriptionGuard() {
   const { accountStatus, loading, isLapsed } = useSubscription()
 
   if (loading || !isLapsed) return null
@@ -21,4 +22,4 @@ export function SubscriptionGuard() {
       </div>
     </div>
   )
-}
+})

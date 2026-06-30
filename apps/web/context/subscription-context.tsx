@@ -1,7 +1,7 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from "react"
+import { portalFetch, AuthError } from "@/lib/portal-api"
 
 type AccountStatus = "active" | "lapsed" | "past_due" | "pending_verification" | "cancelled" | null
 
@@ -26,6 +26,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let cancelled = false
+
     async function fetchStatus() {
       try {
         const supabase = createClient()
@@ -48,17 +50,23 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         console.error("[subscription] status fetch failed:", err)
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     fetchStatus()
+    return () => { cancelled = true }
   }, [])
 
   const isLapsed = accountStatus === "lapsed" || accountStatus === "past_due"
 
+  const value = useMemo<SubscriptionState>(
+    () => ({ accountStatus, loading, isLapsed }),
+    [accountStatus, loading, isLapsed]
+  )
+
   return (
-    <SubscriptionContext.Provider value={{ accountStatus, loading, isLapsed }}>
+    <SubscriptionContext.Provider value={value}>
       {children}
     </SubscriptionContext.Provider>
   )

@@ -14,7 +14,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
             staleTime: 5 * 60 * 1000,
             gcTime: 10 * 60 * 1000,
             refetchOnWindowFocus: false,
-            retry: 1,
+            retry: (failureCount, error) => {
+              if (error instanceof Error && "status" in error) {
+                const status = (error as { status: number }).status
+                if (status === 401 || status === 404) return false
+              }
+              return failureCount < 2
+            },
           },
         },
       })
