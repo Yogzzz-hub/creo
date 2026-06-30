@@ -1,7 +1,7 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from "react"
+import { portalFetch, AuthError } from "@/lib/portal-api"
 
 type AccountStatus = "active" | "lapsed" | "past_due" | "pending_verification" | "cancelled" | null
 
@@ -26,39 +26,32 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let cancelled = false
+
     async function fetchStatus() {
       try {
-        const supabase = createClient()
-        const { data: { session } } = await supabase.auth.getSession()
-
-        if (!session?.access_token) {
-          setLoading(false)
-          return
-        }
-
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/portal/dashboard`,
-          { headers: { Authorization: `Bearer ${session.access_token}` } }
-        )
-
-        if (res.ok) {
-          const data = await res.json()
-          setAccountStatus(data.account_status ?? null)
-        }
-      } catch {
-        // Keep status as null — buttons remain enabled as safe default
+        const data = await portalFetch<{ account_status?: string }>("/api/v1/portal/subscription-status")
+        if (!cancelled) setAccountStatus((data.account_status as AccountStatus) ?? null)
+      } catch (err) {
+        if (err instanceof AuthError) return
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
     fetchStatus()
+    return () => { cancelled = true }
   }, [])
 
   const isLapsed = accountStatus === "lapsed" || accountStatus === "past_due"
 
+  const value = useMemo<SubscriptionState>(
+    () => ({ accountStatus, loading, isLapsed }),
+    [accountStatus, loading, isLapsed]
+  )
+
   return (
-    <SubscriptionContext.Provider value={{ accountStatus, loading, isLapsed }}>
+    <SubscriptionContext.Provider value={value}>
       {children}
     </SubscriptionContext.Provider>
   )

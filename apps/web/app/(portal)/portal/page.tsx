@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { portalFetch, AuthError } from "@/lib/portal-api"
 import {
   FileImage,
   Film,
@@ -101,46 +102,45 @@ export default function PortalDashboard() {
   const [createdAt, setCreatedAt] = useState<string | null>(null)
 
   useEffect(() => {
+    let cancelled = false
+
     async function fetchDashboard() {
-      const supabase = createClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session?.access_token) {
-        setError("Please log in to view your dashboard.")
-        setLoading(false)
-        return
-      }
-
-      if (session.user?.created_at) {
-        setCreatedAt(session.user.created_at)
-      }
-
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/portal/dashboard`,
-          {
-            headers: { Authorization: `Bearer ${session.access_token}` },
-          }
-        )
+        const supabase = createClient()
+        const { data: { session } } = await supabase.auth.getSession()
 
-        if (!res.ok) {
-          setError("Could not load dashboard data. Please try again.")
+        if (cancelled) return
+
+        if (!session?.access_token) {
           setLoading(false)
           return
         }
 
-        const result: DashboardData = await res.json()
-        setData(result)
-      } catch {
-        setError("Something went wrong. Please check your connection and try again.")
-      } finally {
-        setLoading(false)
+        if (session.user?.created_at) {
+          setCreatedAt(session.user.created_at)
+        }
+
+        const result = await portalFetch<DashboardData>("/api/v1/portal/dashboard")
+
+        if (!cancelled) {
+          setData(result)
+          setLoading(false)
+        }
+      } catch (err) {
+        if (cancelled) return
+        if (err instanceof AuthError) {
+          setLoading(false)
+          return
+        }
+        if (!cancelled) {
+          setError("Something went wrong. Please check your connection and try again.")
+          setLoading(false)
+        }
       }
     }
 
     fetchDashboard()
+    return () => { cancelled = true }
   }, [])
 
   if (loading) {
