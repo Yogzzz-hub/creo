@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from "react"
-import { portalFetch, AuthError } from "@/lib/portal-api"
+import { createClient } from "@/lib/supabase/client"
 
 type AccountStatus = "active" | "lapsed" | "past_due" | "pending_verification" | "cancelled" | null
 
