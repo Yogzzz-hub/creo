@@ -47,10 +47,13 @@ function canAccessRoute(role: string, pathname: string): boolean {
 async function fetchUserRole(accessToken: string): Promise<string> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
     const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
       headers: { Authorization: `Bearer ${accessToken}` },
-      next: { revalidate: 300 },
-    } as RequestInit);
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
     if (!res.ok) return "client";
     const data = await res.json();
     return data.role ?? "client";

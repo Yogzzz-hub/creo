@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
+
 import {
   FileImage,
   Film,
@@ -102,47 +102,12 @@ export default function PortalDashboard() {
   const [createdAt, setCreatedAt] = useState<string | null>(null)
   const [termsModalOpen, setTermsModalOpen] = useState(false)
 
+  // ── SUPABASE FETCH BYPASSED ──────────────────────────────────
+  // Hardcoded mock data to isolate infinite render issue.
+  // Restore the real fetch once root cause is identified.
   useEffect(() => {
-    async function fetchDashboard() {
-      const supabase = createClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session?.access_token) {
-        setError("Please log in to view your dashboard.")
-        setLoading(false)
-        return
-      }
-
-      if (session.user?.created_at) {
-        setCreatedAt(session.user.created_at)
-      }
-
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/portal/dashboard`,
-          {
-            headers: { Authorization: `Bearer ${session.access_token}` },
-          }
-        )
-
-        if (!res.ok) {
-          setError("Could not load dashboard data. Please try again.")
-          setLoading(false)
-          return
-        }
-
-        const result: DashboardData = await res.json()
-        setData(result)
-      } catch {
-        setError("Something went wrong. Please check your connection and try again.")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchDashboard()
+    setData(EMPTY_DASHBOARD)
+    setLoading(false)
   }, [])
 
   useEffect(() => {

@@ -45,8 +45,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
           const data = await res.json()
           setAccountStatus(data.account_status ?? null)
         }
-      } catch {
-        // Keep status as null — buttons remain enabled as safe default
+      } catch (err) {
+        console.error("[subscription] status fetch failed:", err)
       } finally {
         setLoading(false)
       }
