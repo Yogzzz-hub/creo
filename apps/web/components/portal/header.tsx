@@ -44,29 +44,32 @@ export function PortalHeader() {
   const [displayName, setDisplayName] = useState(user?.full_name || "")
 
   useEffect(() => {
-    setAvatarUrl(user?.avatar_url ?? null)
-    setDisplayName(resolveDisplayName(user as unknown as Record<string, unknown> | undefined, user?.email))
+    if (!user) return
+    setAvatarUrl(user.avatar_url ?? null)
+    setDisplayName(resolveDisplayName(user as unknown as Record<string, unknown> | undefined, user.email))
   }, [user?.avatar_url, user?.full_name, user?.email])
 
   useEffect(() => {
+    let cancelled = false
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user: authUser } }) => {
-      console.log("Current User Metadata:", authUser?.user_metadata)
-      console.log("User Email:", authUser?.email)
-      if (authUser) {
-        const name = resolveDisplayName(authUser.user_metadata, authUser.email)
-        const dbAvatarUrl = authUser.user_metadata?.avatar_url ?? null
-        setUser({
-          ...user!,
-          full_name: name,
-          business_name: authUser.user_metadata?.business_name ?? user?.business_name,
-          avatar_url: dbAvatarUrl ?? undefined,
-        })
-        setDisplayName(name)
-        setAvatarUrl(dbAvatarUrl)
-      }
+      if (cancelled || !authUser) return
+      const name = resolveDisplayName(authUser.user_metadata, authUser.email)
+      const dbAvatarUrl = authUser.user_metadata?.avatar_url ?? undefined
+      const currentUser = useAuthStore.getState().user
+      const sameName = currentUser?.full_name === name
+      const sameAvatar = currentUser?.avatar_url === dbAvatarUrl
+      const sameBiz = currentUser?.business_name === (authUser.user_metadata?.business_name ?? currentUser?.business_name)
+      if (sameName && sameAvatar && sameBiz) return
+      setUser({
+        ...currentUser!,
+        full_name: name,
+        business_name: authUser.user_metadata?.business_name ?? currentUser?.business_name,
+        avatar_url: dbAvatarUrl,
+      })
     })
-  }, [user, setUser])
+    return () => { cancelled = true }
+  }, [setUser])
 
   async function handleLogout() {
     setLoggingOut(true)

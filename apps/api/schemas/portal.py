@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from models.enums import CalendarEntryStatus, DeliverableStatus, DeliverableType
+from models.enums import AccountStatus, CalendarEntryStatus, DeliverableStatus, DeliverableType
 
 
 class DashboardResponse(BaseModel):
@@ -13,6 +13,12 @@ class DashboardResponse(BaseModel):
     open_ticket_count: int
     ai_summary_line: Optional[str] = None
     onboarding_stage: int
+
+
+class SubscriptionStatusResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    account_status: AccountStatus
 
 
 class DeliverableResponse(BaseModel):

@@ -5,13 +5,13 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import require_active_client
+from core.security import require_active_client, require_client
 from models.deliverable import Deliverable
 from models.enums import DeliverableStatus, TicketStatus
 from models.questionnaire import Questionnaire
 from models.ticket import Ticket
 from models.user import User
-from schemas.portal import DashboardResponse
+from schemas.portal import DashboardResponse, SubscriptionStatusResponse
 
 router = APIRouter(prefix="/api/v1/portal", tags=["portal-dashboard"])
 
@@ -60,3 +60,10 @@ async def get_portal_dashboard(
         ai_summary_line=ai_summary_line,
         onboarding_stage=_compute_onboarding_stage(current_user),
     )
+
+
+@router.get("/subscription-status", response_model=SubscriptionStatusResponse)
+async def get_subscription_status(
+    current_user: Annotated[User, Depends(require_client)],
+):
+    return SubscriptionStatusResponse(account_status=current_user.account_status)

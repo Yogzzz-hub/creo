@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, memo } from "react"
 import { BellRing, Check, X } from "lucide-react"
 import {
   Popover,
@@ -8,7 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { createClient } from "@/lib/supabase/client"
+import { portalFetch, AuthError } from "@/lib/portal-api"
 
 interface Notification {
   id: string
@@ -35,37 +35,26 @@ function timeAgo(dateString: string): string {
   return `${weeks}w ago`
 }
 
-export function NotificationBell() {
+export const NotificationBell = memo(function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    return () => { mountedRef.current = false }
+  }, [])
 
   const unreadCount = notifications.filter((n) => !n.is_read).length
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const supabase = createClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session?.access_token) return
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/notifications`,
-        {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        }
-      )
-
-      if (res.ok) {
-        const data: Notification[] = await res.json()
-        setNotifications(data)
-      }
-    } catch {
-      // Silent fail
+      const data = await portalFetch<Notification[]>("/api/v1/notifications")
+      if (mountedRef.current) setNotifications(data)
+    } catch (err) {
+      if (err instanceof AuthError) return
     } finally {
-      setLoading(false)
+      if (mountedRef.current) setLoading(false)
     }
   }, [])
 
@@ -80,20 +69,9 @@ export function NotificationBell() {
     )
 
     try {
-      const supabase = createClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session?.access_token) return
-
-      await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/notifications/${id}/read`,
-        {
-          method: "PATCH",
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        }
-      )
+      await portalFetch(`/api/v1/notifications/${id}/read`, {
+        method: "PATCH",
+      })
     } catch {
       setNotifications(prev)
     }
@@ -104,23 +82,12 @@ export function NotificationBell() {
     setNotifications((p) => p.map((n) => ({ ...n, is_read: true })))
 
     try {
-      const supabase = createClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session?.access_token) return
-
       const unread = prev.filter((n) => !n.is_read)
       await Promise.all(
         unread.map((n) =>
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/v1/notifications/${n.id}/read`,
-            {
-              method: "PATCH",
-              headers: { Authorization: `Bearer ${session.access_token}` },
-            }
-          )
+          portalFetch(`/api/v1/notifications/${n.id}/read`, {
+            method: "PATCH",
+          })
         )
       )
     } catch {
@@ -241,4 +208,4 @@ export function NotificationBell() {
       </PopoverContent>
     </Popover>
   )
-}
+})
