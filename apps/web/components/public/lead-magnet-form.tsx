@@ -39,7 +39,7 @@ export function LeadMagnetForm() {
     return (
       <div className="mt-8 inline-flex items-center gap-2 rounded-lg bg-success-light px-6 py-3 text-sm font-medium text-success">
         <CheckCircle2 className="size-4" />
-        Check your email for the content calendar template!
+        Check your inbox! Your 30-day content calendar template is on its way.
       </div>
     );
   }

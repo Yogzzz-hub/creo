@@ -6,6 +6,7 @@ import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import {
+  Home,
   LayoutDashboard,
   FileImage,
   CalendarDays,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react"
 
 const NAV_ITEMS = [
+  { label: "Home", href: "/", icon: Home },
   { label: "Dashboard", href: "/portal", icon: LayoutDashboard },
   { label: "Deliverables", href: "/portal/deliverables", icon: FileImage },
   { label: "Calendar", href: "/portal/calendar", icon: CalendarDays },
@@ -25,6 +27,7 @@ const NAV_ITEMS = [
 ]
 
 const BOTTOM_TAB_ITEMS = [
+  { label: "Home", href: "/", icon: Home },
   { label: "Dashboard", href: "/portal", icon: LayoutDashboard },
   { label: "Deliverables", href: "/portal/deliverables", icon: FileImage },
   { label: "Calendar", href: "/portal/calendar", icon: CalendarDays },
@@ -33,6 +36,7 @@ const BOTTOM_TAB_ITEMS = [
 ]
 
 function isActive(href: string, pathname: string) {
+  if (href === "/") return pathname === "/"
   if (href === "/portal") return pathname === "/portal"
   return pathname.startsWith(href)
 }

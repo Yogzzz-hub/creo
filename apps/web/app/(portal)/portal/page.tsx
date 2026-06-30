@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
+
 import {
   FileImage,
   Film,
@@ -20,6 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { TermsModal } from "@/components/portal/terms-modal"
 
 interface DashboardData {
   pending_deliverable_count: number
@@ -99,49 +100,21 @@ export default function PortalDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [createdAt, setCreatedAt] = useState<string | null>(null)
+  const [termsModalOpen, setTermsModalOpen] = useState(false)
+
+  // ── SUPABASE FETCH BYPASSED ──────────────────────────────────
+  // Hardcoded mock data to isolate infinite render issue.
+  // Restore the real fetch once root cause is identified.
+  useEffect(() => {
+    setData(EMPTY_DASHBOARD)
+    setLoading(false)
+  }, [])
 
   useEffect(() => {
-    async function fetchDashboard() {
-      const supabase = createClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session?.access_token) {
-        setError("Please log in to view your dashboard.")
-        setLoading(false)
-        return
-      }
-
-      if (session.user?.created_at) {
-        setCreatedAt(session.user.created_at)
-      }
-
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/portal/dashboard`,
-          {
-            headers: { Authorization: `Bearer ${session.access_token}` },
-          }
-        )
-
-        if (!res.ok) {
-          setError("Could not load dashboard data. Please try again.")
-          setLoading(false)
-          return
-        }
-
-        const result: DashboardData = await res.json()
-        setData(result)
-      } catch {
-        setError("Something went wrong. Please check your connection and try again.")
-      } finally {
-        setLoading(false)
-      }
+    if (!loading && data.onboarding_stage === 1) {
+      setTermsModalOpen(true)
     }
-
-    fetchDashboard()
-  }, [])
+  }, [loading, data.onboarding_stage])
 
   if (loading) {
     return <DashboardSkeleton />
@@ -162,7 +135,9 @@ export default function PortalDashboard() {
   const progressPercent = (completedSteps / ONBOARDING_STEPS.length) * 100
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <>
+      <TermsModal open={termsModalOpen} onOpenChange={setTermsModalOpen} />
+      <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#0D2137]">Dashboard</h1>
@@ -296,10 +271,17 @@ export default function PortalDashboard() {
 
                 {ONBOARDING_STEPS.map((step) => {
                   const completed = step.stage <= data.onboarding_stage
+                  const isClickable = step.stage === 2 && data.onboarding_stage === 1
                   return (
-                    <div
+                    <button
                       key={step.label}
-                      className="relative z-10 flex flex-col items-center"
+                      type="button"
+                      disabled={!isClickable}
+                      onClick={() => isClickable && setTermsModalOpen(true)}
+                      className={cn(
+                        "relative z-10 flex flex-col items-center",
+                        isClickable && "cursor-pointer group"
+                      )}
                     >
                       <div
                         className={cn(
@@ -320,12 +302,13 @@ export default function PortalDashboard() {
                           "mt-2 w-16 text-center text-[10px] leading-tight",
                           completed
                             ? "font-medium text-[#065F46]"
-                            : "text-gray-400"
+                            : "text-gray-400",
+                          isClickable && "group-hover:text-[#2B7BC4] group-hover:underline"
                         )}
                       >
                         {step.label}
                       </p>
-                    </div>
+                    </button>
                   )
                 })}
               </div>
@@ -359,7 +342,27 @@ export default function PortalDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {data.pending_deliverable_count > 0 ? (
+              {data.onboarding_stage === 1 ? (
+                <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+                  <MessageSquareWarning className="size-5 shrink-0 text-amber-600" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-[#0D2137]">
+                      Accept Terms to Continue
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      You must accept our Terms &amp; Conditions to proceed to payment.
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setTermsModalOpen(true)}
+                  >
+                    Review
+                    <ArrowRight className="size-3" />
+                  </Button>
+                </div>
+              ) : data.pending_deliverable_count > 0 ? (
                 <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
                   <MessageSquareWarning className="size-5 shrink-0 text-amber-600" />
                   <div className="min-w-0 flex-1">
@@ -417,5 +420,6 @@ export default function PortalDashboard() {
         </Card>
       </div>
     </div>
+    </>
   )
 }

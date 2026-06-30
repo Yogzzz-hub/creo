@@ -4,6 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowUpRight } from "lucide-react";
 import { GalleryTabs } from "@/components/public/gallery-grid";
+import { SITE } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Our Work | Creo - Digital Marketing Agency",
@@ -179,8 +180,10 @@ export default function PortfolioPage() {
             >
               See Our Plans
             </Link>
-            <Link
-              href="/pricing"
+            <a
+              href={`https://wa.me/${SITE.whatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className={buttonVariants({
                 variant: "outline",
                 className:
@@ -189,7 +192,7 @@ export default function PortfolioPage() {
             >
               Book a Call
               <ArrowUpRight className="ml-1 size-4" />
-            </Link>
+            </a>
           </div>
         </div>
       </section>
