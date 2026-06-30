@@ -40,10 +40,36 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
   }, [])
 
   const handleAccept = async () => {
-    // ── SUPABASE BYPASSED ──────────────────────────────────────
-    // Backend is unreachable; skip DB update and navigate directly.
-    // Restore real Supabase calls once connectivity is resolved.
-    onAccept?.()
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      const { data, error: updateError } = await supabase
+        .from("users")
+        .update({ terms_accepted: true })
+        .eq("id", user.id)
+        .select()
+
+      if (updateError) {
+        console.error("DB Update Error:", updateError.message, updateError)
+        throw updateError
+      }
+
+      if (!data || data.length === 0) {
+        const rowError = new Error("Update returned no rows — user row may not exist in users table")
+        console.error("DB Update Error:", rowError.message)
+        throw rowError
+      }
+
+      onAccept?.()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to accept terms. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (

@@ -18,6 +18,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import { TermsModal } from "@/components/portal/terms-modal"
 import { PaymentModal } from "@/components/portal/payment-modal"
@@ -104,12 +105,29 @@ export default function PortalDashboard() {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
 
-  // ── SUPABASE FETCH BYPASSED ──────────────────────────────────
-  // Hardcoded mock data to isolate infinite render issue.
-  // Restore the real fetch once root cause is identified.
   useEffect(() => {
-    setData(EMPTY_DASHBOARD)
-    setLoading(false)
+    async function loadDashboard() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: profile } = await supabase
+        .from("users")
+        .select("terms_accepted, onboarding_stage, created_at")
+        .eq("id", user.id)
+        .single()
+
+      setTermsAccepted(profile?.terms_accepted ?? false)
+      setCreatedAt(profile?.created_at ?? null)
+      setData({
+        pending_deliverable_count: 0,
+        open_ticket_count: 0,
+        ai_summary_line: null,
+        onboarding_stage: profile?.onboarding_stage ?? 1,
+      })
+      setLoading(false)
+    }
+    loadDashboard()
   }, [])
 
   const effectiveStage = termsAccepted ? 2 : data.onboarding_stage
