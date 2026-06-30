@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { TermsModal } from "@/components/portal/terms-modal"
+import { PaymentModal } from "@/components/portal/payment-modal"
 
 interface DashboardData {
   pending_deliverable_count: number
@@ -101,6 +102,8 @@ export default function PortalDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [createdAt, setCreatedAt] = useState<string | null>(null)
   const [termsModalOpen, setTermsModalOpen] = useState(false)
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(false)
 
   // ── SUPABASE FETCH BYPASSED ──────────────────────────────────
   // Hardcoded mock data to isolate infinite render issue.
@@ -110,11 +113,13 @@ export default function PortalDashboard() {
     setLoading(false)
   }, [])
 
+  const effectiveStage = termsAccepted ? 2 : data.onboarding_stage
+
   useEffect(() => {
-    if (!loading && data.onboarding_stage === 1) {
+    if (!loading && effectiveStage === 1 && !termsAccepted) {
       setTermsModalOpen(true)
     }
-  }, [loading, data.onboarding_stage])
+  }, [loading, effectiveStage, termsAccepted])
 
   if (loading) {
     return <DashboardSkeleton />
@@ -125,18 +130,29 @@ export default function PortalDashboard() {
         (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)
       )
     : 0
-  const onboardingComplete = data.onboarding_stage >= 4
+  const onboardingComplete = effectiveStage >= 4
   const withinWindow = elapsedDays < 7
   const showTracker = !onboardingComplete && withinWindow
 
   const completedSteps = ONBOARDING_STEPS.filter(
-    (s) => s.stage <= data.onboarding_stage
+    (s) => s.stage <= effectiveStage
   ).length
   const progressPercent = (completedSteps / ONBOARDING_STEPS.length) * 100
 
+  function handleTermsAccepted() {
+    setTermsAccepted(true)
+    setTermsModalOpen(false)
+    setPaymentModalOpen(true)
+  }
+
   return (
     <>
-      <TermsModal open={termsModalOpen} onOpenChange={setTermsModalOpen} />
+      <TermsModal
+        open={termsModalOpen}
+        onOpenChange={setTermsModalOpen}
+        onAccept={handleTermsAccepted}
+      />
+      <PaymentModal open={paymentModalOpen} onOpenChange={setPaymentModalOpen} />
       <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -183,7 +199,7 @@ export default function PortalDashboard() {
             </div>
             <div>
               <p className="text-2xl font-bold text-[#0D2137]">
-                {data.onboarding_stage >= 4 ? "Active" : `${data.onboarding_stage}/4`}
+                {effectiveStage >= 4 ? "Active" : `${effectiveStage}/4`}
               </p>
               <p className="text-xs text-gray-500">Account Status</p>
             </div>
@@ -270,8 +286,8 @@ export default function PortalDashboard() {
                 </div>
 
                 {ONBOARDING_STEPS.map((step) => {
-                  const completed = step.stage <= data.onboarding_stage
-                  const isClickable = step.stage === 2 && data.onboarding_stage === 1
+                  const completed = step.stage <= effectiveStage
+                  const isClickable = step.stage === 2 && effectiveStage === 1
                   return (
                     <button
                       key={step.label}
@@ -342,7 +358,7 @@ export default function PortalDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {data.onboarding_stage === 1 ? (
+              {effectiveStage === 1 ? (
                 <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
                   <MessageSquareWarning className="size-5 shrink-0 text-amber-600" />
                   <div className="min-w-0 flex-1">

@@ -18,9 +18,10 @@ import { toast } from "sonner"
 interface TermsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onAccept?: () => void
 }
 
-export function TermsModal({ open, onOpenChange }: TermsModalProps) {
+export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
   const router = useRouter()
   const supabase = createClient()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -42,8 +43,7 @@ export function TermsModal({ open, onOpenChange }: TermsModalProps) {
     // ── SUPABASE BYPASSED ──────────────────────────────────────
     // Backend is unreachable; skip DB update and navigate directly.
     // Restore real Supabase calls once connectivity is resolved.
-    onOpenChange(false)
-    router.push("/onboarding/payment")
+    onAccept?.()
   }
 
   return (
