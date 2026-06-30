@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { ShieldCheck, Loader2, X } from "lucide-react"
+import { toast } from "sonner"
 
 interface TermsModalProps {
   open: boolean
@@ -41,35 +42,39 @@ export function TermsModal({ open, onOpenChange }: TermsModalProps) {
     setIsSubmitting(true)
     setError(null)
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    if (!session?.access_token) {
-      setError("You must be logged in to accept terms.")
-      setIsSubmitting(false)
-      return
-    }
-
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/onboarding/accept-terms`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        }
-      )
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-      if (!res.ok) {
-        const data = await res.json()
-        setError(data.detail || "Failed to accept terms. Please try again.")
+      if (!user) {
+        const msg = "You must be logged in to accept terms."
+        setError(msg)
+        toast.error(msg)
+        setIsSubmitting(false)
+        return
+      }
+
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ terms_accepted: true })
+        .eq("id", user.id)
+
+      if (updateError) {
+        console.error(updateError)
+        const msg = updateError.message || "Failed to accept terms. Please try again."
+        setError(msg)
+        toast.error(msg)
         setIsSubmitting(false)
         return
       }
 
       router.push("/onboarding/payment")
-    } catch {
-      setError("Failed to connect to server. Please try again.")
+    } catch (err) {
+      console.error(err)
+      const msg = "An unexpected error occurred. Please try again."
+      setError(msg)
+      toast.error(msg)
       setIsSubmitting(false)
     }
   }
