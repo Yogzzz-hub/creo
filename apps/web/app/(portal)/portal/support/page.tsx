@@ -227,32 +227,54 @@ export default function SupportPage() {
     setIsSubmitting(true)
     try {
       const supabase = createClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-      if (!session?.access_token) {
-        throw new Error("Not authenticated")
+      if (authError || !user) {
+        console.error("[Ticket Submit] Auth error:", authError?.message ?? "No user")
+        throw new Error("Your session has expired. Please log in again.")
+      }
+
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+
+      if (!token) {
+        console.error("[Ticket Submit] No access_token in session after getUser() succeeded")
+        throw new Error("Could not retrieve authentication token.")
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL
+      if (!apiUrl) {
+        console.error("[Ticket Submit] NEXT_PUBLIC_API_URL is not set")
+        throw new Error("API configuration error.")
+      }
+
+      console.log("[Ticket Submit] accessToken type:", typeof token, "length:", token?.length, "starts:", token?.substring(0, 20))
+
+      const formData = new FormData()
+      formData.append("ticket_type", ticketType)
+      formData.append("subject", subject.trim())
+      formData.append("description", description.trim())
+      if (attachment) {
+        formData.append("attachment", attachment)
       }
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tickets`,
+        `${apiUrl}/api/v1/tickets`,
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            ticket_type: ticketType,
-            subject: subject.trim(),
-            description: description.trim(),
-          }),
+          body: formData,
         }
       )
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
+        console.error(`[Ticket Submit] API returned ${res.status}:`, body)
+        if (res.status === 401) {
+          throw new Error("Authentication failed. Please log out and log back in.")
+        }
         throw new Error(body.detail || "Failed to create ticket")
       }
 
@@ -289,11 +311,11 @@ export default function SupportPage() {
             .getPublicUrl(filePath)
 
           await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tickets/${newTicket.id}/messages`,
+            `${apiUrl}/api/v1/tickets/${newTicket.id}/messages`,
             {
               method: "POST",
               headers: {
-                Authorization: `Bearer ${session.access_token}`,
+                Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({

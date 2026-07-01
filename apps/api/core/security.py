@@ -1,11 +1,13 @@
 import time
 import hashlib
+import logging
 from typing import Annotated
 
 from cryptography.fernet import Fernet
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
+from jose import jwt
+from supabase import create_client
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +16,23 @@ from core.database import get_db
 from models.enums import AccountStatus, UserRole
 from models.user import User
 
+logger = logging.getLogger(__name__)
+
 oauth2_scheme = HTTPBearer()
+
+_supabase_client = None
+_supabase_key_hash: str | None = None
+
+
+def _get_supabase_client():
+    global _supabase_client, _supabase_key_hash
+    current_url = settings.SUPABASE_URL
+    current_key = settings.SUPABASE_SERVICE_ROLE_KEY
+    key_hash = hashlib.sha256(f"{current_url}:{current_key}".encode()).hexdigest()
+    if _supabase_client is None or _supabase_key_hash != key_hash:
+        _supabase_client = create_client(current_url, current_key)
+        _supabase_key_hash = key_hash
+    return _supabase_client
 
 _fernet: Fernet | None = None
 _fernet_key_hash: str | None = None
@@ -67,12 +85,8 @@ def decrypt_gateway_id(encrypted_id: str | None) -> str | None:
         return encrypted_id
 
 
-def _is_token_revoked(token: str) -> bool:
+def _is_jti_revoked(jti: str) -> bool:
     try:
-        payload = jwt.decode(token, settings.SUPABASE_JWT_SECRET, algorithms=["HS256"], options={"verify_exp": False})
-        jti = payload.get("jti")
-        if not jti:
-            return False
         import redis
         r = redis.from_url(settings.REDIS_URL, decode_responses=True)
         revoked = r.exists(f"revoked_token:{jti}")
@@ -83,35 +97,56 @@ def _is_token_revoked(token: str) -> bool:
 
 
 async def get_current_user(
+    request: Request,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(oauth2_scheme)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User:
+    print(f"DEBUG: Headers received: {request.headers.get('Authorization')}")
     token = credentials.credentials
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail={"error_code": "token_invalid", "message": "Could not validate credentials"},
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    # 1. Verify token via Supabase (handles ES256 / RS256 / HS256 automatically)
+    supabase = _get_supabase_client()
     try:
-        payload = jwt.decode(
-            token, settings.SUPABASE_JWT_SECRET, algorithms=["HS256"]
-        )
-        auth_id: str | None = payload.get("sub")
-        if auth_id is None:
-            raise credentials_exception
-        issued_at: int | None = payload.get("iat")
-    except JWTError:
+        user_response = supabase.auth.get_user(token)
+    except Exception as exc:
+        logger.warning("DEBUG: Supabase token verification failed: %s", exc)
         raise credentials_exception
 
-    if _is_token_revoked(token):
+    if not user_response or not user_response.user:
+        logger.warning("DEBUG: Supabase returned no user for the provided token.")
         raise credentials_exception
 
+    auth_id = user_response.user.id
+    logger.debug("DEBUG: Token verified via Supabase. auth_id=%s", auth_id)
+
+    # 2. Extract raw claims for revocation + timeout checks (unverified decode is fine here — token already verified above)
+    try:
+        unverified = jwt.get_unverified_claims(token)
+        jti = unverified.get("jti")
+        issued_at = unverified.get("iat")
+    except Exception:
+        jti = None
+        issued_at = None
+
+    # 3. Check revocation blocklist
+    if jti and _is_jti_revoked(jti):
+        logger.warning("DEBUG: Token is revoked (jti=%s found in Redis blocklist).", jti)
+        raise credentials_exception
+
+    # 4. Look up local user record
     result = await db.execute(select(User).where(User.auth_id == auth_id))
     user = result.scalar_one_or_none()
 
     if user is None:
+        logger.warning("DEBUG: No user found in DB for auth_id=%s.", auth_id)
         raise credentials_exception
     if user.deleted_at is not None:
+        logger.warning("DEBUG: User auth_id=%s has been soft-deleted.", auth_id)
         raise credentials_exception
 
     if user.account_status == AccountStatus.lapsed:
@@ -131,16 +166,19 @@ async def get_current_user(
             },
         )
 
+    # 5. Session timeout check
     if issued_at is not None:
         max_age = SESSION_TIMEOUT_SECONDS.get(user.role, 8 * 3600)
         token_age = int(time.time()) - issued_at
         if token_age > max_age:
+            logger.warning("DEBUG: Token expired. age=%ds, max_age=%ds, role=%s", token_age, max_age, user.role.value)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail={"error_code": "session_expired", "message": "Session expired. Please sign in again."},
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+    logger.debug("DEBUG: Auth successful for user auth_id=%s role=%s", auth_id, user.role.value)
     return user
 
 

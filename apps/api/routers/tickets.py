@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
-from typing import Annotated
+from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
@@ -15,7 +15,6 @@ from models.enums import TicketStatus, TicketType
 from models.ticket import Ticket, TicketMessage
 from models.user import User
 from schemas.ticket import (
-    TicketCreate,
     TicketMessageCreate,
     TicketMessageOut,
     TicketOut,
@@ -73,19 +72,38 @@ async def list_tickets(
 
 @router.post("", response_model=TicketOut, status_code=status.HTTP_201_CREATED)
 async def create_ticket(
-    payload: TicketCreate,
-    current_user: RequireActiveClient,
+    ticket_type: str = Form(...),
+    subject: str = Form(...),
+    description: str = Form(...),
+    attachment: Optional[UploadFile] = File(None),
+    current_user: RequireActiveClient = RequireActiveClient,
     db: AsyncSession = Depends(get_db),
 ):
+    logger.info(
+        "[create_ticket] user=%s ticket_type=%s subject=%s has_attachment=%s",
+        current_user.id,
+        ticket_type,
+        subject,
+        attachment is not None,
+    )
+
+    try:
+        validated_type = TicketType(ticket_type)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid ticket_type: {ticket_type}",
+        )
+
     ticket_number = await _generate_ticket_number(db)
-    assigned_to = await _find_assignment_target(db, payload.ticket_type)
+    assigned_to = await _find_assignment_target(db, validated_type)
 
     ticket = Ticket(
         ticket_number=ticket_number,
         client_id=current_user.id,
-        ticket_type=payload.ticket_type,
-        subject=payload.subject,
-        description=payload.description,
+        ticket_type=validated_type,
+        subject=subject,
+        description=description,
         status=TicketStatus.open,
         assigned_to=assigned_to,
     )

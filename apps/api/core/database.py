@@ -17,7 +17,13 @@ def _get_async_url(url: str) -> str:
     return url
 
 
-engine = create_async_engine(_get_async_url(settings.DATABASE_URL), echo=False, pool_size=5, max_overflow=10)
+engine = create_async_engine(
+    _get_async_url(settings.DATABASE_URL),
+    echo=False,
+    pool_size=5,
+    max_overflow=10,
+    connect_args={"statement_cache_size": 0},
+)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 

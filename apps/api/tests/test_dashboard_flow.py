@@ -25,7 +25,7 @@ def _result(scalar=None, scalars=None, rowcount=1):
 
 class TestDashboardFlow:
     @pytest.mark.asyncio
-    @patch("core.security._is_token_revoked", return_value=False)
+    @patch("core.security._is_jti_revoked", return_value=False)
     async def test_full_dashboard_sequence(self, mock_revoked, mock_db_session: AsyncMock):
         user_id = str(uuid.uuid4())
         team_member_id = str(uuid.uuid4())
@@ -151,7 +151,7 @@ class TestDashboardFlow:
             app.dependency_overrides.pop(get_db, None)
 
     @pytest.mark.asyncio
-    @patch("core.security._is_token_revoked", return_value=False)
+    @patch("core.security._is_jti_revoked", return_value=False)
     async def test_assignment_rejects_already_assigned(self, mock_revoked, mock_db_session: AsyncMock):
         user_id = str(uuid.uuid4())
         team_member_id = str(uuid.uuid4())
@@ -198,7 +198,7 @@ class TestDashboardFlow:
             app.dependency_overrides.pop(get_db, None)
 
     @pytest.mark.asyncio
-    @patch("core.security._is_token_revoked", return_value=False)
+    @patch("core.security._is_jti_revoked", return_value=False)
     async def test_assignment_rejects_non_team_member(self, mock_revoked, mock_db_session: AsyncMock):
         user_id = str(uuid.uuid4())
         mock_user = create_mock_user(auth_id=user_id, role=UserRole.team_member)

@@ -25,7 +25,7 @@ def _result(scalar=None, scalars=None, rowcount=1):
 
 class TestAdminFlow:
     @pytest.mark.asyncio
-    @patch("core.security._is_token_revoked", return_value=False)
+    @patch("core.security._is_jti_revoked", return_value=False)
     async def test_full_admin_sequence(self, mock_revoked, mock_db_session: AsyncMock):
         user_id = str(uuid.uuid4())
         mock_user = create_mock_user(auth_id=user_id, role=UserRole.admin)
@@ -138,7 +138,7 @@ class TestAdminFlow:
             app.dependency_overrides.pop(get_db, None)
 
     @pytest.mark.asyncio
-    @patch("core.security._is_token_revoked", return_value=False)
+    @patch("core.security._is_jti_revoked", return_value=False)
     async def test_kpi_excludes_revenue_for_non_admin(self, mock_revoked, mock_db_session: AsyncMock):
         user_id = str(uuid.uuid4())
         mock_user = create_mock_user(auth_id=user_id, role=UserRole.team_lead)
@@ -179,7 +179,7 @@ class TestAdminFlow:
             app.dependency_overrides.pop(get_db, None)
 
     @pytest.mark.asyncio
-    @patch("core.security._is_token_revoked", return_value=False)
+    @patch("core.security._is_jti_revoked", return_value=False)
     async def test_settings_creates_default_if_missing(self, mock_revoked, mock_db_session: AsyncMock):
         user_id = str(uuid.uuid4())
         mock_user = create_mock_user(auth_id=user_id, role=UserRole.admin)
@@ -228,7 +228,7 @@ class TestAdminFlow:
             app.dependency_overrides.pop(get_db, None)
 
     @pytest.mark.asyncio
-    @patch("core.security._is_token_revoked", return_value=False)
+    @patch("core.security._is_jti_revoked", return_value=False)
     async def test_clients_list_empty(self, mock_revoked, mock_db_session: AsyncMock):
         user_id = str(uuid.uuid4())
         mock_user = create_mock_user(auth_id=user_id, role=UserRole.admin)
