@@ -16,6 +16,14 @@ limiter = Limiter(key_func=get_remote_address)
 
 # Task 10.2 + 10.3: Global Exception Handlers & Rate Limiter Wiring
 def setup_global_middleware_and_exceptions(app: FastAPI) -> None:
+    # 0. Debug middleware: log every incoming request with its Authorization header
+    @app.middleware("http")
+    async def debug_auth_header_middleware(request: Request, call_next):
+        auth_header = request.headers.get("Authorization")
+        logger.debug("DEBUG MIDDLEWARE: %s %s | Authorization: %s", request.method, request.url.path, auth_header)
+        response = await call_next(request)
+        return response
+
     # 1. Register the SlowAPI rate limit handler
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

@@ -142,7 +142,8 @@ export default function DeliverablesPage() {
           throw new Error(`Failed to fetch deliverables (${res.status})`)
         }
 
-        const data: ApiDeliverable[] = await res.json()
+        const json = await res.json()
+        const data: ApiDeliverable[] = Array.isArray(json) ? json : json?.data ?? []
 
         const mappedData: UIDeliverable[] = data.map((item) => ({
           id: item.id,

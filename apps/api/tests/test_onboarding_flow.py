@@ -32,7 +32,7 @@ class TestOnboardingFlow:
 
     @pytest.mark.asyncio
     @patch("routers.auth.notify_incomplete_signup.apply_async")
-    @patch("core.security._is_token_revoked", return_value=False)
+    @patch("core.security._is_jti_revoked", return_value=False)
     async def test_full_onboarding_sequence(self, mock_revoked, mock_celery, mock_db_session: AsyncMock):
         from core.exceptions import limiter as _limiter
         _limiter._storage.reset()
@@ -174,7 +174,7 @@ class TestOnboardingFlow:
             app.dependency_overrides.pop(get_db, None)
 
     @pytest.mark.asyncio
-    @patch("core.security._is_token_revoked", return_value=False)
+    @patch("core.security._is_jti_revoked", return_value=False)
     async def test_questionnaire_rejects_duplicate(self, mock_revoked, mock_db_session: AsyncMock):
         auth_id = str(uuid.uuid4())
         token = create_mock_token(auth_id, "client")
@@ -222,7 +222,7 @@ class TestOnboardingFlow:
             app.dependency_overrides.pop(get_db, None)
 
     @pytest.mark.asyncio
-    @patch("core.security._is_token_revoked", return_value=False)
+    @patch("core.security._is_jti_revoked", return_value=False)
     async def test_questionnaire_status_pending(self, mock_revoked, mock_db_session: AsyncMock):
         auth_id = str(uuid.uuid4())
         token = create_mock_token(auth_id, "client")
@@ -263,7 +263,7 @@ class TestOnboardingFlow:
             app.dependency_overrides.pop(get_db, None)
 
     @pytest.mark.asyncio
-    @patch("core.security._is_token_revoked", return_value=False)
+    @patch("core.security._is_jti_revoked", return_value=False)
     async def test_questionnaire_status_completed(self, mock_revoked, mock_db_session: AsyncMock):
         auth_id = str(uuid.uuid4())
         token = create_mock_token(auth_id, "client")
