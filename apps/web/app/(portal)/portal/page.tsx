@@ -15,11 +15,13 @@ import {
   CalendarDays,
   Ticket,
   FileCheck,
+  CreditCard,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/client"
 import { TermsModal } from "@/components/portal/terms-modal"
 import { PaymentModal } from "@/components/portal/payment-modal"
 
@@ -104,22 +106,41 @@ export default function PortalDashboard() {
   const [termsModalOpen, setTermsModalOpen] = useState(false)
   const [paymentModalOpen, setPaymentModalOpen] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
+  const [subscriptionActive, setSubscriptionActive] = useState(false)
 
-  // ── SUPABASE FETCH BYPASSED ──────────────────────────────────
-  // Hardcoded mock data to isolate infinite render issue.
-  // Restore the real fetch once root cause is identified.
   useEffect(() => {
-    setData(EMPTY_DASHBOARD)
-    setLoading(false)
+    async function loadDashboard() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: profile } = await supabase
+        .from("users")
+        .select("terms_accepted, onboarding_stage, created_at")
+        .eq("id", user.id)
+        .single()
+
+      setTermsAccepted(profile?.terms_accepted ?? false)
+      setSubscriptionActive((profile?.onboarding_stage ?? 1) >= 3)
+      setCreatedAt(profile?.created_at ?? null)
+      setData({
+        pending_deliverable_count: 0,
+        open_ticket_count: 0,
+        ai_summary_line: null,
+        onboarding_stage: profile?.onboarding_stage ?? 1,
+      })
+      setLoading(false)
+    }
+    loadDashboard()
   }, [])
 
-  const effectiveStage = termsAccepted ? 2 : data.onboarding_stage
+  const effectiveStage = subscriptionActive ? 3 : termsAccepted ? 2 : data.onboarding_stage
 
   useEffect(() => {
-    if (!loading && effectiveStage === 1 && !termsAccepted) {
+    if (!loading && effectiveStage === 1) {
       setTermsModalOpen(true)
     }
-  }, [loading, effectiveStage, termsAccepted])
+  }, [loading, effectiveStage])
 
   if (loading) {
     return <DashboardSkeleton />
@@ -287,13 +308,18 @@ export default function PortalDashboard() {
 
                 {ONBOARDING_STEPS.map((step) => {
                   const completed = step.stage <= effectiveStage
-                  const isClickable = step.stage === 2 && effectiveStage === 1
+                  const isClickable =
+                    (step.stage === 2 && effectiveStage === 1) ||
+                    (step.stage === 3 && effectiveStage === 2)
                   return (
                     <button
                       key={step.label}
                       type="button"
                       disabled={!isClickable}
-                      onClick={() => isClickable && setTermsModalOpen(true)}
+                      onClick={() => {
+                        if (step.stage === 2 && effectiveStage === 1) setTermsModalOpen(true)
+                        if (step.stage === 3 && effectiveStage === 2) setPaymentModalOpen(true)
+                      }}
                       className={cn(
                         "relative z-10 flex flex-col items-center",
                         isClickable && "cursor-pointer group"
@@ -375,6 +401,26 @@ export default function PortalDashboard() {
                     onClick={() => setTermsModalOpen(true)}
                   >
                     Review
+                    <ArrowRight className="size-3" />
+                  </Button>
+                </div>
+              ) : effectiveStage === 2 ? (
+                <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+                  <CreditCard className="size-5 shrink-0 text-blue-600" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-[#0D2137]">
+                      Payment Pending
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Please complete your payment to activate your workspace.
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPaymentModalOpen(true)}
+                  >
+                    Pay Now
                     <ArrowRight className="size-3" />
                   </Button>
                 </div>
