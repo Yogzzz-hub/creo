@@ -215,6 +215,7 @@
 ## Phase 9: Third-party Integrations
 
 - [x] 9.1 Build Resend email service in services/email.py
+- [x] 9.1a Create email template router in routers/email.py — send_template with dynamic image URL, responsive layout, and CTA button
 - [x] 9.2 Create React Email templates in apps/web/emails/
 - [x] 9.3 Wire all notification trigger points to Resend
 - [x] 9.4 Build MSG91 service in services/whatsapp.py

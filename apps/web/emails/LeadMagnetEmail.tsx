@@ -70,7 +70,7 @@ const CALENDAR_ROWS = [
 
 export const LeadMagnetEmail = ({
   email = "there",
-  download_url = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+  download_url = "https://rndrwcgjmbnhixkurara.supabase.co/storage/v1/object/public/Template/Template%20plan.jpeg",
 }: LeadMagnetEmailProps) => {
   return (
     <Html>
