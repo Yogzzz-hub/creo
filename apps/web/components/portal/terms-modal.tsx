@@ -49,8 +49,19 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
 
       const { data, error: updateError } = await supabase
         .from("users")
-        .update({ terms_accepted: true })
-        .eq("id", user.id)
+        .upsert(
+          {
+            auth_id: user.id,
+            email: user.email ?? "",
+            full_name: user.user_metadata?.full_name ?? user.email ?? "",
+            role: (user.user_metadata?.role as string) || "client",
+            account_status: (user.user_metadata?.account_status as string) || "pending_verification",
+            business_name: user.user_metadata?.business_name ?? null,
+            phone: user.phone ?? null,
+            terms_accepted: true,
+          },
+          { onConflict: "auth_id" }
+        )
         .select()
 
       if (updateError) {
@@ -59,14 +70,15 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
       }
 
       if (!data || data.length === 0) {
-        const rowError = new Error("Update returned no rows — user row may not exist in users table")
+        const rowError = new Error("Upsert returned no rows")
         console.error("DB Update Error:", rowError.message)
         throw rowError
       }
 
       onAccept?.()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to accept terms. Please try again.")
+    } catch (err: any) {
+      const msg = err?.message || err?.details || "Failed to accept terms. Please try again."
+      setError(msg)
     } finally {
       setIsSubmitting(false)
     }
