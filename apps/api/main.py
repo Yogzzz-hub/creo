@@ -1,7 +1,10 @@
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
+
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 from routers.auth import router as auth_router
 from routers.plans import router as plans_router
 from routers.onboarding import router as onboarding_router
@@ -36,6 +39,7 @@ from routers.admin_reports import router as admin_reports_router
 from routers.client_assignments import router as client_assignments_router
 from routers.content_plans import router as content_plans_router
 from routers.lead_magnet import router as lead_magnet_router
+from routers.email import router as email_router
 from routers.webhooks import router as webhooks_router
 from core.exceptions import setup_global_middleware_and_exceptions
 from core.security import role_router
@@ -46,12 +50,11 @@ app = FastAPI(
     version="1.0.0",
 )
 
-setup_global_middleware_and_exceptions(app)
-
+# CORS must be the outermost middleware so headers are added to ALL responses,
+# including those from exception handlers registered below.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        settings.FRONTEND_URL,
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ],
@@ -59,6 +62,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+setup_global_middleware_and_exceptions(app)
 
 app.include_router(auth_router)
 app.include_router(plans_router)
@@ -94,6 +99,7 @@ app.include_router(admin_reports_router)
 app.include_router(client_assignments_router)
 app.include_router(content_plans_router)
 app.include_router(lead_magnet_router)
+app.include_router(email_router)
 app.include_router(webhooks_router)
 app.include_router(role_router)
 

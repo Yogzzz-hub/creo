@@ -208,7 +208,7 @@ async def _process_abandoned_signups_async() -> None:
     logger.info("[AbandonedSignups] Processed %d users, sent %d reminders", len(incomplete_users), sent_count)
 
 
-LEAD_MAGNET_DOWNLOAD_URL = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+LEAD_MAGNET_DOWNLOAD_URL = "https://rndrwcgjmbnhixkurara.supabase.co/storage/v1/object/public/Template/Template%20plan.jpeg"
 
 CALENDAR_ROWS = [
     ("Monday", "Story", "Behind-the-scenes of your workspace or team"),
