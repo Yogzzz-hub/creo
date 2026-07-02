@@ -81,7 +81,7 @@ export function Footer() {
             </h3>
             <div className="mt-4 flex gap-3">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/creotool26?igsh=NjN0eWxwZ2VqbWJ3"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex size-9 items-center justify-center rounded-lg bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-colors"
@@ -92,7 +92,7 @@ export function Footer() {
                 </svg>
               </a>
               <a
-                href="https://facebook.com"
+                href="https://www.facebook.com/share/1GKDeenkvC/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex size-9 items-center justify-center rounded-lg bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-colors"
@@ -103,7 +103,7 @@ export function Footer() {
                 </svg>
               </a>
               <a
-                href="https://linkedin.com"
+                href="https://www.linkedin.com/in/creo-tool-3bb3b841b?utm_source=share_via&utm_content=profile&utm_medium=member_android"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex size-9 items-center justify-center rounded-lg bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-colors"
@@ -114,7 +114,7 @@ export function Footer() {
                 </svg>
               </a>
               <a
-                href="https://twitter.com"
+                href="https://x.com/creotool"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex size-9 items-center justify-center rounded-lg bg-white/10 text-white/70 hover:bg-white/20 hover:text-white transition-colors"

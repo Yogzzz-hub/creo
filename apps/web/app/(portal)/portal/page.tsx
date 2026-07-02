@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
-import { createClient } from "@/lib/supabase/client"
 import { TermsModal } from "@/components/portal/terms-modal"
 import { PaymentModal } from "@/components/portal/payment-modal"
 
