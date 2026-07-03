@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
-import { createClient } from "@/lib/supabase/client"
 import { TermsModal } from "@/components/portal/terms-modal"
 import { PaymentModal } from "@/components/portal/payment-modal"
 
@@ -43,7 +42,8 @@ const ONBOARDING_STEPS = [
   { label: "Account Created", stage: 1 },
   { label: "Terms Accepted", stage: 2 },
   { label: "Payment Done", stage: 3 },
-  { label: "Active", stage: 4 },
+  { label: "Questionnaire", stage: 4 },
+  { label: "Active", stage: 5 },
 ]
 
 const QUICK_ACCESS = [
@@ -133,7 +133,11 @@ export default function PortalDashboard() {
     loadDashboard()
   }, [])
 
-  const effectiveStage = subscriptionActive ? 3 : termsAccepted ? 2 : data.onboarding_stage
+  const effectiveStage = Math.max(
+    data.onboarding_stage,
+    termsAccepted ? 2 : 0,
+    subscriptionActive ? 3 : 0,
+  )
 
   useEffect(() => {
     if (!loading && effectiveStage === 1) {
@@ -150,7 +154,7 @@ export default function PortalDashboard() {
       (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)
     )
     : 0
-  const onboardingComplete = effectiveStage >= 4
+  const onboardingComplete = effectiveStage >= 5
   const withinWindow = elapsedDays < 7
   const showTracker = !onboardingComplete && withinWindow
 
@@ -172,7 +176,11 @@ export default function PortalDashboard() {
         onOpenChange={setTermsModalOpen}
         onAccept={handleTermsAccepted}
       />
-      <PaymentModal open={paymentModalOpen} onOpenChange={setPaymentModalOpen} />
+      <PaymentModal
+        open={paymentModalOpen}
+        onOpenChange={setPaymentModalOpen}
+        onPaymentSuccess={() => setSubscriptionActive(true)}
+      />
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -219,7 +227,7 @@ export default function PortalDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-[#0D2137]">
-                  {effectiveStage >= 4 ? "Active" : `${effectiveStage}/4`}
+                  {effectiveStage >= 5 ? "Active" : `${effectiveStage}/5`}
                 </p>
                 <p className="text-xs text-gray-500">Account Status</p>
               </div>
@@ -309,16 +317,11 @@ export default function PortalDashboard() {
                     const completed = step.stage <= effectiveStage
                     const isClickable =
                       (step.stage === 2 && effectiveStage === 1) ||
-                      (step.stage === 3 && effectiveStage === 2)
+                      (step.stage === 3 && effectiveStage >= 2) ||
+                      (step.stage === 4 && effectiveStage >= 3)
                     return (
-                      <button
+                      <div
                         key={step.label}
-                        type="button"
-                        disabled={!isClickable}
-                        onClick={() => {
-                          if (step.stage === 2 && effectiveStage === 1) setTermsModalOpen(true)
-                          if (step.stage === 3 && effectiveStage === 2) setPaymentModalOpen(true)
-                        }}
                         className={cn(
                           "relative z-10 flex flex-col items-center",
                           isClickable && "cursor-pointer group"
@@ -326,10 +329,11 @@ export default function PortalDashboard() {
                       >
                         <div
                           className={cn(
-                            "flex size-6 items-center justify-center rounded-full border-2",
+                            "flex size-6 items-center justify-center rounded-full border-2 transition-colors",
                             completed
                               ? "border-[#065F46] bg-[#065F46] text-white"
-                              : "border-gray-300 bg-white text-gray-400"
+                              : "border-gray-300 bg-white text-gray-400",
+                            isClickable && "group-hover:border-[#2B7BC4] group-hover:bg-[#2B7BC4]/10 group-hover:text-[#2B7BC4]"
                           )}
                         >
                           {completed ? (
@@ -338,18 +342,41 @@ export default function PortalDashboard() {
                             <Circle className="size-3" />
                           )}
                         </div>
-                        <p
-                          className={cn(
-                            "mt-2 w-16 text-center text-[10px] leading-tight",
-                            completed
-                              ? "font-medium text-[#065F46]"
-                              : "text-gray-400",
-                            isClickable && "group-hover:text-[#2B7BC4] group-hover:underline"
-                          )}
-                        >
-                          {step.label}
-                        </p>
-                      </button>
+                        {step.stage === 2 && effectiveStage === 1 ? (
+                          <button
+                            type="button"
+                            onClick={() => setTermsModalOpen(true)}
+                            className="mt-2 w-16 text-center text-[10px] leading-tight font-medium text-[#065F46] transition-colors hover:text-[#2B7BC4] hover:underline cursor-pointer"
+                          >
+                            {step.label}
+                          </button>
+                        ) : step.stage === 3 ? (
+                          <Link
+                            href="/onboarding/payment"
+                            className="mt-2 w-16 text-center text-[10px] leading-tight font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
+                          >
+                            {step.label}
+                          </Link>
+                        ) : step.stage === 4 ? (
+                          <Link
+                            href="/onboarding/questionnaire"
+                            className="mt-2 w-16 text-center text-[10px] leading-tight font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
+                          >
+                            {step.label}
+                          </Link>
+                        ) : (
+                          <p
+                            className={cn(
+                              "mt-2 w-16 text-center text-[10px] leading-tight transition-colors",
+                              completed
+                                ? "font-medium text-[#065F46]"
+                                : "text-gray-400"
+                            )}
+                          >
+                            {step.label}
+                          </p>
+                        )}
+                      </div>
                     )
                   })}
                 </div>
@@ -422,6 +449,24 @@ export default function PortalDashboard() {
                       Pay Now
                       <ArrowRight className="size-3" />
                     </Button>
+                  </div>
+                ) : effectiveStage === 3 ? (
+                  <div className="flex items-center gap-3 rounded-lg border border-purple-200 bg-purple-50 px-4 py-3">
+                    <FileCheck className="size-5 shrink-0 text-purple-600" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-[#0D2137]">
+                        Complete Brand Questionnaire
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Tell us about your brand so we can tailor your content strategy.
+                      </p>
+                    </div>
+                    <Link href="/onboarding/questionnaire">
+                      <Button variant="ghost" size="sm">
+                        Start Brand Questionnaire
+                        <ArrowRight className="size-3" />
+                      </Button>
+                    </Link>
                   </div>
                 ) : data.pending_deliverable_count > 0 ? (
                   <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">

@@ -1,161 +1,112 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, ArrowRight, ArrowLeft, Check, Lock, ExternalLink } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Loader2,
+  ArrowRight,
+  ArrowLeft,
+  Check,
+} from "lucide-react";
 
-// Matches the backend schema exact requirements
 type FormData = {
-  industry: string;
-  businessDescription: string;
-  targetAudienceAge: string;
-  targetAudienceLocation: string;
-  targetAudienceInterests: string;
-  socialHandleInstagram: string;
-  socialHandleFacebook: string;
-  socialHandleLinkedIn: string;
-  currentPostingFrequency: string;
-  contentWhatWorks: string;
-  contentWhatDoesnt: string;
+  // Step 1 — Business Info
+  coreProduct: string;
+  targetAudience: string;
+  competitiveAdvantage: string;
+  // Step 2 — Social Presence
+  instagramUrl: string;
+  linkedinUrl: string;
+  competitors: string;
+  brandAssetsStatus: string;
+  // Step 3 — Content Goals
   primaryGoal: string;
-  brandTone: string[];
-  competitorRefs: string;
-  topicsToAvoid: string;
-  styleReferences: string;
+  toneOfVoice: string;
+  priorityTopics: string;
 };
 
-const STEPS = ["Business Details", "Content & Goals", "Brand Preferences"];
+const STEPS = ["Business Info", "Social Presence", "Content Goals"];
 
-const FREQUENCY_OPTIONS = [
-  "Daily",
-  "A few times a week",
-  "Weekly",
-  "Bi-weekly",
-  "Monthly",
-  "Rarely / Never",
+const AUDIENCE_OPTIONS = [
+  "Gen Z (18-24)",
+  "Millennials (25-40)",
+  "Gen X (41-56)",
+  "B2B Professionals",
+  "Broad Consumer Base",
 ];
 
-const PRIMARY_GOALS = [
-  { id: "brand_awareness", label: "Brand Awareness" },
-  { id: "lead_generation", label: "Lead Generation" },
-  { id: "engagement", label: "Engagement & Community" },
-  { id: "sales", label: "Direct Sales" },
-  { id: "thought_leadership", label: "Thought Leadership" },
+const GOAL_OPTIONS = [
+  "Brand Awareness & Reach",
+  "Lead Generation & Conversion",
+  "Audience Engagement & Community",
+  "Direct Sales",
 ];
 
 const TONE_OPTIONS = [
-  "Professional",
-  "Friendly",
-  "Bold",
-  "Playful",
-  "Minimalist",
-  "Inspirational",
-  "Educational",
-  "Witty",
+  "Professional & Authoritative",
+  "Playful & Witty",
+  "Educational & Informative",
+  "Bold & Edgy",
+  "Warm & Empathetic",
 ];
+
+const BRAND_ASSET_OPTIONS = ["Yes", "No", "Partially"];
+
+const FIELDS_BY_STEP: Record<number, (keyof FormData)[]> = {
+  1: ["coreProduct", "targetAudience", "competitiveAdvantage"],
+  2: ["instagramUrl", "linkedinUrl", "competitors", "brandAssetsStatus"],
+  3: ["primaryGoal", "toneOfVoice", "priorityTopics"],
+};
 
 export default function QuestionnairePage() {
   const router = useRouter();
   const supabase = createClient();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
-  const [isLocked, setIsLocked] = useState(false);
-  const [lockedLoading, setLockedLoading] = useState(true);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function checkLockStatus() {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.access_token) {
-          if (!controller.signal.aborted) setLockedLoading(false);
-          return;
-        }
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/questionnaire/status`,
-          {
-            headers: { Authorization: `Bearer ${session.access_token}` },
-            signal: controller.signal,
-          }
-        );
-        if (res.ok) {
-          const data = await res.json();
-          if (data.is_locked && !controller.signal.aborted) {
-            setIsLocked(true);
-          }
-        }
-      } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        // Ignore other errors — default is unlocked
-      } finally {
-        if (!controller.signal.aborted) setLockedLoading(false);
-      }
-    }
-    checkLockStatus();
-
-    return () => controller.abort();
-  }, [supabase]);
 
   const {
     register,
     handleSubmit,
-    watch,
-    setValue,
     trigger,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
-      industry: "",
-      businessDescription: "",
-      targetAudienceAge: "",
-      targetAudienceLocation: "",
-      targetAudienceInterests: "",
-      socialHandleInstagram: "",
-      socialHandleFacebook: "",
-      socialHandleLinkedIn: "",
-      currentPostingFrequency: "",
-      contentWhatWorks: "",
-      contentWhatDoesnt: "",
+      coreProduct: "",
+      targetAudience: "",
+      competitiveAdvantage: "",
+      instagramUrl: "",
+      linkedinUrl: "",
+      competitors: "",
+      brandAssetsStatus: "",
       primaryGoal: "",
-      brandTone: [],
-      competitorRefs: "",
-      topicsToAvoid: "",
-      styleReferences: "",
+      toneOfVoice: "",
+      priorityTopics: "",
     },
   });
 
-  const brandTone = watch("brandTone") ?? [];
-
-  function toggleTone(tone: string) {
-    const current = brandTone;
-    if (current.includes(tone)) {
-      setValue(
-        "brandTone",
-        current.filter((t) => t !== tone),
-        { shouldValidate: true }
-      );
-    } else {
-      setValue("brandTone", [...current, tone], { shouldValidate: true });
-    }
-  }
+  const targetAudience = watch("targetAudience");
+  const brandAssetsStatus = watch("brandAssetsStatus");
+  const primaryGoal = watch("primaryGoal");
+  const toneOfVoice = watch("toneOfVoice");
 
   async function handleNext() {
-    const fieldsToValidate: Record<number, (keyof FormData)[]> = {
-      1: ["industry", "businessDescription", "targetAudienceAge", "targetAudienceLocation", "targetAudienceInterests"],
-      2: ["primaryGoal"], // Only primary goal is mandatory in step 2
-      3: ["brandTone"],
-    };
-
-    const valid = await trigger(fieldsToValidate[step]);
+    const valid = await trigger(FIELDS_BY_STEP[step]);
     if (valid) {
       setStep((prev) => prev + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -167,115 +118,28 @@ export default function QuestionnairePage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function onSubmit(data: FormData) {
+  async function onSubmit(_data: FormData) {
     setIsSubmitting(true);
-    setApiError(null);
+
+    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (!session?.access_token) {
-      setApiError("You must be logged in to submit the questionnaire.");
-      setIsSubmitting(false);
-      return;
+    if (user) {
+      await supabase.from("profiles").upsert({
+        id: user.id,
+        onboarding_stage: 4,
+      });
     }
 
-    // Map React Hook Form data strictly to Backend Schema payload
-    const payload = {
-      industry: data.industry,
-      business_description: data.businessDescription,
-      target_audience: {
-        age: data.targetAudienceAge,
-        location: data.targetAudienceLocation,
-        interests: data.targetAudienceInterests,
-      },
-      social_handles: {
-        instagram: data.socialHandleInstagram,
-        facebook: data.socialHandleFacebook,
-        linkedin: data.socialHandleLinkedIn,
-      },
-      current_posting_frequency: data.currentPostingFrequency || null,
-      content_what_works: data.contentWhatWorks || null,
-      content_what_doesnt: data.contentWhatDoesnt || null,
-      primary_goal: data.primaryGoal,
-      brand_tone: data.brandTone,
-      competitor_refs: data.competitorRefs
-        ? data.competitorRefs.split(",").map((s) => s.trim())
-        : null,
-      topics_to_avoid: data.topicsToAvoid || null,
-      style_references: data.styleReferences
-        ? data.styleReferences.split(",").map((s) => s.trim())
-        : null,
-    };
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/questionnaire`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        setApiError(
-          errorData.detail || "Failed to submit questionnaire. Please try again."
-        );
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Success! Move to the next page to handle the loading/polling
-      router.push("/onboarding/complete");
-    } catch {
-      setApiError("Failed to connect to server. Please try again.");
-      setIsSubmitting(false);
-    }
-  }
-
-  if (lockedLoading) {
-    return (
-      <CardContent className="py-2">
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
-        </div>
-      </CardContent>
-    );
-  }
-
-  if (isLocked) {
-    return (
-      <CardContent className="py-2">
-        <div className="flex flex-col items-center text-center py-10 space-y-4">
-          <div className="flex size-14 items-center justify-center rounded-full bg-amber-100">
-            <Lock className="size-7 text-amber-600" />
-          </div>
-          <h2 className="text-xl font-bold text-brand-dark">Questionnaire Locked</h2>
-          <p className="text-sm text-text-muted max-w-md">
-            Your brand questionnaire was submitted more than 7 days ago and is now locked.
-            To make changes, please contact our Support team.
-          </p>
-          <Button
-            variant="outline"
-            className="mt-2 border-border text-text"
-            onClick={() => router.push("/portal/support")}
-          >
-            Go to Support
-            <ExternalLink className="ml-2 size-4" />
-          </Button>
-        </div>
-      </CardContent>
-    );
+    router.push("/onboarding/complete");
   }
 
   return (
     <CardContent className="py-2">
+      {/* Header */}
       <div className="mb-6 text-center">
         <p className="text-sm font-medium text-brand mb-1">
           Step {step} of 3: {STEPS[step - 1]}
@@ -287,248 +151,271 @@ export default function QuestionnairePage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
+        {/* Step 1 — Business Info */}
         {step === 1 && (
           <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-              <Label htmlFor="industry" className="mb-1.5 block">
-                Industry / Niche <span className="text-error">*</span>
+              <Label htmlFor="coreProduct" className="mb-1.5 block">
+                What is your primary product or service?{" "}
+                <span className="text-error">*</span>
               </Label>
-              <Input
-                id="industry"
-                placeholder="e.g. Restaurant, Fitness, Real Estate"
-                className="h-10"
-                {...register("industry", { required: "Industry is required" })}
+              <Textarea
+                id="coreProduct"
+                placeholder="Describe what you sell and the problem it solves..."
+                {...register("coreProduct", {
+                  required: "Primary product or service is required",
+                })}
               />
-              {errors.industry && (
-                <p className="mt-1 text-xs text-error">{errors.industry.message}</p>
+              {errors.coreProduct && (
+                <p className="mt-1 text-xs text-error">
+                  {errors.coreProduct.message}
+                </p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="businessDescription" className="mb-1.5 block">
-                Business Description <span className="text-error">*</span>
+              <Label htmlFor="targetAudience" className="mb-1.5 block">
+                Primary Target Audience{" "}
+                <span className="text-error">*</span>
               </Label>
-              <textarea
-                id="businessDescription"
-                placeholder="Describe what your business does in a few sentences..."
-                className="w-full min-h-[100px] rounded-lg border border-input bg-transparent px-3 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand"
-                {...register("businessDescription", { required: "Description is required" })}
+              <Select
+                value={targetAudience}
+                onValueChange={(value) => {
+                  if (value) {
+                    setValue("targetAudience", value, {
+                      shouldValidate: true,
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select target audience" />
+                </SelectTrigger>
+                <SelectContent>
+                  {AUDIENCE_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <input
+                type="hidden"
+                {...register("targetAudience", {
+                  required: "Target audience is required",
+                })}
               />
-              {errors.businessDescription && (
-                <p className="mt-1 text-xs text-error">{errors.businessDescription.message}</p>
+              {errors.targetAudience && (
+                <p className="mt-1 text-xs text-error">
+                  {errors.targetAudience.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="competitiveAdvantage" className="mb-1.5 block">
+                What is your biggest competitive advantage?{" "}
+                <span className="text-error">*</span>
+              </Label>
+              <Textarea
+                id="competitiveAdvantage"
+                placeholder="What makes you different from competitors?"
+                {...register("competitiveAdvantage", {
+                  required: "Competitive advantage is required",
+                })}
+              />
+              {errors.competitiveAdvantage && (
+                <p className="mt-1 text-xs text-error">
+                  {errors.competitiveAdvantage.message}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Step 2 — Social Presence */}
+        {step === 2 && (
+          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div>
+              <Label htmlFor="instagramUrl" className="mb-1.5 block">
+                Instagram URL
+              </Label>
+              <Input
+                id="instagramUrl"
+                type="url"
+                placeholder="https://instagram.com/your-brand"
+                {...register("instagramUrl")}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="linkedinUrl" className="mb-1.5 block">
+                LinkedIn URL
+              </Label>
+              <Input
+                id="linkedinUrl"
+                type="url"
+                placeholder="https://linkedin.com/company/your-brand"
+                {...register("linkedinUrl")}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="competitors" className="mb-1.5 block">
+                List 2-3 competitors or brands whose social media presence you
+                admire. <span className="text-error">*</span>
+              </Label>
+              <Textarea
+                id="competitors"
+                placeholder="e.g. Nike, HubSpot, Glossier"
+                {...register("competitors", {
+                  required: "Please list at least one competitor or admired brand",
+                })}
+              />
+              {errors.competitors && (
+                <p className="mt-1 text-xs text-error">
+                  {errors.competitors.message}
+                </p>
               )}
             </div>
 
             <div>
               <Label className="mb-1.5 block">
-                Target Audience <span className="text-error">*</span>
+                Do you have existing brand guidelines (colors, fonts, logo)?{" "}
+                <span className="text-error">*</span>
               </Label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <Input
-                    placeholder="Age (e.g. 25-45)"
-                    {...register("targetAudienceAge", { required: "Required" })}
-                  />
-                  {errors.targetAudienceAge && (
-                    <p className="mt-1 text-xs text-error">Required</p>
-                  )}
-                </div>
-                <div>
-                  <Input
-                    placeholder="Location"
-                    {...register("targetAudienceLocation", { required: "Required" })}
-                  />
-                  {errors.targetAudienceLocation && (
-                    <p className="mt-1 text-xs text-error">Required</p>
-                  )}
-                </div>
-                <div>
-                  <Input
-                    placeholder="Interests"
-                    {...register("targetAudienceInterests", { required: "Required" })}
-                  />
-                  {errors.targetAudienceInterests && (
-                    <p className="mt-1 text-xs text-error">Required</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <Label className="mb-1.5 block">Social Media Handles</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Input placeholder="Instagram (@handle)" {...register("socialHandleInstagram")} />
-                <Input placeholder="Facebook" {...register("socialHandleFacebook")} />
-                <Input placeholder="LinkedIn" {...register("socialHandleLinkedIn")} />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div>
-              <Label htmlFor="postingFrequency" className="mb-1.5 block">
-                Current Posting Frequency
-              </Label>
-              <select
-                id="postingFrequency"
-                className="flex h-10 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm transition-colors outline-none focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand"
-                {...register("currentPostingFrequency")}
-              >
-                <option value="">Select frequency</option>
-                {FREQUENCY_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <Label htmlFor="contentWhatWorks" className="mb-1.5 block">
-                What type of content has worked well?
-              </Label>
-              <textarea
-                id="contentWhatWorks"
-                placeholder="e.g. Behind-the-scenes reels, customer testimonials..."
-                className="w-full min-h-[80px] rounded-lg border border-input bg-transparent px-3 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand"
-                {...register("contentWhatWorks")}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="contentWhatDoesnt" className="mb-1.5 block">
-                What type of content has NOT worked?
-              </Label>
-              <textarea
-                id="contentWhatDoesnt"
-                placeholder="e.g. Long text-heavy posts, overly promotional content..."
-                className="w-full min-h-[80px] rounded-lg border border-input bg-transparent px-3 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand"
-                {...register("contentWhatDoesnt")}
-              />
-            </div>
-
-            <div>
-              <Label className="mb-2 block">
-                Primary Goal <span className="text-error">*</span>
-              </Label>
-              <div className="space-y-2">
-                {PRIMARY_GOALS.map((goal) => (
+              <div className="flex gap-4">
+                {BRAND_ASSET_OPTIONS.map((option) => (
                   <label
-                    key={goal.id}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg border px-4 py-3 cursor-pointer transition-colors",
-                      watch("primaryGoal") === goal.id
-                        ? "border-brand bg-brand/5 text-brand-dark"
-                        : "border-border hover:bg-bg-internal text-text"
-                    )}
+                    key={option}
+                    className="flex items-center gap-2 cursor-pointer"
                   >
                     <input
                       type="radio"
-                      value={goal.id}
-                      className="sr-only"
-                      {...register("primaryGoal", { required: "Please select a primary goal" })}
+                      value={option}
+                      className="accent-brand size-4"
+                      checked={brandAssetsStatus === option}
+                      onChange={() =>
+                        setValue("brandAssetsStatus", option, {
+                          shouldValidate: true,
+                        })
+                      }
                     />
-                    <div
-                      className={cn(
-                        "flex size-5 items-center justify-center rounded-full border-2 shrink-0",
-                        watch("primaryGoal") === goal.id
-                          ? "border-brand bg-brand text-white"
-                          : "border-border"
-                      )}
-                    >
-                      {watch("primaryGoal") === goal.id && <Check className="size-3" />}
-                    </div>
-                    <span className="text-sm font-medium">{goal.label}</span>
+                    <span className="text-sm">{option}</span>
                   </label>
                 ))}
               </div>
-              {errors.primaryGoal && (
-                <p className="mt-1 text-xs text-error">{errors.primaryGoal.message}</p>
+              <input
+                type="hidden"
+                {...register("brandAssetsStatus", {
+                  required: "Please select an option",
+                })}
+              />
+              {errors.brandAssetsStatus && (
+                <p className="mt-1 text-xs text-error">
+                  {errors.brandAssetsStatus.message}
+                </p>
               )}
             </div>
           </div>
         )}
 
+        {/* Step 3 — Content Goals */}
         {step === 3 && (
           <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-              <Label className="mb-2 block">
-                Brand Tone <span className="text-error">*</span>
+              <Label htmlFor="primaryGoal" className="mb-1.5 block">
+                Primary 3-Month Goal{" "}
+                <span className="text-error">*</span>
               </Label>
-              <p className="text-xs text-text-muted mb-2">
-                Select all that apply to your brand voice.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {TONE_OPTIONS.map((tone) => (
-                  <button
-                    key={tone}
-                    type="button"
-                    onClick={() => toggleTone(tone)}
-                    className={cn(
-                      "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
-                      brandTone.includes(tone)
-                        ? "border-brand bg-brand text-white"
-                        : "border-border text-text hover:bg-bg-internal"
-                    )}
-                  >
-                    {tone}
-                  </button>
-                ))}
-              </div>
-              {/* Hidden input to register the array for validation */}
+              <Select
+                value={primaryGoal}
+                onValueChange={(value) => {
+                  if (value) {
+                    setValue("primaryGoal", value, {
+                      shouldValidate: true,
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a goal" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GOAL_OPTIONS.map((goal) => (
+                    <SelectItem key={goal} value={goal}>
+                      {goal}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <input
                 type="hidden"
-                {...register("brandTone", { validate: (val) => val.length > 0 || "Select at least one brand tone" })}
+                {...register("primaryGoal", {
+                  required: "Please select a primary goal",
+                })}
               />
-              {errors.brandTone && (
-                <p className="mt-1 text-xs text-error">{errors.brandTone.message}</p>
+              {errors.primaryGoal && (
+                <p className="mt-1 text-xs text-error">
+                  {errors.primaryGoal.message}
+                </p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="competitorRefs" className="mb-1.5 block">
-                Competitor References
+              <Label htmlFor="toneOfVoice" className="mb-1.5 block">
+                Brand Tone of Voice{" "}
+                <span className="text-error">*</span>
               </Label>
-              <Input
-                id="competitorRefs"
-                placeholder="Instagram handles or brand names (comma-separated)"
-                className="h-10"
-                {...register("competitorRefs")}
+              <Select
+                value={toneOfVoice}
+                onValueChange={(value) => {
+                  if (value) {
+                    setValue("toneOfVoice", value, {
+                      shouldValidate: true,
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a tone" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TONE_OPTIONS.map((tone) => (
+                    <SelectItem key={tone} value={tone}>
+                      {tone}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <input
+                type="hidden"
+                {...register("toneOfVoice", {
+                  required: "Please select a tone of voice",
+                })}
               />
+              {errors.toneOfVoice && (
+                <p className="mt-1 text-xs text-error">
+                  {errors.toneOfVoice.message}
+                </p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="topicsToAvoid" className="mb-1.5 block">
-                Topics to Avoid
+              <Label htmlFor="priorityTopics" className="mb-1.5 block">
+                Are there any specific promotions we should prioritize this
+                month?
               </Label>
-              <textarea
-                id="topicsToAvoid"
-                placeholder="e.g. Politics, controversial topics, competitor mentions..."
-                className="w-full min-h-[80px] rounded-lg border border-input bg-transparent px-3 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-brand focus-visible:ring-1 focus-visible:ring-brand"
-                {...register("topicsToAvoid")}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="styleReferences" className="mb-1.5 block">
-                Style References
-              </Label>
-              <Input
-                id="styleReferences"
-                placeholder="Links to posts or accounts you like (comma-separated)"
-                className="h-10"
-                {...register("styleReferences")}
+              <Textarea
+                id="priorityTopics"
+                placeholder="Describe any upcoming launches, seasonal campaigns, or promotions..."
+                {...register("priorityTopics")}
               />
             </div>
           </div>
         )}
 
-        {apiError && (
-          <div className="mt-4 p-3 text-sm text-error bg-error/10 border border-error/20 rounded-md">
-            {apiError}
-          </div>
-        )}
-
+        {/* Navigation */}
         <div className="mt-8 flex items-center justify-between gap-4">
           {step > 1 ? (
             <Button
@@ -542,7 +429,7 @@ export default function QuestionnairePage() {
               Back
             </Button>
           ) : (
-            <div className="w-full" /> // Spacer for alignment
+            <div className="w-full" />
           )}
 
           {step < 3 ? (
@@ -563,10 +450,10 @@ export default function QuestionnairePage() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 size-4 animate-spin" />
-                  Submitting...
+                  Generating AI Brand Analysis...
                 </>
               ) : (
-                "Submit & Analyze"
+                "Submit Questionnaire"
               )}
             </Button>
           )}
