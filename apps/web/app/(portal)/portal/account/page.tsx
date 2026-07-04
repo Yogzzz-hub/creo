@@ -451,7 +451,7 @@ function IntegrationsTab() {
 
   function handleConnect() {
     const appId = process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID
-    const redirectUri = `${window.location.origin}/auth/instagram/callback`
+    const redirectUri = `${window.location.origin}/api/auth/callback/instagram`
 
     if (!appId) {
       toast.error("Instagram integration not configured.")
