@@ -315,25 +315,17 @@ export default function PortalDashboard() {
 
                   {ONBOARDING_STEPS.map((step) => {
                     const completed = step.stage <= effectiveStage
-                    const isClickable =
-                      (step.stage === 2 && effectiveStage === 1) ||
-                      (step.stage === 3 && effectiveStage >= 2) ||
-                      (step.stage === 4 && effectiveStage >= 3)
                     return (
                       <div
                         key={step.label}
-                        className={cn(
-                          "relative z-10 flex flex-col items-center",
-                          isClickable && "cursor-pointer group"
-                        )}
+                        className="relative z-10 flex flex-col items-center"
                       >
                         <div
                           className={cn(
                             "flex size-6 items-center justify-center rounded-full border-2 transition-colors",
                             completed
                               ? "border-[#065F46] bg-[#065F46] text-white"
-                              : "border-gray-300 bg-white text-gray-400",
-                            isClickable && "group-hover:border-[#2B7BC4] group-hover:bg-[#2B7BC4]/10 group-hover:text-[#2B7BC4]"
+                              : "border-gray-300 bg-white text-gray-400"
                           )}
                         >
                           {completed ? (
@@ -342,40 +334,16 @@ export default function PortalDashboard() {
                             <Circle className="size-3" />
                           )}
                         </div>
-                        {step.stage === 2 && effectiveStage === 1 ? (
-                          <button
-                            type="button"
-                            onClick={() => setTermsModalOpen(true)}
-                            className="mt-2 w-16 text-center text-[10px] leading-tight font-medium text-[#065F46] transition-colors hover:text-[#2B7BC4] hover:underline cursor-pointer"
-                          >
-                            {step.label}
-                          </button>
-                        ) : step.stage === 3 ? (
-                          <Link
-                            href="/onboarding/payment"
-                            className="mt-2 w-16 text-center text-[10px] leading-tight font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
-                          >
-                            {step.label}
-                          </Link>
-                        ) : step.stage === 4 ? (
-                          <Link
-                            href="/onboarding/questionnaire"
-                            className="mt-2 w-16 text-center text-[10px] leading-tight font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
-                          >
-                            {step.label}
-                          </Link>
-                        ) : (
-                          <p
-                            className={cn(
-                              "mt-2 w-16 text-center text-[10px] leading-tight transition-colors",
-                              completed
-                                ? "font-medium text-[#065F46]"
-                                : "text-gray-400"
-                            )}
-                          >
-                            {step.label}
-                          </p>
-                        )}
+                        <p
+                          className={cn(
+                            "mt-2 w-16 text-center text-[10px] leading-tight transition-colors",
+                            completed
+                              ? "font-medium text-[#065F46]"
+                              : "text-gray-400"
+                          )}
+                        >
+                          {step.label}
+                        </p>
                       </div>
                     )
                   })}
@@ -461,12 +429,14 @@ export default function PortalDashboard() {
                         Tell us about your brand so we can tailor your content strategy.
                       </p>
                     </div>
-                    <Link href="/onboarding/questionnaire">
-                      <Button variant="ghost" size="sm">
-                        Start Brand Questionnaire
-                        <ArrowRight className="size-3" />
-                      </Button>
-                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      render={<Link href="/onboarding/questionnaire" />}
+                    >
+                      Start Brand Questionnaire
+                      <ArrowRight className="size-3" />
+                    </Button>
                   </div>
                 ) : data.pending_deliverable_count > 0 ? (
                   <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
