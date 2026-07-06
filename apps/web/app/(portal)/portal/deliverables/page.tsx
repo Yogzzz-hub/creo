@@ -14,7 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { createClient } from "@/lib/supabase/client"
+import { apiFetch, ApiError } from "@/lib/api"
+import { useSession } from "@/context/session-context"
 
 type DeliverableType = "poster" | "reel" | "story"
 type DeliverableStatus = "pending" | "approved" | "revision" | "rejected"
@@ -115,35 +116,18 @@ function formatDate(dateString: string): string {
 }
 
 export default function DeliverablesPage() {
+  const { token } = useSession()
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [deliverables, setDeliverables] = useState<UIDeliverable[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null) // 3. FIXED: Added error state
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchDeliverables() {
       try {
-        const supabase = createClient()
-        const { data: { session } } = await supabase.auth.getSession()
-
-        if (!session?.access_token) {
-          throw new Error("Authentication required")
-        }
-
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/deliverables`, {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-        })
-
-        if (!res.ok) {
-          throw new Error(`Failed to fetch deliverables (${res.status})`)
-        }
-
-        const json = await res.json()
-        const data: ApiDeliverable[] = Array.isArray(json) ? json : json?.data ?? []
+        const json = await apiFetch("/api/v1/deliverables", {}, token)
+        const data: ApiDeliverable[] = Array.isArray(json) ? json : (json as { data?: ApiDeliverable[] })?.data ?? []
 
         const mappedData: UIDeliverable[] = data.map((item) => ({
           id: item.id,
@@ -156,14 +140,17 @@ export default function DeliverablesPage() {
 
         setDeliverables(mappedData)
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load deliverables")
+        const message = err instanceof ApiError
+          ? err.status === 401 ? "Session expired. Please refresh the page." : err.message
+          : "Failed to load deliverables"
+        setError(message)
       } finally {
         setLoading(false)
       }
     }
 
     fetchDeliverables()
-  }, [])
+  }, [token])
 
   const filtered = deliverables.filter((d) => {
     if (typeFilter !== "all" && d.type !== typeFilter) return false

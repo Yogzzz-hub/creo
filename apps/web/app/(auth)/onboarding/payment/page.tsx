@@ -58,7 +58,7 @@ function getSelectedPlan(): { id: string; name: string; display_name: string } |
 function getAccessToken(): Promise<string | null> {
   return createClient()
     .auth.getSession()
-    .then(({ data: { session } }) => session?.access_token ?? null);
+    .then(({ data }: { data: { session: { access_token: string } | null } }) => data.session?.access_token ?? null);
 }
 
 async function apiCreateSubscription(

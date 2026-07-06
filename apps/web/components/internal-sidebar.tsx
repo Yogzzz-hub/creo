@@ -69,10 +69,10 @@ export function InternalSidebar() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      const userRole =
-        data.user?.user_metadata?.role ??
-        data.user?.app_metadata?.role ??
+    supabase.auth.getUser().then(({ data }: { data: { user: { user_metadata?: Record<string, string>; app_metadata?: Record<string, string> } | null } }) => {
+      const userRole: string | null =
+        (data.user?.user_metadata?.role as string) ??
+        (data.user?.app_metadata?.role as string) ??
         null;
       setRole(userRole);
       setLoading(false);

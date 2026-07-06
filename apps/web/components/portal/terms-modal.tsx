@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { useSession } from "@/context/session-context"
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ interface TermsModalProps {
 
 export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
   const router = useRouter()
+  const { user } = useSession()
   const supabase = createClient()
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -44,7 +46,6 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
     setError(null)
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Not authenticated")
 
       const { data, error: updateError } = await supabase

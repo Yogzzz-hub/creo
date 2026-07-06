@@ -19,9 +19,10 @@ async function getToken(): Promise<string | null> {
 
 export async function portalFetch<T>(
   path: string,
-  options?: RequestInit
+  options?: RequestInit,
+  accessToken?: string | null
 ): Promise<T> {
-  const token = await getToken()
+  const token = accessToken ?? await getToken()
 
   if (!token) {
     throw new AuthError()

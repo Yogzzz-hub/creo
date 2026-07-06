@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useSession } from "@/context/session-context"
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -91,6 +91,7 @@ function getEntriesForDay(entries: CalendarEntry[], year: number, month: number,
 }
 
 export default function CalendarPage() {
+  const { token } = useSession()
   const [viewMode, setViewMode] = useState<ViewMode>("month")
   const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth())
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear())
@@ -104,12 +105,7 @@ export default function CalendarPage() {
 
   useEffect(() => {
     async function fetchCalendar() {
-      const supabase = createClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session?.access_token) {
+      if (!token) {
         setLoading(false)
         return
       }
@@ -117,7 +113,7 @@ export default function CalendarPage() {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/calendar`,
         {
-          headers: { Authorization: `Bearer ${session.access_token}` },
+          headers: { Authorization: `Bearer ${token}` },
         }
       )
 
@@ -146,7 +142,7 @@ export default function CalendarPage() {
     }
 
     fetchCalendar()
-  }, [])
+  }, [token])
 
   function navigateMonth(direction: number) {
     const totalMonths = currentYear * 12 + currentMonth + direction

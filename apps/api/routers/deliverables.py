@@ -33,7 +33,7 @@ from schemas.upload import (
     UploadURLRequest,
     UploadURLResponse,
 )
-from services.instagram import publish_media, refresh_access_token
+from services.instagram import publish_media, publish_reel, refresh_access_token
 from services.storage import generate_signed_download_url, generate_signed_upload_url
 
 logger = logging.getLogger(__name__)
@@ -411,13 +411,23 @@ async def publish_deliverable_to_instagram(
             detail="Failed to decrypt Instagram access token",
         )
 
+    is_video = deliverable.file_type.startswith("video/")
+
     try:
-        publish_result = await publish_media(
-            ig_user_id=client_user.instagram_user_id,
-            access_token=decrypted_token,
-            image_url=deliverable.file_url,
-            caption=payload.caption,
-        )
+        if is_video:
+            publish_result = await publish_reel(
+                ig_user_id=client_user.instagram_user_id,
+                access_token=decrypted_token,
+                video_url=deliverable.file_url,
+                caption=payload.caption,
+            )
+        else:
+            publish_result = await publish_media(
+                ig_user_id=client_user.instagram_user_id,
+                access_token=decrypted_token,
+                image_url=deliverable.file_url,
+                caption=payload.caption,
+            )
     except Exception as exc:
         logger.exception(
             "Instagram publish failed for deliverable %s: %s",

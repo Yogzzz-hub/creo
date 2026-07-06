@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react"
 import Link from "next/link"
 import {
   ArrowLeft,
+  Camera,
   Check,
   Download,
   Film,
@@ -19,7 +20,8 @@ import { useForm } from "react-hook-form"
 import { z } from "zod/v4"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import { createClient } from "@/lib/supabase/client"
+import { apiFetch } from "@/lib/api"
+import { useSession } from "@/context/session-context"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -50,6 +52,8 @@ interface ApiDeliverable {
   created_at: string
   approved_at: string | null
   rejected_at: string | null
+  instagram_post_id: string | null
+  instagram_published_at: string | null
 }
 
 interface Deliverable {
@@ -59,6 +63,7 @@ interface Deliverable {
   status: DeliverableStatus
   uploadDate: string
   fileUrl: string
+  instagramPostId: string | null
 }
 
 function inferType(fileUrl: string, fileType: string): DeliverableType {
@@ -132,39 +137,13 @@ function formatDate(dateString: string): string {
   })
 }
 
-async function apiFetch(path: string, options?: RequestInit) {
-  const supabase = createClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  if (!session?.access_token) {
-    throw new Error("Not authenticated")
-  }
-
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-  })
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body.detail || `Request failed (${res.status})`)
-  }
-
-  return res.json()
-}
-
 export default function DeliverableDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { token } = useSession()
   const [deliverable, setDeliverable] = useState<Deliverable | null>(null)
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<"forbidden" | "not_found" | "generic" | null>(null)
@@ -173,6 +152,7 @@ export default function DeliverableDetailPage({
   const [videoPlaying, setVideoPlaying] = useState(false)
   const { isLapsed } = useSubscription()
   const [isApproving, setIsApproving] = useState(false)
+  const [isPublishing, setIsPublishing] = useState(false)
   const [showUpsell, setShowUpsell] = useState(false)
 
   const {
@@ -188,9 +168,11 @@ export default function DeliverableDetailPage({
   useEffect(() => {
     async function fetchDeliverable() {
       try {
-        const data: ApiDeliverable = await apiFetch(
-          `/api/v1/deliverables/${id}`
-        )
+        const data = (await apiFetch(
+          `/api/v1/deliverables/${id}`,
+          {},
+          token
+        )) as ApiDeliverable
         setDeliverable({
           id: data.id,
           title: `Deliverable — Round ${data.revision_round}`,
@@ -198,6 +180,7 @@ export default function DeliverableDetailPage({
           status: mapStatus(data.status),
           uploadDate: data.created_at,
           fileUrl: data.file_url,
+          instagramPostId: data.instagram_post_id ?? null,
         })
       } catch (err) {
         const msg = err instanceof Error ? err.message : ""
@@ -213,16 +196,17 @@ export default function DeliverableDetailPage({
       }
     }
     fetchDeliverable()
-  }, [id])
+  }, [id, token])
 
   async function handleApprove() {
     if (!deliverable) return
     setIsApproving(true)
     try {
-      const data: ApiDeliverable = await apiFetch(
+      const data = (await apiFetch(
         `/api/v1/deliverables/${deliverable.id}/approve`,
-        { method: "POST" }
-      )
+        { method: "POST" },
+        token
+      )) as ApiDeliverable
       setDeliverable((prev) =>
         prev ? { ...prev, status: mapStatus(data.status) } : prev
       )
@@ -239,13 +223,14 @@ export default function DeliverableDetailPage({
     if (!deliverable) return
     setIsRejecting(true)
     try {
-      const res: ApiDeliverable = await apiFetch(
+      const res = (await apiFetch(
         `/api/v1/deliverables/${deliverable.id}/reject`,
         {
           method: "POST",
           body: JSON.stringify({ comment_text: data.comment_text }),
-        }
-      )
+        },
+        token
+      )) as ApiDeliverable
       setDeliverable((prev) =>
         prev ? { ...prev, status: mapStatus(res.status) } : prev
       )
@@ -262,12 +247,37 @@ export default function DeliverableDetailPage({
   async function handleDownload() {
     if (!deliverable) return
     try {
-      const data: { download_url: string } = await apiFetch(
-        `/api/v1/deliverables/${deliverable.id}/download`
-      )
+      const data = (await apiFetch(
+        `/api/v1/deliverables/${deliverable.id}/download`,
+        {},
+        token
+      )) as { download_url: string }
       window.open(data.download_url, "_blank")
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Download failed")
+    }
+  }
+
+  async function handlePublishToInstagram() {
+    if (!deliverable) return
+    setIsPublishing(true)
+    try {
+      const data = (await apiFetch(
+          `/api/v1/deliverables/${deliverable.id}/publish-instagram`,
+          {
+            method: "POST",
+            body: JSON.stringify({ caption: "" }),
+          },
+          token
+        )) as { success: boolean; instagram_post_id: string | null }
+      setDeliverable((prev) =>
+        prev ? { ...prev, instagramPostId: data.instagram_post_id } : prev
+      )
+      toast.success("Deliverable published to Instagram!")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to publish to Instagram")
+    } finally {
+      setIsPublishing(false)
     }
   }
 
@@ -343,14 +353,22 @@ export default function DeliverableDetailPage({
             <span>{formatDate(deliverable.uploadDate)}</span>
           </div>
         </div>
-        <Badge
-          className={cn(
-            "border text-xs font-medium",
-            statusConfig.className
+        <div className="flex items-center gap-2">
+          <Badge
+            className={cn(
+              "border text-xs font-medium",
+              statusConfig.className
+            )}
+          >
+            {statusConfig.label}
+          </Badge>
+          {deliverable.instagramPostId && (
+            <Badge className="border bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 text-xs font-medium text-purple-800 border-purple-200">
+              <Camera className="size-3 mr-1" />
+              Instagram Published
+            </Badge>
           )}
-        >
-          {statusConfig.label}
-        </Badge>
+        </div>
       </div>
 
       <Card className="rounded-xl shadow-[var(--shadow-card)]">
@@ -475,7 +493,7 @@ export default function DeliverableDetailPage({
       {isTerminal && canDownload && (
         <Card className="rounded-xl shadow-[var(--shadow-card)]">
           <CardContent className="p-5">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold text-[#0D2137]">
                   Download Approved Content
@@ -484,13 +502,29 @@ export default function DeliverableDetailPage({
                   Your deliverable is ready for download.
                 </p>
               </div>
-              <Button
-                onClick={handleDownload}
-                className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90"
-              >
-                <Download className="size-4" />
-                Download
-              </Button>
+              <div className="flex items-center gap-2">
+                {!deliverable.instagramPostId && (
+                  <Button
+                    onClick={handlePublishToInstagram}
+                    disabled={isPublishing}
+                    className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90"
+                  >
+                    {isPublishing ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Camera className="size-4" />
+                    )}
+                    {isPublishing ? "Publishing..." : "Publish to Instagram"}
+                  </Button>
+                )}
+                <Button
+                  onClick={handleDownload}
+                  className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90"
+                >
+                  <Download className="size-4" />
+                  Download
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

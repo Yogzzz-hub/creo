@@ -42,7 +42,7 @@ export function useAuthListener() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: string, session: { user: { id: string; email?: string; user_metadata?: Record<string, string>; app_metadata?: Record<string, string> } } | null) => {
         if (session?.user) {
           const { user } = session;
           setUser({
