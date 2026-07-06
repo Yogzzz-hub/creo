@@ -18,6 +18,7 @@ import {
   EyeOff,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useSession } from "@/context/session-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -96,6 +97,7 @@ export default function AccountPage() {
 }
 
 function BusinessProfileTab() {
+  const { user: authUser } = useSession()
   const [isSaving, setIsSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState("")
@@ -111,28 +113,18 @@ function BusinessProfileTab() {
   })
 
   useEffect(() => {
-    async function fetchProfile() {
-      try {
-        const supabase = createClient()
-        const user = await supabase.auth.getUser()
-        const userData = user.data.user
-        const emailValue = userData?.email ?? ""
-        setEmail(emailValue)
+    if (!authUser) return
+    const emailValue = authUser.email ?? ""
+    setEmail(emailValue)
 
-        reset({
-          fullName: userData?.user_metadata?.full_name ?? "",
-          businessName: userData?.user_metadata?.business_name ?? "",
-          phone: userData?.phone ?? "",
-          email: emailValue,
-        })
-      } catch {
-        // Use defaults
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchProfile()
-  }, [reset])
+    reset({
+      fullName: authUser.user_metadata?.full_name ?? "",
+      businessName: authUser.user_metadata?.business_name ?? "",
+      phone: authUser.phone ?? "",
+      email: emailValue,
+    })
+    setLoading(false)
+  }, [authUser, reset])
 
   async function onSubmit(values: BusinessProfileValues) {
     setIsSaving(true)
@@ -432,22 +424,14 @@ function SecurityTab() {
 }
 
 function IntegrationsTab() {
+  const { user: authUser } = useSession()
   const [instagramConnected, setInstagramConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
 
   useEffect(() => {
-    async function checkInstagram() {
-      try {
-        const supabase = createClient()
-        const user = await supabase.auth.getUser()
-        const token = user.data.user?.user_metadata?.instagram_access_token
-        setInstagramConnected(!!token)
-      } catch {
-        // Default to disconnected
-      }
-    }
-    checkInstagram()
-  }, [])
+    const token = authUser?.user_metadata?.instagram_access_token
+    setInstagramConnected(!!token)
+  }, [authUser?.user_metadata])
 
   function handleConnect() {
     const appId = process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID

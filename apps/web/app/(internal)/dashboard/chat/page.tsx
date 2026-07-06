@@ -88,7 +88,7 @@ export default function ChatPage() {
           table: "ticket_messages",
           filter: `ticket_id=eq.${selectedTicketId}`,
         },
-        (payload) => {
+        (payload: { new: TicketMessage }) => {
           const newMessage = payload.new as TicketMessage;
           setMessages((prev) => [...prev, newMessage]);
         }

@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useSession } from "@/context/session-context"
 
 type AccountStatus = "active" | "lapsed" | "past_due" | "pending_verification" | "cancelled" | null
 
@@ -22,6 +22,7 @@ export function useSubscription() {
 }
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
+  const { token } = useSession()
   const [accountStatus, setAccountStatus] = useState<AccountStatus>(null)
   const [loading, setLoading] = useState(true)
 
@@ -30,17 +31,14 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
     async function fetchStatus() {
       try {
-        const supabase = createClient()
-        const { data: { session } } = await supabase.auth.getSession()
-
-        if (!session?.access_token) {
+        if (!token) {
           setLoading(false)
           return
         }
 
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/v1/portal/dashboard`,
-          { headers: { Authorization: `Bearer ${session.access_token}` } }
+          { headers: { Authorization: `Bearer ${token}` } }
         )
 
         if (res.ok) {
@@ -56,7 +54,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
     fetchStatus()
     return () => { cancelled = true }
-  }, [])
+  }, [token])
 
   const isLapsed = accountStatus === "lapsed" || accountStatus === "past_due"
 

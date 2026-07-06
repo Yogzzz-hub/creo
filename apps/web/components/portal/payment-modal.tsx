@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useSession } from "@/context/session-context"
 import {
   Dialog,
   DialogContent,
@@ -54,6 +55,7 @@ function formatCurrency(n: number) {
 }
 
 export function PaymentModal({ open, onOpenChange, onPaymentSuccess }: PaymentModalProps) {
+  const { user } = useSession()
   const supabase = createClient()
 
   const [selectedPlan, setSelectedPlan] = useState<PlanSlug>("starter")
@@ -70,7 +72,6 @@ export function PaymentModal({ open, onOpenChange, onPaymentSuccess }: PaymentMo
     await new Promise((resolve) => setTimeout(resolve, 2500))
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Not authenticated")
 
       const { error: updateError } = await supabase

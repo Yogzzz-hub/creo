@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useSession } from "@/context/session-context"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -153,6 +154,7 @@ export default function TicketDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = use(params)
+  const { user, token } = useSession()
   const [ticket, setTicket] = useState<Ticket | null>(null)
   const [localMessages, setLocalMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(true)
@@ -166,12 +168,7 @@ export default function TicketDetailPage({
   useEffect(() => {
     async function fetchTicket() {
       try {
-        const supabase = createClient()
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (!session?.access_token) {
+        if (!token) {
           setLoading(false)
           return
         }
@@ -179,7 +176,7 @@ export default function TicketDetailPage({
         const ticketRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tickets`,
           {
-            headers: { Authorization: `Bearer ${session.access_token}` },
+            headers: { Authorization: `Bearer ${token}` },
           }
         )
 
@@ -211,7 +208,7 @@ export default function TicketDetailPage({
         const msgRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tickets/${id}/messages`,
           {
-            headers: { Authorization: `Bearer ${session.access_token}` },
+            headers: { Authorization: `Bearer ${token}` },
           }
         )
 
@@ -226,12 +223,11 @@ export default function TicketDetailPage({
             file_size_bytes: number | null
           }[] = await msgRes.json()
 
-          const userId = (await supabase.auth.getUser()).data.user?.id
           setLocalMessages(
             msgs.map((m) => ({
               id: m.id,
-              sender: m.sender_id === userId ? ("client" as const) : ("team" as const),
-              senderName: m.sender_id === userId ? "You" : "Team Creo",
+              sender: m.sender_id === user?.id ? ("client" as const) : ("team" as const),
+              senderName: m.sender_id === user?.id ? "You" : "Team Creo",
               content: m.message_text ?? "",
               timestamp: m.created_at,
               fileUrl: m.file_url,
@@ -247,16 +243,13 @@ export default function TicketDetailPage({
       }
     }
     fetchTicket()
-  }, [id])
+  }, [id, token, user?.id])
 
   useEffect(() => {
     if (!ticket) return
 
-    let userId: string | undefined
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      userId = data.user?.id
-    })
+    const userId = user?.id
 
     const channel = supabase
       .channel(`ticket:${ticket.id}`)
@@ -268,7 +261,7 @@ export default function TicketDetailPage({
           table: "ticket_messages",
           filter: `ticket_id=eq.${ticket.id}`,
         },
-        (payload) => {
+        (payload: { new: Record<string, unknown> }) => {
           const newMsg = payload.new as {
             id: string
             sender_id: string
@@ -305,7 +298,7 @@ export default function TicketDetailPage({
       supabase.removeChannel(channel)
       channelRef.current = null
     }
-  }, [ticket?.id])
+  }, [ticket?.id, user?.id])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -332,17 +325,15 @@ export default function TicketDetailPage({
 
   async function handleSendMessage() {
     if ((!chatInput.trim() && !attachment) || !ticket) return
+    if (!token) {
+      const { toast } = await import("sonner")
+      toast.error("Not authenticated")
+      return
+    }
     setIsSending(true)
 
     try {
       const supabase = createClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session?.access_token) {
-        throw new Error("Not authenticated")
-      }
 
       let fileUrl: string | null = null
       let fileName: string | null = null
@@ -370,7 +361,7 @@ export default function TicketDetailPage({
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -397,13 +388,12 @@ export default function TicketDetailPage({
         file_size_bytes: number | null
       } = await res.json()
 
-      const userId = (await supabase.auth.getUser()).data.user?.id
       setLocalMessages((prev) => [
         ...prev,
         {
           id: newMsg.id,
-          sender: newMsg.sender_id === userId ? ("client" as const) : ("team" as const),
-          senderName: newMsg.sender_id === userId ? "You" : "Team Creo",
+          sender: newMsg.sender_id === user?.id ? ("client" as const) : ("team" as const),
+          senderName: newMsg.sender_id === user?.id ? "You" : "Team Creo",
           content: newMsg.message_text ?? "",
           timestamp: newMsg.created_at,
           fileUrl: newMsg.file_url,

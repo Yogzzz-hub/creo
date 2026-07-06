@@ -152,3 +152,27 @@ def investor_relations_token() -> str:
 
 def auth_header(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(autouse=True)
+def mock_supabase_auth():
+    with patch("core.security._get_supabase_client") as mock_get:
+        mock_client = MagicMock()
+        
+        def fake_get_user(token):
+            try:
+                # Decode using the same settings/secret as create_mock_token
+                payload = jwt.decode(token, TEST_JWT_SECRET, algorithms=["HS256"])
+                user = MagicMock()
+                user.id = payload["sub"]
+                user.email = payload.get("email")
+                res = MagicMock()
+                res.user = user
+                return res
+            except Exception as e:
+                raise ValueError(f"Invalid mock token in test: {e}")
+                
+        mock_client.auth.get_user.side_effect = fake_get_user
+        mock_get.return_value = mock_client
+        yield
+

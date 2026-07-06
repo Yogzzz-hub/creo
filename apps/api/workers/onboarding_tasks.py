@@ -5,3 +5,6 @@ All Celery tasks have been consolidated into ai_tasks.py to prevent
 task-name shadowing (both files previously registered
 'name="generate_ai_analysis"').
 """
+
+from workers.ai_tasks import generate_ai_analysis
+

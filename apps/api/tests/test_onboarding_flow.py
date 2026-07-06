@@ -5,6 +5,7 @@ Celery task (generate_ai_analysis) is mocked so tests run instantly.
 """
 
 import uuid
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -185,6 +186,7 @@ class TestOnboardingFlow:
 
         existing = MagicMock()
         existing.user_id = str(uuid.uuid4())
+        existing.submitted_at = None
 
         queries = iter([
             auth_result,
@@ -233,6 +235,7 @@ class TestOnboardingFlow:
 
         q = MagicMock()
         q.ai_summary_line = None
+        q.submitted_at = datetime.now(timezone.utc)
 
         queries = iter([
             auth_result,
@@ -274,6 +277,7 @@ class TestOnboardingFlow:
 
         q = MagicMock()
         q.ai_summary_line = "Bold brand with friendly tone"
+        q.submitted_at = datetime.now(timezone.utc)
 
         queries = iter([
             auth_result,

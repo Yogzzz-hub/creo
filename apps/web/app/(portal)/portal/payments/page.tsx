@@ -11,7 +11,7 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
+import { useSession } from "@/context/session-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -80,6 +80,7 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
 }
 
 export default function PaymentsPage() {
+  const { token } = useSession()
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null)
   const [availablePlans, setAvailablePlans] = useState<Plan[]>([])
   const [paymentHistory, setPaymentHistory] = useState<PaymentRecord[]>([])
@@ -92,22 +93,17 @@ export default function PaymentsPage() {
   useEffect(() => {
     async function fetchPayments() {
       try {
-        const supabase = createClient()
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (!session?.access_token) {
+        if (!token) {
           setLoading(false)
           return
         }
 
         const [plansRes, historyRes] = await Promise.all([
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/plans`, {
-            headers: { Authorization: `Bearer ${session.access_token}` },
+            headers: { Authorization: `Bearer ${token}` },
           }),
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/history`, {
-            headers: { Authorization: `Bearer ${session.access_token}` },
+            headers: { Authorization: `Bearer ${token}` },
           }),
         ])
 
@@ -154,7 +150,7 @@ export default function PaymentsPage() {
       }
     }
     fetchPayments()
-  }, [])
+  }, [token])
 
   function handleDownloadReceipt(invoice: string) {
     toast.success(`Receipt for ${invoice} downloaded.`)
@@ -166,23 +162,19 @@ export default function PaymentsPage() {
       return
     }
 
+    if (!token) {
+      toast.error("Not authenticated")
+      return
+    }
+
     setIsChangingPlan(true)
     try {
-      const supabase = createClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session?.access_token) {
-        throw new Error("Not authenticated")
-      }
-
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/change-plan`,
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${session.access_token}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ new_plan_id: selectedPlan }),

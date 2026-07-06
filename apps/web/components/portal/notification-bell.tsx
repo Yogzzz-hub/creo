@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { portalFetch, AuthError } from "@/lib/portal-api"
+import { useSession } from "@/context/session-context"
 
 interface Notification {
   id: string
@@ -36,6 +37,7 @@ function timeAgo(dateString: string): string {
 }
 
 export const NotificationBell = memo(function NotificationBell() {
+  const { token } = useSession()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [open, setOpen] = useState(false)
@@ -48,15 +50,16 @@ export const NotificationBell = memo(function NotificationBell() {
   const unreadCount = notifications.filter((n) => !n.is_read).length
 
   const fetchNotifications = useCallback(async () => {
+    if (!token) return
     try {
-      const data = await portalFetch<Notification[]>("/api/v1/notifications")
+      const data = await portalFetch<Notification[]>("/api/v1/notifications", undefined, token)
       if (mountedRef.current) setNotifications(data)
     } catch (err) {
       if (err instanceof AuthError) return
     } finally {
       if (mountedRef.current) setLoading(false)
     }
-  }, [])
+  }, [token])
 
   useEffect(() => {
     fetchNotifications()
@@ -71,7 +74,7 @@ export const NotificationBell = memo(function NotificationBell() {
     try {
       await portalFetch(`/api/v1/notifications/${id}/read`, {
         method: "PATCH",
-      })
+      }, token)
     } catch {
       setNotifications(prev)
     }
@@ -87,7 +90,7 @@ export const NotificationBell = memo(function NotificationBell() {
         unread.map((n) =>
           portalFetch(`/api/v1/notifications/${n.id}/read`, {
             method: "PATCH",
-          })
+          }, token)
         )
       )
     } catch {

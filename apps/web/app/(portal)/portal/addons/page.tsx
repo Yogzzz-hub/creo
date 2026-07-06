@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { ShoppingCart, Plus, Minus, FileImage, Film, Layers, Loader2 } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
+import { useSession } from "@/context/session-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -42,6 +42,7 @@ function formatCurrency(amount: number): string {
 }
 
 export default function AddonsPage() {
+  const { token } = useSession()
   const [addonTypes, setAddonTypes] = useState<AddonType[]>([])
   const [loading, setLoading] = useState(true)
   const [quantities, setQuantities] = useState<Record<string, number>>({})
@@ -51,12 +52,7 @@ export default function AddonsPage() {
   useEffect(() => {
     async function fetchPricing() {
       try {
-        const supabase = createClient()
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (!session?.access_token) {
+        if (!token) {
           setLoading(false)
           return
         }
@@ -64,7 +60,7 @@ export default function AddonsPage() {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/v1/addons/pricing`,
           {
-            headers: { Authorization: `Bearer ${session.access_token}` },
+            headers: { Authorization: `Bearer ${token}` },
           }
         )
 
@@ -100,7 +96,7 @@ export default function AddonsPage() {
       }
     }
     fetchPricing()
-  }, [])
+  }, [token])
 
   function updateQuantity(id: string, delta: number) {
     setQuantities((prev) => {
@@ -121,17 +117,13 @@ export default function AddonsPage() {
       return
     }
 
+    if (!token) {
+      toast.error("Not authenticated")
+      return
+    }
+
     setIsProcessing(true)
     try {
-      const supabase = createClient()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session?.access_token) {
-        throw new Error("Not authenticated")
-      }
-
       const addonsToOrder = addonTypes.filter((a) => (quantities[a.id] || 0) > 0)
 
       for (const addon of addonsToOrder) {
@@ -141,7 +133,7 @@ export default function AddonsPage() {
           {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${session.access_token}`,
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({

@@ -216,6 +216,7 @@ async def require_active_client(current_user: CurrentUser) -> User:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
+                "error": "onboarding_required",
                 "error_code": "pending_onboarding",
                 "message": "Please complete onboarding before accessing this resource.",
                 "account_status": current_user.account_status.value,

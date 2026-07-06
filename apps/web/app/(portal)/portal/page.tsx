@@ -19,7 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { createClient } from "@/lib/supabase/client"
+import { useSession } from "@/context/session-context"
 import { cn } from "@/lib/utils"
 import { TermsModal } from "@/components/portal/terms-modal"
 import { PaymentModal } from "@/components/portal/payment-modal"
@@ -99,6 +99,7 @@ function DashboardSkeleton() {
 }
 
 export default function PortalDashboard() {
+  const { user, token } = useSession()
   const [data, setData] = useState<DashboardData>(EMPTY_DASHBOARD)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -111,9 +112,10 @@ export default function PortalDashboard() {
 
   useEffect(() => {
     async function loadDashboard() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
 
       const { data: profile } = await supabase
         .from("users")
@@ -132,7 +134,7 @@ export default function PortalDashboard() {
       setLoading(false)
     }
     loadDashboard()
-  }, [])
+  }, [user])
 
   const effectiveStage = Math.max(
     data.onboarding_stage,

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { NotificationBell } from "@/components/portal/notification-bell"
-import { useAuthStore } from "@/store/auth"
+import { useSession } from "@/context/session-context"
 import { createClient } from "@/lib/supabase/client"
 import {
   DropdownMenu,
@@ -34,42 +34,22 @@ function getInitials(name: string): string {
 }
 
 export function PortalHeader() {
-  const user = useAuthStore((s) => s.user)
-  const setUser = useAuthStore((s) => s.setUser)
+  const { user: authUser } = useSession()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [loggingOut, setLoggingOut] = useState(false)
-  const [avatarUrl, setAvatarUrl] = useState<string | null | undefined>(user?.avatar_url)
-  const [displayName, setDisplayName] = useState(user?.full_name || "")
+  const [avatarUrl, setAvatarUrl] = useState<string | null | undefined>(authUser?.user_metadata?.avatar_url as string | undefined)
+  const [displayName, setDisplayName] = useState(
+    resolveDisplayName(authUser?.user_metadata as Record<string, unknown> | undefined, authUser?.email)
+  )
 
   useEffect(() => {
-    if (!user) return
-    setAvatarUrl(user.avatar_url ?? null)
-    setDisplayName(resolveDisplayName(user as unknown as Record<string, unknown> | undefined, user.email))
-  }, [user?.avatar_url, user?.full_name, user?.email])
-
-  useEffect(() => {
-    let cancelled = false
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user: authUser } }) => {
-      if (cancelled || !authUser) return
-      const name = resolveDisplayName(authUser.user_metadata, authUser.email)
-      const dbAvatarUrl = authUser.user_metadata?.avatar_url ?? undefined
-      const currentUser = useAuthStore.getState().user
-      const sameName = currentUser?.full_name === name
-      const sameAvatar = currentUser?.avatar_url === dbAvatarUrl
-      const sameBiz = currentUser?.business_name === (authUser.user_metadata?.business_name ?? currentUser?.business_name)
-      if (sameName && sameAvatar && sameBiz) return
-      setUser({
-        ...currentUser!,
-        full_name: name,
-        business_name: authUser.user_metadata?.business_name ?? currentUser?.business_name,
-        avatar_url: dbAvatarUrl,
-      })
-    })
-    return () => { cancelled = true }
-  }, [setUser])
+    if (!authUser) return
+    const meta = authUser.user_metadata as Record<string, string> | undefined
+    setAvatarUrl(meta?.avatar_url ?? null)
+    setDisplayName(resolveDisplayName(authUser.user_metadata as Record<string, unknown> | undefined, authUser.email))
+  }, [authUser?.user_metadata, authUser?.email])
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -82,54 +62,43 @@ export function PortalHeader() {
   async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
     try {
       if (!event.target.files || event.target.files.length === 0) {
-        console.log('No file selected.');
         return;
       }
 
       const file = event.target.files[0];
-      console.log('Step 1: File selected:', file.name, 'Size:', file.size);
-
       const supabase = createClient();
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) throw new Error('User not found');
-      console.log('Step 2: User found:', authUser.id);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not found');
 
       const fileExt = file.name.split('.').pop();
-      const filePath = `${authUser.id}/avatar-${Date.now()}.${fileExt}`;
-      console.log('Step 3: Uploading to:', filePath);
+      const filePath = `${user.id}/avatar-${Date.now()}.${fileExt}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) {
-        console.error('Upload Error Details:', uploadError);
         alert(`Upload Blocked by Supabase: ${uploadError.message}`);
         return;
       }
-      console.log('Step 4: Upload successful to storage');
 
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
-      console.log('Step 5: Public URL generated:', publicUrl);
 
       const { error: updateError } = await supabase.auth.updateUser({
         data: { avatar_url: publicUrl }
       });
 
       if (updateError) {
-        console.error('Metadata Update Error:', updateError);
         alert(`Failed to save to profile: ${updateError.message}`);
         return;
       }
-      console.log('Step 6: User metadata updated');
 
       setAvatarUrl(`${publicUrl}?t=${Date.now()}`);
       alert('Profile picture updated successfully!');
 
     } catch (error: any) {
-      console.error('Unexpected Crash:', error);
       alert(`System Error: ${error.message}`);
     } finally {
       if (event.target) event.target.value = '';
@@ -149,7 +118,6 @@ export function PortalHeader() {
           : null;
 
         if (filePath) {
-          console.log('Removing storage file:', filePath);
           const { error: storageError } = await supabase.storage
             .from('avatars')
             .remove([filePath]);
@@ -174,8 +142,9 @@ export function PortalHeader() {
     }
   }
 
-  const resolvedName = resolveDisplayName(user as unknown as Record<string, unknown> | undefined, user?.email)
+  const resolvedName = resolveDisplayName(authUser?.user_metadata as Record<string, unknown> | undefined, authUser?.email)
   const initial = getInitials(displayName || resolvedName)
+  const businessName = authUser?.user_metadata?.business_name as string | undefined
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-white/80 px-4 backdrop-blur-sm lg:px-8">
@@ -232,11 +201,11 @@ export function PortalHeader() {
                 </button>
               )}
               <p className="text-sm font-semibold">{displayName || "User"}</p>
-              <p className="text-xs font-normal text-gray-500">{user?.email ?? ""}</p>
-              {user?.business_name && (
+              <p className="text-xs font-normal text-gray-500">{authUser?.email ?? ""}</p>
+              {businessName && (
                 <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
                   <Building2 className="size-3.5 shrink-0" />
-                  <span className="truncate">Workspace: {user.business_name}</span>
+                  <span className="truncate">Workspace: {businessName}</span>
                 </div>
               )}
             </DropdownMenuLabel>

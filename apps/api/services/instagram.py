@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 import httpx
@@ -247,3 +248,140 @@ async def _publish_container(
         raise ValueError("Instagram media publish response missing id field")
 
     return published_id
+
+
+async def publish_reel(
+    ig_user_id: str,
+    access_token: str,
+    video_url: str,
+    caption: str,
+) -> dict:
+    """Publish a reel/video to Instagram via the Graph API Container method.
+
+    Three-step process:
+    1. Create a media container with media_type=REELS and video_url.
+    2. Poll until the container status is FINISHED.
+    3. Publish the container.
+
+    Args:
+        ig_user_id: The Instagram Business/Creator account user ID.
+        access_token: A valid long-lived access token.
+        video_url: A publicly accessible URL of the video to publish.
+        caption: The caption text for the Instagram reel.
+
+    Returns:
+        A dict containing:
+            - id: The Instagram media ID of the published reel.
+            - success: Boolean indicating success.
+
+    Raises:
+        ValueError: If the API response is missing required data.
+        RuntimeError: If the API call fails or processing times out.
+    """
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        container_id = await _create_reel_container(
+            client, ig_user_id, access_token, video_url, caption
+        )
+        await _wait_for_container_ready(client, ig_user_id, access_token, container_id)
+        published_id = await _publish_container(
+            client, ig_user_id, access_token, container_id
+        )
+
+    logger.info(
+        "Successfully published Instagram reel: ig_user=%s post_id=%s",
+        ig_user_id,
+        published_id,
+    )
+
+    return {
+        "id": published_id,
+        "success": True,
+    }
+
+
+async def _create_reel_container(
+    client: httpx.AsyncClient,
+    ig_user_id: str,
+    access_token: str,
+    video_url: str,
+    caption: str,
+) -> str:
+    """Step A: Create a media container for the reel/video."""
+    url = f"{GRAPH_API_BASE}/{ig_user_id}/media"
+    payload = {
+        "media_type": "REELS",
+        "video_url": video_url,
+        "caption": caption,
+        "access_token": access_token,
+    }
+
+    response = await client.post(url, data=payload)
+
+    if response.status_code != 200:
+        logger.error(
+            "Failed to create Instagram reel container: status=%d body=%s",
+            response.status_code,
+            response.text,
+        )
+        raise RuntimeError(
+            f"Instagram reel container creation failed with status "
+            f"{response.status_code}: {response.text}"
+        )
+
+    data = response.json()
+    container_id = data.get("id")
+    if not container_id:
+        logger.error("Instagram reel container response missing id: %s", _sanitize_meta_response(data))
+        raise ValueError("Instagram reel container response missing id field")
+
+    logger.info("Created Instagram reel container: id=%s", container_id)
+    return container_id
+
+
+async def _wait_for_container_ready(
+    client: httpx.AsyncClient,
+    ig_user_id: str,
+    access_token: str,
+    container_id: str,
+    max_wait_seconds: int = 300,
+    poll_interval_seconds: int = 5,
+) -> None:
+    """Poll the container status until it is FINISHED or a terminal error."""
+    url = f"{GRAPH_API_BASE}/{ig_user_id}/media"
+    params = {
+        "fields": "status_code",
+        "access_token": access_token,
+    }
+
+    elapsed = 0
+    while elapsed < max_wait_seconds:
+        response = await client.get(url, params=params)
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Failed to check reel container status: {response.status_code}: {response.text}"
+            )
+
+        data = response.json()
+        status_code = data.get("status_code")
+
+        if status_code == "FINISHED":
+            logger.info("Reel container %s is ready for publishing", container_id)
+            return
+
+        if status_code in ("ERROR", "EXPIRED"):
+            error_msg = data.get("status_code", "unknown")
+            logger.error("Reel container %s reached terminal status: %s", container_id, error_msg)
+            raise RuntimeError(f"Instagram reel processing failed with status: {error_msg}")
+
+        logger.debug(
+            "Reel container %s status: %s (elapsed: %ds)",
+            container_id,
+            status_code,
+            elapsed,
+        )
+        await asyncio.sleep(poll_interval_seconds)
+        elapsed += poll_interval_seconds
+
+    raise RuntimeError(
+        f"Instagram reel processing timed out after {max_wait_seconds}s"
+    )

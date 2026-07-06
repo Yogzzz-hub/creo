@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useSession } from "@/context/session-context"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -138,6 +139,7 @@ function mapTicketStatus(s: string): TicketStatus {
 }
 
 export default function SupportPage() {
+  const { user, token } = useSession()
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -152,12 +154,7 @@ export default function SupportPage() {
   useEffect(() => {
     async function fetchTickets() {
       try {
-        const supabase = createClient()
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (!session?.access_token) {
+        if (!token) {
           setLoading(false)
           return
         }
@@ -165,7 +162,7 @@ export default function SupportPage() {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/v1/tickets`,
           {
-            headers: { Authorization: `Bearer ${session.access_token}` },
+            headers: { Authorization: `Bearer ${token}` },
           }
         )
 
@@ -198,7 +195,7 @@ export default function SupportPage() {
       }
     }
     fetchTickets()
-  }, [])
+  }, [token])
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -224,31 +221,19 @@ export default function SupportPage() {
       return
     }
 
+    if (!user || !token) {
+      toast.error("Your session has expired. Please log in again.")
+      return
+    }
+
     setIsSubmitting(true)
     try {
-      const supabase = createClient()
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-      if (authError || !user) {
-        console.error("[Ticket Submit] Auth error:", authError?.message ?? "No user")
-        throw new Error("Your session has expired. Please log in again.")
-      }
-
-      const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token
-
-      if (!token) {
-        console.error("[Ticket Submit] No access_token in session after getUser() succeeded")
-        throw new Error("Could not retrieve authentication token.")
-      }
-
       const apiUrl = process.env.NEXT_PUBLIC_API_URL
       if (!apiUrl) {
-        console.error("[Ticket Submit] NEXT_PUBLIC_API_URL is not set")
         throw new Error("API configuration error.")
       }
 
-      console.log("[Ticket Submit] accessToken type:", typeof token, "length:", token?.length, "starts:", token?.substring(0, 20))
+      const supabase = createClient()
 
       const formData = new FormData()
       formData.append("ticket_type", ticketType)
@@ -271,7 +256,6 @@ export default function SupportPage() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        console.error(`[Ticket Submit] API returned ${res.status}:`, body)
         if (res.status === 401) {
           throw new Error("Authentication failed. Please log out and log back in.")
         }

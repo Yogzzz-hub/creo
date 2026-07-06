@@ -176,7 +176,7 @@ export default function QuestionnairePage() {
         data: { session },
       } = await supabase.auth.getSession();
 
-      if (!session?.access_token) {
+      if (!session?.access_token || !session?.user?.id) {
         setError("You must be logged in to submit.");
         setIsSubmitting(false);
         return;
@@ -206,7 +206,7 @@ export default function QuestionnairePage() {
         style_references: parseList(form.style_references),
       };
 
-      const res = await fetch(
+      let res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/questionnaire`,
         {
           method: "POST",
@@ -218,15 +218,48 @@ export default function QuestionnairePage() {
         }
       );
 
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.detail || "Submission failed. Please try again.");
-        setIsSubmitting(false);
-        return;
+      if (res.status === 409) {
+        setError(null); // Clear the error state
+        res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/questionnaire`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify(payload),
+          }
+        );
       }
 
-      router.push("/onboarding/complete");
-    } catch {
+      if (!res.ok) {
+        if (res.status === 403) {
+          console.warn("Questionnaire is locked, but proceeding since it was already submitted.");
+        } else {
+          const data = await res.json();
+          setError(data.detail || "Submission failed. Please try again.");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // Update the user's onboarding_stage in Supabase to 4 and account_status to active to unlock the dashboard
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({
+          onboarding_stage: 4,
+          account_status: "active",
+        })
+        .eq("id", session.user.id);
+
+      if (updateError) {
+        console.error("Supabase update error:", updateError);
+      }
+
+      router.push("/portal");
+    } catch (err) {
+      console.error(err);
       setError("Failed to connect to server. Please try again.");
       setIsSubmitting(false);
     }
@@ -234,5 +267,385 @@ export default function QuestionnairePage() {
 
   const Icon = STEP_ICONS[step - 1];
 
-  return (<div className="p-10 text-xl font-bold text-[#0D2137]">Questionnaire Page Reached!</div>);
+  return (
+    <CardContent className="p-0">
+      {/* Questionnaire Sub-Stepper */}
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-brand flex items-center gap-1.5">
+            <Icon className="size-4" />
+            Step {step} of {TOTAL_STEPS}
+          </span>
+          <span className="text-sm font-semibold text-brand-dark">
+            {STEP_TITLES[step - 1]}
+          </span>
+        </div>
+        <div className="w-full h-1.5 bg-[#E8F4FD] rounded-full overflow-hidden">
+          <div
+            className="h-full bg-brand rounded-full transition-all duration-300 ease-out"
+            style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-6 p-4 rounded-lg bg-error-light border border-error/20 text-sm text-error font-medium">
+          {error}
+        </div>
+      )}
+
+      <div className="space-y-6">
+        {step === 1 && (
+          <div className="space-y-5 animate-in fade-in duration-300">
+            <div className="space-y-2">
+              <Label htmlFor="industry" className="text-sm font-semibold text-brand-dark">
+                Industry
+              </Label>
+              <Input
+                id="industry"
+                type="text"
+                placeholder="e.g., E-commerce, SaaS, Fitness, Real Estate"
+                value={form.industry}
+                onChange={(e) => updateField("industry", e.target.value)}
+                className="w-full border-border focus-visible:ring-brand focus-visible:border-brand"
+              />
+              <p className="text-xs text-[#6BAED6]">
+                What sector or category does your business operate in?
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="business_description" className="text-sm font-semibold text-brand-dark">
+                Business Description
+              </Label>
+              <Textarea
+                id="business_description"
+                placeholder="Describe your products, services, value proposition, and business mission..."
+                value={form.business_description}
+                onChange={(e) => updateField("business_description", e.target.value)}
+                className="w-full min-h-[120px] border-border focus-visible:ring-brand focus-visible:border-brand"
+              />
+              <p className="text-xs text-[#6BAED6]">
+                Provide as much detail as possible to help our AI analyze your brand persona.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="primary_goal" className="text-sm font-semibold text-brand-dark">
+                Primary Goal
+              </Label>
+              <Select
+                value={form.primary_goal}
+                onValueChange={(val) => updateField("primary_goal", val)}
+              >
+                <SelectTrigger id="primary_goal" className="w-full border-border focus:ring-brand focus:border-brand">
+                  <SelectValue placeholder="Select your primary marketing goal" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GOALS.map((goal) => (
+                    <SelectItem key={goal} value={goal}>
+                      {goal}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-[#6BAED6]">
+                Select the main objective you want to achieve with this content strategy.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-5 animate-in fade-in duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="age_range" className="text-sm font-semibold text-brand-dark">
+                  Target Age Range
+                </Label>
+                <Input
+                  id="age_range"
+                  type="text"
+                  placeholder="e.g., 18-35, 25-50, All ages"
+                  value={form.target_audience.age_range}
+                  onChange={(e) => updateNestedField("target_audience", "age_range", e.target.value)}
+                  className="w-full border-border focus-visible:ring-brand"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="location" className="text-sm font-semibold text-brand-dark">
+                  Target Location
+                </Label>
+                <Input
+                  id="location"
+                  type="text"
+                  placeholder="e.g., United States, Mumbai, Global"
+                  value={form.target_audience.location}
+                  onChange={(e) => updateNestedField("target_audience", "location", e.target.value)}
+                  className="w-full border-border focus-visible:ring-brand"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="gender" className="text-sm font-semibold text-brand-dark">
+                  Target Gender
+                </Label>
+                <Select
+                  value={form.target_audience.gender}
+                  onValueChange={(val) => updateNestedField("target_audience", "gender", val)}
+                >
+                  <SelectTrigger id="gender" className="w-full border-border focus:ring-brand">
+                    <SelectValue placeholder="Select target gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GENDERS.map((gender) => (
+                      <SelectItem key={gender} value={gender}>
+                        {gender}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="interests" className="text-sm font-semibold text-brand-dark">
+                  Audience Interests / Pain Points
+                </Label>
+                <Input
+                  id="interests"
+                  type="text"
+                  placeholder="e.g., tech, fitness, career growth"
+                  value={form.target_audience.interests}
+                  onChange={(e) => updateNestedField("target_audience", "interests", e.target.value)}
+                  className="w-full border-border focus-visible:ring-brand"
+                />
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-4 mt-6">
+              <h3 className="text-sm font-bold text-brand-dark mb-4">Social Media Presence (Optional)</h3>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="instagram" className="text-sm font-semibold text-brand-dark">
+                    Instagram Handle
+                  </Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-xs font-semibold text-[#6BAED6]">@</span>
+                    <Input
+                      id="instagram"
+                      type="text"
+                      placeholder="username"
+                      value={form.social_handles.instagram}
+                      onChange={(e) => updateNestedField("social_handles", "instagram", e.target.value)}
+                      className="w-full pl-7 border-border focus-visible:ring-brand"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="facebook" className="text-sm font-semibold text-brand-dark">
+                      Facebook URL / Page
+                    </Label>
+                    <Input
+                      id="facebook"
+                      type="text"
+                      placeholder="facebook.com/page"
+                      value={form.social_handles.facebook}
+                      onChange={(e) => updateNestedField("social_handles", "facebook", e.target.value)}
+                      className="w-full border-border focus-visible:ring-brand"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="linkedin" className="text-sm font-semibold text-brand-dark">
+                      LinkedIn URL / Page
+                    </Label>
+                    <Input
+                      id="linkedin"
+                      type="text"
+                      placeholder="linkedin.com/company/page"
+                      value={form.social_handles.linkedin}
+                      onChange={(e) => updateNestedField("social_handles", "linkedin", e.target.value)}
+                      className="w-full border-border focus-visible:ring-brand"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-5 animate-in fade-in duration-300">
+            <div className="space-y-2.5">
+              <Label className="text-sm font-semibold text-brand-dark">
+                Brand Tone (Select 1-10 keywords)
+              </Label>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {BRAND_TONES.map((tone) => {
+                  const isSelected = form.brand_tone.includes(tone);
+                  return (
+                    <button
+                      key={tone}
+                      type="button"
+                      onClick={() => toggleTone(tone)}
+                      disabled={!isSelected && form.brand_tone.length >= 10}
+                      className={cn(
+                        "py-2 px-3 text-xs font-semibold rounded-lg border text-center transition-all cursor-pointer",
+                        isSelected
+                          ? "bg-brand text-white border-brand shadow-sm"
+                          : "bg-white text-brand-dark border-border hover:bg-brand-light/50"
+                      )}
+                    >
+                      {tone}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-[#6BAED6] flex justify-between">
+                <span>Selected: {form.brand_tone.length} / 10</span>
+                {form.brand_tone.length >= 10 && <span className="text-amber-600 font-medium">Max tone limit reached</span>}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="competitor_refs" className="text-sm font-semibold text-brand-dark">
+                  Competitors / References
+                </Label>
+                <Input
+                  id="competitor_refs"
+                  type="text"
+                  placeholder="e.g., Apple, Nike, local brands (comma separated)"
+                  value={form.competitor_refs}
+                  onChange={(e) => updateField("competitor_refs", e.target.value)}
+                  className="w-full border-border focus-visible:ring-brand"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="style_references" className="text-sm font-semibold text-brand-dark">
+                  Visual Style References
+                </Label>
+                <Input
+                  id="style_references"
+                  type="text"
+                  placeholder="e.g., minimalist, bright, vintage (comma separated)"
+                  value={form.style_references}
+                  onChange={(e) => updateField("style_references", e.target.value)}
+                  className="w-full border-border focus-visible:ring-brand"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="current_posting_frequency" className="text-sm font-semibold text-brand-dark">
+                Current Posting Frequency (Optional)
+              </Label>
+              <Input
+                id="current_posting_frequency"
+                type="text"
+                placeholder="e.g., 3 posts/week, daily, none"
+                value={form.current_posting_frequency}
+                onChange={(e) => updateField("current_posting_frequency", e.target.value)}
+                className="w-full border-border focus-visible:ring-brand"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="content_what_works" className="text-sm font-semibold text-brand-dark">
+                What Content Works Well for You? (Optional)
+              </Label>
+              <Textarea
+                id="content_what_works"
+                placeholder="Describe any past marketing posts, formats, or campaigns that successfully engaged your audience..."
+                value={form.content_what_works}
+                onChange={(e) => updateField("content_what_works", e.target.value)}
+                className="w-full border-border focus-visible:ring-brand"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="content_what_doesnt" className="text-sm font-semibold text-brand-dark">
+                What Content Does NOT Work? (Optional)
+              </Label>
+              <Textarea
+                id="content_what_doesnt"
+                placeholder="Describe any marketing strategies or post styles you tried but found ineffective..."
+                value={form.content_what_doesnt}
+                onChange={(e) => updateField("content_what_doesnt", e.target.value)}
+                className="w-full border-border focus-visible:ring-brand"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="topics_to_avoid" className="text-sm font-semibold text-brand-dark">
+                Topics to Avoid (Optional)
+              </Label>
+              <Input
+                id="topics_to_avoid"
+                type="text"
+                placeholder="List any sensitive topics, words, or competitors you want to avoid..."
+                value={form.topics_to_avoid}
+                onChange={(e) => updateField("topics_to_avoid", e.target.value)}
+                className="w-full border-border focus-visible:ring-brand"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Button controls */}
+      <div className="mt-8 flex items-center justify-between gap-4 pt-6 border-t border-border">
+        {step > 1 ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setStep((prev) => prev - 1)}
+            disabled={isSubmitting}
+            className="flex items-center gap-2 border-border text-brand-dark cursor-pointer animate-in fade-in duration-200"
+          >
+            <ArrowLeft className="size-4" />
+            Back
+          </Button>
+        ) : (
+          <div /> // spacer
+        )}
+
+        {step < TOTAL_STEPS ? (
+          <Button
+            type="button"
+            onClick={() => setStep((prev) => prev + 1)}
+            disabled={!canNext}
+            className="flex items-center gap-2 bg-brand text-white hover:bg-brand/90 transition-colors cursor-pointer px-6 h-11"
+          >
+            Next
+            <ArrowRight className="size-4" />
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!canNext || isSubmitting}
+            className="flex items-center justify-center gap-2 bg-brand hover:bg-brand/90 text-white font-semibold shadow-sm transition-colors cursor-pointer px-6 h-11"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Submitting Profile...
+              </>
+            ) : (
+              "Submit Questionnaire"
+            )}
+          </Button>
+        )}
+      </div>
+    </CardContent>
+  );
 }
+
