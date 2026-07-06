@@ -103,6 +103,7 @@ export default function PortalDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [createdAt, setCreatedAt] = useState<string | null>(null)
+  // TODO: Restore state checks after UI testing
   const [termsModalOpen, setTermsModalOpen] = useState(false)
   const [paymentModalOpen, setPaymentModalOpen] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
@@ -139,11 +140,12 @@ export default function PortalDashboard() {
     subscriptionActive ? 3 : 0,
   )
 
-  useEffect(() => {
-    if (!loading && effectiveStage === 1) {
-      setTermsModalOpen(true)
-    }
-  }, [loading, effectiveStage])
+  // TODO: Restore state checks after UI testing
+  // useEffect(() => {
+  //   if (!loading && effectiveStage === 1) {
+  //     setTermsModalOpen(true)
+  //   }
+  // }, [loading, effectiveStage])
 
   if (loading) {
     return <DashboardSkeleton />
@@ -171,6 +173,7 @@ export default function PortalDashboard() {
 
   return (
     <>
+      {/* TODO: Restore state checks after UI testing */}
       <TermsModal
         open={termsModalOpen}
         onOpenChange={setTermsModalOpen}
@@ -432,7 +435,11 @@ export default function PortalDashboard() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      render={<Link href="/onboarding/questionnaire" />}
+                      className="cursor-pointer"
+                      onClick={() => {
+                        console.log("Questionnaire button clicked!");
+                        window.location.href = '/onboarding/questionnaire';
+                      }}
                     >
                       Start Brand Questionnaire
                       <ArrowRight className="size-3" />
