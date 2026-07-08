@@ -120,7 +120,7 @@ export default function PortalDashboard() {
       const { data: profile } = await supabase
         .from("users")
         .select("terms_accepted, onboarding_stage, created_at")
-        .eq("id", user.id)
+        .eq("auth_id", user.id)
         .single()
 
       setTermsAccepted(profile?.terms_accepted ?? false)

@@ -69,7 +69,9 @@ interface FormData {
   social_handles: {
     instagram: string;
     facebook: string;
+    tiktok: string;
     linkedin: string;
+    other_platforms: string;
   };
   current_posting_frequency: string;
   brand_tone: string[];
@@ -93,7 +95,9 @@ const INITIAL_FORM: FormData = {
   social_handles: {
     instagram: "",
     facebook: "",
+    tiktok: "",
     linkedin: "",
+    other_platforms: "",
   },
   current_posting_frequency: "",
   brand_tone: [],
@@ -195,7 +199,9 @@ export default function QuestionnairePage() {
         social_handles: {
           instagram: form.social_handles.instagram.trim(),
           facebook: form.social_handles.facebook.trim(),
+          tiktok: form.social_handles.tiktok.trim(),
           linkedin: form.social_handles.linkedin.trim(),
+          other_platforms: form.social_handles.other_platforms.trim(),
         },
         current_posting_frequency: form.current_posting_frequency.trim() || null,
         brand_tone: form.brand_tone,
@@ -234,8 +240,8 @@ export default function QuestionnairePage() {
       }
 
       if (!res.ok) {
-        if (res.status === 403) {
-          console.warn("Questionnaire is locked, but proceeding since it was already submitted.");
+        if (res.status === 403 || res.status === 409) {
+          console.warn(`Proceeding despite API status ${res.status} because it represents an existing/locked submission.`);
         } else {
           const data = await res.json();
           setError(data.detail || "Submission failed. Please try again.");
@@ -244,19 +250,20 @@ export default function QuestionnairePage() {
         }
       }
 
-      // Update the user's onboarding_stage in Supabase to 4 and account_status to active to unlock the dashboard
+      // Update the user's onboarding_stage in Supabase to 5 and account_status to active to unlock the dashboard
       const { error: updateError } = await supabase
         .from("users")
         .update({
-          onboarding_stage: 4,
+          onboarding_stage: 5,
           account_status: "active",
         })
-        .eq("id", session.user.id);
+        .eq("auth_id", session.user.id);
 
       if (updateError) {
         console.error("Supabase update error:", updateError);
       }
 
+      router.refresh();
       router.push("/portal");
     } catch (err) {
       console.error(err);
@@ -336,7 +343,7 @@ export default function QuestionnairePage() {
               </Label>
               <Select
                 value={form.primary_goal}
-                onValueChange={(val) => updateField("primary_goal", val)}
+                onValueChange={(val) => updateField("primary_goal", val ?? "")}
               >
                 <SelectTrigger id="primary_goal" className="w-full border-border focus:ring-brand focus:border-brand">
                   <SelectValue placeholder="Select your primary marketing goal" />
@@ -395,7 +402,7 @@ export default function QuestionnairePage() {
                 </Label>
                 <Select
                   value={form.target_audience.gender}
-                  onValueChange={(val) => updateNestedField("target_audience", "gender", val)}
+                  onValueChange={(val) => updateNestedField("target_audience", "gender", val ?? "")}
                 >
                   <SelectTrigger id="gender" className="w-full border-border focus:ring-brand">
                     <SelectValue placeholder="Select target gender" />
@@ -462,6 +469,25 @@ export default function QuestionnairePage() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="tiktok" className="text-sm font-semibold text-brand-dark">
+                      TikTok Handle (Optional)
+                    </Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-xs font-semibold text-[#6BAED6]">@</span>
+                      <Input
+                        id="tiktok"
+                        type="text"
+                        placeholder="username"
+                        value={form.social_handles.tiktok}
+                        onChange={(e) => updateNestedField("social_handles", "tiktok", e.target.value)}
+                        className="w-full pl-7 border-border focus-visible:ring-brand"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <Label htmlFor="linkedin" className="text-sm font-semibold text-brand-dark">
                       LinkedIn URL / Page
                     </Label>
@@ -471,6 +497,20 @@ export default function QuestionnairePage() {
                       placeholder="linkedin.com/company/page"
                       value={form.social_handles.linkedin}
                       onChange={(e) => updateNestedField("social_handles", "linkedin", e.target.value)}
+                      className="w-full border-border focus-visible:ring-brand"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="other_platforms" className="text-sm font-semibold text-brand-dark">
+                      Other Platforms (Optional)
+                    </Label>
+                    <Input
+                      id="other_platforms"
+                      type="text"
+                      placeholder="e.g., YouTube, Pinterest, Twitter/X"
+                      value={form.social_handles.other_platforms}
+                      onChange={(e) => updateNestedField("social_handles", "other_platforms", e.target.value)}
                       className="w-full border-border focus-visible:ring-brand"
                     />
                   </div>
