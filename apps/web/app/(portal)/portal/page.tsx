@@ -15,6 +15,8 @@ import {
   Ticket,
   FileCheck,
   CreditCard,
+  Sparkles,
+  Loader2,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -29,6 +31,7 @@ interface DashboardData {
   open_ticket_count: number
   ai_summary_line: string | null
   onboarding_stage: number
+  brand_summary: string | null
 }
 
 const EMPTY_DASHBOARD: DashboardData = {
@@ -36,6 +39,7 @@ const EMPTY_DASHBOARD: DashboardData = {
   open_ticket_count: 0,
   ai_summary_line: null,
   onboarding_stage: 1,
+  brand_summary: null,
 }
 
 const ONBOARDING_STEPS = [
@@ -109,6 +113,7 @@ export default function PortalDashboard() {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [subscriptionActive, setSubscriptionActive] = useState(false)
+  const [generating, setGenerating] = useState(false)
 
   useEffect(() => {
     async function loadDashboard() {
@@ -119,7 +124,7 @@ export default function PortalDashboard() {
 
       const { data: profile } = await supabase
         .from("users")
-        .select("terms_accepted, onboarding_stage, created_at")
+        .select("terms_accepted, onboarding_stage, created_at, brand_summary")
         .eq("auth_id", user.id)
         .single()
 
@@ -130,11 +135,40 @@ export default function PortalDashboard() {
         open_ticket_count: 0,
         ai_summary_line: null,
         onboarding_stage: profile?.onboarding_stage ?? 1,
+        brand_summary: profile?.brand_summary ?? null,
       })
       setLoading(false)
     }
     loadDashboard()
   }, [user])
+
+  async function handleGenerateBrandSummary() {
+    if (!user) return
+    setGenerating(true)
+    try {
+      const { apiFetch } = await import("@/lib/api")
+      const res = await apiFetch("/api/v1/brand-summary/generate", {
+        method: "POST",
+      }) as { brand_summary: string; source: string }
+
+      const { createClient } = await import("@/lib/supabase/client")
+      const supabase = createClient()
+
+      setData((prev) => ({
+        ...prev,
+        brand_summary: res.brand_summary,
+      }))
+
+      await supabase
+        .from("users")
+        .update({ brand_summary: res.brand_summary })
+        .eq("auth_id", user.id)
+    } catch {
+      setError("Failed to generate brand strategy. Please try again.")
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   const effectiveStage = Math.max(
     data.onboarding_stage,
@@ -273,7 +307,7 @@ export default function PortalDashboard() {
                 </div>
               </CardContent>
             </Card>
-          ) : (
+          ) : data.brand_summary ? (
             <Card className="rounded-xl shadow-[var(--shadow-card)]">
               <CardContent className="p-0">
                 <div className="flex items-start gap-4 border-l-4 border-[#2B7BC4] bg-[#E8F4FD] p-5">
@@ -284,11 +318,11 @@ export default function PortalDashboard() {
                     <p className="text-xs font-medium uppercase tracking-wider text-[#2B7BC4]">
                       Brand Summary
                     </p>
-                    <p className="mt-2 text-sm italic text-[#0D2137] leading-relaxed">
-                      {data.ai_summary_line
-                        ? `\u201C${data.ai_summary_line}\u201D`
-                        : "\u201CYour brand analysis will appear here after onboarding.\u201D"}
-                    </p>
+                    <div className="mt-2 space-y-3 text-sm text-[#0D2137] leading-relaxed">
+                      {data.brand_summary.split("\n\n").map((paragraph, i) => (
+                        <p key={i}>{paragraph}</p>
+                      ))}
+                    </div>
                     <Link
                       href="/portal/account"
                       className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#2B7BC4] hover:underline"
@@ -296,6 +330,43 @@ export default function PortalDashboard() {
                       Update profile
                       <ArrowRight className="size-3" />
                     </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="rounded-xl shadow-[var(--shadow-card)]">
+              <CardContent className="p-0">
+                <div className="flex items-start gap-4 border-l-4 border-[#0EA5E9] bg-[#E8F4FD] p-5">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#0EA5E9]/10">
+                    <Sparkles className="size-5 text-[#0EA5E9]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium uppercase tracking-wider text-[#0EA5E9]">
+                      Brand Strategy
+                    </p>
+                    <p className="mt-2 text-sm text-[#0D2137] leading-relaxed">
+                      Generate a personalized AI-powered brand strategy based on your questionnaire answers.
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-3 cursor-pointer"
+                      onClick={handleGenerateBrandSummary}
+                      disabled={generating}
+                    >
+                      {generating ? (
+                        <>
+                          <Loader2 className="size-3 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          Generate Brand Strategy
+                          <ArrowRight className="size-3" />
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
               </CardContent>
