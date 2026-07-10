@@ -27,20 +27,20 @@ interface PaymentModalProps {
 const PLANS: Record<PlanSlug, { label: string; price: string; amount: number; features: string[] }> = {
   starter: {
     label: "Starter",
-    price: "₹4,999",
-    amount: 4999,
+    price: "₹25,000",
+    amount: 25000,
     features: ["5 social accounts", "20 posts/mo", "Basic analytics"],
   },
   growth: {
     label: "Growth",
-    price: "₹9,999",
-    amount: 9999,
+    price: "₹50,000",
+    amount: 50000,
     features: ["15 social accounts", "40 posts/mo", "Advanced analytics", "Dedicated manager"],
   },
   pro: {
     label: "Pro",
-    price: "₹14,999",
-    amount: 14999,
+    price: "₹95,000",
+    amount: 95000,
     features: ["Unlimited accounts", "60 posts/mo", "Advanced analytics", "Priority support"],
   },
 }

@@ -75,7 +75,7 @@ def create_stripe_subscription(user: User, plan: Plan, stripe_customer_id: str) 
 
     stripe_price = stripe.Price.create(
         unit_amount=price_amount,
-        currency="usd",
+        currency="inr",
         recurring={"interval": "month"},
         product_data={
             "name": f"Creo {plan.display_name} Plan",
