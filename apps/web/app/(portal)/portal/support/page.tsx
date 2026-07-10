@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { useSubscription } from "@/context/subscription-context"
+import { ChatbotWidget } from "@/components/chatbot/chatbot-widget"
 
 type TicketType = "deliverable_revision" | "billing_issue" | "general_support" | "content_brief_update"
 type TicketStatus = "open" | "in_progress" | "awaiting_client" | "resolved" | "escalated"
@@ -456,96 +457,104 @@ export default function SupportPage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="ticket-subject">
-                Subject <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="ticket-subject"
-                placeholder="Brief description of your issue"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>
-                Description <span className="text-red-500">*</span>
-              </Label>
-              <RichTextEditor
-                value={description}
-                onChange={setDescription}
-                placeholder="Please provide details about your issue..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Attachments</Label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.doc,.docx"
-                className="hidden"
-                onChange={handleFileSelect}
-              />
-              {attachment ? (
-                <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                  <FileText className="size-8 shrink-0 text-[#2B7BC4]" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-[#0D2137]">{attachment.name}</p>
-                    <p className="text-xs text-gray-400">{formatFileSize(attachment.size)}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleRemoveFile}
-                    className="shrink-0 rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
-                  >
-                    <X className="size-4" />
-                  </button>
+            {ticketType === "general_support" ? (
+              <ChatbotWidget />
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="ticket-subject">
+                    Subject <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="ticket-subject"
+                    placeholder="Brief description of your issue"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                  />
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 p-6 transition-colors hover:border-[#2B7BC4]/40 hover:bg-[#E8F4FD]/50"
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload className="size-6 text-gray-400" />
-                    <p className="text-xs text-gray-500">
-                      Click to upload or drag & drop
-                    </p>
-                    <p className="text-[10px] text-gray-400">
-                      PNG, JPG, PDF up to 25MB
-                    </p>
-                  </div>
-                </button>
-              )}
-            </div>
+
+                <div className="space-y-2">
+                  <Label>
+                    Description <span className="text-red-500">*</span>
+                  </Label>
+                  <RichTextEditor
+                    value={description}
+                    onChange={setDescription}
+                    placeholder="Please provide details about your issue..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Attachments</Label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.doc,.docx"
+                    className="hidden"
+                    onChange={handleFileSelect}
+                  />
+                  {attachment ? (
+                    <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <FileText className="size-8 shrink-0 text-[#2B7BC4]" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-[#0D2137]">{attachment.name}</p>
+                        <p className="text-xs text-gray-400">{formatFileSize(attachment.size)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveFile}
+                        className="shrink-0 rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 p-6 transition-colors hover:border-[#2B7BC4]/40 hover:bg-[#E8F4FD]/50"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <Upload className="size-6 text-gray-400" />
+                        <p className="text-xs text-gray-500">
+                          Click to upload or drag & drop
+                        </p>
+                        <p className="text-[10px] text-gray-400">
+                          PNG, JPG, PDF up to 25MB
+                        </p>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
-          <SheetFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDrawerOpen(false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                "Submit Ticket"
-              )}
-            </Button>
-          </SheetFooter>
+          {ticketType !== "general_support" && (
+            <SheetFooter>
+              <Button
+                variant="outline"
+                onClick={() => setDrawerOpen(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit Ticket"
+                )}
+              </Button>
+            </SheetFooter>
+          )}
         </SheetContent>
       </Sheet>
     </div>
