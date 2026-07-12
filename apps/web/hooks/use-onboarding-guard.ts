@@ -54,12 +54,8 @@ export function useOnboardingGuard() {
         return
       }
 
-      // No token — cannot verify status, block by default (fail-closed)
+      // No token yet — session still loading, wait without blocking
       if (!token) {
-        if (!cancelled) {
-          setBlocked(true)
-          setReady(true)
-        }
         return
       }
 

@@ -59,6 +59,7 @@ async def get_portal_dashboard(
         open_ticket_count=open_ticket_count,
         ai_summary_line=ai_summary_line,
         onboarding_stage=_compute_onboarding_stage(current_user),
+        account_status=current_user.account_status.value,
     )
 
 
