@@ -13,6 +13,7 @@ class DashboardResponse(BaseModel):
     open_ticket_count: int
     ai_summary_line: Optional[str] = None
     onboarding_stage: int
+    account_status: str
 
 
 class SubscriptionStatusResponse(BaseModel):
