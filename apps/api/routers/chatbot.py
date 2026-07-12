@@ -1,10 +1,10 @@
 import logging
 
 import httpx
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from core.config import settings
-from core.security import RequireActiveClient
+from core.security import require_active_client
 from schemas.chatbot import ChatbotRequest, ChatbotResponse
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/v1/chatbot", tags=["chatbot"])
 @router.post("", response_model=ChatbotResponse)
 async def chat_with_bot(
     payload: ChatbotRequest,
-    current_user: RequireActiveClient,
+    current_user=Depends(require_active_client),
 ):
     logger.info(
         "[chatbot] incoming request user=%s message_length=%d conversation_id=%s",
