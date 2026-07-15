@@ -71,7 +71,8 @@ export function ChatbotWidget() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        throw new Error(body.detail || "Failed to get response")
+        const message = body.error?.message || body.detail || "Failed to get response"
+        throw new Error(message)
       }
 
       const data: { reply: string; conversation_id?: string; escalate?: boolean } = await res.json()
