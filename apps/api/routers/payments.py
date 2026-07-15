@@ -10,7 +10,7 @@ from starlette.concurrency import run_in_threadpool
 
 from core.config import settings
 from core.database import get_db
-from core.security import CurrentUser, require_active_client
+from core.security import CurrentUser, encrypt_gateway_id, require_active_client
 from models.enums import AccountStatus, PaymentGateway, PlanName
 from models.plan import Plan
 from models.subscription import Subscription

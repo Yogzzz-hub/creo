@@ -1,9 +1,13 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSession } from "@/context/session-context";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
 const STEPS = [
   { label: "Verify", href: "/onboarding/verify" },
@@ -19,8 +23,74 @@ export default function OnboardingLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { token, loading: sessionLoading } = useSession();
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    if (sessionLoading) return;
+    if (!token) {
+      setChecking(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function checkAndRedirect() {
+      try {
+        const [roleRes, accountRes] = await Promise.all([
+          fetch(`${API_URL}/api/v1/auth/me/role`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`${API_URL}/api/v1/account`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        if (cancelled) return;
+
+        if (roleRes.ok) {
+          const roleData = await roleRes.json();
+          const isActive = roleData.account_status === "active";
+
+          if (isActive && accountRes.ok) {
+            const accountData = await accountRes.json();
+            if (accountData.instagram_connected) {
+              router.replace("/portal");
+              return;
+            }
+          }
+        }
+      } catch {
+        // Silently continue to onboarding if check fails
+      }
+
+      if (!cancelled) setChecking(false);
+    }
+
+    checkAndRedirect();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, sessionLoading, router]);
 
   const currentIndex = STEPS.findIndex((step) => pathname.startsWith(step.href));
+
+  // Show a clean loading spinner while checking user status
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-[560px]">
+          <div className="bg-surface rounded-xl shadow-card p-8">
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+              <Loader2 className="size-6 animate-spin text-brand" />
+              <p className="text-sm text-text-muted">Loading your account...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center px-4 py-12">

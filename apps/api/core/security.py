@@ -101,7 +101,6 @@ async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(oauth2_scheme)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User:
-    print(f"DEBUG: Headers received: {request.headers.get('Authorization')}")
     token = credentials.credentials
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -114,15 +113,15 @@ async def get_current_user(
     try:
         user_response = supabase.auth.get_user(token)
     except Exception as exc:
-        logger.warning("DEBUG: Supabase token verification failed: %s", exc)
+        logger.warning("Supabase token verification failed: %s", exc)
         raise credentials_exception
 
     if not user_response or not user_response.user:
-        logger.warning("DEBUG: Supabase returned no user for the provided token.")
+        logger.warning("Supabase returned no user for the provided token.")
         raise credentials_exception
 
     auth_id = user_response.user.id
-    logger.debug("DEBUG: Token verified via Supabase. auth_id=%s", auth_id)
+    logger.debug("Token verified via Supabase. auth_id=%s", auth_id)
 
     # 2. Extract raw claims for revocation + timeout checks (unverified decode is fine here — token already verified above)
     try:
@@ -135,7 +134,7 @@ async def get_current_user(
 
     # 3. Check revocation blocklist
     if jti and _is_jti_revoked(jti):
-        logger.warning("DEBUG: Token is revoked (jti=%s found in Redis blocklist).", jti)
+        logger.warning("Token is revoked (jti=%s found in Redis blocklist).", jti)
         raise credentials_exception
 
     # 4. Look up local user record
@@ -143,10 +142,10 @@ async def get_current_user(
     user = result.scalar_one_or_none()
 
     if user is None:
-        logger.warning("DEBUG: No user found in DB for auth_id=%s.", auth_id)
+        logger.warning("No user found in DB for auth_id=%s.", auth_id)
         raise credentials_exception
     if user.deleted_at is not None:
-        logger.warning("DEBUG: User auth_id=%s has been soft-deleted.", auth_id)
+        logger.warning("User auth_id=%s has been soft-deleted.", auth_id)
         raise credentials_exception
 
     if user.account_status == AccountStatus.lapsed:
@@ -171,14 +170,14 @@ async def get_current_user(
         max_age = SESSION_TIMEOUT_SECONDS.get(user.role, 8 * 3600)
         token_age = int(time.time()) - issued_at
         if token_age > max_age:
-            logger.warning("DEBUG: Token expired. age=%ds, max_age=%ds, role=%s", token_age, max_age, user.role.value)
+            logger.warning("Token expired. age=%ds, max_age=%ds, role=%s", token_age, max_age, user.role.value)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail={"error_code": "session_expired", "message": "Session expired. Please sign in again."},
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-    logger.debug("DEBUG: Auth successful for user auth_id=%s role=%s", auth_id, user.role.value)
+    logger.debug("Auth successful for user auth_id=%s role=%s", auth_id, user.role.value)
     return user
 
 

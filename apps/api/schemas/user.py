@@ -42,3 +42,11 @@ class UserOut(UserBase):
     deleted_at: Optional[datetime] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
+
+
+class AccountProfileResponse(UserBase):
+    id: str
+    instagram_connected: bool = False
+    instagram_username: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None

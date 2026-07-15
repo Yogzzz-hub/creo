@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { toast } from "sonner"
 import {
   FileImage,
   Film,
@@ -134,6 +135,20 @@ export default function PortalDashboard() {
     }
     loadDashboard()
   }, [user])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const success = params.get("success")
+    if (success === "instagram_connected") {
+      toast.success("Instagram Business Account connected successfully!", {
+        description: "You can now publish approved content directly to Instagram.",
+        duration: 5000,
+      })
+      const url = new URL(window.location.href)
+      url.searchParams.delete("success")
+      window.history.replaceState({}, "", url.toString())
+    }
+  }, [])
 
   const effectiveStage = Math.max(
     data.onboarding_stage,
