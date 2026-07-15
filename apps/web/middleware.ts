@@ -73,6 +73,11 @@ function isOnboardingRoute(pathname: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+  // Skip Supabase auth for Instagram OAuth callback (arrives cookieless from Facebook)
+  if (request.nextUrl.pathname.startsWith("/api/auth/callback/instagram")) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(

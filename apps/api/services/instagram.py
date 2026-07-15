@@ -25,17 +25,25 @@ def _sanitize_meta_response(data: dict) -> dict:
     return sanitized
 
 
-async def exchange_instagram_token(code: str, redirect_uri: str) -> str:
+async def exchange_instagram_token(code: str, redirect_uri: str) -> dict:
     """Exchange a short-lived OAuth code for a long-lived Instagram access token.
 
     1. Exchange the authorization code for a short-lived user token.
     2. Exchange the short-lived token for a long-lived token (~60 days).
-    3. Return the long-lived token string.
+    3. Fetch the user's Facebook Pages and resolve the Instagram Business Account.
+
+    Returns:
+        dict with keys: access_token, instagram_user_id, instagram_username
     """
     async with httpx.AsyncClient(timeout=30.0) as client:
         short_lived_token = await _get_short_lived_token(client, code, redirect_uri)
         long_lived_token = await _get_long_lived_token(client, short_lived_token)
-        return long_lived_token
+        ig_account = await _resolve_instagram_business_account(client, long_lived_token)
+        return {
+            "access_token": long_lived_token,
+            "instagram_user_id": ig_account.get("id") if ig_account else None,
+            "instagram_username": ig_account.get("username") if ig_account else None,
+        }
 
 
 async def _get_short_lived_token(
@@ -87,6 +95,57 @@ async def _get_long_lived_token(client: httpx.AsyncClient, short_lived_token: st
         expires_in,
     )
     return long_lived_token
+
+
+async def _resolve_instagram_business_account(
+    client: httpx.AsyncClient, long_lived_token: str
+) -> dict | None:
+    """Fetch the user's Facebook Pages and find the linked Instagram Business Account.
+
+    Graph API flow:
+      1. GET /me/accounts?fields=id,name,instagram_business_account{id,username}
+      2. For each page with an instagram_business_account, return that dict.
+
+    Returns dict with keys (id, username), or None if none found.
+    """
+    url = f"{GRAPH_API_BASE}/me/accounts"
+    params = {
+        "fields": "id,name,instagram_business_account{id,username}",
+        "access_token": long_lived_token,
+    }
+
+    try:
+        response = await client.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+    except Exception as exc:
+        logger.error("Failed to fetch Facebook pages: %s", exc)
+        return None
+
+    pages = data.get("data", [])
+    if not pages:
+        logger.warning("No Facebook Pages found for this user. "
+                       "User may need to grant pages_show_list and business_management scopes.")
+        return None
+
+    for page in pages:
+        ig_account = page.get("instagram_business_account")
+        if ig_account and ig_account.get("id"):
+            logger.info(
+                "Resolved Instagram Business Account: id=%s username=%s (page=%s)",
+                ig_account["id"],
+                ig_account.get("username", "unknown"),
+                page.get("name", "unknown"),
+            )
+            return ig_account
+
+    logger.warning(
+        "No Instagram Business Account linked to any of the user's %d page(s). "
+        "Pages found: %s",
+        len(pages),
+        [p.get("name", "unnamed") for p in pages],
+    )
+    return None
 
 
 async def refresh_access_token(current_token: str) -> dict:

@@ -52,6 +52,7 @@ class User(Base):
     )
     instagram_access_token: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     instagram_user_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    instagram_username: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     razorpay_customer_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     stripe_customer_id: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     two_fa_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

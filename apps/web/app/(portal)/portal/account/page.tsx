@@ -424,14 +424,33 @@ function SecurityTab() {
 }
 
 function IntegrationsTab() {
-  const { user: authUser } = useSession()
+  const { token } = useSession()
+  const [loading, setLoading] = useState(true)
   const [instagramConnected, setInstagramConnected] = useState(false)
+  const [instagramUsername, setInstagramUsername] = useState<string | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
+  const [isDisconnecting, setIsDisconnecting] = useState(false)
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"
 
   useEffect(() => {
-    const token = authUser?.user_metadata?.instagram_access_token
-    setInstagramConnected(!!token)
-  }, [authUser?.user_metadata])
+    if (!token) return
+    const controller = new AbortController()
+    fetch(`${API_URL}/api/v1/account`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) {
+          setInstagramConnected(data.instagram_connected)
+          setInstagramUsername(data.instagram_username)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+    return () => controller.abort()
+  }, [token, API_URL])
 
   function handleConnect() {
     const appId = process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID
@@ -442,14 +461,50 @@ function IntegrationsTab() {
       return
     }
 
-    const scopes = ["instagram_basic", "instagram_content_publish", "pages_show_list"]
+    setIsConnecting(true)
+    const scopes = [
+      "pages_show_list",
+      "instagram_basic",
+      "instagram_content_publish",
+      "instagram_manage_comments",
+      "pages_read_engagement",
+      "business_management",
+    ]
     const url = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes.join(",")}&response_type=code`
     window.location.href = url
   }
 
-  function handleDisconnect() {
-    setInstagramConnected(false)
-    toast.success("Instagram account disconnected.")
+  async function handleDisconnect() {
+    if (!token) return
+    setIsDisconnecting(true)
+    try {
+      const res = await fetch(`${API_URL}/api/v1/account/instagram`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        setInstagramConnected(false)
+        setInstagramUsername(null)
+        toast.success("Instagram account disconnected.")
+      } else {
+        toast.error("Failed to disconnect Instagram.")
+      }
+    } catch {
+      toast.error("Failed to disconnect Instagram.")
+    } finally {
+      setIsDisconnecting(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <Card className="rounded-xl shadow-[var(--shadow-card)]">
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="size-5 animate-spin text-gray-400" />
+          <span className="ml-2 text-sm text-gray-500">Loading integrations...</span>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -486,7 +541,9 @@ function IntegrationsTab() {
 
             <p className="mt-1 text-xs text-gray-500">
               {instagramConnected
-                ? "Your Instagram account is connected. Content can be published directly."
+                ? instagramUsername
+                  ? `Connected as @${instagramUsername}. Content can be published directly.`
+                  : "Your Instagram account is connected. Content can be published directly."
                 : "Connect your Instagram Business account to enable direct publishing of approved content."}
             </p>
 
@@ -496,9 +553,14 @@ function IntegrationsTab() {
                   variant="outline"
                   size="sm"
                   onClick={handleDisconnect}
+                  disabled={isDisconnecting}
                   className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
                 >
-                  <Unlink className="size-3.5" />
+                  {isDisconnecting ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Unlink className="size-3.5" />
+                  )}
                   Disconnect
                 </Button>
               ) : (

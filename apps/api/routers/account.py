@@ -10,7 +10,7 @@ from core.database import get_db
 from core.security import RequireActiveClient, encrypt_token
 from models.user import User
 from schemas.payments import TwoFactorRequest
-from schemas.user import UserOut, UserUpdate
+from schemas.user import AccountProfileResponse, UserOut, UserUpdate
 from services.instagram import exchange_instagram_token
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ async def connect_instagram(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        long_lived_token = await exchange_instagram_token(
+        result = await exchange_instagram_token(
             code=payload.code,
             redirect_uri=payload.redirect_uri,
         )
@@ -59,7 +59,28 @@ async def connect_instagram(
             detail="Failed to connect with Instagram. Please try again.",
         )
 
+    long_lived_token = result["access_token"]
+    ig_user_id = result.get("instagram_user_id")
+    ig_username = result.get("instagram_username")
+
+    if not ig_user_id:
+        logger.warning(
+            "No Instagram Business Account found for user %s. "
+            "Token was obtained but ig_user_id is None.",
+            current_user.id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                "No Instagram Business Account found. "
+                "Please ensure your Facebook Page is linked to an Instagram Business Account "
+                "and that you selected it during the OAuth flow."
+            ),
+        )
+
     current_user.instagram_access_token = encrypt_token(long_lived_token)
+    current_user.instagram_user_id = ig_user_id
+    current_user.instagram_username = ig_username
     db.add(current_user)
     try:
         await db.commit()
@@ -80,6 +101,25 @@ async def connect_instagram(
     return InstagramConnectResponse(
         success=True,
         message="Instagram account connected successfully",
+    )
+
+
+@router.get("", response_model=AccountProfileResponse)
+async def get_account_profile(current_user: RequireActiveClient):
+    return AccountProfileResponse(
+        id=current_user.id,
+        email=current_user.email,
+        phone=current_user.phone,
+        full_name=current_user.full_name,
+        business_name=current_user.business_name,
+        role=current_user.role,
+        account_status=current_user.account_status,
+        plan_name=current_user.plan_name,
+        two_fa_enabled=current_user.two_fa_enabled,
+        instagram_connected=bool(current_user.instagram_access_token),
+        instagram_username=current_user.instagram_username,
+        created_at=current_user.created_at,
+        updated_at=current_user.updated_at,
     )
 
 
@@ -165,6 +205,7 @@ async def disconnect_instagram(
 ):
     current_user.instagram_access_token = None
     current_user.instagram_user_id = None
+    current_user.instagram_username = None
     db.add(current_user)
     try:
         await db.commit()

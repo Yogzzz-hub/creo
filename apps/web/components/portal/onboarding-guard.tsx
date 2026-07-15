@@ -13,9 +13,9 @@ import { Loader2 } from "lucide-react"
  *   3. isRestricted = true, blocked → OnboardingRequiredView
  *   4. isRestricted = true, !blocked → render children
  *
- * The key={pathname} on the children container forces React to unmount
- * the old page component and remount the new one atomically during
- * navigation — no stale reconciliation, no background API calls.
+ * This guard NEVER redirects active users. Its sole purpose is to block
+ * non-active users from restricted portal routes. The fully-onboarded
+ * auto-redirect lives in the onboarding layout, not here.
  */
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { isRestricted, ready, blocked } = useOnboardingGuard()

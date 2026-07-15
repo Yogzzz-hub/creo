@@ -269,3 +269,13 @@
 - [x] Fixed idempotency in payments router
 - [x] Fixed Razorpay webhook notes payload mapping
 - [x] Fixed dependency override leaks and relative imports in tests
+
+## Integration Point 2: Audit Fixes
+
+- [x] Fix IntegrationsTab loading state — add skeleton loader + AbortController to prevent UI lag
+- [x] Fix C1: Add missing `encrypt_gateway_id` import in routers/payments.py
+- [x] Fix C2: Implement `generate_ai_analysis` Celery task in workers/ai_tasks.py with proper re-export in onboarding_tasks.py
+- [x] Fix C4: Remove debug `print` statement leaking JWT in core/security.py
+- [x] Fix M7: Remove debug middleware logging Authorization headers in core/exceptions.py
+- [x] Clean up DEBUG: prefixed log messages in core/security.py
+- [x] Fix onboarding wizard flash: add isLoading gate + auto-redirect for fully onboarded users
