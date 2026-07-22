@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -224,4 +224,130 @@ async def create_subscription(
         subscription_id=result["subscription_id"],
         client_secret=result.get("client_secret"),
         gateway_customer_id=result["gateway_customer_id"],
+    )
+
+
+# ---------------------------------------------------------------------------
+# Receipt download — GET /api/v1/payments/receipt/{subscription_id}
+# ---------------------------------------------------------------------------
+
+def _render_receipt_html(
+    *,
+    business_name: str,
+    full_name: str,
+    email: str,
+    plan_display: str,
+    amount: float,
+    currency: str,
+    status_label: str,
+    payment_id: str,
+    gateway: str,
+    billing_period_start: str,
+    billing_period_end: str,
+    receipt_date: str,
+) -> str:
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Receipt — {payment_id[:12]}</title>
+<style>
+  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+  body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f5f7fa; color: #1a1a2e; padding: 40px 20px; }}
+  .receipt {{ max-width: 640px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); overflow: hidden; }}
+  .header {{ background: #2B7BC4; color: #fff; padding: 28px 32px; }}
+  .header h1 {{ font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }}
+  .header p {{ font-size: 13px; opacity: 0.85; margin-top: 4px; }}
+  .body {{ padding: 28px 32px; }}
+  .row {{ display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }}
+  .row:last-child {{ border-bottom: none; }}
+  .label {{ color: #6b7280; }}
+  .value {{ font-weight: 600; color: #0D2137; text-align: right; max-width: 60%; word-break: break-all; }}
+  .total {{ background: #E8F4FD; border-radius: 8px; padding: 16px 20px; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; }}
+  .total .label {{ font-size: 15px; font-weight: 600; color: #0D2137; }}
+  .total .value {{ font-size: 22px; font-weight: 700; color: #2B7BC4; border: none; text-align: right; }}
+  .footer {{ padding: 20px 32px; background: #f9fafb; border-top: 1px solid #f0f0f0; font-size: 12px; color: #9ca3af; text-align: center; }}
+  .badge {{ display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
+  .badge-paid {{ background: #d1fae5; color: #065f46; }}
+  .badge-pending {{ background: #fef3c7; color: #92400e; }}
+  .badge-failed {{ background: #fee2e2; color: #991b1b; }}
+</style>
+</head>
+<body>
+<div class="receipt">
+  <div class="header">
+    <h1>Creo — Payment Receipt</h1>
+    <p>Thank you for your business</p>
+  </div>
+  <div class="body">
+    <div class="row"><span class="label">Receipt Date</span><span class="value">{receipt_date}</span></div>
+    <div class="row"><span class="label">Payment ID</span><span class="value">{payment_id}</span></div>
+    <div class="row"><span class="label">Status</span><span class="value"><span class="badge badge-{'paid' if 'active' in status_label.lower() or 'paid' in status_label.lower() else 'pending' if 'pending' in status_label.lower() else 'failed'}">{status_label}</span></span></div>
+    <div class="row"><span class="label">Customer</span><span class="value">{full_name}</span></div>
+    <div class="row"><span class="label">Business</span><span class="value">{business_name or '—'}</span></div>
+    <div class="row"><span class="label">Email</span><span class="value">{email}</span></div>
+    <div class="row"><span class="label">Plan</span><span class="value">{plan_display}</span></div>
+    <div class="row"><span class="label">Billing Period</span><span class="value">{billing_period_start} — {billing_period_end}</span></div>
+    <div class="row"><span class="label">Payment Gateway</span><span class="value">{gateway.title()}</span></div>
+    <div class="total">
+      <span class="label">Amount Paid</span>
+      <span class="value">{currency} {amount:,.2f}</span>
+    </div>
+  </div>
+  <div class="footer">
+    This is a computer-generated receipt. For questions, contact support@creo.com
+  </div>
+</div>
+</body>
+</html>"""
+
+
+@router.get("/receipt/{subscription_id}")
+async def download_receipt(
+    subscription_id: str,
+    current_user: Annotated[User, Depends(require_active_client)],
+    db: AsyncSession = Depends(get_db),
+):
+    """Generate and return an HTML receipt for a subscription payment."""
+    result = await db.execute(
+        select(Subscription, Plan)
+        .join(Plan, Subscription.plan_id == Plan.id)
+        .where(
+            Subscription.id == subscription_id,
+            Subscription.user_id == current_user.id,
+        )
+    )
+    row = result.one_or_none()
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Subscription not found",
+        )
+
+    sub, plan = row
+
+    now = datetime.now(timezone.utc)
+    html = _render_receipt_html(
+        business_name=current_user.business_name or "",
+        full_name=current_user.full_name,
+        email=current_user.email,
+        plan_display=plan.display_name,
+        amount=float(plan.monthly_price),
+        currency="INR",
+        status_label=sub.status.replace("_", " ").title(),
+        payment_id=sub.gateway_subscription_id,
+        gateway=sub.gateway.value,
+        billing_period_start=sub.current_period_start.strftime("%b %d, %Y"),
+        billing_period_end=sub.current_period_end.strftime("%b %d, %Y"),
+        receipt_date=now.strftime("%b %d, %Y"),
+    )
+
+    filename = f"creo-receipt-{sub.gateway_subscription_id[:12]}.html"
+    return Response(
+        content=html,
+        media_type="text/html",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
     )

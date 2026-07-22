@@ -152,8 +152,35 @@ export default function PaymentsPage() {
     fetchPayments()
   }, [token])
 
-  function handleDownloadReceipt(invoice: string) {
-    toast.success(`Receipt for ${invoice} downloaded.`)
+  async function handleDownloadReceipt(subscriptionId: string) {
+    if (!token) return
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/receipt/${subscriptionId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      if (!res.ok) {
+        console.error("[Payments] receipt download failed:", res.status)
+        toast.error("Failed to download receipt")
+        return
+      }
+      const blob = await res.blob()
+      const disposition = res.headers.get("Content-Disposition") || ""
+      const filenameMatch = disposition.match(/filename="?([^"]+)"?/)
+      const filename = filenameMatch ? filenameMatch[1] : `creo-receipt-${subscriptionId.slice(0, 12)}.html`
+
+      const a = document.createElement("a")
+      a.href = URL.createObjectURL(blob)
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(a.href)
+      toast.success("Receipt downloaded")
+    } catch (err) {
+      console.error("[Payments] receipt download error:", err)
+      toast.error("Failed to download receipt")
+    }
   }
 
   async function handleChangePlan() {
