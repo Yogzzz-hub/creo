@@ -33,9 +33,9 @@ ADMIN_EMAILS = ["admin@creo.app", "ops@creo.app"]
 QUOTA_THRESHOLD = 0.80
 
 DELIVERABLE_MONTHLY_SCHEDULE = {
-    DeliverableType.poster: 4,
-    DeliverableType.reel: 2,
-    DeliverableType.story: 4,
+    DeliverableType.poster: 8,
+    DeliverableType.reel: 4,
+    DeliverableType.story: 10,
 }
 
 
@@ -532,31 +532,49 @@ def auto_assign_tasks():
 # ---------------------------------------------------------------------------
 # Task 9.16 — generate_content_calendar
 # ---------------------------------------------------------------------------
-async def _generate_content_calendar_async():
+ONBOARDING_BUFFER_DAYS = 7
+
+
+def _next_month_range(now: datetime):
+    """Return (start, end) dates for the month following *now*."""
     from datetime import date as date_type
 
-    now = datetime.now(timezone.utc)
-
-    if now.month == 12:
-        next_month_start = date_type(now.year + 1, 1, 1)
-        next_month_end = date_type(now.year + 1, 2, 1) - timedelta(days=1)
+    y, m = now.year, now.month
+    if m == 12:
+        start = date_type(y + 1, 1, 1)
+        end = date_type(y + 1, 2, 1) - timedelta(days=1)
     else:
-        next_month_start = date_type(now.year, now.month + 1, 1)
-        if now.month + 1 == 12:
-            next_month_end = date_type(now.year + 1, 1, 1) - timedelta(days=1)
+        start = date_type(y, m + 1, 1)
+        if m + 1 == 12:
+            end = date_type(y + 1, 1, 1) - timedelta(days=1)
         else:
-            next_month_end = date_type(now.year, now.month + 2, 1) - timedelta(days=1)
+            end = date_type(y, m + 2, 1) - timedelta(days=1)
+    return start, end
+
+
+def _distribute_items(count: int, pool: list):
+    """Evenly place *count* items into *pool* positions, returning chosen indices."""
+    if count <= 0 or not pool:
+        return []
+    step = len(pool) / count
+    return [pool[int(i * step)] for i in range(count) if int(i * step) < len(pool)]
+
+
+async def _generate_content_calendar_async():
+    now = datetime.now(timezone.utc)
+    next_month_start, next_month_end = _next_month_range(now)
+
+    # Build the full list of dates for the target month
+    all_dates = []
+    d = next_month_start
+    while d <= next_month_end:
+        all_dates.append(d)
+        d += timedelta(days=1)
+
+    # The first 7 days are reserved for onboarding — no deliverables
+    available_dates = all_dates[ONBOARDING_BUFFER_DAYS:]
 
     entries_created = 0
-
-    all_dates = []
-    current_date = next_month_start
-    while current_date <= next_month_end:
-        all_dates.append(current_date)
-        current_date += timedelta(days=1)
-
-    weekend_dates = [d for d in all_dates if d.weekday() >= 5]
-    weekday_dates = [d for d in all_dates if d.weekday() < 5]
 
     async with async_session() as db:
         active_subs_result = await db.execute(
@@ -569,6 +587,7 @@ async def _generate_content_calendar_async():
 
     for subscription, user, plan in active_subs:
         async with async_session() as db:
+            # Skip if entries already exist for this month
             existing_result = await db.execute(
                 select(func.count(ContentCalendar.id)).where(
                     ContentCalendar.client_id == user.id,
@@ -576,63 +595,89 @@ async def _generate_content_calendar_async():
                     ContentCalendar.scheduled_date <= next_month_end,
                 )
             )
-            existing_count = existing_result.scalar() or 0
-
-            if existing_count > 0:
+            if (existing_result.scalar() or 0) > 0:
                 continue
 
-            quota_map = {
-                DeliverableType.poster: plan.poster_quota,
-                DeliverableType.reel: plan.reel_quota,
-                DeliverableType.story: plan.story_quota,
-            }
+            reel_quota = plan.reel_quota
+            poster_quota = plan.poster_quota
+            story_quota = plan.story_quota
+            total_needed = reel_quota + poster_quota + story_quota
 
-            days_in_month = (next_month_end - next_month_start).days + 1
+            if total_needed == 0:
+                continue
+
+            # We need at least total_needed available days after the buffer.
+            # If the plan quota exceeds available days, cap each type proportionally.
+            if total_needed > len(available_dates):
+                ratio = len(available_dates) / total_needed
+                reel_quota = max(0, int(reel_quota * ratio))
+                poster_quota = max(0, int(poster_quota * ratio))
+                story_quota = max(0, int(story_quota * ratio))
+                total_needed = reel_quota + poster_quota + story_quota
+
+            # Create or find the content plan for this month
+            target_month = next_month_start.month
+            target_year = next_month_start.year
+
+            cp_result = await db.execute(
+                select(ContentPlan).where(
+                    ContentPlan.client_id == user.id,
+                    ContentPlan.month == target_month,
+                    ContentPlan.year == target_year,
+                )
+            )
+            content_plan = cp_result.scalar_one_or_none()
+            if content_plan is None:
+                content_plan = ContentPlan(
+                    client_id=user.id,
+                    month=target_month,
+                    year=target_year,
+                    status=ContentPlanStatus.draft,
+                )
+                db.add(content_plan)
+                await db.flush()
+
+            used_dates = set()
             client_entries = 0
+            biz_name = html_mod.escape(user.business_name or user.full_name or "Client")
 
-            for del_type, quota in quota_map.items():
-                if quota <= 0:
-                    continue
+            # --- Step 1: Schedule Reels evenly across available dates ---
+            reel_indices = _distribute_items(reel_quota, list(range(len(available_dates))))
+            for idx in reel_indices:
+                scheduled_date = available_dates[idx]
+                entry = ContentCalendar(
+                    client_id=user.id,
+                    content_plan_id=content_plan.id,
+                    scheduled_date=scheduled_date,
+                    deliverable_type=DeliverableType.reel,
+                    content_topic=f"Auto-generated reel for {biz_name}",
+                    status=CalendarEntryStatus.draft,
+                )
+                db.add(entry)
+                used_dates.add(scheduled_date)
+                client_entries += 1
 
-                    entry = ContentCalendar(
-                        client_id=user.id,
-                        content_plan_id=content_plan.id,
-                        scheduled_date=scheduled_date,
-                        deliverable_type=DeliverableType.reel,
-                        content_topic=f"Auto-generated reel for {user.business_name or user.full_name}",
-                        status=CalendarEntryStatus.draft,
-                    )
-                    db.add(entry)
-                    used_dates.add(scheduled_date)
-                    entries_created += 1
+            # --- Step 2: Distribute Posters and Stories on remaining dates ---
+            remaining = [d for i, d in enumerate(available_dates) if i not in reel_indices]
+            remaining = [d for d in remaining if d not in used_dates]
 
-            remaining_weekdays = [d for d in weekday_dates if d not in used_dates]
-            remaining_dates = remaining_weekdays + [d for d in weekend_dates if d not in used_dates]
-
-            poster_stories = []
+            # Build interleaved list: [P, S, P, S, ...] until quotas are met
+            ps_queue = []
             for _ in range(poster_quota):
-                poster_stories.append(DeliverableType.poster)
+                ps_queue.append(DeliverableType.poster)
             for _ in range(story_quota):
-                poster_stories.append(DeliverableType.story)
+                ps_queue.append(DeliverableType.story)
 
-            if poster_stories and remaining_dates:
-                ps_spacing = max(1, len(remaining_dates) // len(poster_stories))
-                for i, del_type in enumerate(poster_stories):
-                    idx = i * ps_spacing
-                    if idx >= len(remaining_dates):
+            if ps_queue and remaining:
+                ps_indices = _distribute_items(len(ps_queue), list(range(len(remaining))))
+                for i, del_type in enumerate(ps_queue):
+                    if i >= len(ps_indices):
                         break
-                    scheduled_date = remaining_dates[idx]
+                    idx = ps_indices[i]
+                    if idx >= len(remaining):
+                        break
+                    scheduled_date = remaining[idx]
                     if scheduled_date in used_dates:
-                        continue
-
-                    existing_check = await db.execute(
-                        select(ContentCalendar.id).where(
-                            ContentCalendar.client_id == user.id,
-                            ContentCalendar.scheduled_date == scheduled_date,
-                            ContentCalendar.deliverable_type == del_type,
-                        )
-                    )
-                    if existing_check.scalar_one_or_none() is not None:
                         continue
 
                     entry = ContentCalendar(
@@ -640,10 +685,11 @@ async def _generate_content_calendar_async():
                         content_plan_id=content_plan.id,
                         scheduled_date=scheduled_date,
                         deliverable_type=del_type,
-                        content_topic=f"Auto-generated {del_type.value} for {html_mod.escape(user.business_name or user.full_name)}",
+                        content_topic=f"Auto-generated {del_type.value} for {biz_name}",
                         status=CalendarEntryStatus.draft,
                     )
                     db.add(entry)
+                    used_dates.add(scheduled_date)
                     client_entries += 1
 
             if client_entries > 0:
@@ -660,6 +706,149 @@ async def _generate_content_calendar_async():
 @shared_task(name="generate_content_calendar")
 def generate_content_calendar():
     return _run_async(_generate_content_calendar_async())
+
+
+# ---------------------------------------------------------------------------
+# Single-user generation (for test endpoint)
+# ---------------------------------------------------------------------------
+async def _generate_calendar_for_user_async(user_id: str) -> int:
+    """Generate calendar entries for a single user (admin/test trigger)."""
+    now = datetime.now(timezone.utc)
+    next_month_start, next_month_end = _next_month_range(now)
+
+    all_dates = []
+    d = next_month_start
+    while d <= next_month_end:
+        all_dates.append(d)
+        d += timedelta(days=1)
+
+    available_dates = all_dates[ONBOARDING_BUFFER_DAYS:]
+
+    async with async_session() as db:
+        result = await db.execute(
+            select(Subscription, User, Plan)
+            .join(User, User.id == Subscription.user_id)
+            .join(Plan, Plan.id == Subscription.plan_id)
+            .where(Subscription.user_id == user_id, Subscription.status == "active")
+        )
+        row = result.first()
+        if row is None:
+            logger.warning("No active subscription found for user %s", user_id)
+            return 0
+
+        subscription, user, plan = row
+
+        # Skip if entries already exist
+        existing_result = await db.execute(
+            select(func.count(ContentCalendar.id)).where(
+                ContentCalendar.client_id == user.id,
+                ContentCalendar.scheduled_date >= next_month_start,
+                ContentCalendar.scheduled_date <= next_month_end,
+            )
+        )
+        if (existing_result.scalar() or 0) > 0:
+            return 0
+
+        reel_quota = plan.reel_quota
+        poster_quota = plan.poster_quota
+        story_quota = plan.story_quota
+        total_needed = reel_quota + poster_quota + story_quota
+
+        if total_needed == 0:
+            return 0
+
+        if total_needed > len(available_dates):
+            ratio = len(available_dates) / total_needed
+            reel_quota = max(0, int(reel_quota * ratio))
+            poster_quota = max(0, int(poster_quota * ratio))
+            story_quota = max(0, int(story_quota * ratio))
+
+        target_month = next_month_start.month
+        target_year = next_month_start.year
+
+        cp_result = await db.execute(
+            select(ContentPlan).where(
+                ContentPlan.client_id == user.id,
+                ContentPlan.month == target_month,
+                ContentPlan.year == target_year,
+            )
+        )
+        content_plan = cp_result.scalar_one_or_none()
+        if content_plan is None:
+            content_plan = ContentPlan(
+                client_id=user.id,
+                month=target_month,
+                year=target_year,
+                status=ContentPlanStatus.draft,
+            )
+            db.add(content_plan)
+            await db.flush()
+
+        used_dates = set()
+        client_entries = 0
+        biz_name = html_mod.escape(user.business_name or user.full_name or "Client")
+
+        reel_indices = _distribute_items(reel_quota, list(range(len(available_dates))))
+        for idx in reel_indices:
+            scheduled_date = available_dates[idx]
+            entry = ContentCalendar(
+                client_id=user.id,
+                content_plan_id=content_plan.id,
+                scheduled_date=scheduled_date,
+                deliverable_type=DeliverableType.reel,
+                content_topic=f"Auto-generated reel for {biz_name}",
+                status=CalendarEntryStatus.draft,
+            )
+            db.add(entry)
+            used_dates.add(scheduled_date)
+            client_entries += 1
+
+        remaining = [d for i, d in enumerate(available_dates) if i not in reel_indices]
+        remaining = [d for d in remaining if d not in used_dates]
+
+        ps_queue = []
+        for _ in range(poster_quota):
+            ps_queue.append(DeliverableType.poster)
+        for _ in range(story_quota):
+            ps_queue.append(DeliverableType.story)
+
+        if ps_queue and remaining:
+            ps_indices = _distribute_items(len(ps_queue), list(range(len(remaining))))
+            for i, del_type in enumerate(ps_queue):
+                if i >= len(ps_indices):
+                    break
+                idx = ps_indices[i]
+                if idx >= len(remaining):
+                    break
+                scheduled_date = remaining[idx]
+                if scheduled_date in used_dates:
+                    continue
+
+                entry = ContentCalendar(
+                    client_id=user.id,
+                    content_plan_id=content_plan.id,
+                    scheduled_date=scheduled_date,
+                    deliverable_type=del_type,
+                    content_topic=f"Auto-generated {del_type.value} for {biz_name}",
+                    status=CalendarEntryStatus.draft,
+                )
+                db.add(entry)
+                used_dates.add(scheduled_date)
+                client_entries += 1
+
+        await db.commit()
+
+    logger.info(
+        "generate_calendar_for_user(%s) — %d entries created",
+        user_id,
+        client_entries,
+    )
+    return client_entries
+
+
+@shared_task(name="generate_calendar_for_user")
+def generate_calendar_for_user(user_id: str) -> int:
+    return _run_async(_generate_calendar_for_user_async(user_id))
 
 
 async def _cleanup_failed_payments_async() -> int:

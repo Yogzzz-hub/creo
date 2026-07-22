@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { usePathname } from "next/navigation"
 import { useSession } from "@/context/session-context"
 
@@ -19,10 +19,18 @@ function isRestrictedRoute(pathname: string): boolean {
   )
 }
 
+interface RoleResponse {
+  role: string
+  account_status: string
+}
+
 interface AccountStatus {
   account_status: string
   instagram_connected: boolean
 }
+
+const MAX_POLL_ATTEMPTS = 10
+const POLL_INTERVAL_MS = 2000
 
 /**
  * Route-aware onboarding guard for the portal.
@@ -30,17 +38,9 @@ interface AccountStatus {
  * Blocks any user whose account_status is not "active" on restricted routes.
  * Dashboard (/portal) and Support (/portal/support) are never restricted.
  *
- * Also checks Instagram connection status so callers can determine
- * whether the user is fully onboarded (active + connected).
- *
- * Fail-closed: if the status check fails (network error, non-OK response,
- * missing token), access is denied by default.
- *
- * Returns:
- *   isRestricted   = synchronous boolean — true when on a restricted route
- *   ready          = false while the async status check is in flight
- *   blocked        = true when on a restricted route AND status is not active
- *   fullyOnboarded = true when account is active AND Instagram is connected
+ * When blocked, polls /api/v1/auth/me/role every 2s (up to 10 times) to
+ * detect when a payment webhook has activated the account, then unblocks
+ * without requiring a full page reload.
  */
 export function useOnboardingGuard() {
   const pathname = usePathname()
@@ -48,6 +48,8 @@ export function useOnboardingGuard() {
   const [ready, setReady] = useState(false)
   const [blocked, setBlocked] = useState(false)
   const [fullyOnboarded, setFullyOnboarded] = useState(false)
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const cancelledRef = useRef(false)
 
   const isRestricted = useMemo(
     () => isRestrictedRoute(pathname),
@@ -55,9 +57,9 @@ export function useOnboardingGuard() {
   )
 
   useEffect(() => {
-    let cancelled = false
+    cancelledRef.current = false
 
-    async function check() {
+    async function checkStatus() {
       if (!isRestricted) {
         setBlocked(false)
         setFullyOnboarded(false)
@@ -65,9 +67,8 @@ export function useOnboardingGuard() {
         return
       }
 
-      // No token — cannot verify status, block by default (fail-closed)
       if (!token) {
-        if (!cancelled) {
+        if (!cancelledRef.current) {
           setBlocked(true)
           setFullyOnboarded(false)
           setReady(true)
@@ -85,10 +86,10 @@ export function useOnboardingGuard() {
           }),
         ])
 
-        if (cancelled) return
+        if (cancelledRef.current) return
 
         if (roleRes.ok) {
-          const roleData = await roleRes.json()
+          const roleData: RoleResponse = await roleRes.json()
           const isActive = roleData.account_status === "active"
           setBlocked(!isActive)
 
@@ -98,25 +99,77 @@ export function useOnboardingGuard() {
           } else {
             setFullyOnboarded(false)
           }
+
+          // If still blocked, start polling for webhook activation
+          if (!isActive) {
+            startPolling()
+          }
         } else {
-          // Non-OK response — cannot confirm active status, block (fail-closed)
           setBlocked(true)
           setFullyOnboarded(false)
+          startPolling()
         }
         setReady(true)
       } catch {
-        // Network error or timeout — cannot confirm status, block (fail-closed)
-        if (!cancelled) {
+        if (!cancelledRef.current) {
           setBlocked(true)
           setFullyOnboarded(false)
           setReady(true)
+          startPolling()
         }
       }
     }
 
-    check()
+    async function pollOnce() {
+      if (cancelledRef.current || !token) return
+
+      try {
+        const res = await fetch(`${API_URL}/api/v1/auth/me/role`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (cancelledRef.current) return
+
+        if (res.ok) {
+          const data: RoleResponse = await res.json()
+          if (data.account_status === "active") {
+            setBlocked(false)
+            // Also re-check instagram status
+            const accountRes = await fetch(`${API_URL}/api/v1/account`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            if (accountRes.ok && !cancelledRef.current) {
+              const accountData: AccountStatus = await accountRes.json()
+              setFullyOnboarded(accountData.instagram_connected === true)
+            }
+            return // Stop polling — user is active
+          }
+        }
+      } catch {
+        // Silently continue polling on network errors
+      }
+
+      pollAttempt++
+      if (pollAttempt < MAX_POLL_ATTEMPTS && !cancelledRef.current) {
+        pollRef.current = setTimeout(pollOnce, POLL_INTERVAL_MS)
+      }
+    }
+
+    let pollAttempt = 0
+
+    function startPolling() {
+      pollAttempt = 0
+      if (pollRef.current) clearTimeout(pollRef.current)
+      pollRef.current = setTimeout(pollOnce, POLL_INTERVAL_MS)
+    }
+
+    checkStatus()
+
     return () => {
-      cancelled = true
+      cancelledRef.current = true
+      if (pollRef.current) {
+        clearTimeout(pollRef.current)
+        pollRef.current = null
+      }
     }
   }, [isRestricted, token])
 
