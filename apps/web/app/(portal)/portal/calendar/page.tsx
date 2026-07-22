@@ -1,47 +1,26 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useSession } from "@/context/session-context"
-import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2, Trash2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-type CalendarStatus = "scheduled" | "ready_for_review" | "approved"
 type DeliverableType = "poster" | "reel" | "story"
-type ViewMode = "month" | "list"
 
 interface CalendarEntry {
   id: string
   date: string
   type: DeliverableType
   topic: string
-  status: CalendarStatus
+  status: string
 }
 
-const STATUS_CONFIG: Record<CalendarStatus, { label: string; className: string; dotColor: string }> = {
-  scheduled: {
-    label: "Scheduled",
-    className: "bg-sky-100 text-sky-700 border-sky-200",
-    dotColor: "bg-sky-400",
-  },
-  ready_for_review: {
-    label: "Ready for Review",
-    className: "bg-amber-100 text-amber-700 border-amber-200",
-    dotColor: "bg-amber-400",
-  },
-  approved: {
-    label: "Approved",
-    className: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    dotColor: "bg-emerald-400",
-  },
-}
-
-const TYPE_ICONS: Record<DeliverableType, string> = {
-  poster: "🖼️",
-  reel: "🎬",
-  story: "📱",
+const TYPE_TILE_CONFIG: Record<DeliverableType, { letter: string; bg: string; text: string }> = {
+  poster: { letter: "P", bg: "bg-[#6BAED6]", text: "text-white" },
+  reel:   { letter: "R", bg: "bg-[#9B59B6]", text: "text-white" },
+  story:  { letter: "S", bg: "bg-[#F0A87E]", text: "text-white" },
 }
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
@@ -50,33 +29,12 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ]
 
-function mapStatus(apiStatus: string): CalendarStatus {
-  switch (apiStatus) {
-    case "approved":
-      return "approved"
-    case "ready_for_review":
-    case "in_progress":
-      return "ready_for_review"
-    default:
-      return "scheduled"
-  }
-}
-
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate()
 }
 
 function getFirstDayOfMonth(year: number, month: number): number {
   return new Date(year, month, 1).getDay()
-}
-
-function formatDate(dateString: string): string {
-  const date = new Date(dateString + "T00:00:00")
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  })
 }
 
 function getEntriesForDay(entries: CalendarEntry[], year: number, month: number, day: number): CalendarEntry[] {
@@ -90,59 +48,120 @@ function getEntriesForDay(entries: CalendarEntry[], year: number, month: number,
   })
 }
 
+function getQuotaSummary(entries: CalendarEntry[]) {
+  const counts = { poster: 0, reel: 0, story: 0 }
+  for (const e of entries) {
+    if (e.type in counts) counts[e.type]++
+  }
+  return counts
+}
+
 export default function CalendarPage() {
   const { token } = useSession()
-  const [viewMode, setViewMode] = useState<ViewMode>("month")
   const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth())
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear())
   const [today] = useState(() => new Date())
   const [entries, setEntries] = useState<CalendarEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [generating, setGenerating] = useState(false)
+  const [resetting, setResetting] = useState(false)
 
   const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() === currentMonth
   const daysInMonth = getDaysInMonth(currentYear, currentMonth)
   const firstDay = getFirstDayOfMonth(currentYear, currentMonth)
 
-  useEffect(() => {
-    async function fetchCalendar() {
-      if (!token) {
-        setLoading(false)
-        return
-      }
+  const fetchCalendar = useCallback(async () => {
+    if (!token) {
+      setLoading(false)
+      return
+    }
 
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/calendar`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    )
+
+    if (!res.ok) {
+      setLoading(false)
+      return
+    }
+
+    const data: {
+      id: string
+      scheduled_date: string
+      deliverable_type: string
+      content_topic: string | null
+      status: string
+    }[] = await res.json()
+
+    const mapped: CalendarEntry[] = data.map((e) => ({
+      id: e.id,
+      date: e.scheduled_date,
+      type: (e.deliverable_type as DeliverableType) || "poster",
+      topic: e.content_topic || "Untitled Content",
+      status: e.status,
+    }))
+    setEntries(mapped)
+    setLoading(false)
+  }, [token])
+
+  useEffect(() => {
+    fetchCalendar()
+  }, [fetchCalendar])
+
+  async function handleTestGenerate() {
+    if (!token) return
+    setGenerating(true)
+    try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/calendar`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/calendar/test-generate`,
         {
+          method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         }
       )
-
       if (!res.ok) {
-        setLoading(false)
+        const body = await res.json().catch(() => null)
+        console.error("[Calendar] test-generate failed:", res.status, body)
         return
       }
-
-      const data: {
-        id: string
-        scheduled_date: string
-        deliverable_type: string
-        content_topic: string | null
-        status: string
-      }[] = await res.json()
-
-      const mapped: CalendarEntry[] = data.map((e) => ({
-        id: e.id,
-        date: e.scheduled_date,
-        type: (e.deliverable_type as DeliverableType) || "poster",
-        topic: e.content_topic || "Untitled Content",
-        status: mapStatus(e.status),
-      }))
-      setEntries(mapped)
-      setLoading(false)
+      const data = await res.json()
+      console.log("[Calendar] Generated", data.entries_created, "entries")
+      await fetchCalendar()
+    } catch (err) {
+      console.error("[Calendar] test-generate network error:", err)
+    } finally {
+      setGenerating(false)
     }
+  }
 
-    fetchCalendar()
-  }, [token])
+  async function handleTestReset() {
+    if (!token) return
+    setResetting(true)
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/calendar/test-reset`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+      if (!res.ok) {
+        const body = await res.json().catch(() => null)
+        console.error("[Calendar] test-reset failed:", res.status, body)
+        return
+      }
+      const data = await res.json()
+      console.log("[Calendar] Deleted", data.entries_deleted, "entries")
+      await fetchCalendar()
+    } catch (err) {
+      console.error("[Calendar] test-reset network error:", err)
+    } finally {
+      setResetting(false)
+    }
+  }
 
   function navigateMonth(direction: number) {
     const totalMonths = currentYear * 12 + currentMonth + direction
@@ -152,9 +171,12 @@ export default function CalendarPage() {
     setCurrentYear(newYear)
   }
 
-  const sortedEntries = [...entries].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  )
+  const filteredEntries = entries.filter((e) => {
+    const d = new Date(e.date + "T00:00:00")
+    return d.getFullYear() === currentYear && d.getMonth() === currentMonth
+  })
+
+  const quota = getQuotaSummary(filteredEntries)
 
   const calendarCells: (number | null)[] = []
   for (let i = 0; i < firstDay; i++) calendarCells.push(null)
@@ -162,40 +184,54 @@ export default function CalendarPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
+      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#0D2137]">Content Calendar</h1>
           <p className="mt-1 text-sm text-gray-500">
-            View your scheduled and upcoming content.
+            Your scheduled content for the month.
           </p>
         </div>
 
-        <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1">
-          <button
-            onClick={() => setViewMode("month")}
-            className={cn(
-              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-              viewMode === "month"
-                ? "bg-[#2B7BC4] text-white"
-                : "text-gray-500 hover:text-gray-700"
+        {/* Quota summary — top right */}
+        {!loading && filteredEntries.length > 0 && (
+          <div className="flex items-center gap-4 text-sm font-semibold">
+            {quota.poster > 0 && (
+              <span className="flex items-center gap-1.5">
+                <span className="inline-flex size-5 items-center justify-center rounded bg-[#6BAED6] text-[10px] font-bold text-white">P</span>
+                <span className="text-[#6BAED6]">{quota.poster} POSTERS</span>
+              </span>
             )}
-          >
-            Month View
-          </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={cn(
-              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-              viewMode === "list"
-                ? "bg-[#2B7BC4] text-white"
-                : "text-gray-500 hover:text-gray-700"
+            {quota.story > 0 && (
+              <span className="flex items-center gap-1.5">
+                <span className="inline-flex size-5 items-center justify-center rounded bg-[#F0A87E] text-[10px] font-bold text-white">S</span>
+                <span className="text-[#F0A87E]">{quota.story} STORIES</span>
+              </span>
             )}
-          >
-            List View
-          </button>
-        </div>
+            {quota.reel > 0 && (
+              <span className="flex items-center gap-1.5">
+                <span className="inline-flex size-5 items-center justify-center rounded bg-[#9B59B6] text-[10px] font-bold text-white">R</span>
+                <span className="text-[#9B59B6]">{quota.reel} REELS</span>
+              </span>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleTestReset}
+              disabled={resetting}
+              className="ml-2 text-gray-400 hover:text-red-500"
+            >
+              {resetting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Trash2 className="size-4" />
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
+      {/* Calendar Grid */}
       {loading ? (
         <Card className="rounded-xl shadow-[var(--shadow-card)]">
           <CardContent className="p-6">
@@ -206,29 +242,54 @@ export default function CalendarPage() {
             </div>
           </CardContent>
         </Card>
-      ) : viewMode === "month" ? (
+      ) : filteredEntries.length === 0 ? (
+        <Card className="rounded-xl shadow-[var(--shadow-card)]">
+          <CardContent className="flex flex-col items-center justify-center py-20">
+            <div className="flex size-16 items-center justify-center rounded-full bg-[#E8F4FD]">
+              <span className="text-3xl">📅</span>
+            </div>
+            <h3 className="mt-5 text-lg font-semibold text-[#0D2137]">
+              Your content calendar is being set up
+            </h3>
+            <p className="mt-2 max-w-sm text-center text-sm text-gray-500">
+              Check back after your content plan is approved.
+            </p>
+            <div className="mt-6 flex items-center gap-3">
+              <Button
+                onClick={handleTestGenerate}
+                disabled={generating || resetting}
+              >
+                {generating && <Loader2 className="mr-2 size-4 animate-spin" />}
+                {generating ? "Generating…" : "Dev: Generate Test Calendar"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleTestReset}
+                disabled={generating || resetting}
+              >
+                {resetting && <Loader2 className="mr-2 size-4 animate-spin" />}
+                {resetting ? "Deleting…" : "Dev: Reset Calendar"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
         <Card className="rounded-xl shadow-[var(--shadow-card)]">
           <CardContent className="p-4 sm:p-6">
+            {/* Month navigation */}
             <div className="flex items-center justify-between mb-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigateMonth(-1)}
-              >
+              <Button variant="ghost" size="icon" onClick={() => navigateMonth(-1)}>
                 <ChevronLeft className="size-4" />
               </Button>
               <h2 className="text-base font-semibold text-[#0D2137]">
                 {MONTH_NAMES[currentMonth]} {currentYear}
               </h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigateMonth(1)}
-              >
+              <Button variant="ghost" size="icon" onClick={() => navigateMonth(1)}>
                 <ChevronRight className="size-4" />
               </Button>
             </div>
 
+            {/* Weekday headers */}
             <div className="grid grid-cols-7 gap-px rounded-lg border border-gray-200 bg-gray-200">
               {WEEKDAYS.map((day) => (
                 <div
@@ -239,9 +300,15 @@ export default function CalendarPage() {
                 </div>
               ))}
 
+              {/* Day cells */}
               {calendarCells.map((day, index) => {
                 if (day === null) {
-                  return <div key={`empty-${index}`} className="bg-white min-h-[72px] sm:min-h-[88px]" />
+                  return (
+                    <div
+                      key={`empty-${index}`}
+                      className="bg-white min-h-[72px] sm:min-h-[88px]"
+                    />
+                  )
                 }
 
                 const dayEntries = getEntriesForDay(entries, currentYear, currentMonth, day)
@@ -255,7 +322,8 @@ export default function CalendarPage() {
                       isToday && "bg-[#E8F4FD]"
                     )}
                   >
-                    <div className="flex items-center justify-between">
+                    {/* Day number */}
+                    <div className="flex items-center justify-between mb-1">
                       <span
                         className={cn(
                           "text-xs font-medium",
@@ -268,105 +336,49 @@ export default function CalendarPage() {
                       </span>
                     </div>
 
-                    <div className="mt-1 space-y-0.5">
-                      {dayEntries.slice(0, 3).map((entry) => {
-                        const config = STATUS_CONFIG[entry.status]
+                    {/* Color-coded tiles */}
+                    <div className="flex flex-wrap gap-1">
+                      {dayEntries.map((entry) => {
+                        const config = TYPE_TILE_CONFIG[entry.type]
                         return (
                           <div
                             key={entry.id}
-                            className="group flex items-center gap-1 rounded px-1 py-0.5 text-[10px] hover:bg-gray-50"
-                            title={entry.topic}
+                            title={`${config.letter}: ${entry.topic}`}
+                            className={cn(
+                              "flex size-9 items-center justify-center rounded-md text-sm font-bold shadow-sm",
+                              config.bg,
+                              config.text
+                            )}
                           >
-                            <span className={cn("size-1.5 shrink-0 rounded-full", config.dotColor)} />
-                            <span className="truncate text-gray-600">
-                              {TYPE_ICONS[entry.type]} {entry.topic}
-                            </span>
+                            {config.letter}
                           </div>
                         )
                       })}
-                      {dayEntries.length > 3 && (
-                        <span className="block px-1 text-[10px] text-gray-400">
-                          +{dayEntries.length - 3} more
-                        </span>
-                      )}
                     </div>
                   </div>
                 )
               })}
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-4">
-              {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-                <div key={key} className="flex items-center gap-1.5">
-                  <span className={cn("size-2 rounded-full", config.dotColor)} />
-                  <span className="text-xs text-gray-500">{config.label}</span>
-                </div>
-              ))}
+            {/* Footer legend */}
+            <div className="mt-4 flex items-center justify-center gap-6 text-sm font-medium text-gray-600">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-flex size-5 items-center justify-center rounded bg-[#6BAED6] text-[10px] font-bold text-white">P</span>
+                POSTER
+              </span>
+              <span className="text-gray-300">|</span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-flex size-5 items-center justify-center rounded bg-[#9B59B6] text-[10px] font-bold text-white">R</span>
+                REEL
+              </span>
+              <span className="text-gray-300">|</span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-flex size-5 items-center justify-center rounded bg-[#F0A87E] text-[10px] font-bold text-white">S</span>
+                STORY
+              </span>
             </div>
           </CardContent>
         </Card>
-      ) : (
-        <div className="space-y-3">
-          {sortedEntries.length === 0 ? (
-            <Card className="rounded-xl shadow-[var(--shadow-card)]">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <CalendarDays className="size-12 text-gray-300" />
-                <h3 className="mt-4 text-base font-semibold text-[#0D2137]">
-                  No scheduled content
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Your content calendar is empty. Check back soon!
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            sortedEntries.map((entry) => {
-              const config = STATUS_CONFIG[entry.status]
-              const entryDate = new Date(entry.date + "T00:00:00")
-              const isPast = entryDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())
-
-              return (
-                <Card
-                  key={entry.id}
-                  className={cn(
-                    "rounded-xl shadow-[var(--shadow-card)] transition-all hover:shadow-md",
-                    isPast && "opacity-70"
-                  )}
-                >
-                  <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-start gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gray-50">
-                        <span className="text-lg">{TYPE_ICONS[entry.type]}</span>
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="text-sm font-semibold text-[#0D2137]">
-                          {entry.topic}
-                        </h3>
-                        <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <CalendarDays className="size-3" />
-                            {formatDate(entry.date)}
-                          </span>
-                          <span className="text-gray-300">·</span>
-                          <span className="capitalize">{entry.type}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Badge
-                      className={cn(
-                        "w-fit border text-[10px] font-medium sm:self-center",
-                        config.className
-                      )}
-                    >
-                      {config.label}
-                    </Badge>
-                  </CardContent>
-                </Card>
-              )
-            })
-          )}
-        </div>
       )}
     </div>
   )

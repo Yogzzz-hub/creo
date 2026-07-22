@@ -231,6 +231,8 @@
 - [x] 9.14 Write Celery task check_quota_exhaustion()
 - [x] 9.15 Write Celery task auto_assign_tasks()
 - [x] 9.16 Write Celery task generate_content_calendar()
+- [x] 9.16a Update generate_content_calendar — 7-day onboarding buffer, new plan quotas (Starter: 8P/4R/10S, Growth: 12P/8R/15S, Pro: 16P/12R/20S), even distribution algorithm
+- [x] 9.16b Update portal calendar UI — color-coded letter tiles (P=Blue, R=Purple, S=Peach), quota header summary, footer legend
 - [ ] 9.17 Test all Celery tasks
 - [ ] 9.18 Test all WhatsApp messages
 - [ ] 9.19 Test all Resend emails

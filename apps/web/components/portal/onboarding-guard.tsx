@@ -13,15 +13,14 @@ import { Loader2 } from "lucide-react"
  *   3. isRestricted = true, blocked → OnboardingRequiredView
  *   4. isRestricted = true, !blocked → render children
  *
- * This guard NEVER redirects active users. Its sole purpose is to block
- * non-active users from restricted portal routes. The fully-onboarded
- * auto-redirect lives in the onboarding layout, not here.
+ * When blocked on a restricted route, the hook polls /api/v1/auth/me/role
+ * every 2s to detect when a payment webhook has activated the account,
+ * then unblocks automatically without a page reload.
  */
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { isRestricted, ready, blocked } = useOnboardingGuard()
 
   // Non-restricted routes: render children on the very first render.
-  // No async delay, no intermediate spinner.
   if (!isRestricted) {
     return (
       <div key="portal-content">
@@ -39,7 +38,7 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Restricted route — user is not active
+  // Restricted route — user is not active (auto-polling is active in the hook)
   if (blocked) {
     return <OnboardingRequiredView />
   }
