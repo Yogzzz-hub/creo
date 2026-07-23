@@ -4,8 +4,10 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
 from core.database import get_db
 from core.security import RequireAdmin
@@ -19,9 +21,29 @@ from models.subscription import Subscription
 from models.task import Task
 from models.team import TeamMember
 from models.user import User
+from models.ticket import Ticket
 from utils.exports import generate_excel_report, generate_pdf_report
 
 router = APIRouter(prefix="/api/v1/admin/reports", tags=["admin-reports"])
+
+
+class MonthlyRevenueResponse(BaseModel):
+    month: str
+    revenue: float
+
+
+class TicketMetricsResponse(BaseModel):
+    total_tickets: int
+    resolved: int
+    avg_resolution_hours: float
+    by_status: dict
+
+
+class DeliverableMetricsResponse(BaseModel):
+    total: int
+    approved: int
+    pending: int
+    revision: int
 
 
 async def _gather_kpi_data(db: AsyncSession, current_user: RequireAdmin) -> dict:
@@ -159,4 +181,110 @@ async def export_kpi_excel(
         io.BytesIO(excel_bytes),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": "attachment; filename=creo-kpi-report.xlsx"},
+    )
+
+
+@router.get("/revenue", response_model=list[MonthlyRevenueResponse])
+async def get_revenue_report(
+    _current_user: RequireAdmin,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(
+            func.date_trunc("month", Subscription.created_at).label("month"),
+            func.coalesce(func.sum(Plan.monthly_price), 0.0).label("revenue"),
+        )
+        .join(Plan, Plan.id == Subscription.plan_id)
+        .where(Subscription.status == "active")
+        .group_by(func.date_trunc("month", Subscription.created_at))
+        .order_by(func.date_trunc("month", Subscription.created_at).desc())
+        .limit(12)
+    )
+    rows = result.all()
+
+    return [
+        MonthlyRevenueResponse(
+            month=row.month.strftime("%b %Y") if row.month else "Unknown",
+            revenue=float(row.revenue),
+        )
+        for row in rows
+    ]
+
+
+@router.get("/tickets", response_model=TicketMetricsResponse)
+async def get_ticket_metrics(
+    _current_user: RequireAdmin,
+    db: AsyncSession = Depends(get_db),
+):
+    total_result = await db.execute(select(func.count(Ticket.id)))
+    total = total_result.scalar() or 0
+
+    resolved_result = await db.execute(
+        select(func.count(Ticket.id)).where(Ticket.status == "resolved")
+    )
+    resolved = resolved_result.scalar() or 0
+
+    status_result = await db.execute(
+        select(Ticket.status, func.count(Ticket.id))
+        .group_by(Ticket.status)
+    )
+    by_status = {}
+    for row in status_result.all():
+        status_key = row.status.value if hasattr(row.status, 'value') else str(row.status)
+        by_status[status_key] = row.count
+
+    avg_hours = 0.0
+    if resolved > 0:
+        avg_result = await db.execute(
+            select(
+                func.avg(
+                    func.extract("epoch", Ticket.resolved_at - Ticket.created_at) / 3600
+                )
+            ).where(Ticket.resolved_at.isnot(None))
+        )
+        avg_hours = float(avg_result.scalar() or 0.0)
+
+    return TicketMetricsResponse(
+        total_tickets=total,
+        resolved=resolved,
+        avg_resolution_hours=round(avg_hours, 1),
+        by_status=by_status,
+    )
+
+
+@router.get("/deliverables", response_model=DeliverableMetricsResponse)
+async def get_deliverable_metrics(
+    _current_user: RequireAdmin,
+    db: AsyncSession = Depends(get_db),
+):
+    total_result = await db.execute(select(func.count(Deliverable.id)))
+    total = total_result.scalar() or 0
+
+    approved_result = await db.execute(
+        select(func.count(Deliverable.id)).where(Deliverable.status == DeliverableStatus.approved)
+    )
+    approved = approved_result.scalar() or 0
+
+    pending_result = await db.execute(
+        select(func.count(Deliverable.id)).where(
+            Deliverable.status == DeliverableStatus.pending_approval
+        )
+    )
+    pending = pending_result.scalar() or 0
+
+    revision_result = await db.execute(
+        select(func.count(Deliverable.id)).where(
+            Deliverable.status.in_([
+                DeliverableStatus.revision_in_progress,
+                DeliverableStatus.revised_pending_approval,
+            ])
+        )
+    )
+    revision = revision_result.scalar() or 0
+
+    return DeliverableMetricsResponse(
+        total=total,
+        approved=approved,
+        pending=pending,
+        revision=revision,
     )

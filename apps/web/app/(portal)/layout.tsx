@@ -22,7 +22,7 @@ export default function PortalLayout({
         <div className="min-h-screen bg-[#E8F4FD]">
           <DesktopSidebar />
 
-          <div className="lg:pl-[--sidebar-width]">
+          <div className="lg:pl-[var(--sidebar-width)]">
             <PortalHeader />
             <SubscriptionGuard />
 

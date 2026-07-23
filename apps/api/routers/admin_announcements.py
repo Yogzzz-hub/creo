@@ -1,11 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
 from core.database import get_db
 from core.security import RequireAdmin
 from models.announcement import Announcement
 from schemas.announcement import AnnouncementCreate, AnnouncementResponse, TargetAudience
+
+
+class AnnouncementUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    type: Optional[str] = None
+    target_departments: Optional[list[str]] = None
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin-announcements"])
 
@@ -102,3 +111,44 @@ async def delete_announcement(
 
     await db.delete(announcement)
     await db.commit()
+
+
+@router.patch("/announcements/{announcement_id}", response_model=AnnouncementResponse)
+async def update_announcement(
+    announcement_id: str,
+    payload: AnnouncementUpdate,
+    _current_user: RequireAdmin,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Announcement).where(Announcement.id == announcement_id)
+    )
+    announcement = result.scalar_one_or_none()
+
+    if announcement is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Announcement not found",
+        )
+
+    if payload.title is not None:
+        announcement.title = payload.title
+    if payload.content is not None:
+        announcement.content = payload.content
+    if payload.type is not None:
+        announcement.type = payload.type
+    if payload.target_departments is not None:
+        announcement.target_departments = payload.target_departments
+
+    await db.commit()
+    await db.refresh(announcement)
+
+    return AnnouncementResponse(
+        id=announcement.id,
+        author_id=announcement.author_id,
+        title=announcement.title,
+        content=announcement.content,
+        type=announcement.type,
+        target_departments=announcement.target_departments,
+        created_at=announcement.created_at,
+    )

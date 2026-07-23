@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Plus, Megaphone, Loader2 } from "lucide-react"
+import { Plus, Megaphone, Pencil, Trash2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { adminFetch } from "@/lib/admin-api"
 
@@ -51,43 +51,26 @@ function formatDepartment(d: string) {
 function getTypeBadge(type: string) {
   switch (type) {
     case "mom":
-      return (
-        <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
-          MoM
-        </span>
-      )
+      return <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">MoM</span>
     case "newsletter":
-      return (
-        <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
-          Newsletter
-        </span>
-      )
+      return <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Newsletter</span>
     case "general":
-      return (
-        <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-          General
-        </span>
-      )
+      return <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">General</span>
     default:
-      return (
-        <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-700">
-          {type}
-        </span>
-      )
+      return <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-700">{type}</span>
   }
 }
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  })
+  return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
 }
 
 export default function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -120,6 +103,23 @@ export default function AnnouncementsPage() {
     }))
   }
 
+  function openEditDialog(ann: Announcement) {
+    setSelectedAnnouncement(ann)
+    const typeMap: Record<string, string> = { mom: "MoM", newsletter: "Newsletter", general: "General Alert" }
+    setFormData({
+      title: ann.title,
+      type: typeMap[ann.type] ?? ann.type,
+      departments: ann.target_departments ?? [],
+      description: ann.content === ann.title ? "" : ann.content,
+    })
+    setEditDialogOpen(true)
+  }
+
+  function openDeleteDialog(ann: Announcement) {
+    setSelectedAnnouncement(ann)
+    setDeleteDialogOpen(true)
+  }
+
   async function handleSubmit() {
     if (!formData.title || !formData.type) {
       toast.error("Please fill in all required fields")
@@ -127,33 +127,66 @@ export default function AnnouncementsPage() {
     }
     setSubmitting(true)
     try {
-      const typeMap: Record<string, string> = {
-        MoM: "mom",
-        Newsletter: "newsletter",
-        "General Alert": "general",
-      }
+      const typeMap: Record<string, string> = { MoM: "mom", Newsletter: "newsletter", "General Alert": "general" }
       await adminFetch("/api/v1/admin/announcements", {
         method: "POST",
         body: JSON.stringify({
           title: formData.title,
           content: formData.description || formData.title,
           type: typeMap[formData.type] ?? "general",
-          target_departments:
-            formData.departments.length === 0 || formData.departments.length === DEPARTMENTS.length
-              ? null
-              : formData.departments,
+          target_departments: formData.departments.length === 0 || formData.departments.length === DEPARTMENTS.length ? null : formData.departments,
         }),
       })
-      toast.success("Announcement published", {
-        description: `"${formData.title}" has been published.`,
-      })
+      toast.success("Announcement published", { description: `"${formData.title}" has been published.` })
       setFormData({ title: "", type: "", departments: [], description: "" })
       setDialogOpen(false)
       fetchAnnouncements()
     } catch (err) {
-      toast.error("Failed to publish", {
-        description: err instanceof Error ? err.message : "Unknown error",
+      toast.error("Failed to publish", { description: err instanceof Error ? err.message : "Unknown error" })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleUpdate() {
+    if (!selectedAnnouncement || !formData.title || !formData.type) {
+      toast.error("Please fill in all required fields")
+      return
+    }
+    setSubmitting(true)
+    try {
+      const typeMap: Record<string, string> = { MoM: "mom", Newsletter: "newsletter", "General Alert": "general" }
+      await adminFetch(`/api/v1/admin/announcements/${selectedAnnouncement.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: formData.title,
+          content: formData.description || formData.title,
+          type: typeMap[formData.type] ?? "general",
+          target_departments: formData.departments.length === 0 || formData.departments.length === DEPARTMENTS.length ? null : formData.departments,
+        }),
       })
+      toast.success("Announcement updated")
+      setEditDialogOpen(false)
+      fetchAnnouncements()
+    } catch (err) {
+      toast.error("Failed to update", { description: err instanceof Error ? err.message : "Unknown error" })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!selectedAnnouncement) return
+    setSubmitting(true)
+    try {
+      await adminFetch(`/api/v1/admin/announcements/${selectedAnnouncement.id}`, {
+        method: "DELETE",
+      })
+      toast.success("Announcement deleted")
+      setDeleteDialogOpen(false)
+      fetchAnnouncements()
+    } catch (err) {
+      toast.error("Failed to delete", { description: err instanceof Error ? err.message : "Unknown error" })
     } finally {
       setSubmitting(false)
     }
@@ -163,9 +196,7 @@ export default function AnnouncementsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0D2137]">
-            Platform Announcements
-          </h1>
+          <h1 className="text-2xl font-bold text-[#0D2137]">Announcements</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Create and manage internal announcements, newsletters, and alerts
           </p>
@@ -181,9 +212,7 @@ export default function AnnouncementsPage() {
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
       ) : error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
-        </div>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
       ) : (
         <div className="rounded-lg border bg-white">
           <Table>
@@ -191,19 +220,16 @@ export default function AnnouncementsPage() {
               <TableRow>
                 <TableHead>Title</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Target
-                </TableHead>
+                <TableHead className="hidden md:table-cell">Target</TableHead>
                 <TableHead className="hidden lg:table-cell">Date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {announcements.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      No announcements yet.
-                    </p>
+                  <TableCell colSpan={5} className="h-24 text-center">
+                    <p className="text-sm text-muted-foreground">No announcements yet.</p>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -220,12 +246,20 @@ export default function AnnouncementsPage() {
                     </TableCell>
                     <TableCell>{getTypeBadge(ann.type)}</TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground">
-                      {ann.target_departments
-                        ? ann.target_departments.map(formatDepartment).join(", ")
-                        : "All Departments"}
+                      {ann.target_departments ? ann.target_departments.map(formatDepartment).join(", ") : "All Departments"}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-muted-foreground">
                       {formatDate(ann.created_at)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(ann)}>
+                          <Pencil className="size-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(ann)} className="text-red-600 hover:bg-red-50 hover:text-red-700">
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -235,97 +269,122 @@ export default function AnnouncementsPage() {
         </div>
       )}
 
+      {/* Create Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>New Announcement</DialogTitle>
+            <DialogDescription>Create an announcement to share with your team</DialogDescription>
+          </DialogHeader>
+          <AnnouncementForm formData={formData} setFormData={setFormData} onSubmit={handleSubmit} onCancel={() => setDialogOpen(false)} submitting={submitting} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Announcement</DialogTitle>
+            <DialogDescription>Update the announcement details</DialogDescription>
+          </DialogHeader>
+          <AnnouncementForm formData={formData} setFormData={setFormData} onSubmit={handleUpdate} onCancel={() => setEditDialogOpen(false)} submitting={submitting} submitLabel="Update Announcement" />
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Announcement</DialogTitle>
             <DialogDescription>
-              Create an announcement to share with your team
+              Are you sure you want to delete "{selectedAnnouncement?.title}"? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="ann-title">Title</Label>
-              <Input
-                id="ann-title"
-                placeholder="e.g. Updated Content Guidelines"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Type</Label>
-              <Select
-                value={formData.type}
-                onValueChange={(v) =>
-                  setFormData({ ...formData, type: v ?? "" })
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MoM">MoM (Minutes of Meeting)</SelectItem>
-                  <SelectItem value="Newsletter">Newsletter</SelectItem>
-                  <SelectItem value="General Alert">General Alert</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Target Departments</Label>
-              <div className="flex flex-wrap gap-2">
-                {DEPARTMENTS.map((dept) => {
-                  const selected = formData.departments.includes(dept)
-                  return (
-                    <button
-                      key={dept}
-                      type="button"
-                      onClick={() => handleToggleDept(dept)}
-                      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                        selected
-                          ? "border-[#2B7BC4] bg-[#2B7BC4] text-white"
-                          : "border-border bg-white text-muted-foreground hover:bg-muted"
-                      }`}
-                    >
-                      {formatDepartment(dept)}
-                    </button>
-                  )
-                })}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Leave empty to send to all departments
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Description (optional)</Label>
-              <Textarea
-                placeholder="Add context or a summary of the announcement..."
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                rows={3}
-              />
-            </div>
-          </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={submitting}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit} disabled={submitting}>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={submitting}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={submitting}>
               {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Publish Announcement
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+function AnnouncementForm({
+  formData,
+  setFormData,
+  onSubmit,
+  onCancel,
+  submitting,
+  submitLabel = "Publish Announcement",
+}: {
+  formData: { title: string; type: string; departments: string[]; description: string }
+  setFormData: React.Dispatch<React.SetStateAction<{ title: string; type: string; departments: string[]; description: string }>>
+  onSubmit: () => void
+  onCancel: () => void
+  submitting: boolean
+  submitLabel?: string
+}) {
+  function handleToggleDept(dept: string) {
+    setFormData((prev) => ({
+      ...prev,
+      departments: prev.departments.includes(dept)
+        ? prev.departments.filter((d) => d !== dept)
+        : [...prev.departments, dept],
+    }))
+  }
+
+  return (
+    <div className="space-y-4 py-2">
+      <div className="space-y-2">
+        <Label htmlFor="ann-title">Title</Label>
+        <Input id="ann-title" placeholder="e.g. Updated Content Guidelines" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Type</Label>
+        <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v ?? "" })}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="MoM">MoM (Minutes of Meeting)</SelectItem>
+            <SelectItem value="Newsletter">Newsletter</SelectItem>
+            <SelectItem value="General Alert">General Alert</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Target Departments</Label>
+        <div className="flex flex-wrap gap-2">
+          {DEPARTMENTS.map((dept) => {
+            const selected = formData.departments.includes(dept)
+            return (
+              <button key={dept} type="button" onClick={() => handleToggleDept(dept)} className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${selected ? "border-[#2B7BC4] bg-[#2B7BC4] text-white" : "border-border bg-white text-muted-foreground hover:bg-muted"}`}>
+                {formatDepartment(dept)}
+              </button>
+            )
+          })}
+        </div>
+        <p className="text-xs text-muted-foreground">Leave empty to send to all departments</p>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Description (optional)</Label>
+        <Textarea placeholder="Add context or a summary of the announcement..." value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={3} />
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" onClick={onCancel} disabled={submitting}>Cancel</Button>
+        <Button onClick={onSubmit} disabled={submitting}>
+          {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
+          {submitLabel}
+        </Button>
+      </DialogFooter>
     </div>
   )
 }

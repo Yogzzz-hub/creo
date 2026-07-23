@@ -29,7 +29,8 @@ import {
   SheetDescription,
   SheetFooter,
 } from "@/components/ui/sheet"
-import { Users, Plus, Pencil, Loader2 } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Users, Plus, Pencil, Loader2, Search } from "lucide-react"
 import { toast } from "sonner"
 import { adminFetch } from "@/lib/admin-api"
 
@@ -60,15 +61,11 @@ interface TeamMember {
 }
 
 function formatDepartment(dept: string) {
-  return dept
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase())
+  return dept.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 function formatRole(role: string) {
-  return role
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase())
+  return role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 function totalCap(m: TeamMember) {
@@ -81,6 +78,8 @@ export default function TeamManagementPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [search, setSearch] = useState("")
+  const [deptFilter, setDeptFilter] = useState("all")
 
   const {
     register,
@@ -130,9 +129,7 @@ export default function TeamManagementPage() {
         }),
       })
       setEmployees((prev) =>
-        [...prev, newMember].sort((a, b) =>
-          a.full_name.localeCompare(b.full_name)
-        )
+        [...prev, newMember].sort((a, b) => a.full_name.localeCompare(b.full_name))
       )
       toast.success("Employee added successfully", {
         description: `${data.full_name} has been added to the ${formatDepartment(data.department)} team.`,
@@ -147,6 +144,19 @@ export default function TeamManagementPage() {
       setSubmitting(false)
     }
   }
+
+  const filtered = employees.filter((emp) => {
+    const matchesSearch =
+      search === "" ||
+      emp.full_name.toLowerCase().includes(search.toLowerCase()) ||
+      emp.email.toLowerCase().includes(search.toLowerCase())
+    const matchesDept = deptFilter === "all" || emp.department === deptFilter
+    return matchesSearch && matchesDept
+  })
+
+  const departments = [...new Set(employees.map((e) => e.department))]
+  const activeMembers = employees.filter((e) => e.is_active)
+  const totalCapacity = activeMembers.reduce((sum, m) => sum + totalCap(m), 0)
 
   if (loading) {
     return (
@@ -168,9 +178,7 @@ export default function TeamManagementPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0D2137]">
-            Team Management
-          </h1>
+          <h1 className="text-2xl font-bold text-[#0D2137]">Team Management</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Manage team members, departments, and workloads
           </p>
@@ -181,6 +189,60 @@ export default function TeamManagementPage() {
         </Button>
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Members</CardTitle>
+            <Users className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-[#0D2137]">{employees.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active Members</CardTitle>
+            <Users className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-emerald-600">{activeMembers.length}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Daily Capacity</CardTitle>
+            <Users className="size-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-[#0D2137]">{totalCapacity}</div>
+            <p className="mt-1 text-xs text-muted-foreground">tasks/day</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-9 pl-8"
+          />
+        </div>
+        <Select value={deptFilter} onValueChange={(v) => setDeptFilter(v ?? "all")}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Department" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Departments</SelectItem>
+            {departments.map((d) => (
+              <SelectItem key={d} value={d}>{formatDepartment(d)}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="rounded-lg border bg-white">
         <Table>
           <TableHeader>
@@ -188,65 +250,60 @@ export default function TeamManagementPage() {
               <TableHead>Name</TableHead>
               <TableHead>Department</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead className="hidden md:table-cell">
-                Daily Cap
-              </TableHead>
+              <TableHead className="hidden md:table-cell">Daily Cap</TableHead>
               <TableHead className="hidden md:table-cell">Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {employees.map((emp) => {
-              const cap = totalCap(emp)
-              return (
-                <TableRow key={emp.team_member_id}>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium text-[#0D2137]">
-                        {emp.full_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {emp.email}
-                      </p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium">
-                      {formatDepartment(emp.department)}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatRole(emp.role)}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <span className="text-sm font-semibold text-[#0D2137]">
-                      {cap}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {" "}
-                      tasks/day
-                    </span>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  <p className="text-sm text-muted-foreground">No team members found.</p>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((emp) => {
+                const cap = totalCap(emp)
+                return (
+                  <TableRow key={emp.team_member_id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium text-[#0D2137]">{emp.full_name}</p>
+                        <p className="text-xs text-muted-foreground">{emp.email}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-medium">
+                        {formatDepartment(emp.department)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatRole(emp.role)}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <span className="text-sm font-semibold text-[#0D2137]">{cap}</span>
+                      <span className="text-sm text-muted-foreground"> tasks/day</span>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
                         emp.is_active
                           ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                           : "border-gray-200 bg-gray-50 text-gray-500"
-                      }`}
-                    >
-                      {emp.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">
-                      <Pencil className="size-3.5" />
-                      Edit
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              )
-            })}
+                      }`}>
+                        {emp.is_active ? "Active" : "Inactive"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm">
+                        <Pencil className="size-3.5" />
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
+            )}
           </TableBody>
         </Table>
       </div>
@@ -260,58 +317,29 @@ export default function TeamManagementPage() {
             </SheetDescription>
           </SheetHeader>
 
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="flex flex-1 flex-col gap-4 px-4"
-          >
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col gap-4 px-4">
             <div className="space-y-2">
               <Label htmlFor="full_name">Name</Label>
-              <Input
-                id="full_name"
-                placeholder="e.g. John Doe"
-                {...register("full_name", { required: "Name is required" })}
-              />
-              {errors.full_name && (
-                <p className="text-xs text-red-600">
-                  {errors.full_name.message}
-                </p>
-              )}
+              <Input id="full_name" placeholder="e.g. John Doe" {...register("full_name", { required: "Name is required" })} />
+              {errors.full_name && <p className="text-xs text-red-600">{errors.full_name.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="e.g. john@creo.agency"
-                {...register("email", {
-                  required: "Email is required",
-                  pattern: {
-                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                    message: "Invalid email address",
-                  },
-                })}
-              />
-              {errors.email && (
-                <p className="text-xs text-red-600">{errors.email.message}</p>
-              )}
+              <Input id="email" type="email" placeholder="e.g. john@creo.agency" {...register("email", { required: "Email is required", pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Invalid email address" } })} />
+              {errors.email && <p className="text-xs text-red-600">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label>Department</Label>
-              <Select
-                value={departmentValue}
-                onValueChange={(v) => setValue("department", v ?? "")}
-              >
+              <Select value={departmentValue} onValueChange={(v) => setValue("department", v ?? "")}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="graphics">Graphics</SelectItem>
                   <SelectItem value="video">Video</SelectItem>
-                  <SelectItem value="content_writing">
-                    Content Writing
-                  </SelectItem>
+                  <SelectItem value="content_writing">Content Writing</SelectItem>
                   <SelectItem value="social_media">Social Media</SelectItem>
                   <SelectItem value="sales">Sales</SelectItem>
                   <SelectItem value="investor_relations">Investor Relations</SelectItem>
@@ -319,19 +347,12 @@ export default function TeamManagementPage() {
                   <SelectItem value="tech">Tech</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.department && (
-                <p className="text-xs text-red-600">
-                  {errors.department.message}
-                </p>
-              )}
+              {errors.department && <p className="text-xs text-red-600">{errors.department.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label>Role</Label>
-              <Select
-                value={watch("role")}
-                onValueChange={(v) => setValue("role", v ?? "")}
-              >
+              <Select value={watch("role")} onValueChange={(v) => setValue("role", v ?? "")}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
@@ -340,68 +361,28 @@ export default function TeamManagementPage() {
                   <SelectItem value="team_lead">Team Lead</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.role && (
-                <p className="text-xs text-red-600">{errors.role.message}</p>
-              )}
+              {errors.role && <p className="text-xs text-red-600">{errors.role.message}</p>}
             </div>
 
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="daily_cap_posters">Posters</Label>
-                <Input
-                  id="daily_cap_posters"
-                  type="number"
-                  min={0}
-                  {...register("daily_cap_posters", {
-                    valueAsNumber: true,
-                    min: { value: 0, message: "Min 0" },
-                  })}
-                />
+                <Input id="daily_cap_posters" type="number" min={0} {...register("daily_cap_posters", { valueAsNumber: true, min: { value: 0, message: "Min 0" } })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="daily_cap_reels">Reels</Label>
-                <Input
-                  id="daily_cap_reels"
-                  type="number"
-                  min={0}
-                  {...register("daily_cap_reels", {
-                    valueAsNumber: true,
-                    min: { value: 0, message: "Min 0" },
-                  })}
-                />
+                <Input id="daily_cap_reels" type="number" min={0} {...register("daily_cap_reels", { valueAsNumber: true, min: { value: 0, message: "Min 0" } })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="daily_cap_stories">Stories</Label>
-                <Input
-                  id="daily_cap_stories"
-                  type="number"
-                  min={0}
-                  {...register("daily_cap_stories", {
-                    valueAsNumber: true,
-                    min: { value: 0, message: "Min 0" },
-                  })}
-                />
+                <Input id="daily_cap_stories" type="number" min={0} {...register("daily_cap_stories", { valueAsNumber: true, min: { value: 0, message: "Min 0" } })} />
               </div>
             </div>
 
             <SheetFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDrawerOpen(false)}
-                disabled={submitting}
-              >
-                Cancel
-              </Button>
+              <Button type="button" variant="outline" onClick={() => setDrawerOpen(false)} disabled={submitting}>Cancel</Button>
               <Button type="submit" disabled={submitting}>
-                {submitting ? (
-                  <>
-                    <Loader2 className="mr-2 size-4 animate-spin" />
-                    Adding...
-                  </>
-                ) : (
-                  "Add Employee"
-                )}
+                {submitting ? (<><Loader2 className="mr-2 size-4 animate-spin" />Adding...</>) : "Add Employee"}
               </Button>
             </SheetFooter>
           </form>

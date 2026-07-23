@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, Shield, Zap, Clock } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { SITE } from "@/lib/constants";
 import {
   Card,
   CardContent,
@@ -206,6 +207,28 @@ export default async function PricingPage() {
               })}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Custom Plan CTA */}
+      <section className="bg-white py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold tracking-tight text-brand-dark sm:text-4xl">
+            Need a Customized Plan?
+          </h2>
+          <div className="mt-8">
+            <a
+              href={`https://wa.me/${SITE.whatsapp}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({
+                className:
+                  "bg-[#2B7BC4] hover:bg-[#2B7BC4]/90 text-white h-11 px-8 text-base font-semibold",
+              })}
+            >
+              Talk to Our Team
+            </a>
+          </div>
         </div>
       </section>
 
