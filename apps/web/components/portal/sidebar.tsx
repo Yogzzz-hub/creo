@@ -55,7 +55,7 @@ export function DesktopSidebar() {
   }
 
   return (
-    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-[--sidebar-width] lg:flex-col">
+    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-[var(--sidebar-width)] lg:flex-col">
       <div className="flex grow flex-col gap-y-6 bg-[#0D2137] px-4 pt-6 pb-4">
         <Link href="/portal" className="flex items-center gap-2 px-2">
           <span className="text-xl font-bold text-white tracking-tight">

@@ -15,25 +15,30 @@ const ROLE_HOMES: Record<string, string> = {
   investor_relations: "/admin/reports",
 };
 
+const ADMIN_ROLES = ["admin", "super_admin"];
+const TEAM_ROLES = ["team_member", "team_lead"];
+
 function isProtectedRoute(pathname: string): boolean {
   if (PUBLIC_ROUTES.some((route) => pathname === route)) return false;
   return PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
-function getClientHome(role: string): string {
+function getHome(role: string): string {
   return ROLE_HOMES[role] ?? "/portal";
 }
 
 function canAccessRoute(role: string, pathname: string): boolean {
-  if (role === "admin" || role === "super_admin") return true;
+  // Admin/super_admin can access everything
+  if (ADMIN_ROLES.includes(role)) return true;
+
   if (pathname.startsWith("/admin") || pathname.startsWith("/kpi")) {
     if (role === "investor_relations") {
       return pathname === "/admin/reports" || pathname.startsWith("/admin/reports");
     }
-    return role === "admin" || role === "super_admin" || role === "investor_relations" || role === "team_lead";
+    return TEAM_ROLES.includes(role) || role === "investor_relations";
   }
   if (pathname.startsWith("/dashboard")) {
-    return role === "team_member" || role === "team_lead";
+    return TEAM_ROLES.includes(role);
   }
   if (pathname.startsWith("/portal") || pathname.startsWith("/onboarding")) {
     return role === "client";
@@ -44,32 +49,29 @@ function canAccessRoute(role: string, pathname: string): boolean {
   return false;
 }
 
-async function fetchUserRole(accessToken: string): Promise<string> {
+async function fetchUserRole(accessToken: string): Promise<string | null> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const timeout = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       signal: controller.signal,
     });
     clearTimeout(timeout);
-    if (!res.ok) return "client";
+    if (!res.ok) return null;
     const data = await res.json();
-    return data.role ?? "client";
+    return data.role ?? null;
   } catch {
-    return "client";
+    return null;
   }
 }
 
-const ONBOARDING_STEPS = ["/onboarding/verify", "/onboarding/terms", "/onboarding/payment", "/onboarding/questionnaire", "/onboarding/complete"];
-
-function getOnboardingStepIndex(pathname: string): number {
-  return ONBOARDING_STEPS.findIndex((step) => pathname.startsWith(step));
-}
-
-function isOnboardingRoute(pathname: string): boolean {
-  return ONBOARDING_STEPS.some((step) => pathname.startsWith(step));
+function resolveRole(metadataRole: string, backendRole: string | null): string {
+  // If backend returned a valid role (not null/undefined), prefer it
+  if (backendRole && backendRole !== "client") return backendRole;
+  // If backend returned "client" or failed, use metadata
+  return metadataRole || "client";
 }
 
 export async function middleware(request: NextRequest) {
@@ -97,9 +99,9 @@ export async function middleware(request: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
-
   const pathname = request.nextUrl.pathname;
 
+  // Unauthenticated user trying to access protected route → redirect to login
   if (!user && isProtectedRoute(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -107,44 +109,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Authenticated user on a protected route → check role and access
   if (user && isProtectedRoute(pathname)) {
-    const metadataRole = user.user_metadata?.role ?? "client";
+    const metadataRole = (user.user_metadata?.role as string) ?? "client";
     const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
-    const backendRole = accessToken ? await fetchUserRole(accessToken) : metadataRole;
-    const role = backendRole !== "client" ? backendRole : metadataRole;
+    const backendRole = accessToken ? await fetchUserRole(accessToken) : null;
+    const role = resolveRole(metadataRole, backendRole);
 
     if (!canAccessRoute(role, pathname)) {
       const url = request.nextUrl.clone();
-      url.pathname = getClientHome(role);
+      url.pathname = getHome(role);
       return NextResponse.redirect(url);
     }
-
-    // TODO: Restore route guards after testing UI
-    // if (isOnboardingRoute(pathname) && role === "client") {
-    //   const stepIndex = getOnboardingStepIndex(pathname);
-    //   const emailVerified = !!user.email_confirmed_at;
-    //
-    //   if (!emailVerified && stepIndex > 0) {
-    //     const url = request.nextUrl.clone();
-    //     url.pathname = "/onboarding/verify";
-    //     return NextResponse.redirect(url);
-    //   }
-    //
-    //   if (stepIndex > 1 && !emailVerified) {
-    //     const url = request.nextUrl.clone();
-    //     url.pathname = "/onboarding/verify";
-    //     return NextResponse.redirect(url);
-    //   }
-    // }
   }
 
+  // Authenticated user on login/signup → redirect to their home
   if (user && (pathname === "/login" || pathname === "/signup")) {
-    const metadataRole = user.user_metadata?.role ?? "client";
+    const metadataRole = (user.user_metadata?.role as string) ?? "client";
     const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
-    const backendRole = accessToken ? await fetchUserRole(accessToken) : metadataRole;
-    const role = backendRole !== "client" ? backendRole : metadataRole;
+    const backendRole = accessToken ? await fetchUserRole(accessToken) : null;
+    const role = resolveRole(metadataRole, backendRole);
     const url = request.nextUrl.clone();
-    url.pathname = getClientHome(role);
+    url.pathname = getHome(role);
     return NextResponse.redirect(url);
   }
 
