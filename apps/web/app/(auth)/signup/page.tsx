@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Phone, Mail, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -33,22 +33,7 @@ const signupSchema = z.object({
     .regex(/[^A-Za-z0-9]/, "Password must contain at least 1 special character"),
 });
 
-const phoneSchema = z.object({
-  fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  businessName: z.string().min(1, "Business name is required"),
-  phone: z
-    .string()
-    .min(1, "Phone number is required")
-    .refine(
-      (val) => isValidPhoneNumber(val),
-      "Please enter a valid phone number."
-    ),
-});
-
 type SignupFormData = z.infer<typeof signupSchema>;
-type PhoneFormData = z.infer<typeof phoneSchema>;
-
-type AuthMode = "email" | "phone";
 
 function getPasswordStrength(password: string): { level: "weak" | "medium" | "strong"; color: string } {
   let score = 0;
@@ -80,7 +65,6 @@ export default function SignupPage() {
   const supabase = createClient();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [mode, setMode] = useState<AuthMode>("email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [emailConfirmationPending, setEmailConfirmationPending] = useState(false);
@@ -95,12 +79,6 @@ export default function SignupPage() {
       },
     });
   }
-
-  // Phone OTP state
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [phoneData, setPhoneData] = useState<PhoneFormData | null>(null);
-  const [phoneValue, setPhoneValue] = useState("");
 
   const {
     register,
@@ -168,15 +146,11 @@ export default function SignupPage() {
       return;
     }
 
-    if (!authData.session) {
-      setSubmittedEmail(data.email);
-      setEmailConfirmationPending(true);
-      setLoading(false);
-      return;
-    }
-
     const authId = authData.user.id;
 
+    // Register with backend FIRST — before email confirmation check — so phone
+    // and profile data are always persisted, even when Supabase requires email
+    // verification (where authData.session is null and we used to return early).
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/register`,
@@ -186,7 +160,7 @@ export default function SignupPage() {
           body: JSON.stringify({
             auth_id: authId,
             email: data.email,
-            phone: data.phone || null,
+            phone: data.phone,
             full_name: data.fullName,
             business_name: data.businessName || null,
           }),
@@ -205,82 +179,10 @@ export default function SignupPage() {
       return;
     }
 
-    const params = new URLSearchParams(window.location.search);
-    const planParam = params.get("plan");
-    const redirectUrl = planParam
-      ? `/signup/plan?plan=${encodeURIComponent(planParam)}`
-      : "/signup/plan";
-    router.push(redirectUrl);
-  }
-
-  async function handleSendPhoneOtp(data: PhoneFormData) {
-    setLoading(true);
-    setError(null);
-
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: data.phone,
-    });
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-      return;
-    }
-
-    setPhoneData(data);
-    setOtpSent(true);
-    setLoading(false);
-  }
-
-  async function handleVerifyPhoneOtp(e: React.FormEvent) {
-    e.preventDefault();
-    if (!phoneData) return;
-
-    setLoading(true);
-    setError(null);
-
-    const { data: authData, error: verifyError } = await supabase.auth.verifyOtp({
-      phone: phoneData.phone,
-      token: otp,
-      type: "sms",
-    });
-
-    if (verifyError) {
-      setError(verifyError.message);
-      setLoading(false);
-      return;
-    }
-
-    if (!authData.user) {
-      setError("Verification failed. Please try again.");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/register`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            auth_id: authData.user.id,
-            email: authData.user.email || null,
-            phone: phoneData.phone,
-            full_name: phoneData.fullName,
-            business_name: phoneData.businessName || null,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const result = await response.json();
-        setError(result.detail || "Registration failed. Please try again.");
-        setLoading(false);
-        return;
-      }
-    } catch {
-      setError("Failed to connect to server. Please try again.");
+    // Now handle email confirmation or redirect
+    if (!authData.session) {
+      setSubmittedEmail(data.email);
+      setEmailConfirmationPending(true);
       setLoading(false);
       return;
     }
@@ -340,7 +242,7 @@ export default function SignupPage() {
                 Back to sign up
               </Button>
             </div>
-          ) : mode === "email" ? (
+          ) : (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="fullName" className="text-text">
@@ -486,135 +388,6 @@ export default function SignupPage() {
                 )}
               </Button>
             </form>
-          ) : !otpSent ? (
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const form = e.target as HTMLFormElement;
-              const fullName = (form.elements.namedItem("fullNamePhone") as HTMLInputElement).value;
-              const businessName = (form.elements.namedItem("businessNamePhone") as HTMLInputElement).value;
-              handleSendPhoneOtp({ fullName, businessName, phone: phoneValue });
-            }} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullNamePhone" className="text-text">
-                  Full Name <span className="text-error">*</span>
-                </Label>
-                <Input
-                  id="fullNamePhone"
-                  placeholder="John Doe"
-                  required
-                  className="border-border focus:border-brand focus:ring-brand"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="businessNamePhone" className="text-text">
-                  Business Name <span className="text-error">*</span>
-                </Label>
-                <Input
-                  id="businessNamePhone"
-                  placeholder="Your Business"
-                  required
-                  className="border-border focus:border-brand focus:ring-brand"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phoneSignup" className="text-text">
-                  Phone Number <span className="text-error">*</span>
-                </Label>
-                <PhoneInput
-                  id="phoneSignup"
-                  placeholder="Enter phone number"
-                  defaultCountry="IN"
-                  value={phoneValue}
-                  onChange={(val) => setPhoneValue(val ?? "")}
-                  international
-                  countryCallingCodeEditable={false}
-                  inputComponent={Input}
-                  className="PhoneInput"
-                />
-                <p className="text-xs text-text-muted">
-                  We&apos;ll send a one-time password to verify your number.
-                </p>
-              </div>
-
-              {error && (
-                <div className="text-sm text-error bg-error-light p-3 rounded-md">
-                  {error}
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full bg-brand hover:bg-brand/90 text-white"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending OTP...
-                  </>
-                ) : (
-                  "Send OTP"
-                )}
-              </Button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyPhoneOtp} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="otp" className="text-text">
-                  Enter OTP
-                </Label>
-                <Input
-                  id="otp"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="6-digit code"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  required
-                  maxLength={6}
-                  className="border-border focus:border-brand focus:ring-brand"
-                />
-                <p className="text-xs text-text-muted">
-                  OTP sent to {phoneData?.phone}
-                </p>
-              </div>
-
-              {error && (
-                <div className="text-sm text-error bg-error-light p-3 rounded-md">
-                  {error}
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full bg-brand hover:bg-brand/90 text-white"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Verifying...
-                  </>
-                ) : (
-                  "Verify & Create Account"
-                )}
-              </Button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full text-text-muted"
-                onClick={() => {
-                  setOtpSent(false);
-                  setOtp("");
-                  setError(null);
-                }}
-              >
-                Use a different number
-              </Button>
-            </form>
           )}
 
           <div className="relative mt-6">
@@ -626,11 +399,11 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mt-4">
+          <div className="mt-4">
             <button
               type="button"
               onClick={handleGoogleSignUp}
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-white px-4 py-2.5 text-sm font-medium text-text transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/80 focus-visible:ring-offset-2"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-border bg-white px-4 py-2.5 text-sm font-medium text-text transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/80 focus-visible:ring-offset-2"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -638,20 +411,7 @@ export default function SignupPage() {
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
               </svg>
-              Google
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode(mode === "email" ? "phone" : "email");
-                setError(null);
-                setOtpSent(false);
-                setOtp("");
-              }}
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-white px-4 py-2.5 text-sm font-medium text-text transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/80 focus-visible:ring-offset-2"
-            >
-              {mode === "email" ? <Phone className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
-              {mode === "email" ? "Phone" : "Email"}
+              Continue with Google
             </button>
           </div>
         </CardContent>
