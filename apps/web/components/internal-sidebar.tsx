@@ -12,6 +12,7 @@ import {
   LogOut,
   FileText,
   DollarSign,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +52,12 @@ const NAV_ITEMS: NavItem[] = [
     label: "Team Overview",
     href: "/dashboard/team",
     icon: Users,
+    roles: ["team_lead"],
+  },
+  {
+    label: "KPI Dashboard",
+    href: "/admin/kpi",
+    icon: BarChart3,
     roles: ["team_lead"],
   },
   {

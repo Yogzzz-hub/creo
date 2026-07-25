@@ -67,7 +67,6 @@ export function useOnboardingGuard() {
         return
       }
 
-      // No token yet — session still loading, wait without blocking
       if (!token) {
         if (!cancelledRef.current) {
           setBlocked(true)

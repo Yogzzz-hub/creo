@@ -33,6 +33,7 @@ const ADMIN_NAV_ITEMS = [
   { label: "Sales & Pricing", href: "/admin/sales", icon: TrendingUp },
   { label: "Add-ons", href: "/admin/addons", icon: Puzzle },
   { label: "Reports", href: "/admin/reports", icon: BarChart3 },
+  { label: "KPI Dashboard", href: "/admin/kpi", icon: BarChart3 },
   { label: "Team Management", href: "/admin/teams", icon: UserCog },
   { label: "Announcements", href: "/admin/announcements", icon: Megaphone },
   { label: "Settings", href: "/admin/settings", icon: Settings },
