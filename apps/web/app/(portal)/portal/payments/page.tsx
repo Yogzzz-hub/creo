@@ -4,12 +4,13 @@ import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import {
   Download,
-  ArrowRight,
   Check,
-  Sparkles,
   Crown,
   Loader2,
   AlertCircle,
+  MessageSquare,
+  Copy,
+  CheckCheck,
 } from "lucide-react"
 import { useSession } from "@/context/session-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,7 +22,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog"
 import {
   Table,
@@ -33,6 +33,11 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import { useSubscription } from "@/context/subscription-context"
+
+const TEAM_PHONE = "+919941999415"
+const TEAM_PHONE_DISPLAY = "+91 994 199 9415"
+const WHATSAPP_PHONE = "919941999415"
+const WHATSAPP_MESSAGE = "Hi, I would like to change my Creo plan."
 
 interface Plan {
   id: string
@@ -82,13 +87,19 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
 export default function PaymentsPage() {
   const { token } = useSession()
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null)
-  const [availablePlans, setAvailablePlans] = useState<Plan[]>([])
   const [paymentHistory, setPaymentHistory] = useState<PaymentRecord[]>([])
   const [loading, setLoading] = useState(true)
-  const [planChangeOpen, setPlanChangeOpen] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
-  const [isChangingPlan, setIsChangingPlan] = useState(false)
+  const [consultationModalOpen, setConsultationModalOpen] = useState(false)
+  const [phoneCopied, setPhoneCopied] = useState(false)
   const { isLapsed } = useSubscription()
+
+  function handleCopyPhone() {
+    navigator.clipboard.writeText(TEAM_PHONE).then(() => {
+      setPhoneCopied(true)
+      toast.success("Phone number copied")
+      setTimeout(() => setPhoneCopied(false), 2000)
+    })
+  }
 
   useEffect(() => {
     async function fetchPayments() {
@@ -110,7 +121,6 @@ export default function PaymentsPage() {
         let plans: Plan[] = []
         if (plansRes.ok) {
           plans = await plansRes.json()
-          setAvailablePlans(plans)
         }
 
         if (!historyRes.ok) {
@@ -180,48 +190,6 @@ export default function PaymentsPage() {
     } catch (err) {
       console.error("[Payments] receipt download error:", err)
       toast.error("Failed to download receipt")
-    }
-  }
-
-  async function handleChangePlan() {
-    if (!selectedPlan || selectedPlan === currentPlan?.id) {
-      setPlanChangeOpen(false)
-      return
-    }
-
-    if (!token) {
-      toast.error("Not authenticated")
-      return
-    }
-
-    setIsChangingPlan(true)
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/change-plan`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ new_plan_id: selectedPlan }),
-        }
-      )
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        throw new Error(body.detail || "Failed to change plan")
-      }
-
-      const plan = availablePlans.find((p) => p.id === selectedPlan)
-      setCurrentPlan(plan ?? currentPlan)
-      toast.success(`Plan changed to ${plan?.display_name}. Changes take effect next billing cycle.`)
-      setPlanChangeOpen(false)
-      setSelectedPlan(null)
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to change plan")
-    } finally {
-      setIsChangingPlan(false)
     }
   }
 
@@ -296,13 +264,9 @@ export default function PaymentsPage() {
               variant="outline"
               className="border-[#2B7BC4] text-[#2B7BC4] hover:bg-[#2B7BC4] hover:text-white"
               disabled={isLapsed}
-              onClick={() => {
-                setSelectedPlan(currentPlan.id)
-                setPlanChangeOpen(true)
-              }}
+              onClick={() => setConsultationModalOpen(true)}
             >
               Change Plan
-              <ArrowRight className="size-4" />
             </Button>
           </div>
         </div>
@@ -395,96 +359,46 @@ export default function PaymentsPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={planChangeOpen} onOpenChange={setPlanChangeOpen}>
-        <DialogContent className="sm:max-w-lg">
+      <Dialog open={consultationModalOpen} onOpenChange={setConsultationModalOpen}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Change Your Plan</DialogTitle>
-            <DialogDescription>
-              Select a new plan. Changes will take effect at your next billing date.
+            <DialogTitle className="text-center text-lg">
+              Want to change a plan?
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              Chat with us on WhatsApp or copy our phone number below.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3">
-            {availablePlans.map((plan) => (
+          <div className="flex flex-col gap-3 pt-2">
+            <a
+              href={`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#25D366] px-6 text-sm font-medium text-white transition-colors hover:bg-[#25D366]/90"
+            >
+              <MessageSquare className="size-4" />
+              Chat on WhatsApp
+            </a>
+
+            <div className="flex items-center justify-center gap-1.5 pt-1">
+              <span className="text-sm font-medium text-[#0D2137] select-all">
+                {TEAM_PHONE_DISPLAY}
+              </span>
               <button
-                key={plan.id}
-                onClick={() => setSelectedPlan(plan.id)}
-                className={cn(
-                  "w-full rounded-xl border-2 p-4 text-left transition-all",
-                  selectedPlan === plan.id
-                    ? "border-[#2B7BC4] bg-[#E8F4FD] ring-1 ring-[#2B7BC4]/20"
-                    : "border-gray-200 hover:border-gray-300",
-                  plan.id === currentPlan.id && "opacity-60 cursor-not-allowed"
-                )}
-                disabled={plan.id === currentPlan.id}
+                type="button"
+                onClick={handleCopyPhone}
+                className="inline-flex size-7 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                title="Copy phone number"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {plan.name === "growth" && (
-                      <Sparkles className="size-4 text-amber-500" />
-                    )}
-                    <span className="text-sm font-semibold text-[#0D2137]">
-                      {plan.display_name}
-                    </span>
-                    {plan.id === currentPlan.id && (
-                      <Badge className="text-[10px] bg-gray-100 text-gray-500 border-gray-200">
-                        Current
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-bold text-[#0D2137]">
-                      {formatCurrency(plan.monthly_price)}
-                    </span>
-                    <span className="text-xs text-gray-500">/mo</span>
-                  </div>
-                </div>
-
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {plan.highlights.slice(0, 3).map((feature) => (
-                    <span
-                      key={feature}
-                      className="rounded-md bg-gray-100 px-2 py-0.5 text-[10px] text-gray-600"
-                    >
-                      {feature}
-                    </span>
-                  ))}
-                  {plan.highlights.length > 3 && (
-                    <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[10px] text-gray-400">
-                      +{plan.highlights.length - 3} more
-                    </span>
-                  )}
-                </div>
+                {phoneCopied ? (
+                  <CheckCheck className="size-3.5 text-emerald-500" />
+                ) : (
+                  <Copy className="size-3.5" />
+                )}
               </button>
-            ))}
+            </div>
           </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setPlanChangeOpen(false)
-                setSelectedPlan(null)
-              }}
-              disabled={isChangingPlan}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleChangePlan}
-              disabled={!selectedPlan || selectedPlan === currentPlan.id || isChangingPlan}
-              className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90"
-            >
-              {isChangingPlan ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Changing...
-                </>
-              ) : (
-                "Confirm Change"
-              )}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
