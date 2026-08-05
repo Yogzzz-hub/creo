@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, FileImage, Film, Layers, SlidersHorizontal, Zap, ArrowRight, Loader2 } from "lucide-react"
+import { ArrowLeft, FileImage, Film, Layers, SlidersHorizontal, Zap, ArrowRight, Loader2, Camera } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils"
 import { apiFetch, ApiError } from "@/lib/api"
 import { useSession } from "@/context/session-context"
 
-type DeliverableType = "poster" | "reel" | "story"
+type DeliverableType = "poster" | "reel" | "story" | "shoot_day"
 type DeliverableStatus = "pending" | "approved" | "revision" | "rejected"
 
 // 1. FIXED: Full 16-field interface matching the backend schema
@@ -53,6 +53,7 @@ const TYPE_ICONS: Record<DeliverableType, typeof FileImage> = {
   poster: FileImage,
   reel: Film,
   story: Layers,
+  shoot_day: Camera,
 }
 
 const STATUS_CONFIG: Record<

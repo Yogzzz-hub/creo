@@ -50,6 +50,26 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (err) {
         setError(err.message)
         setSession(null)
+        return
+      }
+
+      if (!s) {
+        setSession(null)
+        setError(null)
+        return
+      }
+
+      const expiresAt = s.expires_at ?? 0
+      const now = Math.floor(Date.now() / 1000)
+      if (expiresAt - now < 30) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError) {
+          setError(refreshError.message)
+          setSession(s)
+        } else {
+          setSession(refreshed.session ?? s)
+          setError(null)
+        }
       } else {
         setSession(s)
         setError(null)

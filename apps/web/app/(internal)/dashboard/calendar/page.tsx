@@ -25,6 +25,7 @@ const TYPE_ICONS: Record<string, string> = {
   poster: "P",
   reel: "R",
   story: "S",
+  shoot_day: "SD",
 };
 
 function getDaysInMonth(year: number, month: number) {

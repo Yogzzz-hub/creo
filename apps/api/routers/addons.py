@@ -25,6 +25,7 @@ MONTHLY_ADDON_LIMITS = {
     DeliverableType.poster: 10,
     DeliverableType.reel: 10,
     DeliverableType.story: 10,
+    DeliverableType.shoot_day: 10,
 }
 
 

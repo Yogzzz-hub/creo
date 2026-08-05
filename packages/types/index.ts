@@ -71,7 +71,7 @@ export interface Task {
   updated_at: string;
 }
 
-export type DeliverableType = "poster" | "reel" | "story";
+export type DeliverableType = "poster" | "reel" | "story" | "shoot_day";
 
 export type TaskStatus =
   | "pending"

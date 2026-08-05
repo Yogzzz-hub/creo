@@ -36,6 +36,7 @@ DELIVERABLE_MONTHLY_SCHEDULE = {
     DeliverableType.poster: 8,
     DeliverableType.reel: 4,
     DeliverableType.story: 10,
+    DeliverableType.shoot_day: 6,
 }
 
 

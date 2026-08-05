@@ -43,7 +43,7 @@ import {
 import { toast } from "sonner"
 import { adminFetch } from "@/lib/admin-api"
 
-type DeliverableType = "poster" | "reel" | "story"
+type DeliverableType = "poster" | "reel" | "story" | "shoot_day"
 type DeliverableStatus = "draft" | "pending_review" | "approved" | "revision" | "rejected"
 
 interface Deliverable {
@@ -75,6 +75,7 @@ const TYPE_CONFIG: Record<DeliverableType, { label: string; className: string }>
   poster: { label: "Poster", className: "bg-purple-100 text-purple-700 border-purple-200" },
   reel: { label: "Reel", className: "bg-pink-100 text-pink-700 border-pink-200" },
   story: { label: "Story", className: "bg-sky-100 text-sky-700 border-sky-200" },
+  shoot_day: { label: "Shoot Day", className: "bg-teal-100 text-teal-700 border-teal-200" },
 }
 
 function formatDate(d: string) {

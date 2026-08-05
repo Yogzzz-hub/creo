@@ -33,6 +33,7 @@ const TYPE_COLORS: Record<string, string> = {
   story: "border-l-violet-400 bg-violet-50 text-violet-800",
   blog: "border-l-amber-400 bg-amber-50 text-amber-800",
   ad: "border-l-pink-400 bg-pink-50 text-pink-800",
+  shoot_day: "border-l-teal-400 bg-teal-50 text-teal-800",
 }
 
 const CLIENT_COLORS = [

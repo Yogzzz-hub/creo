@@ -30,6 +30,7 @@ class DeliverableType(str, enum.Enum):
     poster = "poster"
     reel = "reel"
     story = "story"
+    shoot_day = "shoot_day"
 
 
 class DeliverableStatus(str, enum.Enum):

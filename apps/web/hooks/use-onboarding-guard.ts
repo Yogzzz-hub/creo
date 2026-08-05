@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { usePathname } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import { useSession } from "@/context/session-context"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"
@@ -44,7 +45,7 @@ const POLL_INTERVAL_MS = 2000
  */
 export function useOnboardingGuard() {
   const pathname = usePathname()
-  const { token } = useSession()
+  const { token, loading: sessionLoading } = useSession()
   const [ready, setReady] = useState(false)
   const [blocked, setBlocked] = useState(false)
   const [fullyOnboarded, setFullyOnboarded] = useState(false)
@@ -67,6 +68,13 @@ export function useOnboardingGuard() {
         return
       }
 
+      if (sessionLoading) {
+        setBlocked(false)
+        setFullyOnboarded(false)
+        setReady(false)
+        return
+      }
+
       if (!token) {
         if (!cancelledRef.current) {
           setBlocked(true)
@@ -76,13 +84,49 @@ export function useOnboardingGuard() {
         return
       }
 
+      async function getValidToken() {
+        const supabase = createClient()
+        const { data: { session }, error } = await supabase.auth.getSession()
+
+        if (error) {
+          throw error
+        }
+
+        if (!session) {
+          return null
+        }
+
+        const expiresAt = session.expires_at ?? 0
+        const now = Math.floor(Date.now() / 1000)
+        if (expiresAt - now < 30) {
+          const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession()
+          if (refreshError) {
+            throw refreshError
+          }
+          return refreshed.session?.access_token ?? session.access_token
+        }
+
+        return session.access_token
+      }
+
       try {
+        const accessToken = await getValidToken()
+        if (!accessToken) {
+          if (!cancelledRef.current) {
+            setBlocked(true)
+            setFullyOnboarded(false)
+            setReady(true)
+            startPolling()
+          }
+          return
+        }
+
         const [roleRes, accountRes] = await Promise.all([
           fetch(`${API_URL}/api/v1/auth/me/role`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${accessToken}` },
           }),
           fetch(`${API_URL}/api/v1/account`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${accessToken}` },
           }),
         ])
 
@@ -100,7 +144,6 @@ export function useOnboardingGuard() {
             setFullyOnboarded(false)
           }
 
-          // If still blocked, start polling for webhook activation
           if (!isActive) {
             startPolling()
           }
@@ -121,11 +164,14 @@ export function useOnboardingGuard() {
     }
 
     async function pollOnce() {
-      if (cancelledRef.current || !token) return
+      if (cancelledRef.current) return
 
       try {
+        const tokenToUse = await getValidToken()
+        if (!tokenToUse) return
+
         const res = await fetch(`${API_URL}/api/v1/auth/me/role`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${tokenToUse}` },
         })
         if (cancelledRef.current) return
 
@@ -133,9 +179,8 @@ export function useOnboardingGuard() {
           const data: RoleResponse = await res.json()
           if (data.account_status === "active") {
             setBlocked(false)
-            // Also re-check instagram status
             const accountRes = await fetch(`${API_URL}/api/v1/account`, {
-              headers: { Authorization: `Bearer ${token}` },
+              headers: { Authorization: `Bearer ${tokenToUse}` },
             })
             if (accountRes.ok && !cancelledRef.current) {
               const accountData: AccountStatus = await accountRes.json()
@@ -171,7 +216,7 @@ export function useOnboardingGuard() {
         pollRef.current = null
       }
     }
-  }, [isRestricted, token])
+  }, [isRestricted, token, sessionLoading])
 
   return { isRestricted, ready, blocked, fullyOnboarded }
 }

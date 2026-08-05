@@ -50,6 +50,7 @@ PRO_QUOTAS = {
     DeliverableType.poster: 16,
     DeliverableType.reel: 12,
     DeliverableType.story: 20,
+    DeliverableType.shoot_day: 6,
 }
 
 TOPICS = {
@@ -73,6 +74,11 @@ TOPICS = {
         "Flash Sale", "Q&A Sticker", "Quiz Time", "Shoutout",
         "Milestone Celebration", "Fun Fact", "Seasonal Greeting",
         "Work in Progress", "User Generated Content", "Throwback",
+    ],
+    DeliverableType.shoot_day: [
+        "BTS Shoot Day", "Product Photoshoot", "Brand Video Shoot",
+        "Team Photoshoot", "Location Shoot", "Event Coverage",
+        "Lifestyle Shoot", "Studio Session",
     ],
 }
 

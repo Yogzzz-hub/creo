@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-type DeliverableType = "poster" | "reel" | "story"
+type DeliverableType = "poster" | "reel" | "story" | "shoot_day"
 
 interface CalendarEntry {
   id: string
@@ -21,6 +21,7 @@ const TYPE_TILE_CONFIG: Record<DeliverableType, { letter: string; bg: string; te
   poster: { letter: "P", bg: "bg-[#6BAED6]", text: "text-white" },
   reel:   { letter: "R", bg: "bg-[#9B59B6]", text: "text-white" },
   story:  { letter: "S", bg: "bg-[#F0A87E]", text: "text-white" },
+  shoot_day: { letter: "SD", bg: "bg-[#0EA5E9]", text: "text-white" },
 }
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]

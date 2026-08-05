@@ -38,7 +38,7 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { useSubscription } from "@/context/subscription-context"
 
-type DeliverableType = "poster" | "reel" | "story"
+type DeliverableType = "poster" | "reel" | "story" | "shoot_day"
 type DeliverableStatus = "pending" | "approved" | "revision" | "rejected"
 
 interface ApiDeliverable {
@@ -95,6 +95,7 @@ const TYPE_ICONS: Record<DeliverableType, typeof FileImage> = {
   poster: FileImage,
   reel: Film,
   story: Layers,
+  shoot_day: Camera,
 }
 
 const STATUS_CONFIG: Record<
