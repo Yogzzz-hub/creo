@@ -263,8 +263,7 @@ export default function QuestionnairePage() {
         console.error("Supabase update error:", updateError);
       }
 
-      router.refresh();
-      router.push("/portal");
+      router.push("/onboarding/complete");
     } catch (err) {
       console.error(err);
       setError("Failed to connect to server. Please try again.");
@@ -434,7 +433,7 @@ export default function QuestionnairePage() {
 
             <div className="border-t border-border pt-4 mt-6">
               <h3 className="text-sm font-bold text-brand-dark mb-4">Social Media Presence (Optional)</h3>
-              
+
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="instagram" className="text-sm font-semibold text-brand-dark">
