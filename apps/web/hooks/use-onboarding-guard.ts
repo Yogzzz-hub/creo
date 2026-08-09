@@ -33,16 +33,31 @@ interface AccountStatus {
 const MAX_POLL_ATTEMPTS = 10
 const POLL_INTERVAL_MS = 2000
 
-/**
- * Route-aware onboarding guard for the portal.
- *
- * Blocks any user whose account_status is not "active" on restricted routes.
- * Dashboard (/portal) and Support (/portal/support) are never restricted.
- *
- * When blocked, polls /api/v1/auth/me/role every 2s (up to 10 times) to
- * detect when a payment webhook has activated the account, then unblocks
- * without requiring a full page reload.
- */
+async function getValidToken() {
+  const supabase = createClient()
+  const { data: { session }, error } = await supabase.auth.getSession()
+
+  if (error) {
+    throw error
+  }
+
+  if (!session) {
+    return null
+  }
+
+  const expiresAt = session.expires_at ?? 0
+  const now = Math.floor(Date.now() / 1000)
+  if (expiresAt - now < 30) {
+    const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession()
+    if (refreshError) {
+      throw refreshError
+    }
+    return refreshed.session?.access_token ?? session.access_token
+  }
+
+  return session.access_token
+}
+
 export function useOnboardingGuard() {
   const pathname = usePathname()
   const { token, loading: sessionLoading } = useSession()
@@ -84,31 +99,6 @@ export function useOnboardingGuard() {
         return
       }
 
-      async function getValidToken() {
-        const supabase = createClient()
-        const { data: { session }, error } = await supabase.auth.getSession()
-
-        if (error) {
-          throw error
-        }
-
-        if (!session) {
-          return null
-        }
-
-        const expiresAt = session.expires_at ?? 0
-        const now = Math.floor(Date.now() / 1000)
-        if (expiresAt - now < 30) {
-          const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession()
-          if (refreshError) {
-            throw refreshError
-          }
-          return refreshed.session?.access_token ?? session.access_token
-        }
-
-        return session.access_token
-      }
-
       try {
         const accessToken = await getValidToken()
         if (!accessToken) {
@@ -121,38 +111,47 @@ export function useOnboardingGuard() {
           return
         }
 
-        const [roleRes, accountRes] = await Promise.all([
-          fetch(`${API_URL}/api/v1/auth/me/role`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-          fetch(`${API_URL}/api/v1/account`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-        ])
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 3500)
 
-        if (cancelledRef.current) return
+        try {
+          const [roleRes, accountRes] = await Promise.all([
+            fetch(`${API_URL}/api/v1/auth/me/role`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+              signal: controller.signal,
+            }),
+            fetch(`${API_URL}/api/v1/account`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+              signal: controller.signal,
+            }),
+          ])
 
-        if (roleRes.ok) {
-          const roleData: RoleResponse = await roleRes.json()
-          const isActive = roleData.account_status === "active"
-          setBlocked(!isActive)
+          if (cancelledRef.current) return
 
-          if (isActive && accountRes.ok) {
-            const accountData: AccountStatus = await accountRes.json()
-            setFullyOnboarded(accountData.instagram_connected === true)
+          if (roleRes.ok) {
+            const roleData: RoleResponse = await roleRes.json()
+            const isActive = roleData.account_status === "active"
+            setBlocked(!isActive)
+
+            if (isActive && accountRes.ok) {
+              const accountData: AccountStatus = await accountRes.json()
+              setFullyOnboarded(accountData.instagram_connected === true)
+            } else {
+              setFullyOnboarded(false)
+            }
+
+            if (!isActive) {
+              startPolling()
+            }
           } else {
+            setBlocked(true)
             setFullyOnboarded(false)
-          }
-
-          if (!isActive) {
             startPolling()
           }
-        } else {
-          setBlocked(true)
-          setFullyOnboarded(false)
-          startPolling()
+          setReady(true)
+        } finally {
+          clearTimeout(timeoutId)
         }
-        setReady(true)
       } catch {
         if (!cancelledRef.current) {
           setBlocked(true)
