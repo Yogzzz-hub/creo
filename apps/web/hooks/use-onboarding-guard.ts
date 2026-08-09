@@ -11,6 +11,7 @@ const RESTRICTED_ROUTES = [
   "/portal/deliverables",
   "/portal/calendar",
   "/portal/payments",
+  "/portal/addons",
   "/portal/account",
 ]
 
@@ -60,6 +61,31 @@ export function useOnboardingGuard() {
   useEffect(() => {
     cancelledRef.current = false
 
+    async function getValidToken() {
+      const supabase = createClient()
+      const { data: { session }, error } = await supabase.auth.getSession()
+
+      if (error) {
+        throw error
+      }
+
+      if (!session) {
+        return null
+      }
+
+      const expiresAt = session.expires_at ?? 0
+      const now = Math.floor(Date.now() / 1000)
+      if (expiresAt - now < 30) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession()
+        if (refreshError) {
+          throw refreshError
+        }
+        return refreshed.session?.access_token ?? session.access_token
+      }
+
+      return session.access_token
+    }
+
     async function checkStatus() {
       if (!isRestricted) {
         setBlocked(false)
@@ -84,30 +110,7 @@ export function useOnboardingGuard() {
         return
       }
 
-      async function getValidToken() {
-        const supabase = createClient()
-        const { data: { session }, error } = await supabase.auth.getSession()
 
-        if (error) {
-          throw error
-        }
-
-        if (!session) {
-          return null
-        }
-
-        const expiresAt = session.expires_at ?? 0
-        const now = Math.floor(Date.now() / 1000)
-        if (expiresAt - now < 30) {
-          const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession()
-          if (refreshError) {
-            throw refreshError
-          }
-          return refreshed.session?.access_token ?? session.access_token
-        }
-
-        return session.access_token
-      }
 
       try {
         const accessToken = await getValidToken()

@@ -153,7 +153,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
     }
   }
 
-  async function handleAssign(assignedTo: string) {
+  async function handleAssign(assignedTo: string | null) {
     if (!ticket) return
     try {
       const updated = await adminFetch<Ticket>(`/api/v1/admin/support/tickets/${ticket.id}/assign`, {

@@ -292,6 +292,16 @@ POLICIES = {
 
 
 def upgrade() -> None:
+    op.execute("CREATE SCHEMA IF NOT EXISTS auth;")
+    op.execute("""
+    CREATE OR REPLACE FUNCTION auth.uid()
+    RETURNS uuid
+    LANGUAGE sql
+    STABLE
+    AS $$
+        SELECT NULL::uuid;
+    $$;
+    """)
     op.execute(HELPER_FUNCTION)
 
     for table in ENABLE_RLS_TABLES:

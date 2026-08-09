@@ -10,7 +10,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from core.database import get_db
-from core.security import RequireActiveClient
+from core.security import RequireClient
 from models.enums import TicketStatus, TicketType
 from models.ticket import Ticket, TicketMessage
 from models.user import User
@@ -58,7 +58,7 @@ async def _generate_ticket_number(db: AsyncSession) -> str:
 
 @router.get("", response_model=list[TicketOut])
 async def list_tickets(
-    current_user: RequireActiveClient,
+    current_user: RequireClient,
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -76,7 +76,7 @@ async def create_ticket(
     subject: str = Form(...),
     description: str = Form(...),
     attachment: Optional[UploadFile] = File(None),
-    current_user: RequireActiveClient = RequireActiveClient,
+    current_user: RequireClient = RequireClient,
     db: AsyncSession = Depends(get_db),
 ):
     logger.info(
@@ -130,7 +130,7 @@ async def create_ticket(
 @router.get("/{ticket_id}/messages", response_model=list[TicketMessageOut])
 async def list_ticket_messages(
     ticket_id: str,
-    current_user: RequireActiveClient,
+    current_user: RequireClient,
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -164,7 +164,7 @@ async def list_ticket_messages(
 async def create_ticket_message(
     ticket_id: str,
     payload: TicketMessageCreate,
-    current_user: RequireActiveClient,
+    current_user: RequireClient,
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -212,7 +212,7 @@ async def create_ticket_message(
 @router.post("/{ticket_id}/resolve", response_model=TicketOut)
 async def resolve_ticket(
     ticket_id: str,
-    current_user: RequireActiveClient,
+    current_user: RequireClient,
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
@@ -256,7 +256,7 @@ async def resolve_ticket(
 @router.post("/{ticket_id}/reopen", response_model=TicketOut)
 async def reopen_ticket(
     ticket_id: str,
-    current_user: RequireActiveClient,
+    current_user: RequireClient,
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(

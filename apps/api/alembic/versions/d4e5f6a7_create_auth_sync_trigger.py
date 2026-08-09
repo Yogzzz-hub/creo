@@ -54,6 +54,14 @@ DROP_TRIGGER = "DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;"
 
 
 def upgrade() -> None:
+    op.execute("CREATE SCHEMA IF NOT EXISTS auth;")
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS auth.users (
+        id uuid PRIMARY KEY,
+        email text,
+        raw_user_meta_data jsonb
+    );
+    """)
     op.execute(SYNC_FUNCTION)
     op.execute(CREATE_TRIGGER)
 
