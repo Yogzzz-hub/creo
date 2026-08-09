@@ -37,6 +37,17 @@ export default function OnboardingLayout({
   }, []);
 
   useEffect(() => {
+    // Fallback to unlock UI if sessionLoading is stuck for too long
+    let fallbackTimeout: NodeJS.Timeout;
+    if (sessionLoading) {
+      fallbackTimeout = setTimeout(() => {
+        setChecking(false);
+      }, 4000);
+    }
+    return () => clearTimeout(fallbackTimeout);
+  }, [sessionLoading]);
+
+  useEffect(() => {
     if (sessionLoading) return;
     if (!token) {
       setChecking(false);
@@ -45,7 +56,7 @@ export default function OnboardingLayout({
 
     let cancelled = false;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
     async function checkAndRedirect() {
       try {
@@ -88,7 +99,7 @@ export default function OnboardingLayout({
     return () => {
       cancelled = true;
       controller.abort();
-      clearTimeout(timeoutId);
+
     };
   }, [token, sessionLoading, router]);
 

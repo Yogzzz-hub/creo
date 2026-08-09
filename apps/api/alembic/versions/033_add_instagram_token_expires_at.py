@@ -16,9 +16,8 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "users",
-        sa.Column("instagram_token_expires_at", sa.DateTime(timezone=True), nullable=True),
+    op.execute(
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS instagram_token_expires_at TIMESTAMP WITH TIME ZONE"
     )
 
 
