@@ -12,7 +12,7 @@ from core.exceptions import limiter
 from models.enums import AccountStatus, UserRole
 from models.user import User
 from schemas.auth import RegisterRequest, RegisterResponse
-from workers.notification_tasks import notify_incomplete_signup
+from workers.notification_tasks import send_verification_email_task
 
 logger = logging.getLogger(__name__)
 
@@ -100,16 +100,17 @@ async def register_user(
             detail="Database transaction failed."
         )
 
-    if user.phone:
-        checkout_url = f"{settings.FRONTEND_URL}/onboarding/verify"
-        task_ids = []
-        for countdown in [3600, 7200, 14400]:
-            result = notify_incomplete_signup.apply_async(
-                args=[user.phone, user.full_name, checkout_url],
-                countdown=countdown,
-            )
-            task_ids.append(result.id)
-        _store_task_ids(str(user.id), task_ids)
+    # TODO: Re-enable abandoned signup recovery when notify_incomplete_signup is restored
+    # if user.phone:
+    #     checkout_url = f"{settings.FRONTEND_URL}/onboarding/verify"
+    #     task_ids = []
+    #     for countdown in [3600, 7200, 14400]:
+    #         result = notify_incomplete_signup.apply_async(
+    #             args=[user.phone, user.full_name, checkout_url],
+    #             countdown=countdown,
+    #         )
+    #         task_ids.append(result.id)
+    #     _store_task_ids(str(user.id), task_ids)
 
     return RegisterResponse(
         id=user.id,
@@ -118,3 +119,36 @@ async def register_user(
         role=user.role,
         account_status=user.account_status.value,
     )
+
+#email_verfication_duringOnboarding
+@router.post("/module-3-entry/{user_id}")
+async def trigger_email_verification(user_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    Task T5.1: Triggered when a client enters Module 3.
+    Bypasses email verification for Google OAuth users (who skip the pending_verification status).
+    """
+    query = select(User).where(User.id == user_id, User.deleted_at.is_(None))
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    # Bypass for pre-verified Google OAuth users or already verified accounts
+    if user.account_status != AccountStatus.pending_verification:
+        return {
+            "status": "bypassed", 
+            "message": "User is already verified. Proceed to payment."
+        }
+
+    # Construct the frontend verification link
+    # Note: Using NEXT_PUBLIC_API_URL as placeholder, align with FRONTEND_URL if your config differs
+    verification_link = f"{settings.FRONTEND_URL}/onboarding/verify?user={user.id}"
+    
+    # Trigger the Celery task asynchronously using .delay()
+    send_verification_email_task.delay(user.email, verification_link)
+
+    return {
+        "status": "verification_sent", 
+        "message": "Verification email dispatched successfully."
+    }
