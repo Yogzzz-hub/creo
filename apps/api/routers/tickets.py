@@ -1,9 +1,13 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated, Optional
 
+# pyrefly: ignore [missing-import]
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+# pyrefly: ignore [missing-import]
 from sqlalchemy import func, select
+# pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
+# pyrefly: ignore [missing-import]
 from sqlalchemy.exc import IntegrityError
 import logging
 
@@ -11,7 +15,9 @@ logger = logging.getLogger(__name__)
 
 from core.database import get_db
 from core.security import RequireClient
-from models.enums import TicketStatus, TicketType
+from models.client_assignment import ClientAssignment
+from models.enums import Department, TicketStatus, TicketType
+from models.team import TeamMember
 from models.ticket import Ticket, TicketMessage
 from models.user import User
 from schemas.ticket import (
@@ -24,30 +30,65 @@ router = APIRouter(prefix="/api/v1/tickets", tags=["tickets"])
 
 REOPEN_WINDOW_DAYS = 7
 
-TICKET_ASSIGNMENT_RULES = {
-    TicketType.deliverable_revision: "team_member",
-    TicketType.content_brief_update: "team_member",
-    TicketType.general_support: "admin",
-    TicketType.billing_issue: "admin",
-}
-
-
-async def _find_assignment_target(db: AsyncSession, ticket_type: TicketType) -> str | None:
-    target_role = TICKET_ASSIGNMENT_RULES.get(ticket_type)
-    if not target_role:
+async def _find_assignment_target(db: AsyncSession, ticket_type: TicketType, client_id: str) -> str | None:
+    if ticket_type == TicketType.deliverable_revision:
+        # First, try to route to a specific team member assigned to this client
+        result = await db.execute(
+            select(TeamMember.user_id)
+            .join(ClientAssignment, ClientAssignment.team_member_id == TeamMember.id)
+            .where(
+                ClientAssignment.client_id == client_id,
+                ClientAssignment.is_active == True,
+                TeamMember.is_active == True,
+            )
+            .order_by(func.random())
+            .limit(1)
+        )
+        assigned_user = result.scalar_one_or_none()
+        if assigned_user:
+            return assigned_user
+        
+        # Fallback to graphics department
+        target_department = Department.graphics
+    
+    elif ticket_type == TicketType.content_brief_update:
+        target_department = Department.content_writing
+    
+    elif ticket_type == TicketType.calendar_request:
+        target_department = Department.social_media
+    
+    elif ticket_type in (TicketType.general_support, TicketType.billing_issue):
+        # Route directly to admin role
+        result = await db.execute(
+            select(User.id)
+            .where(
+                User.role == "admin",
+                User.deleted_at.is_(None)
+            )
+            .order_by(func.random())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+    
+    else:
         return None
 
-    result = await db.execute(
-        select(User.id)
-        .where(
-            User.role == target_role,
-            User.deleted_at.is_(None),
+    # For departmental routing
+    if target_department:
+        result = await db.execute(
+            select(TeamMember.user_id)
+            .join(User, User.id == TeamMember.user_id)
+            .where(
+                TeamMember.department == target_department,
+                TeamMember.is_active == True,
+                User.deleted_at.is_(None)
+            )
+            .order_by(func.random())
+            .limit(1)
         )
-        .order_by(func.random())
-        .limit(1)
-    )
-    row = result.scalar_one_or_none()
-    return row
+        return result.scalar_one_or_none()
+    
+    return None
 
 
 async def _generate_ticket_number(db: AsyncSession) -> str:
@@ -96,7 +137,7 @@ async def create_ticket(
         )
 
     ticket_number = await _generate_ticket_number(db)
-    assigned_to = await _find_assignment_target(db, validated_type)
+    assigned_to = await _find_assignment_target(db, validated_type, current_user.id)
 
     ticket = Ticket(
         ticket_number=ticket_number,
