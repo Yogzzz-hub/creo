@@ -1,20 +1,28 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useCallback, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
 import { Download, Loader2, ShieldCheck } from "lucide-react";
 
-export default function TermsPage() {
+function TermsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const plan = searchParams.get("plan");
   const supabase = createClient();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [agreed, setAgreed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (plan) {
+      localStorage.setItem("creo_selected_plan", JSON.stringify({ name: plan }));
+    }
+  }, [plan]);
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
@@ -59,8 +67,11 @@ export default function TermsPage() {
         return;
       }
 
-      // Success - proceed to payment step
-      router.push("/onboarding/payment");
+      // Success - proceed to payment step while preserving plan parameter
+      const redirectUrl = plan
+        ? `/onboarding/payment?plan=${encodeURIComponent(plan)}`
+        : "/onboarding/payment";
+      router.push(redirectUrl);
     } catch {
       setError("Failed to connect to server. Please try again.");
       setIsSubmitting(false);
@@ -332,5 +343,20 @@ export default function TermsPage() {
         )}
       </div>
     </CardContent>
+  );
+}
+
+export default function TermsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center py-16 gap-4">
+          <Loader2 className="size-6 animate-spin text-brand" />
+          <p className="text-sm text-text-muted">Loading terms...</p>
+        </div>
+      }
+    >
+      <TermsContent />
+    </Suspense>
   );
 }
