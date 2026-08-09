@@ -8,6 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
+const ROLE_HOMES: Record<string, string> = {
+  client: "/portal",
+  team_member: "/dashboard",
+  team_lead: "/dashboard",
+  sales: "/sales",
+  admin: "/admin",
+  super_admin: "/admin",
+  investor_relations: "/admin/reports",
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -23,7 +33,7 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -34,7 +44,32 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/portal");
+    const searchParams = new URLSearchParams(window.location.search);
+    const redirectedFrom = searchParams.get("redirectedFrom");
+
+    if (redirectedFrom && redirectedFrom.startsWith("/")) {
+      router.push(redirectedFrom);
+    } else {
+      let role: string | null = null;
+      const accessToken = data.session?.access_token;
+      if (accessToken) {
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+          const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          if (res.ok) {
+            const roleData = await res.json();
+            role = roleData.role;
+          }
+        } catch {
+          // Fallback to metadata if API call fails
+        }
+      }
+      role = role || (data.user?.user_metadata?.role as string) || "client";
+      const targetPath = ROLE_HOMES[role] ?? "/portal";
+      router.push(targetPath);
+    }
     router.refresh();
   }
 
