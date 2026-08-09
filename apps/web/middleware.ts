@@ -68,9 +68,8 @@ async function fetchUserRole(accessToken: string): Promise<string | null> {
 }
 
 function resolveRole(metadataRole: string, backendRole: string | null): string {
-  // If backend returned a valid role (not null/undefined), prefer it
-  if (backendRole && backendRole !== "client") return backendRole;
-  // If backend returned "client" or failed, use metadata
+  // Database role is single source of truth; if backend returns a valid role, use it
+  if (backendRole) return backendRole;
   return metadataRole || "client";
 }
 

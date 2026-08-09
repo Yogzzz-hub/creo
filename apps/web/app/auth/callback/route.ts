@@ -22,7 +22,25 @@ export async function GET(request: Request) {
     if (!error) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const role = user.user_metadata?.role ?? "client";
+        let role = user.user_metadata?.role;
+        if (!role) {
+          try {
+            const session = (await supabase.auth.getSession()).data.session;
+            if (session?.access_token) {
+              const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+              const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
+                headers: { Authorization: `Bearer ${session.access_token}` },
+              });
+              if (res.ok) {
+                const roleData = await res.json();
+                role = roleData.role;
+              }
+            }
+          } catch {
+            // Fallback to client if fetch fails
+          }
+        }
+        role = role ?? "client";
         const redirectPath = ROLE_REDIRECTS[role] ?? "/portal";
         return NextResponse.redirect(`${origin}${redirectPath}`);
       }

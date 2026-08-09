@@ -134,25 +134,13 @@ export default async function PricingPage() {
           ) : (
             <div className="grid gap-8 lg:grid-cols-3">
               {plans.map((plan) => {
-                const isPopular = plan.is_recommended;
                 const highlights = plan.highlights ?? [];
 
                 return (
                   <Card
                     key={plan.id}
-                    className={`relative flex flex-col ${
-                      isPopular
-                        ? "border-2 border-[#2B7BC4] shadow-lg"
-                        : "border-border shadow-card"
-                    }`}
+                    className="relative flex flex-col border-border shadow-card"
                   >
-                    {isPopular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <span className="bg-[#2B7BC4] text-white text-xs font-semibold px-4 py-1.5 rounded-full">
-                          Most Popular
-                        </span>
-                      </div>
-                    )}
                     <CardHeader className="text-center pt-8">
                       <CardTitle className="text-2xl font-bold text-brand-dark">
                         {plan.display_name}
@@ -190,13 +178,9 @@ export default async function PricingPage() {
                     </CardContent>
                     <CardFooter className="pt-4 px-6 pb-8">
                       <Link
-                        href={`/signup?plan=${plan.name}`}
+                        href={`/onboarding/terms?plan=${plan.name}`}
                         className={buttonVariants({
-                          className: `w-full h-11 text-base font-semibold ${
-                            isPopular
-                              ? "bg-[#2B7BC4] hover:bg-[#2B7BC4]/90 text-white"
-                              : "bg-brand-dark hover:bg-brand-dark/90 text-white"
-                          }`,
+                          className: "w-full h-11 text-base font-semibold bg-brand-dark hover:bg-brand-dark/90 text-white",
                         })}
                       >
                         Start Growing
