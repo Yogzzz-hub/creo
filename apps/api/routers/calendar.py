@@ -45,12 +45,27 @@ class TestResetResponse(BaseModel):
     entries_deleted: int
 
 
-# Pro plan quotas
-PRO_QUOTAS = {
-    DeliverableType.poster: 16,
-    DeliverableType.reel: 12,
-    DeliverableType.story: 20,
-    DeliverableType.shoot_day: 6,
+
+# Multi-tier quotas based on the client's subscription plan
+PLAN_QUOTAS = {
+    "basic": {
+        DeliverableType.poster: 8,
+        DeliverableType.reel: 4,
+        DeliverableType.story: 10,
+        DeliverableType.shoot_day: 2,
+    },
+    "pro": {
+        DeliverableType.poster: 16,
+        DeliverableType.reel: 12,
+        DeliverableType.story: 20,
+        DeliverableType.shoot_day: 6,
+    },
+    "enterprise": {
+        DeliverableType.poster: 30,
+        DeliverableType.reel: 25,
+        DeliverableType.story: 40,
+        DeliverableType.shoot_day: 12,
+    }
 }
 
 TOPICS = {
@@ -83,15 +98,16 @@ TOPICS = {
 }
 
 
-def _generate_entries_for_month(year: int, month: int, client_id: str) -> list[dict]:
-    """Generate Pro plan calendar entries for a month, skipping first 7 days."""
+def _generate_entries_for_month(year: int, month: int, client_id: str, plan_tier: str = "pro") -> list[dict]:
+    """Generate calendar entries for a month based on the client's specific plan tier."""
     days_in_month = monthrange(year, month)[1]
-    # Available slots: day 8 through end of month
     available_days = list(range(8, days_in_month + 1))
 
-    # Build a pool of (type, day) pairs, then shuffle for natural spread
+    # Pick the quotas dynamically based on the plan tier (defaults to 'pro')
+    quotas = PLAN_QUOTAS.get(plan_tier.lower(), PLAN_QUOTAS["pro"])
+
     pool: list[tuple[DeliverableType, int]] = []
-    for dtype, count in PRO_QUOTAS.items():
+    for dtype, count in quotas.items():
         for _ in range(count):
             day = random.choice(available_days)
             pool.append((dtype, day))
@@ -112,8 +128,7 @@ def _generate_entries_for_month(year: int, month: int, client_id: str) -> list[d
         )
 
     return entries
-
-
+    
 @router.post(
     "/test-generate",
     response_model=TestGenerateResponse,
@@ -123,12 +138,27 @@ async def test_generate_calendar(
     current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
-    """Dev-only: synchronously generate Pro plan calendar entries for the
-    current month. Clears any existing entries for this client first."""
+    """Dev-only: synchronously generate calendar entries based on the client's specific plan tier."""
     now = date.today()
     year, month = now.year, now.month
 
-    # Clear existing entries for this client in the current month
+    # 1. Fetch the client's active content plan from the database to determine tier
+    from sqlalchemy import select
+    from models.content_plan import ContentPlan
+    from models.plan import Plan # Adjust import if your plan table model name differs
+
+    plan_tier = "pro" # Default fallback
+    
+    plan_result = await db.execute(
+        select(ContentPlan).where(ContentPlan.client_id == current_user.id)
+    );
+    content_plan = plan_result.scalars().first()
+    
+    if content_plan:
+        # If your content_plan relates to a plan or has a tier name field directly:
+        plan_tier = getattr(content_plan, "tier_name", None) or getattr(current_user, "plan_tier", "pro")
+
+    # 2. Clear existing entries for this client in the current month
     await db.execute(
         delete(ContentCalendar).where(
             ContentCalendar.client_id == current_user.id,
@@ -137,17 +167,17 @@ async def test_generate_calendar(
         )
     )
 
-    rows = _generate_entries_for_month(year, month, current_user.id)
+    # 3. Generate rows using the dynamically resolved plan tier
+    rows = _generate_entries_for_month(year, month, current_user.id, plan_tier=plan_tier)
     for row in rows:
         db.add(ContentCalendar(**row))
 
     await db.commit()
 
     return TestGenerateResponse(
-        message="Calendar entries generated successfully",
+        message=f"Calendar entries successfully generated for {plan_tier} plan",
         entries_created=len(rows),
     )
-
 
 @router.delete(
     "/test-reset",
