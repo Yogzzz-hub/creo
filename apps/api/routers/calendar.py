@@ -3,6 +3,7 @@ from calendar import monthrange
 from datetime import date
 from typing import Annotated
 
+# pyrefly: ignore [missing-import]
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 from sqlalchemy import delete, select
@@ -128,7 +129,7 @@ def _generate_entries_for_month(year: int, month: int, client_id: str, plan_tier
         )
 
     return entries
-    
+
 @router.post(
     "/test-generate",
     response_model=TestGenerateResponse,

@@ -1,6 +1,7 @@
 import json
 import logging
 
+# pyrefly: ignore [missing-import]
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,6 +37,7 @@ def _store_task_ids(user_id: str, task_ids: list[str]) -> None:
 def revoke_abandoned_cart_tasks(user_id: str) -> None:
     try:
         import redis
+        # pyrefly: ignore [missing-import]
         from celery import Celery
         r = redis.from_url(settings.REDIS_URL, decode_responses=True)
         key = f"{REDIS_ABANDONED_CART_PREFIX}{user_id}"
