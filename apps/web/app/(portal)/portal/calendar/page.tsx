@@ -50,7 +50,7 @@ function getEntriesForDay(entries: CalendarEntry[], year: number, month: number,
 }
 
 function getQuotaSummary(entries: CalendarEntry[]) {
-  const counts = { poster: 0, reel: 0, story: 0 }
+  const counts = { poster: 0, reel: 0, story: 0, shoot_day: 0 } as Record<string, number>
   for (const e of entries) {
     if (e.type in counts) counts[e.type]++
   }

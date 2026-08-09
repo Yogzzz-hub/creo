@@ -281,3 +281,4 @@
 - [x] Fix M7: Remove debug middleware logging Authorization headers in core/exceptions.py
 - [x] Clean up DEBUG: prefixed log messages in core/security.py
 - [x] Fix onboarding wizard flash: add isLoading gate + auto-redirect for fully onboarded users
+- [x] Portal Access Restriction: Restrict active portal access strictly to dashboard and support pages for incomplete accounts

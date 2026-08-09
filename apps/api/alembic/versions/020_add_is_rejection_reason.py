@@ -41,7 +41,7 @@ def upgrade() -> None:
                existing_type=postgresql.TIMESTAMP(timezone=True),
                nullable=True,
                existing_server_default=sa.text('now()'))
-    op.add_column('deliverable_comments', sa.Column('is_rejection_reason', sa.Boolean(), nullable=False))
+    op.execute("ALTER TABLE deliverable_comments ADD COLUMN IF NOT EXISTS is_rejection_reason BOOLEAN NOT NULL DEFAULT false")
     op.alter_column('deliverables', 'updated_at',
                existing_type=postgresql.TIMESTAMP(timezone=True),
                nullable=True,
