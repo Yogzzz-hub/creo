@@ -64,7 +64,9 @@ def _get_fernet() -> Fernet:
     current_key = settings.ENCRYPTION_KEY
 
     if not current_key:
-        raise RuntimeError("ENCRYPTION_KEY is not set in environment")
+        raise RuntimeError(
+            "ENCRYPTION_KEY is not set in environment"
+        )
 
     key_hash = hashlib.sha256(
         current_key.encode()
@@ -93,14 +95,18 @@ def decrypt_token(encrypted_token: str) -> str:
     return fernet.decrypt(encrypted_token.encode()).decode()
 
 
-def encrypt_gateway_id(gateway_id: str | None) -> str | None:
+def encrypt_gateway_id(
+    gateway_id: str | None,
+) -> str | None:
     if not gateway_id:
         return None
 
     return encrypt_token(gateway_id)
 
 
-def decrypt_gateway_id(encrypted_id: str | None) -> str | None:
+def decrypt_gateway_id(
+    encrypted_id: str | None,
+) -> str | None:
     if not encrypted_id:
         return None
 
@@ -120,7 +126,9 @@ def _is_jti_revoked(jti: str) -> bool:
             decode_responses=True,
         )
 
-        revoked = r.exists(f"revoked_token:{jti}")
+        revoked = r.exists(
+            f"revoked_token:{jti}"
+        )
 
         r.close()
 
@@ -158,11 +166,20 @@ async def get_current_user(
     # 1. Verify token using Supabase
     supabase = _get_supabase_client()
 
+    # Temporary diagnostic logging.
+    # We deliberately do NOT log the actual token.
+    logger.info(
+        "Verifying Supabase token. token_length=%d",
+        len(token),
+    )
+
     try:
         user_response = supabase.auth.get_user(token)
 
     except Exception as exc:
-        logger.warning(
+        # Use logger.exception() so the complete traceback
+        # and the real Supabase error are visible.
+        logger.exception(
             "Supabase token verification failed: %s",
             exc,
         )
@@ -315,7 +332,10 @@ def require_role(*roles: UserRole):
 
 
 # Role-based access
-require_client = require_role(UserRole.client)
+
+require_client = require_role(
+    UserRole.client
+)
 
 require_team_member = require_role(
     UserRole.team_member,
@@ -353,6 +373,7 @@ require_admin_or_kpi = require_role(
 
 # Active client access
 # Used for pages/features that require completed onboarding.
+
 async def require_active_client(
     current_user: CurrentUser,
 ) -> User:
@@ -386,6 +407,7 @@ async def require_active_client(
 
 
 # Typed dependencies
+
 RequireClient = Annotated[
     User,
     Depends(require_client),
