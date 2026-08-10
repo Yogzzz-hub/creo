@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text, func
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text, Integer, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -60,6 +60,8 @@ class User(Base):
         DateTime(timezone=True), nullable=True
     )
     brand_summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    terms_accepted: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    onboarding_stage: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     deleted_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

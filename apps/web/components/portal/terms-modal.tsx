@@ -32,14 +32,7 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleScroll = useCallback(() => {
-    const el = scrollRef.current
-    if (!el) return
-    const { scrollTop, clientHeight, scrollHeight } = el
-    if (scrollTop + clientHeight >= scrollHeight - 20) {
-      setChecked(true)
-    }
-  }, [])
+
 
   const handleAccept = async () => {
     setIsSubmitting(true)
@@ -118,7 +111,6 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
 
         <div
           ref={scrollRef}
-          onScroll={handleScroll}
           className="h-[320px] overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm leading-relaxed text-gray-700"
         >
           <div className="space-y-5">

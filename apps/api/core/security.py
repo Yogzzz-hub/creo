@@ -467,4 +467,5 @@ async def get_my_role(
     return {
         "role": current_user.role.value,
         "account_status": current_user.account_status.value,
+        "onboarding_stage": current_user.onboarding_stage,
     }

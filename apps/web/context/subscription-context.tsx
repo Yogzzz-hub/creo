@@ -7,6 +7,7 @@ type AccountStatus = "active" | "lapsed" | "past_due" | "pending_verification" |
 
 interface SubscriptionState {
   accountStatus: AccountStatus
+  onboardingStage: number
   loading: boolean
   isLapsed: boolean
   refresh: () => Promise<void>
@@ -14,6 +15,7 @@ interface SubscriptionState {
 
 const SubscriptionContext = createContext<SubscriptionState>({
   accountStatus: null,
+  onboardingStage: 1,
   loading: true,
   isLapsed: false,
   refresh: async () => {},
@@ -26,6 +28,7 @@ export function useSubscription() {
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const { token } = useSession()
   const [accountStatus, setAccountStatus] = useState<AccountStatus>(null)
+  const [onboardingStage, setOnboardingStage] = useState<number>(1)
   const [loading, setLoading] = useState(true)
 
   const fetchStatus = useCallback(async () => {
@@ -43,6 +46,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       if (res.ok) {
         const data = await res.json()
         setAccountStatus(data.account_status ?? null)
+        setOnboardingStage(data.onboarding_stage ?? 1)
       }
     } catch (err) {
       console.error("[subscription] status fetch failed:", err)
@@ -58,8 +62,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const isLapsed = accountStatus === "lapsed" || accountStatus === "past_due"
 
   const value = useMemo<SubscriptionState>(
-    () => ({ accountStatus, loading, isLapsed, refresh: fetchStatus }),
-    [accountStatus, loading, isLapsed, fetchStatus]
+    () => ({ accountStatus, onboardingStage, loading, isLapsed, refresh: fetchStatus }),
+    [accountStatus, onboardingStage, loading, isLapsed, fetchStatus]
   )
 
   return (

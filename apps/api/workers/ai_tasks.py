@@ -58,10 +58,18 @@ async def _process_and_save_analysis(user_id: str) -> None:
             analysis = ai_result.get("analysis", {})
             questionnaire.ai_analysis = analysis
             questionnaire.ai_summary_line = analysis.get("ai_summary_line", "Analysis complete")
-            
             db.add(questionnaire)
+
+            # 4. Finalize Onboarding
+            from models.user import User
+            user_result = await db.execute(select(User).where(User.id == user_id))
+            user = user_result.scalar_one_or_none()
+            if user:
+                user.onboarding_stage = 5
+                db.add(user)
+
             await db.commit()
-            logger.info("Successfully saved real AI analysis for user: %s", user_id)
+            logger.info("Successfully saved real AI analysis and finalized onboarding for user: %s", user_id)
             
         except Exception as e:
             logger.error("Error generating AI analysis for user_id %s: %s", user_id, e)

@@ -51,7 +51,7 @@ export function DesktopSidebar() {
   const router = useRouter()
   const supabase = createClient()
   const [loggingOut, setLoggingOut] = useState(false)
-  const { accountStatus } = useSubscription()
+  const { accountStatus, onboardingStage } = useSubscription()
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -72,7 +72,7 @@ export function DesktopSidebar() {
         <nav className="flex flex-1 flex-col gap-1">
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.href, pathname)
-            const locked = !ALWAYS_ALLOWED.includes(item.href) && accountStatus !== null && accountStatus !== "active"
+            const locked = !ALWAYS_ALLOWED.includes(item.href) && (accountStatus !== "active" || onboardingStage < 5)
 
             if (locked) {
               return (
@@ -120,7 +120,7 @@ export function DesktopSidebar() {
 
 export function MobileBottomTabBar() {
   const pathname = usePathname()
-  const { accountStatus } = useSubscription()
+  const { accountStatus, onboardingStage } = useSubscription()
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-border bg-white px-1 lg:hidden"
@@ -128,7 +128,7 @@ export function MobileBottomTabBar() {
     >
       {BOTTOM_TAB_ITEMS.map((item) => {
         const active = isActive(item.href, pathname)
-        const locked = !ALWAYS_ALLOWED.includes(item.href) && accountStatus !== null && accountStatus !== "active"
+        const locked = !ALWAYS_ALLOWED.includes(item.href) && (accountStatus !== "active" || onboardingStage < 5)
 
         if (locked) {
           return (

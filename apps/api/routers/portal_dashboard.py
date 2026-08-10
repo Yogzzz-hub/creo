@@ -17,11 +17,7 @@ router = APIRouter(prefix="/api/v1/portal", tags=["portal-dashboard"])
 
 
 def _compute_onboarding_stage(user: User) -> int:
-    if user.account_status.value in ("active", "lapsed", "suspended"):
-        return 4
-    if user.plan_name is not None:
-        return 2
-    return 1
+    return user.onboarding_stage
 
 
 @router.get("/dashboard", response_model=DashboardResponse)

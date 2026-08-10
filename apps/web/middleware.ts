@@ -57,7 +57,7 @@ function canAccessRoute(role: string, pathname: string): boolean {
   return false;
 }
 
-async function fetchUserProfile(accessToken: string): Promise<{ role: string; account_status: string } | null> {
+async function fetchUserProfile(accessToken: string): Promise<{ role: string; account_status: string; onboarding_stage: number } | null> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     const controller = new AbortController();
@@ -69,7 +69,7 @@ async function fetchUserProfile(accessToken: string): Promise<{ role: string; ac
     clearTimeout(timeout);
     if (!res.ok) return null;
     const data = await res.json();
-    return { role: data.role ?? "client", account_status: data.account_status ?? "pending_verification" };
+    return { role: data.role ?? "client", account_status: data.account_status ?? "pending_verification", onboarding_stage: data.onboarding_stage ?? 1 };
   } catch {
     return null;
   }
@@ -134,8 +134,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Portal restriction: non-active clients can only access dashboard & support
-    if (role === "client" && pathname.startsWith("/portal") && !isUnrestrictedPortalRoute(pathname) && profile?.account_status !== "active") {
+    // Portal restriction: non-active clients or those with incomplete onboarding can only access dashboard & support
+    const isFullyActive = profile?.account_status === "active" && profile?.onboarding_stage === 5;
+    if (role === "client" && pathname.startsWith("/portal") && !isUnrestrictedPortalRoute(pathname) && !isFullyActive) {
       const url = request.nextUrl.clone();
       url.pathname = "/portal";
       return NextResponse.redirect(url);
