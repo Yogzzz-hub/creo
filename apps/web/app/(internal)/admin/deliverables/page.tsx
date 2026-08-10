@@ -318,11 +318,14 @@ export default function DeliverablesPage() {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           {d.file_url && (
-                            <Button variant="ghost" size="sm" asChild>
-                              <a href={d.file_url} target="_blank" rel="noopener noreferrer">
-                                <Eye className="size-3.5" />
-                              </a>
-                            </Button>
+                            <a
+                              href={d.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={buttonVariants({ variant: "ghost", size: "sm" })}
+                            >
+                              <Eye className="size-3.5" />
+                            </a>
                           )}
                           {d.status === "pending_review" && (
                             <>

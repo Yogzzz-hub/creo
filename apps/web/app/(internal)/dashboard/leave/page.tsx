@@ -20,7 +20,8 @@ interface LeaveRequest {
   end_date: string;
   reason: string;
   status: "pending" | "approved" | "rejected";
-  approved_by: string | null;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
   created_at: string;
   updated_at: string | null;
 }
@@ -117,7 +118,11 @@ export default function LeavePage() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
-        throw new Error(errData?.detail || "Failed to submit leave request");
+        const errorMsg =
+          errData?.error?.message ||
+          errData?.detail ||
+          "Failed to submit leave request";
+        throw new Error(errorMsg);
       }
 
       setSuccess("Leave request submitted successfully");

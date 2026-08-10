@@ -94,15 +94,15 @@ async def generate_brand_summary(
 
     q_data = await _build_questionnaire_data(questionnaire)
 
-    if settings.OPENAI_API_KEY:
+    if settings.DIFY_API_KEY or settings.OPENAI_API_KEY:
         try:
             from services.ai_analysis import (
-                call_openai_gpt4o,
+                call_dify_ai_analysis,
                 generate_brand_analysis_prompt,
             )
 
             sys_prompt, user_prompt = generate_brand_analysis_prompt(q_data)
-            ai_result = call_openai_gpt4o(sys_prompt, user_prompt)
+            ai_result = call_dify_ai_analysis(sys_prompt, user_prompt, user_id=str(current_user.id))
             analysis = ai_result.get("analysis", {})
             brand_summary = analysis.get("ai_summary_line", "Analysis complete")
 
@@ -117,7 +117,7 @@ async def generate_brand_summary(
                 source="ai",
             )
         except Exception as e:
-            logger.error("OpenAI call failed for user %s: %s — falling back to mock", current_user.id, e)
+            logger.error("Dify AI call failed for user %s: %s — falling back to mock", current_user.id, e)
 
     mock_summary = _generate_mock_brand_summary(q_data)
     questionnaire.ai_summary_line = mock_summary

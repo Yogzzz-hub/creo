@@ -216,3 +216,38 @@ class TestAutomationTaskSignatures:
         from workers.automation_tasks import _run_async
 
         assert callable(_run_async)
+
+
+class TestDifyAIIntegration:
+    def test_call_dify_ai_analysis_success(self, monkeypatch):
+        import json
+        from unittest.mock import MagicMock
+        from services.ai_analysis import call_dify_ai_analysis
+
+        mock_answer = json.dumps({
+            "brand_tone": ["Bold", "Professional"],
+            "content_themes": ["Behind the scenes"],
+            "audience_persona": "Tech savvy users",
+            "goal_alignment": "Aligns with engagement",
+            "ai_summary_line": "Bold voice, targeting tech users, focused on engagement"
+        })
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "answer": f"```json\n{mock_answer}\n```",
+            "metadata": {"usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30}}
+        }
+
+        mock_client = MagicMock()
+        mock_client.__enter__.return_value = mock_client
+        mock_client.post.return_value = mock_response
+
+        monkeypatch.setattr("httpx.Client", lambda timeout=60.0: mock_client)
+        monkeypatch.setattr("core.config.settings.DIFY_API_KEY", "test-dify-key")
+
+        res = call_dify_ai_analysis("sys", "user")
+        assert "analysis" in res
+        assert res["analysis"]["ai_summary_line"] == "Bold voice, targeting tech users, focused on engagement"
+        assert res["total_tokens"] == 30
+

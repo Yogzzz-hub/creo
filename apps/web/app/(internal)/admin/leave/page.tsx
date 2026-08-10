@@ -24,14 +24,16 @@ import { adminFetch } from "@/lib/admin-api"
 interface LeaveRequest {
   id: string
   team_member_id: string
+  employee_name?: string
+  department?: string
   start_date: string
   end_date: string
   reason: string
   status: "pending" | "approved" | "rejected"
-  reviewed_by: string | null
-  reviewed_at: string | null
+  reviewed_by?: string | null
+  reviewed_at?: string | null
   created_at: string
-  updated_at: string | null
+  updated_at?: string | null
 }
 
 function getStatusBadge(status: LeaveRequest["status"]) {
@@ -183,9 +185,11 @@ export default function LeaveApprovalsPage() {
                     <TableCell>
                       <div>
                         <p className="font-medium text-[#0D2137]">
-                          {lr.team_member_id.slice(0, 8)}
+                          {lr.employee_name || lr.team_member_id.slice(0, 8)}
                         </p>
-                        <p className="text-xs text-muted-foreground">{lr.id.slice(0, 8)}</p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {lr.department ? lr.department.replace("_", " ") : lr.id.slice(0, 8)}
+                        </p>
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">

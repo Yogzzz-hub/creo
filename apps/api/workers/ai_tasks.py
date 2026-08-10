@@ -70,7 +70,7 @@ async def _process_and_save_analysis(user_id: str) -> None:
 
 @shared_task(name="generate_ai_analysis", bind=True, max_retries=3)
 def generate_ai_analysis(self, user_id: str) -> None:
-    logger.info("[Celery] Requesting OpenAI brand analysis for user %s", user_id)
+    logger.info("[Celery] Requesting Dify AI brand analysis for user %s", user_id)
     try:
         _run_async(_process_and_save_analysis(user_id))
     except Exception as exc:

@@ -19,7 +19,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Loader2,
-  CheckCircle2,
   Briefcase,
   Users,
   Palette,
@@ -41,6 +40,7 @@ const BRAND_TONES = [
   "Playful",
   "Warm",
   "Authoritative",
+  "Witty",
 ];
 
 const GOALS = [
@@ -57,14 +57,20 @@ const GOALS = [
 const GENDERS = ["All Genders", "Female-Identifying", "Male-Identifying", "Non-Binary", "No Preference"];
 
 interface FormData {
+  // Theme 1: Brand Identity & Basics
+  brand_name: string;
   industry: string;
+  official_logo_assets: string;
   business_description: string;
+
+  // Theme 2: Target Audience & Goals
   primary_goal: string;
   target_audience: {
     age_range: string;
     gender: string;
     location: string;
     interests: string;
+    problems_solved: string;
   };
   social_handles: {
     instagram: string;
@@ -73,17 +79,22 @@ interface FormData {
     linkedin: string;
     other_platforms: string;
   };
-  current_posting_frequency: string;
+
+  // Theme 3: Tone, Style & Preferences
   brand_tone: string[];
+  style_references: string;
+  competitor_refs: string;
+  content_types_focus: string;
   content_what_works: string;
   content_what_doesnt: string;
-  competitor_refs: string;
   topics_to_avoid: string;
-  style_references: string;
+  current_posting_frequency: string;
 }
 
 const INITIAL_FORM: FormData = {
+  brand_name: "",
   industry: "",
+  official_logo_assets: "",
   business_description: "",
   primary_goal: "",
   target_audience: {
@@ -91,6 +102,7 @@ const INITIAL_FORM: FormData = {
     gender: "",
     location: "",
     interests: "",
+    problems_solved: "",
   },
   social_handles: {
     instagram: "",
@@ -99,17 +111,22 @@ const INITIAL_FORM: FormData = {
     linkedin: "",
     other_platforms: "",
   },
-  current_posting_frequency: "",
   brand_tone: [],
+  style_references: "",
+  competitor_refs: "",
+  content_types_focus: "",
   content_what_works: "",
   content_what_doesnt: "",
-  competitor_refs: "",
   topics_to_avoid: "",
-  style_references: "",
+  current_posting_frequency: "",
 };
 
 const STEP_ICONS = [Briefcase, Users, Palette];
-const STEP_TITLES = ["Business Details", "Target Audience & Social", "Brand Voice & Content"];
+const STEP_TITLES = [
+  "Brand Identity & Basics",
+  "Target Audience & Goals",
+  "Tone, Style & Preferences",
+];
 
 export default function QuestionnairePage() {
   const router = useRouter();
@@ -157,15 +174,16 @@ export default function QuestionnairePage() {
   const canNext = useMemo(() => {
     if (step === 1) {
       return (
+        form.brand_name.trim().length > 0 &&
         form.industry.trim().length > 0 &&
-        form.business_description.trim().length > 0 &&
-        form.primary_goal.length > 0
+        form.business_description.trim().length > 0
       );
     }
     if (step === 2) {
       return (
         form.target_audience.age_range.trim().length > 0 &&
-        form.target_audience.location.trim().length > 0
+        form.target_audience.location.trim().length > 0 &&
+        form.primary_goal.length > 0
       );
     }
     return form.brand_tone.length > 0;
@@ -186,15 +204,33 @@ export default function QuestionnairePage() {
         return;
       }
 
+      const formattedDesc = [
+        `Brand Name: ${form.brand_name.trim()}`,
+        form.official_logo_assets.trim() ? `Logo & Visual Assets: ${form.official_logo_assets.trim()}` : "",
+        `Business Description: ${form.business_description.trim()}`,
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      const formattedWorks = [
+        form.content_types_focus.trim() ? `Focus Content Types & Themes: ${form.content_types_focus.trim()}` : "",
+        form.content_what_works.trim() ? `Effective Content: ${form.content_what_works.trim()}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
       const payload = {
         industry: form.industry.trim(),
-        business_description: form.business_description.trim(),
+        business_description: formattedDesc,
         primary_goal: form.primary_goal,
         target_audience: {
+          brand_name: form.brand_name.trim(),
+          official_logo_assets: form.official_logo_assets.trim(),
           age_range: form.target_audience.age_range.trim(),
           gender: form.target_audience.gender,
           location: form.target_audience.location.trim(),
           interests: form.target_audience.interests.trim(),
+          problems_solved: form.target_audience.problems_solved.trim(),
         },
         social_handles: {
           instagram: form.social_handles.instagram.trim(),
@@ -205,7 +241,7 @@ export default function QuestionnairePage() {
         },
         current_posting_frequency: form.current_posting_frequency.trim() || null,
         brand_tone: form.brand_tone,
-        content_what_works: form.content_what_works.trim() || null,
+        content_what_works: formattedWorks || null,
         content_what_doesnt: form.content_what_doesnt.trim() || null,
         competitor_refs: parseList(form.competitor_refs),
         topics_to_avoid: form.topics_to_avoid.trim() || null,
@@ -225,7 +261,7 @@ export default function QuestionnairePage() {
       );
 
       if (res.status === 409) {
-        setError(null); // Clear the error state
+        setError(null);
         res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/v1/questionnaire`,
           {
@@ -250,7 +286,6 @@ export default function QuestionnairePage() {
         }
       }
 
-      // Update the user's onboarding_stage in Supabase to 5 and account_status to active to unlock the dashboard
       const { error: updateError } = await supabase
         .from("users")
         .update({
@@ -302,16 +337,34 @@ export default function QuestionnairePage() {
       )}
 
       <div className="space-y-6">
+        {/* Step 1: Brand Identity & Basics */}
         {step === 1 && (
           <div className="space-y-5 animate-in fade-in duration-300">
             <div className="space-y-2">
+              <Label htmlFor="brand_name" className="text-sm font-semibold text-brand-dark">
+                Brand Name
+              </Label>
+              <Input
+                id="brand_name"
+                type="text"
+                placeholder="e.g., Acme Corporation, Creo Studio"
+                value={form.brand_name}
+                onChange={(e) => updateField("brand_name", e.target.value)}
+                className="w-full border-border focus-visible:ring-brand focus-visible:border-brand"
+              />
+              <p className="text-xs text-[#6BAED6]">
+                Official name of your brand, company, or agency.
+              </p>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="industry" className="text-sm font-semibold text-brand-dark">
-                Industry
+                Industry / Sector
               </Label>
               <Input
                 id="industry"
                 type="text"
-                placeholder="e.g., E-commerce, SaaS, Fitness, Real Estate"
+                placeholder="e.g., E-commerce, SaaS, Fitness, Real Estate, Healthcare"
                 value={form.industry}
                 onChange={(e) => updateField("industry", e.target.value)}
                 className="w-full border-border focus-visible:ring-brand focus-visible:border-brand"
@@ -322,47 +375,41 @@ export default function QuestionnairePage() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="official_logo_assets" className="text-sm font-semibold text-brand-dark">
+                Official Logo or Visual Assets (Optional)
+              </Label>
+              <Input
+                id="official_logo_assets"
+                type="text"
+                placeholder="e.g., Link to Google Drive/Figma logo, brand color hex codes (#2B7BC4), or visual asset notes"
+                value={form.official_logo_assets}
+                onChange={(e) => updateField("official_logo_assets", e.target.value)}
+                className="w-full border-border focus-visible:ring-brand focus-visible:border-brand"
+              />
+              <p className="text-xs text-[#6BAED6]">
+                Provide a link to your official logo, brand kit drive, or brand colors description.
+              </p>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="business_description" className="text-sm font-semibold text-brand-dark">
                 Business Description
               </Label>
               <Textarea
                 id="business_description"
-                placeholder="Describe your products, services, value proposition, and business mission..."
+                placeholder="Briefly describe what your business does, products or services offered, and core value proposition..."
                 value={form.business_description}
                 onChange={(e) => updateField("business_description", e.target.value)}
                 className="w-full min-h-[120px] border-border focus-visible:ring-brand focus-visible:border-brand"
               />
               <p className="text-xs text-[#6BAED6]">
-                Provide as much detail as possible to help our AI analyze your brand persona.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="primary_goal" className="text-sm font-semibold text-brand-dark">
-                Primary Goal
-              </Label>
-              <Select
-                value={form.primary_goal}
-                onValueChange={(val) => updateField("primary_goal", val ?? "")}
-              >
-                <SelectTrigger id="primary_goal" className="w-full border-border focus:ring-brand focus:border-brand">
-                  <SelectValue placeholder="Select your primary marketing goal" />
-                </SelectTrigger>
-                <SelectContent>
-                  {GOALS.map((goal) => (
-                    <SelectItem key={goal} value={goal}>
-                      {goal}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-[#6BAED6]">
-                Select the main objective you want to achieve with this content strategy.
+                Provide clear details about what your business does so our strategic AI can model your brand.
               </p>
             </div>
           </div>
         )}
 
+        {/* Step 2: Target Audience & Goals */}
         {step === 2 && (
           <div className="space-y-5 animate-in fade-in duration-300">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -419,12 +466,12 @@ export default function QuestionnairePage() {
 
               <div className="space-y-2">
                 <Label htmlFor="interests" className="text-sm font-semibold text-brand-dark">
-                  Audience Interests / Pain Points
+                  Audience Demographics & Interests
                 </Label>
                 <Input
                   id="interests"
                   type="text"
-                  placeholder="e.g., tech, fitness, career growth"
+                  placeholder="e.g., tech, fitness, career growth, luxury lifestyle"
                   value={form.target_audience.interests}
                   onChange={(e) => updateNestedField("target_audience", "interests", e.target.value)}
                   className="w-full border-border focus-visible:ring-brand"
@@ -432,8 +479,48 @@ export default function QuestionnairePage() {
               </div>
             </div>
 
-            <div className="border-t border-border pt-4 mt-6">
-              <h3 className="text-sm font-bold text-brand-dark mb-4">Social Media Presence (Optional)</h3>
+            <div className="space-y-2">
+              <Label htmlFor="problems_solved" className="text-sm font-semibold text-brand-dark">
+                Problems You Solve for Your Customers
+              </Label>
+              <Textarea
+                id="problems_solved"
+                placeholder="What pain points or key problems do your ideal customers have, and how does your product/service solve them?"
+                value={form.target_audience.problems_solved}
+                onChange={(e) => updateNestedField("target_audience", "problems_solved", e.target.value)}
+                className="w-full min-h-[90px] border-border focus-visible:ring-brand"
+              />
+              <p className="text-xs text-[#6BAED6]">
+                Helps tailor marketing content around benefits and customer solution stories.
+              </p>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t border-border">
+              <Label htmlFor="primary_goal" className="text-sm font-semibold text-brand-dark">
+                Main Objective / Marketing Strategy Goal
+              </Label>
+              <Select
+                value={form.primary_goal}
+                onValueChange={(val) => updateField("primary_goal", val ?? "")}
+              >
+                <SelectTrigger id="primary_goal" className="w-full border-border focus:ring-brand focus:border-brand">
+                  <SelectValue placeholder="Select your primary marketing objective" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GOALS.map((goal) => (
+                    <SelectItem key={goal} value={goal}>
+                      {goal}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-[#6BAED6]">
+                Select the core outcome you want your content campaign to accomplish.
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <h3 className="text-sm font-bold text-brand-dark mb-4">Social Media Channels (Optional)</h3>
               
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -456,7 +543,7 @@ export default function QuestionnairePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="facebook" className="text-sm font-semibold text-brand-dark">
-                      Facebook URL / Page
+                      Facebook Page
                     </Label>
                     <Input
                       id="facebook"
@@ -470,7 +557,7 @@ export default function QuestionnairePage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="tiktok" className="text-sm font-semibold text-brand-dark">
-                      TikTok Handle (Optional)
+                      TikTok Handle
                     </Label>
                     <div className="relative">
                       <span className="absolute left-3 top-2.5 text-xs font-semibold text-[#6BAED6]">@</span>
@@ -489,7 +576,7 @@ export default function QuestionnairePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="linkedin" className="text-sm font-semibold text-brand-dark">
-                      LinkedIn URL / Page
+                      LinkedIn Page
                     </Label>
                     <Input
                       id="linkedin"
@@ -503,12 +590,12 @@ export default function QuestionnairePage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="other_platforms" className="text-sm font-semibold text-brand-dark">
-                      Other Platforms (Optional)
+                      Other Platforms
                     </Label>
                     <Input
                       id="other_platforms"
                       type="text"
-                      placeholder="e.g., YouTube, Pinterest, Twitter/X"
+                      placeholder="e.g., YouTube, Pinterest, X/Twitter"
                       value={form.social_handles.other_platforms}
                       onChange={(e) => updateNestedField("social_handles", "other_platforms", e.target.value)}
                       className="w-full border-border focus-visible:ring-brand"
@@ -520,11 +607,12 @@ export default function QuestionnairePage() {
           </div>
         )}
 
+        {/* Step 3: Tone, Style & Preferences */}
         {step === 3 && (
           <div className="space-y-5 animate-in fade-in duration-300">
             <div className="space-y-2.5">
               <Label className="text-sm font-semibold text-brand-dark">
-                Brand Tone (Select 1-10 keywords)
+                Preferred Brand Voice / Tone (Select 1-10 keywords)
               </Label>
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {BRAND_TONES.map((tone) => {
@@ -555,92 +643,119 @@ export default function QuestionnairePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="style_references" className="text-sm font-semibold text-brand-dark">
+                  Design Aesthetic & Style References
+                </Label>
+                <Input
+                  id="style_references"
+                  type="text"
+                  placeholder="e.g., minimalist, bright colors, dark mode, vintage typography (comma separated)"
+                  value={form.style_references}
+                  onChange={(e) => updateField("style_references", e.target.value)}
+                  className="w-full border-border focus-visible:ring-brand"
+                />
+                <p className="text-xs text-[#6BAED6]">
+                  Aesthetic preferences for your graphics & visual assets.
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="competitor_refs" className="text-sm font-semibold text-brand-dark">
-                  Competitors / References
+                  Competitors / Inspiration References
                 </Label>
                 <Input
                   id="competitor_refs"
                   type="text"
-                  placeholder="e.g., Apple, Nike, local brands (comma separated)"
+                  placeholder="e.g., Apple, Nike, local competitors (comma separated)"
                   value={form.competitor_refs}
                   onChange={(e) => updateField("competitor_refs", e.target.value)}
+                  className="w-full border-border focus-visible:ring-brand"
+                />
+                <p className="text-xs text-[#6BAED6]">
+                  Brands whose marketing style or content strategy you admire.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="content_types_focus" className="text-sm font-semibold text-brand-dark">
+                Specific Content Types & Focus Themes
+              </Label>
+              <Input
+                id="content_types_focus"
+                type="text"
+                placeholder="e.g., short-form video reels, educational carousels, product showcases, customer stories"
+                value={form.content_types_focus}
+                onChange={(e) => updateField("content_types_focus", e.target.value)}
+                className="w-full border-border focus-visible:ring-brand"
+              />
+              <p className="text-xs text-[#6BAED6]">
+                Highlight themes or formats you want your creative team to focus on.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="content_what_works" className="text-sm font-semibold text-brand-dark">
+                  What Content Works Well? (Optional)
+                </Label>
+                <Textarea
+                  id="content_what_works"
+                  placeholder="Past campaigns or post styles that successfully engaged your audience..."
+                  value={form.content_what_works}
+                  onChange={(e) => updateField("content_what_works", e.target.value)}
                   className="w-full border-border focus-visible:ring-brand"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="style_references" className="text-sm font-semibold text-brand-dark">
-                  Visual Style References
+                <Label htmlFor="content_what_doesnt" className="text-sm font-semibold text-brand-dark">
+                  What Content Does NOT Work? (Optional)
                 </Label>
-                <Input
-                  id="style_references"
-                  type="text"
-                  placeholder="e.g., minimalist, bright, vintage (comma separated)"
-                  value={form.style_references}
-                  onChange={(e) => updateField("style_references", e.target.value)}
+                <Textarea
+                  id="content_what_doesnt"
+                  placeholder="Styles or post concepts you tried but found ineffective..."
+                  value={form.content_what_doesnt}
+                  onChange={(e) => updateField("content_what_doesnt", e.target.value)}
                   className="w-full border-border focus-visible:ring-brand"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="current_posting_frequency" className="text-sm font-semibold text-brand-dark">
-                Current Posting Frequency (Optional)
-              </Label>
-              <Input
-                id="current_posting_frequency"
-                type="text"
-                placeholder="e.g., 3 posts/week, daily, none"
-                value={form.current_posting_frequency}
-                onChange={(e) => updateField("current_posting_frequency", e.target.value)}
-                className="w-full border-border focus-visible:ring-brand"
-              />
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="topics_to_avoid" className="text-sm font-semibold text-brand-dark">
+                  Topics / Words to Avoid (Optional)
+                </Label>
+                <Input
+                  id="topics_to_avoid"
+                  type="text"
+                  placeholder="Sensitive topics, words, or competitors to exclude"
+                  value={form.topics_to_avoid}
+                  onChange={(e) => updateField("topics_to_avoid", e.target.value)}
+                  className="w-full border-border focus-visible:ring-brand"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="content_what_works" className="text-sm font-semibold text-brand-dark">
-                What Content Works Well for You? (Optional)
-              </Label>
-              <Textarea
-                id="content_what_works"
-                placeholder="Describe any past marketing posts, formats, or campaigns that successfully engaged your audience..."
-                value={form.content_what_works}
-                onChange={(e) => updateField("content_what_works", e.target.value)}
-                className="w-full border-border focus-visible:ring-brand"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="content_what_doesnt" className="text-sm font-semibold text-brand-dark">
-                What Content Does NOT Work? (Optional)
-              </Label>
-              <Textarea
-                id="content_what_doesnt"
-                placeholder="Describe any marketing strategies or post styles you tried but found ineffective..."
-                value={form.content_what_doesnt}
-                onChange={(e) => updateField("content_what_doesnt", e.target.value)}
-                className="w-full border-border focus-visible:ring-brand"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="topics_to_avoid" className="text-sm font-semibold text-brand-dark">
-                Topics to Avoid (Optional)
-              </Label>
-              <Input
-                id="topics_to_avoid"
-                type="text"
-                placeholder="List any sensitive topics, words, or competitors you want to avoid..."
-                value={form.topics_to_avoid}
-                onChange={(e) => updateField("topics_to_avoid", e.target.value)}
-                className="w-full border-border focus-visible:ring-brand"
-              />
+              <div className="space-y-2">
+                <Label htmlFor="current_posting_frequency" className="text-sm font-semibold text-brand-dark">
+                  Current Posting Frequency (Optional)
+                </Label>
+                <Input
+                  id="current_posting_frequency"
+                  type="text"
+                  placeholder="e.g., 3 posts/week, daily, irregular"
+                  value={form.current_posting_frequency}
+                  onChange={(e) => updateField("current_posting_frequency", e.target.value)}
+                  className="w-full border-border focus-visible:ring-brand"
+                />
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Button controls */}
+      {/* Controls */}
       <div className="mt-8 flex items-center justify-between gap-4 pt-6 border-t border-border">
         {step > 1 ? (
           <Button
@@ -654,7 +769,7 @@ export default function QuestionnairePage() {
             Back
           </Button>
         ) : (
-          <div /> // spacer
+          <div />
         )}
 
         {step < TOTAL_STEPS ? (
@@ -688,4 +803,3 @@ export default function QuestionnairePage() {
     </CardContent>
   );
 }
-

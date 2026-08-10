@@ -15,10 +15,6 @@ from schemas.leave import LeaveRequestCreate, LeaveRequestOut
 router = APIRouter(prefix="/api/v1/leave", tags=["leave"])
 
 
-class LeaveListResponse:
-    pass
-
-
 @router.get("", response_model=list[LeaveRequestOut])
 async def list_my_leave_requests(
     current_user: RequireTeamMember,

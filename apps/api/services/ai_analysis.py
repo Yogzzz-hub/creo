@@ -1,20 +1,13 @@
 import json
-
-from openai import OpenAI
+import logging
+import httpx
 
 from core.config import settings
 
-openai_client = None
+logger = logging.getLogger(__name__)
 
 
-def _get_openai_client() -> OpenAI:
-    global openai_client
-    if openai_client is None:
-        openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
-    return openai_client
-
-
-def generate_brand_analysis_prompt(questionnaire_data: dict) -> str:
+def generate_brand_analysis_prompt(questionnaire_data: dict) -> tuple[str, str]:
     business_description = questionnaire_data.get("business_description", "")
     industry = questionnaire_data.get("industry", "")
     target_audience = questionnaire_data.get("target_audience", {})
@@ -70,26 +63,64 @@ Return the analysis as a JSON object with the required keys."""
     return system_prompt, user_prompt
 
 
-def call_openai_gpt4o(system_message: str, user_message: str) -> dict:
-    client = _get_openai_client()
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": user_message},
-        ],
-        response_format={"type": "json_object"},
-        temperature=0.7,
-        max_tokens=1000,
-        timeout=60,
-    )
+def call_dify_ai_analysis(system_message: str, user_message: str, user_id: str = "system") -> dict:
+    """Call Dify AI Chatbot / Completion API to generate structured brand analysis."""
+    if not settings.DIFY_API_KEY:
+        raise ValueError("DIFY_API_KEY is not configured in settings")
 
-    content = response.choices[0].message.content
-    usage = response.usage
+    dify_url = f"{settings.DIFY_API_URL.rstrip('/')}/chat-messages"
+    prompt_query = f"{system_message}\n\n{user_message}"
+
+    payload = {
+        "inputs": {},
+        "query": prompt_query,
+        "response_mode": "blocking",
+        "user": user_id,
+    }
+
+    headers = {
+        "Authorization": f"Bearer {settings.DIFY_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    logger.info("[dify_ai_analysis] Sending request to Dify API: %s", dify_url)
+
+    with httpx.Client(timeout=60.0) as client:
+        resp = client.post(dify_url, json=payload, headers=headers)
+
+    if resp.status_code != 200:
+        logger.error("[dify_ai_analysis] Dify returned status %d: %s", resp.status_code, resp.text[:500])
+        raise RuntimeError(f"Dify API error {resp.status_code}: {resp.text[:200]}")
+
+    data = resp.json()
+    answer_text = data.get("answer", "").strip()
+
+    # Clean markdown codeblocks if present
+    if answer_text.startswith("```"):
+        lines = answer_text.splitlines()
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].startswith("```"):
+            lines = lines[:-1]
+        answer_text = "\n".join(lines).strip()
+
+    try:
+        analysis_dict = json.loads(answer_text)
+    except json.JSONDecodeError as exc:
+        logger.error("[dify_ai_analysis] Failed to parse JSON from Dify answer: %s", answer_text[:500])
+        raise ValueError(f"Dify response is not valid JSON: {exc}") from exc
+
+    metadata = data.get("metadata", {})
+    usage = metadata.get("usage", {})
 
     return {
-        "analysis": json.loads(content),
-        "prompt_tokens": usage.prompt_tokens if usage else 0,
-        "completion_tokens": usage.completion_tokens if usage else 0,
-        "total_tokens": usage.total_tokens if usage else 0,
+        "analysis": analysis_dict,
+        "prompt_tokens": usage.get("prompt_tokens", 0),
+        "completion_tokens": usage.get("completion_tokens", 0),
+        "total_tokens": usage.get("total_tokens", 0),
     }
+
+
+def call_openai_gpt4o(system_message: str, user_message: str) -> dict:
+    """Backward-compatible alias routing brand analysis requests to Dify AI."""
+    return call_dify_ai_analysis(system_message, user_message)
