@@ -1,6 +1,7 @@
+import math
 import random
 from calendar import monthrange
-from datetime import date
+from datetime import date, timedelta
 from typing import Annotated
 
 # pyrefly: ignore [missing-import]
@@ -34,7 +35,7 @@ async def list_calendar_entries(
 
 
 # ---------------------------------------------------------------------------
-# Temporary dev endpoint — POST /api/v1/calendar/test-generate
+# Dev endpoint — POST /api/v1/calendar/test-generate
 # ---------------------------------------------------------------------------
 class TestGenerateResponse(BaseModel):
     message: str
@@ -46,26 +47,22 @@ class TestResetResponse(BaseModel):
     entries_deleted: int
 
 
-
-# Multi-tier quotas based on the client's subscription plan
+# Updated to match the specific UI Pricing names and quotas
 PLAN_QUOTAS = {
-    "basic": {
+    "starter": {
         DeliverableType.poster: 8,
         DeliverableType.reel: 4,
         DeliverableType.story: 10,
-        DeliverableType.shoot_day: 2,
+    },
+    "growth": {
+        DeliverableType.poster: 12,
+        DeliverableType.reel: 8,
+        DeliverableType.story: 15,
     },
     "pro": {
         DeliverableType.poster: 16,
         DeliverableType.reel: 12,
         DeliverableType.story: 20,
-        DeliverableType.shoot_day: 6,
-    },
-    "enterprise": {
-        DeliverableType.poster: 30,
-        DeliverableType.reel: 25,
-        DeliverableType.story: 40,
-        DeliverableType.shoot_day: 12,
     }
 }
 
@@ -99,36 +96,52 @@ TOPICS = {
 }
 
 
-def _generate_entries_for_month(year: int, month: int, client_id: str, plan_tier: str = "pro") -> list[dict]:
-    """Generate calendar entries for a month based on the client's specific plan tier."""
-    days_in_month = monthrange(year, month)[1]
-    available_days = list(range(8, days_in_month + 1))
+def _generate_timeline_entries(client_id: str, plan_tier: str = "starter") -> list[dict]:
+    """Generates a 30-day active content timeline, starting after a 7-day onboarding period."""
+    today = date.today()
+    
+    # Logic 1: Days 1-7 are Onboarding. The active 30-day calendar starts on Day 8.
+    active_start_date = today + timedelta(days=7)
+    
+    # Logic 2: Create a pool of 30 distinct dates for the active plan duration
+    available_dates = [active_start_date + timedelta(days=i) for i in range(30)]
 
-    # Pick the quotas dynamically based on the plan tier (defaults to 'pro')
-    quotas = PLAN_QUOTAS.get(plan_tier.lower(), PLAN_QUOTAS["pro"])
+    # Fetch quotas, default to 'starter' if the tier name doesn't match perfectly
+    quotas = PLAN_QUOTAS.get(plan_tier.lower(), PLAN_QUOTAS["starter"]).copy()
 
-    pool: list[tuple[DeliverableType, int]] = []
-    for dtype, count in quotas.items():
-        for _ in range(count):
-            day = random.choice(available_days)
-            pool.append((dtype, day))
+    # Logic 3: Dynamically calculate shoot days based on reel count (4 reels = 2 shoot days)
+    reels_count = quotas.get(DeliverableType.reel, 0)
+    quotas[DeliverableType.shoot_day] = math.ceil(reels_count / 2)
 
-    random.shuffle(pool)
+    # Shuffle dates to ensure randomness
+    random.shuffle(available_dates)
+    date_pool = available_dates.copy()
 
     entries: list[dict] = []
-    for dtype, day in pool:
-        topic_list = TOPICS[dtype]
-        entries.append(
-            {
-                "client_id": client_id,
-                "scheduled_date": date(year, month, day),
-                "deliverable_type": dtype,
-                "content_topic": random.choice(topic_list),
-                "status": CalendarEntryStatus.scheduled,
-            }
-        )
+    
+    # Logic 4: Distribute items strictly one per day using list.pop() to prevent collisions
+    for dtype, count in quotas.items():
+        for _ in range(count):
+            # Safety Fallback: If total plan items > 30 days (e.g., Pro Tier has 48 items),
+            # we will run out of unique days. We recycle the dates to prevent server crashes.
+            if not date_pool:
+                date_pool = available_dates.copy()
+                random.shuffle(date_pool)
+
+            day = date_pool.pop()
+            topic_list = TOPICS[dtype]
+            entries.append(
+                {
+                    "client_id": client_id,
+                    "scheduled_date": day,
+                    "deliverable_type": dtype,
+                    "content_topic": random.choice(topic_list),
+                    "status": CalendarEntryStatus.scheduled,
+                }
+            )
 
     return entries
+
 
 @router.post(
     "/test-generate",
@@ -139,46 +152,43 @@ async def test_generate_calendar(
     current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
-    """Dev-only: synchronously generate calendar entries based on the client's specific plan tier."""
+    """Dev-only: synchronously generate 30-day calendar starting after 7-day onboarding."""
     now = date.today()
-    year, month = now.year, now.month
 
     # 1. Fetch the client's active content plan from the database to determine tier
     from sqlalchemy import select
     from models.content_plan import ContentPlan
-    from models.plan import Plan # Adjust import if your plan table model name differs
-
-    plan_tier = "pro" # Default fallback
+    
+    plan_tier = "starter"  # Default fallback
     
     plan_result = await db.execute(
         select(ContentPlan).where(ContentPlan.client_id == current_user.id)
-    );
+    )
     content_plan = plan_result.scalars().first()
     
     if content_plan:
-        # If your content_plan relates to a plan or has a tier name field directly:
-        plan_tier = getattr(content_plan, "tier_name", None) or getattr(current_user, "plan_tier", "pro")
+        plan_tier = getattr(content_plan, "tier_name", None) or getattr(current_user, "plan_tier", "starter")
 
-    # 2. Clear existing entries for this client in the current month
+    # 2. Clear existing future entries for this client to handle clean resets/month transitions
     await db.execute(
         delete(ContentCalendar).where(
             ContentCalendar.client_id == current_user.id,
-            ContentCalendar.scheduled_date >= date(year, month, 1),
-            ContentCalendar.scheduled_date <= date(year, month, monthrange(year, month)[1]),
+            ContentCalendar.scheduled_date >= now,
         )
     )
 
-    # 3. Generate rows using the dynamically resolved plan tier
-    rows = _generate_entries_for_month(year, month, current_user.id, plan_tier=plan_tier)
+    # 3. Generate rows using the new timeline logic
+    rows = _generate_timeline_entries(current_user.id, plan_tier=plan_tier)
     for row in rows:
         db.add(ContentCalendar(**row))
 
     await db.commit()
 
     return TestGenerateResponse(
-        message=f"Calendar entries successfully generated for {plan_tier} plan",
+        message=f"Calendar timeline successfully generated for {plan_tier} plan",
         entries_created=len(rows),
     )
+
 
 @router.delete(
     "/test-reset",

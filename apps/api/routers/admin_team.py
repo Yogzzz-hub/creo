@@ -137,6 +137,13 @@ async def update_team_member(
 
     tm, user = row
 
+    # --- ADD THESE TWO LINES TO UPDATE THE USER TABLE ---
+    if getattr(payload, "full_name", None) is not None:
+        user.full_name = payload.full_name
+    if getattr(payload, "role", None) is not None:
+        user.role = payload.role
+    # ----------------------------------------------------
+
     if payload.department is not None:
         tm.department = payload.department
     if payload.daily_poster_cap is not None:

@@ -80,6 +80,9 @@ export default function TeamManagementPage() {
   const [submitting, setSubmitting] = useState(false)
   const [search, setSearch] = useState("")
   const [deptFilter, setDeptFilter] = useState("all")
+  
+  // State to track if we are editing an existing employee
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   const {
     register,
@@ -113,31 +116,68 @@ export default function TeamManagementPage() {
     fetchTeam()
   }, [])
 
+  // Function to handle clicking the Edit button
+  function handleEdit(emp: TeamMember) {
+    reset({
+      full_name: emp.full_name,
+      email: emp.email,
+      department: emp.department,
+      role: emp.role,
+      daily_cap_posters: emp.daily_cap_posters,
+      daily_cap_reels: emp.daily_cap_reels,
+      daily_cap_stories: emp.daily_cap_stories,
+    })
+    setEditingId(emp.team_member_id)
+    setDrawerOpen(true)
+  }
+
   async function onSubmit(data: EmployeeFormData) {
     setSubmitting(true)
     try {
-      const newMember = await adminFetch<TeamMember>("/api/v1/admin/team", {
-        method: "POST",
-        body: JSON.stringify({
-          full_name: data.full_name,
-          email: data.email,
-          role: data.role,
-          department: data.department,
-          daily_cap_posters: data.daily_cap_posters,
-          daily_cap_reels: data.daily_cap_reels,
-          daily_cap_stories: data.daily_cap_stories,
-        }),
-      })
-      setEmployees((prev) =>
-        [...prev, newMember].sort((a, b) => a.full_name.localeCompare(b.full_name))
-      )
-      toast.success("Employee added successfully", {
-        description: `${data.full_name} has been added to the ${formatDepartment(data.department)} team.`,
-      })
+      if (editingId) {
+        // UPDATE EXISTING EMPLOYEE (Using PATCH)
+        const updatedMember = await adminFetch<TeamMember>(`/api/v1/admin/team/${editingId}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            full_name: data.full_name, // Added this!
+            role: data.role,           // Added this!
+            department: data.department,
+            daily_poster_cap: data.daily_cap_posters, // Mapped for backend
+            daily_reel_cap: data.daily_cap_reels,     // Mapped for backend
+            daily_story_cap: data.daily_cap_stories,  // Mapped for backend
+            is_active: true,
+          }),
+        })
+        setEmployees((prev) =>
+          prev.map((emp) => (emp.team_member_id === editingId ? updatedMember : emp))
+        )
+        toast.success("Employee updated successfully")
+      } else {
+        // CREATE NEW EMPLOYEE
+        const newMember = await adminFetch<TeamMember>("/api/v1/admin/team", {
+          method: "POST",
+          body: JSON.stringify({
+            full_name: data.full_name,
+            email: data.email,
+            role: data.role,
+            department: data.department,
+            daily_poster_cap: data.daily_cap_posters, // Mapped for backend
+            daily_reel_cap: data.daily_cap_reels,     // Mapped for backend
+            daily_story_cap: data.daily_cap_stories,  // Mapped for backend
+          }),
+        })
+        setEmployees((prev) =>
+          [...prev, newMember].sort((a, b) => a.full_name.localeCompare(b.full_name))
+        )
+        toast.success("Employee added successfully", {
+          description: `${data.full_name} has been added to the ${formatDepartment(data.department)} team.`,
+        })
+      }
       reset()
+      setEditingId(null)
       setDrawerOpen(false)
     } catch (err) {
-      toast.error("Failed to add employee", {
+      toast.error(editingId ? "Failed to update employee" : "Failed to add employee", {
         description: err instanceof Error ? err.message : "Unknown error",
       })
     } finally {
@@ -183,7 +223,22 @@ export default function TeamManagementPage() {
             Manage team members, departments, and workloads
           </p>
         </div>
-        <Button onClick={() => setDrawerOpen(true)}>
+        <Button
+          onClick={() => {
+            // Reset form for new entry
+            reset({
+              full_name: "",
+              email: "",
+              department: "",
+              role: "",
+              daily_cap_posters: 6,
+              daily_cap_reels: 4,
+              daily_cap_stories: 3,
+            })
+            setEditingId(null)
+            setDrawerOpen(true)
+          }}
+        >
           <Plus className="size-4" />
           Add Employee
         </Button>
@@ -295,7 +350,8 @@ export default function TeamManagementPage() {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
+                      {/* Fully Functional Edit Button */}
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(emp)}>
                         <Pencil className="size-3.5" />
                         Edit
                       </Button>
@@ -308,25 +364,41 @@ export default function TeamManagementPage() {
         </Table>
       </div>
 
-      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+      <Sheet open={drawerOpen} onOpenChange={(open) => {
+        setDrawerOpen(open)
+        if (!open) {
+          setEditingId(null)
+          reset()
+        }
+      }}>
         <SheetContent side="right">
           <SheetHeader>
-            <SheetTitle>Add Employee</SheetTitle>
+            <SheetTitle>{editingId ? "Edit Employee" : "Add Employee"}</SheetTitle>
             <SheetDescription>
-              Add a new team member to your organization
+              {editingId ? "Update team member details" : "Add a new team member to your organization"}
             </SheetDescription>
           </SheetHeader>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col gap-4 px-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col gap-4 px-4 mt-6">
             <div className="space-y-2">
               <Label htmlFor="full_name">Name</Label>
-              <Input id="full_name" placeholder="e.g. John Doe" {...register("full_name", { required: "Name is required" })} />
+              <Input 
+                id="full_name" 
+                placeholder="e.g. John Doe" 
+                {...register("full_name", { required: "Name is required" })} 
+              />
               {errors.full_name && <p className="text-xs text-red-600">{errors.full_name.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="e.g. john@creo.agency" {...register("email", { required: "Email is required", pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Invalid email address" } })} />
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="e.g. john@creo.agency" 
+                disabled={!!editingId} // Email cannot be edited once user is created
+                {...register("email", { required: "Email is required", pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Invalid email address" } })} 
+              />
               {errors.email && <p className="text-xs text-red-600">{errors.email.message}</p>}
             </div>
 
@@ -352,7 +424,7 @@ export default function TeamManagementPage() {
 
             <div className="space-y-2">
               <Label>Role</Label>
-              <Select value={watch("role")} onValueChange={(v) => setValue("role", v ?? "")}>
+              <Select disabled={!!editingId} value={watch("role")} onValueChange={(v) => setValue("role", v ?? "")}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
@@ -379,10 +451,14 @@ export default function TeamManagementPage() {
               </div>
             </div>
 
-            <SheetFooter>
+            <SheetFooter className="mt-4">
               <Button type="button" variant="outline" onClick={() => setDrawerOpen(false)} disabled={submitting}>Cancel</Button>
               <Button type="submit" disabled={submitting}>
-                {submitting ? (<><Loader2 className="mr-2 size-4 animate-spin" />Adding...</>) : "Add Employee"}
+                {submitting ? (
+                  <><Loader2 className="mr-2 size-4 animate-spin" />{editingId ? "Saving..." : "Adding..."}</>
+                ) : (
+                  editingId ? "Save Changes" : "Add Employee"
+                )}
               </Button>
             </SheetFooter>
           </form>

@@ -76,6 +76,8 @@ class TeamMemberAdminCreate(BaseModel):
 
 
 class TeamMemberAdminUpdate(BaseModel):
+    full_name: Optional[str] = Field(default=None, max_length=255)
+    role: Optional[UserRole] = None
     department: Optional[Department] = None
     daily_poster_cap: Optional[int] = Field(default=None, ge=0)
     daily_reel_cap: Optional[int] = Field(default=None, ge=0)

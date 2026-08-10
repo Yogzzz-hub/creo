@@ -417,7 +417,13 @@ export default function SalesAdminPage() {
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label>Plan</Label>
-              <Select value={newPlan} onValueChange={(v) => setNewPlan(v ?? "")}>
+              <Select value={newPlan} onValueChange={(v) => {
+                setNewPlan(v ?? "")
+                const matched = plans.find((p) => p.name === v)
+                if (matched) {
+                  setNewPrice(String(matched.monthly_price))
+                }
+              }}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select plan" />
                 </SelectTrigger>

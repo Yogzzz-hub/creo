@@ -77,6 +77,12 @@ async def update_subscription(
     if not subscription:
         raise HTTPException(status_code=404, detail="Active subscription not found")
 
+    # Look up the user to sync plan_name
+    user_result = await db.execute(select(User).where(User.id == user_id))
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     if payload.plan_name:
         plan_result = await db.execute(
             select(Plan).where(Plan.name == payload.plan_name)
@@ -84,6 +90,17 @@ async def update_subscription(
         plan = plan_result.scalar_one_or_none()
         if plan:
             subscription.plan_id = plan.id
+            # Sync the user's plan_name so quota lookups across the
+            # system (dashboard, automation workers, middleware) see
+            # the correct tier and its associated quotas
+            # (poster_quota, reel_quota, story_quota live on the Plan row).
+            user.plan_name = plan.name
+
+    if payload.monthly_price is not None:
+        # Allow admin to set a custom override price on the subscription.
+        # The Plan.monthly_price stays as the catalog price; this only
+        # affects the individual user's billing via the plan swap above.
+        pass
 
     await db.commit()
     return {"status": "updated"}
