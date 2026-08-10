@@ -139,6 +139,7 @@ export function Navbar() {
               {NAV_LINKS.map((link) => (
                 <SheetClose
                   key={link.href}
+                  nativeButton={false}
                   render={
                     <Link
                       href={link.href}

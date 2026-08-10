@@ -7,21 +7,7 @@ from core.config import settings
 logger = logging.getLogger(__name__)
 
 
-<<<<<<< HEAD
 def generate_brand_analysis_prompt(questionnaire_data: dict) -> tuple[str, str]:
-=======
-def _get_openai_client() -> OpenAI | None:
-    global openai_client
-    if openai_client is None:
-        api_key = settings.OPENAI_API_KEY
-        if not api_key:
-            return None
-        openai_client = OpenAI(api_key=api_key)
-    return openai_client
-
-
-def generate_brand_analysis_prompt(questionnaire_data: dict) -> str:
->>>>>>> origin/dev
     business_description = questionnaire_data.get("business_description", "")
     industry = questionnaire_data.get("industry", "")
     target_audience = questionnaire_data.get("target_audience", {})
@@ -77,7 +63,6 @@ Return the analysis as a JSON object with the required keys."""
     return system_prompt, user_prompt
 
 
-<<<<<<< HEAD
 def call_dify_ai_analysis(system_message: str, user_message: str, user_id: str = "system") -> dict:
     """Call Dify AI Chatbot / Completion API to generate structured brand analysis."""
     if not settings.DIFY_API_KEY:
@@ -96,6 +81,7 @@ def call_dify_ai_analysis(system_message: str, user_message: str, user_id: str =
     headers = {
         "Authorization": f"Bearer {settings.DIFY_API_KEY}",
         "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     }
 
     logger.info("[dify_ai_analysis] Sending request to Dify API: %s", dify_url)
@@ -139,49 +125,3 @@ def call_dify_ai_analysis(system_message: str, user_message: str, user_id: str =
 def call_openai_gpt4o(system_message: str, user_message: str) -> dict:
     """Backward-compatible alias routing brand analysis requests to Dify AI."""
     return call_dify_ai_analysis(system_message, user_message)
-=======
-def call_openai_gpt4o(system_message: str, user_message: str) -> dict:
-    client = _get_openai_client()
-    
-    # Fallback response if no API key is provided or if the API call fails
-    fallback_response = {
-        "analysis": {
-            "brand_tone": ["professional", "innovative", "approachable"],
-            "content_themes": ["Product Showcases", "Behind the Scenes", "Customer Success Stories"],
-            "audience_persona": "Professionals and businesses looking for modern, efficient solutions.",
-            "goal_alignment": "The content strategy will establish authority while driving engagement and conversions.",
-            "ai_summary_line": "Professional voice, targeting businesses, focused on growth"
-        },
-        "prompt_tokens": 0,
-        "completion_tokens": 0,
-        "total_tokens": 0,
-    }
-
-    if not client:
-        return fallback_response
-
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message},
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.7,
-            max_tokens=1000,
-            timeout=60,
-        )
-
-        content = response.choices[0].message.content
-        usage = response.usage
-
-        return {
-            "analysis": json.loads(content),
-            "prompt_tokens": usage.prompt_tokens if usage else 0,
-            "completion_tokens": usage.completion_tokens if usage else 0,
-            "total_tokens": usage.total_tokens if usage else 0,
-        }
-    except Exception as e:
-        return fallback_response
->>>>>>> origin/dev

@@ -128,18 +128,10 @@ const INITIAL_FORM: FormData = {
 };
 
 const STEP_ICONS = [Briefcase, Users, Palette];
-<<<<<<< HEAD
 const STEP_TITLES = [
   "Brand Identity & Basics",
   "Target Audience & Goals",
   "Tone, Style & Preferences",
-=======
-
-const STEP_TITLES = [
-  "Business Details",
-  "Target Audience & Social",
-  "Brand Voice & Content",
->>>>>>> origin/dev
 ];
 
 export default function QuestionnairePage() {
@@ -236,7 +228,6 @@ export default function QuestionnairePage() {
         return;
       }
 
-<<<<<<< HEAD
       const formattedDesc = [
         `Brand Name: ${form.brand_name.trim()}`,
         form.official_logo_assets.trim() ? `Logo & Visual Assets: ${form.official_logo_assets.trim()}` : "",
@@ -255,31 +246,9 @@ export default function QuestionnairePage() {
       const payload = {
         industry: form.industry.trim(),
         business_description: formattedDesc,
-=======
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-      if (!apiUrl) {
-        console.error("NEXT_PUBLIC_API_URL is not configured.");
-
-        setError(
-          "API URL is not configured. Please check your environment settings."
-        );
-
-        setIsSubmitting(false);
-        return;
-      }
-
-      const payload = {
-        industry: form.industry.trim(),
-
-        business_description:
-          form.business_description.trim(),
-
->>>>>>> origin/dev
         primary_goal: form.primary_goal,
 
         target_audience: {
-<<<<<<< HEAD
           brand_name: form.brand_name.trim(),
           official_logo_assets: form.official_logo_assets.trim(),
           age_range: form.target_audience.age_range.trim(),
@@ -287,18 +256,6 @@ export default function QuestionnairePage() {
           location: form.target_audience.location.trim(),
           interests: form.target_audience.interests.trim(),
           problems_solved: form.target_audience.problems_solved.trim(),
-=======
-          age_range:
-            form.target_audience.age_range.trim(),
-
-          gender: form.target_audience.gender,
-
-          location:
-            form.target_audience.location.trim(),
-
-          interests:
-            form.target_audience.interests.trim(),
->>>>>>> origin/dev
         },
 
         social_handles: {
@@ -322,29 +279,11 @@ export default function QuestionnairePage() {
           form.current_posting_frequency.trim() || null,
 
         brand_tone: form.brand_tone,
-<<<<<<< HEAD
         content_what_works: formattedWorks || null,
         content_what_doesnt: form.content_what_doesnt.trim() || null,
         competitor_refs: parseList(form.competitor_refs),
         topics_to_avoid: form.topics_to_avoid.trim() || null,
         style_references: parseList(form.style_references),
-=======
-
-        content_what_works:
-          form.content_what_works.trim() || null,
-
-        content_what_doesnt:
-          form.content_what_doesnt.trim() || null,
-
-        competitor_refs:
-          parseList(form.competitor_refs),
-
-        topics_to_avoid:
-          form.topics_to_avoid.trim() || null,
-
-        style_references:
-          parseList(form.style_references),
->>>>>>> origin/dev
       };
 
       const headers = {
@@ -368,14 +307,7 @@ export default function QuestionnairePage() {
        * In that case, update the existing questionnaire.
        */
       if (res.status === 409) {
-<<<<<<< HEAD
         setError(null);
-=======
-        console.log(
-          "Questionnaire already exists. Updating existing questionnaire..."
-        );
-
->>>>>>> origin/dev
         res = await fetch(
           `${apiUrl}/api/v1/questionnaire`,
           {
@@ -421,7 +353,6 @@ export default function QuestionnairePage() {
         return;
       }
 
-<<<<<<< HEAD
       const { error: updateError } = await supabase
         .from("users")
         .update({
@@ -429,11 +360,6 @@ export default function QuestionnairePage() {
           account_status: "active",
         })
         .eq("auth_id", session.user.id);
-=======
-      console.log(
-        "Questionnaire submitted successfully."
-      );
->>>>>>> origin/dev
 
       /*
        * Try to update the user's onboarding state.
@@ -532,16 +458,10 @@ export default function QuestionnairePage() {
       )}
 
       <div className="space-y-6">
-<<<<<<< HEAD
         {/* Step 1: Brand Identity & Basics */}
-=======
-        {/* STEP 1 */}
-
->>>>>>> origin/dev
         {step === 1 && (
           <div className="animate-in space-y-5 fade-in duration-300">
             <div className="space-y-2">
-<<<<<<< HEAD
               <Label htmlFor="brand_name" className="text-sm font-semibold text-brand-dark">
                 Brand Name
               </Label>
@@ -561,13 +481,6 @@ export default function QuestionnairePage() {
             <div className="space-y-2">
               <Label htmlFor="industry" className="text-sm font-semibold text-brand-dark">
                 Industry / Sector
-=======
-              <Label
-                htmlFor="industry"
-                className="text-sm font-semibold text-brand-dark"
-              >
-                Industry
->>>>>>> origin/dev
               </Label>
 
               <Input
@@ -590,7 +503,6 @@ export default function QuestionnairePage() {
             </div>
 
             <div className="space-y-2">
-<<<<<<< HEAD
               <Label htmlFor="official_logo_assets" className="text-sm font-semibold text-brand-dark">
                 Official Logo or Visual Assets (Optional)
               </Label>
@@ -609,12 +521,6 @@ export default function QuestionnairePage() {
 
             <div className="space-y-2">
               <Label htmlFor="business_description" className="text-sm font-semibold text-brand-dark">
-=======
-              <Label
-                htmlFor="business_description"
-                className="text-sm font-semibold text-brand-dark"
-              >
->>>>>>> origin/dev
                 Business Description
               </Label>
 
@@ -632,63 +538,13 @@ export default function QuestionnairePage() {
               />
 
               <p className="text-xs text-[#6BAED6]">
-<<<<<<< HEAD
                 Provide clear details about what your business does so our strategic AI can model your brand.
-=======
-                Provide as much detail as possible to help our AI analyze your brand persona.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label
-                htmlFor="primary_goal"
-                className="text-sm font-semibold text-brand-dark"
-              >
-                Primary Goal
-              </Label>
-
-              <Select
-                value={form.primary_goal}
-                onValueChange={(val) =>
-                  updateField(
-                    "primary_goal",
-                    val ?? ""
-                  )
-                }
-              >
-                <SelectTrigger
-                  id="primary_goal"
-                  className="w-full border-border focus:border-brand focus:ring-brand"
-                >
-                  <SelectValue placeholder="Select your primary marketing goal" />
-                </SelectTrigger>
-
-                <SelectContent>
-                  {GOALS.map((goal) => (
-                    <SelectItem
-                      key={goal}
-                      value={goal}
-                    >
-                      {goal}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <p className="text-xs text-[#6BAED6]">
-                Select the main objective you want to achieve with this content strategy.
->>>>>>> origin/dev
               </p>
             </div>
           </div>
         )}
 
-<<<<<<< HEAD
         {/* Step 2: Target Audience & Goals */}
-=======
-        {/* STEP 2 */}
-
->>>>>>> origin/dev
         {step === 2 && (
           <div className="animate-in space-y-5 fade-in duration-300">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -787,44 +643,21 @@ export default function QuestionnairePage() {
               </div>
 
               <div className="space-y-2">
-<<<<<<< HEAD
                 <Label htmlFor="interests" className="text-sm font-semibold text-brand-dark">
                   Audience Demographics & Interests
-=======
-                <Label
-                  htmlFor="interests"
-                  className="text-sm font-semibold text-brand-dark"
-                >
-                  Audience Interests / Pain Points
->>>>>>> origin/dev
                 </Label>
 
                 <Input
                   id="interests"
                   type="text"
-<<<<<<< HEAD
                   placeholder="e.g., tech, fitness, career growth, luxury lifestyle"
                   value={form.target_audience.interests}
                   onChange={(e) => updateNestedField("target_audience", "interests", e.target.value)}
-=======
-                  placeholder="e.g., tech, fitness, career growth"
-                  value={
-                    form.target_audience.interests
-                  }
-                  onChange={(e) =>
-                    updateNestedField(
-                      "target_audience",
-                      "interests",
-                      e.target.value
-                    )
-                  }
->>>>>>> origin/dev
                   className="w-full border-border focus-visible:ring-brand"
                 />
               </div>
             </div>
 
-<<<<<<< HEAD
             <div className="space-y-2">
               <Label htmlFor="problems_solved" className="text-sm font-semibold text-brand-dark">
                 Problems You Solve for Your Customers
@@ -868,13 +701,6 @@ export default function QuestionnairePage() {
             <div className="pt-2">
               <h3 className="text-sm font-bold text-brand-dark mb-4">Social Media Channels (Optional)</h3>
               
-=======
-            <div className="mt-6 border-t border-border pt-4">
-              <h3 className="mb-4 text-sm font-bold text-brand-dark">
-                Social Media Presence (Optional)
-              </h3>
-
->>>>>>> origin/dev
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label
@@ -910,16 +736,8 @@ export default function QuestionnairePage() {
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-<<<<<<< HEAD
                     <Label htmlFor="facebook" className="text-sm font-semibold text-brand-dark">
                       Facebook Page
-=======
-                    <Label
-                      htmlFor="facebook"
-                      className="text-sm font-semibold text-brand-dark"
-                    >
-                      Facebook URL / Page
->>>>>>> origin/dev
                     </Label>
 
                     <Input
@@ -941,16 +759,8 @@ export default function QuestionnairePage() {
                   </div>
 
                   <div className="space-y-2">
-<<<<<<< HEAD
                     <Label htmlFor="tiktok" className="text-sm font-semibold text-brand-dark">
                       TikTok Handle
-=======
-                    <Label
-                      htmlFor="tiktok"
-                      className="text-sm font-semibold text-brand-dark"
-                    >
-                      TikTok Handle (Optional)
->>>>>>> origin/dev
                     </Label>
 
                     <div className="relative">
@@ -980,16 +790,8 @@ export default function QuestionnairePage() {
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-<<<<<<< HEAD
                     <Label htmlFor="linkedin" className="text-sm font-semibold text-brand-dark">
                       LinkedIn Page
-=======
-                    <Label
-                      htmlFor="linkedin"
-                      className="text-sm font-semibold text-brand-dark"
-                    >
-                      LinkedIn URL / Page
->>>>>>> origin/dev
                     </Label>
 
                     <Input
@@ -1011,39 +813,16 @@ export default function QuestionnairePage() {
                   </div>
 
                   <div className="space-y-2">
-<<<<<<< HEAD
                     <Label htmlFor="other_platforms" className="text-sm font-semibold text-brand-dark">
                       Other Platforms
-=======
-                    <Label
-                      htmlFor="other_platforms"
-                      className="text-sm font-semibold text-brand-dark"
-                    >
-                      Other Platforms (Optional)
->>>>>>> origin/dev
                     </Label>
 
                     <Input
                       id="other_platforms"
                       type="text"
-<<<<<<< HEAD
                       placeholder="e.g., YouTube, Pinterest, X/Twitter"
                       value={form.social_handles.other_platforms}
                       onChange={(e) => updateNestedField("social_handles", "other_platforms", e.target.value)}
-=======
-                      placeholder="e.g., YouTube, Pinterest, Twitter/X"
-                      value={
-                        form.social_handles
-                          .other_platforms
-                      }
-                      onChange={(e) =>
-                        updateNestedField(
-                          "social_handles",
-                          "other_platforms",
-                          e.target.value
-                        )
-                      }
->>>>>>> origin/dev
                       className="w-full border-border focus-visible:ring-brand"
                     />
                   </div>
@@ -1053,12 +832,7 @@ export default function QuestionnairePage() {
           </div>
         )}
 
-<<<<<<< HEAD
         {/* Step 3: Tone, Style & Preferences */}
-=======
-        {/* STEP 3 */}
-
->>>>>>> origin/dev
         {step === 3 && (
           <div className="animate-in space-y-5 fade-in duration-300">
             <div className="space-y-2.5">
@@ -1110,7 +884,6 @@ export default function QuestionnairePage() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-<<<<<<< HEAD
                 <Label htmlFor="style_references" className="text-sm font-semibold text-brand-dark">
                   Design Aesthetic & Style References
                 </Label>
@@ -1130,13 +903,6 @@ export default function QuestionnairePage() {
               <div className="space-y-2">
                 <Label htmlFor="competitor_refs" className="text-sm font-semibold text-brand-dark">
                   Competitors / Inspiration References
-=======
-                <Label
-                  htmlFor="competitor_refs"
-                  className="text-sm font-semibold text-brand-dark"
-                >
-                  Competitors / References
->>>>>>> origin/dev
                 </Label>
 
                 <Input
@@ -1190,7 +956,6 @@ export default function QuestionnairePage() {
               </div>
 
               <div className="space-y-2">
-<<<<<<< HEAD
                 <Label htmlFor="content_what_doesnt" className="text-sm font-semibold text-brand-dark">
                   What Content Does NOT Work? (Optional)
                 </Label>
@@ -1199,32 +964,11 @@ export default function QuestionnairePage() {
                   placeholder="Styles or post concepts you tried but found ineffective..."
                   value={form.content_what_doesnt}
                   onChange={(e) => updateField("content_what_doesnt", e.target.value)}
-=======
-                <Label
-                  htmlFor="style_references"
-                  className="text-sm font-semibold text-brand-dark"
-                >
-                  Visual Style References
-                </Label>
-
-                <Input
-                  id="style_references"
-                  type="text"
-                  placeholder="e.g., minimalist, bright, vintage (comma separated)"
-                  value={form.style_references}
-                  onChange={(e) =>
-                    updateField(
-                      "style_references",
-                      e.target.value
-                    )
-                  }
->>>>>>> origin/dev
                   className="w-full border-border focus-visible:ring-brand"
                 />
               </div>
             </div>
 
-<<<<<<< HEAD
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="topics_to_avoid" className="text-sm font-semibold text-brand-dark">
@@ -1253,111 +997,13 @@ export default function QuestionnairePage() {
                   className="w-full border-border focus-visible:ring-brand"
                 />
               </div>
-=======
-            <div className="space-y-2">
-              <Label
-                htmlFor="current_posting_frequency"
-                className="text-sm font-semibold text-brand-dark"
-              >
-                Current Posting Frequency (Optional)
-              </Label>
-
-              <Input
-                id="current_posting_frequency"
-                type="text"
-                placeholder="e.g., 3 posts/week, daily, none"
-                value={
-                  form.current_posting_frequency
-                }
-                onChange={(e) =>
-                  updateField(
-                    "current_posting_frequency",
-                    e.target.value
-                  )
-                }
-                className="w-full border-border focus-visible:ring-brand"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label
-                htmlFor="content_what_works"
-                className="text-sm font-semibold text-brand-dark"
-              >
-                What Content Works Well for You? (Optional)
-              </Label>
-
-              <Textarea
-                id="content_what_works"
-                placeholder="Describe any past marketing posts, formats, or campaigns that successfully engaged your audience..."
-                value={form.content_what_works}
-                onChange={(e) =>
-                  updateField(
-                    "content_what_works",
-                    e.target.value
-                  )
-                }
-                className="w-full border-border focus-visible:ring-brand"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label
-                htmlFor="content_what_doesnt"
-                className="text-sm font-semibold text-brand-dark"
-              >
-                What Content Does NOT Work? (Optional)
-              </Label>
-
-              <Textarea
-                id="content_what_doesnt"
-                placeholder="Describe any marketing strategies or post styles you tried but found ineffective..."
-                value={form.content_what_doesnt}
-                onChange={(e) =>
-                  updateField(
-                    "content_what_doesnt",
-                    e.target.value
-                  )
-                }
-                className="w-full border-border focus-visible:ring-brand"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label
-                htmlFor="topics_to_avoid"
-                className="text-sm font-semibold text-brand-dark"
-              >
-                Topics to Avoid (Optional)
-              </Label>
-
-              <Input
-                id="topics_to_avoid"
-                type="text"
-                placeholder="List any sensitive topics, words, or competitors you want to avoid..."
-                value={form.topics_to_avoid}
-                onChange={(e) =>
-                  updateField(
-                    "topics_to_avoid",
-                    e.target.value
-                  )
-                }
-                className="w-full border-border focus-visible:ring-brand"
-              />
->>>>>>> origin/dev
             </div>
           </div>
         )}
       </div>
 
-<<<<<<< HEAD
       {/* Controls */}
       <div className="mt-8 flex items-center justify-between gap-4 pt-6 border-t border-border">
-=======
-      {/* Button Controls */}
-
-      <div className="mt-8 flex items-center justify-between gap-4 border-t border-border pt-6">
->>>>>>> origin/dev
         {step > 1 ? (
           <Button
             type="button"
@@ -1407,8 +1053,4 @@ export default function QuestionnairePage() {
       </div>
     </CardContent>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> origin/dev

@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useMemo } from "react"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Placeholder from "@tiptap/extension-placeholder"
@@ -55,8 +56,8 @@ export function RichTextEditor({
   disabled = false,
   className,
 }: RichTextEditorProps) {
-  const editor = useEditor({
-    extensions: [
+  const extensions = useMemo(
+    () => [
       StarterKit.configure({
         heading: false,
       }),
@@ -75,6 +76,11 @@ export function RichTextEditor({
         },
       }),
     ],
+    [placeholder]
+  )
+
+  const editor = useEditor({
+    extensions,
     content: value,
     editorProps: {
       attributes: {
@@ -91,7 +97,14 @@ export function RichTextEditor({
       const clean = sanitizeHtml(raw)
       onChange(clean)
     },
+    immediatelyRender: false,
   })
+
+  useEffect(() => {
+    if (editor && value !== sanitizeHtml(editor.getHTML()) && value === "") {
+      editor.commands.setContent("")
+    }
+  }, [value, editor])
 
   if (!editor) return null
 

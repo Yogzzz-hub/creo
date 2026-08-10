@@ -18,7 +18,7 @@ import {
 import { createClient } from "@/lib/supabase/client"
 import { useSession } from "@/context/session-context"
 import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { RichTextEditor, sanitizeHtml } from "@/components/ui/rich-text-editor"
 import { cn } from "@/lib/utils"
@@ -31,6 +31,9 @@ interface Ticket {
   subject: string
   type: TicketType
   status: TicketStatus
+  description: string
+  createdAt: string
+  clientId: string
 }
 
 interface ChatMessage {
@@ -190,6 +193,9 @@ export default function TicketDetailPage({
           subject: string
           ticket_type: string
           status: string
+          description: string
+          created_at: string
+          client_id: string
         }[] = await ticketRes.json()
 
         const found = tickets.find((t) => t.id === id)
@@ -203,6 +209,9 @@ export default function TicketDetailPage({
           subject: found.subject,
           type: mapTicketType(found.ticket_type),
           status: mapTicketStatus(found.status),
+          description: found.description,
+          createdAt: found.created_at,
+          clientId: found.client_id,
         })
 
         const msgRes = await fetch(
@@ -223,18 +232,18 @@ export default function TicketDetailPage({
             file_size_bytes: number | null
           }[] = await msgRes.json()
 
-          setLocalMessages(
-            msgs.map((m) => ({
+          setLocalMessages([
+            ...msgs.map((m) => ({
               id: m.id,
-              sender: m.sender_id === user?.id ? ("client" as const) : ("team" as const),
-              senderName: m.sender_id === user?.id ? "You" : "Team Creo",
+              sender: m.sender_id === found.client_id ? ("client" as const) : ("team" as const),
+              senderName: m.sender_id === found.client_id ? "You" : "Team Creo",
               content: m.message_text ?? "",
               timestamp: m.created_at,
               fileUrl: m.file_url,
               fileName: m.file_name,
               fileSizeBytes: m.file_size_bytes,
             }))
-          )
+          ])
         }
       } catch {
         // Silent fail
@@ -249,7 +258,6 @@ export default function TicketDetailPage({
     if (!ticket) return
 
     const supabase = createClient()
-    const userId = user?.id
 
     const channel = supabase
       .channel(`ticket:${ticket.id}`)
@@ -278,8 +286,8 @@ export default function TicketDetailPage({
               ...prev,
               {
                 id: newMsg.id,
-                sender: newMsg.sender_id === userId ? ("client" as const) : ("team" as const),
-                senderName: newMsg.sender_id === userId ? "You" : "Team Creo",
+                sender: newMsg.sender_id === ticket.clientId ? ("client" as const) : ("team" as const),
+                senderName: newMsg.sender_id === ticket.clientId ? "You" : "Team Creo",
                 content: newMsg.message_text ?? "",
                 timestamp: newMsg.created_at,
                 fileUrl: newMsg.file_url,
@@ -388,19 +396,22 @@ export default function TicketDetailPage({
         file_size_bytes: number | null
       } = await res.json()
 
-      setLocalMessages((prev) => [
-        ...prev,
-        {
-          id: newMsg.id,
-          sender: newMsg.sender_id === user?.id ? ("client" as const) : ("team" as const),
-          senderName: newMsg.sender_id === user?.id ? "You" : "Team Creo",
-          content: newMsg.message_text ?? "",
-          timestamp: newMsg.created_at,
-          fileUrl: newMsg.file_url,
-          fileName: newMsg.file_name,
-          fileSizeBytes: newMsg.file_size_bytes,
-        },
-      ])
+      setLocalMessages((prev) => {
+        if (prev.some((m) => m.id === newMsg.id)) return prev
+        return [
+          ...prev,
+          {
+            id: newMsg.id,
+            sender: newMsg.sender_id === ticket.clientId ? ("client" as const) : ("team" as const),
+            senderName: newMsg.sender_id === ticket.clientId ? "You" : "Team Creo",
+            content: newMsg.message_text ?? "",
+            timestamp: newMsg.created_at,
+            fileUrl: newMsg.file_url,
+            fileName: newMsg.file_name,
+            fileSizeBytes: newMsg.file_size_bytes,
+          },
+        ]
+      })
       setChatInput("")
       setAttachment(null)
     } catch (err) {
@@ -454,11 +465,11 @@ export default function TicketDetailPage({
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <Link
+      <Link 
         href="/portal/support"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#2B7BC4]"
+        className={buttonVariants({ variant: "ghost", className: "pl-0 text-gray-500 hover:text-[#2B7BC4] hover:bg-transparent -ml-2" })}
       >
-        <ArrowLeft className="size-4" />
+        <ArrowLeft className="size-4 mr-1.5" />
         Back to Support
       </Link>
 
@@ -489,6 +500,22 @@ export default function TicketDetailPage({
           </h1>
         </div>
       </div>
+
+      <Card className="rounded-xl shadow-sm border border-gray-100 bg-gray-50/50">
+        <CardContent className="p-4 sm:p-5">
+          <h4 className="text-sm font-semibold text-[#0D2137] mb-2">Ticket Details</h4>
+          <div 
+            className="text-sm text-gray-600 prose prose-sm max-w-none [&_p]:m-0 [&_ul]:m-0 [&_ol]:m-0 [&_li]:m-0 leading-relaxed" 
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(ticket.description) }} 
+          />
+          <div className="mt-4 pt-4 border-t border-gray-200/60 flex items-center gap-4 text-xs text-gray-400">
+            <div className="flex items-center gap-1.5">
+              <Clock className="size-3.5" />
+              Created {formatDateLabel(ticket.createdAt)} at {formatTime(ticket.createdAt)}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="rounded-xl shadow-[var(--shadow-card)]">
         <CardContent className="flex flex-col" style={{ height: "min(500px, 70vh)" }}>
