@@ -138,6 +138,7 @@ def process_abandoned_signups() -> None:
 
 
 async def _process_abandoned_signups_async() -> None:
+    # pyrefly: ignore [missing-import]
     import redis as redis_lib
 
     now = datetime.now(timezone.utc)
