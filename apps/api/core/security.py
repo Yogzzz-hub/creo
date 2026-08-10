@@ -26,13 +26,23 @@ _supabase_key_hash: str | None = None
 
 def _get_supabase_client():
     global _supabase_client, _supabase_key_hash
+
     current_url = settings.SUPABASE_URL
     current_key = settings.SUPABASE_SERVICE_ROLE_KEY
-    key_hash = hashlib.sha256(f"{current_url}:{current_key}".encode()).hexdigest()
+
+    key_hash = hashlib.sha256(
+        f"{current_url}:{current_key}".encode()
+    ).hexdigest()
+
     if _supabase_client is None or _supabase_key_hash != key_hash:
-        _supabase_client = create_client(current_url, current_key)
+        _supabase_client = create_client(
+            current_url,
+            current_key,
+        )
         _supabase_key_hash = key_hash
+
     return _supabase_client
+
 
 _fernet: Fernet | None = None
 _fernet_key_hash: str | None = None
@@ -50,13 +60,28 @@ SESSION_TIMEOUT_SECONDS = {
 
 def _get_fernet() -> Fernet:
     global _fernet, _fernet_key_hash
+
     current_key = settings.ENCRYPTION_KEY
+
     if not current_key:
-        raise RuntimeError("ENCRYPTION_KEY is not set in environment")
-    key_hash = hashlib.sha256(current_key.encode() if isinstance(current_key, str) else current_key).hexdigest()
+        raise RuntimeError(
+            "ENCRYPTION_KEY is not set in environment"
+        )
+
+    key_hash = hashlib.sha256(
+        current_key.encode()
+        if isinstance(current_key, str)
+        else current_key
+    ).hexdigest()
+
     if _fernet is None or _fernet_key_hash != key_hash:
-        _fernet = Fernet(current_key.encode() if isinstance(current_key, str) else current_key)
+        _fernet = Fernet(
+            current_key.encode()
+            if isinstance(current_key, str)
+            else current_key
+        )
         _fernet_key_hash = key_hash
+
     return _fernet
 
 
@@ -70,15 +95,21 @@ def decrypt_token(encrypted_token: str) -> str:
     return fernet.decrypt(encrypted_token.encode()).decode()
 
 
-def encrypt_gateway_id(gateway_id: str | None) -> str | None:
+def encrypt_gateway_id(
+    gateway_id: str | None,
+) -> str | None:
     if not gateway_id:
         return None
+
     return encrypt_token(gateway_id)
 
 
-def decrypt_gateway_id(encrypted_id: str | None) -> str | None:
+def decrypt_gateway_id(
+    encrypted_id: str | None,
+) -> str | None:
     if not encrypted_id:
         return None
+
     try:
         return decrypt_token(encrypted_id)
     except Exception:
@@ -87,159 +118,352 @@ def decrypt_gateway_id(encrypted_id: str | None) -> str | None:
 
 def _is_jti_revoked(jti: str) -> bool:
     try:
+        # pyrefly: ignore [missing-import]
         import redis
-        r = redis.from_url(settings.REDIS_URL, decode_responses=True)
-        revoked = r.exists(f"revoked_token:{jti}")
+
+        r = redis.from_url(
+            settings.REDIS_URL,
+            decode_responses=True,
+        )
+
+        revoked = r.exists(
+            f"revoked_token:{jti}"
+        )
+
         r.close()
+
         return bool(revoked)
+
     except Exception:
         return False
 
 
 async def get_current_user(
     request: Request,
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(oauth2_scheme)],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    credentials: Annotated[
+        HTTPAuthorizationCredentials,
+        Depends(oauth2_scheme),
+    ],
+    db: Annotated[
+        AsyncSession,
+        Depends(get_db),
+    ],
 ) -> User:
+
     token = credentials.credentials
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail={"error_code": "token_invalid", "message": "Could not validate credentials"},
-        headers={"WWW-Authenticate": "Bearer"},
+        detail={
+            "error_code": "token_invalid",
+            "message": "Could not validate credentials",
+        },
+        headers={
+            "WWW-Authenticate": "Bearer",
+        },
     )
 
-    # 1. Verify token via Supabase (handles ES256 / RS256 / HS256 automatically)
+    # 1. Verify token using Supabase
     supabase = _get_supabase_client()
+
+    # Temporary diagnostic logging.
+    # We deliberately do NOT log the actual token.
+    logger.info(
+        "Verifying Supabase token. token_length=%d",
+        len(token),
+    )
+
     try:
         user_response = supabase.auth.get_user(token)
+
     except Exception as exc:
-        logger.warning("Supabase token verification failed: %s", exc)
+        # Use logger.exception() so the complete traceback
+        # and the real Supabase error are visible.
+        logger.exception(
+            "Supabase token verification failed: %s",
+            exc,
+        )
         raise credentials_exception
 
     if not user_response or not user_response.user:
-        logger.warning("Supabase returned no user for the provided token.")
+        logger.warning(
+            "Supabase returned no user for the provided token."
+        )
         raise credentials_exception
 
     auth_id = user_response.user.id
-    logger.debug("Token verified via Supabase. auth_id=%s", auth_id)
 
-    # 2. Extract raw claims for revocation + timeout checks (unverified decode is fine here — token already verified above)
+    logger.debug(
+        "Token verified via Supabase. auth_id=%s",
+        auth_id,
+    )
+
+    # 2. Extract token claims
     try:
         unverified = jwt.get_unverified_claims(token)
+
         jti = unverified.get("jti")
         issued_at = unverified.get("iat")
+
     except Exception:
         jti = None
         issued_at = None
 
-    # 3. Check revocation blocklist
+    # 3. Check token revocation
     if jti and _is_jti_revoked(jti):
-        logger.warning("Token is revoked (jti=%s found in Redis blocklist).", jti)
+        logger.warning(
+            "Token is revoked (jti=%s found in Redis blocklist).",
+            jti,
+        )
         raise credentials_exception
 
-    # 4. Look up local user record
-    result = await db.execute(select(User).where(User.auth_id == auth_id))
+    # 4. Look up local user
+    result = await db.execute(
+        select(User).where(
+            User.auth_id == auth_id
+        )
+    )
+
     user = result.scalar_one_or_none()
 
     if user is None:
-        logger.warning("No user found in DB for auth_id=%s.", auth_id)
-        raise credentials_exception
-    if user.deleted_at is not None:
-        logger.warning("User auth_id=%s has been soft-deleted.", auth_id)
+        logger.warning(
+            "No user found in DB for auth_id=%s.",
+            auth_id,
+        )
         raise credentials_exception
 
+    if user.deleted_at is not None:
+        logger.warning(
+            "User auth_id=%s has been soft-deleted.",
+            auth_id,
+        )
+        raise credentials_exception
+
+    # Lapsed accounts are blocked globally
     if user.account_status == AccountStatus.lapsed:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "error_code": "account_lapsed",
-                "message": "Your subscription has lapsed. Renew to restore full access.",
+                "message": (
+                    "Your subscription has lapsed. "
+                    "Renew to restore full access."
+                ),
             },
         )
+
+    # Suspended accounts are blocked globally
     if user.account_status == AccountStatus.suspended:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "error_code": "account_suspended",
-                "message": "Your account has been suspended. Please contact support.",
+                "message": (
+                    "Your account has been suspended. "
+                    "Please contact support."
+                ),
             },
         )
 
-    # 5. Session timeout check
+    # 5. Session timeout
     if issued_at is not None:
-        max_age = SESSION_TIMEOUT_SECONDS.get(user.role, 8 * 3600)
+        max_age = SESSION_TIMEOUT_SECONDS.get(
+            user.role,
+            8 * 3600,
+        )
+
         token_age = int(time.time()) - issued_at
+
         if token_age > max_age:
-            logger.warning("Token expired. age=%ds, max_age=%ds, role=%s", token_age, max_age, user.role.value)
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail={"error_code": "session_expired", "message": "Session expired. Please sign in again."},
-                headers={"WWW-Authenticate": "Bearer"},
+            logger.warning(
+                "Token expired. age=%ds, max_age=%ds, role=%s",
+                token_age,
+                max_age,
+                user.role.value,
             )
 
-    logger.debug("Auth successful for user auth_id=%s role=%s", auth_id, user.role.value)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={
+                    "error_code": "session_expired",
+                    "message": (
+                        "Session expired. "
+                        "Please sign in again."
+                    ),
+                },
+                headers={
+                    "WWW-Authenticate": "Bearer",
+                },
+            )
+
+    logger.debug(
+        "Auth successful for user auth_id=%s role=%s",
+        auth_id,
+        user.role.value,
+    )
+
     return user
 
 
-CurrentUser = Annotated[User, Depends(get_current_user)]
+CurrentUser = Annotated[
+    User,
+    Depends(get_current_user),
+]
 
 
 def require_role(*roles: UserRole):
-    async def role_checker(current_user: CurrentUser) -> User:
+    async def role_checker(
+        current_user: CurrentUser,
+    ) -> User:
+
         if current_user.role not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Role '{current_user.role.value}' is not authorized to access this resource",
+                detail=(
+                    f"Role '{current_user.role.value}' "
+                    "is not authorized to access this resource"
+                ),
             )
+
         return current_user
+
     return role_checker
 
 
-require_client = require_role(UserRole.client)
-require_team_member = require_role(UserRole.team_member, UserRole.team_lead)
-require_team_lead = require_role(UserRole.team_lead)
-require_sales = require_role(UserRole.sales)
-require_admin = require_role(UserRole.admin, UserRole.super_admin)
-require_super_admin = require_role(UserRole.super_admin)
-require_investor_relations = require_role(UserRole.investor_relations)
-require_admin_or_kpi = require_role(UserRole.admin, UserRole.super_admin, UserRole.team_lead, UserRole.investor_relations)
+# Role-based access
+
+require_client = require_role(
+    UserRole.client
+)
+
+require_team_member = require_role(
+    UserRole.team_member,
+    UserRole.team_lead,
+)
+
+require_team_lead = require_role(
+    UserRole.team_lead,
+)
+
+require_sales = require_role(
+    UserRole.sales,
+)
+
+require_admin = require_role(
+    UserRole.admin,
+    UserRole.super_admin,
+)
+
+require_super_admin = require_role(
+    UserRole.super_admin,
+)
+
+require_investor_relations = require_role(
+    UserRole.investor_relations,
+)
+
+require_admin_or_kpi = require_role(
+    UserRole.admin,
+    UserRole.super_admin,
+    UserRole.team_lead,
+    UserRole.investor_relations,
+)
 
 
-async def require_active_client(current_user: CurrentUser) -> User:
+# Active client access
+# Used for pages/features that require completed onboarding.
+
+async def require_active_client(
+    current_user: CurrentUser,
+) -> User:
+
     if current_user.role != UserRole.client:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Role '{current_user.role.value}' is not authorized to access this resource",
+            detail=(
+                f"Role '{current_user.role.value}' "
+                "is not authorized to access this resource"
+            ),
         )
+
     if current_user.account_status != AccountStatus.active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "error": "onboarding_required",
                 "error_code": "pending_onboarding",
-                "message": "Please complete onboarding before accessing this resource.",
-                "account_status": current_user.account_status.value,
+                "message": (
+                    "Please complete onboarding "
+                    "before accessing this resource."
+                ),
+                "account_status": (
+                    current_user.account_status.value
+                ),
             },
         )
+
     return current_user
 
 
-RequireClient = Annotated[User, Depends(require_client)]
-RequireActiveClient = Annotated[User, Depends(require_active_client)]
-RequireTeamMember = Annotated[User, Depends(require_team_member)]
-RequireTeamLead = Annotated[User, Depends(require_team_lead)]
-RequireSales = Annotated[User, Depends(require_sales)]
-RequireAdmin = Annotated[User, Depends(require_admin)]
-RequireSuperAdmin = Annotated[User, Depends(require_super_admin)]
-RequireInvestorRelations = Annotated[User, Depends(require_investor_relations)]
-RequireAdminOrKpi = Annotated[User, Depends(require_admin_or_kpi)]
+# Typed dependencies
+
+RequireClient = Annotated[
+    User,
+    Depends(require_client),
+]
+
+RequireActiveClient = Annotated[
+    User,
+    Depends(require_active_client),
+]
+
+RequireTeamMember = Annotated[
+    User,
+    Depends(require_team_member),
+]
+
+RequireTeamLead = Annotated[
+    User,
+    Depends(require_team_lead),
+]
+
+RequireSales = Annotated[
+    User,
+    Depends(require_sales),
+]
+
+RequireAdmin = Annotated[
+    User,
+    Depends(require_admin),
+]
+
+RequireSuperAdmin = Annotated[
+    User,
+    Depends(require_super_admin),
+]
+
+RequireInvestorRelations = Annotated[
+    User,
+    Depends(require_investor_relations),
+]
+
+RequireAdminOrKpi = Annotated[
+    User,
+    Depends(require_admin_or_kpi),
+]
 
 
-role_router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
+role_router = APIRouter(
+    prefix="/api/v1/auth",
+    tags=["auth"],
+)
 
 
 @role_router.get("/me/role")
-async def get_my_role(current_user: CurrentUser):
+async def get_my_role(
+    current_user: CurrentUser,
+):
     return {
         "role": current_user.role.value,
         "account_status": current_user.account_status.value,

@@ -27,6 +27,26 @@ export default function OnboardingLayout({
   const { token, loading: sessionLoading } = useSession();
   const [checking, setChecking] = useState(true);
 
+  // Safety fallback: Ensure checking state never stays true for more than 4 seconds
+  useEffect(() => {
+    const safetyTimer = setTimeout(() => {
+      setChecking(false);
+    }, 4000);
+
+    return () => clearTimeout(safetyTimer);
+  }, []);
+
+  useEffect(() => {
+    // Fallback to unlock UI if sessionLoading is stuck for too long
+    let fallbackTimeout: NodeJS.Timeout;
+    if (sessionLoading) {
+      fallbackTimeout = setTimeout(() => {
+        setChecking(false);
+      }, 4000);
+    }
+    return () => clearTimeout(fallbackTimeout);
+  }, [sessionLoading]);
+
   useEffect(() => {
     if (sessionLoading) return;
     if (!token) {
@@ -35,15 +55,19 @@ export default function OnboardingLayout({
     }
 
     let cancelled = false;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
 
     async function checkAndRedirect() {
       try {
         const [roleRes, accountRes] = await Promise.all([
           fetch(`${API_URL}/api/v1/auth/me/role`, {
             headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
           }),
           fetch(`${API_URL}/api/v1/account`, {
             headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
           }),
         ]);
 
@@ -62,15 +86,20 @@ export default function OnboardingLayout({
           }
         }
       } catch {
-        // Silently continue to onboarding if check fails
+        // Silently continue to onboarding if check fails or times out
+      } finally {
+        clearTimeout(timeoutId);
+        if (!cancelled) {
+          setChecking(false);
+        }
       }
-
-      if (!cancelled) setChecking(false);
     }
 
     checkAndRedirect();
     return () => {
       cancelled = true;
+      controller.abort();
+
     };
   }, [token, sessionLoading, router]);
 

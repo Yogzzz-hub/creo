@@ -5,6 +5,14 @@ const PROTECTED_PREFIXES = ["/portal", "/dashboard", "/admin", "/kpi", "/sales",
 
 const PUBLIC_ROUTES = ["/forgot-password", "/reset-password"];
 
+const UNRESTRICTED_PORTAL_ROUTES = ["/portal", "/portal/support"];
+
+function isUnrestrictedPortalRoute(pathname: string): boolean {
+  return UNRESTRICTED_PORTAL_ROUTES.some(
+    (r) => pathname === r || pathname.startsWith(r + "/")
+  );
+}
+
 const ROLE_HOMES: Record<string, string> = {
   client: "/portal",
   team_member: "/dashboard",
@@ -49,7 +57,7 @@ function canAccessRoute(role: string, pathname: string): boolean {
   return false;
 }
 
-async function fetchUserRole(accessToken: string): Promise<string | null> {
+async function fetchUserProfile(accessToken: string): Promise<{ role: string; account_status: string } | null> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     const controller = new AbortController();
@@ -61,16 +69,15 @@ async function fetchUserRole(accessToken: string): Promise<string | null> {
     clearTimeout(timeout);
     if (!res.ok) return null;
     const data = await res.json();
-    return data.role ?? null;
+    return { role: data.role ?? "client", account_status: data.account_status ?? "pending_verification" };
   } catch {
     return null;
   }
 }
 
 function resolveRole(metadataRole: string, backendRole: string | null): string {
-  // If backend returned a valid role (not null/undefined), prefer it
-  if (backendRole && backendRole !== "client") return backendRole;
-  // If backend returned "client" or failed, use metadata
+  // Database role is single source of truth; if backend returns a valid role, use it
+  if (backendRole) return backendRole;
   return metadataRole || "client";
 }
 
@@ -118,12 +125,19 @@ export async function middleware(request: NextRequest) {
   if (user && isProtectedRoute(pathname)) {
     const metadataRole = (user.user_metadata?.role as string) ?? "client";
     const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
-    const backendRole = accessToken ? await fetchUserRole(accessToken) : null;
-    const role = resolveRole(metadataRole, backendRole);
+    const profile = accessToken ? await fetchUserProfile(accessToken) : null;
+    const role = resolveRole(metadataRole, profile?.role ?? null);
 
     if (!canAccessRoute(role, pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = getHome(role);
+      return NextResponse.redirect(url);
+    }
+
+    // Portal restriction: non-active clients can only access dashboard & support
+    if (role === "client" && pathname.startsWith("/portal") && !isUnrestrictedPortalRoute(pathname) && profile?.account_status !== "active") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/portal";
       return NextResponse.redirect(url);
     }
   }
@@ -132,8 +146,8 @@ export async function middleware(request: NextRequest) {
   if (user && (pathname === "/login" || pathname === "/signup")) {
     const metadataRole = (user.user_metadata?.role as string) ?? "client";
     const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
-    const backendRole = accessToken ? await fetchUserRole(accessToken) : null;
-    const role = resolveRole(metadataRole, backendRole);
+    const profile = accessToken ? await fetchUserProfile(accessToken) : null;
+    const role = resolveRole(metadataRole, profile?.role ?? null);
     const url = request.nextUrl.clone();
     url.pathname = getHome(role);
     return NextResponse.redirect(url);

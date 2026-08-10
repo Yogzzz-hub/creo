@@ -14,6 +14,7 @@ import {
   UserCog,
   CreditCard,
   LogOut,
+  Lock,
 } from "lucide-react"
 
 const NAV_ITEMS = [
@@ -35,17 +36,22 @@ const BOTTOM_TAB_ITEMS = [
   { label: "Account", href: "/portal/account", icon: UserCog },
 ]
 
+const ALWAYS_ALLOWED = ["/", "/portal", "/portal/support"]
+
 function isActive(href: string, pathname: string) {
   if (href === "/") return pathname === "/"
   if (href === "/portal") return pathname === "/portal"
   return pathname.startsWith(href)
 }
 
+import { useSubscription } from "@/context/subscription-context"
+
 export function DesktopSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
   const [loggingOut, setLoggingOut] = useState(false)
+  const { accountStatus } = useSubscription()
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -66,6 +72,21 @@ export function DesktopSidebar() {
         <nav className="flex flex-1 flex-col gap-1">
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.href, pathname)
+            const locked = !ALWAYS_ALLOWED.includes(item.href) && accountStatus !== null && accountStatus !== "active"
+
+            if (locked) {
+              return (
+                <span
+                  key={item.href}
+                  className="flex items-center gap-3 rounded-r-lg px-3 py-2.5 text-sm font-medium border-l-[3px] border-transparent text-[#6BAED6]/40 cursor-not-allowed"
+                >
+                  <item.icon className="size-4 shrink-0" />
+                  {item.label}
+                  <Lock className="ml-auto size-3" />
+                </span>
+              )
+            }
+
             return (
               <Link
                 key={item.href}
@@ -99,6 +120,7 @@ export function DesktopSidebar() {
 
 export function MobileBottomTabBar() {
   const pathname = usePathname()
+  const { accountStatus } = useSubscription()
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-border bg-white px-1 lg:hidden"
@@ -106,6 +128,20 @@ export function MobileBottomTabBar() {
     >
       {BOTTOM_TAB_ITEMS.map((item) => {
         const active = isActive(item.href, pathname)
+        const locked = !ALWAYS_ALLOWED.includes(item.href) && accountStatus !== null && accountStatus !== "active"
+
+        if (locked) {
+          return (
+            <span
+              key={item.href}
+              className="flex flex-1 flex-col items-center gap-0.5 py-1 text-[10px] font-medium text-gray-300 cursor-not-allowed"
+            >
+              <Lock className="size-5" />
+              {item.label}
+            </span>
+          )
+        }
+
         return (
           <Link
             key={item.href}

@@ -1,4 +1,6 @@
+# pyrefly: ignore [missing-import]
 from celery import Celery
+# pyrefly: ignore [missing-import]
 from celery.schedules import crontab
 
 from core.config import settings
@@ -7,6 +9,13 @@ celery_app = Celery(
     "creo_worker",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.REDIS_URL,
+    include=[
+        "workers.ai_tasks",
+        "workers.automation_tasks",
+        "workers.notification_tasks",
+        "workers.onboarding_tasks",
+        "workers.report_tasks",
+    ],
 )
 
 celery_app.conf.update(
@@ -96,4 +105,3 @@ celery_app.conf.beat_schedule = {
     },
 }
 
-celery_app.autodiscover_tasks(["workers"])

@@ -54,7 +54,13 @@ const GOALS = [
   "Customer Retention",
 ];
 
-const GENDERS = ["All Genders", "Female-Identifying", "Male-Identifying", "Non-Binary", "No Preference"];
+const GENDERS = [
+  "All Genders",
+  "Female-Identifying",
+  "Male-Identifying",
+  "Non-Binary",
+  "No Preference",
+];
 
 interface FormData {
   // Theme 1: Brand Identity & Basics
@@ -122,10 +128,18 @@ const INITIAL_FORM: FormData = {
 };
 
 const STEP_ICONS = [Briefcase, Users, Palette];
+<<<<<<< HEAD
 const STEP_TITLES = [
   "Brand Identity & Basics",
   "Target Audience & Goals",
   "Tone, Style & Preferences",
+=======
+
+const STEP_TITLES = [
+  "Business Details",
+  "Target Audience & Social",
+  "Brand Voice & Content",
+>>>>>>> origin/dev
 ];
 
 export default function QuestionnairePage() {
@@ -137,24 +151,38 @@ export default function QuestionnairePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function updateField<K extends keyof FormData>(key: K, value: FormData[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
+  function updateField<K extends keyof FormData>(
+    key: K,
+    value: FormData[K]
+  ) {
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   }
 
-  function updateNestedField<K extends keyof FormData>(
-    parent: K,
+  function updateNestedField(
+    parent: "target_audience" | "social_handles",
     field: string,
     value: string
   ) {
     setForm((prev) => {
       const nested = prev[parent] as Record<string, string>;
-      return { ...prev, [parent]: { ...nested, [field]: value } };
+
+      return {
+        ...prev,
+        [parent]: {
+          ...nested,
+          [field]: value,
+        },
+      };
     });
   }
 
   function toggleTone(tone: string) {
     setForm((prev) => {
       const exists = prev.brand_tone.includes(tone);
+
       return {
         ...prev,
         brand_tone: exists
@@ -179,6 +207,7 @@ export default function QuestionnairePage() {
         form.business_description.trim().length > 0
       );
     }
+
     if (step === 2) {
       return (
         form.target_audience.age_range.trim().length > 0 &&
@@ -186,10 +215,13 @@ export default function QuestionnairePage() {
         form.primary_goal.length > 0
       );
     }
+
     return form.brand_tone.length > 0;
   }, [step, form]);
 
   async function handleSubmit() {
+    if (isSubmitting) return;
+
     setIsSubmitting(true);
     setError(null);
 
@@ -204,6 +236,7 @@ export default function QuestionnairePage() {
         return;
       }
 
+<<<<<<< HEAD
       const formattedDesc = [
         `Brand Name: ${form.brand_name.trim()}`,
         form.official_logo_assets.trim() ? `Logo & Visual Assets: ${form.official_logo_assets.trim()}` : "",
@@ -222,8 +255,31 @@ export default function QuestionnairePage() {
       const payload = {
         industry: form.industry.trim(),
         business_description: formattedDesc,
+=======
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+      if (!apiUrl) {
+        console.error("NEXT_PUBLIC_API_URL is not configured.");
+
+        setError(
+          "API URL is not configured. Please check your environment settings."
+        );
+
+        setIsSubmitting(false);
+        return;
+      }
+
+      const payload = {
+        industry: form.industry.trim(),
+
+        business_description:
+          form.business_description.trim(),
+
+>>>>>>> origin/dev
         primary_goal: form.primary_goal,
+
         target_audience: {
+<<<<<<< HEAD
           brand_name: form.brand_name.trim(),
           official_logo_assets: form.official_logo_assets.trim(),
           age_range: form.target_audience.age_range.trim(),
@@ -231,61 +287,141 @@ export default function QuestionnairePage() {
           location: form.target_audience.location.trim(),
           interests: form.target_audience.interests.trim(),
           problems_solved: form.target_audience.problems_solved.trim(),
+=======
+          age_range:
+            form.target_audience.age_range.trim(),
+
+          gender: form.target_audience.gender,
+
+          location:
+            form.target_audience.location.trim(),
+
+          interests:
+            form.target_audience.interests.trim(),
+>>>>>>> origin/dev
         },
+
         social_handles: {
-          instagram: form.social_handles.instagram.trim(),
-          facebook: form.social_handles.facebook.trim(),
-          tiktok: form.social_handles.tiktok.trim(),
-          linkedin: form.social_handles.linkedin.trim(),
-          other_platforms: form.social_handles.other_platforms.trim(),
+          instagram:
+            form.social_handles.instagram.trim(),
+
+          facebook:
+            form.social_handles.facebook.trim(),
+
+          tiktok:
+            form.social_handles.tiktok.trim(),
+
+          linkedin:
+            form.social_handles.linkedin.trim(),
+
+          other_platforms:
+            form.social_handles.other_platforms.trim(),
         },
-        current_posting_frequency: form.current_posting_frequency.trim() || null,
+
+        current_posting_frequency:
+          form.current_posting_frequency.trim() || null,
+
         brand_tone: form.brand_tone,
+<<<<<<< HEAD
         content_what_works: formattedWorks || null,
         content_what_doesnt: form.content_what_doesnt.trim() || null,
         competitor_refs: parseList(form.competitor_refs),
         topics_to_avoid: form.topics_to_avoid.trim() || null,
         style_references: parseList(form.style_references),
+=======
+
+        content_what_works:
+          form.content_what_works.trim() || null,
+
+        content_what_doesnt:
+          form.content_what_doesnt.trim() || null,
+
+        competitor_refs:
+          parseList(form.competitor_refs),
+
+        topics_to_avoid:
+          form.topics_to_avoid.trim() || null,
+
+        style_references:
+          parseList(form.style_references),
+>>>>>>> origin/dev
       };
 
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      };
+
+      console.log("Submitting questionnaire...");
+
       let res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/questionnaire`,
+        `${apiUrl}/api/v1/questionnaire`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
+          headers,
           body: JSON.stringify(payload),
         }
       );
 
+      /*
+       * 409 means the questionnaire already exists.
+       * In that case, update the existing questionnaire.
+       */
       if (res.status === 409) {
+<<<<<<< HEAD
         setError(null);
+=======
+        console.log(
+          "Questionnaire already exists. Updating existing questionnaire..."
+        );
+
+>>>>>>> origin/dev
         res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/questionnaire`,
+          `${apiUrl}/api/v1/questionnaire`,
           {
             method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${session.access_token}`,
-            },
+            headers,
             body: JSON.stringify(payload),
           }
         );
       }
 
+      /*
+       * If POST/PATCH failed, show the actual backend error.
+       */
       if (!res.ok) {
-        if (res.status === 403 || res.status === 409) {
-          console.warn(`Proceeding despite API status ${res.status} because it represents an existing/locked submission.`);
-        } else {
+        let errorMessage =
+          "Submission failed. Please try again.";
+
+        try {
           const data = await res.json();
-          setError(data.detail || "Submission failed. Please try again.");
-          setIsSubmitting(false);
-          return;
+
+          if (typeof data?.detail === "string") {
+            errorMessage = data.detail;
+          } else if (Array.isArray(data?.detail)) {
+            errorMessage = data.detail
+              .map(
+                (item: { msg?: string }) =>
+                  item?.msg || "Invalid questionnaire data"
+              )
+              .join(", ");
+          }
+        } catch {
+          // Backend did not return JSON.
         }
+
+        console.error(
+          "Questionnaire API error:",
+          res.status,
+          errorMessage
+        );
+
+        setError(errorMessage);
+        setIsSubmitting(false);
+        return;
       }
 
+<<<<<<< HEAD
       const { error: updateError } = await supabase
         .from("users")
         .update({
@@ -293,16 +429,63 @@ export default function QuestionnairePage() {
           account_status: "active",
         })
         .eq("auth_id", session.user.id);
+=======
+      console.log(
+        "Questionnaire submitted successfully."
+      );
+>>>>>>> origin/dev
 
-      if (updateError) {
-        console.error("Supabase update error:", updateError);
+      /*
+       * Try to update the user's onboarding state.
+       *
+       * This is intentionally non-blocking.
+       * If Supabase RLS prevents this update, the user
+       * should still be able to continue.
+       */
+      try {
+        const { error: updateError } =
+          await supabase
+            .from("users")
+            .update({
+              onboarding_stage: 5,
+              account_status: "active",
+            })
+            .eq("auth_id", session.user.id);
+
+        if (updateError) {
+          console.warn(
+            "Could not update onboarding status:",
+            updateError
+          );
+        }
+      } catch (updateErr) {
+        console.warn(
+          "Supabase onboarding update failed:",
+          updateErr
+        );
       }
 
-      router.refresh();
-      router.push("/portal");
+      /*
+       * Stop loading before navigation.
+       */
+      setIsSubmitting(false);
+
+      /*
+       * Questionnaire is complete.
+       */
+      router.push("/onboarding/complete");
     } catch (err) {
-      console.error(err);
-      setError("Failed to connect to server. Please try again.");
+      console.error(
+        "Questionnaire submission error:",
+        err
+      );
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to connect to server. Please try again."
+      );
+
       setIsSubmitting(false);
     }
   }
@@ -310,37 +493,55 @@ export default function QuestionnairePage() {
   const Icon = STEP_ICONS[step - 1];
 
   return (
-    <CardContent className="p-0">
+    <CardContent>
       {/* Questionnaire Sub-Stepper */}
+
       <div className="mb-8">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-brand flex items-center gap-1.5">
-            <Icon className="size-4" />
-            Step {step} of {TOTAL_STEPS}
-          </span>
-          <span className="text-sm font-semibold text-brand-dark">
-            {STEP_TITLES[step - 1]}
-          </span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-brand-light text-brand">
+              <Icon className="size-5" />
+            </div>
+
+            <div>
+              <p className="text-xs font-medium text-text-muted">
+                Step {step} of {TOTAL_STEPS}
+              </p>
+
+              <h2 className="text-sm font-bold text-brand-dark">
+                {STEP_TITLES[step - 1]}
+              </h2>
+            </div>
+          </div>
         </div>
-        <div className="w-full h-1.5 bg-[#E8F4FD] rounded-full overflow-hidden">
+
+        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-brand-light">
           <div
-            className="h-full bg-brand rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
+            className="h-full rounded-full bg-brand transition-all duration-300 ease-out"
+            style={{
+              width: `${(step / TOTAL_STEPS) * 100}%`,
+            }}
           />
         </div>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-lg bg-error-light border border-error/20 text-sm text-error font-medium">
+        <div className="mb-6 rounded-lg border border-error/20 bg-error-light p-4 text-sm font-medium text-error">
           {error}
         </div>
       )}
 
       <div className="space-y-6">
+<<<<<<< HEAD
         {/* Step 1: Brand Identity & Basics */}
+=======
+        {/* STEP 1 */}
+
+>>>>>>> origin/dev
         {step === 1 && (
-          <div className="space-y-5 animate-in fade-in duration-300">
+          <div className="animate-in space-y-5 fade-in duration-300">
             <div className="space-y-2">
+<<<<<<< HEAD
               <Label htmlFor="brand_name" className="text-sm font-semibold text-brand-dark">
                 Brand Name
               </Label>
@@ -360,21 +561,36 @@ export default function QuestionnairePage() {
             <div className="space-y-2">
               <Label htmlFor="industry" className="text-sm font-semibold text-brand-dark">
                 Industry / Sector
+=======
+              <Label
+                htmlFor="industry"
+                className="text-sm font-semibold text-brand-dark"
+              >
+                Industry
+>>>>>>> origin/dev
               </Label>
+
               <Input
                 id="industry"
                 type="text"
                 placeholder="e.g., E-commerce, SaaS, Fitness, Real Estate, Healthcare"
                 value={form.industry}
-                onChange={(e) => updateField("industry", e.target.value)}
-                className="w-full border-border focus-visible:ring-brand focus-visible:border-brand"
+                onChange={(e) =>
+                  updateField(
+                    "industry",
+                    e.target.value
+                  )
+                }
+                className="w-full border-border focus-visible:border-brand focus-visible:ring-brand"
               />
+
               <p className="text-xs text-[#6BAED6]">
                 What sector or category does your business operate in?
               </p>
             </div>
 
             <div className="space-y-2">
+<<<<<<< HEAD
               <Label htmlFor="official_logo_assets" className="text-sm font-semibold text-brand-dark">
                 Official Logo or Visual Assets (Optional)
               </Label>
@@ -393,70 +609,176 @@ export default function QuestionnairePage() {
 
             <div className="space-y-2">
               <Label htmlFor="business_description" className="text-sm font-semibold text-brand-dark">
+=======
+              <Label
+                htmlFor="business_description"
+                className="text-sm font-semibold text-brand-dark"
+              >
+>>>>>>> origin/dev
                 Business Description
               </Label>
+
               <Textarea
                 id="business_description"
                 placeholder="Briefly describe what your business does, products or services offered, and core value proposition..."
                 value={form.business_description}
-                onChange={(e) => updateField("business_description", e.target.value)}
-                className="w-full min-h-[120px] border-border focus-visible:ring-brand focus-visible:border-brand"
+                onChange={(e) =>
+                  updateField(
+                    "business_description",
+                    e.target.value
+                  )
+                }
+                className="min-h-[120px] w-full border-border focus-visible:border-brand focus-visible:ring-brand"
               />
+
               <p className="text-xs text-[#6BAED6]">
+<<<<<<< HEAD
                 Provide clear details about what your business does so our strategic AI can model your brand.
+=======
+                Provide as much detail as possible to help our AI analyze your brand persona.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="primary_goal"
+                className="text-sm font-semibold text-brand-dark"
+              >
+                Primary Goal
+              </Label>
+
+              <Select
+                value={form.primary_goal}
+                onValueChange={(val) =>
+                  updateField(
+                    "primary_goal",
+                    val ?? ""
+                  )
+                }
+              >
+                <SelectTrigger
+                  id="primary_goal"
+                  className="w-full border-border focus:border-brand focus:ring-brand"
+                >
+                  <SelectValue placeholder="Select your primary marketing goal" />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {GOALS.map((goal) => (
+                    <SelectItem
+                      key={goal}
+                      value={goal}
+                    >
+                      {goal}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <p className="text-xs text-[#6BAED6]">
+                Select the main objective you want to achieve with this content strategy.
+>>>>>>> origin/dev
               </p>
             </div>
           </div>
         )}
 
+<<<<<<< HEAD
         {/* Step 2: Target Audience & Goals */}
+=======
+        {/* STEP 2 */}
+
+>>>>>>> origin/dev
         {step === 2 && (
-          <div className="space-y-5 animate-in fade-in duration-300">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="animate-in space-y-5 fade-in duration-300">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="age_range" className="text-sm font-semibold text-brand-dark">
+                <Label
+                  htmlFor="age_range"
+                  className="text-sm font-semibold text-brand-dark"
+                >
                   Target Age Range
                 </Label>
+
                 <Input
                   id="age_range"
                   type="text"
                   placeholder="e.g., 18-35, 25-50, All ages"
-                  value={form.target_audience.age_range}
-                  onChange={(e) => updateNestedField("target_audience", "age_range", e.target.value)}
+                  value={
+                    form.target_audience.age_range
+                  }
+                  onChange={(e) =>
+                    updateNestedField(
+                      "target_audience",
+                      "age_range",
+                      e.target.value
+                    )
+                  }
                   className="w-full border-border focus-visible:ring-brand"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="location" className="text-sm font-semibold text-brand-dark">
+                <Label
+                  htmlFor="location"
+                  className="text-sm font-semibold text-brand-dark"
+                >
                   Target Location
                 </Label>
+
                 <Input
                   id="location"
                   type="text"
                   placeholder="e.g., United States, Mumbai, Global"
-                  value={form.target_audience.location}
-                  onChange={(e) => updateNestedField("target_audience", "location", e.target.value)}
+                  value={
+                    form.target_audience.location
+                  }
+                  onChange={(e) =>
+                    updateNestedField(
+                      "target_audience",
+                      "location",
+                      e.target.value
+                    )
+                  }
                   className="w-full border-border focus-visible:ring-brand"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="gender" className="text-sm font-semibold text-brand-dark">
+                <Label
+                  htmlFor="gender"
+                  className="text-sm font-semibold text-brand-dark"
+                >
                   Target Gender
                 </Label>
+
                 <Select
-                  value={form.target_audience.gender}
-                  onValueChange={(val) => updateNestedField("target_audience", "gender", val ?? "")}
+                  value={
+                    form.target_audience.gender
+                  }
+                  onValueChange={(val) =>
+                    updateNestedField(
+                      "target_audience",
+                      "gender",
+                      val ?? ""
+                    )
+                  }
                 >
-                  <SelectTrigger id="gender" className="w-full border-border focus:ring-brand">
+                  <SelectTrigger
+                    id="gender"
+                    className="w-full border-border focus:ring-brand"
+                  >
                     <SelectValue placeholder="Select target gender" />
                   </SelectTrigger>
+
                   <SelectContent>
                     {GENDERS.map((gender) => (
-                      <SelectItem key={gender} value={gender}>
+                      <SelectItem
+                        key={gender}
+                        value={gender}
+                      >
                         {gender}
                       </SelectItem>
                     ))}
@@ -465,20 +787,44 @@ export default function QuestionnairePage() {
               </div>
 
               <div className="space-y-2">
+<<<<<<< HEAD
                 <Label htmlFor="interests" className="text-sm font-semibold text-brand-dark">
                   Audience Demographics & Interests
+=======
+                <Label
+                  htmlFor="interests"
+                  className="text-sm font-semibold text-brand-dark"
+                >
+                  Audience Interests / Pain Points
+>>>>>>> origin/dev
                 </Label>
+
                 <Input
                   id="interests"
                   type="text"
+<<<<<<< HEAD
                   placeholder="e.g., tech, fitness, career growth, luxury lifestyle"
                   value={form.target_audience.interests}
                   onChange={(e) => updateNestedField("target_audience", "interests", e.target.value)}
+=======
+                  placeholder="e.g., tech, fitness, career growth"
+                  value={
+                    form.target_audience.interests
+                  }
+                  onChange={(e) =>
+                    updateNestedField(
+                      "target_audience",
+                      "interests",
+                      e.target.value
+                    )
+                  }
+>>>>>>> origin/dev
                   className="w-full border-border focus-visible:ring-brand"
                 />
               </div>
             </div>
 
+<<<<<<< HEAD
             <div className="space-y-2">
               <Label htmlFor="problems_solved" className="text-sm font-semibold text-brand-dark">
                 Problems You Solve for Your Customers
@@ -522,82 +868,182 @@ export default function QuestionnairePage() {
             <div className="pt-2">
               <h3 className="text-sm font-bold text-brand-dark mb-4">Social Media Channels (Optional)</h3>
               
+=======
+            <div className="mt-6 border-t border-border pt-4">
+              <h3 className="mb-4 text-sm font-bold text-brand-dark">
+                Social Media Presence (Optional)
+              </h3>
+
+>>>>>>> origin/dev
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="instagram" className="text-sm font-semibold text-brand-dark">
+                  <Label
+                    htmlFor="instagram"
+                    className="text-sm font-semibold text-brand-dark"
+                  >
                     Instagram Handle
                   </Label>
+
                   <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-xs font-semibold text-[#6BAED6]">@</span>
+                    <span className="absolute left-3 top-2.5 text-xs font-semibold text-[#6BAED6]">
+                      @
+                    </span>
+
                     <Input
                       id="instagram"
                       type="text"
                       placeholder="username"
-                      value={form.social_handles.instagram}
-                      onChange={(e) => updateNestedField("social_handles", "instagram", e.target.value)}
-                      className="w-full pl-7 border-border focus-visible:ring-brand"
+                      value={
+                        form.social_handles.instagram
+                      }
+                      onChange={(e) =>
+                        updateNestedField(
+                          "social_handles",
+                          "instagram",
+                          e.target.value
+                        )
+                      }
+                      className="w-full border-border pl-7 focus-visible:ring-brand"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
+<<<<<<< HEAD
                     <Label htmlFor="facebook" className="text-sm font-semibold text-brand-dark">
                       Facebook Page
+=======
+                    <Label
+                      htmlFor="facebook"
+                      className="text-sm font-semibold text-brand-dark"
+                    >
+                      Facebook URL / Page
+>>>>>>> origin/dev
                     </Label>
+
                     <Input
                       id="facebook"
                       type="text"
                       placeholder="facebook.com/page"
-                      value={form.social_handles.facebook}
-                      onChange={(e) => updateNestedField("social_handles", "facebook", e.target.value)}
+                      value={
+                        form.social_handles.facebook
+                      }
+                      onChange={(e) =>
+                        updateNestedField(
+                          "social_handles",
+                          "facebook",
+                          e.target.value
+                        )
+                      }
                       className="w-full border-border focus-visible:ring-brand"
                     />
                   </div>
 
                   <div className="space-y-2">
+<<<<<<< HEAD
                     <Label htmlFor="tiktok" className="text-sm font-semibold text-brand-dark">
                       TikTok Handle
+=======
+                    <Label
+                      htmlFor="tiktok"
+                      className="text-sm font-semibold text-brand-dark"
+                    >
+                      TikTok Handle (Optional)
+>>>>>>> origin/dev
                     </Label>
+
                     <div className="relative">
-                      <span className="absolute left-3 top-2.5 text-xs font-semibold text-[#6BAED6]">@</span>
+                      <span className="absolute left-3 top-2.5 text-xs font-semibold text-[#6BAED6]">
+                        @
+                      </span>
+
                       <Input
                         id="tiktok"
                         type="text"
                         placeholder="username"
-                        value={form.social_handles.tiktok}
-                        onChange={(e) => updateNestedField("social_handles", "tiktok", e.target.value)}
-                        className="w-full pl-7 border-border focus-visible:ring-brand"
+                        value={
+                          form.social_handles.tiktok
+                        }
+                        onChange={(e) =>
+                          updateNestedField(
+                            "social_handles",
+                            "tiktok",
+                            e.target.value
+                          )
+                        }
+                        className="w-full border-border pl-7 focus-visible:ring-brand"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
+<<<<<<< HEAD
                     <Label htmlFor="linkedin" className="text-sm font-semibold text-brand-dark">
                       LinkedIn Page
+=======
+                    <Label
+                      htmlFor="linkedin"
+                      className="text-sm font-semibold text-brand-dark"
+                    >
+                      LinkedIn URL / Page
+>>>>>>> origin/dev
                     </Label>
+
                     <Input
                       id="linkedin"
                       type="text"
                       placeholder="linkedin.com/company/page"
-                      value={form.social_handles.linkedin}
-                      onChange={(e) => updateNestedField("social_handles", "linkedin", e.target.value)}
+                      value={
+                        form.social_handles.linkedin
+                      }
+                      onChange={(e) =>
+                        updateNestedField(
+                          "social_handles",
+                          "linkedin",
+                          e.target.value
+                        )
+                      }
                       className="w-full border-border focus-visible:ring-brand"
                     />
                   </div>
 
                   <div className="space-y-2">
+<<<<<<< HEAD
                     <Label htmlFor="other_platforms" className="text-sm font-semibold text-brand-dark">
                       Other Platforms
+=======
+                    <Label
+                      htmlFor="other_platforms"
+                      className="text-sm font-semibold text-brand-dark"
+                    >
+                      Other Platforms (Optional)
+>>>>>>> origin/dev
                     </Label>
+
                     <Input
                       id="other_platforms"
                       type="text"
+<<<<<<< HEAD
                       placeholder="e.g., YouTube, Pinterest, X/Twitter"
                       value={form.social_handles.other_platforms}
                       onChange={(e) => updateNestedField("social_handles", "other_platforms", e.target.value)}
+=======
+                      placeholder="e.g., YouTube, Pinterest, Twitter/X"
+                      value={
+                        form.social_handles
+                          .other_platforms
+                      }
+                      onChange={(e) =>
+                        updateNestedField(
+                          "social_handles",
+                          "other_platforms",
+                          e.target.value
+                        )
+                      }
+>>>>>>> origin/dev
                       className="w-full border-border focus-visible:ring-brand"
                     />
                   </div>
@@ -607,27 +1053,40 @@ export default function QuestionnairePage() {
           </div>
         )}
 
+<<<<<<< HEAD
         {/* Step 3: Tone, Style & Preferences */}
+=======
+        {/* STEP 3 */}
+
+>>>>>>> origin/dev
         {step === 3 && (
-          <div className="space-y-5 animate-in fade-in duration-300">
+          <div className="animate-in space-y-5 fade-in duration-300">
             <div className="space-y-2.5">
               <Label className="text-sm font-semibold text-brand-dark">
                 Preferred Brand Voice / Tone (Select 1-10 keywords)
               </Label>
+
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                 {BRAND_TONES.map((tone) => {
-                  const isSelected = form.brand_tone.includes(tone);
+                  const isSelected =
+                    form.brand_tone.includes(tone);
+
                   return (
                     <button
                       key={tone}
                       type="button"
-                      onClick={() => toggleTone(tone)}
-                      disabled={!isSelected && form.brand_tone.length >= 10}
+                      onClick={() =>
+                        toggleTone(tone)
+                      }
+                      disabled={
+                        !isSelected &&
+                        form.brand_tone.length >= 10
+                      }
                       className={cn(
-                        "py-2 px-3 text-xs font-semibold rounded-lg border text-center transition-all cursor-pointer",
+                        "cursor-pointer rounded-lg border px-3 py-2 text-center text-xs font-semibold transition-all",
                         isSelected
-                          ? "bg-brand text-white border-brand shadow-sm"
-                          : "bg-white text-brand-dark border-border hover:bg-brand-light/50"
+                          ? "border-brand bg-brand text-white shadow-sm"
+                          : "border-border bg-white text-brand-dark hover:bg-brand-light/50"
                       )}
                     >
                       {tone}
@@ -635,14 +1094,23 @@ export default function QuestionnairePage() {
                   );
                 })}
               </div>
-              <p className="text-xs text-[#6BAED6] flex justify-between">
-                <span>Selected: {form.brand_tone.length} / 10</span>
-                {form.brand_tone.length >= 10 && <span className="text-amber-600 font-medium">Max tone limit reached</span>}
+
+              <p className="flex justify-between text-xs text-[#6BAED6]">
+                <span>
+                  Selected: {form.brand_tone.length} / 10
+                </span>
+
+                {form.brand_tone.length >= 10 && (
+                  <span className="font-medium text-amber-600">
+                    Max tone limit reached
+                  </span>
+                )}
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
+<<<<<<< HEAD
                 <Label htmlFor="style_references" className="text-sm font-semibold text-brand-dark">
                   Design Aesthetic & Style References
                 </Label>
@@ -662,13 +1130,26 @@ export default function QuestionnairePage() {
               <div className="space-y-2">
                 <Label htmlFor="competitor_refs" className="text-sm font-semibold text-brand-dark">
                   Competitors / Inspiration References
+=======
+                <Label
+                  htmlFor="competitor_refs"
+                  className="text-sm font-semibold text-brand-dark"
+                >
+                  Competitors / References
+>>>>>>> origin/dev
                 </Label>
+
                 <Input
                   id="competitor_refs"
                   type="text"
                   placeholder="e.g., Apple, Nike, local competitors (comma separated)"
                   value={form.competitor_refs}
-                  onChange={(e) => updateField("competitor_refs", e.target.value)}
+                  onChange={(e) =>
+                    updateField(
+                      "competitor_refs",
+                      e.target.value
+                    )
+                  }
                   className="w-full border-border focus-visible:ring-brand"
                 />
                 <p className="text-xs text-[#6BAED6]">
@@ -709,6 +1190,7 @@ export default function QuestionnairePage() {
               </div>
 
               <div className="space-y-2">
+<<<<<<< HEAD
                 <Label htmlFor="content_what_doesnt" className="text-sm font-semibold text-brand-dark">
                   What Content Does NOT Work? (Optional)
                 </Label>
@@ -717,11 +1199,32 @@ export default function QuestionnairePage() {
                   placeholder="Styles or post concepts you tried but found ineffective..."
                   value={form.content_what_doesnt}
                   onChange={(e) => updateField("content_what_doesnt", e.target.value)}
+=======
+                <Label
+                  htmlFor="style_references"
+                  className="text-sm font-semibold text-brand-dark"
+                >
+                  Visual Style References
+                </Label>
+
+                <Input
+                  id="style_references"
+                  type="text"
+                  placeholder="e.g., minimalist, bright, vintage (comma separated)"
+                  value={form.style_references}
+                  onChange={(e) =>
+                    updateField(
+                      "style_references",
+                      e.target.value
+                    )
+                  }
+>>>>>>> origin/dev
                   className="w-full border-border focus-visible:ring-brand"
                 />
               </div>
             </div>
 
+<<<<<<< HEAD
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="topics_to_avoid" className="text-sm font-semibold text-brand-dark">
@@ -750,20 +1253,120 @@ export default function QuestionnairePage() {
                   className="w-full border-border focus-visible:ring-brand"
                 />
               </div>
+=======
+            <div className="space-y-2">
+              <Label
+                htmlFor="current_posting_frequency"
+                className="text-sm font-semibold text-brand-dark"
+              >
+                Current Posting Frequency (Optional)
+              </Label>
+
+              <Input
+                id="current_posting_frequency"
+                type="text"
+                placeholder="e.g., 3 posts/week, daily, none"
+                value={
+                  form.current_posting_frequency
+                }
+                onChange={(e) =>
+                  updateField(
+                    "current_posting_frequency",
+                    e.target.value
+                  )
+                }
+                className="w-full border-border focus-visible:ring-brand"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="content_what_works"
+                className="text-sm font-semibold text-brand-dark"
+              >
+                What Content Works Well for You? (Optional)
+              </Label>
+
+              <Textarea
+                id="content_what_works"
+                placeholder="Describe any past marketing posts, formats, or campaigns that successfully engaged your audience..."
+                value={form.content_what_works}
+                onChange={(e) =>
+                  updateField(
+                    "content_what_works",
+                    e.target.value
+                  )
+                }
+                className="w-full border-border focus-visible:ring-brand"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="content_what_doesnt"
+                className="text-sm font-semibold text-brand-dark"
+              >
+                What Content Does NOT Work? (Optional)
+              </Label>
+
+              <Textarea
+                id="content_what_doesnt"
+                placeholder="Describe any marketing strategies or post styles you tried but found ineffective..."
+                value={form.content_what_doesnt}
+                onChange={(e) =>
+                  updateField(
+                    "content_what_doesnt",
+                    e.target.value
+                  )
+                }
+                className="w-full border-border focus-visible:ring-brand"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="topics_to_avoid"
+                className="text-sm font-semibold text-brand-dark"
+              >
+                Topics to Avoid (Optional)
+              </Label>
+
+              <Input
+                id="topics_to_avoid"
+                type="text"
+                placeholder="List any sensitive topics, words, or competitors you want to avoid..."
+                value={form.topics_to_avoid}
+                onChange={(e) =>
+                  updateField(
+                    "topics_to_avoid",
+                    e.target.value
+                  )
+                }
+                className="w-full border-border focus-visible:ring-brand"
+              />
+>>>>>>> origin/dev
             </div>
           </div>
         )}
       </div>
 
+<<<<<<< HEAD
       {/* Controls */}
       <div className="mt-8 flex items-center justify-between gap-4 pt-6 border-t border-border">
+=======
+      {/* Button Controls */}
+
+      <div className="mt-8 flex items-center justify-between gap-4 border-t border-border pt-6">
+>>>>>>> origin/dev
         {step > 1 ? (
           <Button
             type="button"
             variant="outline"
-            onClick={() => setStep((prev) => prev - 1)}
+            onClick={() =>
+              setStep((prev) => prev - 1)
+            }
             disabled={isSubmitting}
-            className="flex items-center gap-2 border-border text-brand-dark cursor-pointer animate-in fade-in duration-200"
+            className="flex cursor-pointer items-center gap-2 border-border text-brand-dark"
           >
             <ArrowLeft className="size-4" />
             Back
@@ -775,9 +1378,11 @@ export default function QuestionnairePage() {
         {step < TOTAL_STEPS ? (
           <Button
             type="button"
-            onClick={() => setStep((prev) => prev + 1)}
+            onClick={() =>
+              setStep((prev) => prev + 1)
+            }
             disabled={!canNext}
-            className="flex items-center gap-2 bg-brand text-white hover:bg-brand/90 transition-colors cursor-pointer px-6 h-11"
+            className="flex h-11 cursor-pointer items-center gap-2 bg-brand px-6 text-white transition-colors hover:bg-brand/90"
           >
             Next
             <ArrowRight className="size-4" />
@@ -787,7 +1392,7 @@ export default function QuestionnairePage() {
             type="button"
             onClick={handleSubmit}
             disabled={!canNext || isSubmitting}
-            className="flex items-center justify-center gap-2 bg-brand hover:bg-brand/90 text-white font-semibold shadow-sm transition-colors cursor-pointer px-6 h-11"
+            className="flex h-11 cursor-pointer items-center justify-center gap-2 bg-brand px-6 font-semibold text-white shadow-sm transition-colors hover:bg-brand/90"
           >
             {isSubmitting ? (
               <>
@@ -802,4 +1407,8 @@ export default function QuestionnairePage() {
       </div>
     </CardContent>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/dev

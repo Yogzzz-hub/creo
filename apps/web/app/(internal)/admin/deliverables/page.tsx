@@ -39,6 +39,9 @@ import {
   Clock,
   XCircle,
   RefreshCw,
+  User,
+  Users,
+  AlertTriangle,
 } from "lucide-react"
 import { toast } from "sonner"
 import { adminFetch } from "@/lib/admin-api"
@@ -318,6 +321,7 @@ export default function DeliverablesPage() {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           {d.file_url && (
+<<<<<<< HEAD
                             <a
                               href={d.file_url}
                               target="_blank"
@@ -326,6 +330,11 @@ export default function DeliverablesPage() {
                             >
                               <Eye className="size-3.5" />
                             </a>
+=======
+                            <Button variant="ghost" size="sm" onClick={() => window.open(d.file_url!, "_blank", "noopener,noreferrer")}>
+                              <Eye className="size-3.5" />
+                            </Button>
+>>>>>>> origin/dev
                           )}
                           {d.status === "pending_review" && (
                             <>
