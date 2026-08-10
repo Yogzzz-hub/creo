@@ -22,6 +22,7 @@ build/
 .eggs/
 
 # Virtual environments
+**/myenv/
 .venv/
 venv/
 ENV/
