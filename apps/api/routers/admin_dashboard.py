@@ -1,18 +1,23 @@
+# pyrefly: ignore [missing-import]
 from fastapi import APIRouter, Depends
+# pyrefly: ignore [missing-import]
 from pydantic import BaseModel
+# pyrefly: ignore [missing-import]
 from sqlalchemy import func, select
+# pyrefly: ignore [missing-import]
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
 from core.database import get_db
 from core.security import RequireAdmin
-from models.enums import AccountStatus, UserRole
+from models.enums import AccountStatus, DeliverableStatus, LeaveStatus, TicketStatus, UserRole
 from models.escalation import Escalation
 from models.leave import LeaveRequest
-from models.enums import LeaveStatus
 from models.plan import Plan
 from models.subscription import Subscription
 from models.user import User
+from models.deliverable import Deliverable
+from models.ticket import Ticket
 from models.notification import Notification
 from models.content_calendar import ContentCalendar
 from schemas.admin import AdminDashboardResponse
@@ -58,6 +63,13 @@ async def get_admin_dashboard(
     )
     total_active_clients = active_clients_result.scalar() or 0
 
+    active_plans_result = await db.execute(
+        select(func.count(Subscription.id)).where(
+            Subscription.status == "active",
+        )
+    )
+    active_plans = active_plans_result.scalar() or 0
+
     mrr_result = await db.execute(
         select(func.coalesce(func.sum(Plan.monthly_price), 0.0))
         .join(Subscription, Subscription.plan_id == Plan.id)
@@ -69,6 +81,30 @@ async def get_admin_dashboard(
         )
     )
     mrr_estimate = float(mrr_result.scalar() or 0.0)
+
+    pending_deliv_result = await db.execute(
+        select(func.count(Deliverable.id)).where(
+            Deliverable.status != DeliverableStatus.approved,
+        )
+    )
+    pending_deliverables = pending_deliv_result.scalar() or 0
+
+    awaiting_appr_result = await db.execute(
+        select(func.count(Deliverable.id)).where(
+            Deliverable.status.in_([
+                DeliverableStatus.pending_approval,
+                DeliverableStatus.revised_pending_approval,
+            ]),
+        )
+    )
+    awaiting_approval = awaiting_appr_result.scalar() or 0
+
+    open_tickets_result = await db.execute(
+        select(func.count(Ticket.id)).where(
+            Ticket.status != TicketStatus.resolved,
+        )
+    )
+    open_tickets = open_tickets_result.scalar() or 0
 
     escalations_result = await db.execute(
         select(func.count(Escalation.id)).where(
@@ -86,7 +122,11 @@ async def get_admin_dashboard(
 
     return AdminDashboardResponse(
         total_active_clients=total_active_clients,
+        active_plans=active_plans,
         mrr_estimate=mrr_estimate,
+        pending_deliverables=pending_deliverables,
+        awaiting_approval=awaiting_approval,
+        open_tickets=open_tickets,
         active_escalations=active_escalations,
         pending_leave_requests=pending_leave_requests,
     )

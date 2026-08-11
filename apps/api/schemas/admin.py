@@ -12,7 +12,11 @@ from models.enums import Department, PlanName, UserRole
 
 class AdminDashboardResponse(BaseModel):
     total_active_clients: int
+    active_plans: int = 0
     mrr_estimate: float
+    pending_deliverables: int = 0
+    awaiting_approval: int = 0
+    open_tickets: int = 0
     active_escalations: int
     pending_leave_requests: int
 
