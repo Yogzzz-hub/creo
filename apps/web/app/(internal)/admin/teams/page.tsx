@@ -123,7 +123,10 @@ export default function TeamManagementPage() {
 
   function fetchTeam() {
     adminFetch<TeamMember[]>("/api/v1/admin/team")
-      .then(setEmployees)
+      .then((data) => {
+        // Defensively filter out null/undefined items from the API response
+        setEmployees(Array.isArray(data) ? data.filter((e) => e != null) : [])
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }
