@@ -321,7 +321,7 @@ def notify_sales_lead_capture(self, email: str) -> None:
     """Log lead capture for the sales team pipeline context."""
     try:
         logger.info("[Celery] Notifying sales team of new lead: %s", _mask_email(email))
-        sales_email = "sales@creo.app"
+        sales_email = settings.SALES_EMAIL
         html_body = f"""
         <h2>New Lead Magnet Capture</h2>
         <p>A new lead has been captured from the landing page content calendar download.</p>

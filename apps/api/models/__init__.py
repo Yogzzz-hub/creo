@@ -35,6 +35,7 @@ from models.custom_pricing import CustomPricing
 from models.platform_settings import PlatformSettings
 from models.audit import QuestionnaireAuditLog
 from models.task_history import TaskStatusHistory
+from models.lead import Lead
 
 __all__ = [
     "UserRole",
@@ -75,4 +76,5 @@ __all__ = [
     "PlatformSettings",
     "QuestionnaireAuditLog",
     "TaskStatusHistory",
+    "Lead",
 ]

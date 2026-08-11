@@ -1,10 +1,16 @@
+import asyncio
 import logging
+from sqlalchemy.exc import IntegrityError
 
-from fastapi import APIRouter, Request, status
+# pyrefly: ignore [missing-import]
+
+from fastapi import APIRouter, Depends, Request, status
 from pydantic import BaseModel, EmailStr
-from starlette.concurrency import run_in_threadpool
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.database import get_db
 from core.exceptions import limiter
+from models.lead import Lead
 
 logger = logging.getLogger(__name__)
 
@@ -20,67 +26,118 @@ class LeadMagnetResponse(BaseModel):
     message: str
 
 
-def _dispatch_lead_tasks(email: str) -> None:
+async def _dispatch_lead_emails(email: str) -> None:
+    """
+    Send the lead magnet email directly through Resend.
+
+    Celery is intentionally bypassed for now so that email delivery
+    can be tested directly through the Resend integration.
+    """
     try:
-        from workers.notification_tasks import (
-            send_lead_magnet_email,
-            notify_sales_lead_capture,
-        )
+        from services.email import send_email
+        from workers.notification_tasks import _build_lead_magnet_html
+        from core.config import settings
 
-        send_lead_magnet_email.delay(email)
-        notify_sales_lead_capture.delay(email)
-        logger.info("Lead magnet Celery tasks dispatched for %s", email)
-    except Exception:
-        logger.warning(
-            "Celery unavailable, sending lead magnet email synchronously for %s",
-            email,
-        )
-        _send_lead_magnet_sync(email)
+        html_body = _build_lead_magnet_html(email)
 
+        sales_email = settings.SALES_EMAIL
 
-def _send_lead_magnet_sync(email: str) -> None:
-    from services.email import send_email
-    from workers.notification_tasks import _build_lead_magnet_html
-    import asyncio
+        sales_html_body = f"""
+        <h2>New Lead Magnet Capture</h2>
+        <p>A new lead has been captured from the landing page content calendar download.</p>
+        <p><b>Email:</b> {email}</p>
+        <p><b>Source:</b> Landing Page — Lead Magnet Banner</p>
+        <p><b>Action:</b> Add to CRM pipeline for follow-up.</p>
+        <p><a href="https://creo.app/admin/sales">View Sales Pipeline</a></p>
+        """
 
-    html_body = _build_lead_magnet_html(email)
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
-
-    if loop and loop.is_running():
-        import concurrent.futures
-
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            pool.submit(
-                asyncio.run,
-                send_email(
-                    to_email=email,
-                    subject="Your Free 30-Day Content Calendar Template",
-                    html_content=html_body,
-                ),
-            ).result(timeout=30)
-    else:
-        asyncio.run(
+        results = await asyncio.gather(
             send_email(
                 to_email=email,
                 subject="Your Free 30-Day Content Calendar Template",
                 html_content=html_body,
+            ),
+            send_email(
+                to_email=sales_email,
+                subject=f"New Lead: {email} downloaded Content Calendar",
+                html_content=sales_html_body,
+            ),
+            return_exceptions=True,
+        )
+
+        lead_email_result = results[0]
+        sales_email_result = results[1]
+
+        if isinstance(lead_email_result, Exception):
+            logger.error(
+                "Failed to send lead magnet email to %s: %s",
+                email,
+                lead_email_result,
             )
+        else:
+            logger.info(
+                "Lead magnet email sent successfully to %s. Resend response: %s",
+                email,
+                lead_email_result,
+            )
+
+        if isinstance(sales_email_result, Exception):
+            logger.error(
+                "Failed to send sales notification to %s: %s",
+                sales_email,
+                sales_email_result,
+            )
+        else:
+            logger.info(
+                "Sales notification sent successfully to %s. Resend response: %s",
+                sales_email,
+                sales_email_result,
+            )
+
+    except Exception:
+        logger.exception(
+            "Unexpected error while sending lead magnet emails for %s",
+            email,
         )
 
 
-@router.post("", response_model=LeadMagnetResponse, status_code=status.HTTP_200_OK)
+@router.post(
+    "",
+    response_model=LeadMagnetResponse,
+    status_code=status.HTTP_200_OK,
+)
 @limiter.limit("3/minute")
-async def capture_lead(request: Request, payload: LeadMagnetRequest):
+async def capture_lead(
+    request: Request,
+    payload: LeadMagnetRequest,
+    db: AsyncSession = Depends(get_db),
+):
     email = payload.email
 
     logger.info("Lead magnet capture: email=%s", email)
 
-    await run_in_threadpool(_dispatch_lead_tasks, email)
+    try:
+        lead = Lead(email=str(email))
+        db.add(lead)
+        await db.commit()
+
+        logger.info("Lead captured successfully: email=%s", email)
+
+    except IntegrityError:
+        await db.rollback()
+
+        logger.warning(
+            "Lead already exists: email=%s",
+            email,
+        )
+
+    # Send the email directly through Resend.
+    # This is intentionally awaited during testing so we can see
+    # whether the Resend API actually succeeds or fails.
+    await _dispatch_lead_emails(str(email))
 
     return LeadMagnetResponse(
         status="success",
         message="Check your email for the content calendar template.",
     )
+

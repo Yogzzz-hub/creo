@@ -25,7 +25,8 @@ export function LeadMagnetForm() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.detail || "Something went wrong. Please try again.");
+        const errorMsg = res.status === 429 ? "Too many requests. Please try again later." : (data.detail || data.error || "Something went wrong. Please try again.");
+        throw new Error(errorMsg);
       }
 
       setStatus("success");

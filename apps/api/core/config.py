@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     MSG91_WHATSAPP_NUMBER: str = ""
     RESEND_API_KEY: str = ""
     RESEND_FROM_EMAIL: str = ""
+    SALES_EMAIL: str = "sales@creo.app"
     OPENAI_API_KEY: str = ""
     INSTAGRAM_APP_ID: str = ""
     INSTAGRAM_APP_SECRET: str = ""
