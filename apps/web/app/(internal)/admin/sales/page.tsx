@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
 import { IndianRupee, TrendingUp, Users, Loader2, Pencil } from "lucide-react"
 import { toast } from "sonner"
 import { adminFetch } from "@/lib/admin-api"
@@ -110,6 +112,8 @@ export default function SalesAdminPage() {
   const [newPlan, setNewPlan] = useState("")
   const [newPrice, setNewPrice] = useState("")
   const [modifying, setModifying] = useState(false)
+  const [isCustomPricing, setIsCustomPricing] = useState(false)
+  const [customPricingReason, setCustomPricingReason] = useState("")
 
   const fetchData = useCallback(() => {
     setLoading(true)
@@ -161,6 +165,8 @@ export default function SalesAdminPage() {
     setSelectedSub(sub)
     setNewPlan(sub.plan_name ?? "")
     setNewPrice(String(sub.monthly_price))
+    setIsCustomPricing(false)
+    setCustomPricingReason("")
     setModifyDialogOpen(true)
   }
 
@@ -173,6 +179,8 @@ export default function SalesAdminPage() {
         body: JSON.stringify({
           plan_name: newPlan,
           monthly_price: parseInt(newPrice, 10),
+          is_custom_pricing: isCustomPricing,
+          custom_pricing_reason: isCustomPricing ? customPricingReason : null,
         }),
       })
       setSubscriptions((prev) =>
@@ -445,6 +453,32 @@ export default function SalesAdminPage() {
                 min={0}
               />
             </div>
+
+            <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">Override Standard Pricing</Label>
+                <p className="text-xs text-muted-foreground">Enable to set a price below the plan's standard rate</p>
+              </div>
+              <Switch
+                checked={isCustomPricing}
+                onCheckedChange={(checked) => {
+                  setIsCustomPricing(checked)
+                  if (!checked) setCustomPricingReason("")
+                }}
+              />
+            </div>
+
+            {isCustomPricing && (
+              <div className="space-y-2">
+                <Label>Reason for custom pricing</Label>
+                <Textarea
+                  placeholder="e.g. Enterprise deal — 12-month commitment, bulk discount"
+                  value={customPricingReason}
+                  onChange={(e) => setCustomPricingReason(e.target.value)}
+                  className="min-h-20"
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setModifyDialogOpen(false)} disabled={modifying}>Cancel</Button>
