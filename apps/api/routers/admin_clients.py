@@ -39,7 +39,9 @@ async def list_clients(
     if search:
         search_pattern = f"%{search}%"
         query = query.where(
-            (User.business_name.ilike(search_pattern)) | (User.email.ilike(search_pattern))
+            (User.business_name.ilike(search_pattern)) |
+            (User.full_name.ilike(search_pattern)) |
+            (User.email.ilike(search_pattern))
         )
 
     if status_filter:
@@ -137,6 +139,8 @@ async def get_client_detail(
         subscriptions=subscriptions,
         deliverables_count=deliverables_count,
         open_tickets_count=open_tickets_count,
+        questionnaire=user.questionnaire,
+        assignments=user.client_assignments,
     )
 
 

@@ -28,6 +28,18 @@ interface Subscription {
   current_period_end: string
 }
 
+interface Questionnaire {
+  id: string
+  industry: string
+  ai_summary_line?: string
+}
+
+interface Assignment {
+  id: string
+  deliverable_type: string
+  is_active: boolean
+}
+
 interface ClientDetail {
   user_id: string
   full_name: string
@@ -40,6 +52,8 @@ interface ClientDetail {
   subscriptions: Subscription[]
   deliverables_count: number
   open_tickets_count: number
+  questionnaire?: Questionnaire
+  assignments: Assignment[]
 }
 
 function formatStatus(status: string) {
@@ -250,8 +264,54 @@ export default function ClientProfilePage() {
           </Card>
         </div>
 
-        {/* Right column: subscription history */}
-        <div className="lg:col-span-2">
+        {/* Right column: activity timeline */}
+        <div className="lg:col-span-2 space-y-6">
+          {client.questionnaire && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-semibold text-[#0D2137]">
+                  Questionnaire & AI Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Industry</p>
+                  <p className="text-sm font-medium text-[#0D2137]">{client.questionnaire.industry}</p>
+                </div>
+                {client.questionnaire.ai_summary_line && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">AI Brand Summary</p>
+                    <p className="text-sm font-medium text-[#0D2137]">{client.questionnaire.ai_summary_line}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {client.assignments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base font-semibold text-[#0D2137]">
+                  Team Assignments
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {client.assignments.map((assignment) => (
+                    <div key={assignment.id} className="flex items-center justify-between rounded-lg border p-4">
+                      <div>
+                        <p className="text-sm font-medium text-[#0D2137]">{formatStatus(assignment.deliverable_type)}</p>
+                      </div>
+                      <Badge variant={assignment.is_active ? "default" : "outline"}>
+                        {assignment.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle className="text-base font-semibold text-[#0D2137]">

@@ -6,6 +6,7 @@ from typing import Optional
 
 from core.database import get_db
 from core.security import RequireAdmin
+from core.config import settings as app_settings
 from models.platform_settings import PlatformSettings
 from models.user import User
 from schemas.settings import PlatformSettingsResponse, PlatformSettingsUpdate
@@ -61,7 +62,27 @@ async def get_platform_settings(
         await db.commit()
         await db.refresh(settings)
 
-    return settings
+    integration_status = {
+        "razorpay": bool(app_settings.RAZORPAY_KEY_ID and app_settings.RAZORPAY_KEY_SECRET),
+        "stripe": bool(app_settings.STRIPE_SECRET_KEY),
+        "msg91": bool(app_settings.MSG91_AUTH_KEY),
+        "resend": bool(app_settings.RESEND_API_KEY),
+        "openai": bool(app_settings.OPENAI_API_KEY),
+        "instagram": bool(app_settings.INSTAGRAM_APP_ID and app_settings.INSTAGRAM_APP_SECRET),
+        "supabase": bool(app_settings.SUPABASE_URL and app_settings.SUPABASE_SERVICE_ROLE_KEY),
+        "redis": bool(app_settings.REDIS_URL),
+        "celery": bool(app_settings.CELERY_BROKER_URL),
+    }
+
+    config_status = {
+        "environment": app_settings.ENVIRONMENT,
+        "integrations": integration_status
+    }
+
+    response_data = PlatformSettingsResponse.model_validate(settings)
+    response_data.config = config_status
+
+    return response_data
 
 
 @router.patch("/settings", response_model=PlatformSettingsResponse)
@@ -88,7 +109,27 @@ async def update_platform_settings(
     await db.commit()
     await db.refresh(settings)
 
-    return settings
+    integration_status = {
+        "razorpay": bool(app_settings.RAZORPAY_KEY_ID and app_settings.RAZORPAY_KEY_SECRET),
+        "stripe": bool(app_settings.STRIPE_SECRET_KEY),
+        "msg91": bool(app_settings.MSG91_AUTH_KEY),
+        "resend": bool(app_settings.RESEND_API_KEY),
+        "openai": bool(app_settings.OPENAI_API_KEY),
+        "instagram": bool(app_settings.INSTAGRAM_APP_ID and app_settings.INSTAGRAM_APP_SECRET),
+        "supabase": bool(app_settings.SUPABASE_URL and app_settings.SUPABASE_SERVICE_ROLE_KEY),
+        "redis": bool(app_settings.REDIS_URL),
+        "celery": bool(app_settings.CELERY_BROKER_URL),
+    }
+
+    config_status = {
+        "environment": app_settings.ENVIRONMENT,
+        "integrations": integration_status
+    }
+
+    response_data = PlatformSettingsResponse.model_validate(settings)
+    response_data.config = config_status
+
+    return response_data
 
 
 @router.get("/settings/users", response_model=list[UserManagementResponse])

@@ -49,6 +49,9 @@ class SubscriptionSnapshot(BaseModel):
     current_period_end: datetime
 
 
+from schemas.questionnaire import QuestionnaireOut
+from schemas.client_assignment import ClientAssignmentOut
+
 class AdminClientDetailResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -63,6 +66,8 @@ class AdminClientDetailResponse(BaseModel):
     subscriptions: list[SubscriptionSnapshot] = []
     deliverables_count: int = 0
     open_tickets_count: int = 0
+    questionnaire: Optional[QuestionnaireOut] = None
+    assignments: list[ClientAssignmentOut] = []
 
 
 # ---------------------------------------------------------------------------

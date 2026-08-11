@@ -61,26 +61,39 @@ export default function AdminClientsPage() {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [planFilter, setPlanFilter] = useState("all")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
 
   useEffect(() => {
-    adminFetch<Client[]>("/api/v1/admin/clients")
-      .then(setClients)
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearch(search)
+    }, 300)
+    return () => clearTimeout(timeoutId)
+  }, [search])
+
+  useEffect(() => {
+    setLoading(true)
+    const params = new URLSearchParams()
+    if (debouncedSearch) {
+      params.append("search", debouncedSearch)
+    }
+    if (statusFilter !== "all") {
+      params.append("status", statusFilter)
+    }
+    
+    adminFetch<Client[]>(`/api/v1/admin/clients?${params.toString()}`)
+      .then((data) => {
+        setClients(data)
+        setError(null)
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
-  }, [])
+  }, [debouncedSearch, statusFilter])
 
   const filteredClients = clients.filter((client) => {
-    const name = client.business_name ?? client.email
-    const matchesSearch =
-      search === "" ||
-      name.toLowerCase().includes(search.toLowerCase()) ||
-      client.email.toLowerCase().includes(search.toLowerCase())
-    const matchesStatus =
-      statusFilter === "all" || client.status === statusFilter
     const matchesPlan =
       planFilter === "all" ||
       (client.plan_name ?? "").toLowerCase() === planFilter
-    return matchesSearch && matchesStatus && matchesPlan
+    return matchesPlan
   })
 
   if (loading) {
