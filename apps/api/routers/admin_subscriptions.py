@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select, func
@@ -6,6 +8,8 @@ from typing import Optional
 
 from core.database import get_db
 from core.security import RequireAdmin
+from models.custom_pricing import CustomPricing
+from models.enums import CustomPricingStatus
 from models.subscription import Subscription
 from models.plan import Plan
 from models.user import User
@@ -27,6 +31,8 @@ class AdminSubscriptionResponse(BaseModel):
 class SubscriptionUpdate(BaseModel):
     plan_name: Optional[str] = None
     monthly_price: Optional[float] = None
+    is_custom_pricing: bool = False
+    custom_pricing_reason: Optional[str] = None
 
 
 @router.get("/subscriptions", response_model=list[AdminSubscriptionResponse])
@@ -83,6 +89,9 @@ async def update_subscription(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # ── Resolve the target plan ────────────────────────────────────────
+    plan: Plan | None = None
+
     if payload.plan_name:
         plan_result = await db.execute(
             select(Plan).where(Plan.name == payload.plan_name)
@@ -96,14 +105,67 @@ async def update_subscription(
             # (poster_quota, reel_quota, story_quota live on the Plan row).
             user.plan_name = plan.name
 
-    if payload.monthly_price is not None:
-        # Allow admin to set a custom override price on the subscription.
-        # The Plan.monthly_price stays as the catalog price; this only
-        # affects the individual user's billing via the plan swap above.
-        pass
+    # If no plan change was requested, load the current plan for price checks
+    if plan is None:
+        current_plan_result = await db.execute(
+            select(Plan).where(Plan.id == subscription.plan_id)
+        )
+        plan = current_plan_result.scalar_one_or_none()
+
+    # ── Pricing validation ────────────────────────────────────────────
+    custom_pricing_record = None
+
+    if payload.monthly_price is not None and plan is not None:
+        base_price = float(plan.monthly_price)
+
+        if payload.monthly_price < base_price:
+            # Enforce the custom pricing flag
+            if not payload.is_custom_pricing:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Price ₹{payload.monthly_price:,.0f} is below the "
+                        f"{plan.display_name} standard of ₹{base_price:,.0f}. "
+                        f"Enable 'Override Standard Pricing' to proceed."
+                    ),
+                )
+
+            # Enforce a reason for the override
+            if not payload.custom_pricing_reason or not payload.custom_pricing_reason.strip():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="A reason is required when overriding the standard price.",
+                )
+
+            # Create an auto-approved CustomPricing audit record
+            discount_pct = round(
+                ((base_price - payload.monthly_price) / base_price) * 100, 2
+            )
+            custom_pricing_record = CustomPricing(
+                client_id=user_id,
+                plan_id=plan.id,
+                custom_price=payload.monthly_price,
+                standard_price=base_price,
+                discount_percent=discount_pct,
+                requested_by=_current_user.id,
+                approved_by=_current_user.id,
+                status=CustomPricingStatus.approved,
+                valid_from=datetime.now(timezone.utc).date(),
+                notes=payload.custom_pricing_reason.strip(),
+            )
+            db.add(custom_pricing_record)
 
     await db.commit()
-    return {"status": "updated"}
+
+    response = {"status": "updated"}
+    if custom_pricing_record is not None:
+        await db.refresh(custom_pricing_record)
+        response["custom_pricing_id"] = custom_pricing_record.id
+        response["message"] = (
+            f"Custom pricing approved: ₹{payload.monthly_price:,.0f} "
+            f"(standard ₹{float(plan.monthly_price):,.0f})"
+        )
+    return response
 
 
 @router.get("/plans")

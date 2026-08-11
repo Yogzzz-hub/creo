@@ -203,6 +203,9 @@ export default function TeamManagementPage() {
             is_active: true,
           }),
         })
+        if (!updatedMember) {
+          throw new Error("Server failed to return updated employee data")
+        }
         setEmployees((prev) =>
           prev.map((emp) => (emp.team_member_id === editingId ? updatedMember : emp))
         )
@@ -222,6 +225,9 @@ export default function TeamManagementPage() {
           }),
         })
         const newMember = response.team_member
+        if (!newMember) {
+          throw new Error("Server failed to return new employee data")
+        }
         setEmployees((prev) =>
           [...prev, newMember].sort((a, b) => a.full_name.localeCompare(b.full_name))
         )

@@ -1,4 +1,6 @@
-import uuid
+import logging
+import secrets
+import string
 from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -6,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import RequireAdmin
+from core.security import RequireAdmin, _get_supabase_client
 from models.enums import AccountStatus, UserRole
 from models.team import TeamMember
 from models.user import User
@@ -15,6 +17,8 @@ from schemas.admin import (
     TeamMemberAdminResponse,
     TeamMemberAdminUpdate,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/admin/team", tags=["admin-team"])
 
@@ -53,7 +57,7 @@ async def list_team_members(
     ]
 
 
-@router.post("", response_model=TeamMemberAdminResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def create_team_member(
     payload: TeamMemberAdminCreate,
     _current_user: RequireAdmin,
@@ -65,6 +69,7 @@ async def create_team_member(
             detail="Role must be team_member or team_lead",
         )
 
+    # Check for existing user in the local database
     existing_user = await db.execute(
         select(User).where(User.email == payload.email)
     )
@@ -74,45 +79,108 @@ async def create_team_member(
             detail="A user with this email already exists",
         )
 
-    placeholder_auth_id = str(uuid.uuid4())
+    # ── Step 1: Secure Auth Generation ────────────────────────────────────
+    # Generate a cryptographically secure 8-character random string
+    alphabet = string.ascii_letters + string.digits
+    random_chars = "".join(secrets.choice(alphabet) for _ in range(8))
+    temp_password = f"Creo-{random_chars}!"
 
-    new_user = User(
-        auth_id=placeholder_auth_id,
-        email=payload.email,
-        full_name=payload.full_name,
-        role=payload.role,
-        account_status=AccountStatus.active,
-        deleted_at=None,
-    )
-    db.add(new_user)
-    await db.flush()
+    # Create the user in Supabase Auth (service-role key bypasses RLS)
+    supabase = _get_supabase_client()
+    try:
+        auth_response = supabase.auth.admin.create_user(
+            {
+                "email": payload.email,
+                "password": temp_password,
+                "email_confirm": True,
+            }
+        )
+    except Exception as exc:
+        logger.error("Supabase Auth create_user failed: %s", exc)
+        detail = str(exc)
+        if "already been registered" in detail.lower() or "already exists" in detail.lower():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This email is already registered in the authentication system",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to create auth user: {detail}",
+        )
 
-    new_team_member = TeamMember(
-        user_id=new_user.id,
-        department=payload.department,
-        daily_cap_posters=payload.daily_poster_cap,
-        daily_cap_reels=payload.daily_reel_cap,
-        daily_cap_stories=payload.daily_story_cap,
-        is_active=True,
-        joined_at=date.today(),
-    )
-    db.add(new_team_member)
-    await db.commit()
-    await db.refresh(new_team_member)
+    auth_user_id = auth_response.user.id  # UUID string from Supabase Auth
 
-    return TeamMemberAdminResponse(
-        team_member_id=new_team_member.id,
-        user_id=new_user.id,
-        full_name=new_user.full_name,
-        email=new_user.email,
-        role=new_user.role.value,
-        department=new_team_member.department.value,
-        daily_cap_posters=new_team_member.daily_cap_posters,
-        daily_cap_reels=new_team_member.daily_cap_reels,
-        daily_cap_stories=new_team_member.daily_cap_stories,
-        is_active=new_team_member.is_active,
-        joined_at=new_team_member.joined_at,
-    )
+    # ── Step 2: Database Synchronisation ──────────────────────────────────
+    try:
+        # 1. Check if a Supabase trigger automatically created the user row
+        trigger_check = await db.execute(
+            select(User).where(User.auth_id == auth_user_id)
+        )
+        db_user = trigger_check.scalar_one_or_none()
+
+        if db_user:
+            # Trigger created the row; update its missing fields
+            db_user.full_name = payload.full_name
+            db_user.role = payload.role
+            db_user.account_status = AccountStatus.active
+        else:
+            # No trigger found; insert the user manually
+            db_user = User(
+                id=auth_user_id,
+                auth_id=auth_user_id,
+                email=payload.email,
+                full_name=payload.full_name,
+                role=payload.role,
+                account_status=AccountStatus.active,
+                deleted_at=None,
+            )
+            db.add(db_user)
+
+        await db.flush()
+
+        # 2. Insert the Team Member profile attached to this user
+        new_team_member = TeamMember(
+            user_id=db_user.id,
+            department=payload.department,
+            daily_cap_posters=payload.daily_poster_cap,
+            daily_cap_reels=payload.daily_reel_cap,
+            daily_cap_stories=payload.daily_story_cap,
+            is_active=True,
+            joined_at=date.today(),
+        )
+        db.add(new_team_member)
+        await db.commit()
+        await db.refresh(new_team_member)
+    except Exception:
+        await db.rollback()
+        # Rollback: remove the orphaned auth user to keep things atomic
+        try:
+            supabase.auth.admin.delete_user(auth_user_id)
+        except Exception as cleanup_exc:
+            logger.error(
+                "Failed to clean up Supabase Auth user %s after DB error: %s",
+                auth_user_id,
+                cleanup_exc,
+            )
+        raise
+
+    return {
+        "status": "success",
+        "temp_password": temp_password,
+        "team_member": TeamMemberAdminResponse(
+            team_member_id=new_team_member.id,
+            user_id=db_user.id,
+            full_name=db_user.full_name,
+            email=db_user.email,
+            role=db_user.role.value,
+            department=new_team_member.department.value,
+            daily_cap_posters=new_team_member.daily_cap_posters,
+            daily_cap_reels=new_team_member.daily_cap_reels,
+            daily_cap_stories=new_team_member.daily_cap_stories,
+            is_active=new_team_member.is_active,
+            joined_at=new_team_member.joined_at,
+        ).model_dump(),
+    }
 
 
 @router.patch("/{team_member_id}", response_model=TeamMemberAdminResponse)
