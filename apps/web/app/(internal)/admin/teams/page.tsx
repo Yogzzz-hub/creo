@@ -29,8 +29,16 @@ import {
   SheetDescription,
   SheetFooter,
 } from "@/components/ui/sheet"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Plus, Pencil, Loader2, Search } from "lucide-react"
+import { Users, Plus, Pencil, Loader2, Search, Trash2, Copy, CheckCircle2, ShieldAlert } from "lucide-react"
 import { toast } from "sonner"
 import { adminFetch } from "@/lib/admin-api"
 
@@ -80,9 +88,17 @@ export default function TeamManagementPage() {
   const [submitting, setSubmitting] = useState(false)
   const [search, setSearch] = useState("")
   const [deptFilter, setDeptFilter] = useState("all")
-  
+
   // State to track if we are editing an existing employee
   const [editingId, setEditingId] = useState<string | null>(null)
+
+  // One-Time Password Reveal modal state
+  const [newCredentials, setNewCredentials] = useState<{ password: string; name: string } | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  // Delete confirmation dialog state
+  const [deletingMember, setDeletingMember] = useState<TeamMember | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const {
     register,
@@ -131,6 +147,42 @@ export default function TeamManagementPage() {
     setDrawerOpen(true)
   }
 
+  // Copy password to clipboard
+  async function handleCopyPassword() {
+    if (!newCredentials) return
+    try {
+      await navigator.clipboard.writeText(newCredentials.password)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast.error("Failed to copy to clipboard")
+    }
+  }
+
+  // Delete employee handler
+  async function handleDeleteConfirm() {
+    if (!deletingMember) return
+    setDeleting(true)
+    try {
+      await adminFetch(`/api/v1/admin/team/${deletingMember.team_member_id}`, {
+        method: "DELETE",
+      })
+      setEmployees((prev) =>
+        prev.filter((emp) => emp.team_member_id !== deletingMember.team_member_id)
+      )
+      toast.success("Employee removed", {
+        description: `${deletingMember.full_name} has been removed from the team.`,
+      })
+      setDeletingMember(null)
+    } catch (err) {
+      toast.error("Failed to remove employee", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      })
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   async function onSubmit(data: EmployeeFormData) {
     setSubmitting(true)
     try {
@@ -154,7 +206,7 @@ export default function TeamManagementPage() {
         toast.success("Employee updated successfully")
       } else {
         // CREATE NEW EMPLOYEE
-        const newMember = await adminFetch<TeamMember>("/api/v1/admin/team", {
+        const response = await adminFetch<{ status: string; temp_password: string; team_member: TeamMember }>("/api/v1/admin/team", {
           method: "POST",
           body: JSON.stringify({
             full_name: data.full_name,
@@ -166,11 +218,14 @@ export default function TeamManagementPage() {
             daily_story_cap: data.daily_cap_stories,  // Mapped for backend
           }),
         })
+        const newMember = response.team_member
         setEmployees((prev) =>
           [...prev, newMember].sort((a, b) => a.full_name.localeCompare(b.full_name))
         )
-        toast.success("Employee added successfully", {
-          description: `${data.full_name} has been added to the ${formatDepartment(data.department)} team.`,
+        // Show the one-time password reveal modal instead of a toast
+        setNewCredentials({
+          password: response.temp_password,
+          name: newMember.full_name,
         })
       }
       reset()
@@ -341,20 +396,30 @@ export default function TeamManagementPage() {
                       <span className="text-sm text-muted-foreground"> tasks/day</span>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
-                        emp.is_active
+                      <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${emp.is_active
                           ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                           : "border-gray-200 bg-gray-50 text-gray-500"
-                      }`}>
+                        }`}>
                         {emp.is_active ? "Active" : "Inactive"}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      {/* Fully Functional Edit Button */}
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(emp)}>
-                        <Pencil className="size-3.5" />
-                        Edit
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        {/* Fully Functional Edit Button */}
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(emp)}>
+                          <Pencil className="size-3.5" />
+                          Edit
+                        </Button>
+                        {/* Remove Account Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => setDeletingMember(emp)}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )
@@ -364,6 +429,7 @@ export default function TeamManagementPage() {
         </Table>
       </div>
 
+      {/* ── Add / Edit Employee Sheet ─────────────────────────────────── */}
       <Sheet open={drawerOpen} onOpenChange={(open) => {
         setDrawerOpen(open)
         if (!open) {
@@ -382,22 +448,22 @@ export default function TeamManagementPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col gap-4 px-4 mt-6">
             <div className="space-y-2">
               <Label htmlFor="full_name">Name</Label>
-              <Input 
-                id="full_name" 
-                placeholder="e.g. John Doe" 
-                {...register("full_name", { required: "Name is required" })} 
+              <Input
+                id="full_name"
+                placeholder="e.g. John Doe"
+                {...register("full_name", { required: "Name is required" })}
               />
               {errors.full_name && <p className="text-xs text-red-600">{errors.full_name.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="e.g. john@creo.agency" 
+              <Input
+                id="email"
+                type="email"
+                placeholder="e.g. john@creo.agency"
                 disabled={!!editingId} // Email cannot be edited once user is created
-                {...register("email", { required: "Email is required", pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Invalid email address" } })} 
+                {...register("email", { required: "Email is required", pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Invalid email address" } })}
               />
               {errors.email && <p className="text-xs text-red-600">{errors.email.message}</p>}
             </div>
@@ -464,6 +530,113 @@ export default function TeamManagementPage() {
           </form>
         </SheetContent>
       </Sheet>
+
+      {/* ── One-Time Password Reveal Modal ────────────────────────────── */}
+      <Dialog
+        open={!!newCredentials}
+        onOpenChange={(open) => {
+          if (!open) {
+            setNewCredentials(null)
+            setCopied(false)
+          }
+        }}
+      >
+        <DialogContent showCloseButton={false} className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-100">
+              <CheckCircle2 className="size-6 text-emerald-600" />
+            </div>
+            <DialogTitle className="text-center text-lg">Employee Added</DialogTitle>
+            <DialogDescription className="text-center">
+              <strong>{newCredentials?.name}</strong> has been added to the team. Share the temporary password below so they can log in.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <Label className="text-xs font-medium text-muted-foreground">Temporary Password</Label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 rounded-lg border bg-muted/50 px-4 py-3">
+                <code className="text-sm font-mono font-semibold tracking-wide text-[#0D2137] select-all">
+                  {newCredentials?.password}
+                </code>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+                onClick={handleCopyPassword}
+              >
+                {copied ? (
+                  <><CheckCircle2 className="size-3.5 text-emerald-600" /> Copied</>
+                ) : (
+                  <><Copy className="size-3.5" /> Copy</>
+                )}
+              </Button>
+            </div>
+
+            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+              <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-600" />
+              <p className="text-xs text-amber-800">
+                This password is shown <strong>only once</strong> and cannot be retrieved later. Please copy it now and share it securely with the employee.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              className="w-full sm:w-auto"
+              onClick={() => {
+                setNewCredentials(null)
+                setCopied(false)
+              }}
+            >
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Confirmation Dialog ────────────────────────────────── */}
+      <Dialog
+        open={!!deletingMember}
+        onOpenChange={(open) => {
+          if (!open && !deleting) {
+            setDeletingMember(null)
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-red-100">
+              <Trash2 className="size-5 text-red-600" />
+            </div>
+            <DialogTitle className="text-center">Remove Employee</DialogTitle>
+            <DialogDescription className="text-center">
+              Are you sure you want to remove <strong>{deletingMember?.full_name}</strong>? This will deactivate their account and revoke access.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={deleting}
+              onClick={() => setDeletingMember(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleting}
+              onClick={handleDeleteConfirm}
+            >
+              {deleting ? (
+                <><Loader2 className="mr-2 size-4 animate-spin" /> Removing...</>
+              ) : (
+                "Remove"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
