@@ -32,7 +32,9 @@ def run_migrations_offline() -> None:
 from sqlalchemy.ext.asyncio import async_engine_from_config
 import asyncio
 
-def do_run_migrations(connection: connection):
+from sqlalchemy.engine.base import Connection
+
+def do_run_migrations(connection: Connection):
     context.configure(connection=connection, target_metadata=target_metadata)
     with context.begin_transaction():
         context.run_migrations()

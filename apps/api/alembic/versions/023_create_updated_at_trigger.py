@@ -47,8 +47,8 @@ def upgrade() -> None:
     """)
 
     for table in TRIGGER_TABLES:
+        op.execute(f"DROP TRIGGER IF EXISTS update_{table}_updated_at ON {table};")
         op.execute(f"""
-            DROP TRIGGER IF EXISTS update_{table}_updated_at ON {table};
             CREATE TRIGGER update_{table}_updated_at
                 BEFORE UPDATE ON {table}
                 FOR EACH ROW

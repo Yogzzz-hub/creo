@@ -43,7 +43,6 @@ $$;
 DROP_SYNC_FUNCTION = "DROP FUNCTION IF EXISTS public.handle_new_user();"
 
 CREATE_TRIGGER = """
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW
@@ -63,6 +62,7 @@ def upgrade() -> None:
     );
     """)
     op.execute(SYNC_FUNCTION)
+    op.execute(DROP_TRIGGER)
     op.execute(CREATE_TRIGGER)
 
 

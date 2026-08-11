@@ -33,6 +33,8 @@ from models.escalation import Escalation
 from models.announcement import Announcement
 from models.custom_pricing import CustomPricing
 from models.platform_settings import PlatformSettings
+from models.audit import QuestionnaireAuditLog
+from models.task_history import TaskStatusHistory
 
 __all__ = [
     "UserRole",
@@ -71,4 +73,6 @@ __all__ = [
     "Announcement",
     "CustomPricing",
     "PlatformSettings",
+    "QuestionnaireAuditLog",
+    "TaskStatusHistory",
 ]
