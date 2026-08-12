@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -61,6 +62,12 @@ async def create_leave_request(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="End date must be on or after start date",
+        )
+
+    if payload.start_date < date.today() + timedelta(days=7):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Leave must be requested at least 7 days in advance",
         )
 
     leave_request = LeaveRequest(

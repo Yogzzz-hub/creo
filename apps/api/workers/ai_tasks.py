@@ -47,7 +47,8 @@ async def _process_and_save_analysis(user_id: str) -> None:
                 "content_what_works": questionnaire.content_what_works,
                 "content_what_doesnt": questionnaire.content_what_doesnt,
                 "current_posting_frequency": questionnaire.current_posting_frequency,
-                "topics_to_avoid": questionnaire.topics_to_avoid
+                "topics_to_avoid": questionnaire.topics_to_avoid,
+                "style_references": questionnaire.style_references
             }
 
             # 2. Call OpenAI

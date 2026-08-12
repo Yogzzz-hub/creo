@@ -1,7 +1,7 @@
 """Tests for leave request submission, persistence, listing, and admin approval/rejection workflow."""
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -123,6 +123,50 @@ class TestLeaveFlow:
                 assert resp.status_code == 422
                 error_resp = resp.json()["error"]
                 assert "End date must be on or after start date" in str(error_resp)
+        finally:
+            app.dependency_overrides.pop(get_db, None)
+
+    @pytest.mark.asyncio
+    @patch("core.security._is_jti_revoked", return_value=False)
+    async def test_create_leave_request_less_than_7_days(
+        self, mock_revoked, mock_db_session: AsyncMock
+    ):
+        user_id = str(uuid.uuid4())
+        mock_user = create_mock_user(auth_id=user_id, role=UserRole.team_member)
+
+        team_member = MagicMock()
+        team_member.id = str(uuid.uuid4())
+
+        queries = iter([
+            _result(scalar=mock_user),
+            _result(scalar=team_member),
+        ])
+
+        async def mock_execute(stmt, *args, **kwargs):
+            return next(queries)
+
+        mock_db_session.execute = AsyncMock(side_effect=mock_execute)
+
+        async def _override_db():
+            yield mock_db_session
+
+        app.dependency_overrides[get_db] = _override_db
+        transport = ASGITransport(app=app)
+
+        try:
+            async with AsyncClient(transport=transport, base_url="http://test") as ac:
+                token = create_mock_token(user_id, "team_member")
+                # Use today's date + 2 days
+                future_date = date.today() + timedelta(days=2)
+                payload = {
+                    "start_date": future_date.isoformat(),
+                    "end_date": (future_date + timedelta(days=1)).isoformat(),
+                    "reason": "Short notice",
+                }
+                resp = await ac.post("/api/v1/leave", json=payload, headers=auth_header(token))
+                assert resp.status_code == 422
+                error_resp = resp.json()["error"]
+                assert "at least 7 days in advance" in str(error_resp)
         finally:
             app.dependency_overrides.pop(get_db, None)
 

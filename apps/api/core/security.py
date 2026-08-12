@@ -138,6 +138,40 @@ def _is_jti_revoked(jti: str) -> bool:
         return False
 
 
+def _get_cached_auth_id(jti: str) -> str | None:
+    try:
+        import redis
+
+        r = redis.from_url(
+            settings.REDIS_URL,
+            decode_responses=True,
+        )
+
+        auth_id = r.get(f"valid_token:{jti}")
+
+        r.close()
+
+        return auth_id
+    except Exception:
+        return None
+
+
+def _cache_auth_id(jti: str, auth_id: str, ttl: int) -> None:
+    try:
+        import redis
+
+        r = redis.from_url(
+            settings.REDIS_URL,
+            decode_responses=True,
+        )
+
+        r.setex(f"valid_token:{jti}", ttl, auth_id)
+
+        r.close()
+    except Exception:
+        pass
+
+
 async def get_current_user(
     request: Request,
     credentials: Annotated[
@@ -163,59 +197,73 @@ async def get_current_user(
         },
     )
 
-    # 1. Verify token using Supabase
-    supabase = _get_supabase_client()
-
-    # Temporary diagnostic logging.
-    # We deliberately do NOT log the actual token.
-    logger.info(
-        "Verifying Supabase token. token_length=%d",
-        len(token),
-    )
-
-    try:
-        user_response = supabase.auth.get_user(token)
-
-    except Exception as exc:
-        # Use logger.exception() so the complete traceback
-        # and the real Supabase error are visible.
-        logger.exception(
-            "Supabase token verification failed: %s",
-            exc,
-        )
-        raise credentials_exception
-
-    if not user_response or not user_response.user:
-        logger.warning(
-            "Supabase returned no user for the provided token."
-        )
-        raise credentials_exception
-
-    auth_id = user_response.user.id
-
-    logger.debug(
-        "Token verified via Supabase. auth_id=%s",
-        auth_id,
-    )
-
-    # 2. Extract token claims
+    # 1. Extract token claims early for caching
     try:
         unverified = jwt.get_unverified_claims(token)
 
         jti = unverified.get("jti")
         issued_at = unverified.get("iat")
+        exp = unverified.get("exp")
 
     except Exception:
         jti = None
         issued_at = None
+        exp = None
 
-    # 3. Check token revocation
+    # 2. Check token revocation
     if jti and _is_jti_revoked(jti):
         logger.warning(
             "Token is revoked (jti=%s found in Redis blocklist).",
             jti,
         )
         raise credentials_exception
+
+    # 3. Check cache
+    auth_id = None
+    if jti:
+        auth_id = _get_cached_auth_id(jti)
+
+    # 4. Verify token using Supabase if not cached
+    if not auth_id:
+        supabase = _get_supabase_client()
+
+        # Temporary diagnostic logging.
+        logger.info(
+            "Verifying Supabase token. token_length=%d",
+            len(token),
+        )
+
+        try:
+            user_response = supabase.auth.get_user(token)
+
+        except Exception as exc:
+            # Use logger.exception() so the complete traceback
+            # and the real Supabase error are visible.
+            logger.exception(
+                "Supabase token verification failed: %s",
+                exc,
+            )
+            raise credentials_exception
+
+        if not user_response or not user_response.user:
+            logger.warning(
+                "Supabase returned no user for the provided token."
+            )
+            raise credentials_exception
+
+        auth_id = user_response.user.id
+
+        logger.debug(
+            "Token verified via Supabase. auth_id=%s",
+            auth_id,
+        )
+
+        # Cache the valid token until it expires
+        if jti and exp:
+            ttl = max(60, int(exp) - int(time.time()))
+            _cache_auth_id(jti, auth_id, ttl)
+
+
 
     # 4. Look up local user
     result = await db.execute(
