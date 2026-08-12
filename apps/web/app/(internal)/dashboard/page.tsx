@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, FileText, ArrowRight } from "lucide-react";
 
 interface DailyMetrics {
   posters_completed: number;
@@ -17,6 +19,17 @@ interface TeamDashboardData {
   active_tasks_count: number;
   overdue_tasks_count: number;
   pending_leave_requests: boolean;
+}
+
+interface TaskItem {
+  id: string;
+  deliverable_type: string;
+  status: string;
+  due_date: string | null;
+  client?: {
+    full_name?: string;
+    business_name?: string | null;
+  } | null;
 }
 
 async function getDashboardData(): Promise<TeamDashboardData> {
@@ -53,6 +66,26 @@ async function getDashboardData(): Promise<TeamDashboardData> {
   return res.json();
 }
 
+async function getAssignedTasks(): Promise<TaskItem[]> {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const headers: Record<string, string> = {};
+  if (session?.access_token) {
+    headers["Authorization"] = `Bearer ${session.access_token}`;
+  }
+
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/tasks`, {
+    cache: "no-store",
+    headers,
+  });
+
+  if (!res.ok) return [];
+  return res.json();
+}
+
 function ProgressMetric({
   label,
   completed,
@@ -81,9 +114,26 @@ function ProgressMetric({
   );
 }
 
+const STATUS_BADGES: Record<string, { label: string; className: string }> = {
+  pending: { label: "Pending", className: "bg-gray-100 text-gray-700" },
+  in_progress: { label: "In Progress", className: "bg-blue-100 text-blue-700" },
+  submitted: { label: "Submitted", className: "bg-green-100 text-green-700" },
+  approved: { label: "Approved", className: "bg-emerald-100 text-emerald-700" },
+  revision: { label: "Revision", className: "bg-amber-100 text-amber-700" },
+  overdue: { label: "Overdue", className: "bg-red-100 text-red-700" },
+};
+
 export default async function DashboardPage() {
-  const data = await getDashboardData();
+  const [data, tasks] = await Promise.all([
+    getDashboardData(),
+    getAssignedTasks(),
+  ]);
   const { daily_metrics, active_tasks_count, overdue_tasks_count } = data;
+
+  const today = new Date().toISOString().split("T")[0];
+  const activeOrTodayTasks = tasks.filter(
+    (t) => t.status !== "approved" && t.status !== "submitted"
+  );
 
   return (
     <div className="space-y-6 p-6">
@@ -172,15 +222,56 @@ export default async function DashboardPage() {
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Today&apos;s Tasks</CardTitle>
+          <Link
+            href="/dashboard/tasks"
+            className="flex items-center gap-1 text-xs font-medium text-[var(--color-brand)] hover:underline"
+          >
+            View All Tasks <ArrowRight size={12} />
+          </Link>
         </CardHeader>
         <CardContent>
-          <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-[var(--color-border)]">
-            <p className="text-sm text-[var(--color-text-muted)]">
-              Tasks will appear here once assigned.
-            </p>
-          </div>
+          {activeOrTodayTasks.length === 0 ? (
+            <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-[var(--color-border)]">
+              <p className="text-sm text-[var(--color-text-muted)]">
+                No active tasks assigned to you.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {activeOrTodayTasks.slice(0, 5).map((task) => {
+                const badge = STATUS_BADGES[task.status] || STATUS_BADGES.pending;
+                return (
+                  <Link
+                    key={task.id}
+                    href={`/dashboard/tasks/${task.id}`}
+                    className="flex items-center justify-between rounded-lg border p-3.5 transition-colors hover:bg-[var(--color-brand-light)]/40"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--color-brand-light)]">
+                        <FileText size={16} className="text-[var(--color-brand)]" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-[var(--color-brand-dark)]">
+                          {task.deliverable_type.charAt(0).toUpperCase() + task.deliverable_type.slice(1)}
+                        </p>
+                        <p className="text-xs text-[var(--color-text-muted)]">
+                          {task.client?.business_name || task.client?.full_name || "Assigned Client"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.className}`}>
+                        {badge.label}
+                      </span>
+                      <ArrowRight size={14} className="text-[var(--color-text-muted)]" />
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

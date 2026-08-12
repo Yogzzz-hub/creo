@@ -90,7 +90,7 @@ async def get_team_dashboard(
         select(func.count(Task.id)).where(
             and_(
                 Task.assigned_to == team_member.id,
-                Task.status.in_([TaskStatus.pending, TaskStatus.in_progress]),
+                Task.status.in_([TaskStatus.pending, TaskStatus.in_progress, TaskStatus.revision]),
             )
         )
     )
