@@ -247,5 +247,5 @@ cd apps/api && alembic upgrade head
 * Payment gateway: Razorpay (India) recommended, Stripe (International)
 * SMS provider: MSG91
 * Email: Resend (3,000 free/month)
-* AI: OpenAI GPT-4o for brand analysis
+* AI: Dify AI for brand analysis
 * Pricing amounts — TBD, managed via admin panel from DB `plans` table

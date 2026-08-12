@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 from core.database import async_session
 from models.questionnaire import Questionnaire
-from services.ai_analysis import call_openai_gpt4o, generate_brand_analysis_prompt
+from services.ai_analysis import call_ai_brand_analysis
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +50,8 @@ async def _process_and_save_analysis(user_id: str) -> None:
                 "topics_to_avoid": questionnaire.topics_to_avoid
             }
 
-            # 2. Call OpenAI
-            sys_prompt, user_prompt = generate_brand_analysis_prompt(q_data)
-            ai_result = call_openai_gpt4o(sys_prompt, user_prompt)
+            # 2. Call AI Provider (Dify AI or OpenAI)
+            ai_result = call_ai_brand_analysis(q_data)
 
             # 3. Save back to DB
             analysis = ai_result.get("analysis", {})
@@ -61,7 +60,7 @@ async def _process_and_save_analysis(user_id: str) -> None:
             
             db.add(questionnaire)
             await db.commit()
-            logger.info("Successfully saved real AI analysis for user: %s", user_id)
+            logger.info("Successfully saved real AI analysis for user: %s (source: %s)", user_id, ai_result.get("source"))
             
         except Exception as e:
             logger.error("Error generating AI analysis for user_id %s: %s", user_id, e)
@@ -70,7 +69,7 @@ async def _process_and_save_analysis(user_id: str) -> None:
 
 @shared_task(name="generate_ai_analysis", bind=True, max_retries=3)
 def generate_ai_analysis(self, user_id: str) -> None:
-    logger.info("[Celery] Requesting OpenAI brand analysis for user %s", user_id)
+    logger.info("[Celery] Requesting AI brand analysis for user %s", user_id)
     try:
         _run_async(_process_and_save_analysis(user_id))
     except Exception as exc:

@@ -70,7 +70,7 @@ const SECTIONS = [
       "Meta Graph API — Instagram content publishing. governed by Meta's Platform Terms.",
       "Resend — Transactional email delivery. Emails are sent from our verified domain.",
       "MSG91 — SMS and WhatsApp message delivery for OTP verification and notifications.",
-      "OpenAI — AI-powered brand analysis and content strategy generation. Prompts are processed in compliance with OpenAI's data usage policies.",
+      "Dify AI — AI-powered brand analysis and content strategy generation. Prompts are processed in compliance with Dify's data usage policies.",
       "Each third-party service operates under its own privacy policy and data processing agreements. We select service providers that maintain industry-standard security certifications.",
     ],
   },

@@ -7,6 +7,13 @@ celery_app = Celery(
     "creo_worker",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.REDIS_URL,
+    include=[
+        "workers.ai_tasks",
+        "workers.automation_tasks",
+        "workers.notification_tasks",
+        "workers.onboarding_tasks",
+        "workers.report_tasks",
+    ],
 )
 
 celery_app.conf.update(

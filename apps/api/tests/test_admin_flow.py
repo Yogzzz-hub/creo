@@ -55,8 +55,10 @@ class TestAdminFlow:
             elif call_idx[0] == 4:
                 r = MagicMock(); r.scalar.return_value = 5; return r
             elif call_idx[0] == 5:
-                r = MagicMock(); r.scalars.return_value.all.return_value = [(tm, tm_user)]; return r
+                r = MagicMock(); r.all.return_value = [(tm, tm_user)]; return r
             elif call_idx[0] == 6:
+                r = MagicMock(); r.all.return_value = []; return r
+            elif call_idx[0] == 7:
                 r = MagicMock(); r.scalar.return_value = 500000.0; return r
             else:
                 r = MagicMock(); r.scalar.return_value = 0; return r

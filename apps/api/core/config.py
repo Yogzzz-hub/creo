@@ -23,7 +23,6 @@ class Settings(BaseSettings):
     MSG91_WHATSAPP_NUMBER: str = ""
     RESEND_API_KEY: str = ""
     RESEND_FROM_EMAIL: str = ""
-    OPENAI_API_KEY: str = ""
     INSTAGRAM_APP_ID: str = ""
     INSTAGRAM_APP_SECRET: str = ""
     INSTAGRAM_REDIRECT_URI: str = ""
@@ -35,6 +34,9 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:3000"
     DIFY_API_KEY: str = ""
     DIFY_API_URL: str = "https://api.dify.ai/v1"
+    GEMINI_API_KEY: str = ""
+    OPENAI_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

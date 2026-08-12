@@ -127,11 +127,10 @@ class TestOnboardingFlow:
 
                 import sys as _sys
                 _old_modules = {}
-                for key in ("services.ai_analysis", "workers.onboarding_tasks", "openai"):
+                for key in ("services.ai_analysis", "workers.onboarding_tasks"):
                     _old_modules[key] = _sys.modules.get(key)
                 _sys.modules["services.ai_analysis"] = mock_svc
                 _sys.modules["workers.onboarding_tasks"] = mock_ai_mod
-                _sys.modules["openai"] = mock_svc
 
                 try:
                     q = await ac.post(

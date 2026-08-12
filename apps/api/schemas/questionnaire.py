@@ -76,7 +76,7 @@ class QuestionnaireStatusResponse(BaseModel):
 class AdminQuestionnaireOverride(BaseModel):
     """Schema for admin override of AI-generated brand analysis.
 
-    Used when OpenAI hallucinates or produces inaccurate results.
+    Used when AI analysis produces inaccurate results.
     Allows admins to manually set the ai_analysis JSON and summary line.
     """
 
