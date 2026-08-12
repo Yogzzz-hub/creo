@@ -153,7 +153,7 @@ async def send_otp_sms(
         "mobile": full_phone,
         "otp": otp,
         "otp_length": 6,
-        "otp_expiry": 5,
+        "otp_expiry": 10,
         "sender_id": sender_id or "CREOAV",
         "authkey": auth_key,
     }
