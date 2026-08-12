@@ -53,7 +53,7 @@ async def get_team_overview(
         select(Task.assigned_to, func.count(Task.id).label("cnt"))
         .where(
             Task.assigned_to.in_(active_member_ids),
-            Task.status == TaskStatus.submitted,
+            Task.status.in_([TaskStatus.submitted, TaskStatus.approved]),
             func.date(Task.submitted_at) == today,
         )
         .group_by(Task.assigned_to)

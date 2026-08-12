@@ -9,7 +9,7 @@ from core.security import RequireAdmin
 from models.task import Task
 from models.user import User
 from models.team import TeamMember
-from models.enums import TaskStatus
+from models.enums import TaskStatus, DeliverableType
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin-tasks"])
 
@@ -35,6 +35,7 @@ class TaskCreate(BaseModel):
     client_name: Optional[str] = None
     priority: str = "medium"
     deadline: Optional[str] = None
+    deliverable_type: DeliverableType = DeliverableType.poster
 
 
 class TaskStatusUpdate(BaseModel):
@@ -59,12 +60,12 @@ async def list_admin_tasks(
     for t in tasks:
         assigned_name = None
         if t.assigned_to:
-            member_result = await db.execute(
-                select(TeamMember).where(TeamMember.id == t.assigned_to)
+            user_result = await db.execute(
+                select(User).join(TeamMember, TeamMember.user_id == User.id).where(TeamMember.id == t.assigned_to)
             )
-            member = member_result.scalar_one_or_none()
-            if member:
-                assigned_name = member.full_name
+            assigned_user = user_result.scalar_one_or_none()
+            if assigned_user:
+                assigned_name = assigned_user.full_name
 
         client_name = None
         if t.client_id:
@@ -111,6 +112,7 @@ async def create_admin_task(
         client_id=current_user.id,
         assigned_to=payload.assigned_to,
         assigned_by=current_user.id,
+        deliverable_type=payload.deliverable_type,
         content_brief=payload.title,
         status=TaskStatus.pending,
         priority=PRIORITY_MAP.get(payload.priority, 2),
@@ -122,18 +124,18 @@ async def create_admin_task(
 
     assigned_name = None
     if payload.assigned_to:
-        member_result = await db.execute(
-            select(TeamMember).where(TeamMember.id == payload.assigned_to)
+        user_result = await db.execute(
+            select(User).join(TeamMember, TeamMember.user_id == User.id).where(TeamMember.id == payload.assigned_to)
         )
-        member = member_result.scalar_one_or_none()
-        if member:
-            assigned_name = member.full_name
+        assigned_user = user_result.scalar_one_or_none()
+        if assigned_user:
+            assigned_name = assigned_user.full_name
 
     return AdminTaskResponse(
         id=task.id,
         title=payload.title,
         description=payload.description,
-        status="todo",
+        status=task.status.value,
         priority=payload.priority,
         assigned_to=task.assigned_to,
         assigned_name=assigned_name,
