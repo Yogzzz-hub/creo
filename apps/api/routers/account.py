@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -78,9 +79,19 @@ async def connect_instagram(
             ),
         )
 
+    expires_in = result.get("expires_in")
+
     current_user.instagram_access_token = encrypt_token(long_lived_token)
     current_user.instagram_user_id = ig_user_id
     current_user.instagram_username = ig_username
+
+    if expires_in and expires_in != "unknown":
+        try:
+            current_user.instagram_token_expires_at = datetime.utcnow() + timedelta(seconds=int(expires_in))
+        except (ValueError, TypeError):
+            current_user.instagram_token_expires_at = None
+    else:
+        current_user.instagram_token_expires_at = None
     db.add(current_user)
     try:
         await db.commit()
@@ -206,6 +217,7 @@ async def disconnect_instagram(
     current_user.instagram_access_token = None
     current_user.instagram_user_id = None
     current_user.instagram_username = None
+    current_user.instagram_token_expires_at = None
     db.add(current_user)
     try:
         await db.commit()

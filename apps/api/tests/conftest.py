@@ -48,6 +48,8 @@ def create_mock_user(
     user.two_fa_enabled = False
     user.instagram_access_token = None
     user.instagram_user_id = None
+    user.instagram_username = None
+    user.instagram_token_expires_at = None
     user.razorpay_customer_id = None
     user.stripe_customer_id = None
     return user
