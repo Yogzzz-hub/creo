@@ -332,6 +332,8 @@ export default function QuestionnairePage() {
 
           if (typeof data?.detail === "string") {
             errorMessage = data.detail;
+          } else if (typeof data?.detail === "object" && !Array.isArray(data?.detail) && data?.detail?.message) {
+            errorMessage = data.detail.message;
           } else if (Array.isArray(data?.detail)) {
             errorMessage = data.detail
               .map(

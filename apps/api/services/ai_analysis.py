@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 import httpx
 
@@ -41,6 +42,9 @@ def generate_brand_analysis_prompt(
     topics_to_avoid = questionnaire_data.get(
         "topics_to_avoid", ""
     )
+    style_references = questionnaire_data.get(
+        "style_references", []
+    )
 
     audience_str = (
         json.dumps(target_audience, indent=2)
@@ -57,6 +61,12 @@ def generate_brand_analysis_prompt(
     competitors_str = (
         ", ".join(competitor_refs)
         if competitor_refs
+        else "None provided"
+    )
+
+    styles_str = (
+        ", ".join(style_references)
+        if style_references
         else "None provided"
     )
 
@@ -151,6 +161,9 @@ Selected Brand Tone:
 
 Competitor References:
 {competitors_str}
+
+Style References:
+{styles_str}
 
 Topics to Avoid:
 {topics_to_avoid or "None"}
@@ -260,32 +273,46 @@ def call_dify_ai_analysis(
             "Dify returned an empty response."
         )
 
-    # Remove markdown code fences if Dify returns them.
-    if answer_text.startswith("```"):
-        lines = answer_text.splitlines()
+    analysis_dict = None
 
-        if lines and lines[0].startswith("```"):
-            lines = lines[1:]
-
-        if lines and lines[-1].startswith("```"):
-            lines = lines[:-1]
-
-        answer_text = "\n".join(lines).strip()
-
+    # 1. Attempt raw JSON parsing
     try:
         analysis_dict = json.loads(answer_text)
-    except json.JSONDecodeError as exc:
+    except json.JSONDecodeError:
+        pass
+
+    # 2. Attempt Markdown code block extraction
+    if analysis_dict is None:
+        match = re.search(r"```(?:json)?\s*(.*?)\s*```", answer_text, re.DOTALL)
+        if match:
+            try:
+                analysis_dict = json.loads(match.group(1).strip())
+            except json.JSONDecodeError:
+                pass
+
+    # 3. Fallback to scanning the string for the first valid JSON object using raw_decode
+    if analysis_dict is None:
+        decoder = json.JSONDecoder()
+        idx = 0
+        while idx < len(answer_text):
+            brace_idx = answer_text.find('{', idx)
+            if brace_idx == -1:
+                break
+            try:
+                obj, end_idx = decoder.raw_decode(answer_text[brace_idx:])
+                if isinstance(obj, dict):
+                    analysis_dict = obj
+                    break
+                idx = brace_idx + end_idx
+            except json.JSONDecodeError:
+                idx = brace_idx + 1
+
+    if analysis_dict is None or not isinstance(analysis_dict, dict):
         logger.error(
-            "[dify_ai_analysis] Failed to parse JSON from Dify answer: %s",
+            "[dify_ai_analysis] Failed to parse JSON from Dify answer. Snippet: %s",
             answer_text[:500],
         )
-        analysis_dict = {
-            "brand_tone": ["Professional", "Approachable", "Clear"],
-            "content_themes": ["Educational", "Behind the Scenes", "Success Stories"],
-            "audience_persona": "Professionals looking for high-quality services and clear communication.",
-            "goal_alignment": "The content themes will build trust and demonstrate expertise, aligning with the primary goal.",
-            "ai_summary_line": "Professional voice, targeting professionals, focused on building trust"
-        }
+        raise ValueError("Dify returned malformed JSON content that could not be parsed.")
 
     metadata = data.get("metadata", {})
     usage = metadata.get("usage", {})
