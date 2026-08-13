@@ -4,6 +4,7 @@ import { SessionProvider } from "@/context/session-context"
 import { SubscriptionProvider } from "@/context/subscription-context"
 import { SubscriptionGuard } from "@/components/portal/subscription-guard"
 import { OnboardingGuard } from "@/components/portal/onboarding-guard"
+import { AnnouncementBanner } from "@/components/announcement-banner"
 
 export default function PortalLayout({
   children,
@@ -24,6 +25,7 @@ export default function PortalLayout({
 
           <div className="lg:pl-[var(--sidebar-width)]">
             <PortalHeader />
+            <AnnouncementBanner />
             <SubscriptionGuard />
 
             <main

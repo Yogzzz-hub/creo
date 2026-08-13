@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState, useCallback, useRef, use } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -75,7 +75,8 @@ function formatTicketType(t: string) {
   return t.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-export default function TicketDetailPage({ params }: { params: { id: string } }) {
+export default function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const [ticket, setTicket] = useState<Ticket | null>(null)
   const [messages, setMessages] = useState<TicketMessage[]>([])
   const [team, setTeam] = useState<TeamMember[]>([])
@@ -90,8 +91,8 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
     setError(null)
     try {
       const [ticketData, messagesData, teamData] = await Promise.allSettled([
-        adminFetch<Ticket>(`/api/v1/admin/support/tickets/${params.id}`),
-        adminFetch<TicketMessage[]>(`/api/v1/admin/support/tickets/${params.id}/messages`),
+        adminFetch<Ticket>(`/api/v1/admin/support/tickets/${id}`),
+        adminFetch<TicketMessage[]>(`/api/v1/admin/support/tickets/${id}/messages`),
         adminFetch<TeamMember[]>("/api/v1/admin/team"),
       ])
 
@@ -104,7 +105,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
     } finally {
       setLoading(false)
     }
-  }, [params.id])
+  }, [id])
 
   useEffect(() => {
     fetchData()
@@ -119,7 +120,7 @@ export default function TicketDetailPage({ params }: { params: { id: string } })
     setSending(true)
     try {
       const newMessage = await adminFetch<TicketMessage>(
-        `/api/v1/admin/support/tickets/${params.id}/messages`,
+        `/api/v1/admin/support/tickets/${id}/messages`,
         {
           method: "POST",
           body: JSON.stringify({ message_text: replyText.trim() }),

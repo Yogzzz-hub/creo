@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiFetch } from "@/lib/api";
+import { useSession } from "@/context/session-context";
 
 interface Ticket {
   id: string;
@@ -41,10 +43,11 @@ export default function ChatPage() {
 
   const supabase = createClient();
 
+  const { user } = useSession();
+
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/team/tickets`)
-      .then((res) => res.json())
-      .then((data) => setTickets(data))
+    apiFetch("/api/v1/team/tickets")
+      .then((data) => setTickets(data as Ticket[]))
       .catch(console.error);
   }, []);
 
@@ -55,12 +58,9 @@ export default function ChatPage() {
     }
 
     setLoadingMessages(true);
-    fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/team/tickets/${selectedTicketId}/messages`
-    )
-      .then((res) => res.json())
+    apiFetch(`/api/v1/team/tickets/${selectedTicketId}/messages`)
       .then((data) => {
-        setMessages(data);
+        setMessages(data as TicketMessage[]);
         setLoadingMessages(false);
       })
       .catch((err) => {
@@ -72,7 +72,7 @@ export default function ChatPage() {
   useEffect(() => {
     if (!selectedTicketId) {
       if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
+        channelRef.current.unsubscribe();
         channelRef.current = null;
       }
       return;
@@ -90,7 +90,13 @@ export default function ChatPage() {
         },
         (payload: { new: TicketMessage }) => {
           const newMessage = payload.new as TicketMessage;
-          setMessages((prev) => [...prev, newMessage]);
+          setMessages((prev) => {
+            // Check if message already exists (from optimistic UI)
+            if (prev.some((msg) => msg.id === newMessage.id)) {
+              return prev;
+            }
+            return [...prev, newMessage];
+          });
         }
       )
       .subscribe();
@@ -98,7 +104,7 @@ export default function ChatPage() {
     channelRef.current = channel;
 
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe();
       channelRef.current = null;
     };
   }, [selectedTicketId, supabase]);
@@ -111,27 +117,38 @@ export default function ChatPage() {
     e.preventDefault();
     if (!newMessage.trim() || !selectedTicketId || sending) return;
 
-    setSending(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (session?.access_token) {
-        headers["Authorization"] = `Bearer ${session.access_token}`;
-      }
+    const messageText = newMessage.trim();
+    setNewMessage(""); // Optimistic clear
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/team/tickets/${selectedTicketId}/messages`,
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ message_text: newMessage.trim() }),
-        }
+    // Optimistic UI Append
+    const tempId = `temp-${Date.now()}`;
+    const tempMessage: TicketMessage = {
+      id: tempId,
+      ticket_id: selectedTicketId,
+      sender_id: user?.id ?? "",
+      message_text: messageText,
+      file_url: null,
+      created_at: new Date().toISOString(),
+    };
+    
+    setMessages((prev) => [...prev, tempMessage]);
+    setSending(true);
+
+    try {
+      const createdMessage = await apiFetch(`/api/v1/team/tickets/${selectedTicketId}/messages`, {
+        method: "POST",
+        body: JSON.stringify({ message_text: messageText }),
+      });
+
+      // Replace temp message with actual
+      setMessages((prev) => 
+        prev.map((msg) => msg.id === tempId ? (createdMessage as TicketMessage) : msg)
       );
-      if (res.ok) {
-        setNewMessage("");
-      }
     } catch (err) {
       console.error(err);
+      // Remove temp message on error
+      setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+      setNewMessage(messageText); // Restore input
     } finally {
       setSending(false);
     }
@@ -220,7 +237,7 @@ export default function ChatPage() {
                     <div key={msg.id} className="flex flex-col gap-1">
                       <div className="flex items-baseline gap-2">
                         <span className="text-xs font-medium text-[var(--color-deep-navy)]">
-                          {msg.sender_id === selectedTicket?.assigned_to ? "You" : "Client"}
+                          {msg.sender_id === user?.id ? "You" : "Client"}
                         </span>
                         <span className="text-[10px] text-[var(--color-steel-mid)]">
                           {formatTime(msg.created_at)}
