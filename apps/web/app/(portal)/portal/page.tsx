@@ -1,25 +1,26 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
-import { toast } from "sonner"
 import {
-  FileImage,
-  Film,
-  Layers,
-  MessageSquareWarning,
+  Activity,
   CheckCircle2,
-  Circle,
+  Clock,
   ArrowRight,
-  ShoppingCart,
-  CalendarDays,
-  Ticket,
-  FileCheck,
+  TrendingUp,
   CreditCard,
+  MessageSquare,
+  FileText,
+  Video,
+
+  BarChart,
+  Calendar,
+  AlertCircle,
+  HelpCircle,
   Sparkles,
-  Loader2,
+  Search,
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSession } from "@/context/session-context"
@@ -28,6 +29,8 @@ import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { TermsModal } from "@/components/portal/terms-modal"
 import { PaymentModal } from "@/components/portal/payment-modal"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface DashboardData {
   pending_deliverable_count: number
@@ -45,75 +48,15 @@ const EMPTY_DASHBOARD: DashboardData = {
   brand_summary: null,
 }
 
-const ONBOARDING_STEPS = [
-  { label: "Account Created", stage: 1 },
-  { label: "Terms Accepted", stage: 2 },
-  { label: "Payment Done", stage: 3 },
-  { label: "Questionnaire", stage: 4 },
-  { label: "Active", stage: 5 },
-]
-
-const QUICK_ACCESS = [
-  { label: "Review Deliverables", href: "/portal/deliverables", icon: FileCheck },
-  { label: "View Calendar", href: "/portal/calendar", icon: CalendarDays },
-  { label: "Buy Add-ons", href: "/portal/addons", icon: ShoppingCart },
-  { label: "Raise a Ticket", href: "/portal/support", icon: Ticket },
-]
-
-function DashboardSkeleton() {
-  return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div>
-        <Skeleton className="h-8 w-40" />
-        <Skeleton className="mt-2 h-4 w-56" />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="rounded-xl shadow-[var(--shadow-card)]">
-            <CardContent className="flex items-center gap-3 p-4">
-              <Skeleton className="size-10 shrink-0 rounded-lg" />
-              <div className="space-y-2">
-                <Skeleton className="h-7 w-12" />
-                <Skeleton className="h-3 w-24" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="rounded-xl shadow-[var(--shadow-card)]">
-          <CardContent className="space-y-3 p-5">
-            <Skeleton className="h-3 w-24" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-          </CardContent>
-        </Card>
-        <Card className="rounded-xl shadow-[var(--shadow-card)]">
-          <CardContent className="space-y-4 p-5">
-            <Skeleton className="h-4 w-32" />
-            <div className="flex justify-between">
-              {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="size-6 rounded-full" />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
-}
-
 export default function PortalDashboard() {
-  const { user, loading: sessionLoaded } = useSession()
+  const { user, token, loading: sessionLoaded } = useSession()
   const { refresh: refreshSubscription, onboardingStage: contextOnboardingStage, loading: subscriptionLoading, accountStatus: contextAccountStatus } = useSubscription()
   const router = useRouter()
   const [data, setData] = useState<DashboardData>(EMPTY_DASHBOARD)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [createdAt, setCreatedAt] = useState<string | null>(null)
-  // TODO: Restore state checks after UI testing
+
   const [termsModalOpen, setTermsModalOpen] = useState(false)
   const [paymentModalOpen, setPaymentModalOpen] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
@@ -122,39 +65,50 @@ export default function PortalDashboard() {
 
   useEffect(() => {
     async function loadDashboard() {
-      if (!user) return
+      if (!user || !token) return
 
-      const { createClient } = await import("@/lib/supabase/client")
-      const supabase = createClient()
+      try {
+        const { apiFetch } = await import("@/lib/api")
+        const dashboard = await apiFetch("/api/v1/portal/dashboard", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }) as DashboardData
 
-      const { data: profile } = await supabase
-        .from("users")
-        .select("terms_accepted, created_at, brand_summary")
-        .eq("auth_id", user.id)
-        .single()
+        setData({
+          pending_deliverable_count: dashboard.pending_deliverable_count ?? 0,
+          open_ticket_count: dashboard.open_ticket_count ?? 0,
+          ai_summary_line: dashboard.ai_summary_line ?? null,
+          onboarding_stage: dashboard.onboarding_stage ?? 1,
+          brand_summary: dashboard.ai_summary_line ?? null,
+        })
 
-      setTermsAccepted(profile?.terms_accepted ?? false)
-      setCreatedAt(profile?.created_at ?? null)
-      setData({
-        pending_deliverable_count: 0,
-        open_ticket_count: 0,
-        ai_summary_line: null,
-        onboarding_stage: 1, // unused, kept for type compatibility
-        brand_summary: profile?.brand_summary ?? null,
-      })
-      setLoading(false)
+        const { createClient } = await import("@/lib/supabase/client")
+        const supabase = createClient()
+        const { data: profile } = await supabase
+          .from("users")
+          .select("terms_accepted, onboarding_stage, created_at, brand_summary")
+          .eq("auth_id", user.id)
+          .single()
+
+        setTermsAccepted(profile?.terms_accepted ?? false)
+        setCreatedAt(profile?.created_at ?? null)
+      } catch (err) {
+        console.error("Failed to load dashboard", err)
+        setError("Unable to load your dashboard summary right now.")
+      } finally {
+        setLoading(false)
+        refreshSubscription()
+      }
     }
     loadDashboard()
-  }, [user])
+  }, [user, token, refreshSubscription])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const success = params.get("success")
-    if (success === "instagram_connected") {
-      toast.success("Instagram Business Account connected successfully!", {
-        description: "You can now publish approved content directly to Instagram.",
-        duration: 5000,
-      })
+    if (params.get("success") === "true") {
+      setTermsAccepted(true)
+
       const url = new URL(window.location.href)
       url.searchParams.delete("success")
       window.history.replaceState({}, "", url.toString())
@@ -168,25 +122,15 @@ export default function PortalDashboard() {
     if (!user) return
     setGenerating(true)
     try {
-      const { apiFetch } = await import("@/lib/api")
-      const res = await apiFetch("/api/v1/brand-summary/generate", {
-        method: "POST",
-      }) as { brand_summary: string; source: string }
-
       const { createClient } = await import("@/lib/supabase/client")
       const supabase = createClient()
-
-      setData((prev) => ({
-        ...prev,
-        brand_summary: res.brand_summary,
-      }))
-
-      await supabase
-        .from("users")
-        .update({ brand_summary: res.brand_summary })
-        .eq("auth_id", user.id)
-    } catch {
-      setError("Failed to generate brand strategy. Please try again.")
+      const { error } = await supabase.functions.invoke("generate-brand-summary", {
+        body: { userId: user.id }
+      })
+      if (error) throw error
+      window.location.reload()
+    } catch (err) {
+      console.error(err)
     } finally {
       setGenerating(false)
     }
@@ -198,10 +142,9 @@ export default function PortalDashboard() {
     subscriptionActive ? 3 : 0,
   )
 
-  // TODO: Restore state checks after UI testing
   // useEffect(() => {
-  //   if (!loading && effectiveStage === 1) {
-  //     setTermsModalOpen(true)
+  //   if (!loading && effectiveStage < 5) {
+  //     router.push("/onboarding")
   //   }
   // }, [loading, effectiveStage])
 
@@ -209,19 +152,18 @@ export default function PortalDashboard() {
     return <DashboardSkeleton />
   }
 
-  const elapsedDays = createdAt
-    ? Math.floor(
-      (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24)
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-4 text-center">
+        <AlertCircle className="size-10 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Failed to load dashboard</h2>
+        <p className="text-muted-foreground">{error}</p>
+        <Button onClick={() => window.location.reload()} variant="outline" className="mt-4">
+          Try Again
+        </Button>
+      </div>
     )
-    : 0
-  const onboardingComplete = effectiveStage >= 5
-  const withinWindow = elapsedDays < 7
-  const showTracker = !onboardingComplete && withinWindow
-
-  const completedSteps = ONBOARDING_STEPS.filter(
-    (s) => s.stage <= effectiveStage
-  ).length
-  const progressPercent = (completedSteps / ONBOARDING_STEPS.length) * 100
+  }
 
   function handleTermsAccepted() {
     setTermsAccepted(true)
@@ -230,8 +172,7 @@ export default function PortalDashboard() {
   }
 
   return (
-    <>
-      {/* TODO: Restore state checks after UI testing */}
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
       <TermsModal
         open={termsModalOpen}
         onOpenChange={setTermsModalOpen}
@@ -245,266 +186,179 @@ export default function PortalDashboard() {
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-[#0D2137]">Dashboard</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Welcome back! Here&apos;s your account overview.
+            <h2 className="text-3xl font-bold tracking-tight">Overview</h2>
+            <p className="text-muted-foreground mt-1">
+              {data.ai_summary_line || "Welcome back to your client portal."}
             </p>
           </div>
+          {effectiveStage >= 5 && (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-md">
+                <div className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                System Active
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Card className="rounded-xl shadow-[var(--shadow-card)]">
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#2B7BC4]/10">
-                <FileImage className="size-5 text-[#2B7BC4]" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-[#0D2137]">
-                  {data.pending_deliverable_count}
-                </p>
-                <p className="text-xs text-gray-500">Pending Deliverables</p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Action Required Banner */}
+        {effectiveStage < 5 && (
+          <Alert className="border-amber-200 bg-amber-50 text-amber-800">
+            <AlertCircle className="size-4 text-amber-600" />
+            <AlertTitle>Action Required</AlertTitle>
+            <AlertDescription>
+              Please complete your account setup to activate your dashboard.
+            </AlertDescription>
+          </Alert>
+        )}
 
-          <Card className="rounded-xl shadow-[var(--shadow-card)]">
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#0EA5E9]/10">
-                <MessageSquareWarning className="size-5 text-[#0EA5E9]" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-[#0D2137]">
-                  {data.open_ticket_count}
-                </p>
-                <p className="text-xs text-gray-500">Open Tickets</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-xl shadow-[var(--shadow-card)]">
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#6BAED6]/10">
-                <Layers className="size-5 text-[#6BAED6]" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-[#0D2137]">
-                  {effectiveStage >= 5 ? "Active" : `${effectiveStage}/5`}
-                </p>
-                <p className="text-xs text-gray-500">Account Status</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-xl shadow-[var(--shadow-card)]">
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#D97706]/10">
-                <Film className="size-5 text-[#D97706]" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-[#0D2137]">
-                  {data.pending_deliverable_count > 0 ? "Review" : "All Clear"}
-                </p>
-                <p className="text-xs text-gray-500">Action Needed</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          {error ? (
-            <Card className="rounded-xl shadow-[var(--shadow-card)]">
-              <CardContent className="p-0">
-                <div className="flex items-start gap-4 border-l-4 border-amber-400 bg-amber-50 p-5">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
-                    <span className="text-lg">⚠️</span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-amber-700">
-                      Brand Summary
-                    </p>
-                    <p className="mt-2 text-sm text-amber-800 leading-relaxed">
-                      {error}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ) : data.brand_summary ? (
-            <Card className="rounded-xl shadow-[var(--shadow-card)]">
-              <CardContent className="p-0">
-                <div className="flex items-start gap-4 border-l-4 border-[#2B7BC4] bg-[#E8F4FD] p-5">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#2B7BC4]/10">
-                    <span className="text-lg">🏋️</span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-[#2B7BC4]">
-                      Brand Summary
-                    </p>
-                    <div className="mt-2 space-y-3 text-sm text-[#0D2137] leading-relaxed">
-                      {data.brand_summary.split("\n\n").map((paragraph, i) => (
-                        <p key={i}>{paragraph}</p>
-                      ))}
-                    </div>
-                    <Link
-                      href="/portal/account"
-                      className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[#2B7BC4] hover:underline"
-                    >
-                      Update profile
-                      <ArrowRight className="size-3" />
-                    </Link>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="rounded-xl shadow-[var(--shadow-card)]">
-              <CardContent className="p-0">
-                <div className="flex items-start gap-4 border-l-4 border-[#0EA5E9] bg-[#E8F4FD] p-5">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#0EA5E9]/10">
-                    <Sparkles className="size-5 text-[#0EA5E9]" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-[#0EA5E9]">
-                      Brand Strategy
-                    </p>
-                    <p className="mt-2 text-sm text-[#0D2137] leading-relaxed">
-                      Generate a personalized AI-powered brand strategy based on your questionnaire answers.
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-3 cursor-pointer"
-                      onClick={handleGenerateBrandSummary}
-                      disabled={generating}
-                    >
-                      {generating ? (
-                        <>
-                          <Loader2 className="size-3 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          Generate Brand Strategy
-                          <ArrowRight className="size-3" />
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {showTracker && (
-            <Card className="rounded-xl shadow-[var(--shadow-card)]">
-              <CardHeader>
-                <CardTitle className="text-base font-semibold text-[#0D2137]">
-                  Onboarding Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="relative flex items-center justify-between">
-                  <div className="absolute left-0 top-3 h-0.5 w-full bg-gray-200">
-                    <div
-                      className="h-full bg-[#065F46] transition-all"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-
-                  {ONBOARDING_STEPS.map((step) => {
-                    const completed = step.stage <= effectiveStage
-                    return (
-                      <div
-                        key={step.label}
-                        className="relative z-10 flex flex-col items-center"
-                      >
-                        <div
-                          className={cn(
-                            "flex size-6 items-center justify-center rounded-full border-2 transition-colors",
-                            completed
-                              ? "border-[#065F46] bg-[#065F46] text-white"
-                              : "border-gray-300 bg-white text-gray-400"
-                          )}
-                        >
-                          {completed ? (
-                            <CheckCircle2 className="size-3.5" />
-                          ) : (
-                            <Circle className="size-3" />
-                          )}
-                        </div>
-                        <p
-                          className={cn(
-                            "mt-2 w-16 text-center text-[10px] leading-tight transition-colors",
-                            completed
-                              ? "font-medium text-[#065F46]"
-                              : "text-gray-400"
-                          )}
-                        >
-                          {step.label}
-                        </p>
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {onboardingComplete && (
-            <Card className="rounded-xl shadow-[var(--shadow-card)]">
-              <CardContent className="flex items-center gap-4 p-5">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#065F46]/10">
-                  <CheckCircle2 className="size-5 text-[#065F46]" />
-                </div>
+        {/* Onboarding Progress Card */}
+        {effectiveStage < 5 && (
+          <Card className="border-primary/10 shadow-sm overflow-hidden">
+            <CardHeader className="bg-primary/5 pb-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-[#0D2137]">
-                    You&apos;re all set!
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Onboarding is complete. Welcome to Creo.
-                  </p>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Sparkles className="size-5 text-primary" />
+                    Setup Progress
+                  </CardTitle>
+                  <CardDescription>Complete these steps to start generating leads</CardDescription>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                <div className="text-2xl font-bold text-primary">
+                  {Math.round((effectiveStage / 5) * 100)}%
+                </div>
+              </div>
+              <div className="w-full bg-primary/10 h-2 rounded-full mt-4 overflow-hidden">
+                <div
+                  className="bg-primary h-full transition-all duration-500 ease-in-out"
+                  style={{ width: `${(effectiveStage / 5) * 100}%` }}
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 p-6 bg-card">
+              <StepItem
+                number={1}
+                title="Create Account"
+                description="Verified email"
+                status="completed"
+              />
+              <StepItem
+                number={2}
+                title="Service Agreement"
+                description="Review and accept terms"
+                status={effectiveStage >= 2 ? "completed" : "current"}
+                onClick={() => setTermsModalOpen(true)}
+              />
+              <StepItem
+                number={3}
+                title="Payment Setup"
+                description="Activate subscription"
+                status={
+                  effectiveStage >= 3 ? "completed" : effectiveStage >= 2 ? "current" : "upcoming"
+                }
+                onClick={() => router.push("/onboarding/payment")}
+              />
+              <StepItem
+                number={4}
+                title="Brand Profile"
+                description="Complete questionnaire"
+                status={
+                  effectiveStage >= 4 ? "completed" : effectiveStage >= 3 ? "current" : "upcoming"
+                }
+                onClick={() => router.push("/onboarding/questionnaire")}
+              />
+            </CardContent>
+          </Card>
+        )}
 
-          <Card className="rounded-xl shadow-[var(--shadow-card)]">
-            <CardHeader>
-              <CardTitle className="text-base font-semibold text-[#0D2137]">
-                Pending Actions
-              </CardTitle>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Active Campaigns"
+            value="0"
+            description="Campaigns running"
+            icon={<Activity className="size-4 text-muted-foreground" />}
+            trend="+0%"
+          />
+          <StatCard
+            title="Total Leads"
+            value="0"
+            description="Leads generated"
+            icon={<TrendingUp className="size-4 text-muted-foreground" />}
+            trend="+0%"
+          />
+          <StatCard
+            title="Upcoming Posts"
+            value={data.pending_deliverable_count.toString()}
+            description="Scheduled for this week"
+            icon={<Calendar className="size-4 text-muted-foreground" />}
+          />
+          <StatCard
+            title="Open Tickets"
+            value={data.open_ticket_count.toString()}
+            description="Awaiting response"
+            icon={<HelpCircle className="size-4 text-muted-foreground" />}
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+          <Card className="col-span-4">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div className="space-y-1">
+                <CardTitle>Recent Activity</CardTitle>
+                <CardDescription>Your latest workspace updates</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" className="h-8" >
+                <a href="/portal/activity">View All</a>
+              </Button>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {effectiveStage === 1 ? (
-                  <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-                    <MessageSquareWarning className="size-5 shrink-0 text-amber-600" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[#0D2137]">
-                        Accept Terms to Continue
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        You must accept our Terms &amp; Conditions to proceed to payment.
+              <div className="space-y-8">
+                {createdAt && (
+                  <div className="flex items-center">
+                    <div className="bg-primary/10 p-2 rounded-full mr-4">
+                      <CheckCircle2 className="size-4 text-primary" />
+                    </div>
+                    <div className="space-y-1 flex-1">
+                      <p className="text-sm font-medium leading-none">Account Created</p>
+                      <p className="text-sm text-muted-foreground">
+                        Welcome to Creo! Complete setup to get started.
                       </p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setTermsModalOpen(true)}
-                    >
+                    <div className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Clock className="size-3" />
+                      {new Date(createdAt).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </div>
+                  </div>
+                )}
+                {!termsAccepted && (
+                  <div className="flex items-center">
+                    <div className="bg-amber-500/10 p-2 rounded-full mr-4">
+                      <AlertCircle className="size-4 text-amber-500" />
+                    </div>
+                    <div className="space-y-1 flex-1">
+                      <p className="text-sm font-medium leading-none">Terms Review Required</p>
+                      <p className="text-sm text-muted-foreground">
+                        Please review and accept our service agreement.
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setTermsModalOpen(true)}>
                       Review
-                      <ArrowRight className="size-3" />
+                      <ArrowRight className="size-3 ml-2" />
                     </Button>
                   </div>
-                ) : effectiveStage === 2 ? (
-                  <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
-                    <CreditCard className="size-5 shrink-0 text-blue-600" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[#0D2137]">
-                        Payment Pending
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Please complete your payment to activate your workspace.
+                )}
+                {termsAccepted && !subscriptionActive && (
+                  <div className="flex items-center">
+                    <div className="bg-amber-500/10 p-2 rounded-full mr-4">
+                      <CreditCard className="size-4 text-amber-500" />
+                    </div>
+                    <div className="space-y-1 flex-1">
+                      <p className="text-sm font-medium leading-none">Payment Required</p>
+                      <p className="text-sm text-muted-foreground">
+                        Activate your subscription to unlock services.
                       </p>
                     </div>
                     <Button
@@ -513,91 +367,227 @@ export default function PortalDashboard() {
                       onClick={() => router.push("/onboarding/payment")}
                     >
                       Pay Now
-                      <ArrowRight className="size-3" />
+                      <ArrowRight className="size-3 ml-2" />
                     </Button>
                   </div>
-                ) : effectiveStage === 3 ? (
-                  <div className="flex items-center gap-3 rounded-lg border border-purple-200 bg-purple-50 px-4 py-3">
-                    <FileCheck className="size-5 shrink-0 text-purple-600" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[#0D2137]">
-                        Complete Brand Questionnaire
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Tell us about your brand so we can tailor your content strategy.
+                )}
+                {subscriptionActive && data.onboarding_stage < 4 && (
+                  <div className="flex items-center">
+                    <div className="bg-blue-500/10 p-2 rounded-full mr-4">
+                      <FileText className="size-4 text-blue-500" />
+                    </div>
+                    <div className="space-y-1 flex-1">
+                      <p className="text-sm font-medium leading-none">Complete Questionnaire</p>
+                      <p className="text-sm text-muted-foreground">
+                        Help us understand your brand and goals.
                       </p>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="cursor-pointer"
-                      onClick={() => {
-                        console.log("Questionnaire button clicked!");
-                        window.location.href = '/onboarding/questionnaire';
-                      }}
+                      onClick={() => router.push("/onboarding/questionnaire")}
                     >
-                      Start Brand Questionnaire
-                      <ArrowRight className="size-3" />
+                      Start
+                      <ArrowRight className="size-3 ml-2" />
                     </Button>
-                  </div>
-                ) : data.pending_deliverable_count > 0 ? (
-                  <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-                    <MessageSquareWarning className="size-5 shrink-0 text-amber-600" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[#0D2137]">
-                        {data.pending_deliverable_count} Deliverable{data.pending_deliverable_count !== 1 ? "s" : ""} awaiting approval
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Review your latest content submissions.
-                      </p>
-                    </div>
-                    <Link href="/portal/deliverables">
-                      <Button variant="ghost" size="sm">
-                        Review
-                        <ArrowRight className="size-3" />
-                      </Button>
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-                    <CheckCircle2 className="size-5 shrink-0 text-green-600" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[#0D2137]">
-                        All caught up!
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        No pending deliverables to review.
-                      </p>
-                    </div>
                   </div>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          <Card className="rounded-xl shadow-[var(--shadow-card)]">
+          <Card className="col-span-3">
             <CardHeader>
-              <CardTitle className="text-base font-semibold text-[#0D2137]">
-                Quick Access
-              </CardTitle>
+              <CardTitle>Quick Links</CardTitle>
+              <CardDescription>Frequently accessed resources</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                {QUICK_ACCESS.map((item) => (
-                  <Link key={item.label} href={item.href}>
-                    <div className="flex flex-col items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-4 text-center transition-colors hover:border-[#2B7BC4] hover:bg-[#E8F4FD]">
-                      <item.icon className="size-6 text-[#2B7BC4]" />
-                      <span className="text-xs font-medium text-[#0D2137]">
-                        {item.label}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+            <CardContent className="grid gap-2">
+              <QuickLink
+                icon={<Search className="size-4" />}
+                title="Brand Summary"
+                description={
+                  data.brand_summary
+                    ? "View your AI-generated brand profile"
+                    : "Complete questionnaire to generate"
+                }
+                href={data.brand_summary ? "/portal/account" : "#"}
+                disabled={!data.brand_summary}
+              />
+              <QuickLink
+                icon={<MessageSquare className="size-4" />}
+                title="Support Chat"
+                description="Talk with our team"
+                href="/portal/support"
+              />
+              <QuickLink
+                icon={<BarChart className="size-4" />}
+                title="Analytics"
+                description="View campaign performance"
+                href="/portal/analytics"
+                disabled={effectiveStage < 5}
+              />
             </CardContent>
+            {!data.brand_summary && effectiveStage >= 4 && (
+              <CardFooter>
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  onClick={handleGenerateBrandSummary}
+                  disabled={generating}
+                >
+                  {generating ? (
+                    <>
+                      <div className="size-4 mr-2 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="size-4 mr-2" />
+                      Generate Brand Summary
+                    </>
+                  )}
+                </Button>
+              </CardFooter>
+            )}
           </Card>
         </div>
       </div>
-    </>
+    </div>
+  )
+}
+
+function StatCard({
+  title,
+  value,
+  description,
+  icon,
+  trend,
+}: {
+  title: string
+  value: string
+  description: string
+  icon: React.ReactNode
+  trend?: string
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        <p className="text-xs text-muted-foreground flex items-center mt-1">
+          {trend && (
+            <span className="text-emerald-500 font-medium mr-1">{trend}</span>
+          )}
+          {description}
+        </p>
+      </CardContent>
+    </Card>
+  )
+}
+
+function StepItem({
+  number,
+  title,
+  description,
+  status,
+  onClick,
+}: {
+  number: number
+  title: string
+  description: string
+  status: "completed" | "current" | "upcoming"
+  onClick?: () => void
+}) {
+  return (
+    <div
+      className={cn(
+        "relative flex flex-col items-center text-center p-4 rounded-lg transition-colors",
+        status === "current" && "bg-primary/5 cursor-pointer hover:bg-primary/10",
+        status === "upcoming" && "opacity-50 grayscale",
+        onClick && status !== "upcoming" && "cursor-pointer hover:bg-accent",
+      )}
+      onClick={status !== "upcoming" ? onClick : undefined}
+    >
+      <div
+        className={cn(
+          "flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-bold mb-3 transition-colors",
+          status === "completed"
+            ? "border-primary bg-primary text-primary-foreground"
+            : status === "current"
+              ? "border-primary text-primary"
+              : "border-muted-foreground text-muted-foreground",
+        )}
+      >
+        {status === "completed" ? <CheckCircle2 className="h-5 w-5" /> : number}
+      </div>
+      <h3
+        className={cn(
+          "text-sm font-semibold mb-1",
+          status === "completed" ? "text-foreground" : "text-foreground",
+        )}
+      >
+        {title}
+      </h3>
+      <p className="text-xs text-muted-foreground leading-snug">{description}</p>
+    </div>
+  )
+}
+
+function QuickLink({
+  icon,
+  title,
+  description,
+  href,
+  disabled,
+}: {
+  icon: React.ReactNode
+  title: string
+  description: string
+  href: string
+  disabled?: boolean
+}) {
+  return (
+    <a
+      href={disabled ? undefined : href}
+      className={cn(
+        "flex items-center p-3 rounded-lg border bg-card transition-colors",
+        disabled
+          ? "opacity-50 cursor-not-allowed"
+          : "hover:bg-accent hover:text-accent-foreground cursor-pointer",
+      )}
+    >
+      <div className="bg-primary/10 p-2 rounded-md mr-4 text-primary">{icon}</div>
+      <div className="flex-1 space-y-1">
+        <p className="text-sm font-medium leading-none">{title}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      {!disabled && <ArrowRight className="size-4 text-muted-foreground ml-4" />}
+    </a>
+  )
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <div>
+          <Skeleton className="h-9 w-[250px] mb-2" />
+          <Skeleton className="h-5 w-[400px]" />
+        </div>
+        <Skeleton className="h-[200px] w-full rounded-xl" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array(4).fill(0).map((_, i) => (
+            <Skeleton key={i} className="h-[120px] rounded-xl" />
+          ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+          <Skeleton className="col-span-4 h-[400px] rounded-xl" />
+          <Skeleton className="col-span-3 h-[400px] rounded-xl" />
+        </div>
+      </div>
+    </div>
   )
 }
