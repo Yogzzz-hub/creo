@@ -51,6 +51,7 @@ interface QuestionnaireData {
   content_what_doesnt: string | null
   topics_to_avoid: string | null
   current_posting_frequency: string | null
+  ai_summary_line?: string | null
   ai_analysis?: AIAnalysis | null
 }
 
@@ -91,6 +92,7 @@ export function BrandProfileTab() {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isRegenerating, setIsRegenerating] = useState(false)
+  const [questionnaireExists, setQuestionnaireExists] = useState(false)
 
   const fetchQuestionnaire = async (isRefetch = false) => {
     if (!isRefetch) setLoading(true)
@@ -113,11 +115,27 @@ export function BrandProfileTab() {
         current_posting_frequency: data.current_posting_frequency || "",
       })
 
-      if (data.ai_analysis) {
-        setAnalysis(data.ai_analysis)
+      const summaryLine = data.ai_summary_line || data.ai_analysis?.ai_summary_line || null
+      if (summaryLine || data.ai_analysis) {
+        setAnalysis({
+          brand_tone: data.ai_analysis?.brand_tone ?? data.brand_tone ?? [],
+          content_themes: data.ai_analysis?.content_themes ?? ["Brand Growth"],
+          audience_persona: data.ai_analysis?.audience_persona ?? "",
+          goal_alignment: data.ai_analysis?.goal_alignment ?? "",
+          ai_summary_line: summaryLine ?? "",
+        })
+      } else {
+        setAnalysis(null)
       }
+
+      setQuestionnaireExists(true)
+      setError(null)
     } catch (err: any) {
-      if (err.status !== 404) {
+      if (err.status === 404) {
+        // No questionnaire yet - this is fine, user can create one
+        setQuestionnaireExists(false)
+        setError(null)
+      } else {
         setError(err.message || "Failed to load questionnaire")
       }
     } finally {
@@ -158,6 +176,28 @@ export function BrandProfileTab() {
   const parseList = (value: string) => value.split(",").map(s => s.trim()).filter(Boolean)
 
   const handleSave = async () => {
+    // Validate required fields
+    if (!form.industry.trim()) {
+      toast.error("Please fill in Industry")
+      return
+    }
+    if (!form.business_description.trim()) {
+      toast.error("Please fill in Business Description")
+      return
+    }
+    if (!form.primary_goal) {
+      toast.error("Please select a Primary Goal")
+      return
+    }
+    if (form.brand_tone.length === 0) {
+      toast.error("Please select at least one Brand Tone")
+      return
+    }
+    if (!form.target_audience.age_range && !form.target_audience.location && !form.target_audience.interests) {
+      toast.error("Please fill in at least one Target Audience field")
+      return
+    }
+
     setIsSaving(true)
     setIsRegenerating(true)
     try {
@@ -176,21 +216,32 @@ export function BrandProfileTab() {
         style_references: parseList(form.style_references),
       }
 
+      // Use POST if questionnaire doesn't exist, PATCH if it does
+      const method = questionnaireExists ? "PATCH" : "POST"
+      
       await apiFetch("/api/v1/questionnaire", {
-        method: "PATCH",
+        method,
         body: JSON.stringify(payload)
       })
 
-      toast.success("Profile updated! AI Analysis is regenerating...")
+      toast.success(questionnaireExists 
+        ? "Profile updated! AI Analysis is regenerating..." 
+        : "Profile created! Generating your AI Brand Analysis...")
       
       // Wait a bit and refetch to get updated AI analysis
       setTimeout(async () => {
-        await fetchQuestionnaire(true)
-        setIsRegenerating(false)
+        try {
+          await fetchQuestionnaire(true)
+          setIsRegenerating(false)
+        } catch (err) {
+          console.error("Failed to refetch after save:", err)
+          setIsRegenerating(false)
+        }
+        setQuestionnaireExists(true)
       }, 3500)
 
     } catch (err: any) {
-      toast.error(err.message || "Failed to save updates")
+      toast.error(err.message || "Failed to save profile")
       setIsRegenerating(false)
     } finally {
       setIsSaving(false)

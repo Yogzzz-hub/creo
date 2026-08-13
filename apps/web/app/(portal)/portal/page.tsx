@@ -118,30 +118,43 @@ export default function PortalDashboard() {
 
   useEffect(() => {
     async function loadDashboard() {
-      if (!user) return
+      if (!user || !token) return
 
-      const { createClient } = await import("@/lib/supabase/client")
-      const supabase = createClient()
+      try {
+        const { apiFetch } = await import("@/lib/api")
+        const dashboard = await apiFetch("/api/v1/portal/dashboard", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }) as DashboardData
 
-      const { data: profile } = await supabase
-        .from("users")
-        .select("terms_accepted, onboarding_stage, created_at, brand_summary")
-        .eq("auth_id", user.id)
-        .single()
+        setData({
+          pending_deliverable_count: dashboard.pending_deliverable_count ?? 0,
+          open_ticket_count: dashboard.open_ticket_count ?? 0,
+          ai_summary_line: dashboard.ai_summary_line ?? null,
+          onboarding_stage: dashboard.onboarding_stage ?? 1,
+          brand_summary: dashboard.ai_summary_line ?? null,
+        })
 
-      setTermsAccepted(profile?.terms_accepted ?? false)
-      setCreatedAt(profile?.created_at ?? null)
-      setData({
-        pending_deliverable_count: 0,
-        open_ticket_count: 0,
-        ai_summary_line: null,
-        onboarding_stage: profile?.onboarding_stage ?? 1,
-        brand_summary: profile?.brand_summary ?? null,
-      })
-      setLoading(false)
+        const { createClient } = await import("@/lib/supabase/client")
+        const supabase = createClient()
+        const { data: profile } = await supabase
+          .from("users")
+          .select("terms_accepted, onboarding_stage, created_at, brand_summary")
+          .eq("auth_id", user.id)
+          .single()
+
+        setTermsAccepted(profile?.terms_accepted ?? false)
+        setCreatedAt(profile?.created_at ?? null)
+      } catch (err) {
+        console.error("Failed to load dashboard", err)
+        setError("Unable to load your dashboard summary right now.")
+      } finally {
+        setLoading(false)
+      }
     }
     loadDashboard()
-  }, [user])
+  }, [user, token])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

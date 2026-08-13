@@ -88,5 +88,5 @@ class AdminQuestionnaireOverride(BaseModel):
         ...,
         min_length=1,
         max_length=200,
-        description="One-line brand summary, e.g. 'Bold voice, targeting Gen Z, focused on engagement'",
+        description="A brand-specific one-line summary based on the client’s actual business, audience, and goal.",
     )

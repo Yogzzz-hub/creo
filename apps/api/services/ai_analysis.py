@@ -4,9 +4,6 @@ import re
 
 import httpx
 
-# pyrefly: ignore [missing-import]
-from openai import OpenAI
-
 from core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -97,7 +94,7 @@ You MUST return a JSON object with exactly these keys:
   ],
   "audience_persona": "A concise paragraph describing the target audience persona",
   "goal_alignment": "A short note explaining how the recommended content approach aligns with the client's stated goal",
-  "ai_summary_line": "[Primary Tone] voice, targeting [Audience], focused on [Goal]"
+  "ai_summary_line": "A brief, brand-specific summary that mentions the actual business, audience, and goal"
 }
 
 Rules:
@@ -117,10 +114,11 @@ Rules:
 - goal_alignment: A 2-3 sentence note connecting the
   content strategy to the client's primary goal.
 
-- ai_summary_line: MUST follow the exact format:
-  "[Tone] voice, targeting [audience], focused on [goal]"
+- ai_summary_line: Write a short, brand-specific one-sentence summary in plain English.
+  It must mention the actual business context, target audience, and goal,
+  and must not use generic template placeholders like "[Tone] voice...".
 
-- ai_summary_line must be under 15 words.
+- ai_summary_line should be 12-22 words and sound like a real strategic brand summary.
 
 - Return ONLY valid JSON.
 
@@ -248,7 +246,8 @@ def call_dify_ai_analysis(
         )
 
         if response.status_code == 429:
-            raise RuntimeError("DIFY_429_QUOTA_EXHAUSTED")
+            from workers.ai_tasks import QuotaExhausted429Error
+            raise QuotaExhausted429Error("Dify API quota exhausted. Immediate fallback will be applied.")
 
         raise RuntimeError(
             f"Dify API error {response.status_code}: "
