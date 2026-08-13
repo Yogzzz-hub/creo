@@ -53,7 +53,34 @@ async def _process_and_save_analysis(user_id: str) -> None:
 
             # 2. Call OpenAI
             sys_prompt, user_prompt = generate_brand_analysis_prompt(q_data)
-            ai_result = call_openai_gpt4o(sys_prompt, user_prompt)
+            try:
+                ai_result = call_openai_gpt4o(sys_prompt, user_prompt)
+            except RuntimeError as e:
+                if "DIFY_429_QUOTA_EXHAUSTED" in str(e):
+                    logger.warning("[Celery] Caught 429 quota exhausted. Using local user_data_fallback.")
+                    
+                    target_aud = questionnaire.target_audience or {}
+                    age = target_aud.get("age_range", "broad age range")
+                    loc = target_aud.get("location", "various locations")
+                    tone = questionnaire.brand_tone[0] if questionnaire.brand_tone else "Professional"
+                    goal = questionnaire.primary_goal or "Growth"
+
+                    fallback_analysis = {
+                        "brand_tone": questionnaire.brand_tone or ["Professional", "Clear"],
+                        "content_themes": ["Educational", "Community", "Service Showcase"],
+                        "audience_persona": f"Targeting {age} in {loc}.",
+                        "goal_alignment": f"Content is focused on {goal}.",
+                        "ai_summary_line": f"{tone} voice targeting {age} in {loc}, focused on {goal}"
+                    }
+
+                    ai_result = {
+                        "analysis": fallback_analysis,
+                        "prompt_tokens": 0,
+                        "completion_tokens": 0,
+                        "total_tokens": 0
+                    }
+                else:
+                    raise e
 
             # 3. Save back to DB
             analysis = ai_result.get("analysis", {})

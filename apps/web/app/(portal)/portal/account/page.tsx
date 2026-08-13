@@ -16,6 +16,7 @@ import {
   Unlink,
   Eye,
   EyeOff,
+  Sparkles,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useSession } from "@/context/session-context"
@@ -29,6 +30,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
+import { BrandProfileTab } from "@/components/brand-profile-tab"
 
 const businessProfileSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters."),
@@ -70,6 +72,10 @@ export default function AccountPage() {
             <Building2 className="size-3.5" />
             Business Profile
           </TabsTrigger>
+          <TabsTrigger value="brand" className="gap-1.5">
+            <Sparkles className="size-3.5" />
+            Brand Profile
+          </TabsTrigger>
           <TabsTrigger value="security" className="gap-1.5">
             <Shield className="size-3.5" />
             Security
@@ -82,6 +88,10 @@ export default function AccountPage() {
 
         <TabsContent value="profile">
           <BusinessProfileTab />
+        </TabsContent>
+
+        <TabsContent value="brand">
+          <BrandProfileTab />
         </TabsContent>
 
         <TabsContent value="security">

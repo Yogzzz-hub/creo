@@ -247,6 +247,9 @@ def call_dify_ai_analysis(
             response.text[:500],
         )
 
+        if response.status_code == 429:
+            raise RuntimeError("DIFY_429_QUOTA_EXHAUSTED")
+
         raise RuntimeError(
             f"Dify API error {response.status_code}: "
             f"{response.text[:200]}"
