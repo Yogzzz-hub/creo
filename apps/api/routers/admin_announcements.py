@@ -74,8 +74,8 @@ async def create_announcement(
         author_id=current_user.id,
         title=payload.title,
         content=payload.content,
-        type=_map_audience_to_type(payload.target_audience),
-        target_departments=_map_audience_to_departments(payload.target_audience),
+        type=payload.type if payload.type else _map_audience_to_type(payload.target_audience),
+        target_departments=payload.target_departments if payload.target_departments is not None else _map_audience_to_departments(payload.target_audience),
     )
     db.add(announcement)
     await db.commit()

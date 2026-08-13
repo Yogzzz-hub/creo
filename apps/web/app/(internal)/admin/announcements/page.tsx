@@ -56,6 +56,10 @@ function getTypeBadge(type: string) {
       return <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Newsletter</span>
     case "general":
       return <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">General</span>
+    case "broadcast":
+      return <span className="inline-flex items-center rounded-full border border-purple-200 bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">Broadcast</span>
+    case "maintenance":
+      return <span className="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">Maintenance</span>
     default:
       return <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-700">{type}</span>
   }
@@ -105,7 +109,7 @@ export default function AnnouncementsPage() {
 
   function openEditDialog(ann: Announcement) {
     setSelectedAnnouncement(ann)
-    const typeMap: Record<string, string> = { mom: "MoM", newsletter: "Newsletter", general: "General Alert" }
+    const typeMap: Record<string, string> = { mom: "MoM", newsletter: "Newsletter", general: "General Alert", broadcast: "Broadcast", maintenance: "Maintenance Notice" }
     setFormData({
       title: ann.title,
       type: typeMap[ann.type] ?? ann.type,
@@ -127,7 +131,7 @@ export default function AnnouncementsPage() {
     }
     setSubmitting(true)
     try {
-      const typeMap: Record<string, string> = { MoM: "mom", Newsletter: "newsletter", "General Alert": "general" }
+      const typeMap: Record<string, string> = { MoM: "mom", Newsletter: "newsletter", "General Alert": "general", Broadcast: "broadcast", "Maintenance Notice": "maintenance" }
       await adminFetch("/api/v1/admin/announcements", {
         method: "POST",
         body: JSON.stringify({
@@ -155,7 +159,7 @@ export default function AnnouncementsPage() {
     }
     setSubmitting(true)
     try {
-      const typeMap: Record<string, string> = { MoM: "mom", Newsletter: "newsletter", "General Alert": "general" }
+      const typeMap: Record<string, string> = { MoM: "mom", Newsletter: "newsletter", "General Alert": "general", Broadcast: "broadcast", "Maintenance Notice": "maintenance" }
       await adminFetch(`/api/v1/admin/announcements/${selectedAnnouncement.id}`, {
         method: "PATCH",
         body: JSON.stringify({
@@ -354,6 +358,8 @@ function AnnouncementForm({
             <SelectItem value="MoM">MoM (Minutes of Meeting)</SelectItem>
             <SelectItem value="Newsletter">Newsletter</SelectItem>
             <SelectItem value="General Alert">General Alert</SelectItem>
+            <SelectItem value="Broadcast">Broadcast</SelectItem>
+            <SelectItem value="Maintenance Notice">Maintenance Notice</SelectItem>
           </SelectContent>
         </Select>
       </div>

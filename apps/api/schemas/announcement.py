@@ -26,6 +26,8 @@ class AnnouncementBase(BaseModel):
 class AnnouncementCreate(BaseModel):
     title: str
     content: str
+    type: Optional[str] = None
+    target_departments: Optional[list[str]] = None
     target_audience: TargetAudience = TargetAudience.all
     file_url: Optional[str] = None
     file_name: Optional[str] = None
