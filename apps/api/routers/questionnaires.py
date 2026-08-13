@@ -14,8 +14,6 @@ from schemas.questionnaire import QuestionnaireCreate, QuestionnaireStatusRespon
 
 router = APIRouter(prefix="/api/v1/questionnaire", tags=["questionnaire"])
 
-QUESTIONNAIRE_LOCK_DAYS = 7
-
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 @limiter.limit("3/minute")
@@ -31,13 +29,6 @@ async def submit_questionnaire(
     existing_q = existing.scalar_one_or_none()
 
     if existing_q is not None:
-        if existing_q.submitted_at is not None:
-            lock_expiry = existing_q.submitted_at + timedelta(days=QUESTIONNAIRE_LOCK_DAYS)
-            if datetime.now(timezone.utc) > lock_expiry:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Questionnaire is locked. The 7-day edit window has expired. Please contact Support to make changes.",
-                )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Questionnaire already submitted",
@@ -69,6 +60,24 @@ async def submit_questionnaire(
 
     return {"status": "success"}
 
+from schemas.questionnaire import QuestionnaireOut
+
+@router.get("", response_model=QuestionnaireOut)
+async def get_questionnaire(
+    current_user: Annotated[User, Depends(require_client)],
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Questionnaire).where(Questionnaire.user_id == current_user.id)
+    )
+    questionnaire = result.scalar_one_or_none()
+
+    if questionnaire is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Questionnaire not found",
+        )
+    return questionnaire
 
 @router.get("/status", response_model=QuestionnaireStatusResponse)
 async def get_questionnaire_status(
@@ -87,9 +96,6 @@ async def get_questionnaire_status(
         )
 
     is_locked = False
-    if questionnaire.submitted_at is not None:
-        lock_expiry = questionnaire.submitted_at + timedelta(days=QUESTIONNAIRE_LOCK_DAYS)
-        is_locked = datetime.now(timezone.utc) > lock_expiry
 
     if questionnaire.ai_summary_line is None:
         return QuestionnaireStatusResponse(
@@ -126,14 +132,6 @@ async def update_questionnaire(
             detail="Questionnaire not found",
         )
 
-    if questionnaire.submitted_at is not None:
-        lock_expiry = questionnaire.submitted_at + timedelta(days=QUESTIONNAIRE_LOCK_DAYS)
-        if datetime.now(timezone.utc) > lock_expiry:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Questionnaire is locked. The 7-day edit window has expired. Please contact Support to make changes.",
-            )
-
     update_data = payload.model_dump(exclude_unset=True)
     if not update_data:
         raise HTTPException(
@@ -145,11 +143,11 @@ async def update_questionnaire(
         setattr(questionnaire, field, value)
 
     await db.commit()
+    
+    from workers.ai_tasks import generate_ai_analysis
+    generate_ai_analysis.delay(str(current_user.id))
 
     is_locked = False
-    if questionnaire.submitted_at is not None:
-        lock_expiry = questionnaire.submitted_at + timedelta(days=QUESTIONNAIRE_LOCK_DAYS)
-        is_locked = datetime.now(timezone.utc) > lock_expiry
 
     if questionnaire.ai_summary_line is None:
         return QuestionnaireStatusResponse(
