@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
 import { CreditCard, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 // ── Razorpay types ──────────────────────────────────────────────
 interface RazorpayOptions {
@@ -251,7 +252,7 @@ function PaymentContent() {
         description: `${plan?.display_name || "Growth"} Plan Subscription`,
         handler: () => {
           setProcessing(null);
-          router.push("/onboarding/questionnaire");
+          setIsWaitingForWebhook(true);
         },
         prefill: {},
         theme: { color: "#2B7BC4" },
@@ -306,8 +307,8 @@ function PaymentContent() {
   const handleStripeSuccess = useCallback(() => {
     setStripeClientSecret(null);
     setProcessing(null);
-    router.push("/onboarding/questionnaire");
-  }, [router]);
+    setIsWaitingForWebhook(true);
+  }, []);
 
   const handleStripeError = useCallback((msg: string) => {
     setError(msg);
@@ -348,6 +349,46 @@ function PaymentContent() {
     } finally {
       setHelpLoading(false);
     }
+  }
+
+  const [isWaitingForWebhook, setIsWaitingForWebhook] = useState(false);
+
+  const { data: roleData } = useQuery({
+    queryKey: ["payment-auth-role-polling"],
+    queryFn: async () => {
+      const token = await getAccessToken();
+      if (!token) throw new Error("No token");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me/role`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch role");
+      return res.json();
+    },
+    enabled: isWaitingForWebhook,
+    refetchInterval: (query) => {
+      if (query.state.data && query.state.data.account_status === "active") {
+        return false; // stop polling
+      }
+      return 2000;
+    }
+  });
+
+  useEffect(() => {
+    if (roleData?.account_status === "active" && isWaitingForWebhook) {
+      router.push("/onboarding/questionnaire");
+    }
+  }, [roleData, isWaitingForWebhook, router]);
+
+  if (isWaitingForWebhook) {
+    return (
+      <CardContent className="py-12 flex flex-col items-center justify-center text-center">
+        <Loader2 className="size-10 animate-spin text-brand mb-4" />
+        <h2 className="text-xl font-bold text-brand-dark mb-2">Processing Payment...</h2>
+        <p className="text-sm text-text-muted max-w-sm">
+          Please wait while we confirm your payment securely with the bank. Do not close this window.
+        </p>
+      </CardContent>
+    );
   }
 
   return (

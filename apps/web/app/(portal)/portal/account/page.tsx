@@ -452,26 +452,86 @@ function IntegrationsTab() {
     return () => controller.abort()
   }, [token, API_URL])
 
-  function handleConnect() {
-    const appId = process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID
-    const redirectUri = `${window.location.origin}/api/auth/callback/instagram`
-
-    if (!appId) {
-      toast.error("Instagram integration not configured.")
-      return
-    }
-
+  async function handleConnect() {
     setIsConnecting(true)
-    const scopes = [
-      "pages_show_list",
-      "instagram_basic",
-      "instagram_content_publish",
-      "instagram_manage_comments",
-      "pages_read_engagement",
-      "business_management",
-    ]
-    const url = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes.join(",")}&response_type=code`
-    window.location.href = url
+
+    try {
+      const res = await fetch("/api/auth/instagram/url");
+      if (!res.ok) {
+        toast.error("Failed to initialize Instagram connection.");
+        setIsConnecting(false);
+        return;
+      }
+
+      const data = await res.json();
+      if (!data.url) {
+        toast.error("Failed to generate Instagram connection URL.");
+        setIsConnecting(false);
+        return;
+      }
+
+      const width = 600;
+      const height = 700;
+      const left = (window.innerWidth - width) / 2;
+      const top = (window.innerHeight - height) / 2;
+
+      const popup = window.open(
+        data.url,
+        "InstagramConnect",
+        `width=${width},height=${height},left=${left},top=${top},status=yes,scrollbars=yes`
+      );
+
+      if (!popup) {
+        toast.error("Please allow popups to connect Instagram.");
+        setIsConnecting(false);
+        return;
+      }
+
+      const messageListener = (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return;
+        if (event.data?.type === "INSTAGRAM_OAUTH") {
+          window.removeEventListener("message", messageListener);
+          setIsConnecting(false);
+
+          if (event.data.status === "success") {
+            toast.success("Instagram connected successfully!");
+            // Refresh account status after popup success
+            setLoading(true);
+            const controller = new AbortController()
+            fetch(`${API_URL}/api/v1/account`, {
+              headers: { Authorization: `Bearer ${token}` },
+              signal: controller.signal,
+            })
+              .then((r) => (r.ok ? r.json() : null))
+              .then((accountData) => {
+                if (accountData) {
+                  setInstagramConnected(accountData.instagram_connected)
+                  setInstagramUsername(accountData.instagram_username)
+                }
+              })
+              .catch(() => {})
+              .finally(() => setLoading(false))
+          } else {
+            toast.error(`Instagram connection failed: ${event.data.details || "Unknown error"}`);
+          }
+        }
+      };
+
+      window.addEventListener("message", messageListener);
+
+      const checkPopup = setInterval(() => {
+        if (!popup || popup.closed) {
+          clearInterval(checkPopup)
+          // Don't remove listener immediately, give a small grace period for postMessage
+          setTimeout(() => window.removeEventListener("message", messageListener), 1000);
+          setIsConnecting(false)
+        }
+      }, 1000)
+
+    } catch (err) {
+      toast.error("Failed to connect Instagram.");
+      setIsConnecting(false);
+    }
   }
 
   async function handleDisconnect() {

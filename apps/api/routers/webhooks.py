@@ -50,6 +50,10 @@ async def _activate_user_account(db: AsyncSession, user_id: str, subscription_id
 
     if user.account_status != AccountStatus.active:
         user.account_status = AccountStatus.active
+        # Idempotently advance onboarding stage to 3 (Post-Payment / Questionnaire Pending)
+        # We use < 3 to ensure we don't accidentally revert a user who already finished the questionnaire (stage 4 or 5)
+        if user.onboarding_stage < 3:
+            user.onboarding_stage = 3
         db.add(user)
 
     subscription.status = "active"
@@ -275,7 +279,13 @@ async def stripe_webhook(request: Request):
         try:
             if event.type == "invoice.payment_succeeded":
                 invoice = event.data.object
-                stripe_subscription_id = invoice.subscription
+                stripe_subscription_id = getattr(invoice, "subscription", None)
+                if not stripe_subscription_id:
+                    parent = getattr(invoice, "parent", None)
+                    if parent:
+                        sub_details = getattr(parent, "subscription_details", None)
+                        if sub_details:
+                            stripe_subscription_id = getattr(sub_details, "subscription", None)
 
                 if stripe_subscription_id:
                     subscription = await _find_subscription_by_gateway_id(
@@ -292,7 +302,13 @@ async def stripe_webhook(request: Request):
 
             elif event.type == "invoice.payment_failed":
                 invoice = event.data.object
-                stripe_subscription_id = invoice.subscription
+                stripe_subscription_id = getattr(invoice, "subscription", None)
+                if not stripe_subscription_id:
+                    parent = getattr(invoice, "parent", None)
+                    if parent:
+                        sub_details = getattr(parent, "subscription_details", None)
+                        if sub_details:
+                            stripe_subscription_id = getattr(sub_details, "subscription", None)
 
                 if stripe_subscription_id:
                     subscription = await _find_subscription_by_gateway_id(

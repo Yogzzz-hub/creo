@@ -23,6 +23,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSession } from "@/context/session-context"
+import { useSubscription } from "@/context/subscription-context"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { TermsModal } from "@/components/portal/terms-modal"
 import { PaymentModal } from "@/components/portal/payment-modal"
@@ -104,7 +106,9 @@ function DashboardSkeleton() {
 }
 
 export default function PortalDashboard() {
-  const { user, token } = useSession()
+  const { user, loading: sessionLoaded } = useSession()
+  const { refresh: refreshSubscription, onboardingStage: contextOnboardingStage, loading: subscriptionLoading, accountStatus: contextAccountStatus } = useSubscription()
+  const router = useRouter()
   const [data, setData] = useState<DashboardData>(EMPTY_DASHBOARD)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -113,7 +117,7 @@ export default function PortalDashboard() {
   const [termsModalOpen, setTermsModalOpen] = useState(false)
   const [paymentModalOpen, setPaymentModalOpen] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
-  const [subscriptionActive, setSubscriptionActive] = useState(false)
+  const subscriptionActive = contextAccountStatus === "active"
   const [generating, setGenerating] = useState(false)
 
   useEffect(() => {
@@ -125,7 +129,7 @@ export default function PortalDashboard() {
 
       const { data: profile } = await supabase
         .from("users")
-        .select("terms_accepted, onboarding_stage, created_at, brand_summary")
+        .select("terms_accepted, created_at, brand_summary")
         .eq("auth_id", user.id)
         .single()
 
@@ -135,7 +139,7 @@ export default function PortalDashboard() {
         pending_deliverable_count: 0,
         open_ticket_count: 0,
         ai_summary_line: null,
-        onboarding_stage: profile?.onboarding_stage ?? 1,
+        onboarding_stage: 1, // unused, kept for type compatibility
         brand_summary: profile?.brand_summary ?? null,
       })
       setLoading(false)
@@ -154,8 +158,11 @@ export default function PortalDashboard() {
       const url = new URL(window.location.href)
       url.searchParams.delete("success")
       window.history.replaceState({}, "", url.toString())
+
+      // Explicitly refresh the global subscription/onboarding state
+      refreshSubscription()
     }
-  }, [])
+  }, [refreshSubscription])
 
   async function handleGenerateBrandSummary() {
     if (!user) return
@@ -186,7 +193,7 @@ export default function PortalDashboard() {
   }
 
   const effectiveStage = Math.max(
-    data.onboarding_stage,
+    contextOnboardingStage,
     termsAccepted ? 2 : 0,
     subscriptionActive ? 3 : 0,
   )
@@ -198,7 +205,7 @@ export default function PortalDashboard() {
   //   }
   // }, [loading, effectiveStage])
 
-  if (loading) {
+  if (loading || subscriptionLoading) {
     return <DashboardSkeleton />
   }
 
@@ -219,7 +226,7 @@ export default function PortalDashboard() {
   function handleTermsAccepted() {
     setTermsAccepted(true)
     setTermsModalOpen(false)
-    setPaymentModalOpen(true)
+    router.push("/onboarding/payment")
   }
 
   return (
@@ -233,7 +240,7 @@ export default function PortalDashboard() {
       <PaymentModal
         open={paymentModalOpen}
         onOpenChange={setPaymentModalOpen}
-        onPaymentSuccess={() => setSubscriptionActive(true)}
+        onPaymentSuccess={() => refreshSubscription()}
       />
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex items-center justify-between">
@@ -503,7 +510,7 @@ export default function PortalDashboard() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setPaymentModalOpen(true)}
+                      onClick={() => router.push("/onboarding/payment")}
                     >
                       Pay Now
                       <ArrowRight className="size-3" />

@@ -10,7 +10,7 @@ from starlette.concurrency import run_in_threadpool
 
 from core.config import settings
 from core.database import get_db
-from core.security import CurrentUser, encrypt_gateway_id, require_active_client
+from core.security import CurrentUser, encrypt_gateway_id, require_active_client, require_client
 from models.enums import AccountStatus, PaymentGateway, PlanName
 from models.plan import Plan
 from models.subscription import Subscription
@@ -164,11 +164,11 @@ class CreateSubscriptionResponse(BaseModel):
 @router.post("/create-subscription", response_model=CreateSubscriptionResponse)
 async def create_subscription(
     payload: CreateSubscriptionRequest,
-    current_user: Annotated[User, Depends(require_active_client)],
+    current_user: Annotated[User, Depends(require_client)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     plan_result = await db.execute(
-        select(Plan).where(Plan.id == payload.plan_id, Plan.is_active)
+        select(Plan).where(Plan.name == payload.plan_id, Plan.is_active)
     )
     plan = plan_result.scalar_one_or_none()
 

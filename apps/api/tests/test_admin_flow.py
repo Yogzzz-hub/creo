@@ -115,6 +115,7 @@ class TestAdminFlow:
                 existing.scarcity_slots_available = 5
                 existing.sla_delivery_days = 3
                 existing.sla_revision_hours = 48
+                existing.config = None
 
                 settings_result = MagicMock()
                 settings_result.scalar_one_or_none.return_value = existing
@@ -216,6 +217,7 @@ class TestAdminFlow:
                     obj.scarcity_slots_available = 10
                     obj.sla_delivery_days = 3
                     obj.sla_revision_hours = 48
+                    obj.config = None
 
                 mock_db_session.refresh = AsyncMock(side_effect=_refresh)
 

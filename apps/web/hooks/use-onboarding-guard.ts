@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useMemo } from "react"
 import { usePathname } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { useSession } from "@/context/session-context"
+import { useQuery } from "@tanstack/react-query"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"
 
@@ -30,9 +31,6 @@ interface AccountStatus {
   account_status: string
   instagram_connected: boolean
 }
-
-const MAX_POLL_ATTEMPTS = 10
-const POLL_INTERVAL_MS = 2000
 
 async function getValidToken() {
   const supabase = createClient()
@@ -62,186 +60,111 @@ async function getValidToken() {
 export function useOnboardingGuard() {
   const pathname = usePathname()
   const { token, loading: sessionLoading } = useSession()
-  const [ready, setReady] = useState(false)
-  const [blocked, setBlocked] = useState(false)
-  const [fullyOnboarded, setFullyOnboarded] = useState(false)
-  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const cancelledRef = useRef(false)
 
   const isRestricted = useMemo(
     () => isRestrictedRoute(pathname),
     [pathname]
   )
 
-  useEffect(() => {
-    cancelledRef.current = false
-
-    async function getValidToken() {
-      const supabase = createClient()
-      const { data: { session }, error } = await supabase.auth.getSession()
-
-      if (error) {
-        throw error
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["onboarding-status"],
+    queryFn: async () => {
+      const accessToken = await getValidToken()
+      if (!accessToken) {
+        throw new Error("No access token available")
       }
 
-      if (!session) {
-        return null
+      const [roleRes, accountRes] = await Promise.all([
+        fetch(`${API_URL}/api/v1/auth/me/role`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+        fetch(`${API_URL}/api/v1/account`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+      ])
+
+      if (!roleRes.ok) {
+        throw new Error(`Failed to fetch role: ${roleRes.statusText}`)
       }
 
-      const expiresAt = session.expires_at ?? 0
-      const now = Math.floor(Date.now() / 1000)
-      if (expiresAt - now < 30) {
-        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession()
-        if (refreshError) {
-          throw refreshError
-        }
-        return refreshed.session?.access_token ?? session.access_token
+      const roleData: RoleResponse = await roleRes.json()
+      const isActive = roleData.account_status === "active"
+
+      let fullyOnboarded = false
+      if (isActive && accountRes.ok) {
+        const accountData: AccountStatus = await accountRes.json()
+        fullyOnboarded = accountData.instagram_connected === true
       }
 
-      return session.access_token
+      return {
+        isActive,
+        fullyOnboarded,
+      }
+    },
+    // Only run the query if we are on a restricted route and the session is loaded
+    enabled: isRestricted && !sessionLoading && !!token,
+    // If not active, poll every 2 seconds to wait for webhook. If active, stop polling.
+    refetchInterval: (query) => {
+      if (query.state.data && !query.state.data.isActive) {
+        return 2000
+      }
+      return false
+    },
+    // Don't refetch on window focus while polling, but do otherwise
+    refetchOnWindowFocus: true,
+    // Retry robustly on network failures
+    retry: 3,
+  })
+
+  // If not restricted, we're always ready and not blocked
+  if (!isRestricted) {
+    return {
+      isRestricted,
+      ready: true,
+      blocked: false,
+      fullyOnboarded: false,
+      isError: false,
     }
+  }
 
-    async function checkStatus() {
-      if (!isRestricted) {
-        setBlocked(false)
-        setFullyOnboarded(false)
-        setReady(true)
-        return
-      }
-
-      if (sessionLoading) {
-        setBlocked(false)
-        setFullyOnboarded(false)
-        setReady(false)
-        return
-      }
-
-      if (!token) {
-        if (!cancelledRef.current) {
-          setBlocked(true)
-          setFullyOnboarded(false)
-          setReady(true)
-        }
-        return
-      }
-
-      try {
-        const accessToken = await getValidToken()
-        if (!accessToken) {
-          if (!cancelledRef.current) {
-            setBlocked(true)
-            setFullyOnboarded(false)
-            setReady(true)
-            startPolling()
-          }
-          return
-        }
-
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 3500)
-
-        try {
-          const [roleRes, accountRes] = await Promise.all([
-            fetch(`${API_URL}/api/v1/auth/me/role`, {
-              headers: { Authorization: `Bearer ${accessToken}` },
-              signal: controller.signal,
-            }),
-            fetch(`${API_URL}/api/v1/account`, {
-              headers: { Authorization: `Bearer ${accessToken}` },
-              signal: controller.signal,
-            }),
-          ])
-
-          if (cancelledRef.current) return
-
-          if (roleRes.ok) {
-            const roleData: RoleResponse = await roleRes.json()
-            const isActive = roleData.account_status === "active"
-            setBlocked(!isActive)
-
-            if (isActive && accountRes.ok) {
-              const accountData: AccountStatus = await accountRes.json()
-              setFullyOnboarded(accountData.instagram_connected === true)
-            } else {
-              setFullyOnboarded(false)
-            }
-
-            if (!isActive) {
-              startPolling()
-            }
-          } else {
-            setBlocked(true)
-            setFullyOnboarded(false)
-            startPolling()
-          }
-          setReady(true)
-        } finally {
-          clearTimeout(timeoutId)
-        }
-      } catch {
-        if (!cancelledRef.current) {
-          setBlocked(true)
-          setFullyOnboarded(false)
-          setReady(true)
-          startPolling()
-        }
-      }
+  // If session is loading or query is loading, we are not ready
+  if (sessionLoading || isLoading) {
+    return {
+      isRestricted,
+      ready: false,
+      blocked: false,
+      fullyOnboarded: false,
+      isError: false,
     }
+  }
 
-    async function pollOnce() {
-      if (cancelledRef.current) return
-
-      try {
-        const tokenToUse = await getValidToken()
-        if (!tokenToUse) return
-
-        const res = await fetch(`${API_URL}/api/v1/auth/me/role`, {
-          headers: { Authorization: `Bearer ${tokenToUse}` },
-        })
-        if (cancelledRef.current) return
-
-        if (res.ok) {
-          const data: RoleResponse = await res.json()
-          if (data.account_status === "active") {
-            setBlocked(false)
-            const accountRes = await fetch(`${API_URL}/api/v1/account`, {
-              headers: { Authorization: `Bearer ${tokenToUse}` },
-            })
-            if (accountRes.ok && !cancelledRef.current) {
-              const accountData: AccountStatus = await accountRes.json()
-              setFullyOnboarded(accountData.instagram_connected === true)
-            }
-            return // Stop polling — user is active
-          }
-        }
-      } catch {
-        // Silently continue polling on network errors
-      }
-
-      pollAttempt++
-      if (pollAttempt < MAX_POLL_ATTEMPTS && !cancelledRef.current) {
-        pollRef.current = setTimeout(pollOnce, POLL_INTERVAL_MS)
-      }
+  // If there was a persistent network error after retries
+  if (isError) {
+    return {
+      isRestricted,
+      ready: true,
+      blocked: false, // Don't block on network error, just show error state
+      fullyOnboarded: false,
+      isError: true,
     }
+  }
 
-    let pollAttempt = 0
-
-    function startPolling() {
-      pollAttempt = 0
-      if (pollRef.current) clearTimeout(pollRef.current)
-      pollRef.current = setTimeout(pollOnce, POLL_INTERVAL_MS)
+  // Default fallback if data is somehow undefined
+  if (!data) {
+    return {
+      isRestricted,
+      ready: true,
+      blocked: true,
+      fullyOnboarded: false,
+      isError: false,
     }
+  }
 
-    checkStatus()
-
-    return () => {
-      cancelledRef.current = true
-      if (pollRef.current) {
-        clearTimeout(pollRef.current)
-        pollRef.current = null
-      }
-    }
-  }, [isRestricted, token, sessionLoading])
-
-  return { isRestricted, ready, blocked, fullyOnboarded }
+  return {
+    isRestricted,
+    ready: true,
+    blocked: !data.isActive,
+    fullyOnboarded: data.fullyOnboarded,
+    isError: false,
+  }
 }

@@ -355,43 +355,7 @@ export default function QuestionnairePage() {
         return;
       }
 
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({
-          onboarding_stage: 5,
-          account_status: "active",
-        })
-        .eq("auth_id", session.user.id);
 
-      /*
-       * Try to update the user's onboarding state.
-       *
-       * This is intentionally non-blocking.
-       * If Supabase RLS prevents this update, the user
-       * should still be able to continue.
-       */
-      try {
-        const { error: updateError } =
-          await supabase
-            .from("users")
-            .update({
-              onboarding_stage: 5,
-              account_status: "active",
-            })
-            .eq("auth_id", session.user.id);
-
-        if (updateError) {
-          console.warn(
-            "Could not update onboarding status:",
-            updateError
-          );
-        }
-      } catch (updateErr) {
-        console.warn(
-          "Supabase onboarding update failed:",
-          updateErr
-        );
-      }
 
       /*
        * Stop loading before navigation.
