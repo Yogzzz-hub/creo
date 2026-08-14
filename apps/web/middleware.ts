@@ -5,7 +5,7 @@ const PROTECTED_PREFIXES = ["/portal", "/dashboard", "/admin", "/kpi", "/sales",
 
 const PUBLIC_ROUTES = ["/forgot-password", "/reset-password"];
 
-const UNRESTRICTED_PORTAL_ROUTES = ["/portal", "/portal/support"];
+const UNRESTRICTED_PORTAL_ROUTES = ["/portal", "/portal/support", "/portal/account"];
 
 function isUnrestrictedPortalRoute(pathname: string): boolean {
   return UNRESTRICTED_PORTAL_ROUTES.some(
@@ -57,9 +57,9 @@ function canAccessRoute(role: string, pathname: string): boolean {
   return false;
 }
 
-async function fetchUserProfile(accessToken: string): Promise<{ role: string; account_status: string; onboarding_stage: number } | null> {
+async function fetchUserProfile(accessToken: string): Promise<{ role: string; account_status: string; onboarding_stage: number } | "network_error" | null> {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const apiUrl = process.env.BACKEND_API_URL || "http://127.0.0.1:8000";
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
@@ -67,11 +67,15 @@ async function fetchUserProfile(accessToken: string): Promise<{ role: string; ac
       signal: controller.signal,
     });
     clearTimeout(timeout);
-    if (!res.ok) return null;
+    if (!res.ok) {
+      if (res.status >= 500) return "network_error"; // MW-05: Don't treat 500 as unauthorized
+      return null;
+    }
     const data = await res.json();
     return { role: data.role ?? "client", account_status: data.account_status ?? "pending_verification", onboarding_stage: data.onboarding_stage ?? 1 };
-  } catch {
-    return null;
+  } catch (err: any) {
+    // MW-05: Aborts, timeouts, network issues, and JSON parse failures are all network errors, not authorization failures
+    return "network_error";
   }
 }
 
@@ -126,6 +130,14 @@ export async function middleware(request: NextRequest) {
     const metadataRole = (user.user_metadata?.role as string) ?? "client";
     const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
     const profile = accessToken ? await fetchUserProfile(accessToken) : null;
+
+    if (profile === "network_error") {
+      return new NextResponse(
+        "Backend server is temporarily unavailable. Please try again later.",
+        { status: 503, headers: { "Retry-After": "30" } }
+      );
+    }
+
     const role = resolveRole(metadataRole, profile?.role ?? null);
 
     if (!canAccessRoute(role, pathname)) {
@@ -143,11 +155,18 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Authenticated user on login/signup → redirect to their home
   if (user && (pathname === "/login" || pathname === "/signup")) {
     const metadataRole = (user.user_metadata?.role as string) ?? "client";
     const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
     const profile = accessToken ? await fetchUserProfile(accessToken) : null;
+
+    if (profile === "network_error") {
+      return new NextResponse(
+        "Backend server is temporarily unavailable. Please try again later.",
+        { status: 503, headers: { "Retry-After": "30" } }
+      );
+    }
+
     const role = resolveRole(metadataRole, profile?.role ?? null);
     const url = request.nextUrl.clone();
     url.pathname = getHome(role);

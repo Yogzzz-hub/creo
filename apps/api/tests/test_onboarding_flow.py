@@ -117,9 +117,9 @@ class TestOnboardingFlow:
                 fake_task = MagicMock()
                 fake_task.delay = MagicMock()
 
-                import routers.questionnaires as _qn_module
-                _original = getattr(_qn_module, "generate_ai_analysis", None)
-                setattr(_qn_module, "generate_ai_analysis", fake_task)
+                import workers.ai_tasks as _ai_tasks
+                _original = getattr(_ai_tasks, "generate_ai_analysis", None)
+                setattr(_ai_tasks, "generate_ai_analysis", fake_task)
 
                 mock_ai_mod = MagicMock()
                 mock_ai_mod.generate_ai_analysis = fake_task
@@ -127,10 +127,10 @@ class TestOnboardingFlow:
 
                 import sys as _sys
                 _old_modules = {}
-                for key in ("services.ai_analysis", "workers.onboarding_tasks", "openai"):
+                for key in ("services.ai_analysis", "workers.ai_tasks", "openai"):
                     _old_modules[key] = _sys.modules.get(key)
                 _sys.modules["services.ai_analysis"] = mock_svc
-                _sys.modules["workers.onboarding_tasks"] = mock_ai_mod
+                _sys.modules["workers.ai_tasks"] = mock_ai_mod
                 _sys.modules["openai"] = mock_svc
 
                 try:
@@ -159,10 +159,10 @@ class TestOnboardingFlow:
                     fake_task.delay.assert_called_once()
                 finally:
                     if _original is not None:
-                        setattr(_qn_module, "generate_ai_analysis", _original)
+                        setattr(_ai_tasks, "generate_ai_analysis", _original)
                     else:
                         try:
-                            delattr(_qn_module, "generate_ai_analysis")
+                            delattr(_ai_tasks, "generate_ai_analysis")
                         except AttributeError:
                             pass
                     for key, val in _old_modules.items():

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from core.exceptions import limiter
-from core.security import require_client
+from core.security import require_active_client
 from models.questionnaire import Questionnaire
 from models.user import User
 from schemas.questionnaire import (
@@ -115,7 +115,7 @@ def build_status_response(
 async def submit_questionnaire(
     request: Request,
     payload: QuestionnaireCreate,
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -161,6 +161,11 @@ async def submit_questionnaire(
 
     db.add(questionnaire)
 
+    # Idempotently advance onboarding stage to 4 (Building your custom dashboard)
+    if current_user.onboarding_stage < 4:
+        current_user.onboarding_stage = 4
+        db.add(current_user)
+
     await db.commit()
     await db.refresh(questionnaire)
 
@@ -188,7 +193,7 @@ async def submit_questionnaire(
     response_model=QuestionnaireOut,
 )
 async def get_questionnaire(
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -214,7 +219,7 @@ async def get_questionnaire(
     response_model=QuestionnaireStatusResponse,
 )
 async def get_questionnaire_status(
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -243,7 +248,7 @@ async def get_questionnaire_status(
 async def update_questionnaire(
     request: Request,
     payload: QuestionnaireUpdate,
-    current_user: Annotated[User, Depends(require_client)],
+    current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
     """

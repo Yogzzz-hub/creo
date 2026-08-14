@@ -14,7 +14,9 @@ from models.addon import Addon
 from models.enums import AccountStatus, AddonStatus
 from models.subscription import Subscription
 from models.user import User
+from schemas.webhooks import SupabaseSmsPayload
 from services.payments import verify_razorpay_signature, verify_stripe_signature
+from services.whatsapp import send_otp_sms
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +50,10 @@ async def _activate_user_account(db: AsyncSession, user_id: str, subscription_id
 
     if user.account_status != AccountStatus.active:
         user.account_status = AccountStatus.active
+        # Idempotently advance onboarding stage to 3 (Post-Payment / Questionnaire Pending)
+        # We use < 3 to ensure we don't accidentally revert a user who already finished the questionnaire (stage 4 or 5)
+        if user.onboarding_stage < 3:
+            user.onboarding_stage = 3
         db.add(user)
 
     subscription.status = "active"
@@ -208,6 +214,44 @@ async def razorpay_webhook(request: Request):
     return {"status": "ok"}
 
 
+@router.post("/sms")
+@limiter.limit("50/minute")
+async def supabase_sms_webhook(request: Request, payload: SupabaseSmsPayload):
+    """
+    Webhook triggered by Supabase Custom SMS Provider.
+    Receives phone and OTP, and forwards it to MSG91.
+    """
+    # Simple authorization: check if the request provides the Supabase Service Role Key
+    auth_header = request.headers.get("Authorization", "")
+    expected_token = f"Bearer {settings.SUPABASE_SERVICE_ROLE_KEY}"
+
+    if auth_header != expected_token:
+        logger.warning("Unauthorized access attempt to SMS webhook")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization token"
+        )
+
+    phone = payload.phone
+    if phone.startswith("+"):
+        phone = phone[1:]
+
+    try:
+        await send_otp_sms(
+            phone_number=phone,
+            otp=payload.otp,
+            country_code=""
+        )
+        logger.info("Successfully forwarded OTP via MSG91 to %s", phone)
+    except Exception as exc:
+        logger.error("Failed to forward OTP via MSG91: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to send SMS via provider"
+        )
+
+    return {"status": "ok"}
+
 @router.post("/stripe")
 @limiter.limit("100/minute")
 async def stripe_webhook(request: Request):
@@ -235,7 +279,13 @@ async def stripe_webhook(request: Request):
         try:
             if event.type == "invoice.payment_succeeded":
                 invoice = event.data.object
-                stripe_subscription_id = invoice.subscription
+                stripe_subscription_id = getattr(invoice, "subscription", None)
+                if not stripe_subscription_id:
+                    parent = getattr(invoice, "parent", None)
+                    if parent:
+                        sub_details = getattr(parent, "subscription_details", None)
+                        if sub_details:
+                            stripe_subscription_id = getattr(sub_details, "subscription", None)
 
                 if stripe_subscription_id:
                     subscription = await _find_subscription_by_gateway_id(
@@ -252,7 +302,13 @@ async def stripe_webhook(request: Request):
 
             elif event.type == "invoice.payment_failed":
                 invoice = event.data.object
-                stripe_subscription_id = invoice.subscription
+                stripe_subscription_id = getattr(invoice, "subscription", None)
+                if not stripe_subscription_id:
+                    parent = getattr(invoice, "parent", None)
+                    if parent:
+                        sub_details = getattr(parent, "subscription_details", None)
+                        if sub_details:
+                            stripe_subscription_id = getattr(sub_details, "subscription", None)
 
                 if stripe_subscription_id:
                     subscription = await _find_subscription_by_gateway_id(

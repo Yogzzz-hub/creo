@@ -38,6 +38,7 @@ def create_mock_user(
     user.id = str(uuid.uuid4())
     user.auth_id = auth_id or str(uuid.uuid4())
     user.email = email or f"{role.value}@test.com"
+    user.onboarding_stage = 3
     user.full_name = full_name
     user.role = role
     user.account_status = account_status
@@ -48,6 +49,8 @@ def create_mock_user(
     user.two_fa_enabled = False
     user.instagram_access_token = None
     user.instagram_user_id = None
+    user.instagram_username = None
+    user.instagram_token_expires_at = None
     user.razorpay_customer_id = None
     user.stripe_customer_id = None
     return user

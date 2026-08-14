@@ -37,12 +37,13 @@ async def exchange_instagram_token(code: str, redirect_uri: str) -> dict:
     """
     async with httpx.AsyncClient(timeout=30.0) as client:
         short_lived_token = await _get_short_lived_token(client, code, redirect_uri)
-        long_lived_token = await _get_long_lived_token(client, short_lived_token)
+        long_lived_token, expires_in = await _get_long_lived_token(client, short_lived_token)
         ig_account = await _resolve_instagram_business_account(client, long_lived_token)
         return {
             "access_token": long_lived_token,
             "instagram_user_id": ig_account.get("id") if ig_account else None,
             "instagram_username": ig_account.get("username") if ig_account else None,
+            "expires_in": expires_in,
         }
 
 
@@ -59,7 +60,11 @@ async def _get_short_lived_token(
     }
 
     response = await client.post(url, data=payload)
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        logger.error("Meta OAuth request failed: %s %s", response.status_code, response.text)
+        raise ValueError("Failed to obtain short-lived access token from Meta") from exc
     data = response.json()
 
     access_token = data.get("access_token")
@@ -71,7 +76,7 @@ async def _get_short_lived_token(
     return access_token
 
 
-async def _get_long_lived_token(client: httpx.AsyncClient, short_lived_token: str) -> str:
+async def _get_long_lived_token(client: httpx.AsyncClient, short_lived_token: str) -> tuple[str, int | str]:
     url = f"{GRAPH_API_BASE}/oauth/access_token"
     payload = {
         "grant_type": "fb_exchange_token",
@@ -94,7 +99,7 @@ async def _get_long_lived_token(client: httpx.AsyncClient, short_lived_token: st
         "Successfully obtained long-lived Instagram access token (expires_in=%s)",
         expires_in,
     )
-    return long_lived_token
+    return long_lived_token, expires_in
 
 
 async def _resolve_instagram_business_account(

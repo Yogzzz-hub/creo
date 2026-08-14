@@ -12,7 +12,7 @@ Updated the frontend to intelligently choose the HTTP method:
 1. **On load**: Fetch questionnaire
    - If 404 (doesn't exist): Set `questionnaireExists = false`
    - If success: Set `questionnaireExists = true`
-2. **On save**: 
+2. **On save**:
    - If `!questionnaireExists`: Use **POST** to create
    - If `questionnaireExists`: Use **PATCH** to update
 
@@ -222,4 +222,3 @@ This fix:
 - ✅ Doesn't break onboarding flow
 - ✅ Doesn't break admin questionnaire override feature
 - ✅ Doesn't affect team member or admin profiles
-

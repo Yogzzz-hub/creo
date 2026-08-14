@@ -130,7 +130,7 @@ export default function ChatPage() {
       file_url: null,
       created_at: new Date().toISOString(),
     };
-    
+
     setMessages((prev) => [...prev, tempMessage]);
     setSending(true);
 
@@ -141,7 +141,7 @@ export default function ChatPage() {
       });
 
       // Replace temp message with actual
-      setMessages((prev) => 
+      setMessages((prev) =>
         prev.map((msg) => msg.id === tempId ? (createdMessage as TicketMessage) : msg)
       );
     } catch (err) {

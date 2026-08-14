@@ -86,12 +86,27 @@ def create_stripe_subscription(user: User, plan: Plan, stripe_customer_id: str) 
         customer=stripe_customer_id,
         items=[{"price": stripe_price.id}],
         payment_behavior="default_incomplete",
+        payment_settings={"save_default_payment_method": "on_subscription"},
         expand=["latest_invoice.payment_intent"],
     )
 
     client_secret = None
-    if subscription.latest_invoice and hasattr(subscription.latest_invoice, "payment_intent"):
-        client_secret = subscription.latest_invoice.payment_intent.client_secret
+    invoice = getattr(subscription, "latest_invoice", None)
+    if invoice:
+        # 1. Try standard fallback if it exists
+        pi = getattr(invoice, "payment_intent", None)
+        if pi and getattr(pi, "client_secret", None):
+            client_secret = pi.client_secret
+
+        # 2. Look up PI manually for this invoice if not found directly
+        if not client_secret:
+            invoice_id = getattr(invoice, "id", invoice) if hasattr(invoice, "id") else invoice
+            pis = stripe.PaymentIntent.list(customer=stripe_customer_id, limit=5)
+            for p in pis.data:
+                pd = getattr(p, "payment_details", {})
+                if pd and getattr(pd, "order_reference", None) == invoice_id:
+                    client_secret = getattr(p, "client_secret", None)
+                    break
 
     return {
         "gateway": "stripe",
@@ -99,11 +114,15 @@ def create_stripe_subscription(user: User, plan: Plan, stripe_customer_id: str) 
         "gateway_customer_id": stripe_customer_id,
         "status": subscription.status,
         "client_secret": client_secret,
-        "current_period_start": datetime.fromtimestamp(
-            subscription.current_period_start, tz=timezone.utc
+        "current_period_start": (
+            datetime.fromtimestamp(getattr(subscription, "current_period_start"), tz=timezone.utc)
+            if getattr(subscription, "current_period_start", None) is not None
+            else datetime.now(timezone.utc)
         ),
-        "current_period_end": datetime.fromtimestamp(
-            subscription.current_period_end, tz=timezone.utc
+        "current_period_end": (
+            datetime.fromtimestamp(getattr(subscription, "current_period_end"), tz=timezone.utc)
+            if getattr(subscription, "current_period_end", None) is not None
+            else datetime.now(timezone.utc)
         ),
     }
 
@@ -171,11 +190,15 @@ def update_stripe_subscription_plan(
         "gateway": "stripe",
         "subscription_id": updated_sub.id,
         "status": updated_sub.status,
-        "current_period_start": datetime.fromtimestamp(
-            updated_sub.current_period_start, tz=timezone.utc
+        "current_period_start": (
+            datetime.fromtimestamp(getattr(updated_sub, "current_period_start"), tz=timezone.utc)
+            if getattr(updated_sub, "current_period_start", None) is not None
+            else datetime.now(timezone.utc)
         ),
-        "current_period_end": datetime.fromtimestamp(
-            updated_sub.current_period_end, tz=timezone.utc
+        "current_period_end": (
+            datetime.fromtimestamp(getattr(updated_sub, "current_period_end"), tz=timezone.utc)
+            if getattr(updated_sub, "current_period_end", None) is not None
+            else datetime.now(timezone.utc)
         ),
     }
 

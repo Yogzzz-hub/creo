@@ -51,7 +51,7 @@ export function DesktopSidebar() {
   const router = useRouter()
   const supabase = createClient()
   const [loggingOut, setLoggingOut] = useState(false)
-  const { accountStatus, onboardingStage } = useSubscription()
+  const { accountStatus, onboardingStage, loading } = useSubscription()
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -72,7 +72,22 @@ export function DesktopSidebar() {
         <nav className="flex flex-1 flex-col gap-1">
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.href, pathname)
-            const locked = !ALWAYS_ALLOWED.includes(item.href) && (accountStatus !== "active" || onboardingStage < 5)
+            const isRestricted = !ALWAYS_ALLOWED.includes(item.href)
+            const locked = isRestricted && !loading && (accountStatus !== "active" || (onboardingStage < 5 && item.href !== "/portal/account"))
+            const isLoadingLink = isRestricted && loading
+
+            if (isLoadingLink) {
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-3 rounded-r-lg px-3 py-2.5 text-sm font-medium border-l-[3px] border-transparent text-[#6BAED6]/70 cursor-wait focus-visible:outline-none"
+                >
+                  <item.icon className="size-4 shrink-0 opacity-50" />
+                  <span className="opacity-50">{item.label}</span>
+                </Link>
+              )
+            }
 
             if (locked) {
               return (
@@ -120,7 +135,7 @@ export function DesktopSidebar() {
 
 export function MobileBottomTabBar() {
   const pathname = usePathname()
-  const { accountStatus, onboardingStage } = useSubscription()
+  const { accountStatus, onboardingStage, loading } = useSubscription()
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-border bg-white px-1 lg:hidden"
@@ -128,7 +143,22 @@ export function MobileBottomTabBar() {
     >
       {BOTTOM_TAB_ITEMS.map((item) => {
         const active = isActive(item.href, pathname)
-        const locked = !ALWAYS_ALLOWED.includes(item.href) && (accountStatus !== "active" || onboardingStage < 5)
+        const isRestricted = !ALWAYS_ALLOWED.includes(item.href)
+        const locked = isRestricted && !loading && (accountStatus !== "active" || (onboardingStage < 5 && item.href !== "/portal/account"))
+        const isLoadingLink = isRestricted && loading
+
+        if (isLoadingLink) {
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex flex-1 flex-col items-center gap-0.5 py-1 text-[10px] font-medium text-gray-300 cursor-wait opacity-50 focus-visible:outline-none"
+            >
+              <item.icon className="size-5" />
+              {item.label}
+            </Link>
+          )
+        }
 
         if (locked) {
           return (

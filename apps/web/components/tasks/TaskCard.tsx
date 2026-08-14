@@ -60,7 +60,7 @@ export function TaskCard({ task }: { task: TaskData }) {
   };
 
   const handleUploadClick = (e: React.MouseEvent) => {
-    e.preventDefault(); 
+    e.preventDefault();
     e.stopPropagation();
     fileInputRef.current?.click();
   };
@@ -129,7 +129,7 @@ export function TaskCard({ task }: { task: TaskData }) {
   };
 
   return (
-    <Card 
+    <Card
       onClick={handleCardClick}
       className={`border-l-4 ${isOverdue ? STATUS_CONFIG.overdue.border : statusConfig.border} transition-shadow hover:shadow-md cursor-pointer`}
     >

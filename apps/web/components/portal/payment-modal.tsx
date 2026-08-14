@@ -74,20 +74,6 @@ export function PaymentModal({ open, onOpenChange, onPaymentSuccess }: PaymentMo
     try {
       if (!user) throw new Error("Not authenticated")
 
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({
-          account_status: "active",
-          onboarding_stage: 3,
-          plan_name: selectedPlan,
-        })
-        .eq("auth_id", user.id)
-
-      if (updateError) {
-        console.error("[payment-modal] DB update failed:", updateError.message, updateError)
-        throw updateError
-      }
-
       toast.success(`${plan.label} plan purchased via ${selectedMethod === "razorpay" ? "Razorpay" : "Stripe"}! Welcome to Creo.`)
       onPaymentSuccess?.()
       onOpenChange(false)
