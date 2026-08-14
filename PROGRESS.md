@@ -117,6 +117,7 @@
 - [x] 5.16 Write OpenAI prompt in services/ai_analysis.py
 - [x] 5.17 Build /onboarding/complete page — confirmation message, animated progress indicator
 - [x] 5.18 Wire questionnaire submission — POST to 5.13, poll for AI completion
+- [x] 5.18a Allow existing clients to update questionnaire responses without forcing social handles and regenerate a fresh AI brand summary from actual questionnaire data
 - [x] 5.19 Add 'Not satisfied with pricing?' link on /onboarding/payment
 - [x] 5.20 Test complete onboarding flow end-to-end
 
@@ -282,3 +283,23 @@
 - [x] Clean up DEBUG: prefixed log messages in core/security.py
 - [x] Fix onboarding wizard flash: add isLoading gate + auto-redirect for fully onboarded users
 - [x] Portal Access Restriction: Restrict active portal access strictly to dashboard and support pages for incomplete accounts
+
+## Feature: Editable Brand Questionnaire & Dynamic AI Regeneration
+
+- [x] Remove 7-day questionnaire lock — clients can edit infinitely
+- [x] Build Brand Profile tab in client account page (/portal/account)
+- [x] Implement continuous questionnaire viewing with full AI analysis display
+- [x] Build editable form with all questionnaire fields
+- [x] Implement smart HTTP method selection (POST for new, PATCH for updates)
+- [x] Add frontend validation for all required fields
+- [x] Implement graceful 404 handling (no questionnaire yet = empty form)
+- [x] Implement AI regeneration trigger on questionnaire updates
+- [x] Add PATCH endpoint /api/v1/questionnaire for client updates
+- [x] Add Celery task retry and error handling with personalized fallback
+- [x] Add 429 quota handling with QuotaExhausted429Error
+- [x] Implement personalized fallback analysis (not generic templates)
+- [x] Remove unused openai import (using Dify API only)
+- [x] Add comprehensive frontend validation with friendly error messages
+- [x] Fix async error handling in refetch after save
+- [x] Verify all required fields: industry, business_description, primary_goal, brand_tone, target_audience, social_handles
+- [x] Verify AI analysis includes: core identity, brand tone, content themes, audience persona, goal alignment

@@ -11,7 +11,9 @@ from models.enums import DeliverableStatus, TicketStatus
 from models.questionnaire import Questionnaire
 from models.ticket import Ticket
 from models.user import User
+from models.announcement import Announcement
 from schemas.portal import DashboardResponse, SubscriptionStatusResponse
+from schemas.announcement import AnnouncementResponse
 
 router = APIRouter(prefix="/api/v1/portal", tags=["portal-dashboard"])
 
@@ -64,3 +66,29 @@ async def get_subscription_status(
     current_user: Annotated[User, Depends(require_client)],
 ):
     return SubscriptionStatusResponse(account_status=current_user.account_status)
+
+
+@router.get("/announcements", response_model=list[AnnouncementResponse])
+async def get_portal_announcements(
+    current_user: Annotated[User, Depends(require_client)],
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Announcement).where(
+            Announcement.type.in_(["maintenance", "broadcast"])
+        ).order_by(Announcement.created_at.desc())
+    )
+    announcements = result.scalars().all()
+
+    return [
+        AnnouncementResponse(
+            id=a.id,
+            author_id=a.author_id,
+            title=a.title,
+            content=a.content,
+            type=a.type,
+            target_departments=a.target_departments,
+            created_at=a.created_at,
+        )
+        for a in announcements
+    ]

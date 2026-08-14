@@ -248,9 +248,8 @@ async def update_task_status(
             new_status=payload.status.value if hasattr(payload.status, "value") else str(payload.status),
         )
         db.add(history)
-        
         task.status = payload.status
-    task.status = payload.status
+
     await db.commit()
     await db.refresh(task)
 
