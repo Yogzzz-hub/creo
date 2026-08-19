@@ -87,26 +87,24 @@ def create_stripe_subscription(user: User, plan: Plan, stripe_customer_id: str) 
         items=[{"price": stripe_price.id}],
         payment_behavior="default_incomplete",
         payment_settings={"save_default_payment_method": "on_subscription"},
-        expand=["latest_invoice.payment_intent"],
+        expand=["latest_invoice.payment_intent", "pending_setup_intent"],
     )
 
     client_secret = None
-    invoice = getattr(subscription, "latest_invoice", None)
-    if invoice:
-        # 1. Try standard fallback if it exists
-        pi = getattr(invoice, "payment_intent", None)
-        if pi and getattr(pi, "client_secret", None):
-            client_secret = pi.client_secret
+    
+    psi = getattr(subscription, "pending_setup_intent", None)
+    if psi and getattr(psi, "client_secret", None):
+        client_secret = psi.client_secret
 
-        # 2. Look up PI manually for this invoice if not found directly
-        if not client_secret:
-            invoice_id = getattr(invoice, "id", invoice) if hasattr(invoice, "id") else invoice
+    if not client_secret:
+        try:
             pis = stripe.PaymentIntent.list(customer=stripe_customer_id, limit=5)
             for p in pis.data:
-                pd = getattr(p, "payment_details", {})
-                if pd and getattr(pd, "order_reference", None) == invoice_id:
-                    client_secret = getattr(p, "client_secret", None)
+                if getattr(p, "client_secret", None):
+                    client_secret = p.client_secret
                     break
+        except Exception:
+            pass
 
     return {
         "gateway": "stripe",

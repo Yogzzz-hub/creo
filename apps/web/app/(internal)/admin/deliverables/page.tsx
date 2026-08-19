@@ -287,7 +287,7 @@ export default function DeliverablesPage() {
               </TableHeader>
               <TableBody>
                 {filtered.map((d) => {
-                  const statusCfg = STATUS_CONFIG[d.status]
+                  const statusCfg = STATUS_CONFIG[d.status] || { label: d.status, className: "bg-gray-100 text-gray-600 border-gray-200" }
                   const typeCfg = TYPE_CONFIG[d.type]
                   return (
                     <TableRow key={d.id}>

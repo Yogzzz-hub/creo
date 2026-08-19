@@ -119,7 +119,7 @@ async def _process_and_save_analysis(user_id: str) -> None:
             # 2. Call Dify-backed AI analysis
             sys_prompt, user_prompt = generate_brand_analysis_prompt(q_data)
             try:
-                ai_result = call_openai_gpt4o(sys_prompt, user_prompt)
+                ai_result = await asyncio.to_thread(call_openai_gpt4o, sys_prompt, user_prompt)
             except (QuotaExhausted429Error, ValueError, RuntimeError) as exc:
                 logger.warning(
                     "[Celery] Dify AI failed for user %s: %s. Applying immediate local fallback without retries.",

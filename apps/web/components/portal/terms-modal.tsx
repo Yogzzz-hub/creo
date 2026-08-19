@@ -31,9 +31,15 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
   const [checked, setChecked] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false)
 
-
-
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current) return
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current
+    if (scrollHeight - scrollTop - clientHeight < 10) {
+      setHasScrolledToBottom(true)
+    }
+  }, [])
   const handleAccept = async () => {
     setIsSubmitting(true)
     setError(null)
@@ -111,6 +117,7 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
 
         <div
           ref={scrollRef}
+          onScroll={handleScroll}
           className="h-[320px] overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm leading-relaxed text-gray-700"
         >
           <div className="space-y-5">
@@ -270,15 +277,18 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
           </div>
         </div>
 
-        <label className="flex items-start gap-3 cursor-pointer select-none">
+        <label className={`flex items-start gap-3 select-none ${hasScrolledToBottom ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
           <input
             type="checkbox"
             checked={checked}
+            disabled={!hasScrolledToBottom}
             onChange={(e) => setChecked(e.target.checked)}
-            className="mt-0.5 size-4 shrink-0 rounded border-gray-300 accent-[#2B7BC4]"
+            className="mt-0.5 size-4 shrink-0 rounded border-gray-300 accent-[#2B7BC4] disabled:opacity-50"
           />
           <span className="text-sm text-gray-700">
-            I have read and agree to the Terms and Conditions
+            {hasScrolledToBottom 
+              ? "I have read and agree to the Terms and Conditions"
+              : "Please scroll to the bottom to accept the terms"}
           </span>
         </label>
 
@@ -300,7 +310,7 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
                 Accepting...
               </>
             ) : (
-              "Accept & Continue to Payment"
+              "Accept & Continue"
             )}
           </Button>
         </DialogFooter>

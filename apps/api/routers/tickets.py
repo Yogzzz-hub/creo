@@ -124,12 +124,20 @@ async def _generate_ticket_number(
 ) -> str:
 
     result = await db.execute(
-        select(func.count(Ticket.id))
+        select(Ticket.ticket_number).order_by(Ticket.ticket_number.desc()).limit(1)
     )
 
-    count = result.scalar() or 0
-
-    return f"TKT-{count + 1:04d}"
+    last_ticket = result.scalar_one_or_none()
+    if not last_ticket:
+        return "TKT-0001"
+        
+    try:
+        last_num = int(last_ticket.replace("TKT-", ""))
+        return f"TKT-{last_num + 1:04d}"
+    except (ValueError, AttributeError):
+        # Fallback if malformed
+        import uuid
+        return f"TKT-{str(uuid.uuid4())[:8].upper()}"
 
 
 @router.get(

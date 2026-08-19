@@ -336,6 +336,118 @@ def call_dify_ai_analysis(
     }
 
 
+def call_gemini_ai_analysis(
+    system_message: str,
+    user_message: str,
+) -> dict:
+    if not settings.GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY is not configured in settings")
+
+    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
+
+    payload = {
+        "systemInstruction": {
+            "parts": [{"text": system_message}]
+        },
+        "contents": [
+            {
+                "role": "user",
+                "parts": [{"text": user_message}]
+            }
+        ],
+        "generationConfig": {
+            "responseMimeType": "application/json"
+        }
+    }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    logger.info("[gemini_ai_analysis] Sending request to Gemini API")
+
+    try:
+        with httpx.Client(timeout=60.0) as client:
+            response = client.post(
+                gemini_url,
+                json=payload,
+                headers=headers,
+            )
+    except httpx.RequestError as exc:
+        logger.exception("[gemini_ai_analysis] Request to Gemini failed: %s", exc)
+        raise RuntimeError(f"Unable to connect to Gemini API: {exc}") from exc
+
+    if response.status_code != 200:
+        logger.error("[gemini_ai_analysis] Gemini returned status %d: %s", response.status_code, response.text[:500])
+        if response.status_code == 429:
+            from workers.ai_tasks import QuotaExhausted429Error
+            raise QuotaExhausted429Error("Gemini API quota exhausted. Immediate fallback will be applied.")
+        raise RuntimeError(f"Gemini API error {response.status_code}: {response.text[:200]}")
+
+    try:
+        data = response.json()
+    except json.JSONDecodeError as exc:
+        logger.error("[gemini_ai_analysis] Gemini returned invalid JSON: %s", response.text[:500])
+        raise ValueError("Gemini returned an invalid JSON response.") from exc
+
+    try:
+        answer_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+    except (KeyError, IndexError) as exc:
+        logger.error("[gemini_ai_analysis] Gemini response missing expected fields: %s", data)
+        raise ValueError("Gemini returned an unexpected response format.") from exc
+
+    if not answer_text:
+        logger.error("[gemini_ai_analysis] Gemini returned an empty answer.")
+        raise ValueError("Gemini returned an empty response.")
+
+    analysis_dict = None
+
+    # 1. Attempt raw JSON parsing
+    try:
+        analysis_dict = json.loads(answer_text)
+    except json.JSONDecodeError:
+        pass
+
+    # 2. Attempt Markdown code block extraction
+    if analysis_dict is None:
+        match = re.search(r"```(?:json)?\s*(.*?)\s*```", answer_text, re.DOTALL)
+        if match:
+            try:
+                analysis_dict = json.loads(match.group(1).strip())
+            except json.JSONDecodeError:
+                pass
+
+    # 3. Fallback to scanning the string for the first valid JSON object using raw_decode
+    if analysis_dict is None:
+        decoder = json.JSONDecoder()
+        idx = 0
+        while idx < len(answer_text):
+            brace_idx = answer_text.find('{', idx)
+            if brace_idx == -1:
+                break
+            try:
+                obj, end_idx = decoder.raw_decode(answer_text[brace_idx:])
+                if isinstance(obj, dict):
+                    analysis_dict = obj
+                    break
+                idx = brace_idx + end_idx
+            except json.JSONDecodeError:
+                idx = brace_idx + 1
+
+    if analysis_dict is None or not isinstance(analysis_dict, dict):
+        logger.error("[gemini_ai_analysis] Failed to parse JSON from Gemini answer. Snippet: %s", answer_text[:500])
+        raise ValueError("Gemini returned malformed JSON content that could not be parsed.")
+
+    usage = data.get("usageMetadata", {})
+
+    return {
+        "analysis": analysis_dict,
+        "prompt_tokens": usage.get("promptTokenCount", 0),
+        "completion_tokens": usage.get("candidatesTokenCount", 0),
+        "total_tokens": usage.get("totalTokenCount", 0),
+    }
+
+
 def call_openai_gpt4o(
     system_message: str,
     user_message: str,
@@ -343,10 +455,15 @@ def call_openai_gpt4o(
     """
     Backward-compatible alias.
 
-    Brand analysis requests are routed through Dify AI.
+    Brand analysis requests are routed through Gemini AI.
     """
 
-    return call_dify_ai_analysis(
+    # return call_dify_ai_analysis(
+    #     system_message,
+    #     user_message,
+    # )
+    
+    return call_gemini_ai_analysis(
         system_message,
         user_message,
     )

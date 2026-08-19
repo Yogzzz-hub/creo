@@ -168,7 +168,6 @@ export default function PortalDashboard() {
   function handleTermsAccepted() {
     setTermsAccepted(true)
     setTermsModalOpen(false)
-    router.push("/onboarding/payment")
   }
 
   return (
@@ -272,20 +271,8 @@ export default function PortalDashboard() {
         )}
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Active Campaigns"
-            value="0"
-            description="Campaigns running"
-            icon={<Activity className="size-4 text-muted-foreground" />}
-            trend="+0%"
-          />
-          <StatCard
-            title="Total Leads"
-            value="0"
-            description="Leads generated"
-            icon={<TrendingUp className="size-4 text-muted-foreground" />}
-            trend="+0%"
-          />
+
+
           <StatCard
             title="Upcoming Posts"
             value={data.pending_deliverable_count.toString()}
@@ -307,9 +294,6 @@ export default function PortalDashboard() {
                 <CardTitle>Recent Activity</CardTitle>
                 <CardDescription>Your latest workspace updates</CardDescription>
               </div>
-              <Button variant="outline" size="sm" className="h-8" >
-                <a href="/portal/activity">View All</a>
-              </Button>
             </CardHeader>
             <CardContent>
               <div className="space-y-8">
@@ -419,13 +403,7 @@ export default function PortalDashboard() {
                 description="Talk with our team"
                 href="/portal/support"
               />
-              <QuickLink
-                icon={<BarChart className="size-4" />}
-                title="Analytics"
-                description="View campaign performance"
-                href="/portal/analytics"
-                disabled={effectiveStage < 5}
-              />
+
             </CardContent>
             {!data.brand_summary && effectiveStage >= 4 && (
               <CardFooter>

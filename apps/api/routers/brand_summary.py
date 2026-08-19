@@ -94,15 +94,22 @@ async def generate_brand_summary(
 
     q_data = await _build_questionnaire_data(questionnaire)
 
-    if settings.DIFY_API_KEY or settings.OPENAI_API_KEY:
+    if settings.GEMINI_API_KEY or settings.DIFY_API_KEY or settings.OPENAI_API_KEY:
         try:
             from services.ai_analysis import (
-                call_dify_ai_analysis,
+                # call_dify_ai_analysis,
+                call_gemini_ai_analysis,
                 generate_brand_analysis_prompt,
             )
 
             sys_prompt, user_prompt = generate_brand_analysis_prompt(q_data)
-            ai_result = call_dify_ai_analysis(sys_prompt, user_prompt, user_id=str(current_user.id))
+            
+            # Use Gemini AI directly if configured, else fall back to Dify (commented)
+            if settings.GEMINI_API_KEY:
+                ai_result = call_gemini_ai_analysis(sys_prompt, user_prompt)
+            # else:
+            #     ai_result = call_dify_ai_analysis(sys_prompt, user_prompt, user_id=str(current_user.id))
+
             analysis = ai_result.get("analysis", {})
             brand_summary = analysis.get("ai_summary_line", "Analysis complete")
 

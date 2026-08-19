@@ -191,7 +191,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     )
   }
 
-  const statusCfg = STATUS_CONFIG[ticket.status]
+  const statusCfg = STATUS_CONFIG[ticket.status] || { label: ticket.status, className: "bg-gray-100 text-gray-600 border-gray-200", icon: Clock }
 
   return (
     <div className="space-y-6">

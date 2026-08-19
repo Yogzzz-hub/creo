@@ -149,6 +149,11 @@ export async function middleware(request: NextRequest) {
     // Portal restriction: non-active clients or those with incomplete onboarding can only access dashboard & support
     const isFullyActive = profile?.account_status === "active" && profile?.onboarding_stage === 5;
     if (role === "client" && pathname.startsWith("/portal") && !isUnrestrictedPortalRoute(pathname) && !isFullyActive) {
+      // The user has paid and is active, allow them to view their payments
+      if (pathname.startsWith("/portal/payments") && profile?.account_status === "active") {
+        return supabaseResponse;
+      }
+
       const url = request.nextUrl.clone();
       url.pathname = "/portal";
       return NextResponse.redirect(url);

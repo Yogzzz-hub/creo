@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +26,7 @@ router = APIRouter(
 )
 
 
-def trigger_ai_analysis(user_id: str) -> bool:
+def trigger_ai_analysis(user_id: str, background_tasks: BackgroundTasks = None) -> bool:
     """
     Trigger the background AI analysis task.
 
@@ -34,40 +34,48 @@ def trigger_ai_analysis(user_id: str) -> bool:
     locally as a fallback when Celery/Redis is temporarily unavailable.
     """
     try:
-        from workers.ai_tasks import generate_ai_analysis
+        from workers.ai_tasks import generate_ai_analysis, _process_and_save_analysis
+        from workers.celery_app import celery_app
+        from core.config import settings
+        import redis
 
-        generate_ai_analysis.delay(str(user_id))
+        active_workers = None
 
-        logger.info(
-            "AI analysis task dispatched successfully for user %s",
-            user_id,
-        )
+        # 1. Fast check if Redis is reachable to avoid Celery/Kombu hanging
+        try:
+            r = redis.Redis.from_url(
+                settings.CELERY_BROKER_URL,
+                socket_connect_timeout=0.1,
+                socket_timeout=0.1
+            )
+            r.ping()
 
-        return True
+            # 2. Redis is up, check if any workers are actively listening
+            active_workers = celery_app.control.ping(timeout=0.1)
+        except Exception as conn_exc:
+            logger.warning("Redis/Celery broker unavailable: %s", conn_exc)
+
+        if active_workers:
+            # Worker is available, dispatch asynchronously
+            generate_ai_analysis.delay(str(user_id))
+            logger.info("AI analysis task dispatched successfully for user %s", user_id)
+            return True
+        else:
+            logger.warning("No active Celery workers found. Falling back to BackgroundTasks.")
+            if background_tasks:
+                background_tasks.add_task(_process_and_save_analysis, str(user_id))
+                logger.info("AI analysis queued as BackgroundTask for user %s", user_id)
+            else:
+                logger.error("No Celery workers and no BackgroundTasks provided!")
+            return True
 
     except Exception as exc:
         logger.exception(
-            "Failed to dispatch AI analysis task for user %s: %s",
+            "Failed to trigger AI analysis (async or fallback) for user %s: %s",
             user_id,
             exc,
         )
-
-        try:
-            from workers.ai_tasks import generate_ai_analysis
-
-            generate_ai_analysis(str(user_id))
-            logger.info(
-                "AI analysis executed synchronously as fallback for user %s",
-                user_id,
-            )
-            return True
-        except Exception as fallback_exc:
-            logger.exception(
-                "Synchronous AI fallback also failed for user %s: %s",
-                user_id,
-                fallback_exc,
-            )
-            return False
+        return False
 
 
 async def get_client_questionnaire(
@@ -116,6 +124,7 @@ async def submit_questionnaire(
     request: Request,
     payload: QuestionnaireCreate,
     current_user: Annotated[User, Depends(require_active_client)],
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -171,7 +180,8 @@ async def submit_questionnaire(
 
     # Analysis is generated from the newly saved questionnaire.
     dispatched = trigger_ai_analysis(
-        str(current_user.id)
+        str(current_user.id),
+        background_tasks
     )
 
     if not dispatched:
@@ -249,6 +259,7 @@ async def update_questionnaire(
     request: Request,
     payload: QuestionnaireUpdate,
     current_user: Annotated[User, Depends(require_active_client)],
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -318,7 +329,8 @@ async def update_questionnaire(
 
     # Trigger analysis using the latest saved questionnaire data.
     dispatched = trigger_ai_analysis(
-        str(current_user.id)
+        str(current_user.id),
+        background_tasks
     )
 
     if not dispatched:

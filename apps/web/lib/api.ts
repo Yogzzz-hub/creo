@@ -36,6 +36,7 @@ export async function apiFetch(
     if (expiresAt - now < 30) {
       const { data: refreshed, error } = await supabase.auth.refreshSession()
       if (error || !refreshed.session) {
+        await supabase.auth.signOut()
         throw new ApiError(401, "Session expired. Please sign in again.")
       }
       return refreshed.session.access_token
@@ -64,9 +65,11 @@ export async function apiFetch(
       const { data: refreshed } = await supabase.auth.refreshSession()
       if (refreshed.session?.access_token) {
         res = await doFetch(refreshed.session.access_token)
+      } else {
+        await supabase.auth.signOut()
       }
     } catch {
-      // Refresh failed — fall through to error handling below
+      await supabase.auth.signOut()
     }
   }
 

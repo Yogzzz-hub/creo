@@ -263,7 +263,7 @@ export default function SupportTicketsPage() {
               </TableHeader>
               <TableBody>
                 {filtered.map((ticket) => {
-                  const statusCfg = STATUS_CONFIG[ticket.status]
+                  const statusCfg = STATUS_CONFIG[ticket.status] || { label: ticket.status, className: "bg-gray-100 text-gray-600 border-gray-200", icon: Clock }
                   const StatusIcon = statusCfg.icon
                   return (
                     <TableRow key={ticket.id}>

@@ -188,10 +188,32 @@ async def create_subscription(
     existing_subscription = existing_result.scalar_one_or_none()
 
     if existing_subscription:
+        client_secret = None
+        if existing_subscription.gateway == PaymentGateway.stripe:
+            try:
+                import stripe
+                sub = await run_in_threadpool(
+                    stripe.Subscription.retrieve,
+                    existing_subscription.gateway_subscription_id,
+                    expand=["latest_invoice.payment_intent", "pending_setup_intent"]
+                )
+                psi = getattr(sub, "pending_setup_intent", None)
+                if psi and getattr(psi, "client_secret", None):
+                    client_secret = psi.client_secret
+                if not client_secret:
+                    # Fallback for Stripe API version 2025-03-31+
+                    pis = stripe.PaymentIntent.list(customer=sub.customer, limit=5)
+                    for p in pis.data:
+                        if getattr(p, "client_secret", None):
+                            client_secret = p.client_secret
+                            break
+            except Exception as e:
+                logger.error(f"Failed to fetch existing subscription: {e}")
+
         return CreateSubscriptionResponse(
             gateway=existing_subscription.gateway.value,
             subscription_id=existing_subscription.gateway_subscription_id,
-            client_secret=None,
+            client_secret=client_secret,
             gateway_customer_id=existing_subscription.gateway_customer_id,
         )
 

@@ -296,8 +296,8 @@ export default function TasksPage() {
               </TableHeader>
               <TableBody>
                 {filtered.map((task) => {
-                  const statusCfg = STATUS_CONFIG[task.status]
-                  const priorityCfg = PRIORITY_CONFIG[task.priority]
+                  const statusCfg = STATUS_CONFIG[task.status] || { label: task.status, className: "bg-gray-100 text-gray-600 border-gray-200" }
+                  const priorityCfg = PRIORITY_CONFIG[task.priority] || { label: task.priority, className: "bg-gray-100 text-gray-600 border-gray-200" }
                   return (
                     <TableRow key={task.id}>
                       <TableCell>

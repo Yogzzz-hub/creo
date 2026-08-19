@@ -73,7 +73,10 @@ export function DesktopSidebar() {
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.href, pathname)
             const isRestricted = !ALWAYS_ALLOWED.includes(item.href)
-            const locked = isRestricted && !loading && (accountStatus !== "active" || (onboardingStage < 5 && item.href !== "/portal/account"))
+            const locked = isRestricted && !loading && (
+              accountStatus !== "active" ||
+              (onboardingStage < 5 && item.href !== "/portal/account" && item.href !== "/portal/payments")
+            )
             const isLoadingLink = isRestricted && loading
 
             if (isLoadingLink) {
@@ -144,7 +147,10 @@ export function MobileBottomTabBar() {
       {BOTTOM_TAB_ITEMS.map((item) => {
         const active = isActive(item.href, pathname)
         const isRestricted = !ALWAYS_ALLOWED.includes(item.href)
-        const locked = isRestricted && !loading && (accountStatus !== "active" || (onboardingStage < 5 && item.href !== "/portal/account"))
+        const locked = isRestricted && !loading && (
+          accountStatus !== "active" ||
+          (onboardingStage < 5 && item.href !== "/portal/account" && item.href !== "/portal/payments")
+        )
         const isLoadingLink = isRestricted && loading
 
         if (isLoadingLink) {
