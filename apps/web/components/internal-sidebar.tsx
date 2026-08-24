@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useSession } from "@/context/session-context";
 import {
   LayoutDashboard,
   CheckSquare,
@@ -11,8 +12,7 @@ import {
   Users,
   LogOut,
   FileText,
-  DollarSign,
-  BarChart3,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,63 +28,85 @@ const NAV_ITEMS: NavItem[] = [
     label: "My Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["team_member", "team_lead"],
+    roles: ["team_member", "team_lead", "admin", "super_admin"],
   },
   {
     label: "My Tasks",
     href: "/dashboard/tasks",
     icon: CheckSquare,
-    roles: ["team_member", "team_lead"],
+    roles: ["team_member", "team_lead", "admin", "super_admin"],
   },
   {
     label: "My Calendar",
     href: "/dashboard/calendar",
     icon: Calendar,
-    roles: ["team_member", "team_lead"],
+    roles: ["team_member", "team_lead", "admin", "super_admin"],
+  },
+  {
+    label: "Support / Live Chat",
+    href: "/dashboard/chat",
+    icon: MessageSquare,
+    roles: ["team_member", "team_lead", "admin", "super_admin"],
   },
   {
     label: "Leave Requests",
     href: "/dashboard/leave",
     icon: FileText,
-    roles: ["team_member", "team_lead"],
+    roles: ["team_member", "team_lead", "admin", "super_admin"],
   },
   {
     label: "Team Overview",
     href: "/dashboard/team",
     icon: Users,
-    roles: ["team_lead"],
-  },
-  {
-    label: "KPI Dashboard",
-    href: "/admin/kpi",
-    icon: BarChart3,
-    roles: ["team_lead"],
-  },
-  {
-    label: "Sales",
-    href: "/dashboard/sales",
-    icon: DollarSign,
-    roles: ["team_lead", "sales"],
+    roles: ["team_lead", "admin", "super_admin"],
   },
 ];
 
 export function InternalSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { token, loading: sessionLoading } = useSession();
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (sessionLoading) return;
+
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }: { data: { user: { user_metadata?: Record<string, string>; app_metadata?: Record<string, string> } | null } }) => {
-      const userRole: string | null =
-        (data.user?.user_metadata?.role as string) ??
-        (data.user?.app_metadata?.role as string) ??
-        null;
-      setRole(userRole);
-      setLoading(false);
-    });
-  }, []);
+
+    async function fetchRole() {
+      try {
+        let apiRole: string | null = null;
+        if (token) {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+          const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            apiRole = data.role;
+          }
+        }
+
+        // Fallback to metadata
+        if (!apiRole) {
+          const { data: { user } } = await supabase.auth.getUser();
+          apiRole =
+            (user?.user_metadata?.role as string) ??
+            (user?.app_metadata?.role as string) ??
+            null;
+        }
+
+        setRole(apiRole);
+      } catch (err) {
+        console.error("Error fetching role in sidebar:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchRole();
+  }, [token, sessionLoading]);
 
   const filteredNav = NAV_ITEMS.filter((item) => {
     if (loading) return false;

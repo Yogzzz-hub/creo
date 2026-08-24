@@ -7,7 +7,7 @@ import { Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/context/session-context";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 const STEPS = [
   { label: "Verify", href: "/onboarding/verify" },
@@ -99,7 +99,6 @@ export default function OnboardingLayout({
     return () => {
       cancelled = true;
       controller.abort();
-
     };
   }, [token, sessionLoading, router]);
 

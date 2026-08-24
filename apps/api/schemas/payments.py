@@ -29,3 +29,34 @@ class PlanChangeRequest(BaseModel):
 
 class TwoFactorRequest(BaseModel):
     enabled: bool
+
+
+class CreateOrderRequest(BaseModel):
+    amount: float
+    currency: str = "INR"
+    receipt: Optional[str] = None
+    notes: Optional[dict] = None
+
+
+class CreateOrderResponse(BaseModel):
+    order_id: str
+    amount: float
+    currency: str
+    receipt: str
+    key_id: str
+
+
+class VerifyPaymentRequest(BaseModel):
+    order_id: str
+    payment_id: str
+    signature: str
+
+
+class VerifyPaymentResponse(BaseModel):
+    valid: bool
+    order_id: str
+    payment_id: str
+    status: str
+    account_status: str
+    plan_name: str
+    onboarding_stage: int

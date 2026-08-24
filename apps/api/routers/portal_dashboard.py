@@ -46,11 +46,13 @@ async def get_portal_dashboard(
     open_ticket_count = open_ticket_result.scalar() or 0
 
     questionnaire_result = await db.execute(
-        select(Questionnaire.ai_summary_line).where(
+        select(Questionnaire.ai_summary_line, Questionnaire.submitted_at).where(
             Questionnaire.user_id == current_user.id
         )
     )
-    ai_summary_line = questionnaire_result.scalar_one_or_none()
+    questionnaire_row = questionnaire_result.one_or_none()
+    ai_summary_line = questionnaire_row[0] if questionnaire_row else None
+    questionnaire_submitted = questionnaire_row is not None and questionnaire_row[1] is not None
 
     return DashboardResponse(
         pending_deliverable_count=pending_deliverable_count,
@@ -58,6 +60,7 @@ async def get_portal_dashboard(
         ai_summary_line=ai_summary_line,
         onboarding_stage=_compute_onboarding_stage(current_user),
         account_status=current_user.account_status.value,
+        questionnaire_submitted=questionnaire_submitted,
     )
 
 

@@ -52,7 +52,7 @@ interface PublicSettings {
   scarcity_slots_available: number;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 async function getPlans(): Promise<Plan[]> {
   try {

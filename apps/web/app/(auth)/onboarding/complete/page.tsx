@@ -13,6 +13,21 @@ const MESSAGES = [
   "Finalizing strategy...",
 ];
 
+type BrandSummary = {
+  ai_summary_line?: string;
+  brand_tone?: string[];
+  content_themes?: string[];
+  audience_persona?: string;
+  goal_alignment?: string;
+};
+
+type ProfileSummary = {
+  industry?: string;
+  primary_goal?: string;
+  brand_tone?: string[];
+  target_audience?: Record<string, unknown>;
+};
+
 export default function CompletePage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -20,6 +35,8 @@ export default function CompletePage() {
   const [phase, setPhase] = useState<"loading" | "success" | "error" | "timeout">("loading");
   const [messageIndex, setMessageIndex] = useState(0);
   const [summaryLine, setSummaryLine] = useState<string | null>(null);
+  const [brandSummary, setBrandSummary] = useState<BrandSummary | null>(null);
+  const [profile, setProfile] = useState<ProfileSummary | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -66,6 +83,13 @@ export default function CompletePage() {
 
       const data = await res.json();
 
+      if (data.brand_summary && typeof data.brand_summary === "object") {
+        setBrandSummary(data.brand_summary as BrandSummary);
+      }
+      if (data.profile && typeof data.profile === "object") {
+        setProfile(data.profile as ProfileSummary);
+      }
+
       if (data.status === "completed" || data.summary_line) {
         if (intervalRef.current) clearInterval(intervalRef.current);
         if (mountedRef.current) {
@@ -86,8 +110,10 @@ export default function CompletePage() {
     // Reset counter on fresh mount
     retriesRef.current = 0;
 
-    // Do an immediate first check
-    pollStatus();
+    // Do an immediate first check without synchronously cascading from the effect.
+    const initialCheckId = window.setTimeout(() => {
+      void pollStatus();
+    }, 0);
 
     // Poll every 3 seconds
     intervalRef.current = setInterval(() => {
@@ -104,6 +130,7 @@ export default function CompletePage() {
 
     return () => {
       mountedRef.current = false;
+      window.clearTimeout(initialCheckId);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [pollStatus]);
@@ -137,11 +164,15 @@ export default function CompletePage() {
           <div className="flex size-16 items-center justify-center rounded-full bg-amber-100">
             <AlertCircle className="size-8 text-amber-600" />
           </div>
-          <h2 className="text-xl font-bold text-brand-dark">Analysis is taking a while</h2>
+          <h2 className="text-xl font-bold text-brand-dark">
+            {brandSummary || summaryLine ? "Your profile is partially ready" : "Analysis is taking a while"}
+          </h2>
           <p className="text-sm text-text-muted max-w-sm">
-            The AI analysis is still processing. This usually completes within a few minutes.
-            You can check back later or continue to your dashboard.
+            {brandSummary || summaryLine
+              ? "Some brand insights are ready now. Your dashboard will continue processing the remaining analysis."
+              : "The AI analysis is still processing. You can continue to your dashboard and view your generated profile there."}
           </p>
+          {(brandSummary || summaryLine || profile) && <BrandSummaryCard summaryLine={summaryLine} brandSummary={brandSummary} profile={profile} partial />}
           <div className="flex flex-col gap-2 w-full max-w-xs mt-2">
             <Button
               onClick={() => router.push("/portal")}
@@ -166,7 +197,7 @@ export default function CompletePage() {
   if (phase === "loading") {
     return (
       <CardContent className="py-2">
-        <div className="flex flex-col items-center text-center min-h-[320px] justify-center py-6">
+        <div className="flex flex-col items-center text-center min-h-80 justify-center py-6">
           <div className="flex flex-col items-center gap-5">
             <div className="flex size-16 items-center justify-center rounded-full bg-brand/10">
               <Loader2 className="size-8 text-brand animate-spin" />
@@ -203,15 +234,7 @@ export default function CompletePage() {
           </p>
         </div>
 
-        {/* AI Summary Section */}
-        <div className="rounded-lg border border-border bg-surface p-5 shadow-sm">
-          <p className="text-sm font-medium text-brand-dark mb-1">
-            Brand Summary
-          </p>
-          <p className="text-sm leading-relaxed text-text">
-            {summaryLine || "Your profile is ready for our creative team."}
-          </p>
-        </div>
+        <BrandSummaryCard summaryLine={summaryLine} brandSummary={brandSummary} profile={profile} />
 
         {/* What happens next section */}
         <div className="rounded-lg bg-brand/5 p-5">
@@ -244,5 +267,61 @@ export default function CompletePage() {
         </Button>
       </div>
     </CardContent>
+  );
+}
+
+function BrandSummaryCard({
+  summaryLine,
+  brandSummary,
+  profile,
+  partial = false,
+}: {
+  summaryLine: string | null;
+  brandSummary: BrandSummary | null;
+  profile: ProfileSummary | null;
+  partial?: boolean;
+}) {
+  const tone = brandSummary?.brand_tone?.join(", ") || profile?.brand_tone?.join(", ");
+  const themes = brandSummary?.content_themes?.join(", ");
+
+  return (
+    <div className="w-full rounded-lg border border-border bg-surface p-5 text-left shadow-sm">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-brand-dark">{partial ? "Brand Summary (partial)" : "Brand Summary"}</p>
+        {profile?.industry && <span className="text-xs text-text-muted">{profile.industry}</span>}
+      </div>
+      <div className="space-y-4 text-sm text-text">
+        {(summaryLine || brandSummary?.ai_summary_line) && (
+          <p className="leading-relaxed">{summaryLine || brandSummary?.ai_summary_line}</p>
+        )}
+        {brandSummary?.audience_persona && (
+          <div>
+            <p className="font-medium text-brand-dark">Target audience</p>
+            <p className="mt-1 leading-relaxed">{brandSummary.audience_persona}</p>
+          </div>
+        )}
+        {brandSummary?.goal_alignment && (
+          <div>
+            <p className="font-medium text-brand-dark">Core strategy</p>
+            <p className="mt-1 leading-relaxed">{brandSummary.goal_alignment}</p>
+          </div>
+        )}
+        {themes && (
+          <div>
+            <p className="font-medium text-brand-dark">Content themes</p>
+            <p className="mt-1 leading-relaxed">{themes}</p>
+          </div>
+        )}
+        {tone && (
+          <div>
+            <p className="font-medium text-brand-dark">Brand voice</p>
+            <p className="mt-1 leading-relaxed">{tone}</p>
+          </div>
+        )}
+        {!summaryLine && !brandSummary && !profile && (
+          <p>Your profile is ready for our creative team.</p>
+        )}
+      </div>
+    </div>
   );
 }

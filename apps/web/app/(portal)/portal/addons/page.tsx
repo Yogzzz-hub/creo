@@ -42,7 +42,7 @@ function formatCurrency(amount: number): string {
 }
 
 export default function AddonsPage() {
-  const { token } = useSession()
+  const { token, user } = useSession()
   const [addonTypes, setAddonTypes] = useState<AddonType[]>([])
   const [loading, setLoading] = useState(true)
   const [quantities, setQuantities] = useState<Record<string, number>>({})
@@ -126,36 +126,124 @@ export default function AddonsPage() {
     try {
       const addonsToOrder = addonTypes.filter((a) => (quantities[a.id] || 0) > 0)
 
-      for (const addon of addonsToOrder) {
-        const qty = quantities[addon.id] || 0
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/addons/purchase`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              deliverable_type: addon.apiType,
-              quantity: qty,
-            }),
+      const loadRazorpayScript = (): Promise<boolean> => {
+        return new Promise((resolve) => {
+          if (typeof window !== "undefined" && (window as any).Razorpay) {
+            resolve(true)
+            return
           }
-        )
-
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}))
-          throw new Error(body.detail || `Failed to purchase ${addon.name}`)
-        }
+          const existing = document.querySelector(
+            'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+          )
+          if (existing) {
+            existing.addEventListener("load", () => resolve(true))
+            return
+          }
+          const script = document.createElement("script")
+          script.src = "https://checkout.razorpay.com/v1/checkout.js"
+          script.onload = () => resolve(true)
+          script.onerror = () => resolve(false)
+          document.body.appendChild(script)
+        })
       }
 
-      const resetQuantities: Record<string, number> = {}
-      addonTypes.forEach((a) => { resetQuantities[a.id] = 0 })
-      setQuantities(resetQuantities)
-      toast.success("Payment successful. Add-on tasks created.")
-    } catch (err) {
+      const scriptLoaded = await loadRazorpayScript()
+      if (!scriptLoaded) {
+        toast.error("Failed to load Razorpay. Please check your connection.")
+        setIsProcessing(false)
+        return
+      }
+
+      const orderRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/create-order`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            amount: totalPrice,
+            currency: "INR",
+            receipt: `addon_${token.slice(0, 8)}`,
+            notes: {
+              items: addonsToOrder.map((a) => ({
+                type: a.apiType,
+                qty: quantities[a.id] || 0,
+              })),
+            },
+          }),
+        }
+      )
+
+      if (!orderRes.ok) {
+        const body = await orderRes.json().catch(() => ({}))
+        throw new Error(body.detail || "Failed to create payment order")
+      }
+
+      const orderData = await orderRes.json()
+
+      const rzp = new window.Razorpay({
+        key: orderData.key_id,
+        amount: orderData.amount * 100,
+        currency: orderData.currency,
+        name: "Creo",
+        description: "Add-on Purchase",
+        order_id: orderData.order_id,
+        handler: async (response: any) => {
+          try {
+            const batchPayload = {
+              items: addonsToOrder.map((a) => ({
+                deliverable_type: a.apiType,
+                quantity: quantities[a.id] || 0,
+              })),
+              order_id: response.razorpay_order_id,
+              payment_id: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+            }
+
+            const purchaseRes = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/api/v1/addons/purchase-batch`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(batchPayload),
+              }
+            )
+
+            if (!purchaseRes.ok) {
+              const body = await purchaseRes.json().catch(() => ({}))
+              throw new Error(body.detail || "Failed to confirm addon purchase")
+            }
+
+            const resetQuantities: Record<string, number> = {}
+            addonTypes.forEach((a) => { resetQuantities[a.id] = 0 })
+            setQuantities(resetQuantities)
+            toast.success("Payment successful! Add-on tasks created.")
+          } catch (err: any) {
+            toast.error(err instanceof Error ? err.message : "Purchase failed")
+          } finally {
+            setIsProcessing(false)
+          }
+        },
+        prefill: {
+          email: user?.email || "",
+          contact: user?.phone || "",
+        },
+        theme: { color: "#2B7BC4" },
+        modal: {
+          ondismiss: () => {
+            setIsProcessing(false)
+          },
+        },
+      })
+
+      rzp.open()
+    } catch (err: any) {
       toast.error(err instanceof Error ? err.message : "Purchase failed")
-    } finally {
       setIsProcessing(false)
     }
   }

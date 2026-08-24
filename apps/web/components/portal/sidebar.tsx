@@ -51,7 +51,7 @@ export function DesktopSidebar() {
   const router = useRouter()
   const supabase = createClient()
   const [loggingOut, setLoggingOut] = useState(false)
-  const { accountStatus, onboardingStage, loading } = useSubscription()
+  const { accountStatus, questionnaireSubmitted, loading } = useSubscription()
 
   async function handleLogout() {
     setLoggingOut(true)
@@ -73,9 +73,10 @@ export function DesktopSidebar() {
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.href, pathname)
             const isRestricted = !ALWAYS_ALLOWED.includes(item.href)
+            const paidAndSubmitted = accountStatus === "active" && questionnaireSubmitted
             const locked = isRestricted && !loading && (
               accountStatus !== "active" ||
-              (onboardingStage < 5 && item.href !== "/portal/account" && item.href !== "/portal/payments")
+              (!paidAndSubmitted && item.href !== "/portal/account" && item.href !== "/portal/payments")
             )
             const isLoadingLink = isRestricted && loading
 
@@ -138,7 +139,7 @@ export function DesktopSidebar() {
 
 export function MobileBottomTabBar() {
   const pathname = usePathname()
-  const { accountStatus, onboardingStage, loading } = useSubscription()
+  const { accountStatus, questionnaireSubmitted, loading } = useSubscription()
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-border bg-white px-1 lg:hidden"
@@ -147,9 +148,10 @@ export function MobileBottomTabBar() {
       {BOTTOM_TAB_ITEMS.map((item) => {
         const active = isActive(item.href, pathname)
         const isRestricted = !ALWAYS_ALLOWED.includes(item.href)
+        const paidAndSubmitted = accountStatus === "active" && questionnaireSubmitted
         const locked = isRestricted && !loading && (
           accountStatus !== "active" ||
-          (onboardingStage < 5 && item.href !== "/portal/account" && item.href !== "/portal/payments")
+          (!paidAndSubmitted && item.href !== "/portal/account" && item.href !== "/portal/payments")
         )
         const isLoadingLink = isRestricted && loading
 

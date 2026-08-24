@@ -259,7 +259,7 @@
 - [ ] 10.16 Update GitHub Actions CI — Railway deploy step
 - [ ] 10.17 Run alembic upgrade head against production Supabase
 - [ ] 10.18 Configure Supabase production project — RLS, Auth redirect URLs
-- [ ] 10.19 Configure Vercel production environment variables
+- [x] 10.19 Configure Vercel production environment variables
 - [ ] 10.20 Configure production Razorpay — live keys
 - [ ] 10.21 Configure production Stripe — live keys
 - [ ] 10.22 Submit Instagram Graph API app for Meta review
@@ -283,6 +283,10 @@
 - [x] Clean up DEBUG: prefixed log messages in core/security.py
 - [x] Fix onboarding wizard flash: add isLoading gate + auto-redirect for fully onboarded users
 - [x] Portal Access Restriction: Restrict active portal access strictly to dashboard and support pages for incomplete accounts
+- [x] Fix team sidebar blank rendering: wrap dashboard layout in SessionProvider, fetch correct database role from backend API, and add Support Chat to navigation mappings
+- [x] Secure client-associated deliverable uploads: implement backend storage upload endpoint, validate client_id, and update frontend to post directly to the backend
+- [x] Auto-Assign Engine & Manual Reassignment: implement workload-balancing dispatcher service, trigger automatically on task creation (addons & scheduled calendar tasks), add reassign API with audit logs, and refactor Admin Task Management UI to support department-filtered assignee dropdowns
+- [x] Fix dashboard 401 error: refactor `app/(portal)/portal/page.tsx` into a Server Component that extracts the session token on the server using `next/headers` cookies and passes it explicitly to `apiFetch`, while ensuring `apiFetch` in `apps/web/lib/api.ts` is server-safe (removed `"use client"`, guarded `toast`/`signOut`/`refreshSession` with `window` checks, and lazily initialized Supabase client) and correctly parses, merges, and forwards the credentials.
 
 ## Feature: Editable Brand Questionnaire & Dynamic AI Regeneration
 

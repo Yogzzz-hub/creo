@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -15,10 +15,21 @@ from models.enums import AccountStatus, PaymentGateway, PlanName
 from models.plan import Plan
 from models.subscription import Subscription
 from models.user import User
-from schemas.payments import PaymentHistoryResponse, PlanChangeRequest
+from schemas.payments import (
+    CreateOrderRequest,
+    CreateOrderResponse,
+    PaymentHistoryResponse,
+    PlanChangeRequest,
+    TwoFactorRequest,
+    VerifyPaymentRequest,
+    VerifyPaymentResponse,
+)
 from services.payments import (
     create_gateway_subscription,
+    create_razorpay_order,
+    fetch_razorpay_order,
     update_stripe_subscription_plan,
+    verify_razorpay_payment_signature,
 )
 
 logger = logging.getLogger(__name__)
@@ -246,6 +257,149 @@ async def create_subscription(
         subscription_id=result["subscription_id"],
         client_secret=result.get("client_secret"),
         gateway_customer_id=result["gateway_customer_id"],
+    )
+
+
+@router.post("/create-order", response_model=CreateOrderResponse)
+async def create_order(
+    payload: CreateOrderRequest,
+    current_user: Annotated[User, Depends(require_client)],
+):
+    if payload.amount <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Amount must be greater than 0",
+        )
+
+    receipt = payload.receipt or f"order_{current_user.id[:8]}"
+    notes = payload.notes or {}
+    notes.setdefault("user_id", current_user.id)
+
+    try:
+        order = await run_in_threadpool(
+            create_razorpay_order,
+            amount=payload.amount,
+            currency=payload.currency,
+            receipt=receipt,
+            notes=notes,
+        )
+    except Exception as e:
+        logger.error(f"Failed to create Razorpay order for user {current_user.id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to create payment order. Please try again.",
+        )
+
+    return CreateOrderResponse(
+        order_id=order["id"],
+        amount=float(order["amount"]) / 100,
+        currency=order["currency"],
+        receipt=order["receipt"],
+        key_id=settings.RAZORPAY_KEY_ID,
+    )
+
+
+@router.post("/verify-payment", response_model=VerifyPaymentResponse)
+async def verify_payment(
+    payload: VerifyPaymentRequest,
+    current_user: Annotated[User, Depends(require_client)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    valid = await run_in_threadpool(
+        verify_razorpay_payment_signature,
+        payload.order_id,
+        payload.payment_id,
+        payload.signature,
+    )
+
+    if not valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Payment signature could not be verified. Please try again or contact support.",
+        )
+
+    try:
+        order = await run_in_threadpool(fetch_razorpay_order, payload.order_id)
+        notes = order.get("notes") or {}
+
+        if notes.get("user_id") != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This payment does not belong to the authenticated account.",
+            )
+
+        plan_name = notes.get("plan_name")
+        try:
+            selected_plan_name = PlanName(plan_name)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Payment is missing a valid plan selection. Please contact support.",
+            ) from None
+
+        plan_result = await db.execute(
+            select(Plan).where(
+                Plan.name == selected_plan_name,
+                Plan.is_active.is_(True),
+            )
+        )
+        plan = plan_result.scalar_one_or_none()
+        if plan is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="The selected plan is no longer available. Please contact support.",
+            )
+
+        subscription_result = await db.execute(
+            select(Subscription).where(
+                Subscription.gateway == PaymentGateway.razorpay,
+                Subscription.gateway_subscription_id == payload.order_id,
+            )
+        )
+        subscription = subscription_result.scalar_one_or_none()
+        if subscription is None:
+            now = datetime.now(timezone.utc)
+            subscription = Subscription(
+                user_id=current_user.id,
+                plan_id=plan.id,
+                status="active",
+                gateway=PaymentGateway.razorpay,
+                gateway_subscription_id=payload.order_id,
+                gateway_customer_id=current_user.razorpay_customer_id or "order_payment",
+                current_period_start=now,
+                current_period_end=now + timedelta(days=30),
+            )
+        else:
+            subscription.plan_id = plan.id
+            subscription.status = "active"
+
+        current_user.plan_name = selected_plan_name
+        current_user.account_status = AccountStatus.active
+        if current_user.onboarding_stage < 3:
+            current_user.onboarding_stage = 3
+
+        db.add(current_user)
+        db.add(subscription)
+        await db.commit()
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception:
+        await db.rollback()
+        logger.exception("Failed to activate account after payment %s", payload.order_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Payment was verified, but account activation failed. Please contact support.",
+        ) from None
+
+    return VerifyPaymentResponse(
+        valid=True,
+        order_id=payload.order_id,
+        payment_id=payload.payment_id,
+        status="active",
+        account_status=current_user.account_status.value,
+        plan_name=selected_plan_name.value,
+        onboarding_stage=current_user.onboarding_stage,
     )
 
 

@@ -27,7 +27,7 @@ export async function GET(request: Request) {
           try {
             const session = (await supabase.auth.getSession()).data.session;
             if (session?.access_token) {
-              const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+              const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
               const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
                 headers: { Authorization: `Bearer ${session.access_token}` },
               });

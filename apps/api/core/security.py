@@ -239,6 +239,7 @@ async def get_current_user(
         except Exception as exc:
             # Use logger.exception() so the complete traceback
             # and the real Supabase error are visible.
+            print(f"JWT Validation Error: {exc}")
             logger.exception(
                 "Supabase token verification failed: %s",
                 exc,

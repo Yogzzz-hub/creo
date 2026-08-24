@@ -106,6 +106,12 @@ def build_status_response(
         return QuestionnaireStatusResponse(
             status="pending",
             summary_line=None,
+            brand_summary=questionnaire.ai_analysis,
+            profile={
+                "industry": questionnaire.industry,
+                "primary_goal": questionnaire.primary_goal,
+                "brand_tone": questionnaire.brand_tone,
+            },
             submitted_at=questionnaire.submitted_at,
             is_locked=False,
         )
@@ -113,6 +119,13 @@ def build_status_response(
     return QuestionnaireStatusResponse(
         status="completed",
         summary_line=questionnaire.ai_summary_line,
+        brand_summary=questionnaire.ai_analysis,
+        profile={
+            "industry": questionnaire.industry,
+            "primary_goal": questionnaire.primary_goal,
+            "brand_tone": questionnaire.brand_tone,
+            "target_audience": questionnaire.target_audience,
+        },
         submitted_at=questionnaire.submitted_at,
         is_locked=False,
     )

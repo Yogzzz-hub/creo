@@ -137,39 +137,30 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
 
     try {
       const supabase = createClient();
-      const filePath = `deliverables/${task.client_id}/${task.id}/1/${file.name}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("deliverables")
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw new Error(uploadError.message);
-
-      const { data: urlData } = supabase.storage
-        .from("deliverables")
-        .getPublicUrl(filePath);
-
-      setUploadProgress("Submitting deliverable...");
-
       const { data: { session } } = await supabase.auth.getSession();
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("client_id", task.client_id);
+      formData.append("task_id", task.id);
+
+      const headers: Record<string, string> = {};
       if (session?.access_token) {
         headers["Authorization"] = `Bearer ${session.access_token}`;
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/tasks/${task.id}/submit`, {
+      setUploadProgress("Submitting deliverable...");
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/deliverables/upload`, {
         method: "POST",
         headers,
-        body: JSON.stringify({
-          file_url: urlData.publicUrl,
-          file_type: file.type,
-          file_size_bytes: file.size,
-        }),
+        body: formData,
       });
 
-      if (!res.ok) throw new Error("Failed to submit deliverable");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.detail || "Failed to submit deliverable");
+      }
 
       setUploadProgress("Deliverable submitted successfully!");
       setTask((prev) => prev ? { ...prev, status: "submitted" } : prev);
@@ -306,8 +297,8 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
                   </h4>
                   <div className="rounded-lg bg-[var(--color-brand-light)]/50 p-3">
                     <p className="text-xs leading-relaxed text-[var(--color-text)] italic">
-                      {task.ai_analysis_excerpt}
-                      {task.ai_analysis_excerpt.length >= 500 && "..."}
+                       {task.ai_analysis_excerpt}
+                       {task.ai_analysis_excerpt.length >= 500 && "..."}
                     </p>
                   </div>
                 </div>

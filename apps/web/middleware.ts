@@ -59,7 +59,7 @@ function canAccessRoute(role: string, pathname: string): boolean {
 
 async function fetchUserProfile(accessToken: string): Promise<{ role: string; account_status: string; onboarding_stage: number } | "network_error" | null> {
   try {
-    const apiUrl = process.env.BACKEND_API_URL || "http://127.0.0.1:8000";
+    const apiUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || "";
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
@@ -147,8 +147,18 @@ export async function middleware(request: NextRequest) {
     }
 
     // Portal restriction: non-active clients or those with incomplete onboarding can only access dashboard & support
-    const isFullyActive = profile?.account_status === "active" && profile?.onboarding_stage === 5;
-    if (role === "client" && pathname.startsWith("/portal") && !isUnrestrictedPortalRoute(pathname) && !isFullyActive) {
+    let questionnaireSubmitted = false;
+    if (role === "client" && profile?.account_status === "active") {
+      const questionnaireResponse = await fetch(
+        `${process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || ""}/api/v1/questionnaire/status`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+      questionnaireSubmitted = questionnaireResponse.ok;
+    }
+
+    const requiresQuestionnaire = pathname.startsWith("/portal/deliverables") || pathname.startsWith("/portal/calendar");
+    const portalAccessAllowed = profile?.account_status === "active" && (!requiresQuestionnaire || questionnaireSubmitted);
+    if (role === "client" && pathname.startsWith("/portal") && !isUnrestrictedPortalRoute(pathname) && !portalAccessAllowed) {
       // The user has paid and is active, allow them to view their payments
       if (pathname.startsWith("/portal/payments") && profile?.account_status === "active") {
         return supabaseResponse;

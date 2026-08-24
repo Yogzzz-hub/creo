@@ -53,6 +53,8 @@ interface Task {
   deadline: string | null
   created_at: string
   updated_at: string
+  deliverable_type: string
+  department: string
 }
 
 interface TeamMember {
@@ -172,10 +174,25 @@ export default function TasksPage() {
         method: "PATCH",
         body: JSON.stringify({ status: newStatus }),
       })
-      setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)))
+      setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status: newStatus } : t)))
       toast.success(`Task marked as ${STATUS_CONFIG[newStatus].label}`)
     } catch (err) {
       toast.error("Failed to update task", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      })
+    }
+  }
+
+  async function handleReassign(id: string, teamMemberId: string | null) {
+    try {
+      const updated = await adminFetch<Task>(`/api/v1/admin/tasks/${id}/reassign`, {
+        method: "PATCH",
+        body: JSON.stringify({ team_member_id: teamMemberId }),
+      })
+      setTasks((prev) => prev.map((t) => (t.id === id ? updated : t)))
+      toast.success(teamMemberId ? "Task reassigned successfully" : "Task unassigned")
+    } catch (err) {
+      toast.error("Failed to reassign task", {
         description: err instanceof Error ? err.message : "Unknown error",
       })
     }
@@ -322,7 +339,24 @@ export default function TasksPage() {
                         </span>
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-muted-foreground">
-                        {task.assigned_name ?? "Unassigned"}
+                        <Select
+                          value={task.assigned_to ?? "unassigned"}
+                          onValueChange={(v) => handleReassign(task.id, v === "unassigned" ? null : v)}
+                        >
+                          <SelectTrigger className="h-7 w-[160px] border border-gray-200 bg-white text-xs font-medium rounded hover:bg-muted">
+                            <SelectValue placeholder="Unassigned" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="unassigned">Unassigned</SelectItem>
+                            {team
+                              .filter((m) => m.department === task.department)
+                              .map((m) => (
+                                <SelectItem key={m.team_member_id} value={m.team_member_id}>
+                                  {m.full_name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-muted-foreground">
                         {formatDate(task.deadline)}

@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import razorpay
 import stripe
 from datetime import datetime, timezone
@@ -12,6 +14,24 @@ razorpay_client = razorpay.Client(
 )
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+
+def verify_razorpay_payment_signature(
+    order_id: str,
+    payment_id: str,
+    signature: str,
+) -> bool:
+    try:
+        razorpay_client.utility.verify_payment_signature(
+            {
+                "razorpay_order_id": order_id,
+                "razorpay_payment_id": payment_id,
+                "razorpay_signature": signature,
+            }
+        )
+        return True
+    except Exception:
+        return False
 
 
 def create_razorpay_customer(user: User) -> dict:
@@ -159,6 +179,10 @@ def create_razorpay_order(amount: float, currency: str, receipt: str, notes: dic
         "notes": notes,
     })
     return order
+
+
+def fetch_razorpay_order(order_id: str) -> dict:
+    return razorpay_client.order.fetch(order_id)
 
 
 def update_razorpay_subscription_plan(

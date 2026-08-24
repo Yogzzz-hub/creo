@@ -3,9 +3,9 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, File, Form, UploadFile
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
@@ -16,6 +16,8 @@ from models.enums import DeliverableStatus, TaskStatus
 from models.platform_settings import PlatformSettings
 from models.task import Task
 from models.user import User
+from models.team import TeamMember
+from models.task_history import TaskStatusHistory
 from schemas.deliverable import (
     DeliverableCommentCreate,
     DeliverableCommentOut,
@@ -34,7 +36,7 @@ from schemas.upload import (
     UploadURLResponse,
 )
 from services.instagram import publish_media, publish_reel, refresh_access_token
-from services.storage import generate_signed_download_url, generate_signed_upload_url
+from services.storage import generate_signed_download_url, generate_signed_upload_url, upload_file_to_storage
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +45,114 @@ DEFAULT_REVISION_SLA_HOURS = 24
 router = APIRouter(prefix="/api/v1/deliverables", tags=["deliverables"])
 
 DELIVERABLES_BUCKET = "deliverables"
+
+
+@router.post("/upload", response_model=DeliverableResponse, status_code=status.HTTP_201_CREATED)
+async def upload_deliverable(
+    client_id: Annotated[str, Form(...)],
+    task_id: Annotated[str, Form(...)],
+    file: UploadFile = File(...),
+    current_user: Annotated[User, Depends(require_team_member)] = None,
+    db: AsyncSession = Depends(get_db),
+):
+    team_result = await db.execute(
+        select(TeamMember).where(TeamMember.user_id == current_user.id)
+    )
+    team_member = team_result.scalar_one_or_none()
+
+    if team_member is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User is not a registered team member",
+        )
+
+    task_result = await db.execute(select(Task).where(Task.id == task_id))
+    task = task_result.scalar_one_or_none()
+
+    if task is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found",
+        )
+
+    if task.assigned_to != team_member.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This task is not assigned to you",
+        )
+
+    if task.client_id != client_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Client ID mismatch for this task",
+        )
+
+    from routers.tasks import VALID_TASK_TRANSITIONS
+    current_status = task.status
+    target_status = TaskStatus.submitted
+    allowed = VALID_TASK_TRANSITIONS.get(current_status, set())
+    if target_status not in allowed:
+        allowed_names = ", ".join(s.value for s in allowed) if allowed else "none (terminal state)"
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot transition task from '{current_status.value}' to '{target_status.value}'. Allowed transitions: {allowed_names}",
+        )
+
+    revision_result = await db.execute(
+        select(func.coalesce(func.max(Deliverable.revision_round), 0)).where(
+            Deliverable.task_id == task_id
+        )
+    )
+    max_revision = revision_result.scalar() or 0
+    revision_round = max_revision + 1
+
+    file_content = await file.read()
+    file_path = f"deliverables/{client_id}/{task_id}/{revision_round}/{file.filename}"
+
+    try:
+        public_url = await run_in_threadpool(
+            upload_file_to_storage,
+            DELIVERABLES_BUCKET,
+            file_path,
+            file_content,
+            file.content_type or "application/octet-stream",
+        )
+    except Exception as exc:
+        logger.exception("Failed to upload deliverable file to storage")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upload file to storage.",
+        )
+
+    deliverable = Deliverable(
+        task_id=task_id,
+        client_id=client_id,
+        submitted_by=team_member.id,
+        file_url=public_url,
+        file_type=file.content_type or "application/octet-stream",
+        file_size_bytes=len(file_content),
+        status=DeliverableStatus.pending_approval,
+        revision_round=revision_round,
+    )
+    db.add(deliverable)
+
+    old_status = task.status
+    new_status = TaskStatus.submitted
+
+    if old_status != new_status:
+        history = TaskStatusHistory(
+            task_id=task.id,
+            changed_by_user_id=current_user.id,
+            old_status=old_status.value if hasattr(old_status, "value") else str(old_status),
+            new_status=new_status.value,
+        )
+        db.add(history)
+        task.status = new_status
+    task.submitted_at = datetime.now(timezone.utc)
+
+    await db.commit()
+    await db.refresh(deliverable)
+    return deliverable
 
 
 @router.post("/upload-url", response_model=UploadURLResponse)

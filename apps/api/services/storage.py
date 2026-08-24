@@ -1,8 +1,11 @@
 import hashlib
+import logging
 
 from supabase import create_client
 
 from core.config import settings
+
+logger = logging.getLogger(__name__)
 
 _supabase_client = None
 _supabase_key_hash: str | None = None
@@ -25,6 +28,11 @@ def generate_signed_download_url(
     bucket_name: str, file_path: str, expires_in: int = 3600
 ) -> str:
     client = _get_supabase_client()
+    # Extract path if it is a full HTTP URL
+    if "public/" in file_path:
+        parts = file_path.split(f"public/{bucket_name}/")
+        if len(parts) > 1:
+            file_path = parts[1]
     result = client.storage.from_(bucket_name).create_signed_url(
         file_path, expires_in
     )
@@ -61,3 +69,19 @@ def delete_user_files(user_id: str, bucket_name: str = "deliverables") -> int:
     except Exception:
         pass
     return deleted_count
+
+
+def upload_file_to_storage(
+    bucket_name: str, file_path: str, file_content: bytes, content_type: str
+) -> str:
+    try:
+        client = _get_supabase_client()
+        client.storage.from_(bucket_name).upload(
+            path=file_path,
+            file=file_content,
+            file_options={"content-type": content_type, "x-upsert": "true"},
+        )
+        return f"{settings.SUPABASE_URL.rstrip('/')}/storage/v1/object/public/{bucket_name}/{file_path}"
+    except Exception as exc:
+        logger.exception("Failed to upload file to storage path %s", file_path)
+        raise exc

@@ -8,6 +8,7 @@ type AccountStatus = "active" | "lapsed" | "past_due" | "pending_verification" |
 interface SubscriptionState {
   accountStatus: AccountStatus
   onboardingStage: number
+  questionnaireSubmitted: boolean
   loading: boolean
   isLapsed: boolean
   networkError: boolean
@@ -17,6 +18,7 @@ interface SubscriptionState {
 const SubscriptionContext = createContext<SubscriptionState>({
   accountStatus: null,
   onboardingStage: 1,
+  questionnaireSubmitted: false,
   loading: true,
   isLapsed: false,
   networkError: false,
@@ -31,6 +33,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const { token, loading: sessionLoading } = useSession()
   const [accountStatus, setAccountStatus] = useState<AccountStatus>(null)
   const [onboardingStage, setOnboardingStage] = useState<number>(1)
+  const [questionnaireSubmitted, setQuestionnaireSubmitted] = useState(false)
   const [loading, setLoading] = useState(true)
   const [networkError, setNetworkError] = useState(false)
 
@@ -78,6 +81,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         setAccountStatus(newStatus)
         activeStatusRef.current = newStatus
         setOnboardingStage(data.onboarding_stage ?? 1)
+        setQuestionnaireSubmitted(data.questionnaire_submitted === true)
         setNetworkError(false)
       } else if (res.status === 401) {
         if (controller.signal.aborted) return
@@ -140,8 +144,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const isLapsed = accountStatus === "lapsed" || accountStatus === "past_due"
 
   const value = useMemo<SubscriptionState>(
-    () => ({ accountStatus, onboardingStage, loading, isLapsed, networkError, refresh: fetchStatus }),
-    [accountStatus, onboardingStage, loading, isLapsed, networkError, fetchStatus]
+    () => ({ accountStatus, onboardingStage, questionnaireSubmitted, loading, isLapsed, networkError, refresh: fetchStatus }),
+    [accountStatus, onboardingStage, questionnaireSubmitted, loading, isLapsed, networkError, fetchStatus]
   )
 
   return (

@@ -15,7 +15,7 @@ from models.addon import Addon, AddonPricing
 from models.enums import AddonStatus, DeliverableType, PaymentGateway, TaskStatus
 from models.task import Task
 from models.user import User
-from services.payments import create_razorpay_order
+from services.payments import create_razorpay_order, verify_razorpay_payment_signature
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,9 @@ class AddonPurchaseRequest(BaseModel):
     deliverable_type: DeliverableType
     quantity: int = Field(..., ge=1, le=10)
     content_brief: str | None = None
+    order_id: str | None = None
+    payment_id: str | None = None
+    signature: str | None = None
 
 
 class BatchAddonItem(BaseModel):
@@ -52,6 +55,9 @@ class BatchAddonItem(BaseModel):
 
 class BatchAddonPurchaseRequest(BaseModel):
     items: list[BatchAddonItem] = Field(..., min_length=1, max_length=3)
+    order_id: str | None = None
+    payment_id: str | None = None
+    signature: str | None = None
 
 
 async def _check_monthly_quota(
@@ -124,17 +130,35 @@ async def purchase_addon(
     await _check_monthly_quota(db, current_user.id, payload.deliverable_type, payload.quantity)
 
     try:
-        order = await run_in_threadpool(
-            create_razorpay_order,
-            amount=total_price,
-            currency="INR",
-            receipt=f"addon_{current_user.id[:8]}",
-            notes={
-                "user_id": current_user.id,
-                "deliverable_type": payload.deliverable_type.value,
-                "quantity": str(payload.quantity),
-            },
-        )
+        order = None
+        payment_verified = False
+
+        if payload.order_id and payload.payment_id and payload.signature:
+            payment_verified = await run_in_threadpool(
+                verify_razorpay_payment_signature,
+                payload.order_id,
+                payload.payment_id,
+                payload.signature,
+            )
+            if not payment_verified:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Payment verification failed. Please try again.",
+                )
+        else:
+            order = await run_in_threadpool(
+                create_razorpay_order,
+                amount=total_price,
+                currency="INR",
+                receipt=f"addon_{current_user.id[:8]}",
+                notes={
+                    "user_id": current_user.id,
+                    "deliverable_type": payload.deliverable_type.value,
+                    "quantity": str(payload.quantity),
+                },
+            )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Addon purchase failed for user {current_user.id}: {e}")
         raise HTTPException(
@@ -142,15 +166,18 @@ async def purchase_addon(
             detail="Failed to process addon payment. No charges were made.",
         )
 
+    addon_status = AddonStatus.approved if payment_verified else AddonStatus.pending
+    gateway_payment_id = payload.payment_id if payment_verified else (order["id"] if order else None)
+
     addon = Addon(
         client_id=current_user.id,
         deliverable_type=payload.deliverable_type,
         quantity=payload.quantity,
         unit_price=unit_price,
         total_price=total_price,
-        status=AddonStatus.pending,
+        status=addon_status,
         gateway=PaymentGateway.razorpay,
-        gateway_payment_id=order["id"],
+        gateway_payment_id=gateway_payment_id,
     )
     db.add(addon)
     await db.flush()
@@ -169,6 +196,11 @@ async def purchase_addon(
             )
         )
     db.add_all(new_tasks)
+
+    # Auto-assign the new tasks to matching team members
+    from services.task_dispatcher import auto_assign_task
+    for t in new_tasks:
+        await auto_assign_task(db, t)
 
     try:
         await db.commit()
@@ -190,7 +222,7 @@ async def purchase_addon(
     return {
         "status": "success",
         "order_id": str(addon.id),
-        "razorpay_order_id": order["id"],
+        "razorpay_order_id": gateway_payment_id or (order["id"] if order else None),
         "total_price": total_price,
     }
 
@@ -203,6 +235,21 @@ async def purchase_addon_batch(
 ):
     results = []
     total_amount = 0.0
+
+    payment_verified = False
+
+    if payload.order_id and payload.payment_id and payload.signature:
+        payment_verified = await run_in_threadpool(
+            verify_razorpay_payment_signature,
+            payload.order_id,
+            payload.payment_id,
+            payload.signature,
+        )
+        if not payment_verified:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Payment verification failed. Please try again.",
+            )
 
     for item in payload.items:
         pricing_result = await db.execute(
@@ -219,7 +266,6 @@ async def purchase_addon_batch(
             )
         total_amount += float(pricing.unit_price) * item.quantity
 
-    # Remove the empty db.commit() here
     for item in payload.items:
         pricing_result = await db.execute(
             select(AddonPricing).where(
@@ -233,24 +279,29 @@ async def purchase_addon_batch(
 
         await _check_monthly_quota(db, current_user.id, item.deliverable_type, item.quantity)
 
-        try:
-            order = await run_in_threadpool(
-                create_razorpay_order,
-                amount=item_total,
-                currency="INR",
-                receipt=f"addon_{current_user.id[:8]}",
-                notes={
-                    "user_id": current_user.id,
-                    "deliverable_type": item.deliverable_type.value,
-                    "quantity": str(item.quantity),
-                },
-            )
-        except Exception as e:
-            logger.error("Batch addon purchase failed for user %s: %s", current_user.id, e)
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="Failed to process addon payment. No charges were made.",
-            )
+        order = None
+        if not payment_verified:
+            try:
+                order = await run_in_threadpool(
+                    create_razorpay_order,
+                    amount=item_total,
+                    currency="INR",
+                    receipt=f"addon_{current_user.id[:8]}",
+                    notes={
+                        "user_id": current_user.id,
+                        "deliverable_type": item.deliverable_type.value,
+                        "quantity": str(item.quantity),
+                    },
+                )
+            except Exception as e:
+                logger.error("Batch addon purchase failed for user %s: %s", current_user.id, e)
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Failed to process addon payment. No charges were made.",
+                )
+
+        addon_status = AddonStatus.approved if payment_verified else AddonStatus.pending
+        gateway_payment_id = payload.payment_id if payment_verified else (order["id"] if order else None)
 
         addon = Addon(
             client_id=current_user.id,
@@ -258,9 +309,9 @@ async def purchase_addon_batch(
             quantity=item.quantity,
             unit_price=unit_price,
             total_price=item_total,
-            status=AddonStatus.pending,
+            status=addon_status,
             gateway=PaymentGateway.razorpay,
-            gateway_payment_id=order["id"],
+            gateway_payment_id=gateway_payment_id,
         )
         db.add(addon)
         await db.flush()
@@ -279,6 +330,11 @@ async def purchase_addon_batch(
                 )
             )
         db.add_all(new_tasks)
+
+        # Auto-assign the new tasks to matching team members
+        from services.task_dispatcher import auto_assign_task
+        for t in new_tasks:
+            await auto_assign_task(db, t)
 
         try:
             await db.commit()
@@ -301,7 +357,7 @@ async def purchase_addon_batch(
             "deliverable_type": item.deliverable_type.value,
             "quantity": item.quantity,
             "total_price": item_total,
-            "razorpay_order_id": order["id"],
+            "razorpay_order_id": order["id"] if order else payload.order_id,
         })
 
     return {

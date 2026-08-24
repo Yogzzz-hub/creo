@@ -69,6 +69,8 @@ class QuestionnaireOut(QuestionnaireBase):
 class QuestionnaireStatusResponse(BaseModel):
     status: str
     summary_line: Optional[str] = None
+    brand_summary: Optional[dict[str, Any]] = None
+    profile: Optional[dict[str, Any]] = None
     submitted_at: Optional[datetime] = None
     is_locked: bool = False
 

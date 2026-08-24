@@ -103,5 +103,17 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(hour=3, minute=0),  # daily at 03:00
         "options": {"queue": "default"},
     },
+    # Scheduled content publishing
+    "check-scheduled-jobs": {
+        "task": "check_scheduled_jobs",
+        "schedule": crontab(minute="*/15"),  # every 15 minutes
+        "options": {"queue": "default"},
+    },
+    # WhatsApp bulk message retry
+    "retry-failed-bulk-messages": {
+        "task": "retry_failed_bulk_messages",
+        "schedule": crontab(minute=0),  # every hour
+        "options": {"queue": "default"},
+    },
 }
 

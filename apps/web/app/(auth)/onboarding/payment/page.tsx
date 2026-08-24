@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
@@ -11,17 +11,20 @@ import { useQuery } from "@tanstack/react-query";
 // ── Razorpay types ──────────────────────────────────────────────
 interface RazorpayOptions {
   key: string;
-  subscription_id: string;
+  amount: number;
+  currency: string;
+  order_id: string;
   name: string;
   description: string;
-  handler: (response: RazorpayResponse) => void;
+  handler: (response: RazorpayResponse) => void | Promise<void>;
   prefill: { email?: string; contact?: string };
   theme: { color: string };
   modal?: { ondismiss?: () => void };
 }
 
 interface RazorpayResponse {
-  razorpay_subscription_id: string;
+  razorpay_order_id?: string;
+  razorpay_subscription_id?: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
 }
@@ -41,53 +44,112 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ""
-);
+const STRIPE_PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(STRIPE_PUBLISHABLE_KEY)
+  : Promise.resolve(null);
 
 // ── Helpers ─────────────────────────────────────────────────────
-function getSelectedPlan(): { id: string; name: string; display_name: string } | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem("creo_selected_plan");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+type PlanName = "starter" | "growth" | "pro";
+
+interface PlanDetails {
+  name: PlanName;
+  display_name: string;
+  monthly_price: number;
+  poster_quota: number;
+  reel_quota: number;
+  story_quota: number;
+  revision_rounds: number;
+  has_dedicated_manager: boolean;
 }
 
 function getAccessToken(): Promise<string | null> {
   return createClient()
     .auth.getSession()
-    .then(({ data }: { data: any }) => data.session?.access_token ?? null);
+    .then(({ data }: {
+      data: { session: { access_token?: string } | null };
+    }) => data.session?.access_token ?? null);
 }
 
-async function apiCreateSubscription(
+async function apiCreateOrder(
   token: string,
-  planId: string,
-  country: string
+  amount: number,
+  planName: PlanName
 ) {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/create-subscription`,
+    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/create-order`,
     {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ plan_id: planId, billing_country: country }),
+      body: JSON.stringify({
+        amount,
+        currency: "INR",
+        notes: { plan_name: planName, description: `${planName} Plan Subscription` },
+      }),
     }
   );
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.detail || "Failed to create subscription");
+    throw new Error(body.detail || "Failed to create payment order");
   }
   return res.json() as Promise<{
-    gateway: string;
-    subscription_id: string;
-    client_secret: string | null;
-    gateway_customer_id: string;
+    order_id: string;
+    amount: number;
+    currency: string;
+    receipt: string;
+    key_id: string;
   }>;
+}
+
+async function apiVerifyPayment(
+  token: string,
+  response: RazorpayResponse,
+  timeoutMs = 10000
+): Promise<{ valid: boolean; account_status: string; onboarding_stage: number }> {
+  if (!response.razorpay_order_id || !response.razorpay_payment_id || !response.razorpay_signature) {
+    throw new Error("Razorpay returned incomplete payment details. Please try again.");
+  }
+
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/verify-payment`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          order_id: response.razorpay_order_id,
+          payment_id: response.razorpay_payment_id,
+          signature: response.razorpay_signature,
+        }),
+        signal: controller.signal,
+      }
+    );
+
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(body.detail || "Payment verification failed. Please try again.");
+    }
+    if (!body.valid) {
+      throw new Error("Payment verification was rejected. Please contact support before trying again.");
+    }
+    return body;
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new Error("Payment verification timed out. Check your payment status or try again.");
+    }
+    throw err;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 }
 
 function loadRazorpayScript(): Promise<boolean> {
@@ -113,11 +175,9 @@ function loadRazorpayScript(): Promise<boolean> {
 
 // ── Stripe inner form (must be inside <Elements>) ──────────────
 function StripePaymentForm({
-  clientSecret,
   onSuccess,
   onError,
 }: {
-  clientSecret: string;
   onSuccess: () => void;
   onError: (msg: string) => void;
 }) {
@@ -176,12 +236,13 @@ function StripePaymentForm({
 // ── Main page ───────────────────────────────────────────────────
 function PaymentContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const selectedPlan = useMemo(() => searchParams.get("plan") ?? "growth", [searchParams]);
+  const [selectedPlan, setSelectedPlan] = useState<PlanName | null>(null);
 
   const [processing, setProcessing] = useState<"razorpay" | "stripe" | null>(
     null
   );
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [isWaitingForWebhook, setIsWaitingForWebhook] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Pricing help state
@@ -193,32 +254,58 @@ function PaymentContent() {
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(
     null
   );
+  const stripeAvailable = Boolean(STRIPE_PUBLISHABLE_KEY);
 
   // Plan details from API
-  const [planDetails, setPlanDetails] = useState<{
-    display_name: string;
-    monthly_price: number;
-    poster_quota: number;
-    reel_quota: number;
-    story_quota: number;
-  } | null>(null);
+  const [plans, setPlans] = useState<PlanDetails[]>([]);
 
   useEffect(() => {
-    async function fetchPlanDetails() {
+    async function fetchPlans() {
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/v1/plans`
         );
         if (!res.ok) return;
-        const plans: { name: string; display_name: string; monthly_price: number; poster_quota: number; reel_quota: number; story_quota: number }[] = await res.json();
-        const match = plans.find((p) => p.name === selectedPlan);
-        if (match) setPlanDetails(match);
+        const availablePlans: PlanDetails[] = await res.json();
+        setPlans(availablePlans.filter((plan) =>
+          ["starter", "growth", "pro"].includes(plan.name)
+        ));
       } catch {
-        // Use fallback
+        setPlans([]);
       }
     }
-    fetchPlanDetails();
-  }, [selectedPlan]);
+    fetchPlans();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function redirectIfAlreadyActive() {
+      try {
+        const token = await getAccessToken();
+        if (!token || cancelled) return;
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me/role`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok || cancelled) return;
+
+        const data: { account_status?: string } = await res.json();
+        if (data.account_status === "active") {
+          router.push("/onboarding/questionnaire");
+        }
+      } catch {
+        // Keep the payment screen available if the status check cannot connect.
+      }
+    }
+
+    redirectIfAlreadyActive();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  const planDetails = plans.find((plan) => plan.name === selectedPlan) ?? null;
 
   // ── Razorpay handler ──────────────────────────────────────────
   const handleRazorpay = useCallback(async () => {
@@ -240,19 +327,44 @@ function PaymentContent() {
         return;
       }
 
-      const plan = getSelectedPlan();
-      const planId = plan?.name?.toLowerCase() || "growth";
-      const country = planId === "starter" ? "IN" : "IN";
-      const data = await apiCreateSubscription(token, planId, country);
+      if (!selectedPlan || !planDetails) {
+        setError("Please select a plan before starting payment.");
+        setProcessing(null);
+        return;
+      }
+
+      const data = await apiCreateOrder(
+        token,
+        planDetails.monthly_price,
+        selectedPlan
+      );
 
       const options: RazorpayOptions = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",
-        subscription_id: data.subscription_id,
+        key: data.key_id,
+        amount: data.amount * 100,
+        currency: data.currency,
+        order_id: data.order_id,
         name: "Creo",
-        description: `${plan?.display_name || "Growth"} Plan Subscription`,
-        handler: () => {
-          setProcessing(null);
-          setIsWaitingForWebhook(true);
+        description: `${planDetails.display_name} Plan Subscription`,
+        handler: async (response) => {
+          try {
+            const verification = await apiVerifyPayment(token, response);
+            setProcessing(null);
+            if (verification.account_status === "active") {
+              setPaymentSuccess(true);
+              router.push("/onboarding/questionnaire");
+            } else {
+              setIsWaitingForWebhook(true);
+            }
+          } catch (err) {
+            setProcessing(null);
+            setIsWaitingForWebhook(false);
+            setError(
+              err instanceof Error
+                ? `${err.message} If money was deducted, contact support with your Razorpay payment ID.`
+                : "Payment verification failed. Please try again or contact support if money was deducted."
+            );
+          }
         },
         prefill: {},
         theme: { color: "#2B7BC4" },
@@ -269,41 +381,9 @@ function PaymentContent() {
       );
       setProcessing(null);
     }
-  }, [router, selectedPlan]);
+  }, [planDetails, router, selectedPlan]);
 
   // ── Stripe handler ────────────────────────────────────────────
-  const handleStripe = useCallback(async () => {
-    setError(null);
-    setProcessing("stripe");
-
-    try {
-      const token = await getAccessToken();
-      if (!token) {
-        setError("You must be logged in.");
-        setProcessing(null);
-        return;
-      }
-
-      const plan = getSelectedPlan();
-      const planId = plan?.name?.toLowerCase() || "growth";
-      const country = planId === "starter" ? "IN" : "US";
-      const data = await apiCreateSubscription(token, planId, country);
-
-      if (!data.client_secret) {
-        setError("Failed to initialize Stripe payment.");
-        setProcessing(null);
-        return;
-      }
-
-      setStripeClientSecret(data.client_secret);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Payment failed. Please try again."
-      );
-      setProcessing(null);
-    }
-  }, []);
-
   const handleStripeSuccess = useCallback(() => {
     setStripeClientSecret(null);
     setProcessing(null);
@@ -351,8 +431,6 @@ function PaymentContent() {
     }
   }
 
-  const [isWaitingForWebhook, setIsWaitingForWebhook] = useState(false);
-
   const { data: roleData } = useQuery({
     queryKey: ["payment-auth-role-polling"],
     queryFn: async () => {
@@ -374,6 +452,17 @@ function PaymentContent() {
   });
 
   useEffect(() => {
+    if (!isWaitingForWebhook) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setIsWaitingForWebhook(false);
+      setError("Payment was verified, but account activation is taking longer than expected. Please refresh or contact support.");
+    }, 60000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isWaitingForWebhook]);
+
+  useEffect(() => {
     if (roleData?.account_status === "active" && isWaitingForWebhook) {
       router.push("/onboarding/questionnaire");
     }
@@ -391,31 +480,83 @@ function PaymentContent() {
     );
   }
 
+  if (paymentSuccess) {
+    return (
+      <CardContent className="py-12 flex flex-col items-center justify-center text-center">
+        <CheckCircle2 className="size-10 text-success mb-4" />
+        <h2 className="text-xl font-bold text-brand-dark mb-2">Payment Successful!</h2>
+        <p className="text-sm text-text-muted max-w-sm">
+          Redirecting you to your brand profile...
+        </p>
+        <Loader2 className="size-5 animate-spin text-brand mt-4" />
+      </CardContent>
+    );
+  }
+
   return (
     <CardContent className="py-2">
       {/* Header & Order Summary */}
       <div className="mb-6 text-center">
         <h2 className="text-xl font-bold text-brand-dark">Order Summary</h2>
         <p className="mt-1 text-sm text-text-muted">
-          Review your selected plan and complete payment.
+          Choose a plan, then complete payment.
         </p>
       </div>
+
+      <fieldset className="mb-6">
+        <legend className="mb-3 text-sm font-semibold text-brand-dark">Choose your plan</legend>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {(["starter", "growth", "pro"] as PlanName[]).map((planName) => {
+            const plan = plans.find((item) => item.name === planName);
+            const isSelected = selectedPlan === planName;
+
+            return (
+              <label
+                key={planName}
+                className={`cursor-pointer rounded-lg border p-4 transition-colors ${
+                  isSelected
+                    ? "border-brand bg-brand-light ring-2 ring-brand/20"
+                    : "border-border hover:border-brand/50"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="plan"
+                  value={planName}
+                  checked={isSelected}
+                  onChange={() => {
+                    setSelectedPlan(planName);
+                    setError(null);
+                  }}
+                  className="sr-only"
+                />
+                <span className="block text-sm font-semibold text-brand-dark">
+                  {plan?.display_name ?? `${planName[0].toUpperCase()}${planName.slice(1)}`}
+                </span>
+                <span className="mt-1 block text-xs text-text-muted">
+                  {plan ? `Rs. ${plan.monthly_price.toLocaleString("en-IN")} / month` : "Loading..."}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      </fieldset>
 
       <div className="rounded-lg border border-border bg-bg-internal p-5 mb-6">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-semibold text-brand-dark">
-              {planDetails?.display_name ?? `${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan`}
+              {planDetails?.display_name ?? "Select a plan"}
             </h3>
             <p className="text-sm text-text-muted mt-0.5">
               {planDetails
-                ? `${planDetails.poster_quota} Posters \u00B7 ${planDetails.reel_quota} Reels \u00B7 ${planDetails.story_quota} Stories / month`
-                : "Loading plan details..."}
+                ? `${planDetails.poster_quota} Posters / ${planDetails.reel_quota} Reels / ${planDetails.story_quota} Stories / month / ${planDetails.revision_rounds} revision round${planDetails.revision_rounds === 1 ? "" : "s"}${planDetails.has_dedicated_manager ? " / Dedicated manager" : ""}`
+                : plans.length === 0 ? "Loading plan details..." : "Choose Starter, Growth, or Pro to see plan details."}
             </p>
           </div>
           <div className="text-right">
             <p className="text-xl font-bold text-brand-dark">
-              {planDetails ? `\u20B9${planDetails.monthly_price.toLocaleString("en-IN")}` : "\u2014"}
+              {planDetails ? `Rs. ${planDetails.monthly_price.toLocaleString("en-IN")}` : "-"}
             </p>
             <p className="text-xs text-text-muted">/month</p>
           </div>
@@ -431,7 +572,7 @@ function PaymentContent() {
       )}
 
       {/* Stripe Elements (shown after API call) */}
-      {stripeClientSecret ? (
+      {stripeClientSecret && stripeAvailable ? (
         <div className="mb-6">
           <Elements
             stripe={stripePromise}
@@ -441,7 +582,6 @@ function PaymentContent() {
             }}
           >
             <StripePaymentForm
-              clientSecret={stripeClientSecret}
               onSuccess={handleStripeSuccess}
               onError={handleStripeError}
             />
@@ -461,7 +601,7 @@ function PaymentContent() {
         <div className="space-y-3 mb-6">
           <Button
             className="w-full bg-brand hover:bg-brand/90 text-white h-11"
-            disabled={processing !== null || helpLoading}
+            disabled={processing !== null || helpLoading || !planDetails}
             onClick={handleRazorpay}
           >
             {processing === "razorpay" ? (
@@ -477,23 +617,18 @@ function PaymentContent() {
             )}
           </Button>
 
-          <Button
-            className="w-full bg-brand-dark hover:bg-brand-dark/90 text-white h-11"
-            disabled={processing !== null || helpLoading}
-            onClick={handleStripe}
-          >
-            {processing === "stripe" ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <CreditCard className="mr-2 size-4" />
-                Pay with Stripe (International)
-              </>
-            )}
-          </Button>
+          <div>
+            <Button
+              className="w-full bg-brand-dark hover:bg-brand-dark/90 text-white h-11"
+              disabled
+            >
+              <CreditCard className="mr-2 size-4" />
+              Stripe checkout unavailable
+            </Button>
+            <p className="mt-2 text-center text-xs text-gray-400">
+              Please use Razorpay until the Stripe order endpoint is configured.
+            </p>
+          </div>
         </div>
       )}
 

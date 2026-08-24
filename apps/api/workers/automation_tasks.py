@@ -934,3 +934,142 @@ async def _proactive_token_refresh_async() -> int:
 def proactive_token_refresh():
     count = _run_async(_proactive_token_refresh_async())
     logger.info("[proactive_token_refresh] Refreshed %d Instagram tokens", count)
+
+
+# ---------------------------------------------------------------------------
+# check_scheduled_jobs — Process content calendar entries due for publishing
+# ---------------------------------------------------------------------------
+async def _check_scheduled_jobs_async() -> int:
+    """Find calendar entries scheduled for today and create tasks for them."""
+    today = date.today()
+    jobs_processed = 0
+
+    async with async_session() as db:
+        result = await db.execute(
+            select(ContentCalendar).where(
+                ContentCalendar.scheduled_date == today,
+                ContentCalendar.status == CalendarEntryStatus.draft,
+            )
+        )
+        due_entries = result.scalars().all()
+
+        for entry in due_entries:
+            existing_task = await db.execute(
+                select(Task).where(
+                    Task.client_id == entry.client_id,
+                    Task.deliverable_type == entry.deliverable_type,
+                    Task.due_date == today,
+                    Task.status.in_(
+                        [TaskStatus.pending, TaskStatus.in_progress, TaskStatus.approved]
+                    ),
+                )
+            )
+            if existing_task.scalar_one_or_none() is not None:
+                continue
+
+            task = Task(
+                client_id=entry.client_id,
+                deliverable_type=entry.deliverable_type,
+                title=entry.content_topic or f"Scheduled {entry.deliverable_type.value}",
+                due_date=today,
+                status=TaskStatus.pending,
+            )
+            db.add(task)
+
+            # Auto-assign task using dispatcher workload balancing
+            from services.task_dispatcher import auto_assign_task
+            await auto_assign_task(db, task)
+
+            entry.status = CalendarEntryStatus.scheduled
+            jobs_processed += 1
+
+        if jobs_processed > 0:
+            await db.commit()
+
+    logger.info("check_scheduled_jobs completed — %d job(s) processed", jobs_processed)
+    return jobs_processed
+
+
+@shared_task(name="check_scheduled_jobs")
+def check_scheduled_jobs():
+    return _run_async(_check_scheduled_jobs_async())
+
+
+# ---------------------------------------------------------------------------
+# retry_failed_bulk_messages — Retry WhatsApp messages that failed delivery
+# ---------------------------------------------------------------------------
+async def _retry_failed_bulk_messages_async() -> int:
+    """Retry WhatsApp bulk messages tracked as failed in Redis."""
+    # pyrefly: ignore [missing-import]
+    import json
+
+    # pyrefly: ignore [missing-import]
+    import redis as redis_lib
+
+    from core.config import settings
+    from services.whatsapp import send_whatsapp_message
+
+    r = redis_lib.from_url(settings.REDIS_URL, decode_responses=True)
+    retried = 0
+
+    try:
+        failed_keys = r.keys("bulk_msg_failed:*")
+
+        for key in failed_keys:
+            raw = r.get(key)
+            if not raw:
+                r.delete(key)
+                continue
+
+            try:
+                msg_data = json.loads(raw)
+            except (json.JSONDecodeError, TypeError):
+                logger.warning("[retry_failed_bulk_messages] Invalid JSON in %s, removing", key)
+                r.delete(key)
+                continue
+
+            phone = msg_data.get("phone_number")
+            template_id = msg_data.get("template_id")
+            parameters = msg_data.get("parameters", {})
+            attempt = msg_data.get("attempt", 0)
+
+            if not phone or not template_id:
+                logger.warning("[retry_failed_bulk_messages] Missing fields in %s, removing", key)
+                r.delete(key)
+                continue
+
+            if attempt >= 3:
+                logger.warning(
+                    "[retry_failed_bulk_messages] Max retries reached for %s, moving to dead letter",
+                    key,
+                )
+                r.rename(key, key.replace("bulk_msg_failed:", "bulk_msg_dead:"))
+                continue
+
+            try:
+                await send_whatsapp_message(
+                    phone_number=phone,
+                    template_id=template_id,
+                    parameters=parameters,
+                )
+                r.delete(key)
+                retried += 1
+            except Exception as exc:
+                msg_data["attempt"] = attempt + 1
+                r.set(key, json.dumps(msg_data))
+                logger.warning(
+                    "[retry_failed_bulk_messages] Retry %d failed for %s: %s",
+                    attempt + 1,
+                    key,
+                    exc,
+                )
+    finally:
+        r.close()
+
+    logger.info("retry_failed_bulk_messages completed — %d message(s) retried successfully", retried)
+    return retried
+
+
+@shared_task(name="retry_failed_bulk_messages")
+def retry_failed_bulk_messages():
+    return _run_async(_retry_failed_bulk_messages_async())

@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useSession } from "@/context/session-context"
 import { useQuery } from "@tanstack/react-query"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || ""
 
 const RESTRICTED_ROUTES = [
   "/portal/deliverables",
@@ -16,8 +16,16 @@ const RESTRICTED_ROUTES = [
   "/portal/account",
 ]
 
+const SUBMISSION_REQUIRED_ROUTES = ["/portal/deliverables", "/portal/calendar"]
+
 function isRestrictedRoute(pathname: string): boolean {
   return RESTRICTED_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(route + "/")
+  )
+}
+
+function requiresQuestionnaireSubmission(pathname: string): boolean {
+  return SUBMISSION_REQUIRED_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(route + "/")
   )
 }
@@ -91,14 +99,23 @@ export function useOnboardingGuard() {
       const isActive = roleData.account_status === "active"
 
       let fullyOnboarded = false
+      let questionnaireSubmitted = false
       if (isActive && accountRes.ok) {
         const accountData: AccountStatus = await accountRes.json()
         fullyOnboarded = accountData.instagram_connected === true
       }
 
+      if (isActive) {
+        const questionnaireRes = await fetch(`${API_URL}/api/v1/questionnaire/status`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        questionnaireSubmitted = questionnaireRes.ok
+      }
+
       return {
         isActive,
         fullyOnboarded,
+        questionnaireSubmitted,
       }
     },
     // Only run the query if we are on a restricted route and the session is loaded
@@ -163,7 +180,7 @@ export function useOnboardingGuard() {
   return {
     isRestricted,
     ready: true,
-    blocked: !data.isActive,
+    blocked: !data.isActive || (requiresQuestionnaireSubmission(pathname) && !data.questionnaireSubmitted),
     fullyOnboarded: data.fullyOnboarded,
     isError: false,
   }

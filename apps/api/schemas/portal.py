@@ -14,6 +14,7 @@ class DashboardResponse(BaseModel):
     ai_summary_line: Optional[str] = None
     onboarding_stage: int
     account_status: str
+    questionnaire_submitted: bool = False
 
 
 class SubscriptionStatusResponse(BaseModel):

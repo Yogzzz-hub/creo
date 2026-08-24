@@ -1,9 +1,7 @@
-"use client"
-
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"
+const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
 
 /**
  * Authenticated fetch wrapper for the FastAPI backend.
@@ -15,39 +13,128 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"
  * 5. On a 403 with error=onboarding_required, shows a friendly toast
  *    directing the user back to the Dashboard to complete onboarding.
  */
+function extractTokenFromHeaders(headers: HeadersInit | undefined): string | null {
+  if (!headers) return null
+  if (headers instanceof Headers) {
+    const auth = headers.get("Authorization")
+    if (auth && auth.startsWith("Bearer ")) {
+      return auth.substring(7)
+    }
+  } else if (Array.isArray(headers)) {
+    for (const [key, value] of headers) {
+      if (key.toLowerCase() === "authorization" && value.startsWith("Bearer ")) {
+        return value.substring(7)
+      }
+    }
+  } else {
+    // Record<string, string>
+    for (const key of Object.keys(headers)) {
+      if (key.toLowerCase() === "authorization") {
+        const val = headers[key]
+        if (typeof val === "string" && val.startsWith("Bearer ")) {
+          return val.substring(7)
+        }
+      }
+    }
+  }
+  return null
+}
+
+function getStoredToken(): string | null {
+  if (typeof window === "undefined") return null
+
+  // 1. Try localStorage
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) {
+        const data = localStorage.getItem(key)
+        if (data) {
+          const parsed = JSON.parse(data)
+          if (parsed && typeof parsed === "object" && parsed.access_token) {
+            return parsed.access_token
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // Ignore localStorage errors
+  }
+
+  // 2. Try cookies
+  try {
+    const cookieString = document.cookie || ""
+    const cookies = cookieString.split(";")
+    for (let cookie of cookies) {
+      cookie = cookie.trim()
+      const eqIdx = cookie.indexOf("=")
+      if (eqIdx !== -1) {
+        const name = cookie.substring(0, eqIdx)
+        const value = decodeURIComponent(cookie.substring(eqIdx + 1))
+        if (name.startsWith("sb-") && name.endsWith("-auth-token")) {
+          try {
+            const parsed = JSON.parse(value)
+            if (parsed && typeof parsed === "object" && parsed.access_token) {
+              return parsed.access_token
+            }
+          } catch {
+            if (value && !value.startsWith("{")) {
+              return value
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // Ignore cookie errors
+  }
+
+  return null
+}
+
 export async function apiFetch(
   path: string,
   options: RequestInit = {},
   accessToken?: string | null
 ): Promise<unknown> {
-  const supabase = createClient()
-
   async function getAccessToken(): Promise<string> {
     if (accessToken) return accessToken
 
-    const { data: { session } } = await supabase.auth.getSession()
+    // Check options headers
+    const headerToken = extractTokenFromHeaders(options.headers)
+    if (headerToken) return headerToken
 
-    if (!session) {
-      throw new ApiError(401, "Not authenticated")
-    }
-
-    const expiresAt = session.expires_at ?? 0
-    const now = Math.floor(Date.now() / 1000)
-    if (expiresAt - now < 30) {
-      const { data: refreshed, error } = await supabase.auth.refreshSession()
-      if (error || !refreshed.session) {
-        await supabase.auth.signOut()
-        throw new ApiError(401, "Session expired. Please sign in again.")
+    // Try Supabase auth session
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        const expiresAt = session.expires_at ?? 0
+        const now = Math.floor(Date.now() / 1000)
+        if (expiresAt - now < 30) {
+          const { data: refreshed, error } = await supabase.auth.refreshSession()
+          if (!error && refreshed.session) {
+            return refreshed.session.access_token
+          }
+        } else {
+          return session.access_token
+        }
       }
-      return refreshed.session.access_token
+    } catch {
+      // Fall through to cookies/localStorage
     }
 
-    return session.access_token
+    // Try cookies/localStorage
+    const storedToken = getStoredToken()
+    if (storedToken) return storedToken
+
+    throw new ApiError(401, "Not authenticated")
   }
 
   async function doFetch(token: string): Promise<Response> {
     const { headers: customHeaders, ...rest } = options
-    return fetch(`${API_URL}${path}`, {
+    return fetch(`${getApiUrl()}${path}`, {
+      credentials: "include",
       ...rest,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -60,8 +147,9 @@ export async function apiFetch(
   const token = await getAccessToken()
   let res = await doFetch(token)
 
-  if (res.status === 401) {
+  if (res.status === 401 && typeof window !== "undefined") {
     try {
+      const supabase = createClient()
       const { data: refreshed } = await supabase.auth.refreshSession()
       if (refreshed.session?.access_token) {
         res = await doFetch(refreshed.session.access_token)
@@ -69,7 +157,12 @@ export async function apiFetch(
         await supabase.auth.signOut()
       }
     } catch {
-      await supabase.auth.signOut()
+      try {
+        const supabase = createClient()
+        await supabase.auth.signOut()
+      } catch {
+        // Ignore errors
+      }
     }
   }
 
@@ -78,9 +171,11 @@ export async function apiFetch(
     const detail = body.detail
 
     if (res.status === 403 && detail?.error === "onboarding_required") {
-      toast.info(
-        "Please complete your onboarding steps in the Dashboard to access this feature."
-      )
+      if (typeof window !== "undefined") {
+        toast.info(
+          "Please complete your onboarding steps in the Dashboard to access this feature."
+        )
+      }
       throw new ApiError(403, "onboarding_required")
     }
 
