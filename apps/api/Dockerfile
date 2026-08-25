@@ -29,3 +29,5 @@ EXPOSE 8080
 # Fallback start command
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
 
+
+# Force cache refresh 2026
