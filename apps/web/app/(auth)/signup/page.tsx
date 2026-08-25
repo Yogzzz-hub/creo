@@ -15,6 +15,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { getBaseUrl } from "@/lib/utils";
 
 const signupSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
@@ -72,11 +73,10 @@ export default function SignupPage() {
   const [resendCooldown, setResendCooldown] = useState(0);
 
   async function handleGoogleSignUp() {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${appUrl}/auth/callback`,
+        redirectTo: `${getBaseUrl()}/auth/callback`,
       },
     });
   }
@@ -120,12 +120,11 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
-        emailRedirectTo: `${appUrl}/auth/callback`,
+        emailRedirectTo: `${getBaseUrl()}/auth/callback`,
         data: {
           full_name: data.fullName,
           role: "client",

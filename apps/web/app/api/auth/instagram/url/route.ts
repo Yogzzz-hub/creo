@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+import { getBaseUrl } from "@/lib/utils";
 
 export async function GET(request: Request) {
   try {
@@ -43,8 +44,7 @@ export async function GET(request: Request) {
     });
 
     const appId = process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
-    const redirectUri = `${appUrl}/api/auth/callback/instagram`;
+    const redirectUri = `${getBaseUrl()}/api/auth/callback/instagram`;
     const scopes = [
       "instagram_basic",
       "instagram_content_publish"

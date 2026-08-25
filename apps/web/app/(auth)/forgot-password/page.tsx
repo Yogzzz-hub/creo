@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Mail, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { getBaseUrl } from "@/lib/utils";
 
 export default function ForgotPasswordPage() {
   const supabase = createClient();
@@ -19,9 +20,8 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setLoading(true);
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${appUrl}/reset-password`,
+      redirectTo: `${getBaseUrl()}/reset-password`,
     });
 
     if (error) {

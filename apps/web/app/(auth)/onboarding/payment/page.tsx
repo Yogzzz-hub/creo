@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
 import { CreditCard, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { getBaseUrl } from "@/lib/utils";
 
 // ── Razorpay types ──────────────────────────────────────────────
 interface RazorpayOptions {
@@ -191,11 +192,10 @@ function StripePaymentForm({
       if (!stripe || !elements) return;
 
       setSubmitting(true);
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${appUrl}/onboarding/questionnaire`,
+          return_url: `${getBaseUrl()}/onboarding/questionnaire`,
         },
         redirect: "if_required",
       });

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Eye, EyeOff, Phone } from "lucide-react";
 import { PhoneLogin } from "@/components/auth/phone-login";
+import { getBaseUrl } from "@/lib/utils";
 
 const ROLE_HOMES: Record<string, string> = {
   client: "/portal",
@@ -79,11 +80,10 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${appUrl}/auth/callback`,
+        redirectTo: `${getBaseUrl()}/auth/callback`,
       },
     });
 

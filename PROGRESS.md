@@ -310,3 +310,4 @@
 - [x] Add Meta/Instagram webhook verification endpoint GET /api/webhook and Pytest tests
 - [x] Audit and refactor frontend auth redirect URLs to dynamically resolve using NEXT_PUBLIC_APP_URL with window.location.origin fallback
 - [x] Migrate deprecated middleware.ts to proxy.ts (Next.js 16+ convention) and add allowScripts for esbuild/unrs-resolver postinstall scripts
+- [x] Centralize frontend dynamic URL resolution under getBaseUrl helper and integrate across auth / payment redirects
