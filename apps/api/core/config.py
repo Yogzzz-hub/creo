@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     CELERY_BROKER_URL: str = "redis://localhost:6379/0"
     SECRET_KEY: str = ""
     ENVIRONMENT: str = "development"
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "https://creo-git-main-yogzzz-hubs-projects.vercel.app"
     DIFY_API_KEY: str = ""
     DIFY_API_URL: str = "https://api.dify.ai/v1"
     GEMINI_API_KEY: str = ""
