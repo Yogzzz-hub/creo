@@ -51,6 +51,7 @@ from routers.lead_magnet import router as lead_magnet_router
 from routers.email import router as email_router
 from routers.brand_summary import router as brand_summary_router
 from routers.webhooks import router as webhooks_router
+from routers.webhook import router as webhook_router
 from routers.chatbot import router as chatbot_router
 from core.exceptions import setup_global_middleware_and_exceptions
 from core.security import role_router
@@ -118,6 +119,7 @@ app.include_router(lead_magnet_router)
 app.include_router(email_router)
 app.include_router(brand_summary_router)
 app.include_router(webhooks_router)
+app.include_router(webhook_router)
 app.include_router(chatbot_router)
 app.include_router(role_router)
 

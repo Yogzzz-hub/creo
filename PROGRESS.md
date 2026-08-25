@@ -307,3 +307,4 @@
 - [x] Fix async error handling in refetch after save
 - [x] Verify all required fields: industry, business_description, primary_goal, brand_tone, target_audience, social_handles
 - [x] Verify AI analysis includes: core identity, brand tone, content themes, audience persona, goal alignment
+- [x] Add Meta/Instagram webhook verification endpoint GET /api/webhook and Pytest tests
