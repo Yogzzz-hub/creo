@@ -1,14 +1,10 @@
 import logging
-import os
-# pyrefly: ignore [missing-import]
-import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-
 from routers.auth import router as auth_router
 from routers.plans import router as plans_router
 from routers.onboarding import router as onboarding_router
@@ -51,7 +47,6 @@ from routers.lead_magnet import router as lead_magnet_router
 from routers.email import router as email_router
 from routers.brand_summary import router as brand_summary_router
 from routers.webhooks import router as webhooks_router
-from routers.webhook import router as webhook_router
 from routers.chatbot import router as chatbot_router
 from core.exceptions import setup_global_middleware_and_exceptions
 from core.security import role_router
@@ -76,6 +71,7 @@ if settings.FRONTEND_URL:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",  # Automatically allows all Vercel branch/preview URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -125,7 +121,6 @@ app.include_router(lead_magnet_router)
 app.include_router(email_router)
 app.include_router(brand_summary_router)
 app.include_router(webhooks_router)
-app.include_router(webhook_router)
 app.include_router(chatbot_router)
 app.include_router(role_router)
 
@@ -133,8 +128,3 @@ app.include_router(role_router)
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
-
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8080))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
