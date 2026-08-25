@@ -15,6 +15,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getApiUrl } from "@/lib/api-url";
 
 interface NavItem {
   label: string;
@@ -78,7 +79,7 @@ export function InternalSidebar() {
       try {
         let apiRole: string | null = null;
         if (token) {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+          const apiUrl = getApiUrl();
           const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
             headers: { Authorization: `Bearer ${token}` },
           });

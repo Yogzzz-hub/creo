@@ -1,6 +1,7 @@
 import { cookies } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
 import { apiFetch } from "@/lib/api"
+import { getApiUrl } from "@/lib/api-url"
 import PortalDashboardClient from "./portal-dashboard"
 import type { DashboardData } from "./portal-dashboard"
 
@@ -21,7 +22,14 @@ export default async function PortalDashboardPage() {
       })) as DashboardData
     }
   } catch (err: any) {
-    console.error("Failed to fetch dashboard data on the server:", err.message, "URL:", process.env.NEXT_PUBLIC_API_URL, "Token:", !!token)
+    console.error(
+      "Failed to fetch dashboard data on the server:",
+      err.message,
+      "URL:",
+      getApiUrl(),
+      "Token:",
+      !!token
+    )
   }
 
   return (

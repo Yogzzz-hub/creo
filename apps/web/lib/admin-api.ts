@@ -1,8 +1,7 @@
 "use client"
 
 import { createClient } from "@/lib/supabase/client"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+import { getApiUrl } from "@/lib/api-url"
 
 export async function adminFetch<T>(
   path: string,
@@ -13,7 +12,7 @@ export async function adminFetch<T>(
     data: { session },
   } = await supabase.auth.getSession()
 
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${getApiUrl()}${path}`, {
     ...options,
     headers: {
       Authorization: `Bearer ${session?.access_token}`,
@@ -44,7 +43,7 @@ export async function adminFetchOptional<T>(
     data: { session },
   } = await supabase.auth.getSession()
 
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${getApiUrl()}${path}`, {
     ...options,
     headers: {
       Authorization: `Bearer ${session?.access_token}`,

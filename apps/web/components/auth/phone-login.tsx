@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Phone } from "lucide-react";
+import { getApiUrl } from "@/lib/api-url";
 
 export function PhoneLogin() {
   const router = useRouter();
@@ -50,31 +51,22 @@ export function PhoneLogin() {
       });
 
       if (error) {
-        if (error.message.toLowerCase().includes("rate limit")) {
-          setError("Too many requests. Please wait before trying again.");
-        } else {
-          setError(error.message);
-        }
+        setError(error.message);
         setLoading(false);
         return;
       }
 
       setMode("otp");
-      setCooldown(60); // 60 seconds cooldown
+      setCooldown(60);
+      setLoading(false);
     } catch (err: any) {
-      setError("A network error occurred. Please try again.");
-    } finally {
+      setError(err.message || "Failed to send verification code. Please try again.");
       setLoading(false);
     }
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (otp.length !== 6) {
-      setError("OTP must be exactly 6 digits.");
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -91,13 +83,7 @@ export function PhoneLogin() {
       });
 
       if (error) {
-        if (error.message.toLowerCase().includes("expired")) {
-          setError("This OTP has expired. Please request a new one.");
-        } else if (error.message.toLowerCase().includes("invalid")) {
-          setError("Invalid OTP. Please check the code and try again.");
-        } else {
-          setError(error.message);
-        }
+        setError(error.message);
         setLoading(false);
         return;
       }
@@ -107,7 +93,7 @@ export function PhoneLogin() {
       const accessToken = data.session?.access_token;
       if (accessToken) {
         try {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+          const apiUrl = getApiUrl();
           const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           });

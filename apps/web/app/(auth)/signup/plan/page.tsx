@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Info, Loader2, Users } from "lucide-react";
+import { getApiUrl } from "@/lib/api-url";
 
 interface Plan {
   id: string;
@@ -104,8 +105,8 @@ function PlanSelectionContent() {
         }
 
         const [plansRes, settingsRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/plans`, { headers }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/settings/public`),
+          fetch(`${getApiUrl()}/api/v1/plans`, { headers }),
+          fetch(`${getApiUrl()}/api/v1/settings/public`),
         ]);
 
         if (!plansRes.ok) {

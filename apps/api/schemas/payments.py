@@ -50,6 +50,7 @@ class VerifyPaymentRequest(BaseModel):
     order_id: str
     payment_id: str
     signature: str
+    plan_name: Optional[str] = None
 
 
 class VerifyPaymentResponse(BaseModel):
