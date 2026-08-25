@@ -61,12 +61,14 @@ def trigger_ai_analysis(user_id: str, background_tasks: BackgroundTasks = None) 
             logger.info("AI analysis task dispatched successfully for user %s", user_id)
             return True
         else:
-            logger.warning("No active Celery workers found. Falling back to BackgroundTasks.")
+            logger.warning("No active Celery workers found. Falling back to BackgroundTasks/sync execution.")
             if background_tasks:
                 background_tasks.add_task(_process_and_save_analysis, str(user_id))
                 logger.info("AI analysis queued as BackgroundTask for user %s", user_id)
             else:
-                logger.error("No Celery workers and no BackgroundTasks provided!")
+                logger.warning("No BackgroundTasks provided. Running synchronously.")
+                generate_ai_analysis(str(user_id))
+                logger.info("AI analysis executed synchronously for user %s", user_id)
             return True
 
     except Exception as exc:

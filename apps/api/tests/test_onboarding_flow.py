@@ -239,6 +239,11 @@ class TestOnboardingFlow:
 
         q = MagicMock()
         q.ai_summary_line = None
+        q.ai_analysis = None
+        q.industry = "tech"
+        q.primary_goal = "lead_generation"
+        q.brand_tone = ["Professional"]
+        q.target_audience = {}
         q.submitted_at = datetime.now(timezone.utc)
 
         queries = iter([
@@ -281,6 +286,11 @@ class TestOnboardingFlow:
 
         q = MagicMock()
         q.ai_summary_line = "Bold brand with friendly tone"
+        q.ai_analysis = {}
+        q.industry = "tech"
+        q.primary_goal = "lead_generation"
+        q.brand_tone = ["Professional"]
+        q.target_audience = {}
         q.submitted_at = datetime.now(timezone.utc)
 
         queries = iter([

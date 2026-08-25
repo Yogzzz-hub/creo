@@ -320,6 +320,15 @@ export default function QuestionnairePage() {
         );
       }
 
+      // If the PATCH (or POST) returns 409 Conflict, it means the questionnaire/onboarding record was already submitted previously.
+      // Catch that gracefully and force redirect to the portal dashboard!
+      if (res.status === 409) {
+        console.log("Questionnaire already submitted previously. Redirecting to portal.");
+        setIsSubmitting(false);
+        router.push("/portal");
+        return;
+      }
+
       /*
        * If POST/PATCH failed, show the actual backend error.
        */

@@ -313,4 +313,5 @@
 - [x] Add dynamic auth/network error fallbacks in Next.js proxy middleware to prevent raw 503 text errors and support graceful client-side dashboard state recovery
 - [x] Integrate dynamic getApiUrl helper across all client-side auth, plans, payment, layout, and sidebar pages to prevent 404 relative fetch errors on Vercel deployment
 - [x] Implement dynamic Razorpay payment signature verification fallback and direct database activation to prevent timeouts during local onboarding
+- [x] Catch HTTP 409 Conflict gracefully in onboarding questionnaire and completion pages and redirect to dashboard
 

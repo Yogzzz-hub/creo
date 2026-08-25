@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
 import { Loader2, CheckCircle2, ArrowRight, AlertCircle } from "lucide-react";
+import { getApiUrl } from "@/lib/api-url";
 
 const MESSAGES = [
   "Analyzing brand profile...",
@@ -43,6 +44,12 @@ export default function CompletePage() {
   const retriesRef = useRef(0);
   const mountedRef = useRef(true);
 
+  // Helper to obtain active JWT token
+  const getAccessToken = useCallback(async (): Promise<string | null> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  }, [supabase.auth]);
+
   // 1. Handle the cycling text animation during loading
   useEffect(() => {
     if (phase !== "loading") return;
@@ -57,9 +64,9 @@ export default function CompletePage() {
   // 2. Poll the API for the actual task status
   const pollStatus = useCallback(async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = await getAccessToken();
 
-      if (!session?.access_token) {
+      if (!accessToken) {
         if (mountedRef.current) {
           setPhase("error");
           setErrorMessage("Authentication error. Please log in again.");
@@ -68,11 +75,19 @@ export default function CompletePage() {
       }
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/questionnaire/status`,
+        `${getApiUrl()}/api/v1/questionnaire/status`,
         {
-          headers: { Authorization: `Bearer ${session.access_token}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
+
+      // Handle 409 Conflict (e.g. if record was already processed/locked)
+      if (res.status === 409) {
+        console.log("Questionnaire status returned 409 Conflict. Redirecting to portal.");
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        router.push("/portal");
+        return;
+      }
 
       if (!res.ok) {
         if (res.status !== 404) {
@@ -100,7 +115,7 @@ export default function CompletePage() {
     } catch (error) {
       console.error("Polling error:", error);
     }
-  }, [supabase.auth]);
+  }, [getAccessToken, router]);
 
   // 3. Start polling on mount — retriesRef persists across renders
   useEffect(() => {
@@ -134,6 +149,33 @@ export default function CompletePage() {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [pollStatus]);
+
+  // 4. Action click handler with graceful error/conflict recovery
+  const handleGoToDashboard = useCallback(async () => {
+    try {
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        router.push("/portal");
+        return;
+      }
+
+      // Check status to ensure onboarding status is synced. If it returns 409 Conflict, catch gracefully.
+      const res = await fetch(
+        `${getApiUrl()}/api/v1/questionnaire/status`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      
+      if (res.status === 409) {
+        console.log("Questionnaire already submitted previously (409 Conflict).");
+      }
+    } catch (err) {
+      console.warn("Verification on dashboard redirect warning:", err);
+    } finally {
+      router.push("/portal");
+    }
+  }, [getAccessToken, router]);
 
   // --- UI RENDER STATES --- //
 
@@ -175,7 +217,7 @@ export default function CompletePage() {
           {(brandSummary || summaryLine || profile) && <BrandSummaryCard summaryLine={summaryLine} brandSummary={brandSummary} profile={profile} partial />}
           <div className="flex flex-col gap-2 w-full max-w-xs mt-2">
             <Button
-              onClick={() => router.push("/portal")}
+              onClick={handleGoToDashboard}
               className="bg-brand hover:bg-brand/90 text-white"
             >
               Go to Dashboard
@@ -259,7 +301,7 @@ export default function CompletePage() {
 
         {/* Action Button */}
         <Button
-          onClick={() => router.push("/portal")}
+          onClick={handleGoToDashboard}
           className="w-full mt-2 bg-brand hover:bg-brand/90 text-white h-12 text-base font-semibold"
         >
           Go to Your Dashboard
