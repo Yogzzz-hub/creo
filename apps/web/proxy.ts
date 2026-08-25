@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getApiUrl } from "./lib/api-url";
 
 const PROTECTED_PREFIXES = ["/portal", "/dashboard", "/admin", "/kpi", "/sales", "/onboarding"];
 
@@ -59,7 +60,7 @@ function canAccessRoute(role: string, pathname: string): boolean {
 
 async function fetchUserProfile(accessToken: string): Promise<{ role: string; account_status: string; onboarding_stage: number } | "network_error" | null> {
   try {
-    const apiUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || "";
+    const apiUrl = getApiUrl();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
@@ -130,15 +131,9 @@ export async function proxy(request: NextRequest) {
     const metadataRole = (user.user_metadata?.role as string) ?? "client";
     const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
     const profile = accessToken ? await fetchUserProfile(accessToken) : null;
+    const isNetworkError = profile === "network_error";
 
-    if (profile === "network_error") {
-      return new NextResponse(
-        "Backend server is temporarily unavailable. Please try again later.",
-        { status: 503, headers: { "Retry-After": "30" } }
-      );
-    }
-
-    const role = resolveRole(metadataRole, profile?.role ?? null);
+    const role = resolveRole(metadataRole, isNetworkError ? null : (profile?.role ?? null));
 
     if (!canAccessRoute(role, pathname)) {
       const url = request.nextUrl.clone();
@@ -148,16 +143,16 @@ export async function proxy(request: NextRequest) {
 
     // Portal restriction: non-active clients or those with incomplete onboarding can only access dashboard & support
     let questionnaireSubmitted = false;
-    if (role === "client" && profile?.account_status === "active") {
+    if (role === "client" && !isNetworkError && profile?.account_status === "active") {
       const questionnaireResponse = await fetch(
-        `${process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || ""}/api/v1/questionnaire/status`,
+        `${getApiUrl()}/api/v1/questionnaire/status`,
         { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       questionnaireSubmitted = questionnaireResponse.ok;
     }
 
     const requiresQuestionnaire = pathname.startsWith("/portal/deliverables") || pathname.startsWith("/portal/calendar");
-    const portalAccessAllowed = profile?.account_status === "active" && (!requiresQuestionnaire || questionnaireSubmitted);
+    const portalAccessAllowed = isNetworkError || (profile?.account_status === "active" && (!requiresQuestionnaire || questionnaireSubmitted));
     if (role === "client" && pathname.startsWith("/portal") && !isUnrestrictedPortalRoute(pathname) && !portalAccessAllowed) {
       // The user has paid and is active, allow them to view their payments
       if (pathname.startsWith("/portal/payments") && profile?.account_status === "active") {
@@ -174,15 +169,9 @@ export async function proxy(request: NextRequest) {
     const metadataRole = (user.user_metadata?.role as string) ?? "client";
     const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
     const profile = accessToken ? await fetchUserProfile(accessToken) : null;
+    const isNetworkError = profile === "network_error";
 
-    if (profile === "network_error") {
-      return new NextResponse(
-        "Backend server is temporarily unavailable. Please try again later.",
-        { status: 503, headers: { "Retry-After": "30" } }
-      );
-    }
-
-    const role = resolveRole(metadataRole, profile?.role ?? null);
+    const role = resolveRole(metadataRole, isNetworkError ? null : (profile?.role ?? null));
     const url = request.nextUrl.clone();
     url.pathname = getHome(role);
     return NextResponse.redirect(url);

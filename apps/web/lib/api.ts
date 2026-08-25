@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
-
-const getApiUrl = () => process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"
+import { getApiUrl } from "./api-url"
 
 /**
  * Authenticated fetch wrapper for the FastAPI backend.

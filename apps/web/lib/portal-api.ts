@@ -1,8 +1,7 @@
 "use client"
 
 import { createClient } from "@/lib/supabase/client"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+import { getApiUrl } from "@/lib/api-url"
 
 export class AuthError extends Error {
   constructor() {
@@ -28,7 +27,7 @@ export async function portalFetch<T>(
     throw new AuthError()
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${getApiUrl()}${path}`, {
     ...options,
     headers: {
       Authorization: `Bearer ${token}`,

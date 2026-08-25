@@ -8,6 +8,7 @@ import { CardContent } from "@/components/ui/card";
 import { CreditCard, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getBaseUrl } from "@/lib/utils";
+import { getApiUrl } from "@/lib/api-url";
 
 // ── Razorpay types ──────────────────────────────────────────────
 interface RazorpayOptions {
@@ -78,7 +79,7 @@ async function apiCreateOrder(
   planName: PlanName
 ) {
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/create-order`,
+    `${getApiUrl()}/api/v1/payments/create-order`,
     {
       method: "POST",
       headers: {
@@ -108,7 +109,8 @@ async function apiCreateOrder(
 async function apiVerifyPayment(
   token: string,
   response: RazorpayResponse,
-  timeoutMs = 10000
+  planName: PlanName,
+  timeoutMs = 30000
 ): Promise<{ valid: boolean; account_status: string; onboarding_stage: number }> {
   if (!response.razorpay_order_id || !response.razorpay_payment_id || !response.razorpay_signature) {
     throw new Error("Razorpay returned incomplete payment details. Please try again.");
@@ -119,7 +121,7 @@ async function apiVerifyPayment(
 
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/verify-payment`,
+      `${getApiUrl()}/api/v1/payments/verify-payment`,
       {
         method: "POST",
         headers: {
@@ -130,6 +132,7 @@ async function apiVerifyPayment(
           order_id: response.razorpay_order_id,
           payment_id: response.razorpay_payment_id,
           signature: response.razorpay_signature,
+          plan_name: planName,
         }),
         signal: controller.signal,
       }
@@ -243,6 +246,7 @@ function PaymentContent() {
     null
   );
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [isWaitingForWebhook, setIsWaitingForWebhook] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -264,7 +268,7 @@ function PaymentContent() {
     async function fetchPlans() {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/plans`
+          `${getApiUrl()}/api/v1/plans`
         );
         if (!res.ok) return;
         const availablePlans: PlanDetails[] = await res.json();
@@ -286,7 +290,7 @@ function PaymentContent() {
         const token = await getAccessToken();
         if (!token || cancelled) return;
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me/role`, {
+        const res = await fetch(`${getApiUrl()}/api/v1/auth/me/role`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok || cancelled) return;
@@ -349,8 +353,10 @@ function PaymentContent() {
         description: `${planDetails.display_name} Plan Subscription`,
         handler: async (response) => {
           try {
-            const verification = await apiVerifyPayment(token, response);
+            setVerifyingPayment(true);
+            const verification = await apiVerifyPayment(token, response, selectedPlan);
             setProcessing(null);
+            setVerifyingPayment(false);
             if (verification.account_status === "active") {
               setPaymentSuccess(true);
               router.push("/onboarding/questionnaire");
@@ -359,6 +365,7 @@ function PaymentContent() {
             }
           } catch (err) {
             setProcessing(null);
+            setVerifyingPayment(false);
             setIsWaitingForWebhook(false);
             setError(
               err instanceof Error
@@ -382,7 +389,7 @@ function PaymentContent() {
       );
       setProcessing(null);
     }
-  }, [planDetails, router, selectedPlan]);
+  }, [planDetails, selectedPlan]);
 
   // ── Stripe handler ────────────────────────────────────────────
   const handleStripeSuccess = useCallback(() => {
@@ -410,7 +417,7 @@ function PaymentContent() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/onboarding/pricing-help`,
+        `${getApiUrl()}/api/v1/onboarding/pricing-help`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -437,7 +444,7 @@ function PaymentContent() {
     queryFn: async () => {
       const token = await getAccessToken();
       if (!token) throw new Error("No token");
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me/role`, {
+      const res = await fetch(`${getApiUrl()}/api/v1/auth/me/role`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch role");
@@ -468,6 +475,18 @@ function PaymentContent() {
       router.push("/onboarding/questionnaire");
     }
   }, [roleData, isWaitingForWebhook, router]);
+
+  if (verifyingPayment) {
+    return (
+      <CardContent className="py-12 flex flex-col items-center justify-center text-center">
+        <Loader2 className="size-10 animate-spin text-brand mb-4" />
+        <h2 className="text-xl font-bold text-brand-dark mb-2">Verifying Payment...</h2>
+        <p className="text-sm text-text-muted max-w-sm">
+          Please do not refresh or close this page while we confirm your transaction securely.
+        </p>
+      </CardContent>
+    );
+  }
 
   if (isWaitingForWebhook) {
     return (

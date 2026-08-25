@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import { useSubscription } from "@/context/subscription-context"
+import { getApiUrl } from "@/lib/api-url"
 
 const TEAM_PHONE = "+919941999415"
 const TEAM_PHONE_DISPLAY = "+91 994 199 9415"
@@ -50,9 +51,11 @@ interface Plan {
   revision_rounds: number
   has_dedicated_manager: boolean
   highlights: string[]
+  is_recommended: boolean
+  is_active: boolean
 }
 
-interface PaymentRecord {
+interface PaymentHistoryItem {
   id: string
   date: string
   amount: number
@@ -60,43 +63,46 @@ interface PaymentRecord {
   gateway: string
 }
 
+const STATUS_BADGE: Record<string, { label: string; className: string }> = {
+  active: { label: "Paid", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  cancelled: { label: "Unpaid", className: "bg-rose-50 text-rose-700 border-rose-200" },
+  suspended: { label: "Unpaid", className: "bg-rose-50 text-rose-700 border-rose-200" },
+  lapsed: { label: "Lapsed", className: "bg-amber-50 text-amber-700 border-amber-200" },
+  pending_verification: { label: "Pending", className: "bg-blue-50 text-blue-700 border-blue-200" },
+}
+
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
+    minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount)
 }
 
 function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
+  return new Date(dateString).toLocaleDateString("en-IN", {
     year: "numeric",
+    month: "long",
+    day: "numeric",
   })
-}
-
-const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  active: { label: "Paid", className: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  pending_payment: { label: "Pending", className: "bg-amber-100 text-amber-700 border-amber-200" },
-  past_due: { label: "Failed", className: "bg-red-100 text-red-700 border-red-200" },
-  cancelled: { label: "Cancelled", className: "bg-gray-100 text-gray-600 border-gray-200" },
 }
 
 export default function PaymentsPage() {
   const { token } = useSession()
+  const { accountStatus } = useSubscription()
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null)
-  const [paymentHistory, setPaymentHistory] = useState<PaymentRecord[]>([])
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [consultationModalOpen, setConsultationModalOpen] = useState(false)
   const [phoneCopied, setPhoneCopied] = useState(false)
-  const { isLapsed } = useSubscription()
+
+  const isLapsed = accountStatus === "lapsed"
 
   function handleCopyPhone() {
     navigator.clipboard.writeText(TEAM_PHONE).then(() => {
       setPhoneCopied(true)
-      toast.success("Phone number copied")
+      toast.success("Phone number copied to clipboard")
       setTimeout(() => setPhoneCopied(false), 2000)
     })
   }
@@ -110,10 +116,10 @@ export default function PaymentsPage() {
         }
 
         const [plansRes, historyRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/plans`, {
+          fetch(`${getApiUrl()}/api/v1/plans`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/history`, {
+          fetch(`${getApiUrl()}/api/v1/payments/history`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ])
@@ -166,7 +172,7 @@ export default function PaymentsPage() {
     if (!token) return
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/receipt/${subscriptionId}`,
+        `${getApiUrl()}/api/v1/payments/receipt/${subscriptionId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       )
       if (!res.ok) {
@@ -329,7 +335,7 @@ export default function PaymentsPage() {
                       <TableCell>
                         <Badge
                           className={cn(
-                            "border text-[10px] font-medium",
+                             "border text-[10px] font-medium",
                             statusConfig.className
                           )}
                         >

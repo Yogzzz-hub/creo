@@ -295,7 +295,6 @@
 - [x] Implement continuous questionnaire viewing with full AI analysis display
 - [x] Build editable form with all questionnaire fields
 - [x] Implement smart HTTP method selection (POST for new, PATCH for updates)
-- [x] Add frontend validation for all required fields
 - [x] Implement graceful 404 handling (no questionnaire yet = empty form)
 - [x] Implement AI regeneration trigger on questionnaire updates
 - [x] Add PATCH endpoint /api/v1/questionnaire for client updates
@@ -308,6 +307,10 @@
 - [x] Verify all required fields: industry, business_description, primary_goal, brand_tone, target_audience, social_handles
 - [x] Verify AI analysis includes: core identity, brand tone, content themes, audience persona, goal alignment
 - [x] Add Meta/Instagram webhook verification endpoint GET /api/webhook and Pytest tests
-- [x] Audit and refactor frontend auth redirect URLs to dynamically resolve using NEXT_PUBLIC_APP_URL with window.location.origin fallback
 - [x] Migrate deprecated middleware.ts to proxy.ts (Next.js 16+ convention) and add allowScripts for esbuild/unrs-resolver postinstall scripts
 - [x] Centralize frontend dynamic URL resolution under getBaseUrl helper and integrate across auth / payment redirects
+- [x] Standardize frontend dynamic API URL resolution under getApiUrl helper and update backend CORS middleware to whitelist FRONTEND_URL dynamically
+- [x] Add dynamic auth/network error fallbacks in Next.js proxy middleware to prevent raw 503 text errors and support graceful client-side dashboard state recovery
+- [x] Integrate dynamic getApiUrl helper across all client-side auth, plans, payment, layout, and sidebar pages to prevent 404 relative fetch errors on Vercel deployment
+- [x] Implement dynamic Razorpay payment signature verification fallback and direct database activation to prevent timeouts during local onboarding
+

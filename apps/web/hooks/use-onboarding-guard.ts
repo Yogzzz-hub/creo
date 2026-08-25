@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { useSession } from "@/context/session-context"
 import { useQuery } from "@tanstack/react-query"
+import { getApiUrl } from "@/lib/api-url"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || ""
+const API_URL = getApiUrl()
 
 const RESTRICTED_ROUTES = [
   "/portal/deliverables",

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2, Eye, EyeOff, Phone } from "lucide-react";
 import { PhoneLogin } from "@/components/auth/phone-login";
 import { getBaseUrl } from "@/lib/utils";
+import { getApiUrl } from "@/lib/api-url";
 
 const ROLE_HOMES: Record<string, string> = {
   client: "/portal",
@@ -57,7 +58,7 @@ export default function LoginPage() {
       const accessToken = data.session?.access_token;
       if (accessToken) {
         try {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+          const apiUrl = getApiUrl();
           const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getApiUrl } from "@/lib/api-url";
 
 const ROLE_REDIRECTS: Record<string, string> = {
   client: "/portal",
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
           try {
             const session = (await supabase.auth.getSession()).data.session;
             if (session?.access_token) {
-              const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+              const apiUrl = getApiUrl();
               const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
                 headers: { Authorization: `Bearer ${session.access_token}` },
               });

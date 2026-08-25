@@ -6,8 +6,9 @@ import Link from "next/link";
 import { Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "@/context/session-context";
+import { getApiUrl } from "@/lib/api-url";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const API_URL = getApiUrl();
 
 const STEPS = [
   { label: "Verify", href: "/onboarding/verify" },

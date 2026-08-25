@@ -64,12 +64,18 @@ app = FastAPI(
 
 # CORS must be the outermost middleware so headers are added to ALL responses,
 # including those from exception handlers registered below.
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+if settings.FRONTEND_URL:
+    origins.append(settings.FRONTEND_URL)
+    if settings.FRONTEND_URL.endswith("/"):
+        origins.append(settings.FRONTEND_URL[:-1])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
