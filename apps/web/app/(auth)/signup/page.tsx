@@ -72,10 +72,11 @@ export default function SignupPage() {
   const [resendCooldown, setResendCooldown] = useState(0);
 
   async function handleGoogleSignUp() {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${appUrl}/auth/callback`,
       },
     });
   }
@@ -119,10 +120,12 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
+        emailRedirectTo: `${appUrl}/auth/callback`,
         data: {
           full_name: data.fullName,
           role: "client",

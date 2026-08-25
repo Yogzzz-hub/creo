@@ -43,7 +43,8 @@ export async function GET(request: Request) {
     });
 
     const appId = process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID;
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/callback/instagram`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+    const redirectUri = `${appUrl}/api/auth/callback/instagram`;
     const scopes = [
       "instagram_basic",
       "instagram_content_publish"

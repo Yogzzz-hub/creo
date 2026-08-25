@@ -191,10 +191,11 @@ function StripePaymentForm({
       if (!stripe || !elements) return;
 
       setSubmitting(true);
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/onboarding/questionnaire`,
+          return_url: `${appUrl}/onboarding/questionnaire`,
         },
         redirect: "if_required",
       });

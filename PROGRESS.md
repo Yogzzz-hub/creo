@@ -308,3 +308,4 @@
 - [x] Verify all required fields: industry, business_description, primary_goal, brand_tone, target_audience, social_handles
 - [x] Verify AI analysis includes: core identity, brand tone, content themes, audience persona, goal alignment
 - [x] Add Meta/Instagram webhook verification endpoint GET /api/webhook and Pytest tests
+- [x] Audit and refactor frontend auth redirect URLs to dynamically resolve using NEXT_PUBLIC_APP_URL with window.location.origin fallback
