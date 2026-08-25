@@ -1,10 +1,14 @@
 import logging
+import os
+# pyrefly: ignore [missing-import]
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+
 from routers.auth import router as auth_router
 from routers.plans import router as plans_router
 from routers.onboarding import router as onboarding_router
@@ -121,3 +125,8 @@ app.include_router(role_router)
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
