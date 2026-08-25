@@ -309,3 +309,4 @@
 - [x] Verify AI analysis includes: core identity, brand tone, content themes, audience persona, goal alignment
 - [x] Add Meta/Instagram webhook verification endpoint GET /api/webhook and Pytest tests
 - [x] Audit and refactor frontend auth redirect URLs to dynamically resolve using NEXT_PUBLIC_APP_URL with window.location.origin fallback
+- [x] Migrate deprecated middleware.ts to proxy.ts (Next.js 16+ convention) and add allowScripts for esbuild/unrs-resolver postinstall scripts

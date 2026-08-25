@@ -85,7 +85,7 @@ function resolveRole(metadataRole: string, backendRole: string | null): string {
   return metadataRole || "client";
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Skip Supabase auth for Instagram OAuth callback (arrives cookieless from Facebook)
   if (request.nextUrl.pathname.startsWith("/api/auth/callback/instagram")) {
     return NextResponse.next();
