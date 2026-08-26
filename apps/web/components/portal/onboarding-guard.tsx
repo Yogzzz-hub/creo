@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { useOnboardingGuard } from "@/hooks/use-onboarding-guard"
 import { OnboardingRequiredView } from "@/components/portal/onboarding-required-view"
 import { Loader2 } from "lucide-react"
@@ -18,7 +20,15 @@ import { Loader2 } from "lucide-react"
  * then unblocks automatically without a page reload.
  */
 export function OnboardingGuard({ children }: { children: React.ReactNode }) {
-  const { isRestricted, ready, blocked, isError } = useOnboardingGuard()
+  const { isRestricted, ready, blocked, isActive, questionnaireSubmitted, isError } = useOnboardingGuard()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (ready && blocked && isActive && !questionnaireSubmitted) {
+      // User has paid (active) but has not completed the questionnaire -> redirect to portal dashboard to complete questionnaire
+      router.push("/portal")
+    }
+  }, [ready, blocked, isActive, questionnaireSubmitted, router])
 
   // Non-restricted routes: render children on the very first render.
   if (!isRestricted) {
@@ -60,6 +70,13 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
 
   // Restricted route — user is not active (auto-polling is active in the hook)
   if (blocked) {
+    if (isActive && !questionnaireSubmitted) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-[#E8F4FD]">
+          <Loader2 className="size-6 animate-spin text-[#2B7BC4]" />
+        </div>
+      )
+    }
     return <OnboardingRequiredView />
   }
 

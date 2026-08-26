@@ -97,12 +97,16 @@ export function useOnboardingGuard() {
       }
 
       const roleData: RoleResponse = await roleRes.json()
-      const isActive = roleData.account_status === "active"
+      let isActive = roleData.account_status === "active"
 
       let fullyOnboarded = false
       let questionnaireSubmitted = false
-      if (isActive && accountRes.ok) {
-        const accountData: AccountStatus = await accountRes.json()
+
+      if (accountRes.ok) {
+        const accountData = await accountRes.json()
+        if (accountData.account_status === "active") {
+          isActive = true
+        }
         fullyOnboarded = accountData.instagram_connected === true
       }
 
@@ -140,6 +144,8 @@ export function useOnboardingGuard() {
       isRestricted,
       ready: true,
       blocked: false,
+      isActive: true,
+      questionnaireSubmitted: true,
       fullyOnboarded: false,
       isError: false,
     }
@@ -151,6 +157,8 @@ export function useOnboardingGuard() {
       isRestricted,
       ready: false,
       blocked: false,
+      isActive: false,
+      questionnaireSubmitted: false,
       fullyOnboarded: false,
       isError: false,
     }
@@ -162,6 +170,8 @@ export function useOnboardingGuard() {
       isRestricted,
       ready: true,
       blocked: false, // Don't block on network error, just show error state
+      isActive: false,
+      questionnaireSubmitted: false,
       fullyOnboarded: false,
       isError: true,
     }
@@ -173,6 +183,8 @@ export function useOnboardingGuard() {
       isRestricted,
       ready: true,
       blocked: true,
+      isActive: false,
+      questionnaireSubmitted: false,
       fullyOnboarded: false,
       isError: false,
     }
@@ -182,6 +194,8 @@ export function useOnboardingGuard() {
     isRestricted,
     ready: true,
     blocked: !data.isActive || (requiresQuestionnaireSubmission(pathname) && !data.questionnaireSubmitted),
+    isActive: data.isActive,
+    questionnaireSubmitted: data.questionnaireSubmitted,
     fullyOnboarded: data.fullyOnboarded,
     isError: false,
   }
