@@ -86,9 +86,19 @@ function resolveRole(metadataRole: string, backendRole: string | null): string {
   return metadataRole || "client";
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // OPTIMIZATION: Bypass middleware logic entirely for Next.js prefetch headers
+  const isPrefetch =
+    request.headers.get("Purpose") === "prefetch" ||
+    request.headers.get("x-middleware-prefetch") === "1";
+  if (isPrefetch) {
+    return NextResponse.next();
+  }
+
   // Skip Supabase auth for Instagram OAuth callback (arrives cookieless from Facebook)
-  if (request.nextUrl.pathname.startsWith("/api/auth/callback/instagram")) {
+  if (pathname.startsWith("/api/auth/callback/instagram")) {
     return NextResponse.next();
   }
 
@@ -115,8 +125,10 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const pathname = request.nextUrl.pathname;
+  // OPTIMIZATION: Use getSession() instead of getUser() to eliminate network latency
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
+  const accessToken = session?.access_token ?? null;
 
   // Unauthenticated user trying to access protected route → redirect to login
   if (!user && isProtectedRoute(pathname)) {
@@ -129,7 +141,6 @@ export async function proxy(request: NextRequest) {
   // Authenticated user on a protected route → check role and access
   if (user && isProtectedRoute(pathname)) {
     const metadataRole = (user.user_metadata?.role as string) ?? "client";
-    const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
     const profile = accessToken ? await fetchUserProfile(accessToken) : null;
     const isNetworkError = profile === "network_error";
 
@@ -167,7 +178,6 @@ export async function proxy(request: NextRequest) {
 
   if (user && (pathname === "/login" || pathname === "/signup")) {
     const metadataRole = (user.user_metadata?.role as string) ?? "client";
-    const accessToken = (await supabase.auth.getSession()).data.session?.access_token;
     const profile = accessToken ? await fetchUserProfile(accessToken) : null;
     const isNetworkError = profile === "network_error";
 

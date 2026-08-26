@@ -315,3 +315,9 @@
 - [x] Implement dynamic Razorpay payment signature verification fallback and direct database activation to prevent timeouts during local onboarding
 - [x] Catch HTTP 409 Conflict gracefully in onboarding questionnaire and completion pages and redirect to dashboard
 
+## Integration Point 3: Performance & Routing Fixes
+
+- [x] Create route loading skeletons (loading.tsx) under /portal and /dashboard to enable streaming layouts
+- [x] Rename and optimize middleware: move proxy.ts to middleware.ts, use getSession() instead of getUser(), and bypass checks on Next.js prefetches
+- [x] Disable unconstrained prefetching: add prefetch={false} to sidebar and admin navigation links
+- [x] Implement Redis connection pooling in backend security token validation checks

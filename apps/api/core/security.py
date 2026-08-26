@@ -3,6 +3,7 @@ import hashlib
 import logging
 from typing import Annotated
 
+import redis
 from cryptography.fernet import Fernet
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -22,6 +23,14 @@ oauth2_scheme = HTTPBearer()
 
 _supabase_client = None
 _supabase_key_hash: str | None = None
+
+# Global Redis connection pool to prevent connection handshakes on every API call.
+_redis_pool = redis.ConnectionPool.from_url(
+    settings.REDIS_URL,
+    decode_responses=True,
+    max_connections=20
+)
+_redis_client = redis.Redis(connection_pool=_redis_pool)
 
 
 def _get_supabase_client():
@@ -118,57 +127,26 @@ def decrypt_gateway_id(
 
 def _is_jti_revoked(jti: str) -> bool:
     try:
-        # pyrefly: ignore [missing-import]
-        import redis
-
-        r = redis.from_url(
-            settings.REDIS_URL,
-            decode_responses=True,
-        )
-
-        revoked = r.exists(
-            f"revoked_token:{jti}"
-        )
-
-        r.close()
-
+        revoked = _redis_client.exists(f"revoked_token:{jti}")
         return bool(revoked)
-
-    except Exception:
+    except Exception as exc:
+        logger.error("Redis error checking JTI revocation: %s", exc)
         return False
 
 
 def _get_cached_auth_id(jti: str) -> str | None:
     try:
-        import redis
-
-        r = redis.from_url(
-            settings.REDIS_URL,
-            decode_responses=True,
-        )
-
-        auth_id = r.get(f"valid_token:{jti}")
-
-        r.close()
-
-        return auth_id
-    except Exception:
+        return _redis_client.get(f"valid_token:{jti}")
+    except Exception as exc:
+        logger.error("Redis error getting cached JTI auth ID: %s", exc)
         return None
 
 
 def _cache_auth_id(jti: str, auth_id: str, ttl: int) -> None:
     try:
-        import redis
-
-        r = redis.from_url(
-            settings.REDIS_URL,
-            decode_responses=True,
-        )
-
-        r.setex(f"valid_token:{jti}", ttl, auth_id)
-
-        r.close()
-    except Exception:
+        _redis_client.setex(f"valid_token:{jti}", ttl, auth_id)
+    except Exception as exc:
+        logger.error("Redis error caching JTI auth ID: %s", exc)
         pass
 
 
