@@ -136,6 +136,7 @@
 - [x] 6.11 Build Content Calendar page — monthly grid + list view toggle
 - [x] 6.12 Create FastAPI endpoint GET /api/v1/calendar
 - [x] 6.13 Wire calendar to API
+- [x] 6.13a Make calendar view interactive and editable, remove dev buttons/onboarding empty state, and support PATCH updates
 - [x] 6.14 Build Payments page — current plan card, payment history, plan change buttons
 - [x] 6.15 Create FastAPI endpoints: GET /api/v1/payments/history, POST /api/v1/payments/change-plan
 - [ ] 6.16 Implement plan upgrade/downgrade — proration calculation

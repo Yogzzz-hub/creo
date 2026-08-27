@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import { useSession } from "@/context/session-context"
-import { ChevronLeft, ChevronRight, Loader2, Trash2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -64,8 +64,15 @@ export default function CalendarPage() {
   const [today] = useState(() => new Date())
   const [entries, setEntries] = useState<CalendarEntry[]>([])
   const [loading, setLoading] = useState(true)
-  const [generating, setGenerating] = useState(false)
-  const [resetting, setResetting] = useState(false)
+
+  // Edit Modal State
+  const [editingEntry, setEditingEntry] = useState<CalendarEntry | null>(null)
+  const [editTopic, setEditTopic] = useState("")
+  const [editDate, setEditDate] = useState("")
+  const [editType, setEditType] = useState<DeliverableType>("poster")
+  const [editStatus, setEditStatus] = useState<string>("scheduled")
+  const [saving, setSaving] = useState(false)
+  const [errorMsg, setErrorMsg] = useState("")
 
   const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() === currentMonth
   const daysInMonth = getDaysInMonth(currentYear, currentMonth)
@@ -112,55 +119,65 @@ export default function CalendarPage() {
     fetchCalendar()
   }, [fetchCalendar])
 
-  async function handleTestGenerate() {
-    if (!token) return
-    setGenerating(true)
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/calendar/test-generate`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-      if (!res.ok) {
-        const body = await res.json().catch(() => null)
-        console.error("[Calendar] test-generate failed:", res.status, body)
-        return
-      }
-      const data = await res.json()
-      console.log("[Calendar] Generated", data.entries_created, "entries")
-      await fetchCalendar()
-    } catch (err) {
-      console.error("[Calendar] test-generate network error:", err)
-    } finally {
-      setGenerating(false)
-    }
+  const startEditing = (entry: CalendarEntry) => {
+    setEditingEntry(entry)
+    setEditTopic(entry.topic)
+    setEditDate(entry.date)
+    setEditType(entry.type)
+    setEditStatus(entry.status)
+    setErrorMsg("")
   }
 
-  async function handleTestReset() {
-    if (!token) return
-    setResetting(true)
+  async function handleSaveEdit() {
+    if (!editingEntry || !token) return
+    setSaving(true)
+    setErrorMsg("")
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/calendar/test-reset`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/calendar/${editingEntry.id}`,
         {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            scheduled_date: editDate,
+            deliverable_type: editType,
+            content_topic: editTopic,
+            status: editStatus,
+          }),
         }
       )
+
       if (!res.ok) {
         const body = await res.json().catch(() => null)
-        console.error("[Calendar] test-reset failed:", res.status, body)
+        setErrorMsg(body?.detail || "Failed to update item")
+        setSaving(false)
         return
       }
-      const data = await res.json()
-      console.log("[Calendar] Deleted", data.entries_deleted, "entries")
-      await fetchCalendar()
+
+      const updated = await res.json()
+      
+      setEntries((prev) =>
+        prev.map((e) =>
+          e.id === editingEntry.id
+            ? {
+                ...e,
+                date: updated.scheduled_date,
+                type: updated.deliverable_type,
+                topic: updated.content_topic || "Untitled Content",
+                status: updated.status,
+              }
+            : e
+        )
+      )
+      setEditingEntry(null)
     } catch (err) {
-      console.error("[Calendar] test-reset network error:", err)
+      console.error(err)
+      setErrorMsg("Network error. Please try again.")
     } finally {
-      setResetting(false)
+      setSaving(false)
     }
   }
 
@@ -215,19 +232,6 @@ export default function CalendarPage() {
                 <span className="text-[#9B59B6]">{quota.reel} REELS</span>
               </span>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleTestReset}
-              disabled={resetting}
-              className="ml-2 text-gray-400 hover:text-red-500"
-            >
-              {resetting ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Trash2 className="size-4" />
-              )}
-            </Button>
           </div>
         )}
       </div>
@@ -240,37 +244,6 @@ export default function CalendarPage() {
               {Array.from({ length: 28 }).map((_, i) => (
                 <div key={i} className="h-20 animate-pulse rounded bg-gray-100" />
               ))}
-            </div>
-          </CardContent>
-        </Card>
-      ) : filteredEntries.length === 0 ? (
-        <Card className="rounded-xl shadow-[var(--shadow-card)]">
-          <CardContent className="flex flex-col items-center justify-center py-20">
-            <div className="flex size-16 items-center justify-center rounded-full bg-[#E8F4FD]">
-              <span className="text-3xl">📅</span>
-            </div>
-            <h3 className="mt-5 text-lg font-semibold text-[#0D2137]">
-              Your content calendar is being set up
-            </h3>
-            <p className="mt-2 max-w-sm text-center text-sm text-gray-500">
-              Check back after your content plan is approved.
-            </p>
-            <div className="mt-6 flex items-center gap-3">
-              <Button
-                onClick={handleTestGenerate}
-                disabled={generating || resetting}
-              >
-                {generating && <Loader2 className="mr-2 size-4 animate-spin" />}
-                {generating ? "Generating…" : "Dev: Generate Test Calendar"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleTestReset}
-                disabled={generating || resetting}
-              >
-                {resetting && <Loader2 className="mr-2 size-4 animate-spin" />}
-                {resetting ? "Deleting…" : "Dev: Reset Calendar"}
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -337,22 +310,23 @@ export default function CalendarPage() {
                       </span>
                     </div>
 
-                    {/* Color-coded tiles */}
+                    {/* Color-coded interactive tiles */}
                     <div className="flex flex-wrap gap-1">
                       {dayEntries.map((entry) => {
                         const config = TYPE_TILE_CONFIG[entry.type]
                         return (
-                          <div
+                          <button
                             key={entry.id}
                             title={`${config.letter}: ${entry.topic}`}
+                            onClick={() => startEditing(entry)}
                             className={cn(
-                              "flex size-9 items-center justify-center rounded-md text-sm font-bold shadow-sm",
+                              "flex size-9 items-center justify-center rounded-md text-sm font-bold shadow-sm cursor-pointer hover:scale-105 transition-transform border-0 focus:outline-none",
                               config.bg,
                               config.text
                             )}
                           >
                             {config.letter}
-                          </div>
+                          </button>
                         )
                       })}
                     </div>
@@ -380,6 +354,101 @@ export default function CalendarPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Edit Modal */}
+      {editingEntry && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <Card className="w-full max-w-md overflow-hidden rounded-xl border border-gray-100 bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold text-[#0D2137] mb-4">Edit Schedule Item</h3>
+            
+            {errorMsg && (
+              <div className="mb-4 rounded bg-red-50 p-2.5 text-xs font-medium text-red-600">
+                {errorMsg}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                  Topic
+                </label>
+                <input
+                  type="text"
+                  className="w-full rounded-lg border border-gray-200 p-2.5 text-sm font-medium text-[#0D2137] focus:border-[#2B7BC4] focus:outline-none"
+                  value={editTopic}
+                  onChange={(e) => setEditTopic(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                    Scheduled Date
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full rounded-lg border border-gray-200 p-2.5 text-sm font-medium text-[#0D2137] focus:border-[#2B7BC4] focus:outline-none"
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                    Deliverable Type
+                  </label>
+                  <select
+                    className="w-full rounded-lg border border-gray-200 p-2.5 text-sm font-medium text-[#0D2137] focus:border-[#2B7BC4] focus:outline-none bg-white"
+                    value={editType}
+                    onChange={(e) => setEditType(e.target.value as DeliverableType)}
+                  >
+                    <option value="poster">Poster</option>
+                    <option value="reel">Reel</option>
+                    <option value="story">Story</option>
+                    <option value="shoot_day">Shoot Day</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                  Status
+                </label>
+                <select
+                  className="w-full rounded-lg border border-gray-200 p-2.5 text-sm font-medium text-[#0D2137] focus:border-[#2B7BC4] focus:outline-none bg-white"
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value)}
+                >
+                  <option value="draft">Draft</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="ready_for_review">Ready For Review</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3 border-t border-gray-100 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setEditingEntry(null)}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveEdit}
+                disabled={saving}
+                className="bg-[#2B7BC4] hover:bg-[#205E98] text-white font-medium"
+              >
+                {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+            </div>
+          </Card>
+        </div>
       )}
     </div>
   )
