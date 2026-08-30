@@ -323,3 +323,6 @@
 - [x] Rename and optimize middleware: move proxy.ts to middleware.ts, use getSession() instead of getUser(), and bypass checks on Next.js prefetches
 - [x] Disable unconstrained prefetching: add prefetch={false} to sidebar and admin navigation links
 - [x] Implement Redis connection pooling in backend security token validation checks
+- [x] Fix sidebar calendar routing and re-export portal-sidebar navigation components
+- [x] Add interactive edit/pencil icons and instant date-change modal interactions to calendar month view items
+
