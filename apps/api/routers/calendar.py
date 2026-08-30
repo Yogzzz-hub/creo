@@ -32,41 +32,18 @@ async def list_calendar_entries(
     current_user: Annotated[User, Depends(require_active_client)],
     db: AsyncSession = Depends(get_db),
 ):
+    """Return all calendar entries for the authenticated client.
+
+    Always returns HTTP 200. Returns an empty list ``[]`` when no entries
+    exist — never raises 404 or triggers implicit generation side-effects.
+    Use POST /test-generate to explicitly seed calendar data.
+    """
     result = await db.execute(
         select(ContentCalendar)
         .where(ContentCalendar.client_id == current_user.id)
         .order_by(ContentCalendar.scheduled_date.asc())
     )
-    entries = result.scalars().all()
-
-    if not entries:
-        from models.content_plan import ContentPlan
-        
-        plan_tier = "starter"  # Default fallback
-        
-        plan_result = await db.execute(
-            select(ContentPlan).where(ContentPlan.client_id == current_user.id)
-        )
-        content_plan = plan_result.scalars().first()
-        
-        if content_plan:
-            plan_tier = getattr(content_plan, "tier_name", None) or getattr(current_user, "plan_tier", "starter")
-            
-        rows = _generate_timeline_entries(current_user.id, plan_tier=plan_tier)
-        for row in rows:
-            db.add(ContentCalendar(**row))
-            
-        await db.commit()
-        
-        # Query again to get and return the newly generated entries
-        result = await db.execute(
-            select(ContentCalendar)
-            .where(ContentCalendar.client_id == current_user.id)
-            .order_by(ContentCalendar.scheduled_date.asc())
-        )
-        entries = result.scalars().all()
-
-    return entries
+    return result.scalars().all()
 
 
 @router.patch("/{entry_id}", response_model=CalendarEntryResponse)

@@ -84,35 +84,39 @@ export default function CalendarPage() {
       return
     }
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/calendar`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/calendar`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+
+      if (!res.ok) {
+        setEntries([])
+        setLoading(false)
+        return
       }
-    )
 
-    if (!res.ok) {
+      const data: {
+        id: string
+        scheduled_date: string
+        deliverable_type: string
+        content_topic: string | null
+        status: string
+      }[] = await res.json()
+
+      const mapped: CalendarEntry[] = (Array.isArray(data) ? data : []).map((e) => ({
+        id: e.id,
+        date: e.scheduled_date,
+        type: (e.deliverable_type as DeliverableType) || "poster",
+        topic: e.content_topic || "Untitled Content",
+        status: e.status,
+      }))
+      setEntries(mapped)
+    } catch {
+      setEntries([])
+    } finally {
       setLoading(false)
-      return
     }
-
-    const data: {
-      id: string
-      scheduled_date: string
-      deliverable_type: string
-      content_topic: string | null
-      status: string
-    }[] = await res.json()
-
-    const mapped: CalendarEntry[] = data.map((e) => ({
-      id: e.id,
-      date: e.scheduled_date,
-      type: (e.deliverable_type as DeliverableType) || "poster",
-      topic: e.content_topic || "Untitled Content",
-      status: e.status,
-    }))
-    setEntries(mapped)
-    setLoading(false)
   }, [token])
 
   useEffect(() => {
