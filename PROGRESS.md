@@ -325,4 +325,8 @@
 - [x] Implement Redis connection pooling in backend security token validation checks
 - [x] Fix sidebar calendar routing and re-export portal-sidebar navigation components
 - [x] Add interactive edit/pencil icons and instant date-change modal interactions to calendar month view items
+- [x] Enable prefetch={true} and unblock sidebar navigation for instant zero-lag page transitions
+- [x] Simplify calendar item edit modal to date picker and deliverable type selector only with streamlined PATCH payload
+
+
 

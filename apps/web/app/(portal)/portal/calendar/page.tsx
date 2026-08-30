@@ -108,12 +108,10 @@ export default function CalendarPage() {
   const [entries, setEntries] = useState<CalendarEntry[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Edit / Date Change Modal State
+  // Edit / Date Change Modal State (Date & Type only)
   const [editingEntry, setEditingEntry] = useState<CalendarEntry | null>(null)
-  const [editTopic, setEditTopic] = useState("")
   const [editDate, setEditDate] = useState("")
   const [editType, setEditType] = useState<DeliverableType>("poster")
-  const [editStatus, setEditStatus] = useState<string>("scheduled")
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
 
@@ -168,10 +166,8 @@ export default function CalendarPage() {
 
   const startEditing = (entry: CalendarEntry) => {
     setEditingEntry(entry)
-    setEditTopic(entry.topic)
     setEditDate(entry.date)
     setEditType(entry.type)
-    setEditStatus(entry.status)
     setErrorMsg("")
   }
 
@@ -190,8 +186,6 @@ export default function CalendarPage() {
         body: JSON.stringify({
           scheduled_date: editDate,
           deliverable_type: editType,
-          content_topic: editTopic,
-          status: editStatus,
         }),
       })
 
@@ -211,8 +205,8 @@ export default function CalendarPage() {
                 ...e,
                 date: updated.scheduled_date,
                 type: updated.deliverable_type,
-                topic: updated.content_topic || "Untitled Content",
-                status: updated.status,
+                topic: updated.content_topic || e.topic,
+                status: updated.status || e.status,
               }
             : e
         )
@@ -252,7 +246,7 @@ export default function CalendarPage() {
         <div>
           <h1 className="text-2xl font-bold text-[#0D2137]">Content Calendar</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Your scheduled content for the month. Click any item to change date or edit details.
+            Your scheduled content for the month. Click any item to change date or deliverable type.
           </p>
         </div>
 
@@ -392,7 +386,7 @@ export default function CalendarPage() {
                           <button
                             key={entry.id}
                             type="button"
-                            title={`Click to edit date or topic: ${config.label} — ${entry.topic}`}
+                            title={`Click to edit date or type: ${config.label} — ${entry.topic}`}
                             onClick={() => startEditing(entry)}
                             className={cn(
                               "group relative flex w-full items-center justify-between gap-1 rounded-md px-1.5 py-1 text-left text-xs font-semibold shadow-xs transition-all duration-150 cursor-pointer border border-transparent",
@@ -419,7 +413,7 @@ export default function CalendarPage() {
                             {/* Interactive Edit / Pencil Icon (inline & highlighted on hover) */}
                             <span
                               className="inline-flex size-4 shrink-0 items-center justify-center rounded bg-black/15 opacity-80 group-hover:opacity-100 group-hover:bg-black/30 group-hover:scale-110 transition-all"
-                              title="Edit date & topic"
+                              title="Edit date & deliverable type"
                             >
                               <Pencil className="size-2.5 text-white stroke-[2.5]" />
                             </span>
@@ -466,7 +460,7 @@ export default function CalendarPage() {
         </Card>
       )}
 
-      {/* Edit / Date Change Modal */}
+      {/* Edit / Date & Type Modal */}
       {editingEntry && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-150">
           <Card className="w-full max-w-md overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-150">
@@ -496,64 +490,29 @@ export default function CalendarPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Content Topic / Title
+                  Scheduled Date
                 </label>
                 <input
-                  type="text"
+                  type="date"
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-[#0D2137] focus:border-[#2B7BC4] focus:ring-1 focus:ring-[#2B7BC4] focus:outline-none"
-                  value={editTopic}
-                  onChange={(e) => setEditTopic(e.target.value)}
-                  placeholder="e.g. Product Feature Highlight"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                    Scheduled Date
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-[#0D2137] focus:border-[#2B7BC4] focus:ring-1 focus:ring-[#2B7BC4] focus:outline-none"
-                      value={editDate}
-                      onChange={(e) => setEditDate(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                    Deliverable Type
-                  </label>
-                  <select
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-[#0D2137] focus:border-[#2B7BC4] focus:ring-1 focus:ring-[#2B7BC4] focus:outline-none bg-white"
-                    value={editType}
-                    onChange={(e) => setEditType(e.target.value as DeliverableType)}
-                  >
-                    <option value="poster">Poster (P)</option>
-                    <option value="reel">Reel (R)</option>
-                    <option value="story">Story (S)</option>
-                    <option value="shoot_day">Shoot Day (SD)</option>
-                  </select>
-                </div>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-                  Status
+                  Deliverable Type
                 </label>
                 <select
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-[#0D2137] focus:border-[#2B7BC4] focus:ring-1 focus:ring-[#2B7BC4] focus:outline-none bg-white"
-                  value={editStatus}
-                  onChange={(e) => setEditStatus(e.target.value)}
+                  value={editType}
+                  onChange={(e) => setEditType(e.target.value as DeliverableType)}
                 >
-                  <option value="draft">Draft</option>
-                  <option value="scheduled">Scheduled</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="ready_for_review">Ready For Review</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
+                  <option value="poster">Poster (P)</option>
+                  <option value="reel">Reel (R)</option>
+                  <option value="story">Story (S)</option>
+                  <option value="shoot_day">Shoot Day (SD)</option>
                 </select>
               </div>
             </div>
@@ -568,7 +527,7 @@ export default function CalendarPage() {
               </Button>
               <Button
                 onClick={handleSaveEdit}
-                disabled={saving || !editTopic.trim() || !editDate}
+                disabled={saving || !editDate}
                 className="bg-[#2B7BC4] hover:bg-[#205E98] text-white font-medium shadow-xs"
               >
                 {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
