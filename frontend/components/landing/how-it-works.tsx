@@ -35,35 +35,42 @@ const STEPS = [
 
 export function HowItWorksSection() {
   return (
-    <section className="py-24 bg-white" id="how-it-works">
+    <section className="py-24 lg:py-32 bg-white" id="how-it-works">
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-20 reveal-element">
+          <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 mb-4">
             How It Works
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-slate-600">
-            From signup to your first high-performing content drop in five simple steps.
+          <p className="text-lg sm:text-xl text-slate-600 font-normal">
+            Five simple steps from sign-up to your first content drop.
           </p>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-          {STEPS.map((step) => {
+        
+        {/* 5 Steps Horizontal Container */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-6 relative">
+          {STEPS.map((step, idx) => {
             const Icon = step.icon;
             return (
               <div
                 key={step.number}
-                className="p-6 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-slate-200 hover:shadow-lg transition-all duration-200 flex flex-col items-center text-center group"
+                className="reveal-element group p-5 rounded-2xl transition-all duration-300 hover:bg-slate-50/90 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-2 border border-transparent hover:border-blue-100 cursor-pointer flex flex-col items-center text-center"
+                style={{ transitionDelay: `${idx * 80}ms` }}
               >
-                <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-200">
-                  <Icon className="w-6 h-6" />
+                <div
+                  className={`w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-6 transition-all duration-300 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-lg group-hover:shadow-blue-500/30 ${
+                    idx % 2 === 0 ? "group-hover:rotate-6" : "group-hover:-rotate-6"
+                  }`}
+                >
+                  <Icon className="w-7 h-7 transition-transform duration-300 group-hover:scale-110" />
                 </div>
-                <span className="text-xs font-bold text-blue-600 tracking-wider uppercase mb-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2 transition-colors group-hover:text-blue-700">
                   Step {step.number}
                 </span>
-                <h3 className="text-base font-bold text-slate-900 mb-2">
+                <h3 className="text-lg font-bold text-slate-900 mb-2.5 group-hover:text-blue-600 transition-colors">
                   {step.title}
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                <p className="text-sm text-slate-600 leading-relaxed">
                   {step.description}
                 </p>
               </div>
