@@ -1,5 +1,8 @@
+import json
 import logging
 import smtplib
+import urllib.request
+import urllib.error
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Optional
@@ -18,6 +21,37 @@ def _mask_email(email: str) -> str:
 
 
 def _send_smtp_email_sync(to_email: str, subject: str, html_content: str, from_email: Optional[str] = None) -> dict:
+    # 1. Primary Strategy: Use Vercel HTTPS email bridge (port 443 HTTPS)
+    # This bypasses Render's free tier firewall block on outbound SMTP ports 25, 465, and 587
+    bridge_urls = [
+        f"{settings.FRONTEND_URL.rstrip('/')}/api/send-email",
+        "https://creo-git-main-yogzzz-hubs-projects.vercel.app/api/send-email",
+    ]
+
+    for bridge_url in bridge_urls:
+        try:
+            req_data = json.dumps({
+                "to": to_email,
+                "subject": subject,
+                "html": html_content,
+                "secret": "creo-internal-secret-2026",
+            }).encode("utf-8")
+            req = urllib.request.Request(
+                bridge_url,
+                data=req_data,
+                headers={
+                    "Content-Type": "application/json",
+                    "User-Agent": "Creo-Backend",
+                },
+            )
+            with urllib.request.urlopen(req, timeout=5) as res:
+                if res.status == 200:
+                    logger.info("Email sent successfully via Vercel HTTPS bridge to=%s", _mask_email(to_email))
+                    return {"status": "sent", "to": to_email, "provider": "vercel-https-bridge"}
+        except Exception as bridge_err:
+            logger.debug("Vercel HTTPS email bridge (%s) skipped: %s", bridge_url, bridge_err)
+
+    # 2. Fallback Strategy: Direct SMTP connection with 3s fast timeout
     sender_email = from_email or settings.SMTP_USERNAME or "creotool26@gmail.com"
     sender_name = settings.SMTP_FROM_NAME or "Creo"
 
@@ -31,12 +65,12 @@ def _send_smtp_email_sync(to_email: str, subject: str, html_content: str, from_e
     smtp_user = settings.SMTP_USERNAME or "creotool26@gmail.com"
     smtp_pass = settings.SMTP_PASSWORD or "gcic myxm rrep lorb"
 
-    with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=12) as server:
+    with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=3) as server:
         server.starttls()
         server.login(smtp_user, smtp_pass)
         server.sendmail(sender_email, [to_email], msg.as_string())
 
-    return {"status": "sent", "to": to_email}
+    return {"status": "sent", "to": to_email, "provider": "direct-smtp"}
 
 
 async def send_email(
