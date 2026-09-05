@@ -68,7 +68,7 @@ export default function AdminLayout({
       {/* Desktop Sidebar */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-[var(--sidebar-width)] lg:flex-col">
         <div className="flex grow flex-col gap-y-6 bg-[#0D2137] px-4 pt-6 pb-4">
-          <Link href="/admin" prefetch={false} className="flex items-center gap-2 px-2">
+          <Link href="/admin" prefetch={true} className="flex items-center gap-2 px-2">
             <span className="text-xl font-bold text-white tracking-tight">
               Creo
             </span>
@@ -84,7 +84,7 @@ export default function AdminLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  prefetch={false}
+                  prefetch={true}
                   className={cn(
                     "flex items-center gap-3 rounded-r-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     active
@@ -123,7 +123,7 @@ export default function AdminLayout({
           />
           <aside className="fixed inset-y-0 left-0 z-50 w-[var(--sidebar-width)] flex flex-col bg-[#0D2137]">
             <div className="flex items-center justify-between px-4 pt-6 pb-2">
-              <Link href="/admin" prefetch={false} className="flex items-center gap-2" onClick={handleNavClick}>
+              <Link href="/admin" prefetch={true} className="flex items-center gap-2" onClick={handleNavClick}>
                 <span className="text-xl font-bold text-white tracking-tight">
                   Creo
                 </span>
@@ -146,7 +146,7 @@ export default function AdminLayout({
                   <Link
                     key={item.href}
                     href={item.href}
-                    prefetch={false}
+                    prefetch={true}
                     onClick={handleNavClick}
                     className={cn(
                       "flex items-center gap-3 rounded-r-lg px-3 py-2.5 text-sm font-medium transition-colors",

@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSession } from "@/context/session-context"
 import { useSubscription } from "@/context/subscription-context"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { TermsModal } from "@/components/portal/terms-modal"
@@ -527,12 +528,13 @@ function QuickLink({
   disabled?: boolean
 }) {
   return (
-    <a
-      href={disabled ? undefined : href}
+    <Link
+      href={disabled ? "#" : href}
+      prefetch={true}
       className={cn(
         "group relative flex items-center p-3.5 rounded-xl border transition-all duration-200 overflow-hidden",
         disabled
-          ? "opacity-50 cursor-not-allowed border-slate-200/80 bg-white"
+          ? "opacity-50 cursor-not-allowed border-slate-200/80 bg-white pointer-events-none"
           : "border-slate-200/80 bg-white hover:bg-gradient-to-r hover:from-[#E8F4FD]/80 hover:to-white hover:border-[#2B7BC4]/50 hover:shadow-md hover:-translate-y-0.5 cursor-pointer",
       )}
     >
@@ -558,7 +560,7 @@ function QuickLink({
           <ArrowRight className="size-4 text-slate-400 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[#2B7BC4]" />
         </div>
       )}
-    </a>
+    </Link>
   )
 }
 

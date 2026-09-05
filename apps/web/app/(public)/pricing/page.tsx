@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, Shield, Zap, Clock } from "lucide-react";
