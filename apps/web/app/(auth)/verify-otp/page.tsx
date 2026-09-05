@@ -4,7 +4,7 @@ import { Suspense } from "react"
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout"
 import { Loader2 } from "lucide-react"
 
-function LoginFallback() {
+function VerifyOtpFallback() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-white">
       <Loader2 className="size-8 animate-spin text-[#2B7BC4]" />
@@ -12,10 +12,10 @@ function LoginFallback() {
   )
 }
 
-export default function LoginPage() {
+export default function VerifyOtpPage() {
   return (
-    <Suspense fallback={<LoginFallback />}>
-      <AuthSplitLayout initialView="login" />
+    <Suspense fallback={<VerifyOtpFallback />}>
+      <AuthSplitLayout initialView="otp" />
     </Suspense>
   )
 }
