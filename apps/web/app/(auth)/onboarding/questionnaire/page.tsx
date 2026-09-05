@@ -24,6 +24,7 @@ import {
   Palette,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getApiUrl } from "@/lib/api-url";
 
 const TOTAL_STEPS = 3;
 
@@ -293,7 +294,7 @@ export default function QuestionnairePage() {
 
       console.log("Submitting questionnaire...");
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace("localhost", "127.0.0.1") || "";
+      const apiUrl = getApiUrl();
 
       let res = await fetch(
         `${apiUrl}/api/v1/questionnaire`,
