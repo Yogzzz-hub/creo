@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "python": "^0.0.4"
-  },
-  "allowScripts": {
-    "esbuild": true,
-    "unrs-resolver": true
-  }
-}
