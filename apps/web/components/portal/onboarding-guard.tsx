@@ -4,14 +4,13 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useOnboardingGuard } from "@/hooks/use-onboarding-guard"
 import { OnboardingRequiredView } from "@/components/portal/onboarding-required-view"
-import { Loader2 } from "lucide-react"
 
 /**
  * Client wrapper placed inside the portal layout.
  *
  * Decision flow:
  *   1. isRestricted = false  → render children immediately (synchronous)
- *   2. isRestricted = true, !ready → spinner (async check in flight)
+ *   2. isRestricted = true, !ready → graceful skeleton placeholder (no full-screen blue wipe)
  *   3. isRestricted = true, blocked → OnboardingRequiredView
  *   4. isRestricted = true, !blocked → render children
  *
@@ -39,11 +38,15 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Restricted route — async check still running
+  // Restricted route — async check in flight: render subtle skeleton within layout, avoiding blank screen flash
   if (!ready) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#E8F4FD]">
-        <Loader2 className="size-6 animate-spin text-[#2B7BC4]" />
+      <div className="mx-auto max-w-6xl space-y-6 animate-pulse">
+        <div className="space-y-2">
+          <div className="h-8 w-48 rounded-lg bg-slate-200/80" />
+          <div className="h-4 w-72 rounded-lg bg-slate-200/60" />
+        </div>
+        <div className="h-64 rounded-xl border border-slate-200/60 bg-white/80 p-6" />
       </div>
     )
   }
@@ -51,15 +54,15 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   // Restricted route — network error after retries
   if (isError) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#E8F4FD] px-4">
-        <div className="rounded-xl border border-red-200 bg-white p-8 text-center shadow-lg">
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <div className="rounded-xl border border-red-200 bg-white p-8 text-center shadow-lg max-w-md">
           <h2 className="mb-2 text-xl font-bold text-gray-900">Connection Error</h2>
           <p className="mb-4 text-sm text-gray-500">
             We couldn't verify your account status. Please check your internet connection and try again.
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="rounded-lg bg-[#2B7BC4] px-4 py-2 text-sm font-medium text-white hover:bg-[#2B7BC4]/90"
+            className="rounded-lg bg-[#2B7BC4] px-4 py-2 text-sm font-medium text-white hover:bg-[#2B7BC4]/90 transition-colors"
           >
             Refresh Page
           </button>
@@ -72,8 +75,12 @@ export function OnboardingGuard({ children }: { children: React.ReactNode }) {
   if (blocked) {
     if (isActive && !questionnaireSubmitted) {
       return (
-        <div className="flex min-h-screen items-center justify-center bg-[#E8F4FD]">
-          <Loader2 className="size-6 animate-spin text-[#2B7BC4]" />
+        <div className="mx-auto max-w-6xl space-y-6 animate-pulse">
+          <div className="space-y-2">
+            <div className="h-8 w-48 rounded-lg bg-slate-200/80" />
+            <div className="h-4 w-72 rounded-lg bg-slate-200/60" />
+          </div>
+          <div className="h-64 rounded-xl border border-slate-200/60 bg-white/80 p-6" />
         </div>
       )
     }

@@ -6,7 +6,6 @@ import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import {
-  Home,
   LayoutDashboard,
   FileImage,
   CalendarDays,
@@ -17,7 +16,6 @@ import {
 } from "lucide-react"
 
 const NAV_ITEMS = [
-  { label: "Home", href: "/", icon: Home },
   { label: "Dashboard", href: "/portal", icon: LayoutDashboard },
   { label: "Deliverables", href: "/portal/deliverables", icon: FileImage },
   { label: "Calendar", href: "/portal/calendar", icon: CalendarDays },
@@ -27,7 +25,6 @@ const NAV_ITEMS = [
 ]
 
 const BOTTOM_TAB_ITEMS = [
-  { label: "Home", href: "/", icon: Home },
   { label: "Dashboard", href: "/portal", icon: LayoutDashboard },
   { label: "Deliverables", href: "/portal/deliverables", icon: FileImage },
   { label: "Calendar", href: "/portal/calendar", icon: CalendarDays },
@@ -36,7 +33,6 @@ const BOTTOM_TAB_ITEMS = [
 ]
 
 function isActive(href: string, pathname: string) {
-  if (href === "/") return pathname === "/"
   if (href === "/portal") return pathname === "/portal"
   return pathname.startsWith(href)
 }
@@ -103,7 +99,8 @@ export function MobileBottomTabBar() {
   const pathname = usePathname()
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-border bg-white px-1 lg:hidden"
+    <nav
+      className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-border bg-white px-1 lg:hidden"
       style={{ height: "var(--bottomtab-height)" }}
     >
       {BOTTOM_TAB_ITEMS.map((item) => {

@@ -12,7 +12,6 @@ const API_URL = getApiUrl()
 const RESTRICTED_ROUTES = [
   "/portal/deliverables",
   "/portal/calendar",
-  "/portal/payments",
   "/portal/addons",
   "/portal/account",
 ]

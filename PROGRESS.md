@@ -340,3 +340,11 @@
 - [x] Prevent client cookie spoofing: bind creo_role_cache to the active session access token signature
 - [x] Migrate hardcoded Meta webhook verify token to configurable settings and structured logging
 - [x] Harden rich-text editor text extraction against DOM XSS via DOMParser and sanitizeHtml
+
+## Integration Point 5: UI & Loading Animation Polish
+
+- [x] Remove marketing 'Home' link from inside Portal and Admin sidebars
+- [x] Upgrade Skeleton component contrast from invisible bg-muted to crisp slate-200 shimmer
+- [x] Replace raw 'Loading payment data...' spinner in portal payments with structured PaymentsLoading skeleton
+- [x] Eliminate full-screen blank blue overlay flash in OnboardingGuard during async route checks
+- [x] Unrestrict /portal/payments from onboarding guard so clients can always manage their plan and billing

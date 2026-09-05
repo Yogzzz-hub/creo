@@ -6,7 +6,6 @@ import {
   Download,
   Check,
   Crown,
-  Loader2,
   AlertCircle,
   MessageSquare,
   Copy,
@@ -34,6 +33,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useSubscription } from "@/context/subscription-context"
 import { getApiUrl } from "@/lib/api-url"
+import PaymentsLoading from "./loading"
 
 const TEAM_PHONE = "+919941999415"
 const TEAM_PHONE_DISPLAY = "+91 994 199 9415"
@@ -89,7 +89,7 @@ function formatDate(dateString: string): string {
 }
 
 export default function PaymentsPage() {
-  const { token } = useSession()
+  const { token, loading: sessionLoading } = useSession()
   const { accountStatus } = useSubscription()
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null)
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryItem[]>([])
@@ -108,29 +108,37 @@ export default function PaymentsPage() {
   }
 
   useEffect(() => {
+    if (sessionLoading) return
+
+    let isMounted = true
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 3500)
+
     async function fetchPayments() {
       try {
         if (!token) {
-          setLoading(false)
+          if (isMounted) setLoading(false)
           return
         }
 
         const [plansRes, historyRes] = await Promise.all([
           fetch(`${getApiUrl()}/api/v1/plans`, {
             headers: { Authorization: `Bearer ${token}` },
-          }),
+            signal: controller.signal,
+          }).catch(() => null),
           fetch(`${getApiUrl()}/api/v1/payments/history`, {
             headers: { Authorization: `Bearer ${token}` },
-          }),
+            signal: controller.signal,
+          }).catch(() => null),
         ])
 
         let plans: Plan[] = []
-        if (plansRes.ok) {
+        if (plansRes && plansRes.ok) {
           plans = await plansRes.json()
         }
 
-        if (!historyRes.ok) {
-          setLoading(false)
+        if (!historyRes || !historyRes.ok) {
+          if (isMounted) setLoading(false)
           return
         }
 
@@ -143,6 +151,8 @@ export default function PaymentsPage() {
           current_period_end: string
           created_at: string
         }[] = await historyRes.json()
+
+        if (!isMounted) return
 
         const activeSub = data.find((s) => s.status === "active")
         if (activeSub) {
@@ -160,13 +170,21 @@ export default function PaymentsPage() {
           }))
         )
       } catch {
-        // Silent fail — show empty state
+        // Silent fail — gracefully complete
       } finally {
-        setLoading(false)
+        clearTimeout(timeoutId)
+        if (isMounted) setLoading(false)
       }
     }
+
     fetchPayments()
-  }, [token])
+
+    return () => {
+      isMounted = false
+      controller.abort()
+      clearTimeout(timeoutId)
+    }
+  }, [token, sessionLoading])
 
   async function handleDownloadReceipt(subscriptionId: string) {
     if (!token) return
@@ -199,15 +217,9 @@ export default function PaymentsPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="flex items-center gap-2 text-sm text-gray-400">
-          <Loader2 className="size-4 animate-spin" />
-          Loading payment data...
-        </div>
-      </div>
-    )
+  // Graceful streaming skeleton while session or payment data is in flight
+  if (loading || sessionLoading) {
+    return <PaymentsLoading />
   }
 
   if (!currentPlan) {
@@ -246,7 +258,7 @@ export default function PaymentsPage() {
       <Card className="rounded-xl shadow-[var(--shadow-card)] overflow-hidden">
         <div className="border-l-4 border-[#2B7BC4] bg-[#E8F4FD] p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="space-y-2">
+            <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Crown className="size-5 text-[#2B7BC4]" />
                 <h2 className="text-lg font-bold text-[#0D2137]">
@@ -335,7 +347,7 @@ export default function PaymentsPage() {
                       <TableCell>
                         <Badge
                           className={cn(
-                             "border text-[10px] font-medium",
+                            "border text-[10px] font-medium",
                             statusConfig.className
                           )}
                         >
