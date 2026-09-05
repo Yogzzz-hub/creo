@@ -330,8 +330,7 @@ export default function SupportPage() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#0D2137]">Support</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
+          <p className="text-sm text-gray-500">
             Raise tickets and track their resolution.
           </p>
         </div>

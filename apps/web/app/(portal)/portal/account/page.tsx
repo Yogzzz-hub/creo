@@ -50,8 +50,7 @@ export default function AccountPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#0D2137]">Account Settings</h1>
-        <p className="mt-0.5 text-sm text-gray-500">
+        <p className="text-sm text-gray-500">
           Manage your profile, security, and integrations.
         </p>
       </div>

@@ -244,8 +244,7 @@ export default function CalendarPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#0D2137]">Content Calendar</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="text-sm text-gray-500">
             Your scheduled content for the month. Click any item to change date or deliverable type.
           </p>
         </div>

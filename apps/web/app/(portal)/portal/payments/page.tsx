@@ -226,7 +226,6 @@ export default function PaymentsPage() {
     return (
       <div className="mx-auto max-w-6xl space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#0D2137]">Payments</h1>
           <p className="mt-1 text-sm text-gray-500">
             Manage your subscription and billing history.
           </p>
@@ -249,7 +248,6 @@ export default function PaymentsPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#0D2137]">Payments</h1>
         <p className="mt-1 text-sm text-gray-500">
           Manage your subscription and billing history.
         </p>
