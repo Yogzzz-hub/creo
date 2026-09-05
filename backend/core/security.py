@@ -157,21 +157,41 @@ def _is_jti_revoked(jti: str) -> bool:
         return False
 
 
-def _get_cached_auth_id(jti: str) -> str | None:
+_in_memory_auth_cache: dict[str, tuple[str, float]] = {}
+
+
+def _get_cached_auth_id(token_key: str) -> str | None:
+    now = time.time()
+    if token_key in _in_memory_auth_cache:
+        auth_id, exp_time = _in_memory_auth_cache[token_key]
+        if now < exp_time:
+            return auth_id
+        else:
+            _in_memory_auth_cache.pop(token_key, None)
+
     if not _is_redis_available():
         return None
     try:
-        return _redis_client.get(f"valid_token:{jti}")
+        return _redis_client.get(f"valid_token:{token_key}")
     except Exception as exc:
         logger.debug("Redis error getting cached JTI auth ID: %s", exc)
         return None
 
 
-def _cache_auth_id(jti: str, auth_id: str, ttl: int) -> None:
+def _cache_auth_id(token_key: str, auth_id: str, ttl: int) -> None:
+    now = time.time()
+    _in_memory_auth_cache[token_key] = (auth_id, now + ttl)
+
+    # Clean stale cache entries if dictionary grows large
+    if len(_in_memory_auth_cache) > 2000:
+        stale_keys = [k for k, (_, exp_time) in _in_memory_auth_cache.items() if now >= exp_time]
+        for k in stale_keys:
+            _in_memory_auth_cache.pop(k, None)
+
     if not _is_redis_available():
         return
     try:
-        _redis_client.setex(f"valid_token:{jti}", ttl, auth_id)
+        _redis_client.setex(f"valid_token:{token_key}", ttl, auth_id)
     except Exception as exc:
         logger.debug("Redis error caching JTI auth ID: %s", exc)
         pass
@@ -223,10 +243,10 @@ async def get_current_user(
         )
         raise credentials_exception
 
-    # 3. Check cache
-    auth_id = None
-    if jti:
-        auth_id = _get_cached_auth_id(jti)
+    token_key = jti or hashlib.sha256(token.encode()).hexdigest()[:32]
+
+    # 3. Check cache (0ms instant lookup)
+    auth_id = _get_cached_auth_id(token_key)
 
     # 4. Verify token: prioritize local cryptographic verification (0ms) over external HTTP calls
     if not auth_id:
@@ -260,10 +280,10 @@ async def get_current_user(
                 logger.exception("Supabase token verification failed: %s", exc)
                 raise credentials_exception
 
-        # Cache the valid token until it expires
-        if jti and exp and auth_id:
-            ttl = max(60, int(exp) - int(time.time()))
-            _cache_auth_id(jti, auth_id, ttl)
+        # Cache the valid token in memory + Redis (up to 5 minutes)
+        if auth_id:
+            ttl = min(max(60, int(exp) - int(time.time())), 300) if exp else 300
+            _cache_auth_id(token_key, auth_id, ttl)
 
 
 

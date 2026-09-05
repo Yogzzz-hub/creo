@@ -16,6 +16,7 @@ class DashboardResponse(BaseModel):
     account_status: str
     questionnaire_submitted: bool = False
     terms_accepted: bool = False
+    created_at: Optional[datetime] = None
 
 
 class SubscriptionStatusResponse(BaseModel):

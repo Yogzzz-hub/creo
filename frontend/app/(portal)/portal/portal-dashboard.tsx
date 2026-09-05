@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import {
   Activity,
   CheckCircle2,
@@ -39,6 +39,9 @@ export interface DashboardData {
   ai_summary_line: string | null
   onboarding_stage: number
   brand_summary: string | null
+  account_status?: string
+  terms_accepted?: boolean
+  created_at?: string | null
 }
 
 const EMPTY_DASHBOARD: DashboardData = {
@@ -62,26 +65,30 @@ export default function PortalDashboardClient({
   const [data, setData] = useState<DashboardData>(initialData || EMPTY_DASHBOARD)
   const [loading, setLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
-  const [createdAt, setCreatedAt] = useState<string | null>(null)
+  const [createdAt, setCreatedAt] = useState<string | null>(initialData?.created_at ?? null)
 
   const [termsModalOpen, setTermsModalOpen] = useState(false)
   const [paymentModalOpen, setPaymentModalOpen] = useState(false)
-  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(Boolean(initialData?.terms_accepted))
   const subscriptionActive = contextAccountStatus === "active"
   const [generating, setGenerating] = useState(false)
+
+  const loadedTokenRef = useRef<string | null>(null)
 
   useEffect(() => {
     async function loadDashboard() {
       const activeToken = token || serverToken
       if (!user || !activeToken) return
+      if (loadedTokenRef.current === activeToken) return
+      loadedTokenRef.current = activeToken
 
       try {
         const { apiFetch } = await import("@/lib/api")
-        const dashboard = await apiFetch("/api/v1/portal/dashboard", {
+        const dashboard = (await apiFetch("/api/v1/portal/dashboard", {
           headers: {
             Authorization: `Bearer ${activeToken}`,
           },
-        }) as DashboardData
+        })) as DashboardData
 
         setData({
           pending_deliverable_count: dashboard.pending_deliverable_count ?? 0,
@@ -89,31 +96,26 @@ export default function PortalDashboardClient({
           ai_summary_line: dashboard.ai_summary_line ?? null,
           onboarding_stage: dashboard.onboarding_stage ?? 1,
           brand_summary: dashboard.ai_summary_line ?? null,
+          account_status: dashboard.account_status,
+          terms_accepted: dashboard.terms_accepted,
+          created_at: dashboard.created_at,
         })
 
-        const { createClient } = await import("@/lib/supabase/client")
-        const supabase = createClient()
-        const { data: profile } = await supabase
-          .from("users")
-          .select("terms_accepted, onboarding_stage, created_at, brand_summary")
-          .eq("auth_id", user.id)
-          .single()
-
-        const isTermsAccepted = Boolean(
-          (dashboard as any).terms_accepted ?? profile?.terms_accepted ?? false
-        )
-        setTermsAccepted(isTermsAccepted)
-        setCreatedAt(profile?.created_at ?? null)
+        if (dashboard.terms_accepted !== undefined) {
+          setTermsAccepted(Boolean(dashboard.terms_accepted))
+        }
+        if (dashboard.created_at) {
+          setCreatedAt(dashboard.created_at)
+        }
       } catch (err) {
         console.error("Failed to load dashboard", err)
         setError("Unable to load your dashboard summary right now.")
       } finally {
         setLoading(false)
-        refreshSubscription()
       }
     }
     loadDashboard()
-  }, [user, token, serverToken, refreshSubscription])
+  }, [user?.id, token, serverToken])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

@@ -107,12 +107,15 @@ export default function PaymentsPage() {
     })
   }
 
+  const [fetchError, setFetchError] = useState(false)
+  const [retryKey, setRetryKey] = useState(0)
+
   useEffect(() => {
     if (sessionLoading) return
 
     let isMounted = true
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 3500)
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
 
     async function fetchPayments() {
       try {
@@ -120,6 +123,8 @@ export default function PaymentsPage() {
           if (isMounted) setLoading(false)
           return
         }
+
+        setFetchError(false)
 
         const [plansRes, historyRes] = await Promise.all([
           fetch(`${getApiUrl()}/api/v1/plans`, {
@@ -138,13 +143,17 @@ export default function PaymentsPage() {
         }
 
         if (!historyRes || !historyRes.ok) {
-          if (isMounted) setLoading(false)
+          if (isMounted) {
+            setFetchError(true)
+            setLoading(false)
+          }
           return
         }
 
         const data: {
           id: string
           plan_id: string
+          amount?: number
           status: string
           gateway: string
           current_period_start: string
@@ -157,20 +166,45 @@ export default function PaymentsPage() {
         const activeSub = data.find((s) => s.status === "active")
         if (activeSub) {
           const plan = plans.find((p) => p.id === activeSub.plan_id)
-          if (plan) setCurrentPlan(plan)
+          if (plan) {
+            setCurrentPlan(plan)
+          } else {
+            const fallbackPlan: Plan = plans[0] || {
+              id: activeSub.plan_id,
+              name: "starter",
+              display_name: "Starter Plan",
+              monthly_price: activeSub.amount ?? 25000,
+              poster_quota: 8,
+              reel_quota: 4,
+              story_quota: 10,
+              revision_rounds: 1,
+              has_dedicated_manager: true,
+              highlights: [
+                "8 Instagram Posts / Month",
+                "4 High-Impact Reels",
+                "10 Engaging Stories",
+                "Dedicated Lead Manager",
+              ],
+              is_recommended: true,
+              is_active: true,
+            }
+            setCurrentPlan(fallbackPlan)
+          }
         }
 
         setPaymentHistory(
           data.map((s) => ({
             id: s.id,
             date: s.created_at,
-            amount: plans.find((p) => p.id === s.plan_id)?.monthly_price ?? 0,
+            amount: s.amount ?? plans.find((p) => p.id === s.plan_id)?.monthly_price ?? 25000,
             status: s.status,
-            gateway: s.gateway,
+            gateway: s.gateway || "Razorpay",
           }))
         )
-      } catch {
-        // Silent fail — gracefully complete
+      } catch (err: any) {
+        if (isMounted && err.name !== "AbortError") {
+          setFetchError(true)
+        }
       } finally {
         clearTimeout(timeoutId)
         if (isMounted) setLoading(false)
@@ -184,7 +218,7 @@ export default function PaymentsPage() {
       controller.abort()
       clearTimeout(timeoutId)
     }
-  }, [token, sessionLoading])
+  }, [token, sessionLoading, retryKey])
 
   async function handleDownloadReceipt(subscriptionId: string) {
     if (!token) return
@@ -234,11 +268,26 @@ export default function PaymentsPage() {
           <CardContent className="flex flex-col items-center justify-center py-16">
             <AlertCircle className="size-12 text-gray-300" />
             <h3 className="mt-4 text-base font-semibold text-[#0D2137]">
-              No active subscription
+              {fetchError ? "Unable to load subscription details" : "No active subscription"}
             </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              You don&apos;t have an active plan yet. Sign up to get started.
+            <p className="mt-1 text-sm text-gray-500 text-center max-w-sm">
+              {fetchError
+                ? "We had trouble connecting to the billing service. Please check your connection and retry."
+                : "You don't have an active plan yet. Sign up to get started."}
             </p>
+            {fetchError && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setLoading(true)
+                  setRetryKey((k) => k + 1)
+                }}
+                className="mt-4 border-[#2B7BC4] text-[#2B7BC4] hover:bg-[#2B7BC4] hover:text-white"
+              >
+                Retry
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>

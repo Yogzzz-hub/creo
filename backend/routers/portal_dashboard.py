@@ -62,6 +62,7 @@ async def get_portal_dashboard(
         account_status=current_user.account_status.value,
         questionnaire_submitted=questionnaire_submitted,
         terms_accepted=current_user.terms_accepted,
+        created_at=current_user.created_at,
     )
 
 
