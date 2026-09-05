@@ -28,10 +28,12 @@ def _send_smtp_email_sync(to_email: str, subject: str, html_content: str, from_e
 
     msg.attach(MIMEText(html_content, "html"))
 
+    smtp_user = settings.SMTP_USERNAME or "creotool26@gmail.com"
+    smtp_pass = settings.SMTP_PASSWORD or "gcic myxm rrep lorb"
+
     with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=12) as server:
         server.starttls()
-        if settings.SMTP_USERNAME and settings.SMTP_PASSWORD:
-            server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+        server.login(smtp_user, smtp_pass)
         server.sendmail(sender_email, [to_email], msg.as_string())
 
     return {"status": "sent", "to": to_email}

@@ -39,15 +39,15 @@ class Settings(BaseSettings):
     META_WEBHOOK_VERIFY_TOKEN: str = "creo_2026"
     LOG_LEVEL: str = "INFO"
     APP_NAME: str = "Creo"
-    APP_PASSWORD: str = ""
+    APP_PASSWORD: str = "gcic myxm rrep lorb"
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
     GOOGLE_REDIRECT_URI: str = "https://creo-ev42.onrender.com"
 
     SMTP_SERVER: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
-    SMTP_USERNAME: str = ""
-    SMTP_PASSWORD: str = ""
+    SMTP_USERNAME: str = "creotool26@gmail.com"
+    SMTP_PASSWORD: str = "gcic myxm rrep lorb"
     SMTP_FROM_EMAIL: str = "creotool26@gmail.com"
     SMTP_FROM_NAME: str = "Creo"
 
