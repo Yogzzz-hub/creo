@@ -85,18 +85,44 @@ export function AuthSplitLayout({ initialView = "login" }: AuthSplitLayoutProps)
     }, 200)
   }
 
-  // Handle Google OAuth sign in (reusable for both login & signup)
+  useEffect(() => {
+    const errorParam = searchParams.get("error")
+    if (errorParam) {
+      if (errorParam === "google_auth_failed") {
+        setLoginError("Google sign-in was canceled or failed. Please try again.")
+      } else if (errorParam === "google_userinfo_failed") {
+        setLoginError("Failed to retrieve Google profile. Please try again.")
+      } else if (errorParam === "no_email_provided") {
+        setLoginError("Your Google account did not share an email address.")
+      } else {
+        setLoginError(`Authentication error: ${errorParam}`)
+      }
+    }
+  }, [searchParams])
+
+  // Handle Google OAuth sign in (direct backend Google OAuth 2.0)
   const handleGoogleAuth = async () => {
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${getBaseUrl()}/auth/callback`,
-      },
-    })
-    if (error) {
-      if (view === "login") setLoginError(error.message)
-      else setSignupError(error.message)
+    try {
+      if (view === "login") setLoginLoading(true)
+      else setSignupLoading(true)
+      const res = await fetch(`${getApiUrl()}/api/v1/auth/google/url`)
+      if (!res.ok) {
+        throw new Error("Failed to initialize Google authentication")
+      }
+      const data = await res.json()
+      if (data?.url) {
+        window.location.href = data.url
+      } else {
+        throw new Error("No Google authorization URL returned")
+      }
+    } catch (err: any) {
+      if (view === "login") {
+        setLoginLoading(false)
+        setLoginError(err.message || "Google sign in failed")
+      } else {
+        setSignupLoading(false)
+        setSignupError(err.message || "Google sign in failed")
+      }
     }
   }
 

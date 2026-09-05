@@ -118,12 +118,12 @@ The frontend will be available at [http://localhost:3000](http://localhost:3000)
 
 To run the full suite of Creo's features, you need to configure the following external services and add their keys to your `.env` file.
 
-### 1. Supabase (Database, Auth, Storage)
+### 1. Supabase (Database & Storage)
 
 Create a project at [Supabase](https://supabase.com).
 
 - **Database:** Copy the `DATABASE_URL` (Transaction mode/PgBouncer for production) to your backend `.env`.
-- **Auth:** Enable Email and Phone providers. Add your `SUPABASE_JWT_SECRET` to the backend. Add your `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to the frontend.
+- **Auth & JWT:** Add your `SUPABASE_JWT_SECRET` to the backend `.env`. Add your `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to the frontend `.env.local`.
 - **Storage:** Create the following buckets:
   - `deliverables` (Private)
   - `portfolio` (Public)
@@ -131,17 +131,24 @@ Create a project at [Supabase](https://supabase.com).
   - `announcements` (Private)
   - `ticket-attachments` (Private)
 
-### 2. Payments (Razorpay & Stripe)
+### 2. Google OAuth 2.0 (Direct Authentication)
+
+Creo uses direct Google OAuth 2.0 for single-sign on:
+- **Client ID:** Set `GOOGLE_CLIENT_ID` in `backend/.env` and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` in `frontend/.env.local`.
+- **Client Secret:** Set `GOOGLE_CLIENT_SECRET` in `backend/.env`.
+- **Authorized Redirect URIs:** Add `https://creo-ev42.onrender.com` (and `https://creo-ev42.onrender.com/api/v1/auth/google/callback`) in Google Cloud Console.
+
+### 3. Payments (Razorpay & Stripe)
 
 - **Razorpay:** Generate test API keys. Add `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`. Set up a webhook pointing to `/api/webhooks/razorpay` and capture the `RAZORPAY_WEBHOOK_SECRET`.
 - **Stripe:** Get your test publishable and secret keys. Set up a webhook pointing to `/api/webhooks/stripe` and capture the `STRIPE_WEBHOOK_SECRET`.
 
-### 3. Communications (Resend & MSG91)
+### 4. Communications (Resend & MSG91)
 
 - **Resend:** Verify your sending domain. Generate an API key (`RESEND_API_KEY`) and set your `RESEND_FROM_EMAIL` (e.g., `notifications@creo.app`).
 - **MSG91:** Create an account for Indian telecom OTP and WhatsApp routing. Add your `MSG91_AUTH_KEY`, `MSG91_SENDER_ID` (for SMS), and `MSG91_WHATSAPP_NUMBER`. Note: WhatsApp templates must be pre-approved by Meta via MSG91.
 
-### 4. AI & Social (OpenAI & Instagram)
+### 5. AI & Social (OpenAI & Instagram)
 
 - **OpenAI:** Generate a project API key (`OPENAI_API_KEY`). Ensure your account has billing enabled for GPT-4o access.
 - **Meta Graph API:** Create a Meta Developer App. Request the `instagram_basic` and `instagram_content_publish` permissions. Add your `INSTAGRAM_APP_ID` and `INSTAGRAM_APP_SECRET`.
@@ -150,13 +157,9 @@ Create a project at [Supabase](https://supabase.com).
 
 ## 🚀 Deployment
 
-### Backend (Railway)
+### Backend (Render / Railway)
 
-The backend is designed for zero-config deployment on Railway using the included `railway.json` and `Dockerfile`.
-
-1. Connect your GitHub repo to Railway.
-2. Provision a Redis service within your Railway project.
-3. Deploy the backend repo 3 separate times as different services using these custom start commands:
+The backend is deployed to Render (`https://creo-ev42.onrender.com`):
 
 | Service | Start Command |
 |---------|---------------|
@@ -167,7 +170,7 @@ The backend is designed for zero-config deployment on Railway using the included
 ### Frontend (Vercel)
 
 1. Import the repository into Vercel.
-2. Set the Root Directory to `apps/web`.
+2. Set the Root Directory to `frontend`.
 3. Add all `NEXT_PUBLIC_*` environment variables.
 4. Vercel will automatically run `npm run build` and deploy the application.
 
@@ -178,14 +181,14 @@ The backend is designed for zero-config deployment on Railway using the included
 ### Backend Tests (Pytest)
 
 ```bash
-cd apps/api
+cd backend
 pytest tests/ -v
 ```
 
 ### Frontend Tests (Playwright E2E)
 
 ```bash
-cd apps/web
+cd frontend
 npx playwright test
 ```
 

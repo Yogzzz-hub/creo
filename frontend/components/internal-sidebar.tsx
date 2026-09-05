@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getApiUrl } from "@/lib/api-url";
+import { clearLocalSession } from "@/lib/api";
 
 interface NavItem {
   label: string;
@@ -115,8 +116,9 @@ export function InternalSidebar() {
   });
 
   const handleSignOut = async () => {
+    clearLocalSession();
     const supabase = createClient();
-    await supabase.auth.signOut();
+    await supabase.auth.signOut().catch(() => {});
     router.push("/login");
   };
 

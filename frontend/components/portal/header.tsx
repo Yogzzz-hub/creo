@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Settings, LifeBuoy, LogOut, Building2, Camera, Trash2 } from "lucide-react"
+import { clearLocalSession } from "@/lib/api"
 
 function resolveDisplayName(user_metadata: Record<string, unknown> | undefined, email: string | undefined): string {
   const meta = user_metadata as Record<string, string> | undefined;
@@ -82,8 +83,9 @@ export function PortalHeader() {
 
   async function handleLogout() {
     setLoggingOut(true)
+    clearLocalSession()
     const supabase = createClient()
-    await supabase.auth.signOut()
+    await supabase.auth.signOut().catch(() => {})
     router.push("/login")
     router.refresh()
   }

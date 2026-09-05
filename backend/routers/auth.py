@@ -154,3 +154,140 @@ async def trigger_email_verification(user_id: str, db: AsyncSession = Depends(ge
         "status": "verification_sent", 
         "message": "Verification email dispatched successfully."
     }
+
+
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Direct Google OAuth Integration
+# ---------------------------------------------------------------------------
+
+async def process_google_oauth(
+    code: str,
+    redirect_uri: str,
+    db: AsyncSession,
+):
+    """
+    Exchanges Google authorization code for tokens, creates or finds user in PostgreSQL,
+    and returns a JWT token redirecting to the frontend.
+    """
+    import httpx
+    import uuid
+    from datetime import datetime, timezone, timedelta
+    from jose import jwt
+    from fastapi.responses import RedirectResponse
+
+    token_url = "https://oauth2.googleapis.com/token"
+    token_data = {
+        "code": code,
+        "client_id": settings.GOOGLE_CLIENT_ID,
+        "client_secret": settings.GOOGLE_CLIENT_SECRET,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code",
+    }
+
+    async with httpx.AsyncClient() as client:
+        token_res = await client.post(token_url, data=token_data)
+        if token_res.status_code != 200:
+            logger.error("Google token exchange failed (uri=%s): %s", redirect_uri, token_res.text)
+            return RedirectResponse(f"{settings.FRONTEND_URL}/login?error=google_auth_failed")
+
+        token_json = token_res.json()
+        access_token = token_json.get("access_token")
+
+        userinfo_res = await client.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        if userinfo_res.status_code != 200:
+            logger.error("Google userinfo fetch failed: %s", userinfo_res.text)
+            return RedirectResponse(f"{settings.FRONTEND_URL}/login?error=google_userinfo_failed")
+
+        userinfo = userinfo_res.json()
+
+    email = userinfo.get("email")
+    full_name = userinfo.get("name") or userinfo.get("given_name") or (email.split("@")[0] if email else "User")
+
+    if not email:
+        return RedirectResponse(f"{settings.FRONTEND_URL}/login?error=no_email_provided")
+
+    # Check if user exists by email
+    query = select(User).where(User.email == email)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+
+    if not user:
+        # Create new client user
+        user = User(
+            auth_id=str(uuid.uuid4()),
+            email=email,
+            full_name=full_name,
+            role=UserRole.client,
+            account_status=AccountStatus.pending_verification,
+            onboarding_stage=1,
+            terms_accepted=False,
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    # Issue JWT session token signed with SUPABASE_JWT_SECRET or SECRET_KEY
+    jwt_secret = settings.SUPABASE_JWT_SECRET or settings.SECRET_KEY
+    now = datetime.now(timezone.utc)
+    exp = now + timedelta(days=30)
+    claims = {
+        "aud": "authenticated",
+        "role": user.role.value,
+        "sub": str(user.auth_id),
+        "email": user.email,
+        "name": user.full_name,
+        "app_metadata": {
+            "provider": "google",
+            "providers": ["google"],
+        },
+        "user_metadata": {
+            "role": user.role.value,
+            "full_name": user.full_name,
+            "name": user.full_name,
+            "account_status": user.account_status.value,
+            "onboarding_stage": user.onboarding_stage,
+        },
+        "account_status": user.account_status.value,
+        "onboarding_stage": user.onboarding_stage,
+        "iat": int(now.timestamp()),
+        "exp": int(exp.timestamp()),
+        "jti": str(uuid.uuid4()),
+    }
+    session_token = jwt.encode(claims, jwt_secret, algorithm="HS256")
+
+    # Redirect to frontend callback route with token
+    redirect_url = f"{settings.FRONTEND_URL}/auth/callback?token={session_token}"
+    return RedirectResponse(redirect_url)
+
+
+@router.get("/google/url")
+async def get_google_auth_url(redirect_uri: str = None):
+    """Generates the direct Google OAuth 2.0 authorization URL."""
+    from urllib.parse import urlencode
+
+    client_id = settings.GOOGLE_CLIENT_ID
+    target_redirect_uri = redirect_uri or settings.GOOGLE_REDIRECT_URI
+    scope = "openid email profile"
+
+    params = {
+        "client_id": client_id,
+        "redirect_uri": target_redirect_uri,
+        "response_type": "code",
+        "scope": scope,
+        "access_type": "offline",
+        "prompt": "select_account",
+    }
+    url = f"https://accounts.google.com/o/oauth2/auth?{urlencode(params)}"
+    return {"url": url}
+
+
+@router.get("/google/callback")
+async def google_auth_callback(
+    code: str,
+    db: AsyncSession = Depends(get_db),
+):
+    return await process_google_oauth(code=code, redirect_uri=settings.GOOGLE_REDIRECT_URI, db=db)

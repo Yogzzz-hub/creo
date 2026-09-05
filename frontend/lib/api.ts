@@ -39,10 +39,30 @@ function extractTokenFromHeaders(headers: HeadersInit | undefined): string | nul
   return null
 }
 
+export function clearLocalSession(): void {
+  if (typeof window === "undefined") return
+  try {
+    localStorage.removeItem("creo_access_token")
+    document.cookie = "sb-access-token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    document.cookie = "creo_session_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    document.cookie = "creo_role_cache=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+  } catch {
+    // Ignore cleanup errors
+  }
+}
+
 function getStoredToken(): string | null {
   if (typeof window === "undefined") return null
 
-  // 1. Try localStorage
+  // 1. Direct session token in localStorage
+  try {
+    const directToken = localStorage.getItem("creo_access_token")
+    if (directToken) return directToken
+  } catch (e) {
+    // Ignore localStorage errors
+  }
+
+  // 2. Try Supabase localStorage keys
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i)
@@ -60,7 +80,7 @@ function getStoredToken(): string | null {
     // Ignore localStorage errors
   }
 
-  // 2. Try cookies
+  // 3. Try cookies
   try {
     const cookieString = document.cookie || ""
     const cookies = cookieString.split(";")
@@ -70,6 +90,9 @@ function getStoredToken(): string | null {
       if (eqIdx !== -1) {
         const name = cookie.substring(0, eqIdx)
         const value = decodeURIComponent(cookie.substring(eqIdx + 1))
+        if (name === "sb-access-token" || name === "creo_session_token") {
+          return value
+        }
         if (name.startsWith("sb-") && name.endsWith("-auth-token")) {
           try {
             const parsed = JSON.parse(value)

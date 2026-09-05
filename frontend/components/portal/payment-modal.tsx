@@ -67,7 +67,7 @@ export function PaymentModal({
   receipt,
   notes,
 }: PaymentModalProps) {
-  const { user } = useSession()
+  const { user, token: sessionToken } = useSession()
   const supabase = createClient()
 
   const [selectedMethod, setSelectedMethod] = useState<Gateway>("razorpay")
@@ -75,6 +75,7 @@ export function PaymentModal({
   const [processingGateway, setProcessingGateway] = useState<Gateway | null>(null)
 
   async function getAccessToken(): Promise<string | null> {
+    if (sessionToken) return sessionToken
     const { data: { session } } = await supabase.auth.getSession()
     return session?.access_token ?? null
   }

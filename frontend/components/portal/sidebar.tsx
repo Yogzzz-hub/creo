@@ -37,6 +37,8 @@ function isActive(href: string, pathname: string) {
   return pathname.startsWith(href)
 }
 
+import { clearLocalSession } from "@/lib/api"
+
 export function DesktopSidebar() {
   const pathname = usePathname()
   const router = useRouter()
@@ -45,7 +47,8 @@ export function DesktopSidebar() {
 
   async function handleLogout() {
     setLoggingOut(true)
-    await supabase.auth.signOut()
+    clearLocalSession()
+    await supabase.auth.signOut().catch(() => {})
     router.push("/login")
     router.refresh()
   }

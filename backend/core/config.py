@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     APP_NAME: str = "Creo"
     APP_PASSWORD: str = ""
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_REDIRECT_URI: str = "https://creo-ev42.onrender.com"
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

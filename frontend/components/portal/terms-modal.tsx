@@ -24,7 +24,7 @@ interface TermsModalProps {
 
 export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
   const router = useRouter()
-  const { user } = useSession()
+  const { user, token: sessionToken } = useSession()
   const supabase = createClient()
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -49,7 +49,8 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
 
       // 1. Persist terms acceptance directly to the database via backend API
       const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token
+      const token = sessionToken || session?.access_token
+
 
       if (token) {
         const { getApiUrl } = await import("@/lib/api-url")

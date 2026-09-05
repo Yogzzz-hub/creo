@@ -149,6 +149,7 @@ export async function middleware(request: NextRequest) {
     (c) =>
       c.name.includes("-auth-token") ||
       c.name === "sb-access-token" ||
+      c.name === "creo_session_token" ||
       c.name.startsWith("sb-")
   );
 
@@ -167,38 +168,56 @@ export async function middleware(request: NextRequest) {
 
   let supabaseResponse = NextResponse.next({ request });
 
+  let accessToken: string | null = null;
+  let user: any = null;
+
+  // 1. Direct JWT token from Google OAuth backend
+  const directToken = request.cookies.get("sb-access-token")?.value || request.cookies.get("creo_session_token")?.value;
+  if (directToken) {
+    const claims = parseJwtPayload(directToken);
+    if (claims && (!claims.exp || claims.exp * 1000 > Date.now())) {
+      accessToken = directToken;
+      user = {
+        id: claims.sub,
+        email: claims.email,
+        user_metadata: claims.user_metadata || {
+          role: claims.role,
+          account_status: claims.account_status,
+          onboarding_stage: claims.onboarding_stage,
+        },
+        app_metadata: claims.app_metadata || {},
+      };
+    }
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    // If Supabase env vars are missing, do not crash or stall
-    return isProtected
-      ? NextResponse.redirect(new URL("/login", request.url))
-      : supabaseResponse;
+  if (!user && supabaseUrl && supabaseAnonKey) {
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    });
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    user = session?.user ?? null;
+    accessToken = session?.access_token ?? null;
   }
 
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value)
-        );
-        supabaseResponse = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options)
-        );
-      },
-    },
-  });
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user = session?.user ?? null;
-  const accessToken = session?.access_token ?? null;
 
   // Unauthenticated user on protected route
   if (!user && isProtected) {

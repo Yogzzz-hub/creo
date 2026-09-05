@@ -1,8 +1,10 @@
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
+from core.database import get_db
 
 log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
 logging.basicConfig(level=log_level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -135,6 +137,21 @@ app.include_router(chatbot_router)
 app.include_router(role_router)
 
 
+@app.get("/")
+async def root(
+    code: str = None,
+    error: str = None,
+    db: AsyncSession = Depends(get_db),
+):
+    if code:
+        from routers.auth import process_google_oauth
+        return await process_google_oauth(code=code, redirect_uri="https://creo-ev42.onrender.com", db=db)
+    if error:
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(f"{settings.FRONTEND_URL}/login?error={error}")
+    return {"message": "Creo API", "status": "ok"}
+
+
 @app.get("/health")
 async def health_check():
-    return {"status": "ok"}
+    return {"status": "ok"}
