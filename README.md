@@ -6,15 +6,15 @@ Creo is a full-stack SaaS platform designed to bridge the gap between local busi
 
 ## 🏗 Tech Stack
 
-### Frontend (`apps/web`)
+### Frontend (`frontend`)
 
 - **Framework:** Next.js 15 (App Router) + TypeScript
 - **Styling:** Tailwind CSS v4 + shadcn/ui
-- **State & Data:** Zustand + TanStack Query v5
+- **State & Data:** TanStack Query v5 + Context
 - **Forms & Validation:** React Hook Form + Zod
 - **Charts:** Recharts
 
-### Backend (`apps/api`)
+### Backend (`backend`)
 
 - **Framework:** FastAPI (Python 3.12+)
 - **ORM & Database:** SQLAlchemy 2.0 (async) + Alembic + PostgreSQL (Supabase)
@@ -26,23 +26,18 @@ Creo is a full-stack SaaS platform designed to bridge the gap between local busi
 - **Payments:** Razorpay (Domestic) & Stripe (International)
 - **Communications:** Resend (Email) & MSG91 (WhatsApp + OTP)
 - **AI & Social:** OpenAI GPT-4o (Brand Analysis) & Meta Graph API (Instagram Publishing)
-- **Hosting:** Vercel (Frontend) & Railway (Backend + Redis)
+- **Hosting:** Vercel (Frontend) & Render / Railway (Backend + Redis)
 
 ---
 
 ## 📂 Repository Structure
 
-This project uses a monorepo structure to keep frontend and backend development tightly aligned.
-
 ```plaintext
 creo/
-├── apps/
-│   ├── api/                  # Python FastAPI backend & Celery workers
-│   └── web/                  # Next.js 15 frontend application
-├── packages/                 # Shared resources (future-proofing)
-├── .env.example              # Environment variables template
+├── frontend/                 # Next.js 15 frontend application (Vercel ready)
+├── backend/                  # Python FastAPI backend & Celery workers (Render ready)
 ├── docker-compose.yml        # Local Redis & PostgreSQL services
-└── README.md
+└── README.md                 # Single documentation file
 ```
 
 ---
@@ -79,7 +74,7 @@ docker-compose up -d
 Open a new terminal window and navigate to the API directory:
 
 ```bash
-cd apps/api
+cd backend
 
 # Create and activate a virtual environment
 python -m venv .venv
@@ -95,7 +90,7 @@ alembic upgrade head
 uvicorn main:app --reload --port 8000
 ```
 
-To process background tasks (emails, webhooks, AI generation), open another terminal in `apps/api` and start the Celery worker:
+To process background tasks (emails, webhooks, AI generation), open another terminal in `backend` and start the Celery worker:
 
 ```bash
 celery -A workers.celery_app worker --loglevel=info
@@ -103,10 +98,10 @@ celery -A workers.celery_app worker --loglevel=info
 
 ### 5. Start the Frontend (Next.js)
 
-Open a new terminal window and navigate to the web directory:
+Open a new terminal window and navigate to the frontend directory:
 
 ```bash
-cd apps/web
+cd frontend
 
 # Install dependencies
 npm install
