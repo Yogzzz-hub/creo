@@ -8,6 +8,19 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "@tanstack/react-query",
+      "date-fns",
+      "recharts",
+      "@tiptap/react",
+      "@tiptap/starter-kit",
+      "sonner",
+    ],
+  },
+  compress: true,
+  poweredByHeader: false,
   turbopack: {
     root: path.resolve(__dirname, "../../"),
   },
