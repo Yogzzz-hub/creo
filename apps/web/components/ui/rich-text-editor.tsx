@@ -36,9 +36,13 @@ function sanitizeHtml(html: string): string {
 }
 
 function getPlainText(html: string): string {
-  const div = document.createElement("div")
-  div.innerHTML = html
-  return div.textContent || div.innerText || ""
+  if (typeof window === "undefined") {
+    return html.replace(/<[^>]*>/g, "")
+  }
+  const clean = sanitizeHtml(html)
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(clean, "text/html")
+  return doc.body.textContent || ""
 }
 
 interface RichTextEditorProps {

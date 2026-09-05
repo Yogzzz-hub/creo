@@ -4,7 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
 
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
+logging.basicConfig(level=log_level, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+
 from routers.auth import router as auth_router
 from routers.plans import router as plans_router
 from routers.onboarding import router as onboarding_router
@@ -52,10 +54,15 @@ from routers.chatbot import router as chatbot_router
 from core.exceptions import setup_global_middleware_and_exceptions
 from core.security import role_router
 
+is_production = settings.ENVIRONMENT.lower() == "production"
+
 app = FastAPI(
     title="Creo API",
     description="Digital Marketing Agency Platform — Backend API",
     version="1.0.0",
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc",
+    openapi_url=None if is_production else "/openapi.json",
 )
 
 # CORS must be the outermost middleware so headers are added to ALL responses,
@@ -72,7 +79,8 @@ if settings.FRONTEND_URL:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"https://.*\.vercel\.app",  # Automatically allows all Vercel branch/preview URLs
+    # Strictly whitelist legitimate Creo and team project domains, blocking arbitrary Vercel sites
+    allow_origin_regex=r"^https://(creo(-[a-z0-9-]+)?-yogzzz-hubs-projects|creo(-[a-z0-9-]+)?)\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

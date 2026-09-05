@@ -37,24 +37,34 @@ function getHome(role: string): string {
 }
 
 function canAccessRoute(role: string, pathname: string): boolean {
-  // Admin/super_admin can access everything
+  // Admin and super_admin can access everything
   if (ADMIN_ROLES.includes(role)) return true;
 
-  if (pathname.startsWith("/admin") || pathname.startsWith("/kpi")) {
+  if (pathname.startsWith("/admin")) {
+    // Only investor relations can access /admin/reports specifically
     if (role === "investor_relations") {
       return pathname === "/admin/reports" || pathname.startsWith("/admin/reports");
     }
-    return TEAM_ROLES.includes(role) || role === "investor_relations";
+    return false;
   }
+
+  if (pathname.startsWith("/kpi")) {
+    // Only admin, super_admin, and investor relations can access KPI
+    return role === "investor_relations";
+  }
+
   if (pathname.startsWith("/dashboard")) {
     return TEAM_ROLES.includes(role);
   }
+
   if (pathname.startsWith("/portal") || pathname.startsWith("/onboarding")) {
     return role === "client";
   }
+
   if (pathname.startsWith("/sales")) {
     return role === "sales";
   }
+
   return false;
 }
 
@@ -208,14 +218,20 @@ export async function middleware(request: NextRequest) {
   let accountStatus = (user.user_metadata?.account_status as string) ?? "pending_verification";
   let onboardingStage = (user.user_metadata?.onboarding_stage as number) ?? 1;
 
-  // Check fast cookie cache (5-minute TTL)
+  // Check token-bound fast cookie cache (5-minute TTL)
+  // Ensures client cannot forge a fake role cookie without matching the active session token
   const cachedCookie = request.cookies.get("creo_role_cache");
   let hasValidCache = false;
 
-  if (cachedCookie?.value) {
+  if (cachedCookie?.value && accessToken) {
     try {
       const parsed = JSON.parse(cachedCookie.value);
-      if (parsed.exp && parsed.exp > Date.now()) {
+      const expectedTokenSig = accessToken.slice(-16);
+      if (
+        parsed.token_sig === expectedTokenSig &&
+        parsed.exp &&
+        parsed.exp > Date.now()
+      ) {
         role = parsed.role || role;
         accountStatus = parsed.account_status || accountStatus;
         onboardingStage = parsed.onboarding_stage || onboardingStage;
@@ -250,6 +266,7 @@ export async function middleware(request: NextRequest) {
             role,
             account_status: accountStatus,
             onboarding_stage: onboardingStage,
+            token_sig: accessToken.slice(-16),
             exp: Date.now() + 5 * 60 * 1000,
           }),
           { path: "/", httpOnly: true, sameSite: "lax", maxAge: 300 }

@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     DIFY_API_KEY: str = ""
     DIFY_API_URL: str = "https://api.dify.ai/v1"
     GEMINI_API_KEY: str = ""
+    META_WEBHOOK_VERIFY_TOKEN: str = "creo_2026"
+    LOG_LEVEL: str = "INFO"
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

@@ -147,9 +147,7 @@
 - [x] 6.20 Build contextual upsell prompts
 - [x] 6.21 Build Support page — ticket list, new ticket form, ticket detail with chat thread
 - [x] 6.22 Create FastAPI endpoints: tickets CRUD + messages
-
 - [x] 6.23 Implement Supabase Realtime for live chat
-
 - [x] 6.24 Build Account Settings pages — business profile, password, Instagram, 2FA
 - [~] 6.25 Implement Instagram OAuth flow
 - [x] 6.26 Create FastAPI endpoint POST /api/v1/account/instagram
@@ -331,3 +329,14 @@
 - [x] Eliminate Next.js middleware waterfalls: bypass public marketing routes instantly (<10ms), cache roles in cookies/JWT claims, and lower fallback abort timeout to 1.5s
 - [x] Standardize getApiUrl across subscription context and add resilient fallback data in pricing/page.tsx to eliminate SSR hangs
 - [x] Add reusable PageLoading component and loading.tsx streaming skeletons across all 14 admin and 6 dashboard subroutes
+
+## Integration Point 4: Security Hardening & Pentest Fixes
+
+- [x] Restrict backend CORS allow_origin_regex strictly to Creo project domains (`*.vercel.app` arbitrary origin exploit resolved)
+- [x] Gate Swagger `/docs`, `/redoc`, and `/openapi.json` to be disabled in production
+- [x] Switch FastAPI backend root logging level from DEBUG to INFO to prevent sensitive log leakage
+- [x] Configure Next.js HTTP security headers in next.config.ts (X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy, CSP frame-ancestors none)
+- [x] Fix edge middleware role authorization: strictly disallow team_member/team_lead from /admin and /kpi
+- [x] Prevent client cookie spoofing: bind creo_role_cache to the active session access token signature
+- [x] Migrate hardcoded Meta webhook verify token to configurable settings and structured logging
+- [x] Harden rich-text editor text extraction against DOM XSS via DOMParser and sanitizeHtml
