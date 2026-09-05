@@ -242,17 +242,39 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // If not cached and token exists, check decoded JWT claims in-memory (0ms)
+  // If not cached and token exists, check decoded JWT claims in-memory (0ms pure CPU decode)
   if (!hasValidCache && accessToken) {
     const claims = parseJwtPayload(accessToken);
-    if (claims?.user_metadata?.role || claims?.app_metadata?.role) {
-      role = claims.user_metadata?.role || claims.app_metadata?.role;
+    if (claims) {
+      const meta = claims.user_metadata || claims.app_metadata || {};
+      if (meta.role) {
+        role = meta.role;
+      }
+      if (meta.account_status) {
+        accountStatus = meta.account_status;
+      }
+      if (meta.onboarding_stage !== undefined) {
+        onboardingStage = meta.onboarding_stage;
+      }
+      hasValidCache = true;
+
+      supabaseResponse.cookies.set(
+        "creo_role_cache",
+        JSON.stringify({
+          role,
+          account_status: accountStatus,
+          onboarding_stage: onboardingStage,
+          token_sig: accessToken.slice(-16),
+          exp: Date.now() + 15 * 60 * 1000,
+        }),
+        { path: "/", httpOnly: true, sameSite: "lax", maxAge: 900 }
+      );
     }
   }
 
   // Handle protected routes
   if (isProtected) {
-    // If we still lack verified profile details and have an access token, fetch with fast 1.5s timeout
+    // Only if token claims were completely unparseable and cache is absent, fetch with fast fallback
     if (!hasValidCache && accessToken) {
       const profile = await fetchUserProfile(accessToken);
       if (profile && profile !== "network_error") {
@@ -267,9 +289,9 @@ export async function middleware(request: NextRequest) {
             account_status: accountStatus,
             onboarding_stage: onboardingStage,
             token_sig: accessToken.slice(-16),
-            exp: Date.now() + 5 * 60 * 1000,
+            exp: Date.now() + 15 * 60 * 1000,
           }),
-          { path: "/", httpOnly: true, sameSite: "lax", maxAge: 300 }
+          { path: "/", httpOnly: true, sameSite: "lax", maxAge: 900 }
         );
       }
     }
