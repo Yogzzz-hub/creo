@@ -129,49 +129,80 @@ export function AuthSplitLayout({ initialView = "login" }: AuthSplitLayoutProps)
   // Handle Login submission
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!loginEmail.trim()) return
+
     setLoginLoading(true)
     setLoginError(null)
 
-    const supabase = createClient()
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: loginEmail,
-      password: loginPassword,
-    })
-
-    if (error) {
-      setLoginError(error.message)
-      setLoginLoading(false)
-      return
-    }
-
-    const redirectedFrom = searchParams.get("redirectedFrom")
-    if (redirectedFrom && redirectedFrom.startsWith("/")) {
-      router.push(redirectedFrom)
-    } else {
-      let role: string | null = null
-      const accessToken = data.session?.access_token
-      if (accessToken) {
-        try {
-          const apiUrl = getApiUrl()
-          const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          })
-          if (res.ok) {
-            const roleData = await res.json()
-            role = roleData.role
-          }
-        } catch {
-          // Fallback to metadata
+    // If no password entered, send one-time code via Google SMTP
+    if (!loginPassword.trim()) {
+      try {
+        const res = await fetch(`${getApiUrl()}/api/v1/auth/send-otp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: loginEmail.trim() }),
+        })
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          throw new Error(body.detail || "Failed to send verification code")
         }
+        setSignupEmail(loginEmail.trim())
+        setFullName("")
+        setLoginLoading(false)
+        switchView("otp")
+        return
+      } catch (err: unknown) {
+        setLoginError(err instanceof Error ? err.message : "Failed to send login code.")
+        setLoginLoading(false)
+        return
       }
-      role = role || (data.user?.user_metadata?.role as string) || "client"
-      const targetPath = ROLE_HOMES[role] ?? "/portal"
-      router.push(targetPath)
     }
-    router.refresh()
+
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: loginPassword,
+      })
+
+      if (error) {
+        setLoginError(error.message)
+        setLoginLoading(false)
+        return
+      }
+
+      const redirectedFrom = searchParams.get("redirectedFrom")
+      if (redirectedFrom && redirectedFrom.startsWith("/")) {
+        router.push(redirectedFrom)
+      } else {
+        let role: string | null = null
+        const accessToken = data.session?.access_token
+        if (accessToken) {
+          try {
+            const apiUrl = getApiUrl()
+            const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            })
+            if (res.ok) {
+              const roleData = await res.json()
+              role = roleData.role
+            }
+          } catch {
+            // Fallback to metadata
+          }
+        }
+        role = role || (data.user?.user_metadata?.role as string) || "client"
+        const targetPath = ROLE_HOMES[role] ?? "/portal"
+        router.push(targetPath)
+      }
+      router.refresh()
+    } catch (err: unknown) {
+      setLoginError(err instanceof Error ? err.message : "Sign in failed")
+      setLoginLoading(false)
+    }
   }
 
-  // Handle Signup submission (simplified: Full Name + Email -> send OTP)
+  // Handle Signup submission: Send 6-digit OTP via Google SMTP backend (no Supabase email)
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!fullName.trim() || !signupEmail.trim()) return
@@ -179,37 +210,19 @@ export function AuthSplitLayout({ initialView = "login" }: AuthSplitLayoutProps)
     setSignupLoading(true)
     setSignupError(null)
 
-    const supabase = createClient()
-
     try {
-      // Trigger 6-digit email OTP via Supabase
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email: signupEmail,
-        options: {
-          data: {
-            full_name: fullName.trim(),
-            role: "client",
-          },
-        },
+      const res = await fetch(`${getApiUrl()}/api/v1/auth/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: signupEmail.trim(),
+          full_name: fullName.trim(),
+        }),
       })
 
-      if (otpError) {
-        // Fallback: If signInWithOtp has issue, try signUp
-        const { error: fallbackSignUpErr } = await supabase.auth.signUp({
-          email: signupEmail,
-          password: `Creo_${Math.random().toString(36).slice(2, 10)}!9`,
-          options: {
-            data: {
-              full_name: fullName.trim(),
-              role: "client",
-            },
-          },
-        })
-        if (fallbackSignUpErr && !fallbackSignUpErr.message.includes("already registered")) {
-          setSignupError(fallbackSignUpErr.message)
-          setSignupLoading(false)
-          return
-        }
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.detail || "Failed to send verification code")
       }
 
       setSignupLoading(false)

@@ -1,11 +1,18 @@
 import json
 import logging
+import time
+import secrets
+import uuid
+from typing import Optional
+from datetime import datetime, timezone, timedelta
 
 # pyrefly: ignore [missing-import]
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from pydantic import BaseModel, EmailStr
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
+from jose import jwt
 
 from core.config import settings
 from core.database import get_db
@@ -13,7 +20,7 @@ from core.exceptions import limiter
 from models.enums import AccountStatus, UserRole
 from models.user import User
 from schemas.auth import RegisterRequest, RegisterResponse
-from workers.notification_tasks import notify_incomplete_signup
+from services.email import send_otp_email
 from workers.notification_tasks import notify_incomplete_signup, send_verification_email_task
 
 logger = logging.getLogger(__name__)
@@ -21,6 +28,154 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 REDIS_ABANDONED_CART_PREFIX = "abandoned_cart:"
+
+# In-memory OTP store with expiration fallback
+_otp_cache: dict[str, dict] = {}
+
+
+def _store_otp(email: str, code: str, full_name: Optional[str] = None) -> None:
+    norm_email = email.strip().lower()
+    expires_at = time.time() + 600  # 10 minutes
+    _otp_cache[norm_email] = {"code": code, "expires_at": expires_at, "full_name": full_name}
+    try:
+        import redis
+        r = redis.from_url(settings.REDIS_URL, decode_responses=True)
+        r.set(f"otp:{norm_email}", json.dumps({"code": code, "full_name": full_name}), ex=600)
+        r.close()
+    except Exception as exc:
+        logger.debug("Redis OTP cache bypassed: %s", exc)
+
+
+def _get_and_clear_otp(email: str, code: str) -> Optional[dict]:
+    norm_email = email.strip().lower()
+    stored = None
+    try:
+        import redis
+        r = redis.from_url(settings.REDIS_URL, decode_responses=True)
+        val = r.get(f"otp:{norm_email}")
+        if val:
+            stored = json.loads(val)
+            r.delete(f"otp:{norm_email}")
+        r.close()
+    except Exception:
+        pass
+
+    if not stored and norm_email in _otp_cache:
+        item = _otp_cache.get(norm_email)
+        if item and item["expires_at"] > time.time():
+            stored = item
+        _otp_cache.pop(norm_email, None)
+
+    if stored and stored.get("code") == code.strip():
+        return stored
+    return None
+
+
+class SendOtpPayload(BaseModel):
+    email: EmailStr
+    full_name: Optional[str] = None
+
+
+class VerifyOtpPayload(BaseModel):
+    email: EmailStr
+    code: str
+    full_name: Optional[str] = None
+
+
+@router.post("/send-otp")
+async def send_otp_endpoint(payload: SendOtpPayload):
+    """Generates and sends a 6-digit OTP code to user's email using Google SMTP."""
+    code = f"{secrets.randbelow(900000) + 100000}"
+    _store_otp(payload.email, code, payload.full_name)
+    try:
+        await send_otp_email(to_email=payload.email, otp_code=code, name=payload.full_name)
+    except Exception as exc:
+        logger.exception("Failed to send OTP email via Google SMTP: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send verification code. Please check your email address or try again.",
+        )
+    return {"status": "ok", "message": "Verification code sent successfully"}
+
+
+@router.post("/verify-otp")
+async def verify_otp_endpoint(payload: VerifyOtpPayload, db: AsyncSession = Depends(get_db)):
+    """Verifies the 6-digit OTP code and returns a signed JWT session token."""
+    stored = _get_and_clear_otp(payload.email, payload.code)
+    if not stored:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification code. Please check and try again.",
+        )
+
+    norm_email = payload.email.strip().lower()
+    name = payload.full_name or stored.get("full_name") or norm_email.split("@")[0]
+
+    # Find or create user in PostgreSQL
+    query = select(User).where(User.email == norm_email)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+
+    if not user:
+        user = User(
+            auth_id=str(uuid.uuid4()),
+            email=norm_email,
+            full_name=name,
+            role=UserRole.client,
+            account_status=AccountStatus.pending_verification,
+            onboarding_stage=1,
+            terms_accepted=False,
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+    elif name and (not user.full_name or user.full_name == norm_email.split("@")[0]):
+        user.full_name = name
+        await db.commit()
+        await db.refresh(user)
+
+    # Issue standard JWT session token signed with SUPABASE_JWT_SECRET
+    jwt_secret = settings.SUPABASE_JWT_SECRET or settings.SECRET_KEY
+    now = datetime.now(timezone.utc)
+    exp = now + timedelta(days=30)
+    claims = {
+        "aud": "authenticated",
+        "role": user.role.value,
+        "sub": str(user.auth_id),
+        "email": user.email,
+        "name": user.full_name,
+        "app_metadata": {
+            "provider": "email",
+            "providers": ["email"],
+        },
+        "user_metadata": {
+            "role": user.role.value,
+            "full_name": user.full_name,
+            "name": user.full_name,
+            "account_status": user.account_status.value,
+            "onboarding_stage": user.onboarding_stage,
+        },
+        "account_status": user.account_status.value,
+        "onboarding_stage": user.onboarding_stage,
+        "iat": int(now.timestamp()),
+        "exp": int(exp.timestamp()),
+        "jti": str(uuid.uuid4()),
+    }
+    session_token = jwt.encode(claims, jwt_secret, algorithm="HS256")
+
+    return {
+        "status": "ok",
+        "access_token": session_token,
+        "token_type": "bearer",
+        "user": {
+            "id": str(user.auth_id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role.value,
+            "account_status": user.account_status.value,
+            "onboarding_stage": user.onboarding_stage,
+        },
+    }
 
 
 def _store_task_ids(user_id: str, task_ids: list[str]) -> None:

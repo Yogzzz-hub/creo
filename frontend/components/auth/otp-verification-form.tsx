@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Loader2, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
+import { getApiUrl } from "@/lib/api-url"
 
 interface OtpVerificationFormProps {
   email: string
@@ -106,22 +106,21 @@ export function OtpVerificationForm({
     setError(null)
 
     try {
-      const supabase = createClient()
-      const { error: resendErr } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          data: { full_name: fullName, role: "client" },
-        },
+      const res = await fetch(`${getApiUrl()}/api/v1/auth/send-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, full_name: fullName }),
       })
 
-      if (resendErr) {
-        toast.error(resendErr.message || "Failed to resend code")
-      } else {
-        toast.success("A new 6-digit code has been sent to your email!")
-        setCountdown(30)
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.detail || "Failed to resend verification code")
       }
-    } catch {
-      toast.error("Network error. Please try again.")
+
+      toast.success("A new 6-digit code has been sent to your email!")
+      setCountdown(30)
+    } catch (err: any) {
+      toast.error(err.message || "Network error. Please try again.")
     } finally {
       setIsResending(false)
     }
@@ -135,53 +134,43 @@ export function OtpVerificationForm({
     setError(null)
 
     try {
-      const supabase = createClient()
-
-      // Attempt verification with type "email" (standard for email OTP)
-      let { data, error: verifyErr } = await supabase.auth.verifyOtp({
-        email,
-        token: otpCode,
-        type: "email",
+      const res = await fetch(`${getApiUrl()}/api/v1/auth/verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          code: otpCode,
+          full_name: fullName || "User",
+        }),
       })
 
-      // Fallback to "signup" type if "email" type fails
-      if (verifyErr) {
-        const fallback = await supabase.auth.verifyOtp({
-          email,
-          token: otpCode,
-          type: "signup",
-        })
-        if (!fallback.error) {
-          data = fallback.data
-          verifyErr = null
-        }
-      }
-
-      if (verifyErr) {
-        setError(verifyErr.message || "Invalid verification code. Please check and try again.")
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        setError(body.detail || "Invalid verification code. Please check and try again.")
         setLoading(false)
         return
       }
 
-      const authId = data?.user?.id || (await supabase.auth.getUser()).data.user?.id
+      const data = await res.json()
+      const token = data.access_token
 
-      if (authId) {
-        // Register in PostgreSQL backend
+      if (token) {
+        // Save session locally and in standard auth cookies
         try {
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/register`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              auth_id: authId,
-              email,
-              phone: null,
-              full_name: fullName || "User",
-              business_name: null,
-            }),
-          })
-        } catch {
-          // Continue if registration already succeeded or silently handled
-        }
+          localStorage.setItem("creo_access_token", token)
+        } catch {}
+        document.cookie = `sb-access-token=${token}; path=/; max-age=2592000; SameSite=Lax`
+        document.cookie = `creo_session_token=${token}; path=/; max-age=2592000; SameSite=Lax`
+        const role = data.user?.role || "client"
+        document.cookie = `creo_role_cache=${JSON.stringify({
+          role,
+          account_status: data.user?.account_status || "pending_verification",
+          onboarding_stage: data.user?.onboarding_stage || 1,
+          token_sig: token.slice(-16),
+          exp: Date.now() + 15 * 60 * 1000,
+        })}; path=/; max-age=900; SameSite=Lax`
+
+        window.dispatchEvent(new Event("storage"))
       }
 
       toast.success("Email verified successfully!")

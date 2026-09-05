@@ -44,6 +44,13 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = ""
     GOOGLE_REDIRECT_URI: str = "https://creo-ev42.onrender.com"
 
+    SMTP_SERVER: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = "creotool26@gmail.com"
+    SMTP_FROM_NAME: str = "Creo"
+
     model_config = {"env_file": ".env", "extra": "ignore"}
 
 
