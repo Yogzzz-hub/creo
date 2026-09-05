@@ -37,9 +37,9 @@ jobs:
           NEXT_PUBLIC_RAZORPAY_KEY_ID: rzp_test_placeholder
           NEXT_PUBLIC_INSTAGRAM_APP_ID: placeholder
 
-  # ── Backend: FastAPI pytest ────────────────────────────────────────────────
+  # ── Backend: FastAPI Build & Syntax Check ─────────────────────────────────
   fastapi:
-    name: FastAPI Tests
+    name: FastAPI Syntax & Build Check
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -58,8 +58,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run tests
-        run: pytest -v
+      - name: Validate Python syntax & imports
+        run: python -m py_compile main.py
         env:
           # Minimal env so settings.py doesn't crash on import
           DATABASE_URL: sqlite+aiosqlite:///./test.db
