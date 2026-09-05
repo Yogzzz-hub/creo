@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { CardContent } from "@/components/ui/card";
@@ -240,7 +240,13 @@ function StripePaymentForm({
 // ── Main page ───────────────────────────────────────────────────
 function PaymentContent() {
   const router = useRouter();
-  const [selectedPlan, setSelectedPlan] = useState<PlanName | null>(null);
+  const searchParams = useSearchParams();
+  const planParam = searchParams.get("plan") as PlanName | null;
+  const [selectedPlan, setSelectedPlan] = useState<PlanName>(
+    planParam && ["starter", "growth", "pro"].includes(planParam)
+      ? planParam
+      : "growth"
+  );
 
   const [processing, setProcessing] = useState<"razorpay" | "stripe" | null>(
     null
@@ -420,13 +426,24 @@ function PaymentContent() {
         `${getApiUrl()}/api/v1/onboarding/pricing-help`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ plan_name: selectedPlan || "growth" }),
         }
       );
 
       if (!res.ok) {
-        const data = await res.json();
-        setHelpError(data.detail || "Failed to send request. Please try again.");
+        let errorMsg = "Failed to send request. Please try again.";
+        try {
+          const data = await res.json();
+          if (data?.detail) errorMsg = data.detail;
+          else if (data?.message) errorMsg = data.message;
+        } catch {
+          // ignore non-json error responses
+        }
+        setHelpError(errorMsg);
         setHelpLoading(false);
         return;
       }
@@ -533,10 +550,10 @@ function PaymentContent() {
             return (
               <label
                 key={planName}
-                className={`cursor-pointer rounded-lg border p-4 transition-colors ${
+                className={`cursor-pointer rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                   isSelected
-                    ? "border-brand bg-brand-light ring-2 ring-brand/20"
-                    : "border-border hover:border-brand/50"
+                    ? "border-[#2B7BC4] bg-[#E8F4FD] ring-2 ring-[#2B7BC4]/30 shadow-xs"
+                    : "border-slate-200/80 bg-white hover:border-[#2B7BC4]/50"
                 }`}
               >
                 <input
@@ -562,7 +579,7 @@ function PaymentContent() {
         </div>
       </fieldset>
 
-      <div className="rounded-lg border border-border bg-bg-internal p-5 mb-6">
+      <div className="rounded-xl border border-slate-200/80 bg-slate-50/60 p-5 mb-6 transition-all duration-300">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-semibold text-brand-dark">
@@ -620,7 +637,7 @@ function PaymentContent() {
       ) : (
         <div className="space-y-3 mb-6">
           <Button
-            className="w-full bg-brand hover:bg-brand/90 text-white h-11"
+            className="w-full bg-[#2B7BC4] hover:bg-[#2368a6] text-white h-11 rounded-xl shadow-xs transition-all duration-200 active:scale-[0.98] cursor-pointer"
             disabled={processing !== null || helpLoading || !planDetails}
             onClick={handleRazorpay}
           >
