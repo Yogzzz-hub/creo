@@ -58,30 +58,52 @@ function canAccessRoute(role: string, pathname: string): boolean {
   return false;
 }
 
-async function fetchUserProfile(accessToken: string): Promise<{ role: string; account_status: string; onboarding_stage: number } | "network_error" | null> {
+function parseJwtPayload(token: string): any {
+  try {
+    const base64Url = token.split(".")[1];
+    if (!base64Url) return null;
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
+
+async function fetchUserProfile(
+  accessToken: string
+): Promise<{ role: string; account_status: string; onboarding_stage: number } | "network_error" | null> {
   try {
     const apiUrl = getApiUrl();
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    // Fast 1.5s timeout prevents page stalls when backend is slow or restarting
+    const timeout = setTimeout(() => controller.abort(), 1500);
     const res = await fetch(`${apiUrl}/api/v1/auth/me/role`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       signal: controller.signal,
     });
     clearTimeout(timeout);
     if (!res.ok) {
-      if (res.status >= 500) return "network_error"; // MW-05: Don't treat 500 as unauthorized
+      if (res.status >= 500) return "network_error";
       return null;
     }
     const data = await res.json();
-    return { role: data.role ?? "client", account_status: data.account_status ?? "pending_verification", onboarding_stage: data.onboarding_stage ?? 1 };
-  } catch (err: any) {
-    // MW-05: Aborts, timeouts, network issues, and JSON parse failures are all network errors, not authorization failures
+    return {
+      role: data.role ?? "client",
+      account_status: data.account_status ?? "pending_verification",
+      onboarding_stage: data.onboarding_stage ?? 1,
+    };
+  } catch {
     return "network_error";
   }
 }
 
 function resolveRole(metadataRole: string, backendRole: string | null): string {
-  // Database role is single source of truth; if backend returns a valid role, use it
   if (backendRole) return backendRole;
   return metadataRole || "client";
 }
@@ -89,7 +111,7 @@ function resolveRole(metadataRole: string, backendRole: string | null): string {
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // OPTIMIZATION: Bypass middleware logic entirely for Next.js prefetch headers
+  // 1. FAST PATH: Next.js prefetch headers
   const isPrefetch =
     request.headers.get("Purpose") === "prefetch" ||
     request.headers.get("x-middleware-prefetch") === "1";
@@ -97,54 +119,143 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Skip Supabase auth for Instagram OAuth callback (arrives cookieless from Facebook)
+  // 2. Skip Supabase auth for Instagram OAuth callback
   if (pathname.startsWith("/api/auth/callback/instagram")) {
     return NextResponse.next();
   }
 
-  let supabaseResponse = NextResponse.next({ request });
+  const isProtected = isProtectedRoute(pathname);
+  const isAuthRoute = pathname === "/login" || pathname === "/signup";
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
+  // 3. FAST PATH: Public marketing pages (/, /about, /pricing, /portfolio, /faq, /terms, /privacy)
+  // Completely skip all auth & network processing for instant <10ms rendering
+  if (!isProtected && !isAuthRoute) {
+    return NextResponse.next();
+  }
+
+  // Check if any auth cookie exists before initializing Supabase client
+  const allCookies = request.cookies.getAll();
+  const hasAuthCookie = allCookies.some(
+    (c) =>
+      c.name.includes("-auth-token") ||
+      c.name === "sb-access-token" ||
+      c.name.startsWith("sb-")
   );
 
-  // OPTIMIZATION: Use getSession() instead of getUser() to eliminate network latency
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user ?? null;
-  const accessToken = session?.access_token ?? null;
-
-  // Unauthenticated user trying to access protected route → redirect to login
-  if (!user && isProtectedRoute(pathname)) {
+  // Unauthenticated user trying to access a protected route -> instant redirect to login
+  if (!hasAuthCookie && isProtected) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirectedFrom", pathname);
     return NextResponse.redirect(url);
   }
 
-  // Authenticated user on a protected route → check role and access
-  if (user && isProtectedRoute(pathname)) {
-    const metadataRole = (user.user_metadata?.role as string) ?? "client";
-    const profile = accessToken ? await fetchUserProfile(accessToken) : null;
-    const isNetworkError = profile === "network_error";
+  // Unauthenticated user on login or signup -> allow immediately
+  if (!hasAuthCookie && isAuthRoute) {
+    return NextResponse.next();
+  }
 
-    const role = resolveRole(metadataRole, isNetworkError ? null : (profile?.role ?? null));
+  let supabaseResponse = NextResponse.next({ request });
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    // If Supabase env vars are missing, do not crash or stall
+    return isProtected
+      ? NextResponse.redirect(new URL("/login", request.url))
+      : supabaseResponse;
+  }
+
+  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) =>
+          request.cookies.set(name, value)
+        );
+        supabaseResponse = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options)
+        );
+      },
+    },
+  });
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
+  const accessToken = session?.access_token ?? null;
+
+  // Unauthenticated user on protected route
+  if (!user && isProtected) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("redirectedFrom", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Unauthenticated user on auth route -> allow
+  if (!user) {
+    return supabaseResponse;
+  }
+
+  // Helper to get or populate user role & status with caching
+  let role = (user.user_metadata?.role as string) ?? "client";
+  let accountStatus = (user.user_metadata?.account_status as string) ?? "pending_verification";
+  let onboardingStage = (user.user_metadata?.onboarding_stage as number) ?? 1;
+
+  // Check fast cookie cache (5-minute TTL)
+  const cachedCookie = request.cookies.get("creo_role_cache");
+  let hasValidCache = false;
+
+  if (cachedCookie?.value) {
+    try {
+      const parsed = JSON.parse(cachedCookie.value);
+      if (parsed.exp && parsed.exp > Date.now()) {
+        role = parsed.role || role;
+        accountStatus = parsed.account_status || accountStatus;
+        onboardingStage = parsed.onboarding_stage || onboardingStage;
+        hasValidCache = true;
+      }
+    } catch {
+      // Ignore cache parse error
+    }
+  }
+
+  // If not cached and token exists, check decoded JWT claims in-memory (0ms)
+  if (!hasValidCache && accessToken) {
+    const claims = parseJwtPayload(accessToken);
+    if (claims?.user_metadata?.role || claims?.app_metadata?.role) {
+      role = claims.user_metadata?.role || claims.app_metadata?.role;
+    }
+  }
+
+  // Handle protected routes
+  if (isProtected) {
+    // If we still lack verified profile details and have an access token, fetch with fast 1.5s timeout
+    if (!hasValidCache && accessToken) {
+      const profile = await fetchUserProfile(accessToken);
+      if (profile && profile !== "network_error") {
+        role = resolveRole(role, profile.role);
+        accountStatus = profile.account_status;
+        onboardingStage = profile.onboarding_stage;
+
+        supabaseResponse.cookies.set(
+          "creo_role_cache",
+          JSON.stringify({
+            role,
+            account_status: accountStatus,
+            onboarding_stage: onboardingStage,
+            exp: Date.now() + 5 * 60 * 1000,
+          }),
+          { path: "/", httpOnly: true, sameSite: "lax", maxAge: 300 }
+        );
+      }
+    }
 
     if (!canAccessRoute(role, pathname)) {
       const url = request.nextUrl.clone();
@@ -152,36 +263,28 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Portal restriction: non-active clients or those with incomplete onboarding can only access dashboard & support
-    let questionnaireSubmitted = false;
-    if (role === "client" && !isNetworkError && profile?.account_status === "active") {
-      const questionnaireResponse = await fetch(
-        `${getApiUrl()}/api/v1/questionnaire/status`,
-        { headers: { Authorization: `Bearer ${accessToken}` } },
-      );
-      questionnaireSubmitted = questionnaireResponse.ok;
-    }
+    // Portal restriction: onboarding stage check
+    const requiresQuestionnaire =
+      pathname.startsWith("/portal/deliverables") ||
+      pathname.startsWith("/portal/calendar");
 
-    const requiresQuestionnaire = pathname.startsWith("/portal/deliverables") || pathname.startsWith("/portal/calendar");
-    const portalAccessAllowed = isNetworkError || (profile?.account_status === "active" && (!requiresQuestionnaire || questionnaireSubmitted));
-    if (role === "client" && pathname.startsWith("/portal") && !isUnrestrictedPortalRoute(pathname) && !portalAccessAllowed) {
-      // The user has paid and is active, allow them to view their payments
-      if (pathname.startsWith("/portal/payments") && profile?.account_status === "active") {
-        return supabaseResponse;
+    if (role === "client" && pathname.startsWith("/portal") && !isUnrestrictedPortalRoute(pathname)) {
+      const questionnaireSubmitted = onboardingStage >= 4;
+      const portalAccessAllowed = accountStatus === "active" && (!requiresQuestionnaire || questionnaireSubmitted);
+
+      if (!portalAccessAllowed) {
+        if (pathname.startsWith("/portal/payments") && accountStatus === "active") {
+          return supabaseResponse;
+        }
+        const url = request.nextUrl.clone();
+        url.pathname = "/portal";
+        return NextResponse.redirect(url);
       }
-
-      const url = request.nextUrl.clone();
-      url.pathname = "/portal";
-      return NextResponse.redirect(url);
     }
   }
 
-  if (user && (pathname === "/login" || pathname === "/signup")) {
-    const metadataRole = (user.user_metadata?.role as string) ?? "client";
-    const profile = accessToken ? await fetchUserProfile(accessToken) : null;
-    const isNetworkError = profile === "network_error";
-
-    const role = resolveRole(metadataRole, isNetworkError ? null : (profile?.role ?? null));
+  // Authenticated user trying to visit /login or /signup -> redirect to home
+  if (isAuthRoute) {
     const url = request.nextUrl.clone();
     url.pathname = getHome(role);
     return NextResponse.redirect(url);

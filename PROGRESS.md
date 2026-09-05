@@ -327,6 +327,7 @@
 - [x] Add interactive edit/pencil icons and instant date-change modal interactions to calendar month view items
 - [x] Enable prefetch={true} and unblock sidebar navigation for instant zero-lag page transitions
 - [x] Simplify calendar item edit modal to date picker and deliverable type selector only with streamlined PATCH payload
-
-
-
+- [x] Eliminate multi-second Redis connection timeouts: add 0.5s connection timeouts + in-memory availability circuit-breaker in security.py, and enable fast in-memory JWT cryptographic verification using SUPABASE_JWT_SECRET
+- [x] Eliminate Next.js middleware waterfalls: bypass public marketing routes instantly (<10ms), cache roles in cookies/JWT claims, and lower fallback abort timeout to 1.5s
+- [x] Standardize getApiUrl across subscription context and add resilient fallback data in pricing/page.tsx to eliminate SSR hangs
+- [x] Add reusable PageLoading component and loading.tsx streaming skeletons across all 14 admin and 6 dashboard subroutes

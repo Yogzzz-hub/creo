@@ -10,6 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 def _get_async_url(url: str) -> str:
+    if not url:
+        return "postgresql+asyncpg://postgres:postgres@localhost:5432/creo"
     if url.startswith("postgresql://"):
         return url.replace("postgresql://", "postgresql+asyncpg://", 1)
     if url.startswith("postgres://"):

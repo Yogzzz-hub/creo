@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from "react"
 import { useSession } from "@/context/session-context"
+import { getApiUrl } from "@/lib/api-url"
 
 type AccountStatus = "active" | "lapsed" | "past_due" | "pending_verification" | "cancelled" | "suspended" | null
 
@@ -66,7 +67,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/portal/dashboard`,
+        `${getApiUrl()}/api/v1/portal/dashboard`,
         {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal

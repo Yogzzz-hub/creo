@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Check, Shield, Zap, Clock } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { SITE } from "@/lib/constants";
+import { getApiUrl } from "@/lib/api-url";
 import {
   Card,
   CardContent,
@@ -52,25 +53,92 @@ interface PublicSettings {
   scarcity_slots_available: number;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+const DEFAULT_PLANS: Plan[] = [
+  {
+    id: "starter",
+    name: "starter",
+    display_name: "Starter",
+    monthly_price: 15000,
+    poster_quota: 4,
+    reel_quota: 2,
+    story_quota: 4,
+    revision_rounds: 1,
+    has_dedicated_manager: false,
+    highlights: [
+      "4 High-converting static posters",
+      "2 Cinematic short-form reels",
+      "Monthly content calendar",
+      "Dedicated creative support",
+    ],
+    is_recommended: false,
+    is_active: true,
+  },
+  {
+    id: "growth",
+    name: "growth",
+    display_name: "Growth",
+    monthly_price: 25000,
+    poster_quota: 8,
+    reel_quota: 4,
+    story_quota: 8,
+    revision_rounds: 2,
+    has_dedicated_manager: true,
+    highlights: [
+      "8 High-converting static posters",
+      "4 Cinematic short-form reels",
+      "Dedicated account manager",
+      "Instagram auto-publishing",
+    ],
+    is_recommended: true,
+    is_active: true,
+  },
+  {
+    id: "pro",
+    name: "pro",
+    display_name: "Pro",
+    monthly_price: 45000,
+    poster_quota: 15,
+    reel_quota: 8,
+    story_quota: 15,
+    revision_rounds: 3,
+    has_dedicated_manager: true,
+    highlights: [
+      "15 High-converting static posters",
+      "8 Cinematic short-form reels",
+      "Priority delivery & custom shoot",
+      "Full multichannel growth strategy",
+    ],
+    is_recommended: false,
+    is_active: true,
+  },
+];
 
 async function getPlans(): Promise<Plan[]> {
   try {
-    const res = await fetch(`${API_BASE}/api/v1/plans`, {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1500);
+    const res = await fetch(`${getApiUrl()}/api/v1/plans`, {
       next: { revalidate: 60 },
+      signal: controller.signal,
     });
-    if (!res.ok) return [];
-    return res.json();
+    clearTimeout(timeout);
+    if (!res.ok) return DEFAULT_PLANS;
+    const data = await res.json();
+    return Array.isArray(data) && data.length > 0 ? data : DEFAULT_PLANS;
   } catch {
-    return [];
+    return DEFAULT_PLANS;
   }
 }
 
 async function getPublicSettings(): Promise<PublicSettings> {
   try {
-    const res = await fetch(`${API_BASE}/api/v1/settings/public`, {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1500);
+    const res = await fetch(`${getApiUrl()}/api/v1/settings/public`, {
       next: { revalidate: 60 },
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
     if (!res.ok) return { scarcity_slots_available: 5 };
     return res.json();
   } catch {

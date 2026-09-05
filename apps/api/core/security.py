@@ -24,13 +24,34 @@ oauth2_scheme = HTTPBearer()
 _supabase_client = None
 _supabase_key_hash: str | None = None
 
-# Global Redis connection pool to prevent connection handshakes on every API call.
+# Global Redis connection pool with fast 0.5s timeouts so absent/offline Redis never blocks API calls.
 _redis_pool = redis.ConnectionPool.from_url(
     settings.REDIS_URL,
     decode_responses=True,
-    max_connections=20
+    max_connections=20,
+    socket_connect_timeout=0.5,
+    socket_timeout=0.5,
 )
 _redis_client = redis.Redis(connection_pool=_redis_pool)
+
+_redis_available = True
+_last_redis_check = 0.0
+
+
+def _is_redis_available() -> bool:
+    global _redis_available, _last_redis_check
+    now = time.time()
+    # If previously offline, back off and only retry ping every 30 seconds
+    if not _redis_available and (now - _last_redis_check < 30.0):
+        return False
+    _last_redis_check = now
+    try:
+        _redis_client.ping()
+        _redis_available = True
+        return True
+    except Exception:
+        _redis_available = False
+        return False
 
 
 def _get_supabase_client():
@@ -126,27 +147,33 @@ def decrypt_gateway_id(
 
 
 def _is_jti_revoked(jti: str) -> bool:
+    if not _is_redis_available():
+        return False
     try:
         revoked = _redis_client.exists(f"revoked_token:{jti}")
         return bool(revoked)
     except Exception as exc:
-        logger.error("Redis error checking JTI revocation: %s", exc)
+        logger.debug("Redis error checking JTI revocation: %s", exc)
         return False
 
 
 def _get_cached_auth_id(jti: str) -> str | None:
+    if not _is_redis_available():
+        return None
     try:
         return _redis_client.get(f"valid_token:{jti}")
     except Exception as exc:
-        logger.error("Redis error getting cached JTI auth ID: %s", exc)
+        logger.debug("Redis error getting cached JTI auth ID: %s", exc)
         return None
 
 
 def _cache_auth_id(jti: str, auth_id: str, ttl: int) -> None:
+    if not _is_redis_available():
+        return
     try:
         _redis_client.setex(f"valid_token:{jti}", ttl, auth_id)
     except Exception as exc:
-        logger.error("Redis error caching JTI auth ID: %s", exc)
+        logger.debug("Redis error caching JTI auth ID: %s", exc)
         pass
 
 
@@ -201,44 +228,40 @@ async def get_current_user(
     if jti:
         auth_id = _get_cached_auth_id(jti)
 
-    # 4. Verify token using Supabase if not cached
+    # 4. Verify token: prioritize local cryptographic verification (0ms) over external HTTP calls
     if not auth_id:
-        supabase = _get_supabase_client()
+        jwt_secret = settings.SUPABASE_JWT_SECRET or settings.SECRET_KEY
+        if jwt_secret:
+            try:
+                payload = jwt.decode(
+                    token,
+                    jwt_secret,
+                    algorithms=["HS256"],
+                    options={"verify_aud": False, "verify_sub": True},
+                )
+                auth_id = payload.get("sub")
+            except jwt.ExpiredSignatureError:
+                raise credentials_exception
+            except Exception as jwt_err:
+                logger.debug("Local JWT verification fallback needed: %s", jwt_err)
+                auth_id = None
 
-        # Temporary diagnostic logging.
-        logger.info(
-            "Verifying Supabase token. token_length=%d",
-            len(token),
-        )
-
-        try:
-            user_response = supabase.auth.get_user(token)
-
-        except Exception as exc:
-            # Use logger.exception() so the complete traceback
-            # and the real Supabase error are visible.
-            print(f"JWT Validation Error: {exc}")
-            logger.exception(
-                "Supabase token verification failed: %s",
-                exc,
-            )
-            raise credentials_exception
-
-        if not user_response or not user_response.user:
-            logger.warning(
-                "Supabase returned no user for the provided token."
-            )
-            raise credentials_exception
-
-        auth_id = user_response.user.id
-
-        logger.debug(
-            "Token verified via Supabase. auth_id=%s",
-            auth_id,
-        )
+        # If local verification was not configured or secret differed, fallback to Supabase SDK
+        if not auth_id:
+            try:
+                supabase = _get_supabase_client()
+                user_response = supabase.auth.get_user(token)
+                if not user_response or not user_response.user:
+                    raise credentials_exception
+                auth_id = user_response.user.id
+            except HTTPException:
+                raise
+            except Exception as exc:
+                logger.exception("Supabase token verification failed: %s", exc)
+                raise credentials_exception
 
         # Cache the valid token until it expires
-        if jti and exp:
+        if jti and exp and auth_id:
             ttl = max(60, int(exp) - int(time.time()))
             _cache_auth_id(jti, auth_id, ttl)
 

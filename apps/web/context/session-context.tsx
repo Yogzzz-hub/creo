@@ -42,10 +42,15 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const fetchSession = useCallback(async () => {
     try {
       const supabase = createClient()
+      const sessionPromise = supabase.auth.getSession()
+      const timeoutPromise = new Promise<{ data: { session: null }; error: null }>((resolve) =>
+        setTimeout(() => resolve({ data: { session: null }, error: null }), 1500)
+      )
+
       const {
         data: { session: s },
         error: err,
-      } = await supabase.auth.getSession()
+      } = await Promise.race([sessionPromise, timeoutPromise])
 
       if (err) {
         setError(err.message)
