@@ -6,7 +6,6 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 import {
-  ArrowLeft,
   Save,
   Loader2,
   Camera,
@@ -29,7 +28,6 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
-import Link from "next/link"
 import { BrandProfileTab } from "@/components/brand-profile-tab"
 
 const businessProfileSchema = z.object({
@@ -51,19 +49,11 @@ interface UserProfile {
 export default function AccountPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/portal"
-          className="flex size-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-white hover:text-gray-700"
-        >
-          <ArrowLeft className="size-4" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-[#0D2137]">Account Settings</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
-            Manage your profile, security, and integrations.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-[#0D2137]">Account Settings</h1>
+        <p className="mt-0.5 text-sm text-gray-500">
+          Manage your profile, security, and integrations.
+        </p>
       </div>
 
       <Tabs defaultValue="profile">

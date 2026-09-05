@@ -184,7 +184,28 @@ export default function AdminLayout({
             >
               <Menu className="size-5" />
             </button>
-            <h1 className="text-lg font-semibold text-[#0D2137]">Admin</h1>
+            {(() => {
+              const currentNav = ADMIN_NAV_ITEMS.find(
+                (item) => item.href !== "/admin" && isActive(item.href, pathname)
+              )
+              if (currentNav) {
+                return (
+                  <div className="flex items-center gap-2 text-sm sm:text-base">
+                    <Link
+                      href="/admin"
+                      className="text-gray-400 hover:text-[#2B7BC4] font-medium transition-colors"
+                    >
+                      Admin
+                    </Link>
+                    <span className="text-gray-300">/</span>
+                    <h1 className="text-base sm:text-lg font-semibold text-[#0D2137]">
+                      {currentNav.label}
+                    </h1>
+                  </div>
+                )
+              }
+              return <h1 className="text-lg font-semibold text-[#0D2137]">Admin</h1>
+            })()}
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">

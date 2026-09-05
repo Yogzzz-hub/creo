@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { useRouter, usePathname } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { NotificationBell } from "@/components/portal/notification-bell"
 import { useSession } from "@/context/session-context"
@@ -36,6 +37,7 @@ function getInitials(name: string): string {
 export function PortalHeader() {
   const { user: authUser } = useSession()
   const router = useRouter()
+  const pathname = usePathname()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [loggingOut, setLoggingOut] = useState(false)
@@ -43,6 +45,40 @@ export function PortalHeader() {
   const [displayName, setDisplayName] = useState(
     resolveDisplayName(authUser?.user_metadata as Record<string, unknown> | undefined, authUser?.email)
   )
+
+  const getPageInfo = () => {
+    if (!pathname || pathname === "/portal") {
+      return { title: "Portal", isRoot: true }
+    }
+    if (pathname.startsWith("/portal/deliverables/")) {
+      return { parent: "Deliverables", parentHref: "/portal/deliverables", title: "Deliverable Details" }
+    }
+    if (pathname === "/portal/deliverables") {
+      return { title: "Deliverables" }
+    }
+    if (pathname === "/portal/calendar") {
+      return { title: "Calendar" }
+    }
+    if (pathname === "/portal/payments") {
+      return { title: "Payments" }
+    }
+    if (pathname === "/portal/addons") {
+      return { title: "Add-ons" }
+    }
+    if (pathname.startsWith("/portal/support/")) {
+      return { parent: "Support", parentHref: "/portal/support", title: "Ticket Details" }
+    }
+    if (pathname === "/portal/support") {
+      return { title: "Support" }
+    }
+    if (pathname === "/portal/account") {
+      return { title: "Account Settings" }
+    }
+    const segment = pathname.split("/").filter(Boolean).pop() || "Portal"
+    return { title: segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ") }
+  }
+
+  const pageInfo = getPageInfo()
 
   useEffect(() => {
     if (!authUser) return
@@ -148,8 +184,43 @@ export function PortalHeader() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-white/80 px-4 backdrop-blur-sm lg:px-8">
-      <div className="flex items-center gap-3">
-        <h1 className="text-lg font-semibold text-[#0D2137]">Portal</h1>
+      <div className="flex items-center gap-2">
+        {pageInfo.isRoot ? (
+          <h1 className="text-lg font-semibold text-[#0D2137]">Portal</h1>
+        ) : pageInfo.parent ? (
+          <div className="flex items-center gap-1.5 text-sm sm:text-base">
+            <Link
+              href="/portal"
+              className="text-gray-400 hover:text-[#2B7BC4] font-medium transition-colors"
+            >
+              Portal
+            </Link>
+            <span className="text-gray-300">/</span>
+            <Link
+              href={pageInfo.parentHref || "/portal"}
+              className="text-gray-400 hover:text-[#2B7BC4] font-medium transition-colors"
+            >
+              {pageInfo.parent}
+            </Link>
+            <span className="text-gray-300">/</span>
+            <h1 className="text-base sm:text-lg font-semibold text-[#0D2137]">
+              {pageInfo.title}
+            </h1>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-sm sm:text-base">
+            <Link
+              href="/portal"
+              className="text-gray-400 hover:text-[#2B7BC4] font-medium transition-colors"
+            >
+              Portal
+            </Link>
+            <span className="text-gray-300">/</span>
+            <h1 className="text-base sm:text-lg font-semibold text-[#0D2137]">
+              {pageInfo.title}
+            </h1>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-3">

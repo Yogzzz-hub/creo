@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, FileImage, Film, Layers, SlidersHorizontal, Zap, ArrowRight, Loader2, Camera } from "lucide-react"
+import { FileImage, Film, Layers, SlidersHorizontal, Zap, ArrowRight, Loader2, Camera } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -161,19 +161,11 @@ export default function DeliverablesPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/portal"
-          className="flex size-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-white hover:text-gray-700"
-        >
-          <ArrowLeft className="size-4" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-[#0D2137]">Deliverables</h1>
-          <p className="mt-0.5 text-sm text-gray-500">
-            Review and approve content created for your brand.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-[#0D2137]">Deliverables</h1>
+        <p className="mt-0.5 text-sm text-gray-500">
+          Review and approve content created for your brand.
+        </p>
       </div>
 
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
