@@ -99,7 +99,10 @@ export default function PortalDashboardClient({
           .eq("auth_id", user.id)
           .single()
 
-        setTermsAccepted(profile?.terms_accepted ?? false)
+        const isTermsAccepted = Boolean(
+          (dashboard as any).terms_accepted ?? profile?.terms_accepted ?? false
+        )
+        setTermsAccepted(isTermsAccepted)
         setCreatedAt(profile?.created_at ?? null)
       } catch (err) {
         console.error("Failed to load dashboard", err)

@@ -61,6 +61,7 @@ async def get_portal_dashboard(
         onboarding_stage=_compute_onboarding_stage(current_user),
         account_status=current_user.account_status.value,
         questionnaire_submitted=questionnaire_submitted,
+        terms_accepted=current_user.terms_accepted,
     )
 
 

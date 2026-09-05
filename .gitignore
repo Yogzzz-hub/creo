@@ -60,5 +60,7 @@ celerybeat.pid
 *.log
 *.pid
 *.seed
+client_secret*.json
+credentials*.json
 
 package-lock.json

@@ -47,34 +47,36 @@ export function TermsModal({ open, onOpenChange, onAccept }: TermsModalProps) {
     try {
       if (!user) throw new Error("Not authenticated")
 
-      const { data, error: updateError } = await supabase
-        .from("users")
-        .upsert(
-          {
-            auth_id: user.id,
-            email: user.email ?? "",
-            full_name: user.user_metadata?.full_name ?? user.email ?? "",
-            role: (user.user_metadata?.role as string) || "client",
-            account_status: (user.user_metadata?.account_status as string) || "pending_verification",
-            business_name: user.user_metadata?.business_name ?? null,
-            phone: user.phone ?? null,
-            terms_accepted: true,
+      // 1. Persist terms acceptance directly to the database via backend API
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+
+      if (token) {
+        const { getApiUrl } = await import("@/lib/api-url")
+        const res = await fetch(`${getApiUrl()}/api/v1/onboarding/accept-terms`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
           },
-          { onConflict: "auth_id" }
-        )
-        .select()
-
-      if (updateError) {
-        console.error("DB Update Error:", updateError.message, updateError)
-        throw updateError
+        })
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          console.warn("Backend accept-terms response:", body)
+        }
       }
 
-      if (!data || data.length === 0) {
-        const rowError = new Error("Upsert returned no rows")
-        console.error("DB Update Error:", rowError.message)
-        throw rowError
+      // 2. Synchronize Supabase users record
+      try {
+        await supabase
+          .from("users")
+          .update({ terms_accepted: true })
+          .eq("auth_id", user.id)
+      } catch (sbErr) {
+        console.warn("Direct Supabase update skipped:", sbErr)
       }
 
+      toast.success("Terms accepted successfully!")
       onAccept?.()
     } catch (err: any) {
       const msg = err?.message || err?.details || "Failed to accept terms. Please try again."

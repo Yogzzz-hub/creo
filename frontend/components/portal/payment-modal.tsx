@@ -86,8 +86,9 @@ export function PaymentModal({
     receipt: string
     key_id: string
   }> {
+    const { getApiUrl } = await import("@/lib/api-url")
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/create-order`,
+      `${getApiUrl()}/api/v1/payments/create-order`,
       {
         method: "POST",
         headers: {
@@ -117,8 +118,9 @@ export function PaymentModal({
     paymentId: string,
     signature: string,
   ): Promise<boolean> {
+    const { getApiUrl } = await import("@/lib/api-url")
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/payments/verify-payment`,
+      `${getApiUrl()}/api/v1/payments/verify-payment`,
       {
         method: "POST",
         headers: {

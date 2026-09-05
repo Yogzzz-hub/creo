@@ -22,14 +22,20 @@ async def accept_terms(
     current_user: Annotated[User, Depends(require_client)],
     db: AsyncSession = Depends(get_db),
 ):
-    await db.execute(
-        update(User)
-        .where(User.id == current_user.id)
-        .values(updated_at=datetime.now(timezone.utc))
-    )
+    current_user.terms_accepted = True
+    if current_user.onboarding_stage < 2:
+        current_user.onboarding_stage = 2
+    current_user.updated_at = datetime.now(timezone.utc)
+    db.add(current_user)
     await db.commit()
+    await db.refresh(current_user)
 
-    return {"status": "success", "message": "Terms accepted"}
+    return {
+        "status": "success",
+        "message": "Terms accepted",
+        "terms_accepted": True,
+        "onboarding_stage": current_user.onboarding_stage,
+    }
 
 
 async def _notify_sales_fallback(user_id: str, client_name: str, plan_name: str):
