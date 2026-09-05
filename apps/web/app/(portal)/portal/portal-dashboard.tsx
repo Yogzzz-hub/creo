@@ -403,9 +403,9 @@ export default function PortalDashboardClient({
               />
             </CardContent>
             {!data.brand_summary && effectiveStage >= 4 && (
-              <CardFooter>
+              <CardFooter className="pt-1">
                 <Button
-                  className="w-full"
+                  className="w-full rounded-xl border border-slate-200/80 bg-white hover:bg-[#E8F4FD]/50 hover:border-[#2B7BC4]/50 hover:text-[#2B7BC4] shadow-2xs hover:shadow-xs transition-all duration-200 active:scale-[0.98] cursor-pointer"
                   variant="outline"
                   onClick={handleGenerateBrandSummary}
                   disabled={generating}
@@ -417,7 +417,7 @@ export default function PortalDashboardClient({
                     </>
                   ) : (
                     <>
-                      <Sparkles className="size-4 mr-2" />
+                      <Sparkles className="size-4 mr-2 text-[#2B7BC4]" />
                       Generate Brand Summary
                     </>
                   )}
@@ -484,7 +484,7 @@ function StepItem({
         "relative flex flex-col items-center text-center p-4 rounded-xl transition-all duration-200",
         status === "current" && "bg-primary/5 cursor-pointer hover:bg-primary/10 hover:scale-[1.02]",
         status === "upcoming" && "opacity-50 grayscale",
-        onClick && status !== "upcoming" && "cursor-pointer hover:bg-accent hover:scale-[1.02]",
+        onClick && status !== "upcoming" && "cursor-pointer hover:bg-[#E8F4FD]/60 hover:scale-[1.02]",
       )}
       onClick={status !== "upcoming" ? onClick : undefined}
     >
@@ -530,23 +530,33 @@ function QuickLink({
     <a
       href={disabled ? undefined : href}
       className={cn(
-        "group flex items-center p-3.5 rounded-xl border border-slate-200/80 bg-white transition-all duration-200 shadow-2xs",
+        "group relative flex items-center p-3.5 rounded-xl border transition-all duration-200 overflow-hidden",
         disabled
-          ? "opacity-50 cursor-not-allowed"
-          : "hover:bg-[#E8F4FD]/40 hover:border-[#2B7BC4]/40 hover:shadow-sm hover:-translate-y-0.5 cursor-pointer",
+          ? "opacity-50 cursor-not-allowed border-slate-200/80 bg-white"
+          : "border-slate-200/80 bg-white hover:bg-gradient-to-r hover:from-[#E8F4FD]/80 hover:to-white hover:border-[#2B7BC4]/50 hover:shadow-md hover:-translate-y-0.5 cursor-pointer",
       )}
     >
-      <div className="bg-[#E8F4FD] p-2.5 rounded-lg mr-4 text-[#2B7BC4] transition-all duration-200 group-hover:bg-[#2B7BC4] group-hover:text-white group-hover:scale-105">
+      {/* Accent left indicator line on hover */}
+      <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[#2B7BC4] opacity-0 transition-all duration-200 group-hover:opacity-100" />
+
+      {/* Icon with smooth background and scale shift */}
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#E8F4FD] text-[#2B7BC4] mr-3.5 transition-all duration-200 group-hover:bg-[#2B7BC4] group-hover:text-white group-hover:scale-105 group-hover:shadow-xs">
         {icon}
       </div>
-      <div className="flex-1 space-y-0.5">
-        <p className="text-sm font-semibold text-[#0D2137] leading-none group-hover:text-[#2B7BC4] transition-colors">
+
+      <div className="flex-1 min-w-0 space-y-1">
+        <p className="text-sm font-semibold text-[#0D2137] leading-none transition-colors duration-200 group-hover:text-[#2B7BC4]">
           {title}
         </p>
-        <p className="text-xs text-slate-500">{description}</p>
+        <p className="text-xs text-slate-500 line-clamp-1 transition-colors duration-200 group-hover:text-slate-600">
+          {description}
+        </p>
       </div>
+
       {!disabled && (
-        <ArrowRight className="size-4 text-slate-400 ml-4 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-[#2B7BC4]" />
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-transparent transition-all duration-200 group-hover:bg-[#2B7BC4]/10 ml-2">
+          <ArrowRight className="size-4 text-slate-400 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-[#2B7BC4]" />
+        </div>
       )}
     </a>
   )
