@@ -1,0 +1,451 @@
+import asyncio
+import logging
+
+import httpx
+
+from core.config import settings
+
+logger = logging.getLogger(__name__)
+
+GRAPH_API_VERSION = "v21.0"
+GRAPH_API_BASE = f"https://graph.facebook.com/{GRAPH_API_VERSION}"
+
+
+def _sanitize_meta_response(data: dict) -> dict:
+    if not isinstance(data, dict):
+        return data
+    sanitized = {}
+    for k, v in data.items():
+        if k in ("access_token", "fb_exchange_token", "client_secret", "user_id"):
+            sanitized[k] = "***MASKED***"
+        elif isinstance(v, dict):
+            sanitized[k] = _sanitize_meta_response(v)
+        else:
+            sanitized[k] = v
+    return sanitized
+
+
+async def exchange_instagram_token(code: str, redirect_uri: str) -> dict:
+    """Exchange a short-lived OAuth code for a long-lived Instagram access token.
+
+    1. Exchange the authorization code for a short-lived user token.
+    2. Exchange the short-lived token for a long-lived token (~60 days).
+    3. Fetch the user's Facebook Pages and resolve the Instagram Business Account.
+
+    Returns:
+        dict with keys: access_token, instagram_user_id, instagram_username
+    """
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        short_lived_token = await _get_short_lived_token(client, code, redirect_uri)
+        long_lived_token, expires_in = await _get_long_lived_token(client, short_lived_token)
+        ig_account = await _resolve_instagram_business_account(client, long_lived_token)
+        return {
+            "access_token": long_lived_token,
+            "instagram_user_id": ig_account.get("id") if ig_account else None,
+            "instagram_username": ig_account.get("username") if ig_account else None,
+            "expires_in": expires_in,
+        }
+
+
+async def _get_short_lived_token(
+    client: httpx.AsyncClient, code: str, redirect_uri: str
+) -> str:
+    url = f"{GRAPH_API_BASE}/oauth/access_token"
+    payload = {
+        "client_id": settings.INSTAGRAM_APP_ID,
+        "client_secret": settings.INSTAGRAM_APP_SECRET,
+        "redirect_uri": redirect_uri,
+        "code": code,
+        "grant_type": "authorization_code",
+    }
+
+    response = await client.post(url, data=payload)
+    try:
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
+        logger.error("Meta OAuth request failed: %s %s", response.status_code, response.text)
+        raise ValueError("Failed to obtain short-lived access token from Meta") from exc
+    data = response.json()
+
+    access_token = data.get("access_token")
+    if not access_token:
+        logger.error("Meta OAuth response missing access_token: %s", _sanitize_meta_response(data))
+        raise ValueError("Failed to obtain short-lived access token from Meta")
+
+    logger.info("Successfully obtained short-lived Instagram access token")
+    return access_token
+
+
+async def _get_long_lived_token(client: httpx.AsyncClient, short_lived_token: str) -> tuple[str, int | str]:
+    url = f"{GRAPH_API_BASE}/oauth/access_token"
+    payload = {
+        "grant_type": "fb_exchange_token",
+        "client_id": settings.INSTAGRAM_APP_ID,
+        "client_secret": settings.INSTAGRAM_APP_SECRET,
+        "fb_exchange_token": short_lived_token,
+    }
+
+    response = await client.post(url, data=payload)
+    response.raise_for_status()
+    data = response.json()
+
+    long_lived_token = data.get("access_token")
+    if not long_lived_token:
+        logger.error("Meta token exchange response missing access_token: %s", _sanitize_meta_response(data))
+        raise ValueError("Failed to exchange for long-lived Instagram access token")
+
+    expires_in = data.get("expires_in", "unknown")
+    logger.info(
+        "Successfully obtained long-lived Instagram access token (expires_in=%s)",
+        expires_in,
+    )
+    return long_lived_token, expires_in
+
+
+async def _resolve_instagram_business_account(
+    client: httpx.AsyncClient, long_lived_token: str
+) -> dict | None:
+    """Fetch the user's Facebook Pages and find the linked Instagram Business Account.
+
+    Graph API flow:
+      1. GET /me/accounts?fields=id,name,instagram_business_account{id,username}
+      2. For each page with an instagram_business_account, return that dict.
+
+    Returns dict with keys (id, username), or None if none found.
+    """
+    url = f"{GRAPH_API_BASE}/me/accounts"
+    params = {
+        "fields": "id,name,instagram_business_account{id,username}",
+        "access_token": long_lived_token,
+    }
+
+    try:
+        response = await client.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+    except Exception as exc:
+        logger.error("Failed to fetch Facebook pages: %s", exc)
+        return None
+
+    pages = data.get("data", [])
+    if not pages:
+        logger.warning("No Facebook Pages found for this user. "
+                       "User may need to grant pages_show_list and business_management scopes.")
+        return None
+
+    for page in pages:
+        ig_account = page.get("instagram_business_account")
+        if ig_account and ig_account.get("id"):
+            logger.info(
+                "Resolved Instagram Business Account: id=%s username=%s (page=%s)",
+                ig_account["id"],
+                ig_account.get("username", "unknown"),
+                page.get("name", "unknown"),
+            )
+            return ig_account
+
+    logger.warning(
+        "No Instagram Business Account linked to any of the user's %d page(s). "
+        "Pages found: %s",
+        len(pages),
+        [p.get("name", "unnamed") for p in pages],
+    )
+    return None
+
+
+async def refresh_access_token(current_token: str) -> dict:
+    """Refresh an Instagram long-lived access token.
+
+    Calls the Graph API with grant_type=ig_refresh_token to obtain a fresh
+    long-lived token. Returns a dict with the new token and expiry info.
+
+    Returns:
+        A dict containing:
+            - access_token: The refreshed long-lived token.
+            - token_type: Always "bearer".
+            - expires_in: Seconds until the new token expires.
+    """
+    url = f"{GRAPH_API_BASE}/oauth/access_token"
+    payload = {
+        "grant_type": "ig_refresh_token",
+        "access_token": current_token,
+    }
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.get(url, params=payload)
+        response.raise_for_status()
+        data = response.json()
+
+    new_token = data.get("access_token")
+    if not new_token:
+        logger.error("Meta token refresh response missing access_token: %s", _sanitize_meta_response(data))
+        raise ValueError("Failed to refresh Instagram access token")
+
+    expires_in = data.get("expires_in", "unknown")
+    logger.info(
+        "Successfully refreshed Instagram access token (expires_in=%s)",
+        expires_in,
+    )
+
+    return {
+        "access_token": new_token,
+        "token_type": data.get("token_type", "bearer"),
+        "expires_in": expires_in,
+    }
+
+
+async def publish_media(
+    ig_user_id: str,
+    access_token: str,
+    image_url: str,
+    caption: str,
+) -> dict:
+    """Publish an image to Instagram via the Graph API.
+
+    Two-step process:
+    1. Create a media container by POSTing to /{ig_user_id}/media
+    2. Publish the container by POSTing to /{ig_user_id}/media_publish
+
+    Args:
+        ig_user_id: The Instagram Business/Creator account user ID.
+        access_token: A valid long-lived access token.
+        image_url: A publicly accessible URL of the image to publish.
+        caption: The caption text for the Instagram post.
+
+    Returns:
+        A dict containing:
+            - id: The Instagram media ID of the published post.
+            - success: Boolean indicating success.
+
+    Raises:
+        ValueError: If the API response is missing required data.
+        RuntimeError: If the API call fails.
+    """
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        container_id = await _create_media_container(
+            client, ig_user_id, access_token, image_url, caption
+        )
+        published_id = await _publish_container(
+            client, ig_user_id, access_token, container_id
+        )
+
+    logger.info(
+        "Successfully published Instagram media: ig_user=%s post_id=%s",
+        ig_user_id,
+        published_id,
+    )
+
+    return {
+        "id": published_id,
+        "success": True,
+    }
+
+
+async def _create_media_container(
+    client: httpx.AsyncClient,
+    ig_user_id: str,
+    access_token: str,
+    image_url: str,
+    caption: str,
+) -> str:
+    """Step A: Create a media container for the image."""
+    url = f"{GRAPH_API_BASE}/{ig_user_id}/media"
+    payload = {
+        "image_url": image_url,
+        "caption": caption,
+        "access_token": access_token,
+    }
+
+    response = await client.post(url, data=payload)
+
+    if response.status_code != 200:
+        logger.error(
+            "Failed to create Instagram media container: status=%d body=%s",
+            response.status_code,
+            response.text,
+        )
+        raise RuntimeError(
+            f"Instagram media container creation failed with status "
+            f"{response.status_code}: {response.text}"
+        )
+
+    data = response.json()
+    container_id = data.get("id")
+    if not container_id:
+        logger.error("Instagram container response missing id: %s", _sanitize_meta_response(data))
+        raise ValueError("Instagram media container response missing id field")
+
+    logger.info("Created Instagram media container: id=%s", container_id)
+    return container_id
+
+
+async def _publish_container(
+    client: httpx.AsyncClient,
+    ig_user_id: str,
+    access_token: str,
+    container_id: str,
+) -> str:
+    """Step B: Publish a previously created media container."""
+    url = f"{GRAPH_API_BASE}/{ig_user_id}/media_publish"
+    payload = {
+        "creation_id": container_id,
+        "access_token": access_token,
+    }
+
+    response = await client.post(url, data=payload)
+
+    if response.status_code != 200:
+        logger.error(
+            "Failed to publish Instagram media: status=%d body=%s",
+            response.status_code,
+            response.text,
+        )
+        raise RuntimeError(
+            f"Instagram media publish failed with status "
+            f"{response.status_code}: {response.text}"
+        )
+
+    data = response.json()
+    published_id = data.get("id")
+    if not published_id:
+        logger.error("Instagram publish response missing id: %s", _sanitize_meta_response(data))
+        raise ValueError("Instagram media publish response missing id field")
+
+    return published_id
+
+
+async def publish_reel(
+    ig_user_id: str,
+    access_token: str,
+    video_url: str,
+    caption: str,
+) -> dict:
+    """Publish a reel/video to Instagram via the Graph API Container method.
+
+    Three-step process:
+    1. Create a media container with media_type=REELS and video_url.
+    2. Poll until the container status is FINISHED.
+    3. Publish the container.
+
+    Args:
+        ig_user_id: The Instagram Business/Creator account user ID.
+        access_token: A valid long-lived access token.
+        video_url: A publicly accessible URL of the video to publish.
+        caption: The caption text for the Instagram reel.
+
+    Returns:
+        A dict containing:
+            - id: The Instagram media ID of the published reel.
+            - success: Boolean indicating success.
+
+    Raises:
+        ValueError: If the API response is missing required data.
+        RuntimeError: If the API call fails or processing times out.
+    """
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        container_id = await _create_reel_container(
+            client, ig_user_id, access_token, video_url, caption
+        )
+        await _wait_for_container_ready(client, ig_user_id, access_token, container_id)
+        published_id = await _publish_container(
+            client, ig_user_id, access_token, container_id
+        )
+
+    logger.info(
+        "Successfully published Instagram reel: ig_user=%s post_id=%s",
+        ig_user_id,
+        published_id,
+    )
+
+    return {
+        "id": published_id,
+        "success": True,
+    }
+
+
+async def _create_reel_container(
+    client: httpx.AsyncClient,
+    ig_user_id: str,
+    access_token: str,
+    video_url: str,
+    caption: str,
+) -> str:
+    """Step A: Create a media container for the reel/video."""
+    url = f"{GRAPH_API_BASE}/{ig_user_id}/media"
+    payload = {
+        "media_type": "REELS",
+        "video_url": video_url,
+        "caption": caption,
+        "access_token": access_token,
+    }
+
+    response = await client.post(url, data=payload)
+
+    if response.status_code != 200:
+        logger.error(
+            "Failed to create Instagram reel container: status=%d body=%s",
+            response.status_code,
+            response.text,
+        )
+        raise RuntimeError(
+            f"Instagram reel container creation failed with status "
+            f"{response.status_code}: {response.text}"
+        )
+
+    data = response.json()
+    container_id = data.get("id")
+    if not container_id:
+        logger.error("Instagram reel container response missing id: %s", _sanitize_meta_response(data))
+        raise ValueError("Instagram reel container response missing id field")
+
+    logger.info("Created Instagram reel container: id=%s", container_id)
+    return container_id
+
+
+async def _wait_for_container_ready(
+    client: httpx.AsyncClient,
+    ig_user_id: str,
+    access_token: str,
+    container_id: str,
+    max_wait_seconds: int = 300,
+    poll_interval_seconds: int = 5,
+) -> None:
+    """Poll the container status until it is FINISHED or a terminal error."""
+    url = f"{GRAPH_API_BASE}/{ig_user_id}/media"
+    params = {
+        "fields": "status_code",
+        "access_token": access_token,
+    }
+
+    elapsed = 0
+    while elapsed < max_wait_seconds:
+        response = await client.get(url, params=params)
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Failed to check reel container status: {response.status_code}: {response.text}"
+            )
+
+        data = response.json()
+        status_code = data.get("status_code")
+
+        if status_code == "FINISHED":
+            logger.info("Reel container %s is ready for publishing", container_id)
+            return
+
+        if status_code in ("ERROR", "EXPIRED"):
+            error_msg = data.get("status_code", "unknown")
+            logger.error("Reel container %s reached terminal status: %s", container_id, error_msg)
+            raise RuntimeError(f"Instagram reel processing failed with status: {error_msg}")
+
+        logger.debug(
+            "Reel container %s status: %s (elapsed: %ds)",
+            container_id,
+            status_code,
+            elapsed,
+        )
+        await asyncio.sleep(poll_interval_seconds)
+        elapsed += poll_interval_seconds
+
+    raise RuntimeError(
+        f"Instagram reel processing timed out after {max_wait_seconds}s"
+    )

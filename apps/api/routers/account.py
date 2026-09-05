@@ -1,0 +1,241 @@
+import logging
+from datetime import datetime, timedelta
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
+
+from core.database import get_db
+from core.security import RequireActiveClient, encrypt_token
+from models.user import User
+from schemas.payments import TwoFactorRequest
+from schemas.user import AccountProfileResponse, UserOut, UserUpdate
+from services.instagram import exchange_instagram_token
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/api/v1/account", tags=["account"])
+
+
+class InstagramConnectRequest(BaseModel):
+    code: str = Field(..., min_length=1, max_length=512)
+    redirect_uri: str = Field(..., min_length=1, max_length=2048)
+
+
+class InstagramConnectResponse(BaseModel):
+    success: bool
+    message: str
+
+
+@router.post("/instagram", response_model=InstagramConnectResponse)
+async def connect_instagram(
+    payload: InstagramConnectRequest,
+    current_user: RequireActiveClient,
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        result = await exchange_instagram_token(
+            code=payload.code,
+            redirect_uri=payload.redirect_uri,
+        )
+    except ValueError as exc:
+        logger.error(
+            "Instagram token exchange failed for user %s: %s",
+            current_user.id,
+            exc,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid or expired Instagram OAuth code",
+        )
+    except Exception as exc:
+        logger.exception(
+            "Unexpected error during Instagram token exchange for user %s",
+            current_user.id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to connect with Instagram. Please try again.",
+        )
+
+    long_lived_token = result["access_token"]
+    ig_user_id = result.get("instagram_user_id")
+    ig_username = result.get("instagram_username")
+
+    if not ig_user_id:
+        logger.warning(
+            "No Instagram Business Account found for user %s. "
+            "Token was obtained but ig_user_id is None.",
+            current_user.id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                "No Instagram Business Account found. "
+                "Please ensure your Facebook Page is linked to an Instagram Business Account "
+                "and that you selected it during the OAuth flow."
+            ),
+        )
+
+    expires_in = result.get("expires_in")
+
+    current_user.instagram_access_token = encrypt_token(long_lived_token)
+    current_user.instagram_user_id = ig_user_id
+    current_user.instagram_username = ig_username
+
+    if expires_in and expires_in != "unknown":
+        try:
+            current_user.instagram_token_expires_at = datetime.utcnow() + timedelta(seconds=int(expires_in))
+        except (ValueError, TypeError):
+            current_user.instagram_token_expires_at = None
+    else:
+        current_user.instagram_token_expires_at = None
+    db.add(current_user)
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database constraint violation."
+        )
+    except Exception:
+        await db.rollback()
+        logger.exception("Transaction failed during Instagram connect")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database transaction failed."
+        )
+
+    return InstagramConnectResponse(
+        success=True,
+        message="Instagram account connected successfully",
+    )
+
+
+@router.get("", response_model=AccountProfileResponse)
+async def get_account_profile(current_user: RequireActiveClient):
+    return AccountProfileResponse(
+        id=current_user.id,
+        email=current_user.email,
+        phone=current_user.phone,
+        full_name=current_user.full_name,
+        business_name=current_user.business_name,
+        role=current_user.role,
+        account_status=current_user.account_status,
+        plan_name=current_user.plan_name,
+        two_fa_enabled=current_user.two_fa_enabled,
+        instagram_connected=bool(current_user.instagram_access_token),
+        instagram_username=current_user.instagram_username,
+        created_at=current_user.created_at,
+        updated_at=current_user.updated_at,
+    )
+
+
+@router.put("", response_model=UserOut)
+async def update_account_profile(
+    payload: UserUpdate,
+    current_user: RequireActiveClient,
+    db: AsyncSession = Depends(get_db),
+):
+    update_data = payload.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(current_user, field, value)
+    try:
+        await db.commit()
+        await db.refresh(current_user)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database constraint violation."
+        )
+    except Exception:
+        await db.rollback()
+        logger.exception("Transaction failed during profile update")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database transaction failed."
+        )
+    return current_user
+
+
+class TwoFactorResponse(BaseModel):
+    success: bool
+    two_fa_enabled: bool
+    message: str
+
+
+@router.patch("/2fa", response_model=TwoFactorResponse)
+async def toggle_two_factor(
+    payload: TwoFactorRequest,
+    current_user: RequireActiveClient,
+    db: AsyncSession = Depends(get_db),
+):
+    current_user.two_fa_enabled = payload.enabled
+    db.add(current_user)
+    try:
+        await db.commit()
+        await db.refresh(current_user)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database constraint violation."
+        )
+    except Exception:
+        await db.rollback()
+        logger.exception("Transaction failed during 2FA toggle")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database transaction failed."
+        )
+
+    return TwoFactorResponse(
+        success=True,
+        two_fa_enabled=current_user.two_fa_enabled,
+        message=(
+            "Two-factor authentication enabled."
+            if payload.enabled
+            else "Two-factor authentication disabled."
+        ),
+    )
+
+
+class InstagramDisconnectResponse(BaseModel):
+    success: bool
+    message: str
+
+
+@router.delete("/instagram", response_model=InstagramDisconnectResponse)
+async def disconnect_instagram(
+    current_user: RequireActiveClient,
+    db: AsyncSession = Depends(get_db),
+):
+    current_user.instagram_access_token = None
+    current_user.instagram_user_id = None
+    current_user.instagram_username = None
+    current_user.instagram_token_expires_at = None
+    db.add(current_user)
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database constraint violation."
+        )
+    except Exception:
+        await db.rollback()
+        logger.exception("Transaction failed during Instagram disconnect")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database transaction failed."
+        )
+
+    return InstagramDisconnectResponse(
+        success=True,
+        message="Instagram account disconnected successfully",
+    )
