@@ -215,8 +215,7 @@ export default function SalesAdminPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#0D2137]">Sales & Pricing</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Manage pricing requests, subscriptions, and payment information
         </p>
       </div>

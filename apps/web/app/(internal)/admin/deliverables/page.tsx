@@ -187,8 +187,7 @@ export default function DeliverablesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0D2137]">Deliverables</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Manage and track all client deliverables
           </p>
         </div>

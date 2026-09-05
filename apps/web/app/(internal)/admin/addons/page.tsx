@@ -103,8 +103,7 @@ export default function AddonsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#0D2137]">Add-ons</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Manage purchased add-ons and process requests
         </p>
       </div>

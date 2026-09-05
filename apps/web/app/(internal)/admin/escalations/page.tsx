@@ -173,8 +173,7 @@ export default function EscalationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0D2137]">Escalations</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Track and resolve client escalations and SLA breaches
           </p>
         </div>
