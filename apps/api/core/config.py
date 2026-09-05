@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     META_WEBHOOK_VERIFY_TOKEN: str = "creo_2026"
     LOG_LEVEL: str = "INFO"
+    APP_NAME: str = "Creo"
+    APP_PASSWORD: str = ""
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
