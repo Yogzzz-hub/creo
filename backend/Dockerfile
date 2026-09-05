@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copy application code
 COPY . .
 
-# Expose port (Railway overrides this dynamically via railway.json)
+# Expose port (Render/Cloud overrides this dynamically via PORT)
 EXPOSE 8080
 
 # Fallback start command
