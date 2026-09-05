@@ -21,6 +21,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useSession } from "@/context/session-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -56,8 +57,8 @@ export default function AccountPage() {
       </div>
 
       <Tabs defaultValue="profile">
-        <TabsList className="bg-white border border-gray-200 p-1 rounded-xl">
-          <TabsTrigger value="profile" className="gap-1.5">
+        <TabsList className="bg-white/80 backdrop-blur-sm border border-slate-200/80 p-1.5 rounded-xl shadow-xs">
+          <TabsTrigger value="profile" className="gap-1.5 transition-all duration-200 data-[state=active]:bg-[#2B7BC4] data-[state=active]:text-white">
             <Building2 className="size-3.5" />
             Business Profile
           </TabsTrigger>
@@ -148,17 +149,21 @@ function BusinessProfileTab() {
 
   if (loading) {
     return (
-      <Card className="rounded-xl shadow-[var(--shadow-card)]">
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="size-5 animate-spin text-gray-400" />
-          <span className="ml-2 text-sm text-gray-500">Loading profile...</span>
-        </CardContent>
+      <Card className="rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-4">
+        <Skeleton className="h-6 w-48" />
+        <div className="grid gap-4 sm:grid-cols-2 pt-2">
+          <Skeleton className="h-10 w-full rounded-lg" />
+          <Skeleton className="h-10 w-full rounded-lg" />
+          <Skeleton className="h-10 w-full rounded-lg" />
+          <Skeleton className="h-10 w-full rounded-lg" />
+        </div>
+        <Skeleton className="h-10 w-32 rounded-lg mt-2" />
       </Card>
     )
   }
 
   return (
-    <Card className="rounded-xl shadow-[var(--shadow-card)]">
+    <Card className="rounded-2xl border border-slate-200/80 shadow-sm transition-all duration-300 hover:shadow-md">
       <CardHeader>
         <CardTitle className="text-base font-semibold text-[#0D2137]">
           Business Information
@@ -557,17 +562,21 @@ function IntegrationsTab() {
 
   if (loading) {
     return (
-      <Card className="rounded-xl shadow-[var(--shadow-card)]">
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="size-5 animate-spin text-gray-400" />
-          <span className="ml-2 text-sm text-gray-500">Loading integrations...</span>
-        </CardContent>
+      <Card className="rounded-2xl border border-slate-200/80 shadow-sm p-6">
+        <div className="flex items-start gap-4">
+          <Skeleton className="size-12 rounded-xl" />
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-5 w-44" />
+            <Skeleton className="h-4 w-72" />
+          </div>
+          <Skeleton className="h-9 w-28 rounded-lg" />
+        </div>
       </Card>
     )
   }
 
   return (
-    <Card className="rounded-xl shadow-[var(--shadow-card)]">
+    <Card className="rounded-2xl border border-slate-200/80 shadow-sm transition-all duration-300 hover:shadow-md">
       <CardContent className="p-5">
         <div className="flex items-start gap-4">
           <div

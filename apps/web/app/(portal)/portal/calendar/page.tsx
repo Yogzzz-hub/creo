@@ -5,6 +5,7 @@ import { useSession } from "@/context/session-context"
 import { ChevronLeft, ChevronRight, Loader2, Pencil, Calendar as CalendarIcon, Clock, Sparkles } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { getApiUrl } from "@/lib/api-url"
 
@@ -290,11 +291,18 @@ export default function CalendarPage() {
 
       {/* Calendar Grid */}
       {loading ? (
-        <Card className="rounded-xl shadow-[var(--shadow-card)]">
+        <Card className="rounded-xl border border-slate-200/80 shadow-sm">
           <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-8 w-36" />
+              <div className="flex gap-2">
+                <Skeleton className="size-8 rounded-lg" />
+                <Skeleton className="size-8 rounded-lg" />
+              </div>
+            </div>
             <div className="grid grid-cols-7 gap-2">
               {Array.from({ length: 28 }).map((_, i) => (
-                <div key={i} className="h-24 animate-pulse rounded bg-gray-100" />
+                <Skeleton key={i} className="h-24 rounded-lg" />
               ))}
             </div>
           </CardContent>

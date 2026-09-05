@@ -287,7 +287,7 @@ export default function PortalDashboardClient({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          <Card className="col-span-4">
+          <Card className="col-span-4 rounded-2xl border border-slate-200/80 bg-white shadow-xs">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div className="space-y-1">
                 <CardTitle>Recent Activity</CardTitle>
@@ -379,7 +379,7 @@ export default function PortalDashboardClient({
             </CardContent>
           </Card>
 
-          <Card className="col-span-3">
+          <Card className="col-span-3 rounded-2xl border border-slate-200/80 bg-white shadow-xs">
             <CardHeader>
               <CardTitle>Quick Links</CardTitle>
               <CardDescription>Frequently accessed resources</CardDescription>
@@ -445,14 +445,16 @@ function StatCard({
   trend?: string
 }) {
   return (
-    <Card>
+    <Card className="group rounded-2xl border border-slate-200/80 bg-white shadow-xs transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-[#2B7BC4]/40">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        {icon}
+        <CardTitle className="text-sm font-medium text-slate-600">{title}</CardTitle>
+        <div className="p-2 rounded-xl bg-[#E8F4FD] text-[#2B7BC4] transition-transform duration-300 group-hover:scale-110">
+          {icon}
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground flex items-center mt-1">
+        <div className="text-2xl font-bold text-[#0D2137]">{value}</div>
+        <p className="text-xs text-slate-500 flex items-center mt-1">
           {trend && (
             <span className="text-emerald-500 font-medium mr-1">{trend}</span>
           )}
@@ -479,10 +481,10 @@ function StepItem({
   return (
     <div
       className={cn(
-        "relative flex flex-col items-center text-center p-4 rounded-lg transition-colors",
-        status === "current" && "bg-primary/5 cursor-pointer hover:bg-primary/10",
+        "relative flex flex-col items-center text-center p-4 rounded-xl transition-all duration-200",
+        status === "current" && "bg-primary/5 cursor-pointer hover:bg-primary/10 hover:scale-[1.02]",
         status === "upcoming" && "opacity-50 grayscale",
-        onClick && status !== "upcoming" && "cursor-pointer hover:bg-accent",
+        onClick && status !== "upcoming" && "cursor-pointer hover:bg-accent hover:scale-[1.02]",
       )}
       onClick={status !== "upcoming" ? onClick : undefined}
     >
@@ -528,18 +530,24 @@ function QuickLink({
     <a
       href={disabled ? undefined : href}
       className={cn(
-        "flex items-center p-3 rounded-lg border bg-card transition-colors",
+        "group flex items-center p-3.5 rounded-xl border border-slate-200/80 bg-white transition-all duration-200 shadow-2xs",
         disabled
           ? "opacity-50 cursor-not-allowed"
-          : "hover:bg-accent hover:text-accent-foreground cursor-pointer",
+          : "hover:bg-[#E8F4FD]/40 hover:border-[#2B7BC4]/40 hover:shadow-sm hover:-translate-y-0.5 cursor-pointer",
       )}
     >
-      <div className="bg-primary/10 p-2 rounded-md mr-4 text-primary">{icon}</div>
-      <div className="flex-1 space-y-1">
-        <p className="text-sm font-medium leading-none">{title}</p>
-        <p className="text-xs text-muted-foreground">{description}</p>
+      <div className="bg-[#E8F4FD] p-2.5 rounded-lg mr-4 text-[#2B7BC4] transition-all duration-200 group-hover:bg-[#2B7BC4] group-hover:text-white group-hover:scale-105">
+        {icon}
       </div>
-      {!disabled && <ArrowRight className="size-4 text-muted-foreground ml-4" />}
+      <div className="flex-1 space-y-0.5">
+        <p className="text-sm font-semibold text-[#0D2137] leading-none group-hover:text-[#2B7BC4] transition-colors">
+          {title}
+        </p>
+        <p className="text-xs text-slate-500">{description}</p>
+      </div>
+      {!disabled && (
+        <ArrowRight className="size-4 text-slate-400 ml-4 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-[#2B7BC4]" />
+      )}
     </a>
   )
 }

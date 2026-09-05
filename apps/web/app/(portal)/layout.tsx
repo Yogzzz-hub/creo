@@ -30,7 +30,7 @@ export default function PortalLayout({
 
             <main
               id="main-content"
-              className="px-4 py-6 pb-[calc(var(--bottomtab-height)+1.5rem)] lg:px-8 lg:py-8 lg:pb-8"
+              className="px-4 py-6 pb-[calc(var(--bottomtab-height)+1.5rem)] lg:px-8 lg:py-8 lg:pb-8 animate-page-in"
             >
               <OnboardingGuard>
                 {children}

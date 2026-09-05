@@ -6,6 +6,7 @@ import { ShoppingCart, Plus, Minus, FileImage, Film, Layers, Loader2 } from "luc
 import { useSession } from "@/context/session-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import { useSubscription } from "@/context/subscription-context"
@@ -251,9 +252,20 @@ export default function AddonsPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl space-y-6">
-        <div className="flex items-center gap-2 text-sm text-gray-400">
-          <Loader2 className="size-4 animate-spin" />
-          Loading add-on pricing...
+        <div>
+          <p className="mt-1 text-sm text-gray-500">
+            Purchase additional content beyond your plan quota.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+              <Skeleton className="size-12 rounded-xl mb-4" />
+              <Skeleton className="h-5 w-32 rounded mb-2" />
+              <Skeleton className="h-4 w-full rounded mb-4" />
+              <Skeleton className="h-6 w-24 rounded" />
+            </Card>
+          ))}
         </div>
       </div>
     )
@@ -298,8 +310,8 @@ export default function AddonsPage() {
               <Card
                 key={addon.id}
                 className={cn(
-                  "rounded-xl shadow-[var(--shadow-card)] transition-all",
-                  qty > 0 && "ring-2 ring-[#2B7BC4]/30"
+                  "rounded-2xl border border-slate-200/80 bg-white shadow-xs transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-[#2B7BC4]/40",
+                  qty > 0 && "ring-2 ring-[#2B7BC4] border-transparent"
                 )}
               >
                 <CardContent className="flex flex-col p-5">

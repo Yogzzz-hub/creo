@@ -245,4 +245,52 @@ body {
   }
 }
 
+/* ── Dynamic Professional Animations & Hover Effects ──────────────────────── */
+@keyframes shimmerPulse {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(226, 232, 240, 0.75) 0%,
+    rgba(241, 245, 249, 0.95) 50%,
+    rgba(226, 232, 240, 0.75) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.card-interactive {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -6px rgba(13, 33, 55, 0.08), 0 4px 8px -2px rgba(13, 33, 55, 0.04);
+  border-color: rgba(43, 123, 196, 0.35);
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-in {
+  animation: pageFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 

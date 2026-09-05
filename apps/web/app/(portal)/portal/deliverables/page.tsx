@@ -6,6 +6,7 @@ import { FileImage, Film, Layers, SlidersHorizontal, Zap, ArrowRight, Loader2, C
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Select,
   SelectContent,
@@ -228,17 +229,13 @@ export default function DeliverablesPage() {
 
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="rounded-xl shadow-[var(--shadow-card)]">
-              <CardContent className="p-0">
-                <div className="aspect-[4/3] animate-pulse bg-gray-100 flex items-center justify-center">
-                  <Loader2 className="size-8 text-gray-300 animate-spin" />
-                </div>
-                <div className="space-y-3 p-4">
-                  <div className="h-4 w-3/4 animate-pulse rounded bg-gray-100" />
-                  <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
-                </div>
-              </CardContent>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-xs">
+              <Skeleton className="aspect-[4/3] w-full rounded-none" />
+              <div className="space-y-2 p-4">
+                <Skeleton className="h-4 w-3/4 rounded" />
+                <Skeleton className="h-3 w-1/2 rounded" />
+              </div>
             </Card>
           ))}
         </div>
@@ -279,7 +276,7 @@ export default function DeliverablesPage() {
                 key={deliverable.id}
                 href={`/portal/deliverables/${deliverable.id}`}
               >
-                <Card className="group cursor-pointer rounded-xl shadow-[var(--shadow-card)] transition-all hover:shadow-md hover:ring-2 hover:ring-[#2B7BC4]/20">
+                <Card className="group cursor-pointer rounded-2xl overflow-hidden border border-slate-200/80 bg-white shadow-xs transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-[#2B7BC4]/40">
                   <CardContent className="p-0">
                     <div className="relative aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center">
                       {deliverable.type === "reel" ? (

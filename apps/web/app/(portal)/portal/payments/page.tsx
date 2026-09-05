@@ -253,7 +253,7 @@ export default function PaymentsPage() {
         </p>
       </div>
 
-      <Card className="rounded-xl shadow-[var(--shadow-card)] overflow-hidden">
+      <Card className="rounded-2xl border border-slate-200/80 shadow-sm transition-all duration-300 hover:shadow-md hover:border-[#2B7BC4]/30 overflow-hidden">
         <div className="border-l-4 border-[#2B7BC4] bg-[#E8F4FD] p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-2">
@@ -301,7 +301,7 @@ export default function PaymentsPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-xl shadow-[var(--shadow-card)]">
+      <Card className="rounded-2xl border border-slate-200/80 shadow-sm transition-all duration-300 hover:shadow-md overflow-hidden">
         <CardHeader>
           <CardTitle className="text-base font-semibold text-[#0D2137]">
             Payment History
@@ -321,12 +321,12 @@ export default function PaymentsPage() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="text-xs font-medium text-gray-500">Date</TableHead>
-                  <TableHead className="text-xs font-medium text-gray-500">Amount</TableHead>
-                  <TableHead className="text-xs font-medium text-gray-500">Status</TableHead>
-                  <TableHead className="text-xs font-medium text-gray-500">Gateway</TableHead>
-                  <TableHead className="text-xs font-medium text-gray-500 text-right">
+                <TableRow className="bg-slate-50/80 border-b border-slate-200/70">
+                  <TableHead className="text-xs font-semibold text-[#0D2137]">Date</TableHead>
+                  <TableHead className="text-xs font-semibold text-[#0D2137]">Amount</TableHead>
+                  <TableHead className="text-xs font-semibold text-[#0D2137]">Status</TableHead>
+                  <TableHead className="text-xs font-semibold text-[#0D2137]">Gateway</TableHead>
+                  <TableHead className="text-xs font-semibold text-[#0D2137] text-right">
                     Receipt
                   </TableHead>
                 </TableRow>
@@ -335,7 +335,7 @@ export default function PaymentsPage() {
                 {paymentHistory.map((payment) => {
                   const statusConfig = STATUS_BADGE[payment.status] ?? STATUS_BADGE.active
                   return (
-                    <TableRow key={payment.id}>
+                    <TableRow key={payment.id} className="transition-colors hover:bg-[#E8F4FD]/40">
                       <TableCell className="text-sm text-[#0D2137]">
                         {formatDate(payment.date)}
                       </TableCell>

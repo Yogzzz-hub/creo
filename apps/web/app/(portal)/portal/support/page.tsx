@@ -18,6 +18,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useSession } from "@/context/session-context"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -346,12 +347,25 @@ export default function SupportPage() {
       </div>
 
       {loading ? (
-        <Card className="rounded-xl shadow-[var(--shadow-card)]">
-          <CardContent className="flex items-center justify-center py-12">
-            <Loader2 className="size-5 animate-spin text-gray-400" />
-            <span className="ml-2 text-sm text-gray-500">Loading tickets...</span>
-          </CardContent>
-        </Card>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <Skeleton className="size-10 rounded-lg shrink-0" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-4 w-44 rounded" />
+                    <Skeleton className="h-3 w-64 rounded" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <Skeleton className="h-4 w-16 rounded" />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
       ) : tickets.length === 0 ? (
         <Card className="rounded-xl shadow-[var(--shadow-card)]">
           <CardContent className="flex flex-col items-center justify-center py-16">
@@ -373,7 +387,7 @@ export default function SupportPage() {
 
             return (
               <Link key={ticket.id} href={`/portal/support/${ticket.id}`}>
-                <Card className="group cursor-pointer rounded-xl shadow-[var(--shadow-card)] transition-all hover:shadow-md hover:ring-1 hover:ring-[#2B7BC4]/20">
+                <Card className="group cursor-pointer rounded-xl border border-slate-200/80 bg-white shadow-xs transition-all duration-200 hover:shadow-md hover:border-[#2B7BC4]/40 hover:-translate-y-0.5">
                   <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-3 min-w-0">
                       <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gray-50">

@@ -59,7 +59,7 @@ export function DesktopSidebar() {
           </span>
         </Link>
 
-        <nav className="flex flex-1 flex-col gap-1">
+        <nav className="flex flex-1 flex-col gap-1.5">
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.href, pathname)
 
@@ -69,10 +69,10 @@ export function DesktopSidebar() {
                 href={item.href}
                 prefetch={true}
                 className={cn(
-                  "flex items-center gap-3 rounded-r-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0EA5E9]/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D2137]",
+                  "flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0EA5E9]/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D2137]",
                   active
-                    ? "border-l-[3px] border-[#2B7BC4] bg-[#1a3a5c] text-white"
-                    : "border-l-[3px] border-transparent text-[#6BAED6] hover:bg-[#1a3a5c]/50 hover:text-white"
+                    ? "bg-[#2B7BC4] text-white font-semibold shadow-sm"
+                    : "text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1"
                 )}
               >
                 <item.icon className="size-4 shrink-0" />
@@ -84,7 +84,7 @@ export function DesktopSidebar() {
           <button
             onClick={handleLogout}
             disabled={loggingOut}
-            className="flex items-center gap-3 rounded-r-lg px-3 py-2.5 text-sm font-medium border-l-[3px] border-transparent text-[#6BAED6] hover:bg-[#1a3a5c]/50 hover:text-white transition-colors mt-auto"
+            className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-400 hover:bg-white/10 hover:text-white hover:translate-x-1 transition-all duration-200 cursor-pointer mt-auto"
           >
             <LogOut className="size-4 shrink-0" />
             {loggingOut ? "Logging out..." : "Log out"}
