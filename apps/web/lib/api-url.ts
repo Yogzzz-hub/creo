@@ -1,3 +1,12 @@
+declare global {
+  namespace NodeJS {
+    interface ProcessEnv {
+      NEXT_PUBLIC_API_URL?: string;
+      BACKEND_API_URL?: string;
+    }
+  }
+}
+
 export const getApiUrl = (): string => {
   // Directly prioritize configured Railway API URL, with zero localhost fallbacks
   const url =
