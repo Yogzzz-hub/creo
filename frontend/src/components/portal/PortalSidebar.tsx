@@ -95,7 +95,7 @@ export function PortalSidebar() {
                 {isLocked && (
                   <span
                     title="Locked until active retainer"
-                    className="flex items-center justify-center size-5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                    className="flex items-center justify-center size-5 rounded-md bg-sky-500/15 text-sky-400 border border-sky-500/25 group-hover:border-sky-400/50 transition-colors"
                   >
                     <Lock className="size-3" />
                   </span>
@@ -108,18 +108,18 @@ export function PortalSidebar() {
             {!isSubscribed && (
               <Link
                 to="/portal/payments"
-                className="flex items-center justify-between gap-2.5 rounded-xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border border-amber-500/30 px-3 py-2.5 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 hover:border-amber-400/50 transition-all group shadow-sm"
+                className="flex items-center justify-between gap-2.5 rounded-xl bg-gradient-to-r from-sky-500/10 via-blue-500/10 to-indigo-500/10 border border-sky-500/25 px-3 py-2.5 text-xs font-semibold text-sky-200 hover:bg-sky-500/15 hover:border-sky-400/40 transition-all group shadow-sm"
               >
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center justify-center size-6 rounded-md bg-amber-500/20 border border-amber-500/30 text-amber-300 shadow-inner group-hover:scale-105 transition-transform">
+                  <div className="flex items-center justify-center size-6 rounded-md bg-sky-500/20 border border-sky-500/30 text-sky-400 shadow-inner group-hover:scale-105 transition-transform">
                     <Lock className="size-3" />
                   </div>
                   <div className="flex flex-col text-left">
                     <span className="text-white font-bold text-xs">Locked Features</span>
-                    <span className="text-[9px] text-amber-400/80 font-normal">Choose plan to unlock</span>
+                    <span className="text-[9px] text-sky-300/80 font-normal">Choose plan to unlock</span>
                   </div>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-400 text-slate-950 font-bold uppercase tracking-wider group-hover:bg-amber-300 transition-colors shadow-xs">
+                <span className="text-[10px] px-2 py-0.5 rounded-md bg-gradient-to-r from-[#2B7BC4] to-[#0EA5E9] hover:from-[#246bb0] hover:to-[#0284c7] text-white font-bold uppercase tracking-wider transition-all shadow-xs">
                   Unlock
                 </span>
               </Link>

@@ -19,7 +19,7 @@ export function SubscriptionLockedState({
         {/* Lock Icon Badge */}
         <div className="relative flex size-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/20">
           <Lock className="size-9" />
-          <div className="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full bg-amber-400 text-slate-900 shadow-sm">
+          <div className="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full bg-[#0EA5E9] text-white shadow-sm border-2 border-white">
             <ShieldAlert className="size-4" />
           </div>
         </div>

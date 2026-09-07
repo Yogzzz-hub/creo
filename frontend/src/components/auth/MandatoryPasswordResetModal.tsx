@@ -49,13 +49,13 @@ export const MandatoryPasswordResetModal: React.FC = () => {
       aria-modal="true"
       aria-labelledby="mandatory-reset-title"
     >
-      <div className="relative w-full max-w-md bg-zinc-950 border border-amber-500/30 rounded-3xl p-8 shadow-2xl shadow-amber-500/10 text-white animate-in fade-in zoom-in-95 duration-300">
+      <div className="relative w-full max-w-md bg-zinc-950 border border-sky-500/30 rounded-3xl p-8 shadow-2xl shadow-sky-500/10 text-white animate-in fade-in zoom-in-95 duration-300">
         {/* Glow backdrop */}
-        <div className="absolute -top-16 -left-16 w-32 h-32 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-16 -right-16 w-32 h-32 bg-rose-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-16 -left-16 w-32 h-32 bg-sky-500/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -right-16 w-32 h-32 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 mb-4 shadow-inner">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400 mb-4 shadow-inner">
             <ShieldAlert className="w-8 h-8 animate-pulse" />
           </div>
           <h2 id="mandatory-reset-title" className="text-2xl font-bold tracking-tight text-white">
@@ -63,9 +63,9 @@ export const MandatoryPasswordResetModal: React.FC = () => {
           </h2>
           <p className="mt-2 text-sm text-zinc-400 leading-relaxed">
             You accessed your account via a password reset code. For your security, you{" "}
-            <span className="text-amber-300 font-semibold">must set a new permanent password</span> before proceeding.
+            <span className="text-sky-300 font-semibold">must set a new permanent password</span> before proceeding.
           </p>
-          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-medium text-amber-300">
+          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-xs font-medium text-sky-300">
             <Lock className="w-3 h-3" /> Page locked until password is set
           </div>
         </div>
@@ -100,7 +100,7 @@ export const MandatoryPasswordResetModal: React.FC = () => {
                   required
                   autoFocus
                   minLength={6}
-                  className="w-full px-4 py-3 bg-zinc-900/80 border border-zinc-700/60 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-sm transition-all"
+                  className="w-full px-4 py-3 bg-zinc-900/80 border border-zinc-700/60 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 text-sm transition-all"
                 />
                 <button
                   type="button"
@@ -124,7 +124,7 @@ export const MandatoryPasswordResetModal: React.FC = () => {
                   placeholder="Re-enter your password"
                   required
                   minLength={6}
-                  className="w-full px-4 py-3 bg-zinc-900/80 border border-zinc-700/60 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 text-sm transition-all"
+                  className="w-full px-4 py-3 bg-zinc-900/80 border border-zinc-700/60 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 text-sm transition-all"
                 />
                 <button
                   type="button"
@@ -140,7 +140,7 @@ export const MandatoryPasswordResetModal: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading || !newPassword || !confirmPassword}
-                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold text-sm transition-all shadow-lg shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#0EA5E9] hover:from-[#246bb0] hover:to-[#0284c7] text-white font-semibold text-sm transition-all shadow-lg shadow-sky-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
