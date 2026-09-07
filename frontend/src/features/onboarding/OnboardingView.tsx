@@ -285,7 +285,6 @@ function StageVerifyEmail({
                   onComplete={(code) => handleVerifyOtp(undefined, code)}
                   disabled={loading}
                   hasError={Boolean(message && message.type === "error")}
-                  showDemoFill={true}
                 />
               </div>
 

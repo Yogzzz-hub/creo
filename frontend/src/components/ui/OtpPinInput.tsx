@@ -1,6 +1,5 @@
 import React, { useRef, useEffect } from "react";
 import { motion } from "motion/react";
-import { Sparkles } from "lucide-react";
 
 interface OtpPinInputProps {
   value: string;
@@ -19,7 +18,6 @@ export function OtpPinInput({
   length = 6,
   disabled = false,
   hasError = false,
-  showDemoFill = true,
 }: OtpPinInputProps) {
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -97,15 +95,6 @@ export function OtpPinInput({
     }
   };
 
-  const handleDemoFill = () => {
-    const demoCode = "123456";
-    onChange(demoCode);
-    inputRefs.current[length - 1]?.focus();
-    if (onComplete) {
-      onComplete(demoCode);
-    }
-  };
-
   return (
     <div className="flex flex-col items-center gap-3">
       {/* 6 Digit Input Group */}
@@ -144,17 +133,6 @@ export function OtpPinInput({
         })}
       </motion.div>
 
-      {/* Demo fast-fill shortcut for convenience in dev/testing */}
-      {showDemoFill && (
-        <button
-          type="button"
-          onClick={handleDemoFill}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-slate-500 hover:text-[#2B7BC4] bg-slate-100/70 hover:bg-[#2B7BC4]/10 rounded-full transition-all border border-slate-200/60"
-        >
-          <Sparkles className="size-3 text-[#2B7BC4]" />
-          <span>Quick Fill Test Code (123456)</span>
-        </button>
-      )}
     </div>
   );
 }

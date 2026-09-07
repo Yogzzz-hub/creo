@@ -453,48 +453,6 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
                 {loading ? <Loader2 className="size-4 animate-spin" /> : (redirectedFrom?.includes("admin") ? "Sign In to Admin Operations" : "Sign In to Creo")}
                 {!loading && <ArrowRight className="size-4" />}
               </button>
-
-              {/* Quick Demo Credentials */}
-              <div className="pt-2 border-t border-slate-100">
-                <div className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-wider text-center">
-                  Quick Demo Access (1-Click Fill)
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEmail("admin@creo.agency");
-                      setPassword("CreoAdmin2026!");
-                    }}
-                    className="flex flex-col items-center py-1.5 px-2 rounded-lg border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-colors"
-                  >
-                    <span className="text-[11px]">🛡️ Admin</span>
-                    <span className="text-[9px] text-indigo-500 font-normal">Super Admin</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEmail("lead@creo.agency");
-                      setPassword("CreoLead2026!");
-                    }}
-                    className="flex flex-col items-center py-1.5 px-2 rounded-lg border border-amber-200 bg-amber-50/70 hover:bg-amber-100 text-amber-700 text-xs font-bold transition-colors"
-                  >
-                    <span className="text-[11px]">⚡ Lead</span>
-                    <span className="text-[9px] text-amber-500 font-normal">Team Lead</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEmail("client5@stage5.com");
-                      setPassword("Client123!");
-                    }}
-                    className="flex flex-col items-center py-1.5 px-2 rounded-lg border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition-colors"
-                  >
-                    <span className="text-[11px]">👤 Client</span>
-                    <span className="text-[9px] text-emerald-500 font-normal">Brand Portal</span>
-                  </button>
-                </div>
-              </div>
             </form>
           )}
 
@@ -676,7 +634,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
                   onComplete={(code) => handleVerifyOtp(undefined, code)}
                   disabled={loading}
                   hasError={Boolean(error)}
-                  showDemoFill={true}
+                  showDemoFill={false}
                 />
               </div>
 
