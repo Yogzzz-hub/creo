@@ -621,6 +621,7 @@ async def get_me_role(
     return {
         "role": user.role.value,
         "account_status": user.account_status.value,
+        "must_reset_password": bool(getattr(user, "must_reset_password", False)),
         "onboarding_stage": stage,
         "has_active_subscription": has_active_sub,
     }

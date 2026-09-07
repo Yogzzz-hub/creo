@@ -2,8 +2,8 @@
 -- CREO PLATFORM — POSTGRESQL PRODUCTION SEED DATA
 -- =============================================================================
 -- Database: PostgreSQL 15+ / 16+ / 17+ (Supabase compatible)
--- Description: Idempotent seed data for core plans, staff accounts, clients,
---              initial deliverables, kanban tasks, and support tickets.
+-- Description: Idempotent core baseline seed data for subscription plans
+--              and primary agency staff accounts (Fresh start: 0 clients, 0 income).
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -99,12 +99,11 @@ ON CONFLICT (name) DO UPDATE SET
     is_recommended = EXCLUDED.is_recommended;
 
 -- -----------------------------------------------------------------------------
--- 2. USERS (STAFF & CLIENTS)
--- Passwords below are hashed with bcrypt (Cost 12) for standard demo credentials:
--- 'CreoAdmin2026!' or 'password123'
+-- 2. CORE AGENCY STAFF USERS
+-- All accounts require mandatory password setup upon first sign in (must_reset_password = TRUE)
 -- -----------------------------------------------------------------------------
 INSERT INTO users (
-    id, auth_id, email, full_name, hashed_password, role, account_status, email_verified_at
+    id, auth_id, email, full_name, hashed_password, role, account_status, email_verified_at, must_reset_password
 ) VALUES
 -- 2.1 Super Admin (Full Agency Access)
 (
@@ -115,7 +114,8 @@ INSERT INTO users (
     '$2b$12$e8Yp89/i61t6ZkPfxmQOqukgl9m61Q0K7jF08b2G9x89M0o/q4l2O',
     'super_admin',
     'active',
-    NOW()
+    NOW(),
+    TRUE
 ),
 -- 2.2 Team Lead (Pod Controller)
 (
@@ -126,7 +126,8 @@ INSERT INTO users (
     '$2b$12$e8Yp89/i61t6ZkPfxmQOqukgl9m61Q0K7jF08b2G9x89M0o/q4l2O',
     'team_lead',
     'active',
-    NOW()
+    NOW(),
+    TRUE
 ),
 -- 2.3 Staff Video Editor
 (
@@ -137,7 +138,8 @@ INSERT INTO users (
     '$2b$12$e8Yp89/i61t6ZkPfxmQOqukgl9m61Q0K7jF08b2G9x89M0o/q4l2O',
     'editor',
     'active',
-    NOW()
+    NOW(),
+    TRUE
 ),
 -- 2.4 Staff Brand Designer
 (
@@ -148,34 +150,14 @@ INSERT INTO users (
     '$2b$12$e8Yp89/i61t6ZkPfxmQOqukgl9m61Q0K7jF08b2G9x89M0o/q4l2O',
     'designer',
     'active',
-    NOW()
-),
--- 2.5 Active Retainer Client (Stage 5 — Astra Living)
-(
-    '00000000-0000-0000-0000-000000000005',
-    'auth-client-astra-005',
-    'client@brandflow.io',
-    'Rohan Singhania',
-    '$2b$12$e8Yp89/i61t6ZkPfxmQOqukgl9m61Q0K7jF08b2G9x89M0o/q4l2O',
-    'client',
-    'active',
-    NOW()
-),
--- 2.6 Active Retainer Client (Stage 5 — Urban Bakes)
-(
-    '00000000-0000-0000-0000-000000000006',
-    'auth-client-urban-006',
-    'hello@urbanbakes.in',
-    'Meera Krishnan',
-    '$2b$12$e8Yp89/i61t6ZkPfxmQOqukgl9m61Q0K7jF08b2G9x89M0o/q4l2O',
-    'client',
-    'active',
-    NOW()
+    NOW(),
+    TRUE
 )
 ON CONFLICT (email) DO UPDATE SET
     full_name = EXCLUDED.full_name,
     role = EXCLUDED.role,
-    account_status = EXCLUDED.account_status;
+    account_status = EXCLUDED.account_status,
+    must_reset_password = EXCLUDED.must_reset_password;
 
 -- -----------------------------------------------------------------------------
 -- 3. STAFF PROFILES
@@ -212,251 +194,6 @@ ON CONFLICT (user_id) DO UPDATE SET
     is_accepting_work = EXCLUDED.is_accepting_work;
 
 -- -----------------------------------------------------------------------------
--- 4. CLIENT PROFILES & BRAND DNA
--- -----------------------------------------------------------------------------
-INSERT INTO client_profiles (
-    user_id, company_name, instagram_username, brand_summary,
-    brand_dna, terms_accepted_at, terms_version, onboarding_completed_at
-) VALUES
-(
-    '00000000-0000-0000-0000-000000000005',
-    'Astra Living',
-    'astraliving.home',
-    'Minimalist Scandinavian interior aesthetics with natural sunlight and architectural negative space.',
-    '{
-        "primary_color": "#07192F",
-        "accent_color": "#2B7BC4",
-        "typography": "Outfit, Inter",
-        "target_audience": "Urban homeowners and design enthusiasts aged 24-42",
-        "tone": "Sophisticated, serene, and premium"
-    }'::jsonb,
-    NOW() - INTERVAL '30 days',
-    'v1.0',
-    NOW() - INTERVAL '28 days'
-),
-(
-    '00000000-0000-0000-0000-000000000006',
-    'Urban Bakes Artisan Group',
-    'urbanbakes.in',
-    'Handcrafted wild yeast sourdough, artisanal viennoiserie, and slow food culture.',
-    '{
-        "primary_color": "#451A03",
-        "accent_color": "#D97706",
-        "typography": "Playfair Display, Inter",
-        "target_audience": "Culinary lovers and local neighborhood foodies",
-        "tone": "Warm, tactile, and mouthwatering"
-    }'::jsonb,
-    NOW() - INTERVAL '15 days',
-    'v1.0',
-    NOW() - INTERVAL '14 days'
-)
-ON CONFLICT (user_id) DO UPDATE SET
-    company_name = EXCLUDED.company_name,
-    instagram_username = EXCLUDED.instagram_username,
-    brand_summary = EXCLUDED.brand_summary,
-    brand_dna = EXCLUDED.brand_dna;
-
--- -----------------------------------------------------------------------------
--- 5. ACTIVE SUBSCRIPTIONS
--- -----------------------------------------------------------------------------
-INSERT INTO subscriptions (
-    id, client_id, plan_id, status, gateway, amount,
-    current_period_start, current_period_end
-) VALUES
-(
-    '00000000-0000-0000-0000-000000000051',
-    '00000000-0000-0000-0000-000000000005',
-    '00000000-0000-0000-0000-000000000020', -- Brand Accelerator (Growth)
-    'active',
-    'razorpay',
-    50000.00,
-    NOW() - INTERVAL '10 days',
-    NOW() + INTERVAL '20 days'
-),
-(
-    '00000000-0000-0000-0000-000000000061',
-    '00000000-0000-0000-0000-000000000006',
-    '00000000-0000-0000-0000-000000000010', -- Starter Growth
-    'active',
-    'razorpay',
-    25000.00,
-    NOW() - INTERVAL '5 days',
-    NOW() + INTERVAL '25 days'
-)
-ON CONFLICT DO NOTHING;
-
--- -----------------------------------------------------------------------------
--- 6. USAGE COUNTERS (CURRENT MONTH)
--- -----------------------------------------------------------------------------
-INSERT INTO usage_counters (
-    id, client_id, period_start, period_end, kind, quota, used
-) VALUES
-(
-    gen_random_uuid(),
-    '00000000-0000-0000-0000-000000000005',
-    DATE_TRUNC('month', CURRENT_DATE)::DATE,
-    (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month - 1 day')::DATE,
-    'static_post',
-    15,
-    6
-),
-(
-    gen_random_uuid(),
-    '00000000-0000-0000-0000-000000000005',
-    DATE_TRUNC('month', CURRENT_DATE)::DATE,
-    (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month - 1 day')::DATE,
-    'reel',
-    8,
-    4
-),
-(
-    gen_random_uuid(),
-    '00000000-0000-0000-0000-000000000005',
-    DATE_TRUNC('month', CURRENT_DATE)::DATE,
-    (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month - 1 day')::DATE,
-    'story',
-    20,
-    11
-)
-ON CONFLICT (client_id, period_start, kind) DO UPDATE SET
-    used = EXCLUDED.used,
-    quota = EXCLUDED.quota;
-
--- -----------------------------------------------------------------------------
--- 7. KANBAN TASKS
--- -----------------------------------------------------------------------------
-INSERT INTO tasks (
-    id, client_id, assigned_to, deliverable_type, status, due_date, sla_due_at
-) VALUES
-(
-    '00000000-0000-0000-0000-000000000101',
-    '00000000-0000-0000-0000-000000000005',
-    '00000000-0000-0000-0000-000000000003',
-    'reel',
-    'in_production',
-    CURRENT_DATE + INTERVAL '2 days',
-    NOW() + INTERVAL '36 hours'
-),
-(
-    '00000000-0000-0000-0000-000000000102',
-    '00000000-0000-0000-0000-000000000005',
-    '00000000-0000-0000-0000-000000000004',
-    'carousel',
-    'internal_qa',
-    CURRENT_DATE + INTERVAL '1 day',
-    NOW() + INTERVAL '18 hours'
-),
-(
-    '00000000-0000-0000-0000-000000000103',
-    '00000000-0000-0000-0000-000000000005',
-    '00000000-0000-0000-0000-000000000003',
-    'reel',
-    'client_review',
-    CURRENT_DATE + INTERVAL '3 days',
-    NOW() + INTERVAL '48 hours'
-),
-(
-    '00000000-0000-0000-0000-000000000104',
-    '00000000-0000-0000-0000-000000000006',
-    '00000000-0000-0000-0000-000000000004',
-    'static_post',
-    'ready_to_publish',
-    CURRENT_DATE,
-    NOW() + INTERVAL '6 hours'
-)
-ON CONFLICT DO NOTHING;
-
--- -----------------------------------------------------------------------------
--- 8. DELIVERABLES (PORTAL REVIEW & PRODUCTION CARDS)
--- -----------------------------------------------------------------------------
-INSERT INTO deliverables (
-    id, root_id, version, client_id, task_id, submitted_by,
-    file_url, file_type, file_size_bytes, status, revision_round,
-    approved_at, scheduled_at
-) VALUES
-(
-    '00000000-0000-0000-0000-000000000201',
-    '00000000-0000-0000-0000-000000000201',
-    1,
-    '00000000-0000-0000-0000-000000000005',
-    '00000000-0000-0000-0000-000000000103',
-    '00000000-0000-0000-0000-000000000003',
-    'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1080&h=1920&fit=crop',
-    'video/mp4',
-    14500000,
-    'pending_approval',
-    1,
-    NULL,
-    NULL
-),
-(
-    '00000000-0000-0000-0000-000000000202',
-    '00000000-0000-0000-0000-000000000202',
-    1,
-    '00000000-0000-0000-0000-000000000005',
-    NULL,
-    '00000000-0000-0000-0000-000000000004',
-    'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1080&h=1080&fit=crop',
-    'image/jpeg',
-    3200000,
-    'approved',
-    1,
-    NOW() - INTERVAL '2 days',
-    NOW() + INTERVAL '1 day'
-)
-ON CONFLICT (root_id, version) DO NOTHING;
-
--- -----------------------------------------------------------------------------
--- 9. CONTENT CALENDAR ENTRIES
--- -----------------------------------------------------------------------------
-INSERT INTO content_calendar (
-    id, client_id, deliverable_id, publish_date, scheduled_time, caption
-) VALUES
-(
-    gen_random_uuid(),
-    '00000000-0000-0000-0000-000000000005',
-    '00000000-0000-0000-0000-000000000202',
-    CURRENT_DATE + INTERVAL '1 day',
-    NOW() + INTERVAL '1 day',
-    'Golden hour architectural styling. Crafted with organic materials for modern living. #MinimalistLiving #AstraHome'
-)
-ON CONFLICT DO NOTHING;
-
--- -----------------------------------------------------------------------------
--- 10. SUPPORT TICKETS
--- -----------------------------------------------------------------------------
-INSERT INTO tickets (
-    id, client_id, assigned_to, title, description, status, priority
-) VALUES
-(
-    '00000000-0000-0000-0000-000000000301',
-    '00000000-0000-0000-0000-000000000005',
-    '00000000-0000-0000-0000-000000000002',
-    'New Seasonal Autumn Drop Video Assets',
-    'We are launching our cashmere autumn throw line on October 1st and would love to review initial script hooks and color grades.',
-    'in_progress',
-    'high'
-)
-ON CONFLICT DO NOTHING;
-
-INSERT INTO ticket_messages (
-    id, ticket_id, sender_id, message
-) VALUES
-(
-    gen_random_uuid(),
-    '00000000-0000-0000-0000-000000000301',
-    '00000000-0000-0000-0000-000000000005',
-    'Please find our high-res product photo gallery in Drive. We are looking for high contrast warm neutral lighting.'
-),
-(
-    gen_random_uuid(),
-    '00000000-0000-0000-0000-000000000301',
-    '00000000-0000-0000-0000-000000000002',
-    'Hi Rohan, Karthik and Ananya are already storyboarded. We will have the first draft reels in your Review Dock by Thursday!'
-)
-ON CONFLICT DO NOTHING;
-
--- -----------------------------------------------------------------------------
--- 11. REFRESH MATERIALIZED VIEW
+-- 4. REFRESH MATERIALIZED VIEW
 -- -----------------------------------------------------------------------------
 REFRESH MATERIALIZED VIEW mv_exec_kpis;
