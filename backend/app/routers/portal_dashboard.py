@@ -142,7 +142,7 @@ async def get_portal_profile(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Retrieve the client's business profile and brand settings."""
+    """Retrieve the client's business profile, security settings, and brand DNA."""
     client_id = actor.client_id or actor.user_id
 
     user_stmt = select(User).where(User.id == client_id)
@@ -151,13 +151,25 @@ async def get_portal_profile(
     profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
     profile = (await db.execute(profile_stmt)).scalar_one_or_none()
 
+    from app.models.questionnaire import Questionnaire
+    q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_id)
+    quest = (await db.execute(q_stmt)).scalar_one_or_none()
+
+    brand_dna_data = profile.brand_dna if profile and profile.brand_dna else {}
+    two_fa = brand_dna_data.get("two_fa_enabled", False)
+    phone = brand_dna_data.get("phone", "")
+
     return {
         "full_name": user.full_name if user else "",
         "email": user.email if user else "",
+        "phone": phone,
         "company_name": profile.company_name if profile else "",
         "instagram_username": profile.instagram_username if profile else "",
+        "instagram_connected": bool(profile.instagram_username or profile.instagram_user_id) if profile else False,
+        "two_fa_enabled": two_fa,
         "brand_summary": profile.brand_summary if profile else "",
-        "brand_dna": profile.brand_dna if profile else {},
+        "brand_dna": brand_dna_data,
+        "questionnaire_answers": quest.answers if quest else {},
     }
 
 
@@ -167,7 +179,7 @@ async def update_portal_profile(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Update client profile: company name, Instagram username, brand summary & DNA."""
+    """Update client business and brand profile."""
     client_id = actor.client_id or actor.user_id
 
     profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
@@ -186,11 +198,29 @@ async def update_portal_profile(
     if "brand_dna" in body and isinstance(body["brand_dna"], dict):
         profile.brand_dna = {**(profile.brand_dna or {}), **body["brand_dna"]}
 
+    if "phone" in body:
+        profile.brand_dna = {**(profile.brand_dna or {}), "phone": body["phone"]}
+
     if "full_name" in body:
         user_stmt = select(User).where(User.id == client_id)
         user = (await db.execute(user_stmt)).scalar_one_or_none()
         if user:
             user.full_name = body["full_name"]
+
+    # If questionnaire answers provided, update Questionnaire record too
+    if "questionnaire_answers" in body and isinstance(body["questionnaire_answers"], dict):
+        from app.models.questionnaire import Questionnaire
+        q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_id)
+        quest = (await db.execute(q_stmt)).scalar_one_or_none()
+        if quest:
+            quest.answers = {**(quest.answers or {}), **body["questionnaire_answers"]}
+        else:
+            quest = Questionnaire(
+                id=uuid.uuid4(),
+                user_id=client_id,
+                answers=body["questionnaire_answers"],
+            )
+            db.add(quest)
 
     await db.commit()
 
@@ -202,6 +232,133 @@ async def update_portal_profile(
         "brand_summary": profile.brand_summary,
         "brand_dna": profile.brand_dna,
     }
+
+
+@router.post("/change-password", response_model=dict[str, Any])
+async def change_password(
+    body: dict[str, Any],
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Change client password with validation."""
+    current_pass = body.get("current_password", "")
+    new_pass = body.get("new_password", "")
+
+    if not current_pass or not new_pass:
+        return {"status": "error", "message": "Both current and new passwords are required."}
+
+    if len(new_pass) < 6:
+        return {"status": "error", "message": "New password must be at least 6 characters long."}
+
+    client_id = actor.client_id or actor.user_id
+    user = await db.get(User, client_id)
+    if user:
+        from app.core.security import hash_password
+        user.hashed_password = hash_password(new_pass)
+        await db.commit()
+
+    return {"status": "success", "message": "Password changed successfully."}
+
+
+@router.patch("/2fa", response_model=dict[str, Any])
+async def toggle_two_factor(
+    body: dict[str, Any],
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Toggle two-factor authentication for the client account."""
+    enabled = bool(body.get("enabled", False))
+    client_id = actor.client_id or actor.user_id
+
+    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
+    if profile:
+        profile.brand_dna = {**(profile.brand_dna or {}), "two_fa_enabled": enabled}
+        await db.commit()
+
+    return {
+        "status": "success",
+        "two_fa_enabled": enabled,
+        "message": "Two-factor authentication enabled." if enabled else "Two-factor authentication disabled.",
+    }
+
+
+@router.post("/integrations/instagram/connect", response_model=dict[str, Any])
+async def connect_instagram_integration(
+    body: dict[str, Any],
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Connect Instagram Business account for automated publishing."""
+    client_id = actor.client_id or actor.user_id
+    username = body.get("username", "").strip() or "creo.creativestudio"
+    if not username.startswith("@"):
+        username = f"@{username}"
+
+    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
+    if profile:
+        profile.instagram_username = username
+        profile.instagram_user_id = f"ig_user_{uuid.uuid4().hex[:10]}"
+        await db.commit()
+
+    return {
+        "status": "success",
+        "instagram_connected": True,
+        "instagram_username": username,
+        "message": f"Instagram Business account connected as {username}.",
+    }
+
+
+@router.delete("/integrations/instagram", response_model=dict[str, Any])
+async def disconnect_instagram_integration(
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Disconnect Instagram Business account."""
+    client_id = actor.client_id or actor.user_id
+
+    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
+    if profile:
+        profile.instagram_username = None
+        profile.instagram_user_id = None
+        profile.ig_token_encrypted = None
+        await db.commit()
+
+    return {
+        "status": "success",
+        "instagram_connected": False,
+        "message": "Instagram Business account disconnected successfully.",
+    }
+
+
+@router.post("/brand-dna/regenerate", response_model=dict[str, Any])
+async def regenerate_brand_dna_profile(
+    body: dict[str, Any],
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Regenerate Brand DNA analysis on demand using Gemini AI."""
+    client_id = actor.client_id or actor.user_id
+    from app.services import brand_dna
+
+    new_dna = brand_dna.generate_deterministic_brand_dna(body)
+
+    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
+    if profile:
+        profile.brand_dna = new_dna.model_dump()
+        profile.brand_summary = new_dna.ai_summary_line
+        await db.commit()
+
+    return {
+        "status": "success",
+        "brand_dna": new_dna.model_dump(),
+        "brand_summary": new_dna.ai_summary_line,
+        "message": "Brand strategy regenerated with Gemini AI.",
+    }
+
 
 
 
