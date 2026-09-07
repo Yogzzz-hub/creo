@@ -1,37 +1,47 @@
+# =============================================================================
+# CREO PLATFORM — STANDALONE DATABASE & CACHE STACK
+# =============================================================================
+# Run: docker compose -f database/docker-compose.db.yml up -d
+# Connect URL: postgresql+asyncpg://postgres:postgres@localhost:5432/postgres
+# =============================================================================
+
 services:
   postgres:
     image: postgres:16-alpine
     container_name: creo-postgres
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: creo_user
-      POSTGRES_PASSWORD: creo_password
-      POSTGRES_DB: creo_db
     ports:
       - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
     volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./seed_data.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
       - creo_pgdata:/var/lib/postgresql/data
-      - ./schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
-      - ./seed_data.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U creo_user -d creo_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-postgres}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: creo-pgadmin
+  redis:
+    image: redis:7-alpine
+    container_name: creo-redis
     restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@creo.agency
-      PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - "5050:80"
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - "6379:6379"
+    volumes:
+      - creo_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   creo_pgdata:
-    driver: local
+    name: creo_pgdata
+  creo_redisdata:
+    name: creo_redisdata
