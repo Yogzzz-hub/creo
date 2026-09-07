@@ -20,12 +20,21 @@ import {
 import { useAuth } from "../../lib/auth-context";
 import { OtpPinInput } from "../../components/ui/OtpPinInput";
 
-type AuthView = "login" | "signup" | "otp";
+type AuthView = "login" | "signup" | "otp" | "forgot" | "forgot_otp";
 
 export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "signup" }) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { loginWithPassword, register, sendOtp, verifyOtp, getGoogleAuthUrl } = useAuth();
+  const {
+    loginWithPassword,
+    registerIntent,
+    verifyRegistration,
+    forgotPassword,
+    verifyResetOtp,
+    sendOtp,
+    verifyOtp,
+    getGoogleAuthUrl,
+  } = useAuth();
 
   const [view, setView] = useState<AuthView>(defaultView);
   const [email, setEmail] = useState(searchParams.get("email") || "");
@@ -33,6 +42,11 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState(searchParams.get("name") || "");
   const [otpCode, setOtpCode] = useState("");
+  const [pendingRegistration, setPendingRegistration] = useState<{
+    email: string;
+    password: string;
+    fullName: string;
+  } | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +54,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
 
   // Auto decrement OTP countdown timer
   useEffect(() => {
-    if (view !== "otp" || otpCountdown <= 0) return;
+    if ((view !== "otp" && view !== "forgot_otp") || otpCountdown <= 0) return;
     const timer = setInterval(() => {
       setOtpCountdown((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
@@ -97,7 +111,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
       const user = await loginWithPassword(email, password);
       routeByRole(user.role);
     } catch (err: any) {
-      setError(err.message || "Failed to sign in. Please verify your credentials.");
+      setError(err.message || "Invalid email or password. Please check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -116,10 +130,34 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
     setLoading(true);
     setError(null);
     try {
-      const user = await register(email, password, fullName);
-      routeByRole(user.role);
+      // Step 1: Send OTP to email and transition to OTP screen
+      await registerIntent(email, password, fullName);
+      setPendingRegistration({ email, password, fullName });
+      setOtpCode("");
+      setView("otp");
+      setOtpCountdown(60);
     } catch (err: any) {
-      setError(err.message || "Failed to create account. Please try again.");
+      setError(err.message || "Failed to initiate registration. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      setError("Please enter your registered email address.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      await forgotPassword(email);
+      setOtpCode("");
+      setView("forgot_otp");
+      setOtpCountdown(60);
+    } catch (err: any) {
+      setError(err.message || "Could not send reset code. Please check that this email exists.");
     } finally {
       setLoading(false);
     }
@@ -132,10 +170,32 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
     setError(null);
     try {
       await sendOtp(email, fullName);
+      setPendingRegistration(null);
+      setOtpCode("");
       setView("otp");
       setOtpCountdown(60);
     } catch (err: any) {
       setError(err.message || "Failed to send verification code.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (otpCountdown > 0 || loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      if (view === "forgot_otp") {
+        await forgotPassword(email);
+      } else if (pendingRegistration) {
+        await registerIntent(pendingRegistration.email, pendingRegistration.password, pendingRegistration.fullName);
+      } else {
+        await sendOtp(email, fullName);
+      }
+      setOtpCountdown(60);
+    } catch (err: any) {
+      setError(err.message || "Failed to resend code.");
     } finally {
       setLoading(false);
     }
@@ -148,6 +208,23 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
     setLoading(true);
     setError(null);
     try {
+      if (view === "forgot_otp") {
+        const user = await verifyResetOtp(email, codeToVerify);
+        routeByRole(user.role);
+        return;
+      }
+
+      if (pendingRegistration) {
+        const user = await verifyRegistration(
+          pendingRegistration.email,
+          codeToVerify,
+          pendingRegistration.password,
+          pendingRegistration.fullName
+        );
+        routeByRole(user.role);
+        return;
+      }
+
       const user = await verifyOtp(email, codeToVerify, fullName);
       routeByRole(user.role);
     } catch (err: any) {
@@ -273,7 +350,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
       <div className="flex flex-1 flex-col justify-center px-6 py-12 sm:px-12 lg:px-16 xl:px-24">
         <div className="mx-auto w-full max-w-md space-y-6">
           {/* View Switcher Tabs (Sign In vs Create Account) */}
-          {view !== "otp" && (
+          {view !== "otp" && view !== "forgot_otp" && view !== "forgot" && (
             <div className="flex rounded-xl bg-slate-100 p-1">
               <button
                 type="button"
@@ -333,9 +410,21 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Password
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setView("forgot");
+                      setError(null);
+                    }}
+                    className="text-xs font-semibold text-[#2B7BC4] hover:underline transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-3 size-4 text-slate-400" />
                   <input
@@ -470,7 +559,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
                   </button>
                 </div>
                 <p className="mt-1 text-[11px] text-slate-400">
-                  Must be at least 6 characters. Saved securely with encryption.
+                  Must be at least 6 characters. You will receive an OTP to verify before this password is saved.
                 </p>
               </div>
 
@@ -479,7 +568,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
                 disabled={loading}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#2B7BC4] hover:bg-[#2B7BC4]/90 py-3 text-sm font-bold text-white shadow-md shadow-[#2B7BC4]/20 transition-all disabled:opacity-50"
               >
-                {loading ? <Loader2 className="size-4 animate-spin" /> : "Create Account"}
+                {loading ? <Loader2 className="size-4 animate-spin" /> : "Create Account & Send OTP"}
                 {!loading && <ArrowRight className="size-4" />}
               </button>
 
@@ -496,23 +585,78 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
             </form>
           )}
 
-          {/* 3. OTP VERIFICATION FORM */}
-          {view === "otp" && (
+          {/* 3. FORGOT PASSWORD REQUEST FORM */}
+          {view === "forgot" && (
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-1 pb-1">
+                <h3 className="text-lg font-bold text-[#0D2137]">Forgot Password</h3>
+                <p className="text-xs text-slate-500">
+                  Enter your registered account email and we'll dispatch a 6-digit reset code to your inbox.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                  Account Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-3 size-4 text-slate-400" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@business.com"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2.5 text-sm text-[#0D2137] placeholder:text-slate-400 focus:border-[#2B7BC4] focus:bg-white focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || !email}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#2B7BC4] hover:bg-[#2B7BC4]/90 py-3 text-sm font-bold text-white shadow-md shadow-[#2B7BC4]/20 transition-all disabled:opacity-50"
+              >
+                {loading ? <Loader2 className="size-4 animate-spin" /> : "Send Reset Code"}
+                {!loading && <ArrowRight className="size-4" />}
+              </button>
+
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView("login");
+                    setError(null);
+                  }}
+                  className="text-xs font-semibold text-slate-500 hover:text-[#0D2137] transition-colors"
+                >
+                  ← Back to Sign In
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* 4. OTP VERIFICATION FORM (Registration OTP & Password Reset OTP) */}
+          {(view === "otp" || view === "forgot_otp") && (
             <form onSubmit={handleVerifyOtp} className="space-y-5">
               <div className="text-center space-y-2 pb-1">
                 <div className="mx-auto w-12 h-12 rounded-2xl bg-[#E8F4FD] border border-[#C9DFF0] flex items-center justify-center text-[#2B7BC4] shadow-xs">
                   <KeyRound className="size-6 text-[#2B7BC4]" />
                 </div>
-                <h3 className="text-lg font-bold text-[#0D2137]">Check Your Email</h3>
+                <h3 className="text-lg font-bold text-[#0D2137]">
+                  {view === "forgot_otp" ? "Reset Code Verification" : "Verify Your Email"}
+                </h3>
                 <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                  We sent a 6-digit verification code to
+                  {view === "forgot_otp"
+                    ? "Enter the 6-digit reset code sent to your registered email:"
+                    : "We sent a 6-digit verification code to complete your account setup:"}
                 </p>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 rounded-full border border-slate-200/80 text-xs font-semibold text-[#0D2137]">
                   <Mail className="size-3 text-[#2B7BC4]" />
                   <span>{email}</span>
                   <button
                     type="button"
-                    onClick={() => setView("signup")}
+                    onClick={() => setView(view === "forgot_otp" ? "forgot" : "signup")}
                     className="ml-1 text-slate-400 hover:text-[#2B7BC4] transition-colors"
                     title="Change email"
                   >
@@ -541,14 +685,20 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
                 disabled={loading || otpCode.length < 4}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#2B7BC4] hover:bg-[#2B7BC4]/90 py-3 text-sm font-bold text-white shadow-md shadow-[#2B7BC4]/20 transition-all disabled:opacity-50"
               >
-                {loading ? <Loader2 className="size-4 animate-spin" /> : "Verify & Continue"}
+                {loading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : view === "forgot_otp" ? (
+                  "Verify Code & Reset Password"
+                ) : (
+                  "Verify & Complete Account"
+                )}
                 {!loading && <CheckCircle2 className="size-4" />}
               </button>
 
               <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
                 <button
                   type="button"
-                  onClick={() => setView("signup")}
+                  onClick={() => setView(view === "forgot_otp" ? "forgot" : "signup")}
                   className="text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1"
                 >
                   <Edit2 className="size-3" />
@@ -556,7 +706,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
                 </button>
                 <button
                   type="button"
-                  onClick={handleSendOtp}
+                  onClick={handleResendOtp}
                   disabled={otpCountdown > 0 || loading}
                   className="font-semibold text-[#2B7BC4] hover:underline disabled:text-slate-400 disabled:no-underline transition-colors"
                 >
@@ -575,7 +725,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
           )}
 
           {/* Social Divider & Google OAuth */}
-          {view !== "otp" && (
+          {view !== "otp" && view !== "forgot_otp" && (
             <>
               <div className="relative flex items-center justify-center">
                 <div className="w-full border-t border-slate-200" />

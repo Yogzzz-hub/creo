@@ -40,6 +40,7 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     email_verified_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    must_reset_password: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     # 1:1 Profiles
     client_profile: Mapped[ClientProfile | None] = relationship(

@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS users (
     account_status account_status DEFAULT 'pending_verification' NOT NULL,
     token_version INT DEFAULT 0 NOT NULL,
     email_verified_at TIMESTAMPTZ,
+    must_reset_password BOOLEAN DEFAULT FALSE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );

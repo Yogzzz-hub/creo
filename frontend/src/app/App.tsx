@@ -15,11 +15,11 @@ import { AboutPage } from "../pages/public/AboutPage";
 import { FaqPage } from "../pages/public/FaqPage";
 import { TermsPage, PrivacyPage } from "../pages/public/TermsPrivacyPages";
 
-// Auth & Route Guards
 import { AuthPage } from "../pages/auth/AuthPage";
 import { GoogleCallbackPage } from "../pages/auth/GoogleCallbackPage";
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 import { PublicOnlyRoute } from "../components/auth/PublicOnlyRoute";
+import { MandatoryPasswordResetModal } from "../components/auth/MandatoryPasswordResetModal";
 
 // Portal Layout & Pages
 import { PortalLayout } from "../components/portal/PortalLayout";
@@ -396,6 +396,7 @@ export function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        <MandatoryPasswordResetModal />
       </BrowserRouter>
     </AuthProvider>
   );
