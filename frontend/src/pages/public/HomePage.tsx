@@ -17,13 +17,7 @@ import {
 } from "lucide-react";
 import { request } from "../../lib/http";
 
-const BRAND_PARTNERS = [
-  { name: "Astra Living", tag: "Home & Lifestyle", growth: "+310% Reach" },
-  { name: "Urban Bakes", tag: "Artisanal F&B", growth: "1,200+ Footfall" },
-  { name: "Zenith Fitness", tag: "Athletic Performance", growth: "3.4x ROAS" },
-  { name: "Kaya Botanicals", tag: "Clean Skincare", growth: "8.2% CTR" },
-  { name: "Heritage Looms", tag: "Luxury Fashion", growth: "+40% Conversions" },
-];
+
 
 const METRICS = [
   { value: "50+", label: "Active Brands Scaled", sub: "Across 12 industries" },
@@ -378,25 +372,7 @@ export function HomePage() {
       {/* ── 2. Brand Partners & Key Impact Numbers ───────────────────────── */}
       <section className="py-14 bg-gradient-to-b from-white via-slate-50/60 to-white border-b border-slate-200/70" id="stats">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          {/* Brand Partner Ticker / Strip */}
-          <div className="text-center mb-10">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-              Trusted by 50+ High-Growth D2C, Retail, & Modern Brands
-            </p>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-4 sm:gap-8">
-              {BRAND_PARTNERS.map((brand) => (
-                <div
-                  key={brand.name}
-                  className="flex items-center gap-2.5 px-4 py-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs hover:border-blue-300 transition-colors"
-                >
-                  <span className="size-2 rounded-full bg-blue-500" />
-                  <span className="text-sm font-bold text-[#0D2137]">{brand.name}</span>
-                  <span className="text-xs text-slate-400">|</span>
-                  <span className="text-xs font-medium text-emerald-600">{brand.growth}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+
 
           {/* 5 Impact Metric Cards */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 sm:gap-6 text-center">
