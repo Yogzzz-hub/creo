@@ -62,27 +62,17 @@ async def get_portal_dashboard(
     ticket_count = (await db.execute(ticket_stmt)).scalar() or 0
 
     # 4. Active subscription & plan (prioritize active/trialing)
-    from app.models.enums import SubscriptionStatus
+    from app.services.subscription_guard import check_client_subscription
 
-    sub_stmt = (
-        select(Subscription, Plan)
-        .join(Plan, Subscription.plan_id == Plan.id)
-        .where(
-            Subscription.client_id == target_client_id,
-            Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
-        )
-        .order_by(Subscription.created_at.desc())
-        .limit(1)
-    )
-    sub_res = await db.execute(sub_stmt)
-    sub_row = sub_res.first()
+    sub_check = await check_client_subscription(db, target_client_id)
+    sub = sub_check["subscription"]
+    plan = sub_check["plan"]
 
     from app.services.onboarding_service import get_current_stage
     current_stage = await get_current_stage(db, target_client_id)
 
     active_plan = None
-    if sub_row:
-        sub, plan = sub_row
+    if sub and plan and sub_check["is_active"]:
         active_plan = {
             "name": plan.display_name,
             "tier": plan.name,
@@ -90,6 +80,23 @@ async def get_portal_dashboard(
             "monthly_price": float(plan.monthly_price),
             "currency": plan.currency,
             "current_period_end": sub.current_period_end.isoformat() if sub.current_period_end else None,
+            "is_active": True,
+            "is_expired": False,
+            "seconds_remaining": sub_check["seconds_remaining"],
+            "days_remaining": sub_check["days_remaining"],
+        }
+    elif sub and plan and sub_check["is_expired"]:
+        active_plan = {
+            "name": plan.display_name,
+            "tier": plan.name,
+            "status": "expired",
+            "monthly_price": float(plan.monthly_price),
+            "currency": plan.currency,
+            "current_period_end": sub.current_period_end.isoformat() if sub.current_period_end else None,
+            "is_active": False,
+            "is_expired": True,
+            "seconds_remaining": 0,
+            "days_remaining": 0,
         }
 
     # 5. Recent deliverables for activity feed
@@ -132,7 +139,11 @@ async def get_portal_dashboard(
         "brand_dna": profile.brand_dna if profile else {},
         "instagram_username": profile.instagram_username if profile else None,
         "active_plan": active_plan,
-        "has_active_subscription": active_plan is not None,
+        "has_active_subscription": sub_check["is_active"],
+        "is_subscription_expired": sub_check["is_expired"],
+        "seconds_remaining": sub_check["seconds_remaining"],
+        "days_remaining": sub_check["days_remaining"],
+        "server_time_utc": sub_check["server_time_utc"],
         "recent_activity": recent_activity,
     }
 

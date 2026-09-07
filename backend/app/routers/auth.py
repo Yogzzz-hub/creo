@@ -302,15 +302,9 @@ async def get_me(
 
     has_active_sub = True
     if user.role.value == "client":
-        from app.models.billing import Subscription
-        from app.models.enums import SubscriptionStatus
-        sub_check = await db.execute(
-            select(Subscription.id).where(
-                Subscription.client_id == user.id,
-                Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
-            ).limit(1)
-        )
-        has_active_sub = sub_check.scalar_one_or_none() is not None
+        from app.services.subscription_guard import check_client_subscription
+        sub_check = await check_client_subscription(db, user.id)
+        has_active_sub = sub_check["is_active"]
 
     return {
         "id": str(user.id),
@@ -350,15 +344,9 @@ async def get_me_role(
 
     has_active_sub = True
     if user.role.value == "client":
-        from app.models.billing import Subscription
-        from app.models.enums import SubscriptionStatus
-        sub_check = await db.execute(
-            select(Subscription.id).where(
-                Subscription.client_id == user.id,
-                Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
-            ).limit(1)
-        )
-        has_active_sub = sub_check.scalar_one_or_none() is not None
+        from app.services.subscription_guard import check_client_subscription
+        sub_check = await check_client_subscription(db, user.id)
+        has_active_sub = sub_check["is_active"]
 
     return {
         "role": user.role.value,

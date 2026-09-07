@@ -65,6 +65,8 @@ async def create_order(
             await db.flush()
 
     now = datetime.now(UTC)
+    from app.services.subscription_guard import expire_stale_subscriptions
+    await expire_stale_subscriptions(db)
 
     # Option 1: Guard against overlapping active subscriptions.
     # Clients can only select/purchase a new plan once their current retainer expires.
@@ -216,8 +218,10 @@ async def confirm_order(
         ).hexdigest()
         is_valid_signature = hmac.compare_digest(expected, signature)
 
-    # Direct activation if signature matches or sandbox confirmation
-    if is_valid_signature or signature in ("simulated_signature_sandbox", "sig_live"):
+    # Direct activation if signature matches or verified sandbox confirmation in non-production
+    is_non_prod = getattr(settings, "ENVIRONMENT", "development") != "production"
+    sandbox_bypass = is_non_prod and signature in ("simulated_signature_sandbox", "sig_live")
+    if is_valid_signature or sandbox_bypass:
         await _activate_subscription(db, sub)
         return ConfirmPaymentResponse(status="active", subscription_id=sub.id)
 

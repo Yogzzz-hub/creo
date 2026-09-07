@@ -15,9 +15,15 @@ export function PortalDeliverablesPage() {
     queryFn: () => request<any>("/api/v1/payments/subscription"),
   });
 
+  const isExpired =
+    subData?.is_expired === true ||
+    subData?.subscription?.status === "expired" ||
+    subData?.subscription?.status === "canceled";
+
   const isSubscribed =
+    !isExpired &&
     !!subData?.subscription &&
-    ["active", "trialing"].includes(subData?.subscription?.status);
+    (subData?.is_active ?? ["active", "trialing"].includes(subData?.subscription?.status));
 
   if (!isLoading && !isSubscribed) {
     return (
@@ -31,8 +37,12 @@ export function PortalDeliverablesPage() {
           </p>
         </div>
         <SubscriptionLockedState
-          title="Deliverables Workspace Locked"
-          description="Access to static posters, reels, and approval stages requires an active production retainer. Choose a plan to assign your dedicated creative team."
+          title={isExpired ? "Creative Retainer Expired" : "Deliverables Workspace Locked"}
+          description={
+            isExpired
+              ? "Your monthly creative retainer billing cycle has concluded. Deliverables approvals and active reviews are paused until you renew."
+              : "Access to static posters, reels, and approval stages requires an active production retainer. Choose a plan to assign your dedicated creative team."
+          }
         />
       </div>
     );

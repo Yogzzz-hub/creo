@@ -47,9 +47,15 @@ export function PortalSidebar() {
     queryFn: () => request<any>("/api/v1/payments/subscription"),
   });
 
+  const isExpired =
+    subData?.is_expired === true ||
+    subData?.subscription?.status === "expired" ||
+    subData?.subscription?.status === "canceled";
+
   const isSubscribed =
+    !isExpired &&
     !!subData?.subscription &&
-    ["active", "trialing"].includes(subData?.subscription?.status);
+    (subData?.is_active ?? ["active", "trialing"].includes(subData?.subscription?.status));
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -117,9 +123,15 @@ export function MobileBottomTabBar() {
     queryFn: () => request<any>("/api/v1/payments/subscription"),
   });
 
+  const isExpired =
+    subData?.is_expired === true ||
+    subData?.subscription?.status === "expired" ||
+    subData?.subscription?.status === "canceled";
+
   const isSubscribed =
+    !isExpired &&
     !!subData?.subscription &&
-    ["active", "trialing"].includes(subData?.subscription?.status);
+    (subData?.is_active ?? ["active", "trialing"].includes(subData?.subscription?.status));
 
   return (
     <nav

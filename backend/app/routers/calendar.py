@@ -25,17 +25,11 @@ async def get_calendar_entries(
     """Retrieve scheduled and published content calendar entries."""
     target_client_id = client_id or actor.client_id or actor.user_id
 
-    # If client role, require active subscription
+    # If client role, require active, unexpired subscription
     if actor.role == "client":
-        from app.models.billing import Subscription
-        from app.models.enums import SubscriptionStatus
-        sub_check = await db.execute(
-            select(Subscription.id).where(
-                Subscription.client_id == target_client_id,
-                Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
-            ).limit(1)
-        )
-        if not sub_check.scalar_one_or_none():
+        from app.services.subscription_guard import check_client_subscription
+        sub_check = await check_client_subscription(db, target_client_id)
+        if not sub_check["is_active"]:
             return []
 
     stmt = (

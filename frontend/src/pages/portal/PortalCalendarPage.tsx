@@ -73,9 +73,15 @@ export function PortalCalendarPage() {
     queryFn: () => request<any>("/api/v1/payments/subscription"),
   });
 
+  const isExpired =
+    subData?.is_expired === true ||
+    subData?.subscription?.status === "expired" ||
+    subData?.subscription?.status === "canceled";
+
   const isSubscribed =
+    !isExpired &&
     !!subData?.subscription &&
-    ["active", "trialing"].includes(subData?.subscription?.status);
+    (subData?.is_active ?? ["active", "trialing"].includes(subData?.subscription?.status));
 
   const { data: rawEntries = [] } = useQuery<CalendarEntry[]>({
     queryKey: ["calendar-entries", user?.id],
@@ -147,8 +153,12 @@ export function PortalCalendarPage() {
           </p>
         </div>
         <SubscriptionLockedState
-          title="Publishing Calendar Locked"
-          description="Access to scheduled content, multi-platform publishing dates, and asset timelines requires an active production retainer. Choose a plan to unlock calendar workflows."
+          title={isExpired ? "Creative Retainer Expired" : "Publishing Calendar Locked"}
+          description={
+            isExpired
+              ? "Your monthly creative retainer billing cycle has concluded. Publishing schedule inspect and calendar actions are paused until you renew."
+              : "Access to scheduled content, multi-platform publishing dates, and asset timelines requires an active production retainer. Choose a plan to unlock calendar workflows."
+          }
         />
       </div>
     );

@@ -26,7 +26,52 @@ import {
   Film,
   Smartphone,
   Image as ImageIcon,
+  AlertCircle,
 } from "lucide-react";
+
+/* ─── Monotonic Timer Hook (Clock Tampering Resistant) ─────────────────────── */
+
+function useMonotonicRetainerTimer(
+  serverSecondsRemaining?: number,
+  serverIsExpired?: boolean,
+  onExpire?: () => void
+) {
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(serverSecondsRemaining ?? 0);
+  const [isExpired, setIsExpired] = useState<boolean>(serverIsExpired ?? false);
+
+  useEffect(() => {
+    if (serverIsExpired || serverSecondsRemaining === undefined || serverSecondsRemaining <= 0) {
+      setIsExpired(serverIsExpired ?? false);
+      setSecondsRemaining(serverSecondsRemaining ?? 0);
+      return;
+    }
+
+    setSecondsRemaining(serverSecondsRemaining);
+    setIsExpired(false);
+
+    const startPerf = performance.now();
+    const interval = setInterval(() => {
+      // performance.now() is a monotonic counter immune to client OS clock manipulation
+      const elapsedSeconds = Math.floor((performance.now() - startPerf) / 1000);
+      const remaining = Math.max(0, serverSecondsRemaining - elapsedSeconds);
+      setSecondsRemaining(remaining);
+      if (remaining <= 0) {
+        setIsExpired(true);
+        clearInterval(interval);
+        onExpire?.();
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [serverSecondsRemaining, serverIsExpired, onExpire]);
+
+  const days = Math.floor(secondsRemaining / 86400);
+  const hours = Math.floor((secondsRemaining % 86400) / 3600);
+  const minutes = Math.floor((secondsRemaining % 3600) / 60);
+  const seconds = secondsRemaining % 60;
+
+  return { secondsRemaining, isExpired, days, hours, minutes, seconds };
+}
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 
@@ -64,6 +109,8 @@ function PlanPickerModal({
   currentPlanDisplayName,
   currentPeriodEnd,
   hasActiveSubscription = false,
+  isExpired = false,
+  daysRemaining = 0,
   onSelect,
   onClose,
   onOpenAddon,
@@ -73,6 +120,8 @@ function PlanPickerModal({
   currentPlanDisplayName?: string;
   currentPeriodEnd?: string | null;
   hasActiveSubscription?: boolean;
+  isExpired?: boolean;
+  daysRemaining?: number;
   onSelect: (plan: Plan) => void;
   onClose: () => void;
   onOpenAddon?: () => void;
@@ -88,10 +137,6 @@ function PlanPickerModal({
         year: "numeric",
       })
     : null;
-
-  const daysRemaining = currentPeriodEnd
-    ? Math.max(0, Math.ceil((new Date(currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-    : 0;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -138,8 +183,8 @@ function PlanPickerModal({
           </p>
         </div>
 
-        {/* Retainer Active Notice Banner (Option 1) */}
-        {hasActiveSubscription && (
+        {/* Retainer Active Notice Banner */}
+        {hasActiveSubscription && !isExpired && (
           <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left">
             <div className="flex items-start gap-3">
               <div className="size-8 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
@@ -173,6 +218,28 @@ function PlanPickerModal({
           </div>
         )}
 
+        {/* Retainer Expired Notice Banner */}
+        {isExpired && (
+          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-amber-500/5 to-transparent border border-rose-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left">
+            <div className="flex items-start gap-3">
+              <div className="size-8 rounded-xl bg-rose-500/20 text-rose-700 flex items-center justify-center shrink-0 mt-0.5">
+                <AlertCircle className="size-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-rose-950 flex items-center gap-2">
+                  <span>Creative Retainer Cycle Expired</span>
+                  <span className="bg-rose-100 text-rose-800 text-[10px] px-2 py-0.5 rounded-md font-semibold">
+                    Expired {formattedExpiry ? `on ${formattedExpiry}` : ""}
+                  </span>
+                </p>
+                <p className="text-[11px] text-rose-800/90 mt-0.5">
+                  Your billing cycle has ended and plan switching is unlocked. Select any plan below to renew your retainer and assign your creative pod.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {realPlans.map((plan) => {
             const isCurrent = plan.name === currentPlanName;
@@ -181,7 +248,7 @@ function PlanPickerModal({
               <div
                 key={plan.id}
                 className={`relative rounded-2xl border-2 p-6 flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 ${
-                  isCurrent
+                  isCurrent && hasActiveSubscription && !isExpired
                     ? "border-emerald-500/80 bg-gradient-to-b from-emerald-50/40 via-white to-white shadow-lg shadow-emerald-500/10"
                     : isRecommended
                     ? "border-[#2B7BC4] bg-gradient-to-b from-[#2B7BC4]/8 via-[#2B7BC4]/3 to-white shadow-xl shadow-[#2B7BC4]/15"
@@ -193,15 +260,22 @@ function PlanPickerModal({
                     <Star className="size-3 fill-amber-300 text-amber-300" /> Most Popular
                   </span>
                 )}
-                {isCurrent && (
+                {isCurrent && hasActiveSubscription && !isExpired && (
                   <span className="absolute -top-3.5 right-4 bg-emerald-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
                     <Check className="size-3" /> Current Active
+                  </span>
+                )}
+                {isCurrent && isExpired && (
+                  <span className="absolute -top-3.5 right-4 bg-rose-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
+                    <AlertCircle className="size-3" /> Cycle Ended
                   </span>
                 )}
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <p className={`text-xs font-bold uppercase tracking-wider ${isCurrent ? "text-emerald-700" : "text-[#2B7BC4]"}`}>
+                    <p className={`text-xs font-bold uppercase tracking-wider ${
+                      isCurrent && hasActiveSubscription && !isExpired ? "text-emerald-700" : "text-[#2B7BC4]"
+                    }`}>
                       {plan.display_name}
                     </p>
                   </div>
@@ -218,7 +292,9 @@ function PlanPickerModal({
                     {plan.highlights.map((h) => (
                       <li key={h} className="flex items-start gap-2.5 text-xs text-slate-600 leading-relaxed">
                         <div className={`size-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                          isCurrent ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-[#2B7BC4]"
+                          isCurrent && hasActiveSubscription && !isExpired
+                            ? "bg-emerald-50 text-emerald-600"
+                            : "bg-blue-50 text-[#2B7BC4]"
                         }`}>
                           <Check className="size-3" />
                         </div>
@@ -228,14 +304,14 @@ function PlanPickerModal({
                   </ul>
                 </div>
 
-                {isCurrent ? (
+                {isCurrent && hasActiveSubscription && !isExpired ? (
                   <button
                     disabled
                     className="w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
                   >
                     <Check className="size-3.5" /> Current Active Plan
                   </button>
-                ) : hasActiveSubscription ? (
+                ) : hasActiveSubscription && !isExpired ? (
                   <button
                     disabled
                     className="w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
@@ -252,7 +328,7 @@ function PlanPickerModal({
                         : "border-2 border-[#2B7BC4] text-[#2B7BC4] hover:bg-[#2B7BC4]/10 active:scale-[0.98]"
                     }`}
                   >
-                    Select Plan <ArrowRight className="size-3.5" />
+                    {isCurrent && isExpired ? "Renew Retainer" : "Select Plan"} <ArrowRight className="size-3.5" />
                   </button>
                 )}
               </div>
@@ -623,9 +699,25 @@ export function PortalPaymentsPage() {
 
   const plan = data?.plan;
   const quotas = data?.quotas || {};
+
+  const { isExpired: timerExpired, days: liveDays } = useMonotonicRetainerTimer(
+    data?.seconds_remaining,
+    data?.is_expired,
+    () => {
+      queryClient.invalidateQueries({ queryKey: ["client-subscription"] });
+    }
+  );
+
+  const isExpired =
+    timerExpired ||
+    data?.is_expired === true ||
+    data?.subscription?.status === "expired" ||
+    data?.subscription?.status === "canceled";
+
   const isSubscribed =
+    !isExpired &&
     !!data?.subscription &&
-    ["active", "trialing"].includes(data?.subscription?.status);
+    (data?.is_active ?? ["active", "trialing"].includes(data?.subscription?.status));
 
   const posterUsed = quotas["static_post"]?.used ?? 0;
   const posterTotal =
@@ -676,6 +768,8 @@ export function PortalPaymentsPage() {
           currentPlanDisplayName={plan?.display_name}
           currentPeriodEnd={data?.subscription?.current_period_end}
           hasActiveSubscription={isSubscribed}
+          isExpired={isExpired}
+          daysRemaining={liveDays ?? data?.days_remaining ?? 0}
           onSelect={handleSelectPlan}
           onClose={() => setShowPlanModal(false)}
           onOpenAddon={() => setShowAddonModal(true)}
@@ -813,6 +907,79 @@ export function PortalPaymentsPage() {
               <div className="h-10 bg-slate-200/70 rounded-2xl w-3/4" />
               <div className="h-20 bg-slate-100 rounded-2xl w-full" />
             </div>
+          ) : data?.subscription && isExpired ? (
+            <>
+              <div className="space-y-5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-1.5 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full">
+                    <AlertCircle className="size-3.5 text-rose-600" />
+                    Previous Retainer
+                  </span>
+                  <span className="rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-xs px-3 py-1 font-bold flex items-center gap-1.5 shadow-2xs">
+                    <span className="size-1.5 rounded-full bg-rose-500" />
+                    Retainer Expired
+                  </span>
+                </div>
+
+                <div>
+                  <h2 className="text-3xl font-black text-[#0D2137] tracking-tight">
+                    {plan?.display_name || "Growth Tier"}
+                  </h2>
+                  <div className="flex items-baseline gap-1.5 mt-1.5">
+                    <span className="text-2xl font-extrabold text-[#0D2137]">
+                      ₹{((plan?.price_minor || 0) / 100).toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-500">/ month + GST</span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-amber-500/5 border border-rose-300 text-xs text-rose-950 space-y-2">
+                  <p className="font-bold flex items-center gap-1.5 text-rose-900">
+                    <AlertCircle className="size-4 text-rose-600 shrink-0" />
+                    Retainer Cycle Concluded
+                  </p>
+                  <p className="text-[11px] text-rose-800 leading-relaxed">
+                    Your monthly creative retainer ended on{" "}
+                    <span className="font-bold">
+                      {data?.subscription?.current_period_end
+                        ? new Date(data.subscription.current_period_end).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })
+                        : "cycle end"}
+                    </span>
+                    . Workflows, deliverable generation, and calendar approvals are locked until you renew.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowPlanModal(true)}
+                    className="w-full mt-2 py-2.5 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white text-xs font-bold hover:from-[#246bb0] hover:to-[#174e7e] transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Zap className="size-3.5" />
+                    Renew Retainer Now →
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-slate-500">
+                <span className="flex items-center gap-1.5 text-rose-700 font-medium">
+                  <Calendar className="size-3.5 text-rose-500" />
+                  Expired on{" "}
+                  {data?.subscription?.current_period_end
+                    ? new Date(data.subscription.current_period_end).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "cycle end"}
+                </span>
+                <span className="text-amber-700 font-bold flex items-center gap-1.5">
+                  <Lock className="size-3.5 text-amber-600" />
+                  Renewal Required
+                </span>
+              </div>
+            </>
           ) : data?.subscription ? (
             <>
               <div className="space-y-5">
@@ -823,7 +990,7 @@ export function PortalPaymentsPage() {
                   </span>
                   <span className="rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs px-3 py-1 font-bold flex items-center gap-1.5 shadow-2xs">
                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Active Retainer
+                    Active Retainer ({liveDays}d left)
                   </span>
                 </div>
 
@@ -910,7 +1077,12 @@ export function PortalPaymentsPage() {
             </div>
             {isSubscribed && (
               <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                Refreshes in 30 days
+                {liveDays} days remaining
+              </span>
+            )}
+            {isExpired && (
+              <span className="text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full">
+                Quota Suspended (Expired)
               </span>
             )}
           </div>

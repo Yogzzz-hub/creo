@@ -83,9 +83,19 @@ async def create_addon_order(
     from app.config import settings as _s
     from app.models.enums import PaymentProvider
 
+    ADDON_PRICING = {
+        "addon_posters_5": 350000,
+        "addon_posters_10": 600000,
+        "addon_reels_3": 650000,
+        "addon_reels_6": 1200000,
+        "addon_stories_10": 250000,
+        "addon_stories_20": 450000,
+        "addon_shoot_half": 1500000,
+        "addon_shoot_full": 2800000,
+    }
     addon_id = body.get("addon_id", "")
-    amount_minor = int(body.get("amount_minor", 250000))
-    currency = body.get("currency", "INR")
+    amount_minor = ADDON_PRICING.get(addon_id, int(body.get("amount_minor", 350000)))
+    currency = "INR"
 
     key_id = _s.RAZORPAY_KEY_ID or "rzp_test_TO2r0YMjDZSpuC"
     key_secret = _s.RAZORPAY_KEY_SECRET or ""
@@ -125,28 +135,20 @@ async def get_client_subscription(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Retrieve active subscription, plan, and quota counters for client."""
-    from typing import Any
-    from app.models.billing import Subscription, UsageCounter
-    from app.models.enums import SubscriptionStatus
+    from app.services.subscription_guard import check_client_subscription
 
     client_id = actor.client_id or actor.user_id
 
-    # 1. Prioritize active or trialing subscriptions
-    active_sub_stmt = (
-        select(Subscription)
-        .where(
-            Subscription.client_id == client_id,
-            Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
-        )
-        .order_by(Subscription.created_at.desc())
-        .limit(1)
-    )
-    sub = (await db.execute(active_sub_stmt)).scalar_one_or_none()
+    # Server-authoritative check with self-healing
+    check = await check_client_subscription(db, client_id)
+    sub = check["subscription"]
+    plan = check["plan"]
 
-    # 2. If no active subscription, check for pending/incomplete order
+    # If no active/expired subscription was found, check for an incomplete/pending checkout order
     if not sub:
         inc_stmt = (
-            select(Subscription)
+            select(Subscription, Plan)
+            .join(Plan, Subscription.plan_id == Plan.id)
             .where(
                 Subscription.client_id == client_id,
                 Subscription.status == SubscriptionStatus.INCOMPLETE,
@@ -154,12 +156,9 @@ async def get_client_subscription(
             .order_by(Subscription.created_at.desc())
             .limit(1)
         )
-        sub = (await db.execute(inc_stmt)).scalar_one_or_none()
-
-    plan = None
-    if sub:
-        plan_stmt = select(Plan).where(Plan.id == sub.plan_id)
-        plan = (await db.execute(plan_stmt)).scalar_one_or_none()
+        inc_row = (await db.execute(inc_stmt)).first()
+        if inc_row:
+            sub, plan = inc_row
 
     counters_stmt = select(UsageCounter).where(UsageCounter.client_id == client_id)
     counters = (await db.execute(counters_stmt)).scalars().all()
@@ -184,13 +183,19 @@ async def get_client_subscription(
     ]
 
     sub_data = None
-    if sub and sub.status in [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]:
+    if sub:
+        effective_status = check["status"] if check["has_subscription"] else sub.status.value
         sub_data = {
             "id": str(sub.id),
-            "status": sub.status.value,
+            "status": effective_status,
             "gateway": sub.gateway.value if hasattr(sub.gateway, "value") else str(sub.gateway),
             "current_period_end": sub.current_period_end.isoformat() if sub.current_period_end else None,
             "amount": sub.amount or (plan.monthly_price if plan else 25000),
+            "is_active": check["is_active"],
+            "is_expired": check["is_expired"],
+            "seconds_remaining": check["seconds_remaining"],
+            "days_remaining": check["days_remaining"],
+            "server_time_utc": check["server_time_utc"],
         }
 
     return {
@@ -202,9 +207,14 @@ async def get_client_subscription(
             "poster_quota": plan.poster_quota,
             "reel_quota": plan.reel_quota,
             "story_quota": plan.story_quota,
-        } if (sub_data and plan) else None,
-        "quotas": quota_map if sub_data else {},
+        } if plan else None,
+        "quotas": quota_map if (sub_data and check["is_active"]) else {},
         "invoices": invoices,
+        "is_active": check["is_active"],
+        "is_expired": check["is_expired"],
+        "seconds_remaining": check["seconds_remaining"],
+        "days_remaining": check["days_remaining"],
+        "server_time_utc": check["server_time_utc"],
     }
 
 

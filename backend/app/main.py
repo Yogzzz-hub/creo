@@ -73,6 +73,18 @@ app.add_middleware(
 app.add_exception_handler(AppError, app_error_handler)  # type: ignore[arg-type]
 
 
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Inject OWASP recommended security headers on all API responses."""
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    return response
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     """Format Pydantic request validation errors into standard Creo API error envelope."""

@@ -33,6 +33,7 @@ from app.models.enums import DeliverableStatus, DeliverableType, TaskStatus, Use
 from app.models.work import Deliverable
 from app.repositories.base import DeliverableRepository, TenantScope
 from app.services import deliverable_state, storage_service
+from app.services.subscription_guard import check_client_subscription, require_active_subscription
 
 log = structlog.get_logger(__name__)
 
@@ -254,6 +255,7 @@ async def approve_deliverable(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
     idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
+    _sub_guard: dict = Depends(require_active_subscription),
 ) -> dict[str, str]:
     """Client approves deliverable. pending_approval → approved. Idempotency-Key honoured."""
     scope = _scope_from_actor(actor)
@@ -312,6 +314,7 @@ async def request_changes(
     rejection_comment: str,
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
+    _sub_guard: dict = Depends(require_active_subscription),
 ) -> dict[str, object]:
     """Client requests changes. pending_approval → revision_requested. Comment required.
 
@@ -449,16 +452,16 @@ async def portal_list_deliverables(
         if not scope.client_id:
             return {"items": [], "has_more": False, "waiting_on_you": 0, "subscription_active": False}
 
-        from app.models.billing import Subscription
-        from app.models.enums import SubscriptionStatus
-        sub_check = await db.execute(
-            select(Subscription.id).where(
-                Subscription.client_id == scope.client_id,
-                Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
-            ).limit(1)
-        )
-        if not sub_check.scalar_one_or_none():
-            return {"items": [], "has_more": False, "waiting_on_you": 0, "subscription_active": False}
+        sub_check = await check_client_subscription(db, scope.client_id)
+        if not sub_check["is_active"]:
+            return {
+                "items": [],
+                "has_more": False,
+                "waiting_on_you": 0,
+                "subscription_active": False,
+                "is_expired": sub_check["is_expired"],
+                "server_time_utc": sub_check["server_time_utc"],
+            }
 
     # Build keyset query — single query, no count(*) for main list
     stmt = select(Deliverable)
