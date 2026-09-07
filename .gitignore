@@ -1,66 +1,69 @@
-# =============================================================================
-# Creo — .gitignore (Next.js + Python)
-# =============================================================================
-
-# Dependencies
-node_modules/
-.pnp
-.pnp.js
-
-# Next.js
-.next/
-out/
-.env*.local
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+client_secret*.json
+*.pem
+*.key
+*.cert
+creo/
 
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
-*.egg-info/
-dist/
+*.so
+.Python
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
 .eggs/
-
-# Virtual environments
-**/myenv/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 .venv/
+env/
 venv/
 ENV/
-env/
+env.bak/
+venv.bak/
 
-# Testing
+# Testing & Linting
 .pytest_cache/
 .coverage
 htmlcov/
-*.cover
+.mypy_cache/
+.ruff_cache/
 
-# IDE
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Vite build
+frontend/dist/
+dist/
+
+# Logs & Build metadata
+*.log
+*.tsbuildinfo
+frontend/*.tsbuildinfo
+
+# OS and IDE
+.DS_Store
+Thumbs.db
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Environment
-.env
-.env.*
-
-# Supabase
-supabase/.temp/
-
-# Celery
-celerybeat-schedule
-celerybeat.pid
-
-# Misc
-*.log
-*.pid
-*.seed
-client_secret*.json
-credentials*.json
-
-package-lock.json
