@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
+import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
 
 interface TicketItem {
   id: string;
@@ -33,6 +34,15 @@ export function PortalSupportPage() {
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high" | "urgent">("medium");
 
+  const { data: subData, isLoading: isSubLoading } = useQuery({
+    queryKey: ["client-subscription"],
+    queryFn: () => request<any>("/api/v1/payments/subscription"),
+  });
+
+  const isSubscribed =
+    !!subData?.subscription &&
+    ["active", "trialing"].includes(subData?.subscription?.status);
+
   const { data: tickets = [], isLoading } = useQuery<TicketItem[]>({
     queryKey: ["tickets", user?.id],
     queryFn: async () => {
@@ -43,6 +53,7 @@ export function PortalSupportPage() {
         return [];
       }
     },
+    enabled: isSubscribed,
     refetchInterval: 10000,
   });
 
@@ -109,6 +120,25 @@ export function PortalSupportPage() {
   };
 
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
+
+  if (!isSubLoading && !isSubscribed) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-6 animate-page-in">
+        <div className="border-b border-border pb-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#0D2137] tracking-tight">
+            Client Support Desk
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Request revisions, deliverable updates, strategy adjustments, or technical inquiries directly with your team.
+          </p>
+        </div>
+        <SubscriptionLockedState
+          title="Support Desk Locked"
+          description="Direct concierge ticket dispatch, revision requests, and dedicated account manager SLA handling require an active production retainer. Choose a plan to activate support."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 animate-page-in">
