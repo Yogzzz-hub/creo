@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { Link } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { request } from "../../lib/http";
 import { openRazorpayCheckout } from "../../lib/razorpay";
@@ -695,9 +696,27 @@ export function PortalPaymentsPage() {
         </div>
       )}
       {paymentStatus === "success" && (
-        <div className="flex items-center gap-3 bg-emerald-50/90 border border-emerald-200/80 rounded-2xl px-5 py-3.5 text-sm font-semibold text-emerald-800 shadow-sm backdrop-blur-xs">
-          <CheckCircle2 className="size-4.5 text-emerald-600 shrink-0" />
-          <span>Payment successfully confirmed! Your creative subscription is live.</span>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-300 rounded-2xl p-4 sm:px-6 sm:py-4.5 text-sm font-semibold text-emerald-950 shadow-md backdrop-blur-xs">
+          <div className="flex items-center gap-3.5">
+            <div className="size-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <CheckCircle2 className="size-5" />
+            </div>
+            <div>
+              <p className="font-extrabold text-sm sm:text-base text-emerald-950">
+                Payment Confirmed & Retainer Active!
+              </p>
+              <p className="text-xs text-emerald-700 font-medium mt-0.5">
+                Next: Enter your brand details to synthesize your Gemini Brand DNA and algorithmically dispatch your creative pod.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/onboarding"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2B7BC4] hover:bg-[#1A5EA8] text-white text-xs font-bold shadow-md shadow-blue-500/25 transition-all shrink-0 cursor-pointer"
+          >
+            <Sparkles className="size-3.5 text-amber-300" />
+            <span>Generate Gemini Brand DNA →</span>
+          </Link>
         </div>
       )}
       {paymentStatus === "error" && (
@@ -706,6 +725,7 @@ export function PortalPaymentsPage() {
           <span>Payment was cancelled or could not be processed. Please try again.</span>
         </div>
       )}
+
 
       {/* ── Top Header ────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-3xl p-6 sm:p-7 shadow-xs">

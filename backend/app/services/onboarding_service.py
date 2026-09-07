@@ -64,6 +64,28 @@ async def get_onboarding_status(db: AsyncSession, client_id: uuid.UUID) -> Onboa
         "onboarding_completed": stage >= 5,
     }
 
+    assigned_team: list[dict[str, Any]] = []
+    if stage >= 4:
+        ca_stmt = (
+            select(ClientAssignment, User)
+            .join(User, User.id == ClientAssignment.user_id)
+            .where(ClientAssignment.client_id == client_id)
+        )
+        ca_res = await db.execute(ca_stmt)
+        for ca, u in ca_res.all():
+            role_label = "Team Member"
+            if ca.role == "team_lead":
+                role_label = "Team Lead & Account Director"
+            elif ca.role == "video_editor":
+                role_label = "Lead Video Editor (Reels & Motion)"
+            elif ca.role == "graphic_designer":
+                role_label = "Lead Graphic Designer (Posters & Carousels)"
+            assigned_team.append({
+                "id": str(u.id),
+                "name": u.full_name or u.email,
+                "role": role_label,
+            })
+
     return OnboardingStatusResponse(
         client_id=client_id,
         stage=stage,
@@ -72,7 +94,9 @@ async def get_onboarding_status(db: AsyncSession, client_id: uuid.UUID) -> Onboa
         deadline=profile.onboarding_deadline if profile else None,
         company_name=profile.company_name if profile else None,
         instagram_username=profile.instagram_username if profile else None,
+        assigned_team=assigned_team,
     )
+
 
 
 async def accept_terms(db: AsyncSession, client_id: uuid.UUID, terms_version: str) -> None:

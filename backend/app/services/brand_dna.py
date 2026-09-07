@@ -27,19 +27,50 @@ logger = get_logger(__name__)
 
 
 def generate_deterministic_brand_dna(answers: dict[str, Any]) -> BrandDNASummary:
-    """Generate deterministic, high-quality Brand DNA fallback."""
-    audience = answers.get("target_audience", "Engaged digital consumers and enthusiasts")
+    """Generate deterministic, high-quality Brand DNA fallback adhering to agency standards."""
+    company = answers.get("company_name", "Your Brand")
+    industry = answers.get("industry", "Digital & Consumer")
+    goal = answers.get("primary_goal", "Brand Awareness & Customer Growth")
+    audience = answers.get("target_audience", "Engaged digital consumers and industry professionals")
+    age_range = answers.get("audience_age_range", "22-42")
+    problems = answers.get("audience_problems_solved", "Finding reliable, high-aesthetic solutions that drive ROI.")
     tones = answers.get("tone_keywords", ["Modern", "Authoritative", "Dynamic"])
-    palette = answers.get("color_palette", ["#0E1116", "#F0A202", "#4C6FFF"])
+    palette = answers.get("color_palette", ["#0E1116", "#2B7BC4", "#065F46", "#F0A202"])
+    focus = answers.get("content_focus", [])
 
-    tone_str = ", ".join(tones) if isinstance(tones, list) else str(tones)
-    summary_line = f"Premium {tone_str.lower()} visual identity tailored for {audience}."
+    tone_str = ", ".join(tones) if isinstance(tones, list) and tones else "Modern, Authoritative"
+    summary_line = (
+        f"{company} elevates {industry.lower()} through a {tone_str.lower()} visual identity "
+        f"tailored to solve core pain points for {audience}."
+    )
+
+    persona = (
+        f"Primary demographic includes individuals aged {age_range} in {industry.lower()}. "
+        f"They value speed, transparent quality, and premium design, seeking to overcome: {problems}"
+    )
+
+    alignment = (
+        f"To achieve the core objective of {goal.lower()}, content strategy combines high-frequency "
+        f"social video with authoritative visual carousels that establish category leadership."
+    )
+
+    content_themes = [
+        "Behind-the-Scenes & Craftsmanship",
+        "Product Demonstrations & Proof",
+        "Customer Transformations & Case Studies",
+        "Educational Breakdowns & Industry Insights",
+    ]
+    if focus and isinstance(focus, list) and len(focus) > 0:
+        content_themes = [f"Focus: {item}" for item in focus[:4]]
 
     return BrandDNASummary(
         tone=tone_str,
-        palette=palette if isinstance(palette, list) else ["#0E1116", "#F0A202"],
+        palette=palette if isinstance(palette, list) and palette else ["#0E1116", "#2B7BC4", "#065F46"],
         target_audience=audience,
         ai_summary_line=summary_line,
+        audience_persona=persona,
+        goal_alignment=alignment,
+        content_themes=content_themes,
         recommended_formats=[
             "High-Retention Reels (9:16)",
             "Educational Carousels (4:5)",
@@ -51,7 +82,7 @@ def generate_deterministic_brand_dna(answers: dict[str, Any]) -> BrandDNASummary
 async def generate_brand_dna(
     db: AsyncSession, client_id: uuid.UUID, questionnaire_id: uuid.UUID
 ) -> BrandDNASummary:
-    """Run Brand DNA synthesis with automatic schema enforcement and fallback."""
+    """Run Brand DNA synthesis with Gemini 1.5 Flash demanding strict JSON, with resilient fallback."""
     q_stmt = select(Questionnaire).where(Questionnaire.id == questionnaire_id)
     quest = (await db.execute(q_stmt)).scalar_one_or_none()
     answers = quest.answers if quest else {}
@@ -59,26 +90,47 @@ async def generate_brand_dna(
     result_dna: BrandDNASummary | None = None
 
     # Check for Gemini API key
-    gemini_key = getattr(settings, "GEMINI_API_KEY", None)
+    gemini_key = getattr(settings, "GEMINI_API_KEY", "") or ""
     if gemini_key:
         try:
             import httpx
 
-            prompt = (
-                "You are a master creative director. Synthesize Brand DNA from this questionnaire: "
-                f"{json.dumps(answers)}. Return ONLY valid JSON with keys: "
-                "'tone' (string), 'palette' (list of hex codes), 'target_audience' (string), "
-                "'ai_summary_line' (single punchy sentence), "
-                "'recommended_formats' (list of 3 strings)."
+            system_instruction = (
+                "You are a master creative director and brand strategist for a premier digital creative agency. "
+                "Analyze the client's brand intake questionnaire and synthesize a structured, strategic Brand DNA. "
+                "Return ONLY a valid JSON object with EXACTLY these keys:\n"
+                "{\n"
+                '  "tone": "Comma-separated 3-5 tone keywords (e.g. Bold, Modern, Authoritative)",\n'
+                '  "palette": ["list", "of", "3-5", "hex", "colors"],\n'
+                '  "target_audience": "Concise summary of the core audience demographic",\n'
+                '  "ai_summary_line": "One punchy, strategic brand positioning sentence (14-24 words)",\n'
+                '  "audience_persona": "2-3 sentences detailing the ideal buyer persona, motivations, and pain points",\n'
+                '  "goal_alignment": "2-3 sentences aligning the social content roadmap with their primary business goal",\n'
+                '  "content_themes": ["3-5", "core", "content", "pillars"],\n'
+                '  "recommended_formats": ["3", "recommended", "deliverable", "formats (e.g. High-Retention Reels (9:16))"]\n'
+                "}\n"
+                "Do NOT include markdown formatting, backticks, or any conversational text outside the JSON."
             )
 
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            user_prompt = f"Client Brand Questionnaire Intake Data:\n{json.dumps(answers, indent=2)}"
+
+            gemini_payload = {
+                "contents": [
+                    {
+                        "role": "user",
+                        "parts": [{"text": f"{system_instruction}\n\n{user_prompt}"}],
+                    }
+                ],
+                "generationConfig": {
+                    "responseMimeType": "application/json",
+                    "temperature": 0.3,
+                },
+            }
+
+            async with httpx.AsyncClient(timeout=15.0) as client:
                 res = await client.post(
                     f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}",
-                    json={
-                        "contents": [{"parts": [{"text": prompt}]}],
-                        "generationConfig": {"response_mime_type": "application/json"},
-                    },
+                    json=gemini_payload,
                 )
                 if res.status_code == 200:
                     text_content = (
@@ -88,12 +140,21 @@ async def generate_brand_dna(
                         .get("parts", [{}])[0]
                         .get("text", "{}")
                     )
-                    parsed = json.loads(text_content)
+                    # Clean any trailing markdown if present
+                    cleaned = text_content.strip()
+                    if cleaned.startswith("```json"):
+                        cleaned = cleaned[7:]
+                    if cleaned.startswith("```"):
+                        cleaned = cleaned[3:]
+                    if cleaned.endswith("```"):
+                        cleaned = cleaned[:-3]
+                    parsed = json.loads(cleaned.strip())
                     result_dna = BrandDNASummary.model_validate(parsed)
+                    logger.info("gemini_brand_dna_synthesized_successfully", client_id=str(client_id))
         except Exception as err:
             logger.warning("gemini_generation_failed_using_fallback", error=str(err))
 
-    # Guaranteed fallback
+    # Guaranteed fallback ensuring the client always has a rich, tailored result
     if not result_dna:
         result_dna = generate_deterministic_brand_dna(answers)
 
@@ -110,6 +171,7 @@ async def generate_brand_dna(
     await db.commit()
     logger.info("brand_dna_synthesized_and_persisted", client_id=str(client_id))
     return result_dna
+
 
 
 async def get_brand_dna_status(db: AsyncSession, client_id: uuid.UUID) -> BrandDNAStatusResponse:

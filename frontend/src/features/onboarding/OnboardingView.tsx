@@ -9,6 +9,7 @@ import { StagePayment } from "./StagePayment";
 import { StageQuestionnaire } from "./StageQuestionnaire";
 import { StageTerms } from "./StageTerms";
 import { OtpPinInput } from "../../components/ui/OtpPinInput";
+import type { AssignedTeamMember } from "../../types/api";
 
 interface OnboardingViewProps {
   userId: string;
@@ -319,6 +320,7 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
   const { user } = useAuth();
   const [termsSubmitting, setTermsSubmitting] = useState(false);
   const [activeStep, setActiveStep] = useState<number | null>(null);
+  const [assignedTeam, setAssignedTeam] = useState<AssignedTeamMember[] | undefined>(undefined);
 
   const {
     data: status,
@@ -349,6 +351,9 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
         }
         return prev;
       });
+      if (status.assigned_team && status.assigned_team.length > 0) {
+        setAssignedTeam(status.assigned_team);
+      }
     }
   }, [status, maxUnlockedStep]);
 
@@ -442,7 +447,10 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
             <StageQuestionnaire
               key="questionnaire"
               userId={userId}
-              onComplete={() => {
+              onComplete={(team) => {
+                if (team && team.length > 0) {
+                  setAssignedTeam(team);
+                }
                 void refreshStatus();
                 setActiveStep(5);
               }}
@@ -453,6 +461,7 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
             <StageComplete
               key="complete"
               userId={userId}
+              assignedTeam={assignedTeam}
               onLaunchPortal={onPortalLaunch ?? (() => {})}
             />
           )}
@@ -461,5 +470,6 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
     </div>
   );
 }
+
 
 export default OnboardingView;

@@ -21,6 +21,14 @@ export interface ApiErrorResponse {
 
 // ── Onboarding ──────────────────────────────────────────────────────────────
 
+export interface AssignedTeamMember {
+  id: string;
+  name: string;
+  role: string;
+  avatar?: string;
+  email?: string;
+}
+
 export interface OnboardingStatus {
   stage: number; // 0-5, derived from v_client_onboarding
   stage_name: string;
@@ -34,6 +42,7 @@ export interface OnboardingStatus {
   deadline: string | null;
   company_name: string | null;
   instagram_username: string | null;
+  assigned_team?: AssignedTeamMember[];
 }
 
 export interface Plan {
@@ -72,6 +81,9 @@ export interface BrandDNA {
   ai_summary_line: string;
   /** Convenience alias populated from brand_summary in the status response */
   summary?: string;
+  audience_persona?: string;
+  goal_alignment?: string;
+  content_themes?: string[];
 }
 
 export interface BrandDNAStatus {
@@ -81,12 +93,33 @@ export interface BrandDNAStatus {
 
 export interface QuestionnairePayload {
   company_name: string;
+  industry?: string;
+  official_logo_assets?: string;
+  website_url?: string;
+  business_description?: string;
   instagram_username: string;
+  primary_goal?: string;
   target_audience: string;
+  audience_age_range?: string;
+  audience_gender?: string;
+  audience_location?: string;
+  audience_problems_solved?: string;
   tone_keywords: string[];
   color_palette: string[];
   content_goals: string[];
+  style_references?: string[];
+  competitors?: string[];
+  content_focus?: string[];
+  topics_to_avoid?: string;
+  notes?: string;
 }
+
+export interface OnboardingCompleteResponse {
+  status: string;
+  onboarding_completed_at: string;
+  assigned_team: AssignedTeamMember[];
+}
+
 
 // ── Deliverables (Phase 4) ──────────────────────────────────────────────────
 

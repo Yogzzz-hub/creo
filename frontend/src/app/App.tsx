@@ -135,12 +135,18 @@ function OnboardingPageWrapper() {
       {/* Main Onboarding Canvas */}
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-8">
         <Suspense fallback={<RouteLoading />}>
-          <OnboardingView userId={userId} />
+          <OnboardingView
+            userId={userId}
+            onPortalLaunch={() => {
+              window.location.href = "/portal";
+            }}
+          />
         </Suspense>
       </main>
     </div>
   );
 }
+
 
 function HealthPage() {
   const { data, isLoading } = useQuery<HealthResponse>({
