@@ -17,7 +17,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.core.logging import get_logger
 from app.core.rbac import Actor, get_current_actor
-from app.core.security import create_access_token, create_refresh_token, hash_password, verify_password
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    hash_password,
+    validate_password_strength,
+    verify_password,
+)
 from app.db.session import get_db
 from app.models.enums import AccountStatus, UserRole
 from app.models.user import ClientProfile, User
@@ -26,19 +32,35 @@ from app.services.email_service import send_otp_email
 logger = get_logger(__name__)
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-# Ephemeral in-memory OTP storage: email -> (code, expiry_timestamp)
-_otp_store: dict[str, tuple[str, float]] = {}
+# Ephemeral in-memory OTP storage: key -> [code, expiry_timestamp, attempts]
+_otp_store: dict[str, list[Any]] = {}
+
+# Ephemeral rate limiting store: key -> list of timestamp floats
+_rate_limits: dict[str, list[float]] = {}
+
+
+def _check_rate_limit(key: str, max_requests: int, window_seconds: int) -> bool:
+    """Sliding-window in-memory rate limiter per key (e.g. IP or email)."""
+    now = time.time()
+    cutoff = now - window_seconds
+    timestamps = [t for t in _rate_limits.get(key, []) if t > cutoff]
+    if len(timestamps) >= max_requests:
+        _rate_limits[key] = timestamps
+        return False
+    timestamps.append(now)
+    _rate_limits[key] = timestamps
+    return True
 
 
 class RegisterRequest(BaseModel):
     email: EmailStr
-    password: str = Field(..., min_length=6, max_length=128)
+    password: str = Field(..., min_length=8, max_length=128)
     full_name: str | None = None
 
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=1, max_length=128)
 
 
 class SendOtpRequest(BaseModel):
@@ -53,14 +75,14 @@ class VerifyOtpRequest(BaseModel):
 
 class RegisterIntentRequest(BaseModel):
     email: EmailStr
-    password: str = Field(..., min_length=6, max_length=128)
+    password: str = Field(..., min_length=8, max_length=128)
     full_name: str | None = None
 
 
 class VerifyRegistrationRequest(BaseModel):
     email: EmailStr
     code: str = Field(..., min_length=4, max_length=8)
-    password: str = Field(..., min_length=6, max_length=128)
+    password: str = Field(..., min_length=8, max_length=128)
     full_name: str | None = None
 
 
@@ -74,7 +96,7 @@ class VerifyResetOtpRequest(BaseModel):
 
 
 class SetMandatoryPasswordRequest(BaseModel):
-    new_password: str = Field(..., min_length=6, max_length=128)
+    new_password: str = Field(..., min_length=8, max_length=128)
 
 
 class OAuthCallbackRequest(BaseModel):
@@ -87,8 +109,20 @@ async def register_intent(
     payload: RegisterIntentRequest,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Validate email uniqueness and dispatch 6-digit verification code to email for account creation."""
+    """Validate email uniqueness, password strength, rate limit, and dispatch 6-digit verification code to email."""
     email_clean = payload.email.strip().lower()
+
+    # Rate limiting: Max 5 registration attempts per 10 minutes per email
+    if not _check_rate_limit(f"reg_intent:{email_clean}", max_requests=5, window_seconds=600):
+        raise HTTPException(
+            status_code=429,
+            detail="Too many registration attempts. Please wait a few minutes before trying again.",
+        )
+
+    # Password complexity enforcement
+    valid, err = validate_password_strength(payload.password)
+    if not valid:
+        raise HTTPException(status_code=400, detail=err)
 
     # Check if user already exists
     stmt = select(User).where(func.lower(User.email) == email_clean)
@@ -101,10 +135,10 @@ async def register_intent(
             detail="An account with this email address already exists. Please sign in instead.",
         )
 
-    # Generate 6-digit OTP
+    # Generate cryptographically secure 6-digit OTP
     otp_code = f"{secrets.randbelow(900000) + 100000}"
     expires_at = time.time() + 600.0  # 10 minutes
-    _otp_store[f"reg:{email_clean}"] = (otp_code, expires_at)
+    _otp_store[f"reg:{email_clean}"] = [otp_code, expires_at, 0]
 
     email_sent = False
     if settings.SMTP_PASSWORD:
@@ -132,15 +166,27 @@ async def verify_registration(
     store_key = f"reg:{email_clean}"
     stored = _otp_store.get(store_key)
 
-    valid_code = False
-    if stored and stored[0] == payload.code and time.time() < stored[1]:
-        valid_code = True
-        _otp_store.pop(store_key, None)
-    elif payload.code in ("123456", "000000") or settings.ENVIRONMENT == "development":
-        valid_code = True
+    if not stored:
+        raise HTTPException(status_code=400, detail="No active verification code found for this email. Please request a new code.")
 
-    if not valid_code:
-        raise HTTPException(status_code=400, detail="Invalid or expired verification code")
+    if time.time() > stored[1]:
+        _otp_store.pop(store_key, None)
+        raise HTTPException(status_code=400, detail="Verification code has expired. Please request a new code.")
+
+    stored[2] += 1
+    if stored[2] > 5:
+        _otp_store.pop(store_key, None)
+        raise HTTPException(status_code=429, detail="Maximum verification attempts exceeded. Please request a new code.")
+
+    if stored[0] != payload.code.strip():
+        raise HTTPException(status_code=400, detail="Invalid verification code. Please check the code sent to your email.")
+
+    _otp_store.pop(store_key, None)
+
+    # Validate password strength
+    valid, err = validate_password_strength(payload.password)
+    if not valid:
+        raise HTTPException(status_code=400, detail=err)
 
     stmt = select(User).where(func.lower(User.email) == email_clean)
     res = await db.execute(stmt)
@@ -176,6 +222,7 @@ async def verify_registration(
         role=user.role.value,
         email=user.email,
         client_id=user.id if user.role == UserRole.CLIENT else None,
+        extra_claims={"must_reset_password": False},
     )
     refresh_token = create_refresh_token(subject=user.id)
 
@@ -202,6 +249,12 @@ async def forgot_password(
     """Generate and dispatch OTP to user email for password reset."""
     email_clean = payload.email.strip().lower()
 
+    if not _check_rate_limit(f"forgot:{email_clean}", max_requests=5, window_seconds=600):
+        raise HTTPException(
+            status_code=429,
+            detail="Too many password reset requests. Please wait a few minutes before trying again.",
+        )
+
     stmt = select(User).where(func.lower(User.email) == email_clean)
     res = await db.execute(stmt)
     user = res.scalar_one_or_none()
@@ -211,7 +264,7 @@ async def forgot_password(
 
     otp_code = f"{secrets.randbelow(900000) + 100000}"
     expires_at = time.time() + 600.0
-    _otp_store[f"reset:{email_clean}"] = (otp_code, expires_at)
+    _otp_store[f"reset:{email_clean}"] = [otp_code, expires_at, 0]
 
     email_sent = False
     if settings.SMTP_PASSWORD:
@@ -239,15 +292,22 @@ async def verify_reset_otp(
     store_key = f"reset:{email_clean}"
     stored = _otp_store.get(store_key)
 
-    valid_code = False
-    if stored and stored[0] == payload.code and time.time() < stored[1]:
-        valid_code = True
-        _otp_store.pop(store_key, None)
-    elif payload.code in ("123456", "000000") or settings.ENVIRONMENT == "development":
-        valid_code = True
+    if not stored:
+        raise HTTPException(status_code=400, detail="No active reset code found for this email. Please request a new code.")
 
-    if not valid_code:
-        raise HTTPException(status_code=400, detail="Invalid or expired verification code")
+    if time.time() > stored[1]:
+        _otp_store.pop(store_key, None)
+        raise HTTPException(status_code=400, detail="Reset code has expired. Please request a new code.")
+
+    stored[2] += 1
+    if stored[2] > 5:
+        _otp_store.pop(store_key, None)
+        raise HTTPException(status_code=429, detail="Too many failed attempts. Please request a new reset code.")
+
+    if stored[0] != payload.code.strip():
+        raise HTTPException(status_code=400, detail="Invalid reset code.")
+
+    _otp_store.pop(store_key, None)
 
     stmt = select(User).where(func.lower(User.email) == email_clean)
     res = await db.execute(stmt)
@@ -266,6 +326,7 @@ async def verify_reset_otp(
         role=user.role.value,
         email=user.email,
         client_id=user.id if user.role == UserRole.CLIENT else None,
+        extra_claims={"must_reset_password": True},
     )
     refresh_token = create_refresh_token(subject=user.id)
 
@@ -292,8 +353,11 @@ async def set_mandatory_password(
 ) -> dict[str, Any]:
     """Set new password for current user and unlock account by unsetting must_reset_password."""
     user_id = actor.user_id
-    if str(user_id) == "00000000-0000-0000-0000-000000000001" and actor.email is None:
-        raise HTTPException(status_code=401, detail="Authentication required")
+
+    # Validate password strength
+    valid, err = validate_password_strength(payload.new_password)
+    if not valid:
+        raise HTTPException(status_code=400, detail=err)
 
     stmt = select(User).where(User.id == user_id)
     res = await db.execute(stmt)
@@ -307,9 +371,19 @@ async def set_mandatory_password(
     await db.commit()
     await db.refresh(user)
 
+    # Issue refreshed token with must_reset_password = False
+    new_access_token = create_access_token(
+        subject=user.id,
+        role=user.role.value,
+        email=user.email,
+        client_id=user.id if user.role == UserRole.CLIENT else None,
+        extra_claims={"must_reset_password": False},
+    )
+
     return {
         "status": "success",
         "message": "Password updated successfully. Account unlocked.",
+        "access_token": new_access_token,
         "user": {
             "id": str(user.id),
             "email": user.email,
@@ -328,6 +402,13 @@ async def register(
 ) -> dict[str, Any]:
     """Register a new user account with email, password, and full name."""
     email_clean = payload.email.strip().lower()
+
+    if not _check_rate_limit(f"register:{email_clean}", max_requests=5, window_seconds=600):
+        raise HTTPException(status_code=429, detail="Too many registration attempts. Please try again later.")
+
+    valid, err = validate_password_strength(payload.password)
+    if not valid:
+        raise HTTPException(status_code=400, detail=err)
 
     # Check if user already exists
     stmt = select(User).where(func.lower(User.email) == email_clean)
@@ -370,6 +451,7 @@ async def register(
         role=user.role.value,
         email=user.email,
         client_id=user.id if user.role == UserRole.CLIENT else None,
+        extra_claims={"must_reset_password": False},
     )
     refresh_token = create_refresh_token(subject=user.id)
 
@@ -393,8 +475,15 @@ async def login(
     payload: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Authenticate with email and password."""
+    """Authenticate with email and password with brute-force rate limit protection."""
     email_clean = payload.email.strip().lower()
+
+    # Rate limiting: Max 10 attempts per 15 minutes
+    if not _check_rate_limit(f"login:{email_clean}", max_requests=10, window_seconds=900):
+        raise HTTPException(
+            status_code=429,
+            detail="Too many sign-in attempts. For your security, this account is temporarily locked for 15 minutes.",
+        )
 
     stmt = select(User).where(func.lower(User.email) == email_clean)
     res = await db.execute(stmt)
@@ -406,20 +495,16 @@ async def login(
             detail="Invalid email or password. Please check your credentials.",
         )
 
-    is_valid = False
-    if user.hashed_password:
-        is_valid = verify_password(payload.password, user.hashed_password)
-    else:
-        # Fallback for seeded or dev demo users
-        if payload.password in ("CreoAdmin2026!", "CreoLead2026!", "Client123!"):
-            is_valid = True
-            user.hashed_password = hash_password(payload.password)
-            await db.commit()
-
-    if not is_valid:
+    if not user.hashed_password or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password. Please check your credentials.",
+        )
+
+    if user.account_status == AccountStatus.SUSPENDED:
+        raise HTTPException(
+            status_code=403,
+            detail="Your account has been suspended. Please contact support.",
         )
 
     access_token = create_access_token(
@@ -427,6 +512,7 @@ async def login(
         role=user.role.value,
         email=user.email,
         client_id=user.id if user.role == UserRole.CLIENT else None,
+        extra_claims={"must_reset_password": bool(getattr(user, "must_reset_password", False))},
     )
     refresh_token = create_refresh_token(subject=user.id)
 
@@ -447,22 +533,30 @@ async def login(
 
 @router.post("/send-otp", response_model=dict[str, Any])
 async def send_otp(payload: SendOtpRequest, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
-    """Send 6-digit verification code to email via Google SMTP (with dev simulator)."""
-    # Generate 6-digit OTP
+    """Send 6-digit verification code to email via Google SMTP with rate limiting."""
+    email_clean = payload.email.strip().lower()
+
+    if not _check_rate_limit(f"send_otp:{email_clean}", max_requests=5, window_seconds=600):
+        raise HTTPException(
+            status_code=429,
+            detail="Too many verification requests. Please wait a few minutes before trying again.",
+        )
+
+    # Generate cryptographically secure 6-digit OTP
     otp_code = f"{secrets.randbelow(900000) + 100000}"
     expires_at = time.time() + 600.0  # 10 minutes
-    _otp_store[payload.email.lower()] = (otp_code, expires_at)
+    _otp_store[email_clean] = [otp_code, expires_at, 0]
 
     email_sent = False
     if settings.SMTP_PASSWORD:
         try:
-            email_sent = await send_otp_email(payload.email, otp_code)
+            email_sent = await send_otp_email(email_clean, otp_code)
         except Exception as e:
-            logger.warning("otp_email_dispatch_error", error=str(e), email=payload.email)
+            logger.warning("otp_email_dispatch_error", error=str(e), email=email_clean)
 
     return {
         "status": "sent",
-        "email": payload.email,
+        "email": email_clean,
         "message": "Verification code sent to email",
         "email_delivered": email_sent,
         "expires_in_seconds": 600,
@@ -475,27 +569,33 @@ async def verify_otp(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Verify OTP and return authenticated user session & token."""
-    email_key = payload.email.lower()
+    email_key = payload.email.strip().lower()
     stored = _otp_store.get(email_key)
 
-    # Allow configured test codes "123456", "000000", or matching stored code
-    valid_code = False
-    if stored and stored[0] == payload.code and time.time() < stored[1]:
-        valid_code = True
-        _otp_store.pop(email_key, None)
-    elif payload.code in ("123456", "000000") or settings.ENVIRONMENT == "development":
-        valid_code = True
+    if not stored:
+        raise HTTPException(status_code=400, detail="No active verification code found for this email. Please request a new code.")
 
-    if not valid_code:
-        raise HTTPException(status_code=400, detail="Invalid or expired verification code")
+    if time.time() > stored[1]:
+        _otp_store.pop(email_key, None)
+        raise HTTPException(status_code=400, detail="Verification code has expired. Please request a new code.")
+
+    stored[2] += 1
+    if stored[2] > 5:
+        _otp_store.pop(email_key, None)
+        raise HTTPException(status_code=429, detail="Maximum verification attempts exceeded. Please request a new code.")
+
+    if stored[0] != payload.code.strip():
+        raise HTTPException(status_code=400, detail="Invalid verification code.")
+
+    _otp_store.pop(email_key, None)
 
     # Lookup or create user
-    stmt = select(User).where(User.email == payload.email)
+    stmt = select(User).where(User.email == email_key)
     res = await db.execute(stmt)
     user = res.scalar_one_or_none()
 
     if not user:
-        email_lower = payload.email.lower()
+        email_lower = email_key
         assigned_role = UserRole.CLIENT
         if email_lower.endswith("@creo.agency") or email_lower.startswith("admin@") or "admin" in email_lower:
             assigned_role = UserRole.SUPER_ADMIN
@@ -504,8 +604,8 @@ async def verify_otp(
 
         user = User(
             auth_id=f"auth-otp-{uuid.uuid4().hex[:12]}",
-            email=payload.email,
-            full_name=payload.full_name or payload.email.split("@")[0].capitalize(),
+            email=email_lower,
+            full_name=payload.full_name or email_lower.split("@")[0].capitalize(),
             role=assigned_role,
             account_status=AccountStatus.ACTIVE,
         )
@@ -516,16 +616,13 @@ async def verify_otp(
         db.add(profile)
         await db.commit()
         await db.refresh(user)
-    elif "admin" in payload.email.lower() and user.role == UserRole.CLIENT:
-        user.role = UserRole.SUPER_ADMIN
-        await db.commit()
-        await db.refresh(user)
 
     access_token = create_access_token(
         subject=user.id,
         role=user.role.value,
         email=user.email,
         client_id=user.id if user.role == UserRole.CLIENT else None,
+        extra_claims={"must_reset_password": bool(getattr(user, "must_reset_password", False))},
     )
     refresh_token = create_refresh_token(subject=user.id)
 

@@ -12,11 +12,8 @@ import type {
  */
 import { request } from "./http";
 
-// ── Auth-sim helpers (pre-auth phase) ──────────────────────────────────────
-// During Phase 3, identity is passed via X-User-Id + X-User-Role headers.
-// In the final auth phase this will be replaced by the JWT Bearer flow.
-export function actorHeaders(userId: string, role = "client"): HeadersInit {
-  return { "X-User-Id": userId, "X-User-Role": role };
+export function actorHeaders(_userId?: string, _role = "client"): HeadersInit {
+  return {};
 }
 
 // ── Onboarding ──────────────────────────────────────────────────────────────

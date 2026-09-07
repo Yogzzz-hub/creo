@@ -32,17 +32,28 @@ async def get_current_actor(
     x_user_role: str | None = Header(None, alias="X-User-Role"),
     x_client_id: str | None = Header(None, alias="X-Client-Id"),
 ) -> Actor:
-    """Extract actor and role from real JWT Bearer token, falling back to headers."""
+    """Extract and strictly authenticate actor from cryptographically signed JWT Bearer token."""
+    from app.config import settings
+
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header[7:].strip()
-        if token and not token.startswith("jwt-"):
+        if token:
             from app.core.security import decode_token
 
-            payload = decode_token(token)
+            payload = decode_token(token, expected_type="access")
             actor_id = uuid.UUID(payload["sub"])
             if await is_user_suspended_in_cache(actor_id):
                 raise Unauthorized("User account has been suspended", code="ACCOUNT_SUSPENDED")
+
+            # Enforce mandatory password reset isolation
+            if payload.get("must_reset_password") is True:
+                path = request.url.path
+                if not (path.endswith("/auth/set-mandatory-password") or path.endswith("/auth/me") or path.endswith("/auth/logout")):
+                    raise Forbidden(
+                        "Mandatory password reset required. Please set a new password before accessing other features.",
+                        code="PASSWORD_RESET_REQUIRED",
+                    )
 
             role_str = payload.get("role", "client").lower()
             try:
@@ -66,38 +77,41 @@ async def get_current_actor(
                 email=payload.get("email"),
             )
 
-    actor_id: uuid.UUID
-    if x_user_id:
-        try:
-            actor_id = uuid.UUID(x_user_id)
-        except ValueError:
+    # Allow automated test fixtures ONLY when running in test environment / pytest
+    import sys
+    is_testing = "pytest" in sys.modules or settings.ENVIRONMENT in ("test", "testing")
+    if is_testing and (x_user_id or x_user_role):
+        if x_user_id:
+            try:
+                actor_id = uuid.UUID(x_user_id)
+            except ValueError:
+                raise Unauthorized("Invalid user ID in test header", code="INVALID_USER_ID")
+        else:
             actor_id = uuid.UUID("00000000-0000-0000-0000-000000000001")
-    else:
-        actor_id = uuid.UUID("00000000-0000-0000-0000-000000000001")
 
-    # Check instant suspension / revocation
-    if x_user_id and await is_user_suspended_in_cache(actor_id):
-        raise Unauthorized("User account has been suspended", code="ACCOUNT_SUSPENDED")
+        if await is_user_suspended_in_cache(actor_id):
+            raise Unauthorized("User account has been suspended", code="ACCOUNT_SUSPENDED")
 
-    role: UserRole
-    if x_user_role:
-        try:
-            role = UserRole(x_user_role.lower())
-        except ValueError as err:
-            raise Forbidden(f"Invalid user role: {x_user_role}", code="INVALID_ROLE") from err
-    else:
-        role = UserRole.SUPER_ADMIN
+        if x_user_role:
+            try:
+                role = UserRole(x_user_role.lower())
+            except ValueError as err:
+                raise Forbidden(f"Invalid user role: {x_user_role}", code="INVALID_ROLE") from err
+        else:
+            role = UserRole.CLIENT
 
-    client_uuid: uuid.UUID | None = None
-    if x_client_id:
-        try:
-            client_uuid = uuid.UUID(x_client_id)
-        except ValueError:
-            pass
-    elif role == UserRole.CLIENT:
-        client_uuid = actor_id
+        client_uuid = None
+        if x_client_id:
+            try:
+                client_uuid = uuid.UUID(x_client_id)
+            except ValueError:
+                pass
+        elif role == UserRole.CLIENT:
+            client_uuid = actor_id
 
-    return Actor(user_id=actor_id, role=role, client_id=client_uuid)
+        return Actor(user_id=actor_id, role=role, client_id=client_uuid)
+
+    raise Unauthorized("Authentication required. Please provide a valid Bearer token.", code="UNAUTHORIZED")
 
 
 def require_roles(*allowed_roles: UserRole) -> Callable[[Actor], Actor]:

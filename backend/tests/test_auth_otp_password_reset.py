@@ -33,12 +33,14 @@ async def test_full_auth_otp_and_password_reset_flow(db_session: AsyncSession):
 
         # Duplicate register-intent with existing email check after completion (will test later)
 
-        # 2. Verify Registration with code 123456 (dev/test allowed)
+        # 2. Verify Registration with the real generated OTP
+        from app.routers.auth import _otp_store
+        reg_code = _otp_store[f"reg:{test_email}"][0]
         verify_reg_resp = await ac.post(
             "/api/v1/auth/verify-registration",
             json={
                 "email": test_email,
-                "code": "123456",
+                "code": reg_code,
                 "password": initial_password,
                 "full_name": "OTP Test User",
             },
@@ -78,12 +80,13 @@ async def test_full_auth_otp_and_password_reset_flow(db_session: AsyncSession):
         assert forgot_resp.status_code == 200
         assert forgot_resp.json()["status"] == "sent"
 
-        # 5. Verify Reset OTP
+        # 5. Verify Reset OTP with real code
+        reset_code = _otp_store[f"reset:{test_email}"][0]
         reset_verify_resp = await ac.post(
             "/api/v1/auth/verify-reset-otp",
             json={
                 "email": test_email,
-                "code": "123456",
+                "code": reset_code,
             },
         )
         assert reset_verify_resp.status_code == 200

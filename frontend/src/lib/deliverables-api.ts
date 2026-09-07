@@ -6,12 +6,8 @@
 import type { DeliverableItem, PortalDeliverablesResponse } from "../types/api";
 import { request } from "./http";
 
-function actorHeaders(clientId: string): HeadersInit {
-  return {
-    "X-User-Id": clientId,
-    "X-User-Role": "client",
-    "X-Client-Id": clientId,
-  };
+function actorHeaders(_clientId?: string): HeadersInit {
+  return {};
 }
 
 export async function fetchPortalDeliverables(

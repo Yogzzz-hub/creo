@@ -73,16 +73,68 @@ app.add_middleware(
 app.add_exception_handler(AppError, app_error_handler)  # type: ignore[arg-type]
 
 
+# In-memory IP-based rate limiting dictionary
+_ip_request_timestamps: dict[str, list[float]] = {}
+MAX_REQUESTS_PER_WINDOW = 200  # 200 requests per 10-second window per IP
+WINDOW_SECONDS = 10
+MAX_CONTENT_LENGTH = 15 * 1024 * 1024  # 15 Megabytes max request size
+
+
 @app.middleware("http")
-async def add_security_headers(request: Request, call_next):
-    """Inject OWASP recommended security headers on all API responses."""
+async def security_and_rate_limit_middleware(request: Request, call_next):
+    """Zero-trust security middleware:
+    - Payload size limitation to prevent DOS / memory exhaustion
+    - Sliding-window IP request throttling
+    - Comprehensive OWASP security headers injection
+    """
+    import time
+
+    client_ip = request.client.host if request.client else "unknown"
+
+    # 1. Payload size check
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > MAX_CONTENT_LENGTH:
+        return JSONResponse(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            content={
+                "error": {
+                    "code": "PAYLOAD_TOO_LARGE",
+                    "message": f"Request payload exceeds maximum allowed size of {MAX_CONTENT_LENGTH // (1024*1024)}MB.",
+                }
+            },
+        )
+
+    # 2. IP-based request throttling / anti-DDoS (exempt health endpoint)
+    if not request.url.path.endswith("/health"):
+        now = time.time()
+        cutoff = now - WINDOW_SECONDS
+        timestamps = [t for t in _ip_request_timestamps.get(client_ip, []) if t > cutoff]
+        if len(timestamps) >= MAX_REQUESTS_PER_WINDOW:
+            _ip_request_timestamps[client_ip] = timestamps
+            return JSONResponse(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                content={
+                    "error": {
+                        "code": "RATE_LIMIT_EXCEEDED",
+                        "message": "Too many requests from your IP address. Please slow down.",
+                    }
+                },
+            )
+        timestamps.append(now)
+        _ip_request_timestamps[client_ip] = timestamps
+
     response = await call_next(request)
+
+    # 3. Comprehensive OWASP Recommended Security Headers
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
     return response
+
 
 
 @app.exception_handler(RequestValidationError)

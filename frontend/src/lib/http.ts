@@ -4,7 +4,7 @@
  */
 
 import type { ApiErrorResponse } from "../types/api";
-import { getAuthToken } from "./auth-token";
+import { getAuthToken, clearAuthToken } from "./auth-token";
 
 export class HttpError extends Error {
   readonly code: string;
@@ -69,6 +69,13 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
       }
     } catch {
       // Body was not JSON
+    }
+
+    if (response.status === 401) {
+      // If an existing authenticated session expired or token was revoked
+      if (!path.includes("/auth/login") && !path.includes("/auth/verify-")) {
+        clearAuthToken();
+      }
     }
 
     throw new HttpError(response.status, errorCode, errorMessage, errorDetails);
