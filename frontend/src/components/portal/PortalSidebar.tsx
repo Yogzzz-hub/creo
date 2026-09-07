@@ -19,7 +19,7 @@ const NAV_ITEMS = [
   { label: "Deliverables", href: "/portal/deliverables", icon: FileImage, requiresSub: true },
   { label: "Calendar", href: "/portal/calendar", icon: CalendarDays, requiresSub: true },
   { label: "Payments", href: "/portal/payments", icon: CreditCard },
-  { label: "Support", href: "/portal/support", icon: LifeBuoy },
+  { label: "Support", href: "/portal/support", icon: LifeBuoy, requiresSub: true },
   { label: "Account", href: "/portal/account", icon: UserCog },
 ];
 
@@ -28,7 +28,7 @@ const BOTTOM_TAB_ITEMS = [
   { label: "Deliverables", href: "/portal/deliverables", icon: FileImage, requiresSub: true },
   { label: "Calendar", href: "/portal/calendar", icon: CalendarDays, requiresSub: true },
   { label: "Plans", href: "/portal/payments", icon: CreditCard },
-  { label: "Support", href: "/portal/support", icon: LifeBuoy },
+  { label: "Support", href: "/portal/support", icon: LifeBuoy, requiresSub: true },
   { label: "Account", href: "/portal/account", icon: UserCog },
 ];
 
@@ -93,7 +93,10 @@ export function PortalSidebar() {
                 <item.icon className="size-4 shrink-0" />
                 <span className="flex-1">{item.label}</span>
                 {isLocked && (
-                  <span className="flex items-center justify-center size-5 rounded-md bg-white/10 text-slate-400">
+                  <span
+                    title="Locked until active retainer"
+                    className="flex items-center justify-center size-5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                  >
                     <Lock className="size-3" />
                   </span>
                 )}
@@ -101,14 +104,36 @@ export function PortalSidebar() {
             );
           })}
 
-          <button
-            onClick={handleLogout}
-            disabled={loggingOut}
-            className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-400 hover:bg-white/10 hover:text-white hover:translate-x-1 transition-all duration-200 cursor-pointer mt-auto"
-          >
-            <LogOut className="size-4 shrink-0" />
-            {loggingOut ? "Logging out..." : "Log out"}
-          </button>
+          <div className="mt-auto space-y-2">
+            {!isSubscribed && (
+              <Link
+                to="/portal/payments"
+                className="flex items-center justify-between gap-2.5 rounded-xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border border-amber-500/30 px-3 py-2.5 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 hover:border-amber-400/50 transition-all group shadow-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center size-6 rounded-md bg-amber-500/20 border border-amber-500/30 text-amber-300 shadow-inner group-hover:scale-105 transition-transform">
+                    <Lock className="size-3" />
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-white font-bold text-xs">Locked Features</span>
+                    <span className="text-[9px] text-amber-400/80 font-normal">Choose plan to unlock</span>
+                  </div>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-400 text-slate-950 font-bold uppercase tracking-wider group-hover:bg-amber-300 transition-colors shadow-xs">
+                  Unlock
+                </span>
+              </Link>
+            )}
+
+            <button
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="w-full flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-400 hover:bg-white/10 hover:text-white hover:translate-x-1 transition-all duration-200 cursor-pointer"
+            >
+              <LogOut className="size-4 shrink-0" />
+              {loggingOut ? "Logging out..." : "Log out"}
+            </button>
+          </div>
         </nav>
       </div>
     </aside>
