@@ -2,23 +2,17 @@ import { useState } from "react";
 import { Link } from "react-router";
 import {
   ArrowRight,
-  Sparkles,
   CheckCircle2,
   Zap,
   Play,
-  TrendingUp,
   FileText,
   Rocket,
   Star,
   Film,
   Layers,
-  Image as ImageIcon,
-  MessageSquare,
   Clock,
   ChevronDown,
   Loader2,
-  Award,
-  Check,
   Calendar,
 } from "lucide-react";
 import { request } from "../../lib/http";
@@ -39,52 +33,7 @@ const METRICS = [
   { value: "7 Days", label: "Onboarding to 1st Batch", sub: "Guaranteed SLA delivery" },
 ];
 
-const DELIVERABLE_FORMATS = [
-  {
-    icon: Film,
-    title: "Cinematic 9:16 Reels",
-    badge: "High Viral Retention",
-    specs: "1080 × 1920 • 60 FPS • 4K Master",
-    description:
-      "Scripted hooks, professional dynamic subtitles, licensed trending audio, and high-energy color grading designed specifically for the Instagram Reels algorithm.",
-    features: ["Storyline & Scriptwriting", "Dynamic Motion Typography", "Sound Design & SFX", "Aspect Ratio Optimization"],
-    color: "from-blue-600 to-indigo-700",
-    lightBg: "bg-blue-50/70 border-blue-200/80 text-blue-700",
-  },
-  {
-    icon: Layers,
-    title: "Swipeable Carousels",
-    badge: "Highest Save & Share Rate",
-    specs: "1080 × 1350 • 4:5 Portrait • Multi-Slide",
-    description:
-      "Educational infographics, curated aesthetic lookbooks, product teardowns, and visual frameworks that drive bookmarks and organic algorithm shares.",
-    features: ["5 to 10 Slide Sequences", "Custom Brand Color Lockups", "Direct Swipe Flow Hooks", "Retina Asset Prep"],
-    color: "from-emerald-600 to-teal-700",
-    lightBg: "bg-emerald-50/70 border-emerald-200/80 text-emerald-700",
-  },
-  {
-    icon: ImageIcon,
-    title: "Branded Feed Posters",
-    badge: "Editorial Brand Identity",
-    specs: "1080 × 1080 & 4:5 • High-DPI",
-    description:
-      "Editorial promo creatives, product launches, seasonal campaigns, and brand-defining visual drops that give your profile an authoritative look.",
-    features: ["Negative Space Typography", "Studio Flatlay Compositing", "Promotional Offer Badges", "Consistent Grid Aesthetic"],
-    color: "from-purple-600 to-violet-700",
-    lightBg: "bg-purple-50/70 border-purple-200/80 text-purple-700",
-  },
-  {
-    icon: MessageSquare,
-    title: "Interactive Stories & Polls",
-    badge: "Daily Community Conversions",
-    specs: "9:16 Full Screen • Daily Cadence",
-    description:
-      "Engagement-first stories with countdown stickers, quiz polls, behind-the-scenes teasers, and link drops engineered to convert passive followers into customers.",
-    features: ["Poll & Question Stickers", "Flash Deal Countdowns", "Behind-the-Scenes Teasers", "Direct Link Anchors"],
-    color: "from-amber-600 to-orange-700",
-    lightBg: "bg-amber-50/70 border-amber-200/80 text-amber-700",
-  },
-];
+
 
 const ONBOARDING_STEPS = [
   {
@@ -168,38 +117,7 @@ const COMPARISON_ROWS = [
   },
 ];
 
-const CASE_STUDIES = [
-  {
-    brand: "Astra Living",
-    industry: "Home & Lifestyle",
-    founder: "Kavita Rao, Founder",
-    quote:
-      "Creo completely transformed our Instagram presence. Going from struggling for content to having 4K reels and aesthetic carousels delivered every week generated a 310% surge in reach within our first month.",
-    metrics: "+310% Organic Reach",
-    subMetric: "30-Day Growth",
-    badge: "D2C Brand",
-  },
-  {
-    brand: "Urban Bakes",
-    industry: "Artisanal F&B",
-    founder: "Rahul Mehta, Co-Founder",
-    quote:
-      "The macro cinematography and fermentation reels Creo produced brought lines outside our doors on weekends. Over 1,200 neighborhood customers visited mentioning our social content.",
-    metrics: "1,200+ Local Customers",
-    subMetric: "3-Week Footfall Surge",
-    badge: "Hospitality & Retail",
-  },
-  {
-    brand: "Zenith Fitness",
-    industry: "Performance Gyms",
-    founder: "Vikram Malhotra, Managing Director",
-    quote:
-      "Our acquisition cost plummeted. The high-energy trainer spotlight reels and motion guides gave us the premium positioning we needed to charge 40% higher membership rates.",
-    metrics: "3.4x ROAS on Ads",
-    subMetric: "Quarterly ROI",
-    badge: "Health & Fitness",
-  },
-];
+
 
 const FAQS = [
   {
@@ -268,14 +186,6 @@ export function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
             {/* Left Column: Headline, Trust Signals & CTAs */}
             <div className="lg:col-span-6 z-10">
-              {/* Trust Badge */}
-              <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold text-blue-100 shadow-inner mb-6">
-                <span className="relative flex size-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full size-2 bg-emerald-400" />
-                </span>
-                <span>Next Production Sprint Starts Monday · Limited to 8 Brands</span>
-              </div>
 
               {/* Main Headline */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight leading-[1.06] text-white">
@@ -362,17 +272,6 @@ export function HomePage() {
 
             {/* Right Column: Interactive Creative Production Suite Mockup */}
             <div className="lg:col-span-6 flex justify-center lg:justify-end relative">
-              {/* Floating Top Badge */}
-              <div className="absolute -top-5 right-4 sm:right-8 z-30 bg-white/95 backdrop-blur-md text-[#0D2137] px-4 py-2 rounded-2xl shadow-xl border border-slate-200/80 flex items-center gap-2.5 animate-float">
-                <div className="size-7 rounded-xl bg-blue-50 text-[#2B7BC4] flex items-center justify-center">
-                  <Zap className="size-4" />
-                </div>
-                <div>
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">First Batch</div>
-                  <div className="text-xs font-extrabold text-[#0D2137]">Delivered in 7 Days</div>
-                </div>
-              </div>
-
               {/* Main Studio Operating Window */}
               <div className="w-full max-w-lg lg:max-w-none rounded-3xl border border-white/60 bg-white/95 backdrop-blur-2xl shadow-2xl shadow-blue-950/25 p-5 sm:p-7 text-slate-800 relative transition-transform duration-500 hover:shadow-blue-500/20">
                 {/* Window Bar */}
@@ -383,10 +282,6 @@ export function HomePage() {
                     <div className="size-3 rounded-full bg-emerald-400" />
                     <span className="ml-2 text-xs font-bold text-slate-700">Creo Creative Hub · Sprint #34</span>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                    <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    LIVE PRODUCTION
-                  </span>
                 </div>
 
                 {/* 2 Live Deliverable Preview Cards */}
@@ -475,17 +370,6 @@ export function HomePage() {
                   </div>
                 </div>
               </div>
-
-              {/* Floating Bottom Badge */}
-              <div className="absolute -bottom-4 left-4 sm:left-8 z-30 bg-white/95 backdrop-blur-md text-[#0D2137] px-4 py-2 rounded-2xl shadow-xl border border-slate-200/80 flex items-center gap-2.5 animate-float-delayed">
-                <div className="size-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <TrendingUp className="size-4" />
-                </div>
-                <div>
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Average Impact</div>
-                  <div className="text-xs font-extrabold text-emerald-600">+310% Reach Surge</div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -534,72 +418,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ── 3. Deliverables Showcase: What You Get Every Week ─────────────── */}
-      <section className="py-24 bg-white relative" id="deliverables">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-bold text-[#2B7BC4] mb-4">
-              <Sparkles className="size-3.5" />
-              <span>Full-Stack Content Production Engine</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0D2137]">
-              Everything Your Brand Needs <br />
-              <span className="text-[#2B7BC4]">to Dominate Social Feeds</span>
-            </h2>
-            <p className="mt-4 text-base sm:text-lg text-slate-600">
-              We handle end-to-end creative strategy, scriptwriting, editing, graphic design, and sound engineering — so you never run out of top-tier content.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {DELIVERABLE_FORMATS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.title}
-                  className="rounded-3xl p-8 border border-slate-200/80 bg-white hover:border-blue-200 hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-4 mb-6">
-                      <div className={`size-14 rounded-2xl flex items-center justify-center bg-gradient-to-br ${item.color} text-white shadow-md group-hover:scale-110 transition-transform`}>
-                        <Icon className="size-7" />
-                      </div>
-                      <span className={`text-xs font-bold px-3 py-1 rounded-full border ${item.lightBg}`}>
-                        {item.badge}
-                      </span>
-                    </div>
-
-                    <h3 className="text-2xl font-bold text-[#0D2137] mb-2">{item.title}</h3>
-                    <div className="text-xs font-semibold text-slate-400 mb-4">{item.specs}</div>
-                    <p className="text-sm text-slate-600 leading-relaxed mb-6">{item.description}</p>
-                  </div>
-
-                  <div className="pt-6 border-t border-slate-100">
-                    <div className="grid grid-cols-2 gap-2.5">
-                      {item.features.map((feat) => (
-                        <div key={feat} className="flex items-center gap-2 text-xs font-medium text-slate-700">
-                          <Check className="size-3.5 text-emerald-500 shrink-0" />
-                          <span>{feat}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-14 text-center">
-            <Link
-              to="/portfolio"
-              className="inline-flex items-center gap-2 text-sm font-bold text-[#2B7BC4] hover:text-[#1A5EA8] hover:gap-3 transition-all"
-            >
-              <span>Explore Verified Creative Gallery & Case Studies</span>
-              <ArrowRight className="size-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* ── 4. How It Works: The 7-Day Roadmap ───────────────────────────── */}
       <section className="py-24 bg-gradient-to-b from-[#F4F9FD] to-white border-y border-slate-200/70" id="how-it-works">
@@ -690,56 +509,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ── 6. Client Growth Stories & Social Proof ──────────────────────── */}
-      <section className="py-24 bg-gradient-to-b from-[#F8FAFD] to-white border-t border-slate-200/70" id="testimonials">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-1.5 text-xs font-bold text-emerald-700 border border-emerald-200/80 mb-4">
-              <Award className="size-3.5" />
-              <span>Verified Client Results</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0D2137]">
-              Proven Results for <br />
-              <span className="text-[#2B7BC4]">Brands That Demand Impact</span>
-            </h2>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {CASE_STUDIES.map((c) => (
-              <div
-                key={c.brand}
-                className="rounded-3xl p-8 bg-white border border-slate-200/90 shadow-xs hover:shadow-xl hover:border-blue-200 transition-all duration-300 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-6">
-                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
-                      {c.badge}
-                    </span>
-                    <div className="text-right">
-                      <div className="text-lg font-black text-emerald-600">{c.metrics}</div>
-                      <div className="text-[10px] text-slate-400 font-semibold">{c.subMetric}</div>
-                    </div>
-                  </div>
-
-                  <p className="text-sm text-slate-700 leading-relaxed italic mb-8">
-                    &ldquo;{c.quote}&rdquo;
-                  </p>
-                </div>
-
-                <div className="pt-6 border-t border-slate-100 flex items-center gap-3">
-                  <div className="size-10 rounded-full bg-gradient-to-br from-[#2B7BC4] to-[#123966] text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                    {c.brand[0]}
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold text-[#0D2137]">{c.founder}</div>
-                    <div className="text-xs text-slate-500">{c.brand} · {c.industry}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── 7. Retainer Quick-Glance Section ──────────────────────────────── */}
       <section className="py-20 bg-white" id="pricing-glance">
