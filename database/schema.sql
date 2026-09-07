@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS users (
     auth_id VARCHAR(255) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     full_name VARCHAR(255),
-    password_hash VARCHAR(255),
+    hashed_password VARCHAR(255),
     role user_role DEFAULT 'client' NOT NULL,
     account_status account_status DEFAULT 'pending_verification' NOT NULL,
     token_version INT DEFAULT 0 NOT NULL,

@@ -136,6 +136,7 @@ def upgrade() -> None:
             auth_id VARCHAR(255) UNIQUE NOT NULL,
             email VARCHAR(255) UNIQUE NOT NULL,
             full_name VARCHAR(255),
+            hashed_password VARCHAR(255),
             role user_role DEFAULT 'client' NOT NULL,
             account_status account_status DEFAULT 'pending_verification' NOT NULL,
             token_version INT DEFAULT 0 NOT NULL,
@@ -181,6 +182,7 @@ def upgrade() -> None:
     op.execute("""
         CREATE TABLE IF NOT EXISTS staff_profiles (
             user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+            team_lead_id UUID REFERENCES users(id) ON DELETE SET NULL,
             department VARCHAR(50) DEFAULT 'creative' NOT NULL,
             daily_capacity INT DEFAULT 4 NOT NULL,
             skills TEXT[] DEFAULT '{}'::text[] NOT NULL,

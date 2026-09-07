@@ -104,7 +104,7 @@ ON CONFLICT (name) DO UPDATE SET
 -- 'CreoAdmin2026!' or 'password123'
 -- -----------------------------------------------------------------------------
 INSERT INTO users (
-    id, auth_id, email, full_name, password_hash, role, account_status, email_verified_at
+    id, auth_id, email, full_name, hashed_password, role, account_status, email_verified_at
 ) VALUES
 -- 2.1 Super Admin (Full Agency Access)
 (

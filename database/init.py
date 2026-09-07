@@ -130,12 +130,13 @@ async def apply_schema() -> None:
     success = 0
     errors = 0
 
-    async with engine.begin() as conn:
+    async with engine.connect() as conn:
         for stmt in statements:
             if not stmt.strip():
                 continue
             try:
-                await conn.execute(text(stmt))
+                async with conn.begin():
+                    await conn.execute(text(stmt))
                 success += 1
             except Exception as e:
                 # Some objects might already exist
@@ -147,9 +148,9 @@ async def apply_schema() -> None:
     print(f"✅ Schema applied: {success} executed, {errors} skipped/warnings.")
 
 
-async def apply_seeds() -> None:
+async def apply_seeds(db_url_override: str | None = None) -> None:
     """Execute seed_data.sql to populate initial plans, staff, clients, and deliverables."""
-    db_url = get_db_url()
+    db_url = db_url_override or get_db_url()
     seed_path = Path(__file__).resolve().parent / "seed_data.sql"
     if not seed_path.exists():
         print(f"❌ seed_data.sql not found at: {seed_path}")
@@ -162,20 +163,23 @@ async def apply_seeds() -> None:
     statements = split_sql_statements(sql_content)
     engine = create_async_engine(db_url, connect_args={"statement_cache_size": 0})
     success = 0
+    errors = 0
 
-    async with engine.begin() as conn:
+    async with engine.connect() as conn:
         for stmt in statements:
             if not stmt.strip():
                 continue
             try:
-                await conn.execute(text(stmt))
+                async with conn.begin():
+                    await conn.execute(text(stmt))
                 success += 1
             except Exception as e:
+                errors += 1
                 first_line = stmt.strip().splitlines()[0][:60]
                 print(f"   ⚠️  Warning on seed statement [{first_line}...]: {e}")
 
     await engine.dispose()
-    print(f"✅ Seeding completed ({success} statements executed).")
+    print(f"✅ Seeding completed ({success} executed, {errors} skipped/warnings).")
 
 
 async def print_stats() -> None:
