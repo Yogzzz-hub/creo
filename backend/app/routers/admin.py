@@ -764,7 +764,9 @@ async def get_admin_addons(
     actor: Actor = AdminActor,
 ) -> list[dict[str, Any]]:
     """List all add-on orders and catalog items."""
-    # Return structured operational catalog and client addon requests
+    res = await db.execute(text("SELECT count(*) FROM payment_events WHERE event_type LIKE '%addon%';"))
+    pending_count = res.scalar() or 0
+
     return [
         {
             "id": "addon-1",
@@ -773,7 +775,7 @@ async def get_admin_addons(
             "price_inr": 15000,
             "unit": "per day",
             "status": "active",
-            "pending_requests": 2,
+            "pending_requests": pending_count,
             "description": "Full day cinematography & photography production on client location",
         },
         {
@@ -783,7 +785,7 @@ async def get_admin_addons(
             "price_inr": 4999,
             "unit": "per request",
             "status": "active",
-            "pending_requests": 1,
+            "pending_requests": 0,
             "description": "Priority queue dispatch with 24-hour turnaround on revisions and urgent assets",
         },
         {
@@ -803,7 +805,7 @@ async def get_admin_addons(
             "price_inr": 25000,
             "unit": "per month",
             "status": "active",
-            "pending_requests": 1,
+            "pending_requests": 0,
             "description": "Personal senior art director leading all brand concepts, shoots, and moodboards",
         },
     ]

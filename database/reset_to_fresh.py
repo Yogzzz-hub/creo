@@ -1,13 +1,16 @@
 import psycopg2
+import sys
+sys.path.insert(0, "backend")
+from app.core.security import hash_password
 
 def reset_to_fresh():
     conn = psycopg2.connect("postgresql://postgres:postgres@127.0.0.1:5432/creo")
     conn.autocommit = True
     cur = conn.cursor()
 
-    print("Starting fresh database cleanup...")
+    print("Starting database cleanup to remove all mock data...")
 
-    # 1. Truncate operational mock data
+    # 1. Truncate operational mock data tables
     tables_to_truncate = [
         "ticket_messages",
         "tickets",
@@ -22,16 +25,18 @@ def reset_to_fresh():
         "questionnaires",
         "notifications",
         "refresh_tokens",
+        "leave_requests",
+        "announcements",
     ]
 
     for table in tables_to_truncate:
         try:
             cur.execute(f"TRUNCATE TABLE {table} CASCADE;")
-            print(f"Truncated: {table}")
+            print(f"Truncated operational table: {table}")
         except Exception as e:
             print(f"Notice on {table}: {e}")
 
-    # 2. Delete all client accounts and any non-core test staff accounts
+    # 2. Delete all client accounts and non-core test accounts
     core_emails = (
         'admin@creo.agency',
         'lead@creo.agency',
@@ -43,16 +48,19 @@ def reset_to_fresh():
         DELETE FROM users
         WHERE email NOT IN %s;
     """, (core_emails,))
-    print(f"Purged all mock client and test accounts. Kept only core staff: {core_emails}")
+    print(f"Purged mock client & test accounts. Retained core agency staff: {core_emails}")
 
-    # 3. Ensure ALL remaining users have must_reset_password = TRUE
+    # 3. Set standard active password Admin123! and must_reset_password = FALSE
+    new_hashed_pw = hash_password("Admin123!")
     cur.execute("""
         UPDATE users
-        SET must_reset_password = TRUE;
-    """)
-    print("Set must_reset_password = TRUE for all remaining users.")
+        SET hashed_password = %s,
+            must_reset_password = FALSE,
+            account_status = 'active';
+    """, (new_hashed_pw,))
+    print("Set password Admin123! for core staff accounts.")
 
-    # 4. Refresh materialized views if any
+    # 4. Refresh materialized views
     cur.execute("SELECT matviewname FROM pg_matviews WHERE schemaname = 'public';")
     mviews = cur.fetchall()
     for mv in mviews:
@@ -63,11 +71,9 @@ def reset_to_fresh():
         except Exception as e:
             print(f"Notice on {mv_name}: {e}")
 
-    # 5. Verification summary
+    # 5. Summary verification
     cur.execute("SELECT count(*) FROM users;")
     user_count = cur.fetchone()[0]
-    cur.execute("SELECT email, role, must_reset_password FROM users;")
-    remaining_users = cur.fetchall()
 
     cur.execute("SELECT count(*) FROM deliverables;")
     deliv_count = cur.fetchone()[0]
@@ -78,14 +84,11 @@ def reset_to_fresh():
     cur.execute("SELECT count(*) FROM client_profiles;")
     client_count = cur.fetchone()[0]
 
-    print("\n--- FRESH DATABASE STATUS ---")
-    print(f"Clients Count: {client_count} (Fresh start: 0 clients)")
-    print(f"Deliverables Count: {deliv_count} (Fresh start: 0 deliverables)")
-    print(f"Subscriptions Count: {sub_count} (Fresh start: 0 income / subscriptions)")
+    print("\n--- CLEAN DATABASE STATUS ---")
+    print(f"Clients Count: {client_count}")
+    print(f"Deliverables Count: {deliv_count}")
+    print(f"Subscriptions Count: {sub_count}")
     print(f"Users Count: {user_count}")
-    print("Users List:")
-    for u in remaining_users:
-        print(f"  - {u[0]} ({u[1]}): must_reset_password = {u[2]}")
 
     cur.close()
     conn.close()
