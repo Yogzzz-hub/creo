@@ -225,101 +225,115 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-50 text-slate-900 antialiased">
-      {/* ── LEFT HALF: Premium Luminous Light Branding Showcase ─────── */}
-      <div className="relative hidden lg:flex lg:w-1/2 flex-col justify-between overflow-hidden border-r border-slate-200/80 bg-gradient-to-br from-white via-slate-50/60 to-sky-50/30 p-8 xl:p-12">
-        {/* Subtle Ambient Light Meshes */}
-        <div className="pointer-events-none absolute -top-32 -left-32 size-96 rounded-full bg-sky-200/30 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 -right-32 size-96 rounded-full bg-blue-200/20 blur-3xl" />
+    <div className="min-h-screen w-full bg-gradient-to-b from-[#E8F4FD] via-[#F4F9FD] to-[#FAFAF8] flex flex-col justify-between p-4 sm:p-6 lg:p-8 text-slate-900 antialiased relative overflow-x-hidden">
+      {/* Ambient Backdrop Glows */}
+      <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-400/10 rounded-full blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 right-10 w-[450px] h-[350px] bg-sky-300/15 rounded-full blur-3xl" />
 
-        {/* Brand Header */}
-        <div className="relative z-10 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#2B7BC4] to-[#0EA5E9] shadow-md shadow-sky-500/20 group-hover:scale-105 transition-transform">
-              <span className="font-mono text-xl font-black text-white">C</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-black tracking-tight text-slate-900">Creo</span>
-              <span className="text-[10px] font-bold tracking-wider text-[#2B7BC4] uppercase">
-                Digital Agency Platform
-              </span>
-            </div>
-          </Link>
+      {/* Top Header Bar */}
+      <div className="max-w-5xl w-full mx-auto flex items-center justify-between pb-3 sm:pb-4 relative z-10">
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#2B7BC4] to-[#0EA5E9] shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform">
+            <span className="font-mono text-lg font-black text-white">C</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xl font-black tracking-tight text-[#0D2137]">Creo</span>
+            <span className="text-[9px] font-bold tracking-wider text-[#2B7BC4] uppercase">
+              Digital Agency Platform
+            </span>
+          </div>
+        </Link>
 
-          <div className="flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-2xs backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-2xs backdrop-blur-sm">
             <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
             Active Production Hub
           </div>
-        </div>
-
-        {/* Showcase Core Content (Focused, high-value, clutter-free) */}
-        <div className="relative z-10 my-auto py-2 space-y-6 max-w-lg">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 border border-sky-200/70 px-3.5 py-1 text-xs font-bold text-[#2B7BC4] uppercase tracking-wide">
-              <Sparkles className="size-3.5 text-[#0EA5E9]" />
-              On-Demand Content Retainer
-            </div>
-            <h1 className="text-3xl xl:text-4xl font-black tracking-tight text-slate-900 leading-tight">
-              {view === "login" ? "Welcome to your creative workspace" : "Scale your brand with dedicated creative talent"}
-            </h1>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              High-converting social deliverables, viral video reels, and studio designs produced with predictable turnaround times.
-            </p>
-          </div>
-
-          {/* Essential Value Highlights */}
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-white/90 p-3.5 shadow-2xs">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#2B7BC4]">
-                <Zap className="size-4.5" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900">Dedicated Creative Squad</h4>
-                <p className="text-[11px] text-slate-500">Experienced art directors, editors, and copywriters assigned to your brand.</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-white/90 p-3.5 shadow-2xs">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-[#0EA5E9]">
-                <TrendingUp className="size-4.5" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900">Guaranteed SLAs & Cadence</h4>
-                <p className="text-[11px] text-slate-500">Strict 48-hour revision turnarounds with calendar auto-publishing.</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-white/90 p-3.5 shadow-2xs">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                <ShieldCheck className="size-4.5" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900">Zero-Trust Enterprise Security</h4>
-                <p className="text-[11px] text-slate-500">End-to-end cryptographic JWT authentication with protected asset isolation.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer / Trust Note */}
-        <div className="relative z-10 flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-200/60">
-          <span>© {new Date().getFullYear()} Creo Technologies Inc.</span>
-          <span className="font-semibold text-slate-600 flex items-center gap-1">
-            <span className="text-amber-500">★</span> 4.9/5 Rating from Top Brands
-          </span>
+          <Link
+            to="/"
+            className="text-xs font-semibold text-slate-600 hover:text-[#2B7BC4] transition-colors inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-white/80 border border-slate-200/80 shadow-2xs hover:bg-white"
+          >
+            <span>← Back to Site</span>
+          </Link>
         </div>
       </div>
 
-      {/* ── RIGHT HALF: Auth Interaction Form (Clean, Light, Perfectly Fit) ─ */}
-      <div className="flex flex-1 flex-col justify-center overflow-y-auto px-6 py-8 sm:px-12 lg:px-14 xl:px-20 bg-white">
-        <div className="mx-auto w-full max-w-md space-y-5">
-          {/* Mobile Logo for responsive view */}
-          <div className="lg:hidden flex items-center justify-center gap-2.5 pb-2">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#2B7BC4] to-[#0EA5E9] shadow-sm">
-              <span className="font-mono text-lg font-black text-white">C</span>
+      {/* Main Centered Dual-Card Container */}
+      <div className="max-w-5xl w-full mx-auto my-auto rounded-3xl bg-white border border-slate-200/90 shadow-2xl shadow-blue-950/10 overflow-hidden grid grid-cols-1 lg:grid-cols-12 relative z-10">
+        {/* ── LEFT HALF: Premium Luminous Light Branding Showcase ─────── */}
+        <div className="lg:col-span-6 bg-gradient-to-br from-white via-slate-50/70 to-sky-50/40 p-6 sm:p-8 lg:p-10 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-200/80 relative overflow-hidden">
+          {/* Subtle Ambient Light Meshes */}
+          <div className="pointer-events-none absolute -top-24 -left-24 size-64 rounded-full bg-sky-200/30 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-24 size-64 rounded-full bg-blue-200/20 blur-2xl" />
+
+          {/* Top Pill / Status */}
+          <div className="relative z-10 flex items-center justify-between mb-4">
+            <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 border border-sky-200/70 px-3 py-1 text-xs font-bold text-[#2B7BC4] uppercase tracking-wide shadow-2xs">
+              <Sparkles className="size-3 text-[#0EA5E9]" />
+              <span>On-Demand Content Retainer</span>
             </div>
-            <span className="text-2xl font-black text-slate-900">Creo</span>
+            <span className="text-[11px] font-semibold text-slate-500 bg-white/80 border border-slate-200/80 rounded-full px-2.5 py-0.5">
+              Enterprise Ready
+            </span>
           </div>
+
+          {/* Showcase Core Content (Focused, high-value, clutter-free) */}
+          <div className="relative z-10 my-auto py-2 space-y-5">
+            <div className="space-y-2">
+              <h1 className="text-2xl xl:text-3xl font-black tracking-tight text-[#0D2137] leading-tight">
+                {view === "login" ? "Welcome to your creative workspace" : "Scale your brand with dedicated creative talent"}
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                High-converting social deliverables, viral video reels, and studio designs produced with predictable turnaround times.
+              </p>
+            </div>
+
+            {/* Essential Value Highlights */}
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-white/95 p-3.5 shadow-2xs hover:border-[#2B7BC4]/40 hover:shadow-xs transition-all group">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#2B7BC4] group-hover:scale-105 transition-transform">
+                  <Zap className="size-4.5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#0D2137]">Dedicated Creative Squad</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Experienced art directors, editors, and copywriters assigned to your brand.</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-white/95 p-3.5 shadow-2xs hover:border-[#2B7BC4]/40 hover:shadow-xs transition-all group">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-[#0EA5E9] group-hover:scale-105 transition-transform">
+                  <TrendingUp className="size-4.5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#0D2137]">Guaranteed SLAs & Cadence</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Strict 48-hour revision turnarounds with calendar auto-publishing.</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-white/95 p-3.5 shadow-2xs hover:border-[#2B7BC4]/40 hover:shadow-xs transition-all group">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 group-hover:scale-105 transition-transform">
+                  <ShieldCheck className="size-4.5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#0D2137]">Zero-Trust Enterprise Security</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">End-to-end cryptographic JWT authentication with protected asset isolation.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer / Trust Note */}
+          <div className="relative z-10 flex items-center justify-between text-xs text-slate-500 pt-3 mt-3 border-t border-slate-200/70">
+            <span>© {new Date().getFullYear()} Creo Technologies Inc.</span>
+            <span className="font-semibold text-slate-700 flex items-center gap-1">
+              <span className="text-amber-500">★</span> 4.9/5 Rating from Top Brands
+            </span>
+          </div>
+        </div>
+
+        {/* ── RIGHT HALF: Auth Interaction Form (Clean, Light, Perfectly Fit) ─ */}
+        <div className="lg:col-span-6 flex flex-col justify-center p-6 sm:p-8 lg:p-10 bg-white">
+          <div className="w-full max-w-sm mx-auto space-y-4">
 
           {/* View Switcher Tabs (Sign In vs Create Account) */}
           {view !== "otp" && view !== "forgot_otp" && view !== "forgot" && (
@@ -688,5 +702,20 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
         </div>
       </div>
     </div>
+
+      {/* Bottom Footer Help Note */}
+      <div className="text-center text-xs text-slate-500 py-2 relative z-10">
+        <span>Need assistance with your account? </span>
+        <a
+          href="https://wa.me/919941999415"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#2B7BC4] font-semibold hover:underline cursor-pointer"
+        >
+          Contact Dedicated Support
+        </a>
+      </div>
+    </div>
   );
 }
+
