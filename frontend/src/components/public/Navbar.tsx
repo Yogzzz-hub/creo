@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { Menu, X, LogOut } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 
@@ -19,6 +19,7 @@ export function Navbar() {
   const [loggingOut, setLoggingOut] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const userHome = getRoleHome(user?.role);
   const userPortalLabel =
@@ -57,17 +58,27 @@ export function Navbar() {
           Creo
         </Link>
 
-        <ul className="hidden lg:flex items-center gap-8">
-          {NAV_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link
-                to={link.href}
-                className="text-sm font-medium text-[#0D2137]/70 hover:text-[#0D2137] transition-colors"
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
+        <ul className="hidden lg:flex items-center gap-2">
+          {NAV_LINKS.map((link) => {
+            const isActive = location.pathname === link.href;
+            return (
+              <li key={link.href}>
+                <Link
+                  to={link.href}
+                  className={`relative px-3.5 py-1.5 rounded-full text-sm transition-all duration-200 inline-flex items-center gap-1.5 ${
+                    isActive
+                      ? "text-[#1F5C96] bg-[#E8F4FD] border border-[#C9DFF0]/90 shadow-2xs font-bold"
+                      : "text-slate-600 font-medium hover:text-[#0D2137] hover:bg-slate-100/70"
+                  }`}
+                >
+                  {isActive && (
+                    <span className="size-1.5 rounded-full bg-[#2B7BC4] animate-pulse" />
+                  )}
+                  <span>{link.label}</span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
 
         <div className="hidden lg:flex items-center gap-4">
@@ -120,17 +131,27 @@ export function Navbar() {
       {/* Mobile Drawer */}
       {sheetOpen && (
         <div className="fixed inset-x-0 top-16 bg-white border-b border-border shadow-lg p-6 lg:hidden flex flex-col gap-4 animate-page-in">
-          <nav className="flex flex-col gap-1">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                onClick={() => setSheetOpen(false)}
-                className="block rounded-lg px-3 py-2.5 text-sm font-medium text-[#0D2137]/80 hover:bg-[#E8F4FD] hover:text-[#0D2137] transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+          <nav className="flex flex-col gap-1.5">
+            {NAV_LINKS.map((link) => {
+              const isActive = location.pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  onClick={() => setSheetOpen(false)}
+                  className={`flex items-center justify-between rounded-xl px-4 py-2.5 text-sm transition-all duration-200 ${
+                    isActive
+                      ? "bg-[#E8F4FD] text-[#1F5C96] font-bold border-l-4 border-[#2B7BC4] shadow-xs"
+                      : "text-slate-700 font-medium hover:bg-slate-50 hover:text-[#0D2137]"
+                  }`}
+                >
+                  <span>{link.label}</span>
+                  {isActive && (
+                    <span className="size-2 rounded-full bg-[#2B7BC4]" />
+                  )}
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="pt-4 border-t border-border flex flex-col gap-2">
