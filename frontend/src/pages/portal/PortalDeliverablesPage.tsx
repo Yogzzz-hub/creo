@@ -22,10 +22,13 @@ export function PortalDeliverablesPage() {
     subData?.subscription?.status === "expired" ||
     subData?.subscription?.status === "canceled";
 
+  const isStaffOrAdmin = user?.role && user.role !== "client";
+
   const isSubscribed =
-    !isExpired &&
-    (subData?.is_active === true ||
-      (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status)));
+    isStaffOrAdmin ||
+    (!isExpired &&
+      (subData?.is_active === true ||
+        (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status))));
 
   // While checking subscription status for onboarded users, show clean loading state instead of flashing unlocked UI
   if (isLoading) {

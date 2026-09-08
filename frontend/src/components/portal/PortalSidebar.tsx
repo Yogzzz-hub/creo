@@ -39,7 +39,7 @@ function isActive(href: string, pathname: string) {
 
 export function PortalSidebar() {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
 
   const { data: subData } = useQuery({
@@ -54,10 +54,13 @@ export function PortalSidebar() {
     subData?.subscription?.status === "expired" ||
     subData?.subscription?.status === "canceled";
 
+  const isStaffOrAdmin = user?.role && user.role !== "client";
+
   const isSubscribed =
-    !isExpired &&
-    (subData?.is_active === true ||
-      (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status)));
+    isStaffOrAdmin ||
+    (!isExpired &&
+      (subData?.is_active === true ||
+        (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status))));
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -144,6 +147,7 @@ export function PortalSidebar() {
 
 export function MobileBottomTabBar() {
   const location = useLocation();
+  const { user } = useAuth();
 
   const { data: subData } = useQuery({
     queryKey: ["client-subscription"],
@@ -155,10 +159,13 @@ export function MobileBottomTabBar() {
     subData?.subscription?.status === "expired" ||
     subData?.subscription?.status === "canceled";
 
+  const isStaffOrAdmin = user?.role && user.role !== "client";
+
   const isSubscribed =
-    !isExpired &&
-    (subData?.is_active === true ||
-      (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status)));
+    isStaffOrAdmin ||
+    (!isExpired &&
+      (subData?.is_active === true ||
+        (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status))));
 
   return (
     <nav
