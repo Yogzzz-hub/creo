@@ -163,7 +163,13 @@ async def get_client_subscription(
 
     counters_stmt = select(UsageCounter).where(UsageCounter.client_id == client_id)
     counters = (await db.execute(counters_stmt)).scalars().all()
-    quota_map = {c.kind.value: {"quota": c.quota, "used": c.used} for c in counters}
+    quota_map = {
+        (c.kind.value if hasattr(c.kind, "value") else str(c.kind)): {
+            "quota": c.quota,
+            "used": c.used,
+        }
+        for c in counters
+    }
 
     inv_stmt = (
         select(Subscription, Plan)
@@ -172,26 +178,30 @@ async def get_client_subscription(
         .order_by(Subscription.created_at.desc())
     )
     inv_rows = (await db.execute(inv_stmt)).all()
-    invoices = [
-        {
+    invoices = []
+    for s, p in inv_rows:
+        s_status = s.status.value if hasattr(s.status, "value") else str(s.status)
+        inv_amt = float(s.amount) if s.amount is not None else float(p.monthly_price if p else 25000.0)
+        invoices.append({
             "id": f"INV-{s.created_at.year}-{str(s.id)[:8].upper()}",
             "date": s.created_at.strftime("%B %d, %Y"),
-            "amount": f"₹{float(s.amount):,.2f}" if s.amount else f"₹{float(p.monthly_price):,.2f}",
-            "status": "Paid" if s.status.value in ["active", "trialing"] else s.status.value.capitalize(),
+            "amount": f"₹{inv_amt:,.2f}",
+            "status": "Paid" if s_status in ["active", "trialing"] else s_status.capitalize(),
             "plan": p.display_name if p else "Growth Tier",
-        }
-        for s, p in inv_rows
-    ]
+        })
 
     sub_data = None
     if sub:
-        effective_status = check["status"] if check["has_subscription"] else sub.status.value
+        sub_status = sub.status.value if hasattr(sub.status, "value") else str(sub.status)
+        sub_gateway = sub.gateway.value if hasattr(sub.gateway, "value") else str(sub.gateway)
+        effective_status = check["status"] if check["has_subscription"] else sub_status
+        sub_amt = float(sub.amount) if sub.amount is not None else float(plan.monthly_price if plan else 25000.0)
         sub_data = {
             "id": str(sub.id),
             "status": effective_status,
-            "gateway": sub.gateway.value if hasattr(sub.gateway, "value") else str(sub.gateway),
+            "gateway": sub_gateway,
             "current_period_end": sub.current_period_end.isoformat() if sub.current_period_end else None,
-            "amount": sub.amount or (plan.monthly_price if plan else 25000),
+            "amount": sub_amt,
             "is_active": check["is_active"],
             "is_expired": check["is_expired"],
             "seconds_remaining": check["seconds_remaining"],

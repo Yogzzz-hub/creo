@@ -724,6 +724,7 @@ async def get_me_role(
     profile_res = await db.execute(profile_stmt)
     profile = profile_res.scalar_one_or_none()
 
+    from app.services.onboarding_service import get_current_stage
     stage = await get_current_stage(db, user.id) if user.role == UserRole.CLIENT else 5
 
     has_active_sub = True
