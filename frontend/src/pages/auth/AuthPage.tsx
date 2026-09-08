@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Mail,
   Lock,
@@ -345,8 +346,16 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
           </div>
         )}
 
-        {/* 1. LOGIN FORM */}
-        {view === "login" && (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={view}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+          >
+            {/* 1. LOGIN FORM */}
+            {view === "login" && (
           <form onSubmit={handleLogin} className="space-y-3.5">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
@@ -646,6 +655,8 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
             </div>
           </form>
         )}
+          </motion.div>
+        </AnimatePresence>
 
         {/* Social Divider & Google OAuth */}
         {view !== "otp" && view !== "forgot_otp" && (
@@ -731,19 +742,42 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
       {/* ── Main Sliding Dual-Panel Container ─────────────────────────── */}
       <div className="max-w-5xl w-full mx-auto my-auto rounded-3xl bg-white/95 backdrop-blur-2xl border border-white/40 shadow-2xl shadow-black/50 overflow-hidden relative z-10 shrink">
         {/* Desktop: Sliding Dual-Panel Layout */}
-        <div className="hidden lg:grid grid-cols-2 relative" style={{ minHeight: 560 }}>
-          <div className={`h-full overflow-y-auto ${isRightPanel ? "order-1" : "order-2"}`}>
-            {renderFormPanel()}
-          </div>
-          <div
-            className={`h-full bg-gradient-to-br from-white/95 via-slate-50/90 to-sky-50/70 border-slate-200/80 backdrop-blur-md transition-all duration-500 ease-in-out ${
-              isRightPanel
-                ? "order-2 border-l shadow-[-8px_0_30px_-5px_rgba(15,23,42,0.12)]"
-                : "order-1 border-r shadow-[8px_0_30px_-5px_rgba(15,23,42,0.12)]"
-            }`}
+        <div className="hidden lg:block relative w-full overflow-hidden" style={{ minHeight: 560 }}>
+          {/* Form Panel (50% width, slides between 0% and 100%) */}
+          <motion.div
+            className="absolute top-0 bottom-0 left-0 w-1/2 h-full z-20 overflow-y-auto bg-white"
+            initial={false}
+            animate={{ x: isRightPanel ? "0%" : "100%" }}
+            transition={{
+              type: "spring",
+              stiffness: 240,
+              damping: 26,
+              mass: 0.95,
+            }}
           >
-            {renderBrandingPanel()}
-          </div>
+            {renderFormPanel()}
+          </motion.div>
+
+          {/* Branding Panel (50% width, slides between 100% and 0%) */}
+          <motion.div
+            className="absolute top-0 bottom-0 left-0 w-1/2 h-full z-10 bg-gradient-to-br from-white/95 via-slate-50/90 to-sky-50/70 backdrop-blur-md overflow-hidden"
+            initial={false}
+            animate={{ x: isRightPanel ? "100%" : "0%" }}
+            transition={{
+              type: "spring",
+              stiffness: 240,
+              damping: 26,
+              mass: 0.95,
+            }}
+          >
+            <div className={`h-full border-slate-200/80 transition-shadow duration-300 ${
+              isRightPanel
+                ? "border-l shadow-[-10px_0_30px_-5px_rgba(15,23,42,0.12)]"
+                : "border-r shadow-[10px_0_30px_-5px_rgba(15,23,42,0.12)]"
+            }`}>
+              {renderBrandingPanel()}
+            </div>
+          </motion.div>
         </div>
 
         {/* Mobile: Stacked Layout (no sliding, just vertical stack) */}
