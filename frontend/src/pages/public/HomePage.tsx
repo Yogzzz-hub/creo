@@ -36,6 +36,7 @@ const ONBOARDING_STEPS = [
     description:
       "Complete a 5-minute brand questionnaire covering your tone, aesthetic guidelines, target audience demographics, and top competitors.",
     icon: FileText,
+    image: "/assets/workflow/step1_brand_dna.jpg",
   },
   {
     day: "Days 2–3",
@@ -44,6 +45,7 @@ const ONBOARDING_STEPS = [
     description:
       "Our creative directors craft your tailored 30-day content calendar, narrative pillars, hook library, and visual moodboard.",
     icon: Zap,
+    image: "/assets/workflow/step2_strategy.jpg",
   },
   {
     day: "Days 4–6",
@@ -52,6 +54,7 @@ const ONBOARDING_STEPS = [
     description:
       "Our motion designers, video editors, and copywriters script, shoot, edit, and polish your inaugural content drops.",
     icon: Film,
+    image: "/assets/workflow/step3_production.jpg",
   },
   {
     day: "Day 7",
@@ -60,6 +63,7 @@ const ONBOARDING_STEPS = [
     description:
       "Your first batch lands directly in your private client portal. Review high-res previews, request tweaks, or approve with one click.",
     icon: CheckCircle2,
+    image: "/assets/workflow/step4_portal.jpg",
   },
   {
     day: "Weekly",
@@ -68,6 +72,7 @@ const ONBOARDING_STEPS = [
     description:
       "Approved content is auto-scheduled to Instagram or exported ready-to-post. New fresh batches arrive every 7 days like clockwork.",
     icon: Rocket,
+    image: "/assets/workflow/step5_autopublish.jpg",
   },
 ];
 
@@ -248,17 +253,29 @@ export function HomePage() {
                   </div>
                 </div>
 
-                {/* 2 Live Deliverable Preview Cards */}
+                {/* 2 Live Deliverable Preview Cards with Real AI Images & Animations */}
                 <div className="space-y-3.5">
                   {/* Card 1: Cinematic 9:16 Reel */}
                   <div className="group relative rounded-2xl border border-slate-200/90 bg-gradient-to-r from-slate-50 to-blue-50/40 p-4 transition-all duration-300 hover:border-blue-300 hover:shadow-md">
                     <div className="flex items-start gap-3.5">
-                      {/* Video Thumbnail Preview */}
-                      <div className="relative size-16 sm:size-20 rounded-xl bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-900 shrink-0 overflow-hidden flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
-                        <div className="size-7 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center text-white">
-                          <Play className="size-3.5 fill-white ml-0.5" />
+                      {/* Video Thumbnail Preview with Real AI Media & Pulse Animation */}
+                      <div className="relative size-16 sm:size-20 rounded-xl overflow-hidden shrink-0 shadow-md group-hover:shadow-lg transition-all duration-500 border border-slate-200/80 bg-slate-900">
+                        <img
+                          src="/assets/deliverables/astra_living_reel.jpg"
+                          alt="Astra Living Reel"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                        
+                        {/* Animated Play Button with Wave Pulse */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="absolute size-7 rounded-full bg-white/40 animate-ping opacity-75" />
+                          <div className="relative size-7 rounded-full bg-white/90 backdrop-blur-xs flex items-center justify-center text-[#0B2545] shadow-sm group-hover:scale-110 transition-transform">
+                            <Play className="size-3 fill-[#0B2545] ml-0.5" />
+                          </div>
                         </div>
-                        <span className="absolute bottom-1 right-1 text-[9px] font-bold bg-black/70 text-white px-1 rounded">
+
+                        <span className="absolute bottom-1 right-1 text-[9px] font-extrabold bg-black/80 backdrop-blur-xs text-white px-1.5 py-0.5 rounded shadow-xs">
                           0:28
                         </span>
                       </div>
@@ -270,11 +287,12 @@ export function HomePage() {
                             <Film className="size-3" />
                             4K Reel · 9:16
                           </span>
-                          <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80">
-                            ✓ Ready to Post
+                          <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80 flex items-center gap-1">
+                            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Ready to Post
                           </span>
                         </div>
-                        <h4 className="text-sm font-bold text-[#0D2137] mt-1.5 truncate">
+                        <h4 className="text-sm font-bold text-[#0D2137] mt-1.5 truncate group-hover:text-[#2B7BC4] transition-colors">
                           Astra Living · Golden Hour Minimalist Drop
                         </h4>
                         <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
@@ -289,12 +307,23 @@ export function HomePage() {
                   {/* Card 2: Editorial Carousel */}
                   <div className="group relative rounded-2xl border border-slate-200/90 bg-gradient-to-r from-slate-50 to-emerald-50/30 p-4 transition-all duration-300 hover:border-emerald-300 hover:shadow-md">
                     <div className="flex items-start gap-3.5">
-                      {/* Carousel Thumbnail */}
-                      <div className="relative size-16 sm:size-20 rounded-xl bg-gradient-to-br from-amber-900 via-stone-800 to-amber-950 shrink-0 overflow-hidden flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
-                        <div className="size-7 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center text-white">
-                          <Layers className="size-3.5" />
+                      {/* Carousel Thumbnail with Real AI Media & Layer Indicator */}
+                      <div className="relative size-16 sm:size-20 rounded-xl overflow-hidden shrink-0 shadow-md group-hover:shadow-lg transition-all duration-500 border border-slate-200/80 bg-slate-900">
+                        <img
+                          src="/assets/deliverables/urban_bakes_carousel.jpg"
+                          alt="Urban Bakes 36-Hr Fermentation Guide"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+
+                        {/* Animated Layers Indicator */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="size-7 rounded-full bg-black/50 backdrop-blur-xs flex items-center justify-center text-amber-300 border border-white/20 group-hover:scale-110 transition-transform shadow-xs">
+                            <Layers className="size-3.5" />
+                          </div>
                         </div>
-                        <span className="absolute bottom-1 right-1 text-[9px] font-bold bg-black/70 text-white px-1 rounded">
+
+                        <span className="absolute bottom-1 right-1 text-[9px] font-extrabold bg-black/80 backdrop-blur-xs text-white px-1.5 py-0.5 rounded shadow-xs">
                           1/8
                         </span>
                       </div>
@@ -306,11 +335,12 @@ export function HomePage() {
                             <Layers className="size-3" />
                             Editorial Carousel
                           </span>
-                          <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/80">
-                            ⚡ Auto-Sync
+                          <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/80 flex items-center gap-1">
+                            <span className="size-1.5 rounded-full bg-blue-500 animate-ping" />
+                            Auto-Sync
                           </span>
                         </div>
-                        <h4 className="text-sm font-bold text-[#0D2137] mt-1.5 truncate">
+                        <h4 className="text-sm font-bold text-[#0D2137] mt-1.5 truncate group-hover:text-[#2B7BC4] transition-colors">
                           Urban Bakes · 36-Hr Fermentation Guide
                         </h4>
                         <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
@@ -389,22 +419,40 @@ export function HomePage() {
               return (
                 <div
                   key={step.number}
-                  className="rounded-2xl bg-white p-6 border border-slate-200/80 shadow-xs hover:border-blue-300 hover:shadow-lg transition-all duration-300 flex flex-col justify-between group"
+                  className="rounded-2xl bg-white p-3.5 sm:p-4 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-xl transition-all duration-500 flex flex-col justify-between group overflow-hidden"
                 >
                   <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-xs font-black px-2.5 py-1 rounded-md bg-[#2B7BC4]/10 text-[#2B7BC4]">
-                        {step.day}
-                      </span>
-                      <span className="text-xs font-extrabold text-slate-300">#{step.number}</span>
+                    {/* Real Animated AI Step Visual */}
+                    <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3.5 bg-slate-100 shadow-inner">
+                      <img
+                        src={step.image}
+                        alt={step.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
+                      
+                      <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-white/95 backdrop-blur-xs text-[#2B7BC4] shadow-xs">
+                          {step.day}
+                        </span>
+                      </div>
+                      
+                      <div className="absolute top-2 right-2">
+                        <span className="text-[11px] font-black text-white/95 bg-black/50 backdrop-blur-xs px-2 py-0.5 rounded-md">
+                          #{step.number}
+                        </span>
+                      </div>
+
+                      <div className="absolute bottom-2 left-2 size-7 rounded-lg bg-white/90 backdrop-blur-xs text-[#2B7BC4] flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:bg-[#2B7BC4] group-hover:text-white transition-all duration-300">
+                        <Icon className="size-3.5" />
+                      </div>
                     </div>
 
-                    <div className="size-12 rounded-xl bg-slate-50 group-hover:bg-[#2B7BC4] text-[#2B7BC4] group-hover:text-white flex items-center justify-center mb-4 transition-colors">
-                      <Icon className="size-6" />
-                    </div>
-
-                    <h3 className="text-base font-bold text-[#0D2137] mb-2">{step.title}</h3>
-                    <p className="text-xs text-slate-600 leading-relaxed">{step.description}</p>
+                    <h3 className="text-sm font-bold text-[#0D2137] mb-1.5 group-hover:text-[#2B7BC4] transition-colors">
+                      {step.title}
+                    </h3>
+                    <p className="text-[11px] text-slate-600 leading-relaxed">{step.description}</p>
                   </div>
                 </div>
               );
