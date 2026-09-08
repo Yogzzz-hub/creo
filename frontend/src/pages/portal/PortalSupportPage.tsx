@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
+import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
 
 interface TicketItem {
   id: string;
@@ -40,9 +41,18 @@ export function PortalSupportPage() {
     refetchOnMount: "always",
   });
 
+  const isExpired =
+    subData?.is_expired === true ||
+    subData?.subscription?.status === "expired" ||
+    subData?.subscription?.status === "canceled";
+
+  const isStaffOrAdmin = user?.role && user.role !== "client";
+
   const isSubscribed =
-    !!subData?.subscription &&
-    ["active", "trialing"].includes(subData?.subscription?.status);
+    isStaffOrAdmin ||
+    (!isExpired &&
+      (subData?.is_active === true ||
+        (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status))));
 
   const { data: tickets = [], isLoading } = useQuery<TicketItem[]>({
     queryKey: ["tickets", user?.id],
@@ -138,6 +148,29 @@ export function PortalSupportPage() {
           <Loader2 className="size-8 text-[#2B7BC4] animate-spin mb-3" />
           <p className="text-xs font-semibold text-slate-500">Checking workspace access...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (!isSubscribed) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5 animate-page-in">
+        <div className="border-b border-border pb-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
+            Client Support Desk
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Request revisions, deliverable updates, strategy adjustments, or technical inquiries directly with your team.
+          </p>
+        </div>
+        <SubscriptionLockedState
+          title={isExpired ? "Creative Retainer Expired" : "Support Desk Workspace Locked"}
+          description={
+            isExpired
+              ? "Your monthly creative retainer billing cycle has concluded. Priority support queue access is paused until you renew."
+              : "Access to dedicated support managers, priority hotline, and ticket queues requires an active retainer plan. Choose a plan to activate support workflows."
+          }
+        />
       </div>
     );
   }
