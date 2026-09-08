@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
-import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
 
 interface TicketItem {
   id: string;
@@ -123,29 +122,7 @@ export function PortalSupportPage() {
 
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
 
-  // If user hasn't completed payment in onboarding (stage < 4), lock immediately on frame 0 without waiting
-  const isUnpaidOnboarding = (user?.onboarding_stage ?? 1) < 4;
-
-  if (isUnpaidOnboarding) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5 animate-page-in">
-        <div className="border-b border-border pb-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
-            Client Support Desk
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Request revisions, deliverable updates, strategy adjustments, or technical inquiries directly with your team.
-          </p>
-        </div>
-        <SubscriptionLockedState
-          title="Support Desk Locked"
-          description="Direct concierge ticket dispatch, revision requests, and dedicated account manager SLA handling require an active production retainer. Choose a plan to activate support."
-        />
-      </div>
-    );
-  }
-
-  // While checking subscription status for onboarded users, show clean loading state instead of flashing unlocked UI
+  // Support Desk is always open for all clients (active subscribers get prioritized SLA)
   if (isSubLoading) {
     return (
       <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5 animate-page-in">
@@ -161,25 +138,6 @@ export function PortalSupportPage() {
           <Loader2 className="size-8 text-[#2B7BC4] animate-spin mb-3" />
           <p className="text-xs font-semibold text-slate-500">Checking workspace access...</p>
         </div>
-      </div>
-    );
-  }
-
-  if (!isSubscribed) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5 animate-page-in">
-        <div className="border-b border-border pb-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
-            Client Support Desk
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Request revisions, deliverable updates, strategy adjustments, or technical inquiries directly with your team.
-          </p>
-        </div>
-        <SubscriptionLockedState
-          title="Support Desk Locked"
-          description="Direct concierge ticket dispatch, revision requests, and dedicated account manager SLA handling require an active production retainer. Choose a plan to activate support."
-        />
       </div>
     );
   }
