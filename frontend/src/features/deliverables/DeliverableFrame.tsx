@@ -37,7 +37,12 @@ export function DeliverableFrame({
   };
 
   const isVideo =
-    deliverable.file_type.toUpperCase() === "MP4" || deliverable.file_type.toUpperCase() === "MOV";
+    (deliverable.file_type || "").toLowerCase().includes("video") ||
+    (deliverable.file_type || "").toLowerCase().includes("mp4") ||
+    (deliverable.file_type || "").toLowerCase().includes("mov") ||
+    (deliverable.file_url || "").toLowerCase().endsWith(".mp4") ||
+    (deliverable.file_url || "").toLowerCase().endsWith(".mov") ||
+    (deliverable.file_url || "").toLowerCase().endsWith(".webm");
 
   return (
     <motion.button
@@ -118,6 +123,12 @@ export function DeliverableFrame({
           >
             <track kind="captions" />
           </video>
+        ) : !isVideo && deliverable.file_url ? (
+          <img
+            src={deliverable.file_url}
+            alt="Creative Deliverable"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
         ) : (
           /* Poster / Preview mockup */
           <div

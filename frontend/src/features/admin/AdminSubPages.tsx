@@ -294,13 +294,7 @@ export function AdminDeliverablesPage() {
         ? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
         : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1200&auto=format&fit=crop";
     }
-    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("/")) {
-      return url;
-    }
-    if (url.endsWith(".mp4") || url.includes("video") || (type || "").toLowerCase().includes("reel")) {
-      return "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
-    }
-    return "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1200&auto=format&fit=crop";
+    return url;
   };
 
   const isVideoAsset = (url?: string, type?: string) => {

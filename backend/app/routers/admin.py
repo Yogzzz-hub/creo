@@ -1081,7 +1081,8 @@ class AdminDeliverableCreate(BaseModel):
 
 
 UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static", "uploads"))
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+DELIVERABLES_DIR = os.path.join(UPLOAD_DIR, "deliverables")
+os.makedirs(DELIVERABLES_DIR, exist_ok=True)
 
 
 @router.post("/deliverables/upload")
@@ -1089,16 +1090,16 @@ async def upload_admin_deliverable_file(
     file: UploadFile = File(...),
     actor: Actor = StaffActor,
 ) -> dict[str, str]:
-    """Upload deliverable media file (MP4, MOV, PNG, JPG, WEBP)."""
+    """Upload deliverable media file (MP4, MOV, PNG, JPG, WEBP) to deliverables folder."""
     ext = file.filename.split(".")[-1] if file.filename and "." in file.filename else "png"
     safe_name = f"{uuid.uuid4().hex[:12]}_{file.filename}"
-    file_path = os.path.join(UPLOAD_DIR, safe_name)
+    file_path = os.path.join(DELIVERABLES_DIR, safe_name)
 
     content = await file.read()
     with open(file_path, "wb") as f:
         f.write(content)
 
-    file_url = f"/static/uploads/{safe_name}"
+    file_url = f"/static/uploads/deliverables/{safe_name}"
     content_type = file.content_type or ("video/mp4" if ext.lower() in ["mp4", "mov"] else f"image/{ext.lower()}")
     return {
         "file_url": file_url,

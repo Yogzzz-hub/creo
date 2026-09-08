@@ -77,7 +77,7 @@ app.add_exception_handler(AppError, app_error_handler)  # type: ignore[arg-type]
 _ip_request_timestamps: dict[str, list[float]] = {}
 MAX_REQUESTS_PER_WINDOW = 200  # 200 requests per 10-second window per IP
 WINDOW_SECONDS = 10
-MAX_CONTENT_LENGTH = 15 * 1024 * 1024  # 15 Megabytes max request size
+MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500 Megabytes max request size for video/image uploads
 
 
 @app.middleware("http")
@@ -91,18 +91,19 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
 
     client_ip = request.client.host if request.client else "unknown"
 
-    # 1. Payload size check
-    content_length = request.headers.get("content-length")
-    if content_length and int(content_length) > MAX_CONTENT_LENGTH:
-        return JSONResponse(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            content={
-                "error": {
-                    "code": "PAYLOAD_TOO_LARGE",
-                    "message": f"Request payload exceeds maximum allowed size of {MAX_CONTENT_LENGTH // (1024*1024)}MB.",
-                }
-            },
-        )
+    # 1. Payload size check (exempt upload routes for media files)
+    if not request.url.path.endswith("/upload") and not request.url.path.endswith("/upload-intent"):
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > MAX_CONTENT_LENGTH:
+            return JSONResponse(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                content={
+                    "error": {
+                        "code": "PAYLOAD_TOO_LARGE",
+                        "message": f"Request payload exceeds maximum allowed size of {MAX_CONTENT_LENGTH // (1024*1024)}MB.",
+                    }
+                },
+            )
 
     # 2. IP-based request throttling / anti-DDoS (exempt health endpoint)
     if not request.url.path.endswith("/health"):
@@ -181,8 +182,10 @@ import os
 from fastapi.staticfiles import StaticFiles
 
 _static_dir = os.path.join(os.path.dirname(__file__), "static")
-os.makedirs(os.path.join(_static_dir, "uploads"), exist_ok=True)
+_uploads_dir = os.path.join(_static_dir, "uploads")
+os.makedirs(_uploads_dir, exist_ok=True)
 app.mount("/static", StaticFiles(directory=_static_dir), name="static")
+app.mount("/uploads", StaticFiles(directory=_uploads_dir), name="uploads")
 
 
 
