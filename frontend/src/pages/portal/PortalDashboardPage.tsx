@@ -46,6 +46,7 @@ export function PortalDashboardPage() {
   const ticketCount = dashboard?.open_ticket_count ?? 0;
   const termsAccepted = dashboard?.terms_accepted ?? false;
   const subscriptionActive = !!dashboard?.active_plan && ["active", "trialing"].includes(dashboard?.active_plan?.status);
+  const progressPercent = stage >= 4 ? 100 : Math.min(100, Math.round((stage / 4) * 100));
 
   return (
     <div className="space-y-4 sm:space-y-5 animate-page-in">
@@ -76,7 +77,7 @@ export function PortalDashboardPage() {
       </div>
 
       {/* ── Action Required Alert (if setup incomplete) ─────────────────── */}
-      {stage < 5 && (
+      {stage < 4 && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-amber-900 flex items-start gap-3">
           <AlertCircle className="size-4.5 text-amber-600 shrink-0 mt-0.5" />
           <div className="flex-1">
@@ -96,7 +97,7 @@ export function PortalDashboardPage() {
       )}
 
       {/* ── Onboarding Progress Card ─────────────────────────────────────── */}
-      {stage < 5 && (
+      {stage < 4 && (
         <div className="rounded-xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
           <div className="bg-[#E8F4FD]/50 p-4 pb-3 border-b border-[#C9DFF0]/50">
             <div className="flex items-center justify-between">
@@ -110,13 +111,13 @@ export function PortalDashboardPage() {
                 </p>
               </div>
               <div className="text-xl font-bold text-[#2B7BC4]">
-                {Math.round((stage / 5) * 100)}%
+                {progressPercent}%
               </div>
             </div>
             <div className="w-full bg-[#E8F4FD] border border-[#C9DFF0] h-1.5 rounded-full mt-3 overflow-hidden">
               <div
                 className="bg-[#2B7BC4] h-full transition-all duration-500 ease-in-out"
-                style={{ width: `${(stage / 5) * 100}%` }}
+                style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>

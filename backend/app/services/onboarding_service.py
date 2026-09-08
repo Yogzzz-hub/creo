@@ -159,13 +159,20 @@ async def submit_questionnaire(
         quest.answers = payload
         quest.submitted_at = now
 
-    # Update profile fields
+    # Update profile fields and finalize onboarding
     profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
     profile_res = await db.execute(profile_stmt)
     profile = profile_res.scalar_one_or_none()
     if profile:
         profile.company_name = data.company_name
         profile.instagram_username = data.instagram_username
+        if not profile.onboarding_completed_at:
+            profile.onboarding_completed_at = now
+            profile.onboarding_deadline = now + timedelta(days=7)
+
+    # Pod Assignment & Initial Calendar Generation
+    from app.services.fair_dispatch_service import assign_client_and_generate_schedule
+    await assign_client_and_generate_schedule(db, client_id)
 
     await db.commit()
     await db.refresh(quest)
