@@ -367,14 +367,19 @@ async def assign_client_and_generate_schedule(
         )
     )
 
+    dna_summary = (client_profile.brand_summary if client_profile and client_profile.brand_summary else "")
+    if not dna_summary and client_profile and client_profile.brand_dna:
+        dna_summary = client_profile.brand_dna.get("ai_summary_line", "")
+    dna_snippet = f" Brand Strategy DNA: \"{dna_summary}\"" if dna_summary else ""
+
     # B. Team Lead Notification
     db.add(
         Notification(
             user_id=best_tl_id,
-            title=f"New Client Onboarded: {client_name}",
+            title=f"New Client Onboarded: {client_name} 👑",
             message=(
-                f"Client {client_name} was auto-assigned to your creative pod. "
-                f"{len(scheduled_items)} deliverables scheduled and dispatched to editors."
+                f"Client {client_name} was algorithmically allocated to your creative pod.{dna_snippet} "
+                f"{len(scheduled_items)} deliverables scheduled with 30-day feasible calendar pacing."
             ),
             link="/admin/tasks",
         )
@@ -385,8 +390,8 @@ async def assign_client_and_generate_schedule(
         db.add(
             Notification(
                 user_id=best_editor[0],
-                title=f"New Reels Assigned: {client_name}",
-                message=f"You have been assigned {reel_quota} reels for {client_name} with feasible calendar pacing.",
+                title=f"New Reels Assigned: {client_name} 🎬",
+                message=f"You have been assigned {reel_quota} reels for {client_name}.{dna_snippet} Review intake questionnaire answers in your dashboard.",
                 link="/admin/tasks",
             )
         )
@@ -396,8 +401,8 @@ async def assign_client_and_generate_schedule(
         db.add(
             Notification(
                 user_id=best_designer[0],
-                title=f"New Graphics Assigned: {client_name}",
-                message=f"You have been assigned {poster_quota + story_quota} creative assets for {client_name}.",
+                title=f"New Graphics Assigned: {client_name} 🎨",
+                message=f"You have been assigned {poster_quota + story_quota} creative assets for {client_name}.{dna_snippet} Review intake questionnaire answers in your dashboard.",
                 link="/admin/tasks",
             )
         )
