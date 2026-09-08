@@ -216,16 +216,16 @@ export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: Stage
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl lg:max-w-5xl w-full mx-auto rounded-2xl border border-[#C9DFF0] bg-white p-8 sm:p-10 lg:p-12 shadow-sm"
+      className="max-w-4xl lg:max-w-5xl w-full mx-auto rounded-2xl border border-[#C9DFF0] bg-white p-5 sm:p-7 lg:p-8 shadow-sm"
     >
-      <header className="mb-6 sm:mb-8">
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#E8F4FD] border border-[#C9DFF0] text-[#2B7BC4] text-[11px] font-bold uppercase tracking-wider mb-2.5">
+      <header className="mb-4 sm:mb-5">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F4FD] border border-[#C9DFF0] text-[#2B7BC4] text-[10px] font-bold uppercase tracking-wider mb-2">
           Step 3 of 5
         </div>
-        <h2 className="text-2xl sm:text-3xl font-bold font-display text-[#0D2137] tracking-tight">
+        <h2 className="text-xl sm:text-2xl font-bold font-display text-[#0D2137] tracking-tight">
           Choose Your Plan
         </h2>
-        <p className="text-xs sm:text-sm text-[#64748B] mt-1.5 leading-normal">
+        <p className="text-xs sm:text-sm text-[#64748B] mt-1 leading-normal">
           Select the subscription tier that matches your creative growth ambition. Upgrade or cancel anytime.
         </p>
       </header>
@@ -239,12 +239,12 @@ export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: Stage
             exit={{ opacity: 0 }}
           >
             {plansLoading ? (
-              <div className="text-[#64748B] p-10 text-center text-xs font-medium">
+              <div className="text-[#64748B] p-8 text-center text-xs font-medium">
                 <div className="size-6 border-2 border-[#2B7BC4] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                 Loading pricing plans…
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 mb-6 sm:mb-8 items-stretch">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4 mb-4 sm:mb-5 items-stretch">
                 {(plans ?? []).map((plan) => (
                   <PlanCard
                     key={plan.id}
@@ -257,7 +257,7 @@ export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: Stage
             )}
 
             {errorMsg && (
-              <div className="mb-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-800">
+              <div className="mb-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-800">
                 ⚠ {errorMsg}
               </div>
             )}
@@ -269,7 +269,7 @@ export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: Stage
               disabled={!selectedPlanId || phase === "processing"}
               whileHover={selectedPlanId && phase !== "processing" ? { scale: 1.01 } : {}}
               whileTap={selectedPlanId && phase !== "processing" ? { scale: 0.99 } : {}}
-              className={`w-full py-3.5 sm:py-4 px-8 rounded-xl font-bold text-sm sm:text-base transition-all shadow-sm ${
+              className={`w-full py-3 px-6 rounded-xl font-bold text-sm transition-all shadow-sm ${
                 selectedPlanId && phase !== "processing"
                   ? "bg-[#2B7BC4] text-white hover:bg-[#1A5EA8] cursor-pointer shadow-blue-500/20"
                   : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"

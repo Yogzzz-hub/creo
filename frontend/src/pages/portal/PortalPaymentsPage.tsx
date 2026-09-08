@@ -158,37 +158,33 @@ function PlanPickerModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-5xl lg:max-w-6xl max-h-[92vh] overflow-y-auto p-5 sm:p-7 sm:px-8 relative my-auto transition-all animate-[zoomIn_0.2s_cubic-bezier(0.16,1,0.3,1)]">
+      <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-5xl lg:max-w-6xl max-h-[96vh] overflow-y-auto lg:overflow-hidden p-4 sm:p-5 lg:p-6 relative my-auto transition-all animate-[zoomIn_0.2s_cubic-bezier(0.16,1,0.3,1)]">
         {/* Subtle Ambient Glow */}
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 size-60 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
 
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 size-8 rounded-full bg-slate-100/80 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer z-10"
+          className="absolute top-3 right-3 size-7 rounded-full bg-slate-100/80 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer z-10"
           aria-label="Close modal"
         >
           <X className="size-4" />
         </button>
 
-        <div className="text-center mb-4 sm:mb-5 relative">
-          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-[11px] font-semibold mb-1.5">
-            <Sparkles className="size-3 text-blue-600" />
-            <span>Transparent Creative Retainers</span>
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-[#0D2137] tracking-tight">
+        <div className="text-center mb-2.5 sm:mb-3 relative">
+          <h2 className="text-xl sm:text-2xl font-black text-[#0D2137] tracking-tight">
             Choose Your Production Plan
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-md mx-auto">
+          <p className="text-xs text-slate-500 mt-0.5 max-w-md mx-auto">
             All plans include dedicated workspace, auto-publishing & guaranteed delivery.
           </p>
         </div>
 
         {/* Retainer Active Notice Banner */}
         {hasActiveSubscription && !isExpired && (
-          <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-left">
-            <div className="flex items-start gap-2.5">
-              <div className="size-7 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
-                <Lock className="size-3.5" />
+          <div className="mb-2.5 p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-left">
+            <div className="flex items-start gap-2">
+              <div className="size-6 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+                <Lock className="size-3" />
               </div>
               <div>
                 <p className="text-xs font-bold text-amber-950 flex items-center gap-2">
@@ -209,7 +205,7 @@ function PlanPickerModal({
                   onClose();
                   onOpenAddon();
                 }}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-95 text-white text-xs font-bold shrink-0 transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                className="px-3 py-1 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-95 text-white text-xs font-bold shrink-0 transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
               >
                 <Package className="size-3.5" />
                 Order Add-on Pack →
@@ -220,10 +216,10 @@ function PlanPickerModal({
 
         {/* Retainer Expired Notice Banner */}
         {isExpired && (
-          <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-rose-500/10 via-amber-500/5 to-transparent border border-rose-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-left">
-            <div className="flex items-start gap-2.5">
-              <div className="size-7 rounded-xl bg-rose-500/20 text-rose-700 flex items-center justify-center shrink-0 mt-0.5">
-                <AlertCircle className="size-3.5" />
+          <div className="mb-2.5 p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-rose-500/10 via-amber-500/5 to-transparent border border-rose-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-left">
+            <div className="flex items-start gap-2">
+              <div className="size-6 rounded-xl bg-rose-500/20 text-rose-700 flex items-center justify-center shrink-0 mt-0.5">
+                <AlertCircle className="size-3" />
               </div>
               <div>
                 <p className="text-xs font-bold text-rose-950 flex items-center gap-2">
@@ -240,7 +236,7 @@ function PlanPickerModal({
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 items-stretch">
           {realPlans.map((plan) => {
             const isCurrent = plan.name === currentPlanName;
             const isRecommended = plan.is_recommended;
@@ -248,7 +244,7 @@ function PlanPickerModal({
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-2xl border-2 p-5 sm:p-6 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 h-full ${
+                className={`relative rounded-2xl border-2 p-3.5 sm:p-4 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 h-full ${
                   isCurrent && hasActiveSubscription && !isExpired
                     ? "border-emerald-500/80 bg-gradient-to-b from-emerald-50/40 via-white to-white shadow-md shadow-emerald-500/10"
                     : isRecommended
@@ -257,85 +253,85 @@ function PlanPickerModal({
                 }`}
               >
                 {isRecommended && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white text-[10px] font-extrabold uppercase tracking-wider px-3.5 py-0.5 rounded-full flex items-center gap-1 shadow-md shadow-blue-600/30">
-                    <Star className="size-2.5 fill-amber-300 text-amber-300" /> Most Popular
+                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white text-[9px] font-extrabold uppercase tracking-wider px-3 py-0.5 rounded-full flex items-center gap-1 shadow-md shadow-blue-600/30">
+                    <Star className="size-2 fill-amber-300 text-amber-300" /> Most Popular
                   </span>
                 )}
                 {isCurrent && hasActiveSubscription && !isExpired && (
-                  <span className="absolute -top-3 right-3 bg-emerald-600 text-white text-[9px] font-bold px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1">
-                    <Check className="size-2.5" /> Current Active
+                  <span className="absolute -top-2.5 right-3 bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                    <Check className="size-2" /> Current Active
                   </span>
                 )}
                 {isCurrent && isExpired && (
-                  <span className="absolute -top-3 right-3 bg-rose-600 text-white text-[9px] font-bold px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1">
-                    <AlertCircle className="size-2.5" /> Cycle Ended
+                  <span className="absolute -top-2.5 right-3 bg-rose-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                    <AlertCircle className="size-2" /> Cycle Ended
                   </span>
                 )}
 
                 <div className="flex-1 flex flex-col">
-                  <div className="mb-1">
-                    <p className={`text-[10px] font-bold uppercase tracking-wider ${
+                  <div className="mb-0.5">
+                    <p className={`text-[9px] font-bold uppercase tracking-wider ${
                       isCurrent && hasActiveSubscription && !isExpired ? "text-emerald-700" : "text-[#2B7BC4]"
                     }`}>
                       {plan.name === "pro" ? "Scale & Enterprise" : plan.name === "growth" ? "High Growth" : "Starter"}
                     </p>
-                    <h3 className="text-xl sm:text-2xl font-black text-[#0D2137] tracking-tight mt-0.5">
+                    <h3 className="text-lg sm:text-xl font-black text-[#0D2137] tracking-tight mt-0.5">
                       {plan.display_name}
                     </h3>
                   </div>
 
-                  <div className="flex items-baseline gap-1 mb-3 pb-3 border-b border-slate-100">
-                    <span className="text-3xl sm:text-4xl font-black text-[#0D2137] tracking-tight">
+                  <div className="flex items-baseline gap-1 mb-2 pb-2 border-b border-slate-100">
+                    <span className="text-2xl sm:text-3xl font-black text-[#0D2137] tracking-tight">
                       ₹{price.toLocaleString("en-IN")}
                     </span>
-                    <span className="text-xs font-medium text-slate-500">/ month</span>
+                    <span className="text-[11px] font-medium text-slate-500">/ month</span>
                   </div>
 
                   {/* Monthly Quota Allocation Strip */}
-                  <div className="rounded-xl bg-blue-50/50 border border-blue-100/60 p-2.5 mb-3.5">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#2B7BC4] mb-1">
+                  <div className="rounded-xl bg-blue-50/50 border border-blue-100/60 p-2 mb-2">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-[#2B7BC4] mb-1">
                       Monthly Production Allocation
                     </p>
-                    <div className="grid grid-cols-3 gap-1.5 text-center">
-                      <div className="bg-white rounded-lg py-1.5 px-1 border border-blue-100/40">
-                        <p className="text-base font-black text-[#0D2137]">{plan.poster_quota}</p>
-                        <p className="text-[9px] text-slate-500 font-medium">Posters</p>
+                    <div className="grid grid-cols-3 gap-1 text-center">
+                      <div className="bg-white rounded-lg py-1 px-1 border border-blue-100/40">
+                        <p className="text-sm font-black text-[#0D2137]">{plan.poster_quota}</p>
+                        <p className="text-[8px] text-slate-500 font-medium">Posters</p>
                       </div>
-                      <div className="bg-white rounded-lg py-1.5 px-1 border border-blue-100/40">
-                        <p className="text-base font-black text-[#2B7BC4]">{plan.reel_quota}</p>
-                        <p className="text-[9px] text-slate-500 font-medium">Reels</p>
+                      <div className="bg-white rounded-lg py-1 px-1 border border-blue-100/40">
+                        <p className="text-sm font-black text-[#2B7BC4]">{plan.reel_quota}</p>
+                        <p className="text-[8px] text-slate-500 font-medium">Reels</p>
                       </div>
-                      <div className="bg-white rounded-lg py-1.5 px-1 border border-blue-100/40">
-                        <p className="text-base font-black text-[#0D2137]">{plan.story_quota}</p>
-                        <p className="text-[9px] text-slate-500 font-medium">Stories</p>
+                      <div className="bg-white rounded-lg py-1 px-1 border border-blue-100/40">
+                        <p className="text-sm font-black text-[#0D2137]">{plan.story_quota}</p>
+                        <p className="text-[8px] text-slate-500 font-medium">Stories</p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Full Feature List (Un-truncated) */}
-                  <ul className="space-y-2 mb-4 flex-1">
+                  {/* Full Feature List */}
+                  <ul className="space-y-1 mb-2 flex-1">
                     {plan.highlights.map((h) => (
-                      <li key={h} className="flex items-start gap-2 text-xs text-slate-700 leading-snug">
-                        <div className={`size-3.5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                      <li key={h} className="flex items-start gap-1.5 text-[11px] text-slate-700 leading-tight">
+                        <div className={`size-3 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                           isCurrent && hasActiveSubscription && !isExpired
                             ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
                             : "bg-blue-50 text-[#2B7BC4] border border-blue-200"
                         }`}>
-                          <Check className="size-2.5" />
+                          <Check className="size-2" />
                         </div>
                         <span>{h}</span>
                       </li>
                     ))}
-                    <li className="flex items-start gap-2 text-xs font-medium text-[#0D2137] leading-snug">
-                      <div className="size-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-200">
-                        <Check className="size-2.5" />
+                    <li className="flex items-start gap-1.5 text-[11px] font-medium text-[#0D2137] leading-tight">
+                      <div className="size-3 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-200">
+                        <Check className="size-2" />
                       </div>
                       <span>{plan.revision_rounds} revision round{plan.revision_rounds !== 1 ? "s" : ""} included</span>
                     </li>
                     {plan.has_dedicated_manager && (
-                      <li className="flex items-start gap-2 text-xs font-semibold text-[#2B7BC4] leading-snug">
-                        <div className="size-3.5 rounded-full bg-blue-50 text-[#2B7BC4] flex items-center justify-center shrink-0 mt-0.5 border border-blue-200">
-                          <Check className="size-2.5" />
+                      <li className="flex items-start gap-1.5 text-[11px] font-semibold text-[#2B7BC4] leading-tight">
+                        <div className="size-3 rounded-full bg-blue-50 text-[#2B7BC4] flex items-center justify-center shrink-0 mt-0.5 border border-blue-200">
+                          <Check className="size-2" />
                         </div>
                         <span>Dedicated Brand Account Director</span>
                       </li>
@@ -343,28 +339,28 @@ function PlanPickerModal({
                   </ul>
                 </div>
 
-                <div className="mt-2 pt-2 border-t border-slate-100">
+                <div className="mt-1.5 pt-1.5 border-t border-slate-100">
                   {isCurrent && hasActiveSubscription && !isExpired ? (
                     <button
                       disabled
-                      className="w-full py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
+                      className="w-full py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
                     >
-                      <Check className="size-3.5" /> Current Active Plan
+                      <Check className="size-3" /> Current Active Plan
                     </button>
                   ) : hasActiveSubscription && !isExpired ? (
                     <button
                       disabled
-                      className="w-full py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                      className="w-full py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
                       title={`Locked until your current retainer cycle expires on ${formattedExpiry || "end of period"}`}
                     >
-                      <Lock className="size-3.5" /> Locked Until Expiry
+                      <Lock className="size-3" /> Locked Until Expiry
                     </button>
                   ) : (
                     <button
                       onClick={() => onSelect(plan)}
-                      className="w-full py-3 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-[0.98] text-white shadow-md shadow-blue-500/25"
+                      className="w-full py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-[0.98] text-white shadow-md shadow-blue-500/25"
                     >
-                      {isCurrent && isExpired ? "Renew Retainer" : `Select ${plan.display_name}`} <ArrowRight className="size-3.5" />
+                      {isCurrent && isExpired ? "Renew Retainer" : `Select ${plan.display_name}`} <ArrowRight className="size-3" />
                     </button>
                   )}
                 </div>
