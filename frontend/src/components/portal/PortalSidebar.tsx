@@ -56,8 +56,8 @@ export function PortalSidebar() {
 
   const isSubscribed =
     !isExpired &&
-    !!subData?.subscription &&
-    (subData?.is_active ?? ["active", "trialing"].includes(subData?.subscription?.status));
+    (subData?.is_active === true ||
+      (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status)));
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -157,8 +157,8 @@ export function MobileBottomTabBar() {
 
   const isSubscribed =
     !isExpired &&
-    !!subData?.subscription &&
-    (subData?.is_active ?? ["active", "trialing"].includes(subData?.subscription?.status));
+    (subData?.is_active === true ||
+      (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status)));
 
   return (
     <nav

@@ -83,8 +83,8 @@ export function PortalCalendarPage() {
 
   const isSubscribed =
     !isExpired &&
-    !!subData?.subscription &&
-    (subData?.is_active ?? ["active", "trialing"].includes(subData?.subscription?.status));
+    (subData?.is_active === true ||
+      (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status)));
 
   const { data: rawEntries = [] } = useQuery<CalendarEntry[]>({
     queryKey: ["calendar-entries", user?.id],
@@ -143,28 +143,6 @@ export function PortalCalendarPage() {
   };
 
   const selectedDayEntries = selectedDay ? getDayEntries(selectedDay) : [];
-
-  // If user hasn't completed payment in onboarding (stage < 4), lock immediately on frame 0 without waiting
-  const isUnpaidOnboarding = (user?.onboarding_stage ?? 1) < 4;
-
-  if (isUnpaidOnboarding) {
-    return (
-      <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5 animate-page-in">
-        <div className="border-b border-border pb-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
-            Publishing Schedule
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Your scheduled content for the month.
-          </p>
-        </div>
-        <SubscriptionLockedState
-          title="Publishing Calendar Locked"
-          description="Access to scheduled content, multi-platform publishing dates, and asset timelines requires an active production retainer. Choose a plan to unlock calendar workflows."
-        />
-      </div>
-    );
-  }
 
   // While checking subscription status for onboarded users, show clean loading state instead of flashing unlocked UI
   if (isSubLoading) {

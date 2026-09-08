@@ -24,30 +24,8 @@ export function PortalDeliverablesPage() {
 
   const isSubscribed =
     !isExpired &&
-    !!subData?.subscription &&
-    (subData?.is_active ?? ["active", "trialing"].includes(subData?.subscription?.status));
-
-  // If user hasn't completed payment in onboarding (stage < 4), lock immediately on frame 0 without waiting
-  const isUnpaidOnboarding = (user?.onboarding_stage ?? 1) < 4;
-
-  if (isUnpaidOnboarding) {
-    return (
-      <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5 animate-page-in">
-        <div className="border-b border-border pb-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
-            Creative Deliverables
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Review and approve content created for your brand. Strict 9:16 mobile reels & static creatives.
-          </p>
-        </div>
-        <SubscriptionLockedState
-          title="Deliverables Workspace Locked"
-          description="Access to static posters, reels, and approval stages requires an active production retainer. Choose a plan to assign your dedicated creative team."
-        />
-      </div>
-    );
-  }
+    (subData?.is_active === true ||
+      (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status)));
 
   // While checking subscription status for onboarded users, show clean loading state instead of flashing unlocked UI
   if (isLoading) {
