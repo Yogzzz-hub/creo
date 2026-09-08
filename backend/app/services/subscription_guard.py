@@ -79,6 +79,48 @@ async def check_client_subscription(
     res = await db.execute(stmt)
     row = res.first()
 
+    from app.config import settings
+    from app.models.user import ClientProfile, User
+    from app.services.payment_service import _activate_subscription
+
+    is_non_prod = getattr(settings, "ENVIRONMENT", "development") != "production"
+
+    if row and row[0].status == SubscriptionStatus.INCOMPLETE and is_non_prod:
+        await _activate_subscription(db, row[0])
+        res = await db.execute(stmt)
+        row = res.first()
+
+    if not row:
+        if is_non_prod:
+            # Auto-provision active Growth Plan subscription for client accounts in sandbox/dev
+            user_res = await db.execute(select(User).where(User.id == client_id))
+            user_obj = user_res.scalar_one_or_none()
+            if user_obj:
+                growth_stmt = select(Plan).where(Plan.name == "growth", Plan.is_active.is_(True)).limit(1)
+                growth_plan = (await db.execute(growth_stmt)).scalar_one_or_none()
+                if not growth_plan:
+                    growth_stmt = select(Plan).where(Plan.is_active.is_(True)).limit(1)
+                    growth_plan = (await db.execute(growth_stmt)).scalar_one_or_none()
+                if growth_plan:
+                    from app.models.enums import PaymentProvider
+                    new_sub = Subscription(
+                        id=uuid.uuid4(),
+                        client_id=client_id,
+                        plan_id=growth_plan.id,
+                        status=SubscriptionStatus.ACTIVE,
+                        gateway=PaymentProvider.RAZORPAY,
+                        gateway_subscription_id=f"order_auto_{uuid.uuid4().hex[:10]}",
+                        amount=growth_plan.monthly_price,
+                        current_period_start=now_utc,
+                        current_period_end=now_utc + timedelta(days=30),
+                    )
+                    db.add(new_sub)
+                    await db.commit()
+                    await _activate_subscription(db, new_sub)
+
+                    res = await db.execute(stmt)
+                    row = res.first()
+
     if not row:
         return {
             "has_subscription": False,
