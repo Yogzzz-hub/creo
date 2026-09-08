@@ -624,7 +624,7 @@ export function HomePage() {
       </section>
 
       {/* ── 9. Final Call to Action ─────────────────────────────────────── */}
-      <section className="py-24 bg-gradient-to-r from-[#07192F] via-[#0B2545] to-[#123966] text-white text-center relative overflow-hidden">
+      <section className="py-24 bg-gradient-to-r from-[#07192F] via-[#0B2545] to-[#123966] text-white text-center relative overflow-hidden border-b border-white/10">
         <div className="max-w-4xl mx-auto px-6 sm:px-8 relative z-10">
           <h2 className="text-4xl sm:text-5xl font-black tracking-tight leading-tight">
             Ready to Put Your Brand Content <br />
