@@ -151,7 +151,7 @@ export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: Stage
       await openRazorpayCheckout(
         {
           key: rzpKey,
-          amount: order.amount_minor,
+          amount: order.amount_minor ?? (order.amount ? order.amount * 100 : (selectedPlan?.price_minor ?? 2500000)),
           currency: order.currency || "INR",
           name: "Creo Digital Marketing",
           description: `Subscription - ${selectedPlan?.display_name || "Plan"}`,

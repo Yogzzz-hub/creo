@@ -2,10 +2,6 @@ import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   Check,
-  Shield,
-  Zap,
-  Clock,
-  Sparkles,
   Star,
   ArrowRight,
 } from "lucide-react";
