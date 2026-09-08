@@ -947,30 +947,7 @@ async def get_admin_sales(
         for r in plan_rows
     ]
 
-    custom_pricing = [
-        {
-            "id": "cp-1",
-            "client_name": "Zenith Fitness Brands",
-            "contact_email": "partnerships@zenithfit.in",
-            "requested_plan": "Growth Tier (Enterprise)",
-            "standard_price_inr": 85000,
-            "offered_price_inr": 72000,
-            "volume_reels": 30,
-            "volume_posters": 25,
-            "status": "pending_approval",
-        },
-        {
-            "id": "cp-2",
-            "client_name": "Artisan Coffee Roasters",
-            "contact_email": "marketing@artisancoffee.co",
-            "requested_plan": "Starter Bundle (Custom)",
-            "standard_price_inr": 45000,
-            "offered_price_inr": 40000,
-            "volume_reels": 15,
-            "volume_posters": 15,
-            "status": "approved",
-        },
-    ]
+    custom_pricing = []
 
     return {
         "plans": plans,
