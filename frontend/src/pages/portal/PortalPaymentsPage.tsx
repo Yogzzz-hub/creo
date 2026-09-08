@@ -721,6 +721,8 @@ export function PortalPaymentsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["client-subscription"],
     queryFn: () => request<any>("/api/v1/payments/subscription"),
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const { data: plans = [] } = useQuery<Plan[]>({

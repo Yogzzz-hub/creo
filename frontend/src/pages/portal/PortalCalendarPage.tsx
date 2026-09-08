@@ -72,6 +72,8 @@ export function PortalCalendarPage() {
   const { data: subData, isLoading: isSubLoading } = useQuery({
     queryKey: ["client-subscription"],
     queryFn: () => request<any>("/api/v1/payments/subscription"),
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const isExpired =
