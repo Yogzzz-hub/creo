@@ -1,32 +1,5 @@
 import { Link } from "react-router";
-import { Users, ThumbsUp, TrendingUp, Star, CheckCircle2, ArrowRight, Sparkles, Award } from "lucide-react";
-
-const SUCCESS_STATS = [
-  {
-    icon: TrendingUp,
-    value: "3.2x",
-    label: "Average Engagement Boost",
-    description: "Consistent organic impressions lift across Instagram Reels within 60 days.",
-  },
-  {
-    icon: Users,
-    value: "50+",
-    label: "Active Retainer Brands",
-    description: "D2C leaders, artisan studios, and lifestyle brands scaling nationwide.",
-  },
-  {
-    icon: ThumbsUp,
-    value: "98.4%",
-    label: "First-Pass Approval Rate",
-    description: "Brand DNA alignment ensures content hits the brief without tedious rework.",
-  },
-  {
-    icon: Award,
-    value: "7 Days",
-    label: "Onboarding SLA",
-    description: "From strategy questionnaire to your first batch of reviewed assets.",
-  },
-];
+import { Star, CheckCircle2, ArrowRight, Sparkles } from "lucide-react";
 
 const BRAND_PARTNERS = [
   { name: "Astra Living", category: "D2C Lifestyle & Apparel", icon: "✨", color: "from-blue-600 to-indigo-700" },
@@ -196,42 +169,6 @@ export function ClientsPage() {
                     </p>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Success Stats Strip ───────────────────────────────────────────── */}
-      <section className="py-20 bg-[#F4F9FD]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#2B7BC4]">
-              Data-Backed Proof
-            </span>
-            <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold text-[#0D2137]">
-              Numbers That Speak for Themselves
-            </h2>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {SUCCESS_STATS.map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-3xl border border-slate-200/80 bg-white text-center p-8 shadow-xs hover:shadow-lg transition-all"
-              >
-                <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#E8F4FD] text-[#2B7BC4] shadow-2xs">
-                  <stat.icon className="size-7" />
-                </div>
-                <p className="text-4xl sm:text-5xl font-black text-[#0D2137] tracking-tight">
-                  {stat.value}
-                </p>
-                <p className="mt-2 text-sm font-bold text-[#2B7BC4]">
-                  {stat.label}
-                </p>
-                <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                  {stat.description}
-                </p>
               </div>
             ))}
           </div>
