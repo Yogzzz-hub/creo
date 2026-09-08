@@ -234,7 +234,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
   };
 
   // ── Branding Panel Content ──
-  const BrandingPanel = () => (
+  const renderBrandingPanel = () => (
     <div className="relative h-full flex flex-col justify-between p-6 sm:p-8 lg:p-10 overflow-hidden">
       {/* Ambient Light Meshes */}
       <div className="pointer-events-none absolute -top-24 -left-24 size-64 rounded-full bg-sky-200/30 blur-2xl" />
@@ -307,7 +307,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
   );
 
   // ── Form Panel Content ──
-  const FormPanel = () => (
+  const renderFormPanel = () => (
     <div className="flex flex-col justify-center p-6 sm:p-8 lg:p-10 bg-white h-full">
       <div className="w-full max-w-sm mx-auto space-y-4">
 
@@ -730,48 +730,28 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
 
       {/* ── Main Sliding Dual-Panel Container ─────────────────────────── */}
       <div className="max-w-5xl w-full mx-auto my-auto rounded-3xl bg-white/95 backdrop-blur-2xl border border-white/40 shadow-2xl shadow-black/50 overflow-hidden relative z-10 shrink">
-        {/* Desktop: Sliding Panel Layout */}
-        <div className="hidden lg:block relative" style={{ minHeight: 560 }}>
-          {/* Form Panel — always rendered at both positions, the correct one shows through */}
-          <div className="absolute inset-0 grid grid-cols-2">
-            {/* Left half for form (visible when branding is on right = signup mode) */}
-            <div
-              className="transition-opacity duration-700 ease-in-out h-full overflow-y-auto"
-              style={{ opacity: isRightPanel ? 1 : 0, pointerEvents: isRightPanel ? "auto" : "none" }}
-            >
-              <FormPanel />
-            </div>
-            {/* Right half for form (visible when branding is on left = login mode) */}
-            <div
-              className="transition-opacity duration-700 ease-in-out h-full overflow-y-auto"
-              style={{ opacity: isRightPanel ? 0 : 1, pointerEvents: isRightPanel ? "none" : "auto" }}
-            >
-              <FormPanel />
-            </div>
+        {/* Desktop: Sliding Dual-Panel Layout */}
+        <div className="hidden lg:grid grid-cols-2 relative" style={{ minHeight: 560 }}>
+          <div className={`h-full overflow-y-auto ${isRightPanel ? "order-1" : "order-2"}`}>
+            {renderFormPanel()}
           </div>
-
-          {/* Branding Overlay Panel — slides between left and right */}
           <div
-            className="absolute top-0 bottom-0 w-1/2 z-10 bg-gradient-to-br from-white/95 via-slate-50/90 to-sky-50/70 border-slate-200/80 backdrop-blur-md transition-transform duration-700 ease-in-out"
-            style={{
-              transform: isRightPanel ? "translateX(100%)" : "translateX(0%)",
-              borderRight: isRightPanel ? "none" : "1px solid rgb(226 232 240 / 0.8)",
-              borderLeft: isRightPanel ? "1px solid rgb(226 232 240 / 0.8)" : "none",
-              boxShadow: isRightPanel
-                ? "-8px 0 30px -5px rgba(15, 23, 42, 0.12)"
-                : "8px 0 30px -5px rgba(15, 23, 42, 0.12)",
-            }}
+            className={`h-full bg-gradient-to-br from-white/95 via-slate-50/90 to-sky-50/70 border-slate-200/80 backdrop-blur-md transition-all duration-500 ease-in-out ${
+              isRightPanel
+                ? "order-2 border-l shadow-[-8px_0_30px_-5px_rgba(15,23,42,0.12)]"
+                : "order-1 border-r shadow-[8px_0_30px_-5px_rgba(15,23,42,0.12)]"
+            }`}
           >
-            <BrandingPanel />
+            {renderBrandingPanel()}
           </div>
         </div>
 
         {/* Mobile: Stacked Layout (no sliding, just vertical stack) */}
         <div className="lg:hidden">
           <div className="bg-gradient-to-br from-white via-slate-50/70 to-sky-50/40 border-b border-slate-200/80">
-            <BrandingPanel />
+            {renderBrandingPanel()}
           </div>
-          <FormPanel />
+          {renderFormPanel()}
         </div>
       </div>
 
