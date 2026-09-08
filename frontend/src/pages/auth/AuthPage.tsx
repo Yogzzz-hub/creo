@@ -725,10 +725,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
             </span>
           </div>
         </Link>
-        <div className="flex items-center gap-2 text-[11px] font-medium text-blue-200/80 bg-white/5 border border-white/10 px-3 py-1 rounded-full backdrop-blur-md">
-          <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span>256-Bit SSL Encrypted</span>
-        </div>
+
       </header>
 
       {/* ── Main Sliding Dual-Panel Container ─────────────────────────── */}

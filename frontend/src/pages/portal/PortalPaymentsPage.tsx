@@ -661,7 +661,7 @@ function AddonModal({
         <div className="mt-5 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400 relative z-10">
           <div className="flex items-center gap-1.5 text-slate-600 font-semibold">
             <ShieldCheck className="size-4 text-emerald-600" />
-            <span>Instant Quota Credit · 256-Bit SSL Encrypted</span>
+            <span>Instant Quota Credit</span>
           </div>
           <div className="flex items-center gap-1.5 font-medium text-slate-400">
             <span className="font-semibold text-slate-500 tracking-tight">PCI-DSS Level 1 Certified</span>
