@@ -9,6 +9,8 @@ import { AnimatePresence, motion } from "motion/react";
  */
 import { useState } from "react";
 import { confirmPayment, createOrder, fetchPlans } from "../../lib/onboarding-api";
+import { openRazorpayCheckout } from "../../lib/razorpay";
+import { useAuth } from "../../lib/auth-context";
 import type { Plan } from "../../types/api";
 
 interface StagePaymentProps {
@@ -36,46 +38,48 @@ function PlanCard({
 }) {
   return (
     <motion.div
-      whileHover={{ y: -2 }}
+      whileHover={{ y: -3 }}
       whileTap={{ scale: 0.99 }}
       onClick={onSelect}
-      className={`relative rounded-2xl p-5 sm:p-6 cursor-pointer transition-all flex-1 min-w-[220px] ${
+      className={`relative rounded-2xl p-5 sm:p-6 cursor-pointer transition-all flex flex-col h-full min-w-[200px] ${
         selected
           ? "border-2 border-[#2B7BC4] bg-[#F0F7FD] shadow-md ring-2 ring-[#2B7BC4]/10"
           : "border border-[#C9DFF0] bg-white hover:border-[#2B7BC4]/40 hover:shadow-xs"
       }`}
     >
       {plan.is_recommended && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#2B7BC4] text-white text-[10px] font-bold tracking-wider uppercase px-3 py-0.5 rounded-full shadow-xs whitespace-nowrap">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#2B7BC4] text-white text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded-full shadow-xs whitespace-nowrap">
           Most Popular
         </div>
       )}
 
-      <p className="text-[11px] font-bold tracking-wider text-[#64748B] uppercase mb-1">
-        {plan.name}
-      </p>
-      <h3 className="text-base sm:text-lg font-bold font-display text-[#0D2137] mb-2">
-        {plan.display_name}
-      </h3>
+      <div className="flex-1 flex flex-col">
+        <p className="text-[11px] font-bold tracking-wider text-[#64748B] uppercase mb-1">
+          {plan.name}
+        </p>
+        <h3 className="text-base sm:text-lg font-bold font-display text-[#0D2137] mb-2">
+          {plan.display_name}
+        </h3>
 
-      <div className="mb-4">
-        <span className="text-2xl sm:text-3xl font-extrabold text-[#0D2137]">
-          {formatINR(plan.price_minor)}
-        </span>
-        <span className="text-xs text-[#64748B] ml-1.5 font-medium">/month</span>
+        <div className="my-2 sm:my-3">
+          <span className="text-2xl sm:text-3xl font-extrabold text-[#0D2137]">
+            {formatINR(plan.price_minor)}
+          </span>
+          <span className="text-xs text-[#64748B] ml-1.5 font-medium">/mo</span>
+        </div>
+
+        <ul className="space-y-2.5 my-3 sm:my-4 flex-1">
+          {plan.highlights.map((h) => (
+            <li key={h} className="text-xs text-[#374151] flex items-start gap-2 leading-relaxed">
+              <span className="text-emerald-600 font-bold shrink-0 mt-0.5">✓</span>
+              <span>{h}</span>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      <ul className="space-y-2 mb-4">
-        {plan.highlights.map((h) => (
-          <li key={h} className="text-xs text-[#374151] flex items-center gap-2">
-            <span className="text-emerald-600 font-bold">✓</span>
-            <span>{h}</span>
-          </li>
-        ))}
-      </ul>
-
       <div
-        className={`w-full py-2 rounded-xl text-xs font-semibold text-center transition-all ${
+        className={`w-full mt-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold text-center transition-all ${
           selected
             ? "bg-[#2B7BC4] text-white shadow-xs"
             : "bg-slate-50 text-[#64748B] border border-[#C9DFF0] hover:bg-white"
@@ -90,6 +94,7 @@ function PlanCard({
 type PaymentPhase = "select" | "processing" | "polling" | "confirmed";
 
 export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: StagePaymentProps) {
+  const { user } = useAuth();
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [phase, setPhase] = useState<PaymentPhase>("select");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -138,66 +143,54 @@ export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: Stage
     try {
       const order = await createOrder(userId, selectedPlanId, "razorpay");
       const selectedPlan = plans?.find((p) => p.id === selectedPlanId);
-      const rzpKey = order.key_id || "rzp_test_TO2r0YMjDZSpuC";
+      const rzpKey =
+        order.key_id ||
+        (import.meta.env.VITE_RAZORPAY_KEY_ID as string) ||
+        "rzp_test_TO2r0YMjDZSpuC";
 
-      // If Razorpay SDK is loaded on window, open real Razorpay checkout modal
-      if (typeof (window as unknown as { Razorpay?: unknown }).Razorpay !== "undefined") {
-        const RazorpayCtor = (window as unknown as { Razorpay: new (opts: unknown) => { open: () => void } }).Razorpay;
-        const options = {
+      await openRazorpayCheckout(
+        {
           key: rzpKey,
           amount: order.amount_minor,
           currency: order.currency || "INR",
           name: "Creo Digital Marketing",
           description: `Subscription - ${selectedPlan?.display_name || "Plan"}`,
           order_id: order.order_id,
-          handler: async (response: {
-            razorpay_payment_id: string;
-            razorpay_order_id: string;
-            razorpay_signature: string;
-          }) => {
-            setPhase("polling");
-            try {
-              await confirmPayment(
-                userId,
-                order.order_id,
-                response.razorpay_payment_id,
-                response.razorpay_signature,
-                "razorpay",
-              );
-            } catch {
-              // Proceed even if polling takes a moment
-            }
-            setPhase("confirmed");
-            setTimeout(onPaymentComplete, 1000);
-          },
-          modal: {
-            ondismiss: () => {
-              setPhase("select");
-            },
+          prefill: {
+            name: user?.full_name || undefined,
+            email: user?.email || undefined,
           },
           theme: {
             color: "#2B7BC4",
           },
-        };
-        const rzpInstance = new RazorpayCtor(options);
-        rzpInstance.open();
-        return;
-      }
-
-      // Direct confirmation fallback if script blocked
-      setPhase("polling");
-      await confirmPayment(
-        userId,
-        order.order_id,
-        `pay_live_${Date.now()}`,
-        "sig_live",
-        "razorpay",
+        },
+        async (response) => {
+          setPhase("polling");
+          try {
+            await confirmPayment(
+              userId,
+              order.order_id,
+              response.razorpay_payment_id,
+              response.razorpay_signature,
+              "razorpay",
+            );
+          } catch {
+            // Proceed even if polling takes a moment
+          }
+          setPhase("confirmed");
+          setTimeout(onPaymentComplete, 1000);
+        },
+        () => {
+          setPhase("select");
+        },
       );
-      setPhase("confirmed");
-      setTimeout(onPaymentComplete, 1000);
     } catch (err: unknown) {
       setPhase("select");
-      if (err instanceof Error) setErrorMsg(err.message);
+      if (err instanceof Error) {
+        setErrorMsg(err.message);
+      } else {
+        setErrorMsg("Failed to initiate payment. Please try again.");
+      }
     }
   };
 
@@ -205,16 +198,16 @@ export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: Stage
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-3xl mx-auto rounded-2xl border border-[#C9DFF0] bg-white p-6 sm:p-8 shadow-sm"
+      className="max-w-4xl lg:max-w-5xl w-full mx-auto rounded-2xl border border-[#C9DFF0] bg-white p-8 sm:p-10 lg:p-12 shadow-sm"
     >
-      <header className="mb-6">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F4FD] border border-[#C9DFF0] text-[#2B7BC4] text-xs font-semibold uppercase tracking-wider mb-3">
+      <header className="mb-6 sm:mb-8">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#E8F4FD] border border-[#C9DFF0] text-[#2B7BC4] text-[11px] font-bold uppercase tracking-wider mb-2.5">
           Step 3 of 5
         </div>
-        <h2 className="text-xl sm:text-2xl font-bold font-display text-[#0D2137] tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-bold font-display text-[#0D2137] tracking-tight">
           Choose Your Plan
         </h2>
-        <p className="text-xs sm:text-sm text-[#64748B] mt-1.5 leading-relaxed">
+        <p className="text-xs sm:text-sm text-[#64748B] mt-1.5 leading-normal">
           Select the subscription tier that matches your creative growth ambition. Upgrade or cancel anytime.
         </p>
       </header>
@@ -228,12 +221,12 @@ export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: Stage
             exit={{ opacity: 0 }}
           >
             {plansLoading ? (
-              <div className="text-[#64748B] p-8 text-center text-sm font-medium">
-                <div className="size-6 border-2 border-[#2B7BC4] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <div className="text-[#64748B] p-10 text-center text-xs font-medium">
+                <div className="size-6 border-2 border-[#2B7BC4] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                 Loading pricing plans…
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 mb-6 sm:mb-8 items-stretch">
                 {(plans ?? []).map((plan) => (
                   <PlanCard
                     key={plan.id}
@@ -246,7 +239,7 @@ export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: Stage
             )}
 
             {errorMsg && (
-              <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-800">
+              <div className="mb-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-800">
                 ⚠ {errorMsg}
               </div>
             )}
@@ -258,13 +251,13 @@ export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: Stage
               disabled={!selectedPlanId || phase === "processing"}
               whileHover={selectedPlanId && phase !== "processing" ? { scale: 1.01 } : {}}
               whileTap={selectedPlanId && phase !== "processing" ? { scale: 0.99 } : {}}
-              className={`w-full py-3.5 px-6 rounded-xl font-semibold text-sm transition-all shadow-sm ${
+              className={`w-full py-3.5 sm:py-4 px-8 rounded-xl font-bold text-sm sm:text-base transition-all shadow-sm ${
                 selectedPlanId && phase !== "processing"
-                  ? "bg-[#2B7BC4] text-white hover:bg-[#1A5EA8] cursor-pointer"
+                  ? "bg-[#2B7BC4] text-white hover:bg-[#1A5EA8] cursor-pointer shadow-blue-500/20"
                   : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
               }`}
             >
-              {phase === "processing" ? "Preparing Secure Checkout…" : "Proceed to Razorpay Checkout →"}
+              {phase === "processing" ? "Opening Razorpay Gateway…" : "Proceed to Secure Checkout →"}
             </motion.button>
           </motion.div>
         )}
@@ -278,7 +271,7 @@ export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: Stage
           >
             <div className="text-4xl mb-3">🔐</div>
             <h3 className="font-display font-bold text-lg text-[#0D2137] mb-1">
-              Confirming your payment with Razorpay...
+              Confirming your payment...
             </h3>
             <p className="text-xs text-[#64748B] max-w-sm mx-auto">
               Please don&apos;t close or refresh this tab. We are finalizing your subscription.

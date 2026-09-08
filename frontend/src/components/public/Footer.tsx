@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { Phone, MessageCircle, ArrowUpRight, MapPin } from "lucide-react";
 
 const QUICK_LINKS = [
+  { label: "Home", href: "/" },
   { label: "About Us", href: "/about" },
   { label: "Our Work", href: "/portfolio" },
   { label: "Our Clients", href: "/clients" },
@@ -43,12 +44,7 @@ export function Footer() {
               Your creative growth engine. High-converting reels, studio carousels, and content operations delivered on autopilot.
             </p>
 
-            <div className="pt-1">
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 shadow-2xs">
-                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Live Production Hub · SLA Guaranteed</span>
-              </div>
-            </div>
+
           </div>
 
           {/* 2. Quick Links Column (3 Cols) */}

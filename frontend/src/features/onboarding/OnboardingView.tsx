@@ -32,25 +32,25 @@ function ProgressStepper({
   maxUnlockedStep: number;
 }) {
   return (
-    <div className="w-full max-w-3xl mx-auto mb-10 px-4">
+    <div className="w-full max-w-4xl lg:max-w-5xl mx-auto mb-8 sm:mb-10 px-2 sm:px-4">
       {/* Stepper Card */}
-      <div className="relative bg-white rounded-2xl shadow-sm border border-slate-100 px-3 sm:px-8 py-4 sm:py-7">
+      <div className="relative bg-white rounded-2xl shadow-xs border border-[#C9DFF0] px-5 sm:px-8 py-4 sm:py-5">
         <div className="flex items-start justify-between relative">
 
           {/* Background track line */}
           <div
-            className="absolute left-0 right-0 h-[2px] sm:h-[3px] rounded-full bg-slate-100"
-            style={{ top: "16px", marginLeft: "10%", marginRight: "10%" }}
+            className="absolute left-0 right-0 h-[2px] rounded-full bg-slate-100"
+            style={{ top: "16px", marginLeft: "8%", marginRight: "8%" }}
           />
 
           {/* Completed track line (grows with progress) */}
           <div
-            className="absolute h-[2px] sm:h-[3px] rounded-full transition-all duration-700"
+            className="absolute h-[2px] rounded-full transition-all duration-500"
             style={{
               top: "16px",
-              marginLeft: "10%",
-              width: `calc(${Math.max(0, ((maxUnlockedStep - 1) / (STAGES.length - 1)))} * 80%)`,
-              background: "linear-gradient(90deg, #059669, #2B7BC4)",
+              marginLeft: "8%",
+              width: `calc(${Math.max(0, ((maxUnlockedStep - 1) / (STAGES.length - 1)))} * 84%)`,
+              background: "#059669",
             }}
           />
 
@@ -61,32 +61,19 @@ function ProgressStepper({
             return (
               <div key={s.step} className="flex flex-col items-center flex-1 relative z-10">
                 <div className="flex flex-col items-center select-none">
-                  {/* Step circle */}
+                  {/* Step circle - Crisp, flat, no glowing outer halo or white ring */}
                   <div className="relative flex items-center justify-center">
-                    {/* Pulse ring for active */}
-                    {isActive && (
-                      <>
-                        <span className="absolute inline-flex size-10 sm:size-14 rounded-full bg-[#2B7BC4]/20 animate-ping" />
-                        <span className="absolute inline-flex size-9 sm:size-12 rounded-full bg-[#2B7BC4]/15" />
-                      </>
-                    )}
-
-                    {/* Glow ring for done */}
-                    {isDone && (
-                      <span className="absolute inline-flex size-8 sm:size-11 rounded-full bg-emerald-400/20" />
-                    )}
-
                     <div
-                      className={`relative size-8 sm:size-11 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all duration-300 ${
+                      className={`relative size-8 sm:size-9 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-colors duration-200 ${
                         isDone
-                          ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md sm:shadow-lg shadow-emerald-200/60"
+                          ? "bg-emerald-600 text-white"
                           : isActive
-                          ? "bg-gradient-to-br from-[#2B7BC4] to-[#1A5EA8] text-white shadow-lg sm:shadow-xl shadow-[#2B7BC4]/40 scale-105 sm:scale-110 ring-2 sm:ring-[3px] ring-white"
-                          : "bg-slate-100 text-slate-400 border border-slate-200 sm:border-2"
+                          ? "bg-[#2B7BC4] text-white"
+                          : "bg-slate-100 text-slate-400 border border-slate-200"
                       }`}
                     >
                       {isDone ? (
-                        <svg className="size-3.5 sm:size-5" viewBox="0 0 20 20" fill="currentColor">
+                        <svg className="size-3.5 sm:size-4" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                       ) : (
@@ -96,9 +83,9 @@ function ProgressStepper({
                   </div>
 
                   {/* Step label */}
-                  <div className="mt-2 sm:mt-3 text-center">
-                    <p className={`text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider sm:tracking-widest mb-0.5 ${
-                      isActive ? "text-[#2B7BC4]" : isDone ? "text-emerald-600" : "text-slate-300"
+                  <div className="mt-2 text-center">
+                    <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-0.5 ${
+                      isActive ? "text-[#2B7BC4]" : isDone ? "text-emerald-600" : "text-slate-400"
                     }`}>
                       Step {s.step}
                     </p>
@@ -106,8 +93,8 @@ function ProgressStepper({
                       isActive
                         ? "text-[#0D2137]"
                         : isDone
-                        ? "text-emerald-700"
-                        : "text-slate-400"
+                        ? "text-emerald-800"
+                        : "text-slate-500"
                     }`}>
                       <span className="sm:hidden">{s.short}</span>
                       <span className="hidden sm:inline whitespace-nowrap">{s.label}</span>
@@ -187,9 +174,9 @@ function StageVerifyEmail({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
-      className="max-w-xl mx-auto rounded-2xl border border-[#C9DFF0] bg-white p-6 sm:p-10 shadow-sm text-center"
+      className="max-w-xl mx-auto rounded-2xl border border-[#C9DFF0] bg-white p-8 sm:p-12 shadow-sm text-center"
     >
-      <div className="size-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-[#E8F4FD] to-[#D5EBFA] border border-[#C9DFF0] flex items-center justify-center text-[#2B7BC4] shadow-xs">
+      <div className="size-14 mx-auto mb-4 rounded-2xl bg-[#E8F4FD] border border-[#C9DFF0] flex items-center justify-center text-[#2B7BC4]">
         {verifiedSuccess ? (
           <ShieldCheck className="size-7 text-emerald-600" />
         ) : (
@@ -219,7 +206,7 @@ function StageVerifyEmail({
       )}
 
       {verifiedSuccess ? (
-        <div className="mt-8 space-y-4">
+        <div className="mt-6 space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
             <CheckCircle2 className="size-4 text-emerald-600" />
             <span>Verified: {userEmail || email || "Active Client"}</span>
@@ -229,7 +216,7 @@ function StageVerifyEmail({
             <button
               type="button"
               onClick={onContinueToTerms}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#2B7BC4] text-white font-semibold text-sm hover:bg-[#1A5EA8] shadow-sm transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#2B7BC4] text-white font-semibold text-xs sm:text-sm hover:bg-[#1A5EA8] shadow-xs transition-all cursor-pointer"
             >
               <span>Continue to Master Service Agreement (Step 2)</span>
               <ArrowRight className="size-4" />
@@ -402,7 +389,7 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
   }
 
   return (
-    <div className="w-full flex flex-col items-center pb-12">
+    <div className="w-full flex flex-col items-center pb-20 sm:pb-28">
       {/* Visual Stepper */}
       <ProgressStepper
         activeStep={currentStep}

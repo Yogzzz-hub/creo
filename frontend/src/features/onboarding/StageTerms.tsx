@@ -98,16 +98,16 @@ export function StageTerms({ onAccepted, isSubmitting }: StageTermsProps) {
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-2xl mx-auto rounded-2xl border border-[#C9DFF0] bg-white p-6 sm:p-8 shadow-sm"
+      className="max-w-4xl lg:max-w-5xl w-full mx-auto rounded-2xl border border-[#C9DFF0] bg-white p-8 sm:p-10 lg:p-12 shadow-sm"
     >
-      <header className="mb-6">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F4FD] border border-[#C9DFF0] text-[#2B7BC4] text-xs font-semibold uppercase tracking-wider mb-3">
+      <header className="mb-6 sm:mb-8">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#E8F4FD] border border-[#C9DFF0] text-[#2B7BC4] text-[11px] font-bold uppercase tracking-wider mb-2.5">
           Step 2 of 5
         </div>
-        <h2 className="text-xl sm:text-2xl font-bold font-display text-[#0D2137] tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-bold font-display text-[#0D2137] tracking-tight">
           Master Service Agreement
         </h2>
-        <p className="text-xs sm:text-sm text-[#64748B] mt-1.5 leading-relaxed">
+        <p className="text-xs sm:text-sm text-[#64748B] mt-1.5 leading-normal">
           Please review the terms of service below. Scroll to the bottom of the agreement to unlock
           the acceptance button.
         </p>
@@ -116,11 +116,11 @@ export function StageTerms({ onAccepted, isSubmitting }: StageTermsProps) {
       {/* Scroll container */}
       <div
         ref={scrollContainerRef}
-        className="h-80 overflow-y-auto bg-[#F8FAFC] border border-[#C9DFF0] rounded-xl p-4 sm:p-5 mb-5 font-mono text-xs text-[#334155] leading-relaxed whitespace-pre-wrap select-text scroll-smooth shadow-inner"
+        className="h-72 sm:h-80 md:h-96 max-h-[50vh] overflow-y-auto bg-[#F8FAFC] border border-[#C9DFF0] rounded-2xl p-6 sm:p-8 mb-6 font-mono text-xs sm:text-[13px] text-[#334155] leading-relaxed whitespace-pre-wrap select-text scroll-smooth shadow-inner"
       >
         {MSA_TEXT}
         {/* IntersectionObserver sentinel */}
-        <div ref={sentinelRef} className="h-1 mt-2" aria-hidden="true" />
+        <div ref={sentinelRef} className="h-1 mt-3" aria-hidden="true" />
       </div>
 
       {/* Scroll hint */}
@@ -128,7 +128,7 @@ export function StageTerms({ onAccepted, isSubmitting }: StageTermsProps) {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mb-4 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg flex items-center gap-2"
+          className="mb-6 text-xs sm:text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 px-4 py-3 rounded-xl flex items-center gap-2"
         >
           <span>↓</span>
           <span>Please scroll to the end of the agreement to continue.</span>
@@ -139,7 +139,7 @@ export function StageTerms({ onAccepted, isSubmitting }: StageTermsProps) {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mb-4 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-lg flex items-center gap-2"
+          className="mb-6 text-xs sm:text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-3 rounded-xl flex items-center gap-2"
         >
           <span>✓</span>
           <span>You have read and scrolled through the full agreement.</span>
@@ -153,9 +153,9 @@ export function StageTerms({ onAccepted, isSubmitting }: StageTermsProps) {
         disabled={!hasScrolled || isSubmitting}
         whileHover={hasScrolled && !isSubmitting ? { scale: 1.01 } : {}}
         whileTap={hasScrolled && !isSubmitting ? { scale: 0.99 } : {}}
-        className={`w-full py-3.5 px-6 rounded-xl font-semibold text-sm transition-all shadow-sm ${
+        className={`w-full py-3.5 sm:py-4 px-8 rounded-xl font-bold text-sm sm:text-base transition-all shadow-sm ${
           hasScrolled && !isSubmitting
-            ? "bg-[#2B7BC4] text-white hover:bg-[#1A5EA8] cursor-pointer"
+            ? "bg-[#2B7BC4] text-white hover:bg-[#1A5EA8] cursor-pointer shadow-blue-500/20"
             : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
         }`}
       >

@@ -362,6 +362,71 @@ body {
   transform: translateY(0);
 }
 
+/* ── Professional Scroll Loading & Reveal Transitions ── */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  filter: blur(4px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform, filter;
+}
+
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+.scroll-reveal-scale {
+  opacity: 0;
+  transform: scale(0.94) translateY(20px);
+  filter: blur(4px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform, filter;
+}
+
+.scroll-reveal-scale.is-visible {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  filter: blur(0);
+}
+
+.scroll-reveal-left {
+  opacity: 0;
+  transform: translateX(-32px);
+  filter: blur(4px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform, filter;
+}
+
+.scroll-reveal-left.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+  filter: blur(0);
+}
+
+.scroll-reveal-right {
+  opacity: 0;
+  transform: translateX(32px);
+  filter: blur(4px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform, filter;
+}
+
+.scroll-reveal-right.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+  filter: blur(0);
+}
+
 /* Tabular figures for data tables and statistics */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
@@ -471,5 +536,58 @@ aside .scrollbar-thin,
 
 .kanban-column-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(43, 123, 196, 0.45);
+}
+
+/* AI Background Animation for Full Page View */
+@keyframes aiBgDrift {
+  0% {
+    transform: scale(1.05) translate(0%, 0%);
+  }
+  33% {
+    transform: scale(1.12) translate(-1.5%, 1%);
+  }
+  66% {
+    transform: scale(1.08) translate(1%, -1.5%);
+  }
+  100% {
+    transform: scale(1.05) translate(0%, 0%);
+  }
+}
+
+@keyframes aiOrbFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translate(30px, -25px) scale(1.15);
+    opacity: 0.75;
+  }
+}
+
+@keyframes aiOrbFloatReverse {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate(-35px, 20px) scale(1.2);
+    opacity: 0.65;
+  }
+}
+
+.animate-ai-bg-drift {
+  animation: aiBgDrift 28s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.animate-ai-orb-1 {
+  animation: aiOrbFloat 14s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-ai-orb-2 {
+  animation: aiOrbFloatReverse 18s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 

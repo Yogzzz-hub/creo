@@ -5,6 +5,7 @@ import {
   ChevronRight,
   Calendar as CalendarIcon,
   Clock,
+  Loader2,
 } from "lucide-react";
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
@@ -141,14 +142,56 @@ export function PortalCalendarPage() {
 
   const selectedDayEntries = selectedDay ? getDayEntries(selectedDay) : [];
 
-  if (!isSubLoading && !isSubscribed) {
+  // If user hasn't completed payment in onboarding (stage < 4), lock immediately on frame 0 without waiting
+  const isUnpaidOnboarding = (user?.onboarding_stage ?? 1) < 4;
+
+  if (isUnpaidOnboarding) {
     return (
-      <div className="mx-auto max-w-6xl space-y-6 animate-page-in">
-        <div className="border-b border-border pb-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#0D2137] tracking-tight">
+      <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5 animate-page-in">
+        <div className="border-b border-border pb-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
             Publishing Schedule
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-0.5">
+            Your scheduled content for the month.
+          </p>
+        </div>
+        <SubscriptionLockedState
+          title="Publishing Calendar Locked"
+          description="Access to scheduled content, multi-platform publishing dates, and asset timelines requires an active production retainer. Choose a plan to unlock calendar workflows."
+        />
+      </div>
+    );
+  }
+
+  // While checking subscription status for onboarded users, show clean loading state instead of flashing unlocked UI
+  if (isSubLoading) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5 animate-page-in">
+        <div className="border-b border-border pb-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
+            Publishing Schedule
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Your scheduled content for the month.
+          </p>
+        </div>
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-12 text-center shadow-xs flex flex-col items-center justify-center min-h-[320px]">
+          <Loader2 className="size-8 text-[#2B7BC4] animate-spin mb-3" />
+          <p className="text-xs font-semibold text-slate-500">Checking workspace access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isSubscribed) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5 animate-page-in">
+        <div className="border-b border-border pb-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
+            Publishing Schedule
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
             Your scheduled content for the month.
           </p>
         </div>
@@ -165,14 +208,14 @@ export function PortalCalendarPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 animate-page-in">
+    <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5 animate-page-in">
       {/* ── Top Header & Quota Bar ────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#0D2137] tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
             Publishing Schedule
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-0.5">
             Your scheduled content for the month. Click any date to inspect queue details.
           </p>
         </div>

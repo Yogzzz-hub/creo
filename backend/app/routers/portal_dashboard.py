@@ -367,7 +367,7 @@ async def regenerate_brand_dna_profile(
         "status": "success",
         "brand_dna": new_dna.model_dump(),
         "brand_summary": new_dna.ai_summary_line,
-        "message": "Brand strategy regenerated with Gemini AI.",
+        "message": "Brand strategy regenerated successfully.",
     }
 
 

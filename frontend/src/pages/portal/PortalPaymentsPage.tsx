@@ -158,37 +158,37 @@ function PlanPickerModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-4xl p-6 sm:p-8 relative my-auto transition-all animate-[zoomIn_0.2s_cubic-bezier(0.16,1,0.3,1)]">
+      <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-4xl p-4 sm:p-6 relative my-auto transition-all animate-[zoomIn_0.2s_cubic-bezier(0.16,1,0.3,1)]">
         {/* Subtle Ambient Glow */}
         <div className="absolute -top-20 left-1/2 -translate-x-1/2 size-60 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
 
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 size-9 rounded-full bg-slate-100/80 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer"
+          className="absolute top-4 right-4 size-8 rounded-full bg-slate-100/80 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer"
           aria-label="Close modal"
         >
-          <X className="size-4.5" />
+          <X className="size-4" />
         </button>
 
-        <div className="text-center mb-6 relative">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold mb-3">
-            <Sparkles className="size-3.5 text-blue-600" />
+        <div className="text-center mb-3 sm:mb-4 relative">
+          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-[11px] font-semibold mb-1.5">
+            <Sparkles className="size-3 text-blue-600" />
             <span>Transparent Creative Retainers</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-[#0D2137] tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-black text-[#0D2137] tracking-tight">
             Choose Your Production Plan
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1.5 max-w-md mx-auto">
-            All plans include dedicated workspace, Instagram auto-publishing & guaranteed on-time creative delivery.
+          <p className="text-xs text-slate-500 mt-0.5 max-w-md mx-auto">
+            All plans include dedicated workspace, auto-publishing & guaranteed delivery.
           </p>
         </div>
 
         {/* Retainer Active Notice Banner */}
         {hasActiveSubscription && !isExpired && (
-          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left">
-            <div className="flex items-start gap-3">
-              <div className="size-8 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
-                <Lock className="size-4" />
+          <div className="mb-3 p-3 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-left">
+            <div className="flex items-start gap-2.5">
+              <div className="size-7 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+                <Lock className="size-3.5" />
               </div>
               <div>
                 <p className="text-xs font-bold text-amber-950 flex items-center gap-2">
@@ -198,7 +198,7 @@ function PlanPickerModal({
                   </span>
                 </p>
                 <p className="text-[11px] text-amber-800/90 mt-0.5">
-                  Your plan is active until <span className="font-semibold">{formattedExpiry || "renewal"}</span>. To prevent duplicate billing, plan switching unlocks after this cycle ends.
+                  Your plan is active until <span className="font-semibold">{formattedExpiry || "renewal"}</span>.
                 </p>
               </div>
             </div>
@@ -209,7 +209,7 @@ function PlanPickerModal({
                   onClose();
                   onOpenAddon();
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shrink-0 transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                className="px-3 py-1 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-95 text-white text-xs font-bold shrink-0 transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
               >
                 <Package className="size-3.5" />
                 Order Add-on Pack →
@@ -220,10 +220,10 @@ function PlanPickerModal({
 
         {/* Retainer Expired Notice Banner */}
         {isExpired && (
-          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-amber-500/5 to-transparent border border-rose-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left">
-            <div className="flex items-start gap-3">
-              <div className="size-8 rounded-xl bg-rose-500/20 text-rose-700 flex items-center justify-center shrink-0 mt-0.5">
-                <AlertCircle className="size-4" />
+          <div className="mb-3 p-3 rounded-2xl bg-gradient-to-r from-rose-500/10 via-amber-500/5 to-transparent border border-rose-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-left">
+            <div className="flex items-start gap-2.5">
+              <div className="size-7 rounded-xl bg-rose-500/20 text-rose-700 flex items-center justify-center shrink-0 mt-0.5">
+                <AlertCircle className="size-3.5" />
               </div>
               <div>
                 <p className="text-xs font-bold text-rose-950 flex items-center gap-2">
@@ -233,72 +233,72 @@ function PlanPickerModal({
                   </span>
                 </p>
                 <p className="text-[11px] text-rose-800/90 mt-0.5">
-                  Your billing cycle has ended and plan switching is unlocked. Select any plan below to renew your retainer and assign your creative pod.
+                  Select any plan below to renew your retainer and assign your creative pod.
                 </p>
               </div>
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
           {realPlans.map((plan) => {
             const isCurrent = plan.name === currentPlanName;
             const isRecommended = plan.is_recommended;
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-2xl border-2 p-6 flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 ${
+                className={`relative rounded-2xl border-2 p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 ${
                   isCurrent && hasActiveSubscription && !isExpired
-                    ? "border-emerald-500/80 bg-gradient-to-b from-emerald-50/40 via-white to-white shadow-lg shadow-emerald-500/10"
+                    ? "border-emerald-500/80 bg-gradient-to-b from-emerald-50/40 via-white to-white shadow-md shadow-emerald-500/10"
                     : isRecommended
-                    ? "border-[#2B7BC4] bg-gradient-to-b from-[#2B7BC4]/8 via-[#2B7BC4]/3 to-white shadow-xl shadow-[#2B7BC4]/15"
-                    : "border-slate-200 bg-white hover:border-[#2B7BC4]/60 hover:shadow-lg shadow-xs"
+                    ? "border-[#2B7BC4] bg-gradient-to-b from-[#2B7BC4]/8 via-[#2B7BC4]/3 to-white shadow-lg shadow-[#2B7BC4]/15"
+                    : "border-slate-200 bg-white hover:border-[#2B7BC4]/60 hover:shadow-md shadow-2xs"
                 }`}
               >
                 {isRecommended && (
-                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#2B7BC4] to-[#1F5C96] text-white text-[10px] font-bold px-3.5 py-1 rounded-full flex items-center gap-1 shadow-md shadow-blue-600/30">
-                    <Star className="size-3 fill-amber-300 text-amber-300" /> Most Popular
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white text-[9px] font-bold px-3 py-0.5 rounded-full flex items-center gap-1 shadow-md shadow-blue-600/30">
+                    <Star className="size-2.5 fill-amber-300 text-amber-300" /> Most Popular
                   </span>
                 )}
                 {isCurrent && hasActiveSubscription && !isExpired && (
-                  <span className="absolute -top-3.5 right-4 bg-emerald-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
-                    <Check className="size-3" /> Current Active
+                  <span className="absolute -top-3 right-3 bg-emerald-600 text-white text-[9px] font-bold px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                    <Check className="size-2.5" /> Current Active
                   </span>
                 )}
                 {isCurrent && isExpired && (
-                  <span className="absolute -top-3.5 right-4 bg-rose-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
-                    <AlertCircle className="size-3" /> Cycle Ended
+                  <span className="absolute -top-3 right-3 bg-rose-600 text-white text-[9px] font-bold px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                    <AlertCircle className="size-2.5" /> Cycle Ended
                   </span>
                 )}
 
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className={`text-xs font-bold uppercase tracking-wider ${
+                  <div className="flex items-center justify-between mb-1">
+                    <p className={`text-[11px] font-bold uppercase tracking-wider ${
                       isCurrent && hasActiveSubscription && !isExpired ? "text-emerald-700" : "text-[#2B7BC4]"
                     }`}>
                       {plan.display_name}
                     </p>
                   </div>
-                  <div className="flex items-baseline gap-1 mb-5">
-                    <span className="text-3xl font-black text-[#0D2137] tracking-tight">
+                  <div className="flex items-baseline gap-1 mb-3">
+                    <span className="text-2xl sm:text-3xl font-black text-[#0D2137] tracking-tight">
                       ₹{(plan.price_minor / 100).toLocaleString("en-IN")}
                     </span>
-                    <span className="text-xs font-medium text-slate-500">/ month</span>
+                    <span className="text-[11px] font-medium text-slate-500">/ month</span>
                   </div>
 
-                  <div className="h-px w-full bg-slate-100 mb-4" />
+                  <div className="h-px w-full bg-slate-100 mb-3" />
 
-                  <ul className="space-y-2.5 mb-6">
-                    {plan.highlights.map((h) => (
-                      <li key={h} className="flex items-start gap-2.5 text-xs text-slate-600 leading-relaxed">
-                        <div className={`size-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                  <ul className="space-y-1.5 mb-4">
+                    {plan.highlights.slice(0, 4).map((h) => (
+                      <li key={h} className="flex items-start gap-2 text-[11px] text-slate-600 leading-snug">
+                        <div className={`size-3.5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                           isCurrent && hasActiveSubscription && !isExpired
                             ? "bg-emerald-50 text-emerald-600"
                             : "bg-blue-50 text-[#2B7BC4]"
                         }`}>
-                          <Check className="size-3" />
+                          <Check className="size-2.5" />
                         </div>
-                        <span>{h}</span>
+                        <span className="line-clamp-1">{h}</span>
                       </li>
                     ))}
                   </ul>
@@ -307,14 +307,14 @@ function PlanPickerModal({
                 {isCurrent && hasActiveSubscription && !isExpired ? (
                   <button
                     disabled
-                    className="w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
+                    className="w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
                   >
                     <Check className="size-3.5" /> Current Active Plan
                   </button>
                 ) : hasActiveSubscription && !isExpired ? (
                   <button
                     disabled
-                    className="w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                    className="w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
                     title={`Locked until your current retainer cycle expires on ${formattedExpiry || "end of period"}`}
                   >
                     <Lock className="size-3.5" /> Locked Until Expiry
@@ -322,11 +322,7 @@ function PlanPickerModal({
                 ) : (
                   <button
                     onClick={() => onSelect(plan)}
-                    className={`w-full py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                      isRecommended
-                        ? "bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white hover:from-[#246bb0] hover:to-[#174e7e] shadow-md shadow-blue-500/25 active:scale-[0.98]"
-                        : "border-2 border-[#2B7BC4] text-[#2B7BC4] hover:bg-[#2B7BC4]/10 active:scale-[0.98]"
-                    }`}
+                    className="w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-[0.98] text-white shadow-md shadow-blue-500/25"
                   >
                     {isCurrent && isExpired ? "Renew Retainer" : "Select Plan"} <ArrowRight className="size-3.5" />
                   </button>
@@ -392,9 +388,15 @@ const ADDON_PACKS: AddonPackItem[] = [
 function AddonModal({
   onClose,
   onPurchase,
+  hasActiveSubscription,
+  currentPlanName,
+  onOpenPlanPicker,
 }: {
   onClose: () => void;
   onPurchase: (addon: AddonPackItem) => void;
+  hasActiveSubscription: boolean;
+  currentPlanName?: string;
+  onOpenPlanPicker: () => void;
 }) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -447,6 +449,85 @@ function AddonModal({
     }
   };
 
+  const getAddonMicroTags = (type: "posters" | "reels" | "stories") => {
+    switch (type) {
+      case "posters":
+        return ["1:1 & 4:5 Feed", "Brand DNA Matched"];
+      case "reels":
+        return ["Cinematic 9:16", "Audio Sync & Captions"];
+      case "stories":
+        return ["Daily 9:16 Frames", "Interactive Stickers"];
+    }
+  };
+
+  // If user does not have an active subscription, show the locked state notice
+  if (!hasActiveSubscription) {
+    return createPortal(
+      <div
+        className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-[fadeIn_0.2s_ease-out]"
+        style={{
+          backgroundColor: "rgba(10, 22, 40, 0.7)",
+          backdropFilter: "blur(14px)",
+          WebkitBackdropFilter: "blur(14px)",
+        }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
+        <div className="bg-white rounded-3xl shadow-2xl border border-slate-100/90 w-full max-w-md p-6 sm:p-8 relative my-auto animate-[zoomIn_0.22s_cubic-bezier(0.16,1,0.3,1)] overflow-hidden text-center">
+          {/* Top colored stripe */}
+          <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600" />
+          
+          <button
+            onClick={onClose}
+            className="absolute top-5 right-5 size-9 rounded-full bg-slate-100/80 hover:bg-slate-200 text-slate-400 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer z-10"
+            aria-label="Close modal"
+          >
+            <X className="size-4.5" />
+          </button>
+
+          <div className="mx-auto size-16 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-600 flex items-center justify-center mb-4 shadow-sm">
+            <Lock className="size-8 text-amber-600" />
+          </div>
+
+          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold uppercase tracking-wide mb-2">
+            <span>Retainer Required</span>
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-black text-[#0D2137] tracking-tight">
+            Active Retainer Required
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-2 leading-relaxed">
+            Add-on packs give instant quota boosts to active monthly subscribers. Please activate a retainer plan first to unlock on-demand add-ons.
+          </p>
+
+          <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col gap-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenPlanPicker();
+              }}
+              className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:from-[#246bb0] hover:to-[#174e7e] text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-500/25 transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              <Zap className="size-4 text-amber-300 fill-amber-300" />
+              <span>Choose Production Plan →</span>
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
+  // Active Subscriber View
   return createPortal(
     <div
       className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-[fadeIn_0.2s_ease-out]"
@@ -460,7 +541,10 @@ function AddonModal({
       }}
     >
       <div className="bg-white rounded-3xl shadow-2xl border border-slate-100/90 w-full max-w-xl p-6 sm:p-8 relative my-auto animate-[zoomIn_0.22s_cubic-bezier(0.16,1,0.3,1)] overflow-hidden">
-        {/* Subtle Ambient Radial Glow */}
+        {/* Top Accent Gradient Bar */}
+        <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#2B7BC4] via-[#6366F1] to-[#059669]" />
+
+        {/* Ambient Radial Glows */}
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 size-72 rounded-full bg-blue-400/15 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 right-0 size-60 rounded-full bg-indigo-400/10 blur-3xl pointer-events-none" />
 
@@ -474,17 +558,21 @@ function AddonModal({
         </button>
 
         {/* Modal Header */}
-        <div className="text-center mb-7 relative z-10">
+        <div className="text-center mb-6 relative z-10">
           <div className="relative inline-flex items-center justify-center size-14 rounded-2xl bg-gradient-to-tr from-[#1B5E9A] via-[#2B7BC4] to-[#54A4E5] p-0.5 shadow-lg shadow-blue-500/20 mb-3">
             <div className="size-full rounded-[14px] bg-white flex items-center justify-center text-[#2B7BC4]">
               <Package className="size-6 text-[#2B7BC4]" />
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-1.5 mb-2">
+          <div className="flex items-center justify-center gap-2 mb-1.5 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-blue-50/90 border border-blue-200/70 text-[#2B7BC4] text-[11px] font-bold tracking-wide uppercase">
               <Sparkles className="size-3 text-[#2B7BC4]" />
               <span>On-Demand Quota Top-Up</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Active: {currentPlanName || "Retainer Plan"}</span>
             </span>
           </div>
 
@@ -492,85 +580,91 @@ function AddonModal({
             Order Add-on Pack
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-md mx-auto leading-relaxed">
-            Need extra content this billing cycle? Instantly boost your monthly quota with verified production drops.
+            Instant creative quota added directly to your current monthly cycle.
           </p>
         </div>
 
         {/* Addon Pack Cards */}
-        <div className="space-y-3.5 relative z-10">
-          {ADDON_PACKS.map((addon) => (
-            <div
-              key={addon.id}
-              className={`relative flex flex-col sm:flex-row sm:items-center justify-between p-4.5 rounded-2xl border transition-all duration-200 group ${
-                addon.badge
-                  ? "border-[#2B7BC4]/40 bg-gradient-to-r from-blue-50/40 via-white to-indigo-50/20 shadow-sm hover:border-[#2B7BC4] hover:shadow-md hover:shadow-blue-500/10"
-                  : "border-slate-200/90 bg-white hover:border-[#2B7BC4]/80 hover:bg-blue-50/20 shadow-xs hover:shadow-sm"
-              }`}
-            >
-              {/* Popular Badge */}
-              {addon.badge && (
-                <div className="absolute -top-2.5 right-4 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#2B7BC4] to-indigo-600 text-white text-[10px] font-black uppercase tracking-wider shadow-xs flex items-center gap-1">
-                  <Star className="size-2.5 fill-amber-300 text-amber-300" />
-                  <span>{addon.badge}</span>
-                </div>
-              )}
-
-              {/* Left: Icon + Info */}
-              <div className="flex items-start sm:items-center gap-3.5">
-                {getAddonIcon(addon.type)}
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-sm font-bold text-[#0D2137] tracking-tight group-hover:text-[#2B7BC4] transition-colors">
-                      {addon.name}
-                    </h3>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getAddonBadge(
-                        addon.type
-                      )}`}
-                    >
-                      {addon.tag}
-                    </span>
+        <div className="space-y-3 relative z-10">
+          {ADDON_PACKS.map((addon) => {
+            const microTags = getAddonMicroTags(addon.type);
+            return (
+              <div
+                key={addon.id}
+                className={`relative flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border transition-all duration-200 group ${
+                  addon.badge
+                    ? "border-[#2B7BC4]/40 bg-gradient-to-r from-blue-50/40 via-white to-indigo-50/20 shadow-sm hover:border-[#2B7BC4] hover:shadow-md hover:shadow-blue-500/10"
+                    : "border-slate-200/90 bg-white hover:border-[#2B7BC4]/80 hover:bg-blue-50/20 shadow-xs hover:shadow-sm"
+                }`}
+              >
+                {/* Popular Badge */}
+                {addon.badge && (
+                  <div className="absolute -top-2.5 right-4 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#2B7BC4] to-indigo-600 text-white text-[10px] font-black uppercase tracking-wider shadow-xs flex items-center gap-1">
+                    <Star className="size-2.5 fill-amber-300 text-amber-300" />
+                    <span>{addon.badge}</span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5 leading-normal max-w-sm">
-                    {addon.description}
-                  </p>
+                )}
+
+                {/* Left: Icon + Info */}
+                <div className="flex items-start sm:items-center gap-3.5">
+                  {getAddonIcon(addon.type)}
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-sm font-bold text-[#0D2137] tracking-tight group-hover:text-[#2B7BC4] transition-colors">
+                        {addon.name}
+                      </h3>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getAddonBadge(
+                          addon.type
+                        )}`}
+                      >
+                        {addon.tag}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {microTags.map((mt, i) => (
+                        <span key={i} className="text-[11px] font-medium text-slate-500 bg-slate-100/80 px-2 py-0.5 rounded-md">
+                          {mt}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Price + Action Button */}
+                <div className="flex items-center justify-between sm:justify-end gap-3.5 mt-3 sm:mt-0 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100 shrink-0">
+                  <div className="text-left sm:text-right">
+                    <div className="text-base font-black text-[#0D2137] tracking-tight">
+                      ₹{(addon.price_minor / 100).toLocaleString("en-IN")}
+                    </div>
+                    <div className="text-[10px] font-semibold text-slate-400">
+                      one-time
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => onPurchase(addon)}
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white text-xs font-bold rounded-xl hover:from-[#3586d1] hover:to-[#2368a5] shadow-sm shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Zap className="size-3 text-amber-300 fill-amber-300" />
+                    <span>Buy Now</span>
+                    <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
                 </div>
               </div>
-
-              {/* Right: Price + Action Button */}
-              <div className="flex items-center justify-between sm:justify-end gap-3.5 mt-3 sm:mt-0 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-100 shrink-0">
-                <div className="text-left sm:text-right">
-                  <div className="text-base font-black text-[#0D2137] tracking-tight">
-                    ₹{(addon.price_minor / 100).toLocaleString("en-IN")}
-                  </div>
-                  <div className="text-[10px] font-semibold text-slate-400">
-                    one-time
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => onPurchase(addon)}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white text-xs font-bold rounded-xl hover:from-[#3586d1] hover:to-[#2368a5] shadow-sm shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
-                >
-                  <Zap className="size-3 text-amber-300 fill-amber-300" />
-                  <span>Buy Now</span>
-                  <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Footer Trust Indicator */}
-        <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400 relative z-10">
+        <div className="mt-5 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400 relative z-10">
           <div className="flex items-center gap-1.5 text-slate-600 font-semibold">
             <ShieldCheck className="size-4 text-emerald-600" />
-            <span>Instant Quota Top-Up · 256-Bit Encrypted Checkout</span>
+            <span>Instant Quota Credit · 256-Bit SSL Encrypted</span>
           </div>
           <div className="flex items-center gap-1.5 font-medium text-slate-400">
-            <span>Powered by</span>
-            <span className="font-extrabold text-[#0D2137] tracking-tight">Razorpay</span>
+            <span className="font-semibold text-slate-500 tracking-tight">PCI-DSS Level 1 Certified</span>
           </div>
         </div>
       </div>
@@ -755,7 +849,7 @@ export function PortalPaymentsPage() {
   }>) || [];
 
   return (
-    <div className="relative mx-auto max-w-6xl space-y-8 pb-12">
+    <div className="relative mx-auto max-w-6xl space-y-5 pb-6">
       {/* ── Ambient Background Lighting ─────────────────────────────────── */}
       <div className="pointer-events-none absolute -top-16 -left-16 size-[480px] rounded-full bg-blue-400/10 blur-3xl -z-10" />
       <div className="pointer-events-none absolute top-1/3 -right-20 size-[520px] rounded-full bg-sky-300/10 blur-3xl -z-10" />
@@ -777,8 +871,14 @@ export function PortalPaymentsPage() {
       )}
       {showAddonModal && (
         <AddonModal
+          hasActiveSubscription={isSubscribed}
+          currentPlanName={plan?.display_name}
           onClose={() => setShowAddonModal(false)}
           onPurchase={handleAddonPurchase}
+          onOpenPlanPicker={() => {
+            setShowAddonModal(false);
+            setShowPlanModal(true);
+          }}
         />
       )}
 
@@ -786,7 +886,7 @@ export function PortalPaymentsPage() {
       {paymentStatus === "processing" && (
         <div className="flex items-center gap-3 bg-blue-50/90 border border-blue-200/80 rounded-2xl px-5 py-3.5 text-sm font-semibold text-blue-800 shadow-sm backdrop-blur-xs">
           <RefreshCw className="size-4.5 animate-spin text-blue-600 shrink-0" />
-          <span>Opening secure Razorpay checkout modal...</span>
+          <span>Opening secure checkout window...</span>
         </div>
       )}
       {paymentStatus === "success" && (
@@ -800,7 +900,7 @@ export function PortalPaymentsPage() {
                 Payment Confirmed & Retainer Active!
               </p>
               <p className="text-xs text-emerald-700 font-medium mt-0.5">
-                Next: Enter your brand details to synthesize your Gemini Brand DNA and algorithmically dispatch your creative pod.
+                Next: Enter your brand details to synthesize your Brand Strategy DNA and dispatch your dedicated creative pod.
               </p>
             </div>
           </div>
@@ -809,7 +909,7 @@ export function PortalPaymentsPage() {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2B7BC4] hover:bg-[#1A5EA8] text-white text-xs font-bold shadow-md shadow-blue-500/25 transition-all shrink-0 cursor-pointer"
           >
             <Sparkles className="size-3.5 text-amber-300" />
-            <span>Generate Gemini Brand DNA →</span>
+            <span>Generate Brand Strategy DNA →</span>
           </Link>
         </div>
       )}
@@ -819,7 +919,6 @@ export function PortalPaymentsPage() {
           <span>Payment was cancelled or could not be processed. Please try again.</span>
         </div>
       )}
-
 
       {/* ── Top Header ────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-3xl p-6 sm:p-7 shadow-xs">
@@ -832,27 +931,40 @@ export function PortalPaymentsPage() {
             Subscription & Quota Hub
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl">
-            Monitor real-time monthly production quotas, manage your active retainer, and download verified GST invoices.
+            Monitor real-time monthly production quotas and active retainer billing.
           </p>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
           <button
             type="button"
-            onClick={() => setShowAddonModal(true)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-white border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 hover:border-[#2B7BC4] hover:text-[#2B7BC4] hover:bg-blue-50/30 transition-all shadow-xs cursor-pointer"
+            onClick={() => {
+              if (isSubscribed) {
+                setShowAddonModal(true);
+              }
+            }}
+            disabled={!isSubscribed}
+            title={!isSubscribed ? "Requires an active retainer plan" : "Order Add-on Pack"}
+            className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-xs font-bold transition-all shadow-xs ${
+              isSubscribed
+                ? "bg-white border-slate-200 text-slate-700 hover:border-[#2B7BC4] hover:text-[#2B7BC4] hover:bg-blue-50/30 cursor-pointer"
+                : "bg-slate-100/80 border-slate-200 text-slate-400 cursor-not-allowed opacity-60"
+            }`}
           >
             <Package className="size-3.5" />
-            Add-on Pack
+            <span>Add-on Pack</span>
+            {!isSubscribed && <Lock className="size-3 text-slate-400" />}
           </button>
-          <button
-            type="button"
-            onClick={() => setShowPlanModal(true)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#246bb0] hover:to-[#174e7e] active:scale-95 transition-all cursor-pointer"
-          >
-            {isSubscribed ? <Crown className="size-3.5" /> : <Zap className="size-3.5" />}
-            {isSubscribed ? "Current Plan Details" : "Activate Retainer Plan"}
-          </button>
+          {isSubscribed && (
+            <button
+              type="button"
+              onClick={() => setShowPlanModal(true)}
+              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#246bb0] hover:to-[#174e7e] active:scale-95 transition-all cursor-pointer"
+            >
+              <Crown className="size-3.5" />
+              <span>Manage Retainer</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -886,7 +998,7 @@ export function PortalPaymentsPage() {
         <div className="rounded-2xl bg-white/90 border border-slate-200/80 p-4.5 shadow-xs flex items-center justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Billing Security</p>
-            <p className="text-lg font-black text-[#0D2137] mt-0.5">Razorpay 256-Bit</p>
+            <p className="text-lg font-black text-[#0D2137] mt-0.5">256-Bit SSL</p>
           </div>
           <div className="size-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
             <ShieldCheck className="size-5" />
@@ -1051,9 +1163,9 @@ export function PortalPaymentsPage() {
                 <Package className="size-7" />
               </div>
               <div>
-                <p className="text-base font-bold text-[#0D2137]">No Active Subscription</p>
+                <p className="text-base font-bold text-[#0D2137]">No Active Retainer</p>
                 <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-                  Activate a high-impact creative plan to unlock your workspace and dedicated creative team.
+                  Choose a production plan to assign your creative pod and unlock monthly quotas.
                 </p>
               </div>
               <button
@@ -1160,7 +1272,7 @@ export function PortalPaymentsPage() {
                   </div>
                   <div>
                     <p className="font-bold text-[#0D2137]">Need extra deliverables before renewal?</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Top up quota anytime with instant Razorpay add-on packs.</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Top up quota anytime with instant add-on packs.</p>
                   </div>
                 </div>
                 <button

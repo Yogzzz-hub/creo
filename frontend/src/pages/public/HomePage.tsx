@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import {
   ArrowRight,
@@ -15,16 +15,114 @@ import {
   Calendar,
 } from "lucide-react";
 import { request } from "../../lib/http";
+import { ScrollReveal } from "../../components/ui/ScrollReveal";
 
+interface MetricItem {
+  target: number;
+  decimals?: number;
+  prefix?: string;
+  suffix?: string;
+  label: string;
+  sub: string;
+}
 
-
-const METRICS = [
-  { value: "50+", label: "Active Brands Scaled", sub: "Across 12 industries" },
-  { value: "1,200+", label: "Reels & Carousels Delivered", sub: "4K & Retina exports" },
-  { value: "98.4%", label: "First-Round Approval Rate", sub: "Minimal revision cycles" },
-  { value: "3.4x", label: "Average Client ROI Lift", sub: "Verified performance" },
-  { value: "7 Days", label: "Onboarding to 1st Batch", sub: "Guaranteed SLA delivery" },
+const METRIC_ITEMS: MetricItem[] = [
+  { target: 50, suffix: "+", label: "Active Brands Scaled", sub: "Across 12 industries" },
+  { target: 1200, suffix: "+", label: "Reels & Carousels Delivered", sub: "4K & Retina exports" },
+  { target: 98.4, decimals: 1, suffix: "%", label: "First-Round Approval Rate", sub: "Minimal revision cycles" },
+  { target: 3.4, decimals: 1, suffix: "x", label: "Average Client ROI Lift", sub: "Verified performance" },
+  { target: 7, suffix: " Days", label: "Onboarding to 1st Batch", sub: "Guaranteed SLA delivery" },
 ];
+
+function AnimatedMetricCard({ item, isLast }: { item: MetricItem; isLast?: boolean }) {
+  const [count, setCount] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const hasTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    const triggerAnimation = () => {
+      if (hasTriggeredRef.current) return;
+      hasTriggeredRef.current = true;
+      setIsAnimating(true);
+
+      const duration = 1600;
+      const startTime = performance.now();
+
+      const update = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        // Quartic ease-out curve for a natural decelerating count
+        const easeOut = 1 - Math.pow(1 - progress, 4);
+        const currentVal = easeOut * item.target;
+        setCount(currentVal);
+
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        } else {
+          setCount(item.target);
+          setIsAnimating(false);
+        }
+      };
+
+      requestAnimationFrame(update);
+    };
+
+    if (typeof IntersectionObserver !== "undefined" && cardRef.current) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0]?.isIntersecting) {
+            triggerAnimation();
+            observer.disconnect();
+          }
+        },
+        { threshold: 0.2 }
+      );
+      observer.observe(cardRef.current);
+      return () => observer.disconnect();
+    } else {
+      const timer = setTimeout(triggerAnimation, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [item.target]);
+
+  const displayCount = () => {
+    if (item.decimals) {
+      return count.toFixed(item.decimals);
+    }
+    return Math.round(count).toLocaleString();
+  };
+
+  return (
+    <div
+      ref={cardRef}
+      className={`group relative p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-center items-center transition-all duration-300 hover:border-[#2B7BC4]/60 hover:shadow-lg hover:-translate-y-1 overflow-hidden ${
+        isLast ? "col-span-2 md:col-span-1" : ""
+      }`}
+    >
+      {/* Top dynamic loading accent bar */}
+      <div
+        className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] transition-all duration-700 ease-out"
+        style={{ width: hasTriggeredRef.current ? "100%" : "0%" }}
+      />
+
+      {/* Numerical metric with animated counter */}
+      <div className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0D2137] mb-1.5 transition-transform duration-300 group-hover:scale-105 font-mono">
+        <span>{item.prefix || ""}</span>
+        <span className="tabular-nums">{displayCount()}</span>
+        <span className="text-[#2B7BC4]">{item.suffix || ""}</span>
+      </div>
+
+      <div className="text-sm font-bold text-slate-700">{item.label}</div>
+      <div className="text-xs text-slate-400 mt-0.5">{item.sub}</div>
+
+      {/* Subtle pulsing live indicator during animation */}
+      {isAnimating && (
+        <span className="absolute top-2 right-2 size-1.5 rounded-full bg-[#2B7BC4] animate-ping" />
+      )}
+    </div>
+  );
+}
 
 
 
@@ -316,13 +414,6 @@ export function HomePage() {
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
 
-                        {/* Animated Layers Indicator */}
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="size-7 rounded-full bg-black/50 backdrop-blur-xs flex items-center justify-center text-amber-300 border border-white/20 group-hover:scale-110 transition-transform shadow-xs">
-                            <Layers className="size-3.5" />
-                          </div>
-                        </div>
-
                         <span className="absolute bottom-1 right-1 text-[9px] font-extrabold bg-black/80 backdrop-blur-xs text-white px-1.5 py-0.5 rounded shadow-xs">
                           1/8
                         </span>
@@ -373,21 +464,14 @@ export function HomePage() {
       <section className="py-10 sm:py-12 bg-gradient-to-b from-white via-slate-50/60 to-white border-b border-slate-200/70" id="stats">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
 
-          {/* 5 Impact Metric Cards */}
+          {/* 5 Impact Metric Cards with Count-Up Loading Animations */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 sm:gap-6 text-center">
-            {METRICS.map((m, idx) => (
-              <div
+            {METRIC_ITEMS.map((m, idx) => (
+              <AnimatedMetricCard
                 key={m.label}
-                className={`p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-center items-center transition-all duration-300 hover:border-blue-200 hover:shadow-md ${
-                  idx === 4 ? "col-span-2 md:col-span-1" : ""
-                }`}
-              >
-                <div className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#0D2137] mb-1.5">
-                  {m.value}
-                </div>
-                <div className="text-sm font-bold text-slate-700">{m.label}</div>
-                <div className="text-xs text-slate-400 mt-0.5">{m.sub}</div>
-              </div>
+                item={m}
+                isLast={idx === 4}
+              />
             ))}
           </div>
         </div>
@@ -396,62 +480,63 @@ export function HomePage() {
       {/* ── 4. How It Works: The 7-Day Roadmap ───────────────────────────── */}
       <section className="py-12 sm:py-16 bg-gradient-to-b from-[#F4F9FD] to-white border-y border-slate-200/70" id="how-it-works">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="text-center max-w-3xl mx-auto mb-10">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#2B7BC4] border border-blue-200/80 shadow-2xs mb-3">
-              <Clock className="size-3.5" />
-              <span>Turnaround Timeline</span>
+          <ScrollReveal variant="up">
+            <div className="text-center max-w-3xl mx-auto mb-10">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#2B7BC4] border border-blue-200/80 shadow-2xs mb-3">
+                <Clock className="size-3.5" />
+                <span>Turnaround Timeline</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#0D2137]">
+                From Sign-Up to First Batch <br />
+                <span className="text-[#2B7BC4]">in Exactly 7 Days</span>
+              </h2>
+              <p className="mt-3 text-sm sm:text-base text-slate-600">
+                No protracted 6-week agency setups. A streamlined 5-step workflow engineered for rapid execution.
+              </p>
             </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#0D2137]">
-              From Sign-Up to First Batch <br />
-              <span className="text-[#2B7BC4]">in Exactly 7 Days</span>
-            </h2>
-            <p className="mt-3 text-sm sm:text-base text-slate-600">
-              No protracted 6-week agency setups. A streamlined 5-step workflow engineered for rapid execution.
-            </p>
-          </div>
+          </ScrollReveal>
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative">
-            {ONBOARDING_STEPS.map((step) => {
+            {ONBOARDING_STEPS.map((step, idx) => {
               const Icon = step.icon;
               return (
-                <div
-                  key={step.number}
-                  className="rounded-2xl bg-white p-3.5 sm:p-4 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-xl transition-all duration-500 flex flex-col justify-between group overflow-hidden"
-                >
-                  <div>
-                    {/* Real Animated AI Step Visual */}
-                    <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3.5 bg-slate-100 shadow-inner">
-                      <img
-                        src={step.image}
-                        alt={step.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
-                      
-                      <div className="absolute top-2 left-2 flex items-center gap-1.5">
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-white/95 backdrop-blur-xs text-[#2B7BC4] shadow-xs">
-                          {step.day}
-                        </span>
-                      </div>
-                      
-                      <div className="absolute top-2 right-2">
-                        <span className="text-[11px] font-black text-white/95 bg-black/50 backdrop-blur-xs px-2 py-0.5 rounded-md">
-                          #{step.number}
-                        </span>
+                <ScrollReveal key={step.number} variant="up" delay={idx * 100}>
+                  <div className="rounded-2xl bg-white p-3.5 sm:p-4 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-xl transition-all duration-500 flex flex-col justify-between group overflow-hidden h-full">
+                    <div>
+                      {/* Real Animated AI Step Visual */}
+                      <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3.5 bg-slate-100 shadow-inner">
+                        <img
+                          src={step.image}
+                          alt={step.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
+                        
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-white/95 backdrop-blur-xs text-[#2B7BC4] shadow-xs">
+                            {step.day}
+                          </span>
+                        </div>
+                        
+                        <div className="absolute top-2 right-2">
+                          <span className="text-[11px] font-black text-white/95 bg-black/50 backdrop-blur-xs px-2 py-0.5 rounded-md">
+                            #{step.number}
+                          </span>
+                        </div>
+
+                        <div className="absolute bottom-2 left-2 size-7 rounded-lg bg-white/90 backdrop-blur-xs text-[#2B7BC4] flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:bg-[#2B7BC4] group-hover:text-white transition-all duration-300">
+                          <Icon className="size-3.5" />
+                        </div>
                       </div>
 
-                      <div className="absolute bottom-2 left-2 size-7 rounded-lg bg-white/90 backdrop-blur-xs text-[#2B7BC4] flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:bg-[#2B7BC4] group-hover:text-white transition-all duration-300">
-                        <Icon className="size-3.5" />
-                      </div>
+                      <h3 className="text-sm font-bold text-[#0D2137] mb-1.5 group-hover:text-[#2B7BC4] transition-colors">
+                        {step.title}
+                      </h3>
+                      <p className="text-[11px] text-slate-600 leading-relaxed">{step.description}</p>
                     </div>
-
-                    <h3 className="text-sm font-bold text-[#0D2137] mb-1.5 group-hover:text-[#2B7BC4] transition-colors">
-                      {step.title}
-                    </h3>
-                    <p className="text-[11px] text-slate-600 leading-relaxed">{step.description}</p>
                   </div>
-                </div>
+                </ScrollReveal>
               );
             })}
           </div>
@@ -461,111 +546,118 @@ export function HomePage() {
       {/* ── 5. Why Brands Switch to Creo (Comparison Matrix) ─────────────── */}
       <section className="py-12 sm:py-16 bg-white" id="comparison">
         <div className="max-w-6xl mx-auto px-6 sm:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-10">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#0D2137]">
-              Why Ambitious Brands <br />
-              <span className="text-[#2B7BC4]">Choose Creo Over the Rest</span>
-            </h2>
-            <p className="mt-3 text-sm sm:text-base text-slate-600">
-              Traditional agencies are too slow. Freelancers are too unreliable. Creo gives you the sweet spot: agency-grade output with startup agility.
-            </p>
-          </div>
+          <ScrollReveal variant="up">
+            <div className="text-center max-w-3xl mx-auto mb-10">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#0D2137]">
+                Why Ambitious Brands <br />
+                <span className="text-[#2B7BC4]">Choose Creo Over the Rest</span>
+              </h2>
+              <p className="mt-3 text-sm sm:text-base text-slate-600">
+                Traditional agencies are too slow. Freelancers are too unreliable. Creo gives you the sweet spot: agency-grade output with startup agility.
+              </p>
+            </div>
+          </ScrollReveal>
 
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-bold uppercase tracking-wider text-slate-500">
-                  <th className="p-4 sm:p-5">Feature</th>
-                  <th className="p-4 sm:p-5 text-slate-400">Traditional Agency</th>
-                  <th className="p-4 sm:p-5 text-slate-400">Freelancer Marketplace</th>
-                  <th className="p-4 sm:p-5 bg-blue-50/80 text-[#2B7BC4] font-black border-l border-blue-200">
-                    Creo Retainer ⚡
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
-                {COMPARISON_ROWS.map((row) => (
-                  <tr key={row.feature} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="p-4 sm:p-5 font-bold text-[#0D2137]">{row.feature}</td>
-                    <td className="p-4 sm:p-5 text-slate-500">{row.traditional}</td>
-                    <td className="p-4 sm:p-5 text-slate-500">{row.freelancer}</td>
-                    <td className="p-4 sm:p-5 font-bold text-[#0D2137] bg-blue-50/40 border-l border-blue-100">
-                      {row.creo}
-                    </td>
+          <ScrollReveal variant="scale" delay={120}>
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <th className="p-4 sm:p-5">Feature</th>
+                    <th className="p-4 sm:p-5 text-slate-400">Traditional Agency</th>
+                    <th className="p-4 sm:p-5 text-slate-400">Freelancer Marketplace</th>
+                    <th className="p-4 sm:p-5 bg-blue-50/80 text-[#2B7BC4] font-black border-l border-blue-200">
+                      Creo Retainer ⚡
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-sm">
+                  {COMPARISON_ROWS.map((row) => (
+                    <tr key={row.feature} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="p-4 sm:p-5 font-bold text-[#0D2137]">{row.feature}</td>
+                      <td className="p-4 sm:p-5 text-slate-500">{row.traditional}</td>
+                      <td className="p-4 sm:p-5 text-slate-500">{row.freelancer}</td>
+                      <td className="p-4 sm:p-5 font-bold text-[#0D2137] bg-blue-50/40 border-l border-blue-100">
+                        {row.creo}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* ── 7. Retainer Quick-Glance Section ──────────────────────────────── */}
       <section className="py-12 sm:py-16 bg-white" id="pricing-glance">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="rounded-3xl bg-gradient-to-r from-[#0D2137] via-[#123966] to-[#1D5E9E] p-8 sm:p-12 lg:p-14 text-white shadow-2xl relative overflow-hidden">
-            <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl pointer-events-none" />
+          <ScrollReveal variant="scale">
+            <div className="rounded-3xl bg-gradient-to-r from-[#0D2137] via-[#123966] to-[#1D5E9E] p-8 sm:p-12 lg:p-14 text-white shadow-2xl relative overflow-hidden">
+              <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
-              <div className="lg:col-span-7">
-                <span className="text-xs font-bold uppercase tracking-widest text-cyan-300">
-                  Predictable Month-to-Month Retainers
-                </span>
-                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight mt-2 text-white">
-                  Plans Starting at Just ₹25,000 / month
-                </h3>
-                <p className="mt-3 text-sm sm:text-base text-blue-100/90 leading-relaxed max-w-xl">
-                  Choose between Starter Growth, Brand Accelerator, or Enterprise Pro. Every plan includes dedicated video editors, graphic designers, and auto-scheduling.
-                </p>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+                <div className="lg:col-span-7">
+                  <span className="text-xs font-bold uppercase tracking-widest text-cyan-300">
+                    Predictable Month-to-Month Retainers
+                  </span>
+                  <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight mt-2 text-white">
+                    Plans Starting at Just ₹25,000 / month
+                  </h3>
+                  <p className="mt-3 text-sm sm:text-base text-blue-100/90 leading-relaxed max-w-xl">
+                    Choose between Starter Growth, Brand Accelerator, or Enterprise Pro. Every plan includes dedicated video editors, graphic designers, and auto-scheduling.
+                  </p>
 
-                <div className="mt-6 flex flex-wrap items-center gap-4 sm:gap-6 text-xs sm:text-sm">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="size-4 text-emerald-400" />
-                    <span>8 to 30 Deliverables / Month</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="size-4 text-emerald-400" />
-                    <span>2 Revision Rounds</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="size-4 text-emerald-400" />
-                    <span>Zero Setup Fees</span>
+                  <div className="mt-6 flex flex-wrap items-center gap-4 sm:gap-6 text-xs sm:text-sm">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="size-4 text-emerald-400" />
+                      <span>8 to 30 Deliverables / Month</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="size-4 text-emerald-400" />
+                      <span>2 Revision Rounds</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="size-4 text-emerald-400" />
+                      <span>Zero Setup Fees</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-3 justify-center">
-                <Link
-                  to="/pricing"
-                  className="px-7 py-3.5 rounded-xl bg-white text-[#0D2137] font-extrabold text-sm text-center hover:bg-slate-50 transition-all duration-200 shadow-lg hover:scale-105"
-                >
-                  View Full Plans & Pricing →
-                </Link>
-                <a
-                  href="https://wa.me/919941999415"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-7 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold text-sm text-center backdrop-blur-md transition-all duration-200"
-                >
-                  Schedule Custom Demo
-                </a>
+                <div className="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-3 justify-center">
+                  <Link
+                    to="/pricing"
+                    className="px-7 py-3.5 rounded-xl bg-white text-[#0D2137] font-extrabold text-sm text-center hover:bg-slate-50 transition-all duration-200 shadow-lg hover:scale-105"
+                  >
+                    View Full Plans & Pricing →
+                  </Link>
+                  <a
+                    href="https://wa.me/919941999415"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-7 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold text-sm text-center backdrop-blur-md transition-all duration-200"
+                  >
+                    Schedule Custom Demo
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* ── 8. Free 30-Day Content Calendar Template (Lead Magnet) ────────── */}
       <section className="py-12 sm:py-16 bg-gradient-to-b from-[#EAF3FB] to-white relative" id="lead-magnet">
         <div className="max-w-4xl mx-auto px-6 sm:px-8 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#2B7BC4] border border-blue-200 mb-3 shadow-2xs">
-            <Calendar className="size-3.5" />
-            <span>Free Agency Resource</span>
-          </div>
+          <ScrollReveal variant="up">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#2B7BC4] border border-blue-200 mb-3 shadow-2xs">
+              <Calendar className="size-3.5" />
+              <span>Free Agency Resource</span>
+            </div>
 
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0D2137] mb-3">
-            Download the 30-Day Content Calendar Blueprint
-          </h2>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0D2137] mb-3">
+              Download the 30-Day Content Calendar Blueprint
+            </h2>
           <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto mb-6 leading-relaxed">
             The exact social media content matrix we use for our top retainer brands. Includes 30 post concepts, proven video hooks, and call-to-action scripts.
           </p>
@@ -591,7 +683,7 @@ export function HomePage() {
               <button
                 type="submit"
                 disabled={leadStatus === "loading"}
-                className="h-13 rounded-2xl bg-[#2B7BC4] hover:bg-[#1A5EA8] px-8 text-white font-bold text-sm inline-flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer disabled:opacity-60"
+                className="h-13 rounded-2xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-95 px-8 text-white font-bold text-sm inline-flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-60"
               >
                 {leadStatus === "loading" ? (
                   <>
@@ -615,40 +707,11 @@ export function HomePage() {
           <p className="text-xs text-slate-400 mt-4 tracking-wide">
             Instant PDF & Notion download link. Zero spam. Unsubscribe anytime.
           </p>
+          </ScrollReveal>
         </div>
       </section>
 
-      {/* ── 9. Final Call to Action ─────────────────────────────────────── */}
-      <section className="py-12 sm:py-16 bg-gradient-to-r from-[#07192F] via-[#0B2545] to-[#123966] text-white text-center relative overflow-hidden border-b border-white/10">
-        <div className="max-w-4xl mx-auto px-6 sm:px-8 relative z-10">
-          <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
-            Ready to Put Your Brand Content <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-cyan-300">
-              on Complete Autopilot?
-            </span>
-          </h2>
-          <p className="mt-4 text-sm sm:text-base text-blue-100/90 max-w-2xl mx-auto">
-            Get onboarded in 7 days. Your first batch of high-impact reels, carousels, and stories arrives next week.
-          </p>
 
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-            <Link
-              to="/pricing"
-              className="px-8 py-3.5 rounded-full bg-white text-[#0B2545] font-extrabold text-sm sm:text-base hover:bg-slate-50 transition-all duration-200 shadow-xl hover:scale-105"
-            >
-              Get Started with a Plan
-            </Link>
-            <a
-              href="https://wa.me/919941999415"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-3.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold text-sm sm:text-base backdrop-blur-md transition-all duration-200"
-            >
-              Book a 15-Min Intro Call
-            </a>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

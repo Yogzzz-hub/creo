@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
-import { CheckCircle2, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
+import { CheckCircle2, AlertCircle, ArrowRight, ShieldCheck, Lock, Sparkles } from "lucide-react";
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
 import { setAuthToken } from "../../lib/auth-token";
@@ -14,8 +14,21 @@ export function GoogleCallbackPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [authenticatedUser, setAuthenticatedUser] = useState<AuthUser | null>(null);
 
+  // Handshake step indicator
+  const [step, setStep] = useState<number>(1);
+
   // Prevent duplicate execution from StrictMode or re-renders
   const hasExchangedRef = useRef(false);
+
+  useEffect(() => {
+    // Cycle through subtle handshake steps for visual polish
+    const t1 = setTimeout(() => setStep(2), 600);
+    const t2 = setTimeout(() => setStep(3), 1200);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
 
   useEffect(() => {
     const code = searchParams.get("code");
@@ -52,7 +65,7 @@ export function GoogleCallbackPage() {
             } else {
               navigate("/portal");
             }
-          }, 1000);
+          }, 900);
         }
       } catch (err: unknown) {
         setStatus("error");
@@ -66,17 +79,51 @@ export function GoogleCallbackPage() {
   }, [searchParams, navigate, refresh]);
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-[#E8F4FD] via-[#DBEDF9] to-[#F0F8FF] px-4 overflow-hidden">
-      {/* Background Ambient Lighting */}
-      <div className="pointer-events-none absolute -top-24 -left-24 size-96 rounded-full bg-blue-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -right-24 size-96 rounded-full bg-sky-300/20 blur-3xl" />
+    <div className="h-screen w-screen fixed inset-0 overflow-hidden bg-[#030914] flex flex-col justify-between p-4 sm:p-6 select-none antialiased">
+      {/* ── Animated AI Background Layer ─────────────────────────────────── */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div
+          className="absolute -inset-10 bg-cover bg-center animate-ai-bg-drift filter brightness-[0.70] contrast-[1.12]"
+          style={{ backgroundImage: `url('/assets/auth_bg.jpg')` }}
+        />
+        {/* Atmospheric Cinematic Sapphire Vignette */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#030A16]/85 via-[#07192F]/65 to-[#040D1A]/90 backdrop-blur-[2px]" />
+        {/* Animated Ambient Light Pulses */}
+        <div className="absolute -top-28 -left-28 w-[520px] h-[520px] bg-blue-500/20 rounded-full blur-[120px] animate-ai-orb-1" />
+        <div className="absolute -bottom-28 -right-28 w-[580px] h-[580px] bg-cyan-400/15 rounded-full blur-[130px] animate-ai-orb-2" />
+      </div>
 
-      <div className="relative w-full max-w-md rounded-3xl border border-slate-200/80 bg-white/90 backdrop-blur-xl p-8 sm:p-10 shadow-2xl text-center space-y-6 animate-page-in">
-        {/* Dual Brand Icon: Google + Creo */}
-        <div className="flex items-center justify-center gap-3">
-          {/* Google Icon */}
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-            <svg className="size-6" viewBox="0 0 24 24">
+      {/* ── Top Header Bar ────────────────────────────────────────────────── */}
+      <header className="max-w-md w-full mx-auto flex items-center justify-between pb-1 relative z-10 shrink-0">
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-br from-[#2B7BC4] to-[#0EA5E9] shadow-lg shadow-blue-500/25 group-hover:scale-105 transition-transform border border-white/20">
+            <span className="font-mono text-base font-black text-white">C</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-lg font-black tracking-tight text-white drop-shadow-sm">Creo</span>
+            <span className="text-[8px] font-bold tracking-wider text-cyan-300 uppercase">
+              Identity Services
+            </span>
+          </div>
+        </Link>
+        <div className="flex items-center gap-1.5 text-[11px] font-medium text-blue-200/80 bg-white/5 border border-white/10 px-3 py-1 rounded-full backdrop-blur-md">
+          <Lock className="size-3 text-cyan-300" />
+          <span>TLS 1.3 / OAuth 2.0</span>
+        </div>
+      </header>
+
+      {/* ── Main Handshake Card ─────────────────────────────────────────── */}
+      <div className="relative w-full max-w-md mx-auto my-auto rounded-3xl border border-white/40 bg-white/95 backdrop-blur-2xl p-8 sm:p-10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] text-center space-y-6 z-10 animate-page-in">
+        {/* Dual Brand Handshake Bridge: Google <───> Creo */}
+        <div className="relative flex items-center justify-center gap-4 py-2">
+          {/* Connecting Handshake Line with Pulse */}
+          <div className="absolute inset-x-20 top-1/2 -translate-y-1/2 h-[2px] bg-gradient-to-r from-blue-300 via-[#2B7BC4] to-cyan-300 opacity-60">
+            <div className="size-2 rounded-full bg-cyan-400 absolute top-1/2 -translate-y-1/2 animate-[ping_1.6s_cubic-bezier(0,0,0.2,1)_infinite]" style={{ left: "50%" }} />
+          </div>
+
+          {/* Google Icon Container */}
+          <div className="relative flex size-14 items-center justify-center rounded-2xl bg-white border border-slate-200/80 shadow-md shadow-slate-200/50 hover:scale-105 transition-transform z-10">
+            <svg className="size-7" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -96,33 +143,43 @@ export function GoogleCallbackPage() {
             </svg>
           </div>
 
-          <span className="text-slate-300 font-light text-xl">×</span>
+          {/* Central Animated Badge */}
+          <div className="z-10 flex size-8 items-center justify-center rounded-full bg-slate-900 border-2 border-white shadow-md text-cyan-400 text-xs">
+            <Sparkles className="size-3.5 animate-spin" style={{ animationDuration: "6s" }} />
+          </div>
 
-          {/* Creo Logo */}
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#2B7BC4] to-[#1E609A] text-white font-black text-xl shadow-md shadow-blue-500/25">
+          {/* Creo Logo Container */}
+          <div className="relative flex size-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#2B7BC4] to-[#1E609A] text-white font-black text-2xl shadow-lg shadow-blue-500/30 hover:scale-105 transition-transform z-10 border border-blue-400/30">
             C
           </div>
         </div>
 
         {/* Status: Loading */}
         {status === "loading" && (
-          <div className="space-y-4 pt-2">
-            <div className="relative mx-auto size-12">
-              <div className="absolute inset-0 rounded-full border-3 border-blue-100 animate-pulse" />
-              <div className="size-12 rounded-full border-3 border-transparent border-t-[#2B7BC4] animate-spin" />
+          <div className="space-y-4 pt-1">
+            {/* Pulsing Concentric Ring Spinner */}
+            <div className="relative mx-auto size-14">
+              <div className="absolute inset-0 rounded-full border-4 border-blue-100/80 animate-ping opacity-30" />
+              <div className="absolute inset-0 rounded-full border-3 border-blue-200/60" />
+              <div className="size-14 rounded-full border-3 border-transparent border-t-[#2B7BC4] border-r-[#0EA5E9] animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <ShieldCheck className="size-5 text-[#2B7BC4]" />
+              </div>
             </div>
 
             <div>
-              <h2 className="text-xl font-bold text-[#0D2137] tracking-tight">
+              <h2 className="text-xl font-extrabold text-[#0D2137] tracking-tight">
                 Signing in with Google
               </h2>
               <p className="text-xs text-slate-500 mt-1.5 leading-relaxed max-w-xs mx-auto">
-                Securely verifying your credentials and synchronizing your Creo workspace...
+                {step === 1 && "Verifying secure cryptographic signature..."}
+                {step === 2 && "Synchronizing workspace credentials & profile..."}
+                {step >= 3 && "Configuring authenticated session..."}
               </p>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] font-semibold text-blue-700">
-              <ShieldCheck className="size-3.5 text-blue-600" />
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-blue-50/80 border border-blue-200/70 text-[11px] font-bold text-[#2B7BC4] shadow-2xs">
+              <ShieldCheck className="size-3.5 text-[#0EA5E9]" />
               <span>OAuth 2.0 Encrypted Handshake</span>
             </div>
           </div>
@@ -130,32 +187,37 @@ export function GoogleCallbackPage() {
 
         {/* Status: Success */}
         {status === "success" && (
-          <div className="space-y-4 pt-2 animate-in fade-in zoom-in-95 duration-200">
-            <div className="size-12 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
-              <CheckCircle2 className="size-6" />
+          <div className="space-y-4 pt-1 animate-in fade-in zoom-in-95 duration-200">
+            <div className="size-14 rounded-full bg-emerald-50 border-2 border-emerald-300 text-emerald-600 flex items-center justify-center mx-auto shadow-md shadow-emerald-500/10">
+              <CheckCircle2 className="size-7" />
             </div>
 
             <div>
-              <h2 className="text-xl font-black text-[#0D2137]">
+              <h2 className="text-xl font-black text-[#0D2137] tracking-tight">
                 Welcome, {authenticatedUser?.full_name?.split(" ")[0] || "there"}!
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Authentication verified. Launching your production portal...
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Authentication confirmed. Launching your Creo production portal...
               </p>
+            </div>
+
+            <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200/80">
+              <span className="size-2 rounded-full bg-emerald-500 animate-ping" />
+              <span>Redirecting automatically</span>
             </div>
           </div>
         )}
 
         {/* Status: Error */}
         {status === "error" && (
-          <div className="space-y-4 pt-2 animate-in fade-in duration-200">
-            <div className="size-12 rounded-full bg-red-50 border border-red-200 text-red-600 flex items-center justify-center mx-auto">
-              <AlertCircle className="size-6" />
+          <div className="space-y-4 pt-1 animate-in fade-in duration-200">
+            <div className="size-14 rounded-full bg-rose-50 border-2 border-rose-300 text-rose-600 flex items-center justify-center mx-auto shadow-md shadow-rose-500/10">
+              <AlertCircle className="size-7" />
             </div>
 
             <div>
               <h2 className="text-xl font-bold text-[#0D2137]">Authentication Failed</h2>
-              <p className="text-xs text-red-600 bg-red-50 p-3 rounded-2xl border border-red-100 mt-2 leading-relaxed">
+              <p className="text-xs text-rose-700 bg-rose-50/90 p-3.5 rounded-2xl border border-rose-200/80 mt-2.5 leading-relaxed text-left">
                 {errorMessage}
               </p>
             </div>
@@ -163,7 +225,7 @@ export function GoogleCallbackPage() {
             <div className="pt-2">
               <Link
                 to="/login"
-                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#246bb0] hover:to-[#174e7e] transition-all"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:brightness-110 active:scale-95 transition-all"
               >
                 Back to Sign In <ArrowRight className="size-3.5" />
               </Link>
@@ -171,6 +233,20 @@ export function GoogleCallbackPage() {
           </div>
         )}
       </div>
+
+      {/* ── Bottom Footer Help Note ─────────────────────────────────────── */}
+      <footer className="text-center text-xs text-white/70 py-1 relative z-10 shrink-0">
+        <span>Protected by Creo Zero-Trust Infrastructure · </span>
+        <a
+          href="https://wa.me/919941999415"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-cyan-300 font-semibold hover:text-white hover:underline cursor-pointer transition-colors"
+        >
+          Need Support?
+        </a>
+      </footer>
     </div>
   );
 }
+

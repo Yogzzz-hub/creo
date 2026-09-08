@@ -6,6 +6,7 @@ import { useAuth } from "../../lib/auth-context";
 import { getRoleHome } from "../auth/ProtectedRoute";
 
 const NAV_LINKS = [
+  { label: "Home", href: "/" },
   { label: "About Us", href: "/about" },
   { label: "Our Work", href: "/portfolio" },
   { label: "Our Clients", href: "/clients" },
@@ -86,7 +87,7 @@ export function Navbar() {
             <>
               <Link
                 to={userHome}
-                className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90 rounded-lg px-5 h-9 text-sm font-medium inline-flex items-center justify-center transition-colors shadow-xs"
+                className="bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-[0.98] text-white rounded-xl px-5 h-9 text-sm font-semibold inline-flex items-center justify-center transition-all shadow-md shadow-blue-500/20"
               >
                 {userPortalLabel}
               </Link>
@@ -109,7 +110,7 @@ export function Navbar() {
               </Link>
               <Link
                 to="/pricing"
-                className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90 rounded-lg px-5 h-9 text-sm font-medium inline-flex items-center justify-center transition-colors shadow-xs"
+                className="bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-[0.98] text-white rounded-xl px-5 h-9 text-sm font-semibold inline-flex items-center justify-center transition-all shadow-md shadow-blue-500/20"
               >
                 Get Started
               </Link>
@@ -160,7 +161,7 @@ export function Navbar() {
                 <Link
                   to={userHome}
                   onClick={() => setSheetOpen(false)}
-                  className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90 rounded-lg w-full h-10 text-sm font-medium inline-flex items-center justify-center transition-colors"
+                  className="bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-[0.98] text-white rounded-xl w-full h-10 text-sm font-semibold inline-flex items-center justify-center transition-all shadow-md shadow-blue-500/20"
                 >
                   {userPortalLabel}
                 </Link>
@@ -188,7 +189,7 @@ export function Navbar() {
                 <Link
                   to="/pricing"
                   onClick={() => setSheetOpen(false)}
-                  className="bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90 rounded-lg w-full h-10 text-sm font-medium inline-flex items-center justify-center transition-colors"
+                  className="bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-[0.98] text-white rounded-xl w-full h-10 text-sm font-semibold inline-flex items-center justify-center transition-all shadow-md shadow-blue-500/20"
                 >
                   Get Started
                 </Link>

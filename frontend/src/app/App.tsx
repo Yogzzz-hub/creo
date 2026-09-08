@@ -97,10 +97,10 @@ function OnboardingPageWrapper() {
   const userId = user?.id || "00000000-0000-0000-0000-000000000001";
 
   return (
-    <div data-surface="review" className="min-h-screen bg-[#E8F4FD] text-[#0D2137] flex flex-col">
+    <div data-surface="review" className="min-h-screen bg-[#E8F4FD] text-[#0D2137] flex flex-col overflow-x-hidden">
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-30 border-b border-[#C9DFF0] bg-white/90 backdrop-blur-md px-4 sm:px-8 py-3.5 shadow-xs">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+      <header className="sticky top-0 z-30 border-b border-[#C9DFF0] bg-white/95 backdrop-blur-md px-4 sm:px-8 py-3 shadow-xs shrink-0">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
             <span className="size-8 flex items-center justify-center rounded-xl bg-gradient-to-br from-[#2B7BC4] to-[#1A5EA8] font-mono text-sm font-bold text-white shadow-xs group-hover:scale-105 transition-transform">
               C
@@ -115,16 +115,24 @@ function OnboardingPageWrapper() {
             </div>
           </Link>
 
-          <div className="flex items-center gap-4 text-xs font-semibold">
+          <div className="flex items-center gap-3 sm:gap-4 text-xs font-semibold">
             <Link
               to="/"
-              className="text-[#64748B] hover:text-[#0D2137] transition-colors hidden sm:inline-block"
+              className="text-[#64748B] hover:text-[#2B7BC4] transition-colors hidden sm:inline-flex items-center gap-1.5"
             >
               ← Back to Home
             </Link>
+            <a
+              href="https://wa.me/919941999415"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#64748B] hover:text-[#2B7BC4] transition-colors inline-flex items-center gap-1.5"
+            >
+              Need Help?
+            </a>
             <Link
               to="/portal"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E8F4FD] text-[#2B7BC4] hover:bg-[#D5EBFA] border border-[#C9DFF0] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#E8F4FD] text-[#2B7BC4] hover:bg-[#D5EBFA] border border-[#C9DFF0] transition-colors"
             >
               Go to Portal →
             </Link>
@@ -132,8 +140,8 @@ function OnboardingPageWrapper() {
         </div>
       </header>
 
-      {/* Main Onboarding Canvas */}
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-8">
+      {/* Main Onboarding Canvas - full page view with generous space */}
+      <main className="flex-1 max-w-5xl lg:max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex flex-col items-center">
         <Suspense fallback={<RouteLoading />}>
           <OnboardingView
             userId={userId}

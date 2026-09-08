@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { ScrollReveal } from "../../components/ui/ScrollReveal";
 import {
   Target,
   Users,
@@ -122,9 +123,11 @@ export function AboutPage() {
       <section className="py-8 sm:py-10 border-b border-[#C9DFF0] bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-            {TRUST_METRICS.map((m) => (
-              <div
+            {TRUST_METRICS.map((m, idx) => (
+              <ScrollReveal
                 key={m.label}
+                variant="up"
+                delay={idx * 80}
                 className="text-center p-3.5 sm:p-4 rounded-2xl bg-[#E8F4FD]/40 border border-[#C9DFF0]/50"
               >
                 <div className="text-2xl sm:text-3xl font-extrabold text-[#0D2137] tracking-tight">
@@ -133,7 +136,7 @@ export function AboutPage() {
                 <div className="text-xs sm:text-sm font-medium text-slate-600 mt-0.5">
                   {m.label}
                 </div>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -142,7 +145,7 @@ export function AboutPage() {
       {/* ── Mission Statement & Studio Showcase ──────────────────────────── */}
       <section className="bg-white py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
+          <ScrollReveal variant="up" className="mx-auto max-w-3xl text-center">
             <span className="text-xs font-bold uppercase tracking-widest text-[#2B7BC4]">
               Our Mission
             </span>
@@ -156,10 +159,10 @@ export function AboutPage() {
               growth thinking so that every reel, every post, every story moves
               your brand forward.
             </p>
-          </div>
+          </ScrollReveal>
 
           {/* Creative Studio Showcase Visual */}
-          <div className="mt-8 max-w-4xl mx-auto rounded-3xl overflow-hidden border border-slate-200/90 shadow-xl relative group">
+          <ScrollReveal variant="scale" delay={120} className="mt-8 max-w-4xl mx-auto rounded-3xl overflow-hidden border border-slate-200/90 shadow-xl relative group">
             <div className="aspect-[16/8] sm:aspect-[21/9] w-full overflow-hidden bg-slate-900 relative">
               <img
                 src="/assets/workflow/studio_master.jpg"
@@ -182,7 +185,7 @@ export function AboutPage() {
                 </span>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
 
           {/* Core Commitments */}
           <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
@@ -190,9 +193,11 @@ export function AboutPage() {
               { icon: Clock, title: "7-Day Onboarding", desc: "From sign-up to first content delivery in one week" },
               { icon: Shield, title: "No Lock-In Contracts", desc: "Monthly retainers. Cancel anytime. We earn your trust." },
               { icon: CheckCircle2, title: "2 Revision Rounds", desc: "Every deliverable comes with built-in revision cycles" },
-            ].map((item) => (
-              <div
+            ].map((item, idx) => (
+              <ScrollReveal
                 key={item.title}
+                variant="up"
+                delay={idx * 90}
                 className="flex items-start gap-3 p-4 rounded-2xl border border-[#C9DFF0]/50 bg-[#E8F4FD]/20 hover:bg-[#E8F4FD]/40 transition-colors"
               >
                 <div className="size-9 shrink-0 rounded-xl bg-[#2B7BC4]/10 text-[#2B7BC4] flex items-center justify-center">
@@ -202,7 +207,7 @@ export function AboutPage() {
                   <h4 className="text-xs sm:text-sm font-bold text-[#0D2137]">{item.title}</h4>
                   <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">{item.desc}</p>
                 </div>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -211,7 +216,7 @@ export function AboutPage() {
       {/* ── Differentiators ──────────────────────────────────────────────── */}
       <section className="bg-[#F8F9FA] py-12 sm:py-16 border-y border-[#C9DFF0]/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
+          <ScrollReveal variant="up" className="mx-auto max-w-2xl text-center">
             <span className="text-xs font-bold uppercase tracking-widest text-[#2B7BC4]">
               Why Creo
             </span>
@@ -222,24 +227,28 @@ export function AboutPage() {
               We&apos;re built for businesses that want measurable results, not
               just posts.
             </p>
-          </div>
+          </ScrollReveal>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {DIFFERENTIATORS.map((item, idx) => (
-              <div
+              <ScrollReveal
                 key={item.title}
-                className="group rounded-2xl border border-[#C9DFF0] bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                variant="up"
+                delay={idx * 60}
+                className="h-full"
               >
-                <div className={`mb-4 flex size-11 items-center justify-center rounded-xl bg-gradient-to-br ${item.accent} text-white shadow-md transition-transform duration-300 group-hover:scale-110 ${idx % 2 === 0 ? "group-hover:rotate-3" : "group-hover:-rotate-3"}`}>
-                  <item.icon className="size-5" />
+                <div className="group rounded-2xl border border-[#C9DFF0] bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg h-full">
+                  <div className={`mb-4 flex size-11 items-center justify-center rounded-xl bg-gradient-to-br ${item.accent} text-white shadow-md transition-transform duration-300 group-hover:scale-110 ${idx % 2 === 0 ? "group-hover:rotate-3" : "group-hover:-rotate-3"}`}>
+                    <item.icon className="size-5" />
+                  </div>
+                  <h3 className="text-base font-bold text-[#0D2137] group-hover:text-[#2B7BC4] transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                    {item.description}
+                  </p>
                 </div>
-                <h3 className="text-base font-bold text-[#0D2137] group-hover:text-[#2B7BC4] transition-colors">
-                  {item.title}
-                </h3>
-                <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
-                  {item.description}
-                </p>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -248,7 +257,7 @@ export function AboutPage() {
       {/* ── Team Section ─────────────────────────────────────────────────── */}
       <section className="bg-white py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
+          <ScrollReveal variant="up" className="mx-auto max-w-2xl text-center">
             <span className="text-xs font-bold uppercase tracking-widest text-[#2B7BC4]">
               Our Team
             </span>
@@ -258,47 +267,52 @@ export function AboutPage() {
             <p className="mt-2 text-xs sm:text-sm text-slate-600">
               Small team. Big experience. Obsessed with your results.
             </p>
-          </div>
+          </ScrollReveal>
 
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {TEAM.map((member) => (
-              <div
+            {TEAM.map((member, idx) => (
+              <ScrollReveal
                 key={member.name}
-                className="group rounded-2xl border border-[#C9DFF0] bg-white p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                variant="scale"
+                delay={idx * 90}
+                className="h-full"
               >
-                <div className={`mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br ${member.gradient} text-white shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
-                  <span className="text-lg font-black tracking-wider">
-                    {member.initials}
-                  </span>
+                <div className="group rounded-2xl border border-[#C9DFF0] bg-white p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg h-full">
+                  <div className={`mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br ${member.gradient} text-white shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
+                    <span className="text-lg font-black tracking-wider">
+                      {member.initials}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-[#0D2137]">
+                    {member.name}
+                  </h3>
+                  <p className="text-xs font-semibold text-[#2B7BC4] mt-0.5">
+                    {member.role}
+                  </p>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-600">
+                    {member.description}
+                  </p>
                 </div>
-                <h3 className="text-base font-bold text-[#0D2137]">
-                  {member.name}
-                </h3>
-                <p className="text-xs font-semibold text-[#2B7BC4] mt-0.5">
-                  {member.role}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                  {member.description}
-                </p>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
       </section>
 
       {/* ── Bottom CTA ───────────────────────────────────────────────────── */}
-      <section className="bg-[#0D2137] py-12 sm:py-16 text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+      <section className="bg-gradient-to-br from-[#07192F] via-[#0B2545] to-[#123966] py-14 sm:py-18 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+        <ScrollReveal variant="scale" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
             Ready to grow your brand?
           </h2>
-          <p className="mt-3 text-xs sm:text-base text-white/70 max-w-xl mx-auto">
+          <p className="mt-3 text-xs sm:text-base text-blue-100/80 max-w-xl mx-auto">
             Join 50+ businesses that chose Creo as their dedicated growth partner.
           </p>
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+          <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <Link
               to="/pricing"
-              className="inline-flex items-center justify-center gap-2 bg-white text-[#0D2137] hover:bg-slate-100 rounded-xl h-11 px-7 text-xs sm:text-sm font-bold transition-all shadow-md w-full sm:w-auto cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-95 text-white h-12 px-8 text-sm font-bold transition-all shadow-lg shadow-blue-600/30 w-full sm:w-auto cursor-pointer"
             >
               Explore Our Retainer Plans
               <ArrowRight className="size-4" />
@@ -307,12 +321,12 @@ export function AboutPage() {
               href="https://wa.me/919941999415"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90 rounded-xl h-11 px-7 text-xs sm:text-sm font-bold transition-all shadow-md w-full sm:w-auto cursor-pointer"
+              className="inline-flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 text-white h-12 px-8 text-sm font-bold backdrop-blur-md transition-all shadow-md w-full sm:w-auto cursor-pointer"
             >
               Speak with Ashok
             </a>
           </div>
-        </div>
+        </ScrollReveal>
       </section>
     </div>
   );

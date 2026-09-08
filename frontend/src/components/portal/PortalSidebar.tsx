@@ -86,7 +86,7 @@ export function PortalSidebar() {
                 to={item.href}
                 className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0EA5E9]/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D2137] ${
                   active
-                    ? "bg-[#2B7BC4] text-white font-semibold shadow-sm"
+                    ? "bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white font-semibold shadow-md shadow-blue-500/20"
                     : "text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1"
                 }`}
               >
@@ -119,7 +119,7 @@ export function PortalSidebar() {
                     <span className="text-[9px] text-sky-300/80 font-normal">Choose plan to unlock</span>
                   </div>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-md bg-gradient-to-r from-[#2B7BC4] to-[#0EA5E9] hover:from-[#246bb0] hover:to-[#0284c7] text-white font-bold uppercase tracking-wider transition-all shadow-xs">
+                <span className="text-[10px] px-2 py-0.5 rounded-md bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 text-white font-bold uppercase tracking-wider transition-all shadow-xs">
                   Unlock
                 </span>
               </Link>

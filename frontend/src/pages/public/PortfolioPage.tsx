@@ -11,6 +11,7 @@ import {
   X,
   Play,
 } from "lucide-react";
+import { ScrollReveal } from "../../components/ui/ScrollReveal";
 
 interface CaseStudy {
   brand: string;
@@ -261,58 +262,57 @@ export function PortfolioPage() {
           </div>
 
           <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {CASE_STUDIES.map((study) => (
-              <div
-                key={study.brand}
-                className="group relative flex flex-col justify-between rounded-3xl border border-[#C9DFF0] bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xl font-bold text-[#0D2137]">{study.brand}</h3>
-                      <span className="text-xs font-semibold text-slate-500">{study.industry}</span>
-                    </div>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-700">
-                      Verified Client
-                    </span>
-                  </div>
-
-                  <div className="mt-6 space-y-4">
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                        The Challenge
-                      </p>
-                      <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                        {study.challenge}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                        Our Solution
-                      </p>
-                      <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                        {study.approach}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 border-t border-slate-100 pt-5">
-                  <div className={`rounded-2xl ${study.color} p-4 border border-black/5`}>
+            {CASE_STUDIES.map((study, idx) => (
+              <ScrollReveal key={study.brand} variant="up" delay={idx * 100} className="h-full">
+                <div className="group relative flex flex-col justify-between rounded-3xl border border-[#C9DFF0] bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl h-full">
+                  <div>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-slate-600">{study.metricLabel}</span>
-                      <TrendingUp className={`size-4 ${study.accent}`} />
+                      <div>
+                        <h3 className="text-xl font-bold text-[#0D2137]">{study.brand}</h3>
+                        <span className="text-xs font-semibold text-slate-500">{study.industry}</span>
+                      </div>
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-700">
+                        Verified Client
+                      </span>
                     </div>
-                    <p className={`mt-1 text-2xl font-black ${study.accent}`}>
-                      {study.result}
+
+                    <div className="mt-6 space-y-4">
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                          The Challenge
+                        </p>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                          {study.challenge}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                          Our Solution
+                        </p>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                          {study.approach}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 border-t border-slate-100 pt-5">
+                    <div className={`rounded-2xl ${study.color} p-4 border border-black/5`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-600">{study.metricLabel}</span>
+                        <TrendingUp className={`size-4 ${study.accent}`} />
+                      </div>
+                      <p className={`mt-1 text-2xl font-black ${study.accent}`}>
+                        {study.result}
+                      </p>
+                    </div>
+                    <p className="mt-3 text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
+                      <span className="inline-block size-1.5 rounded-full bg-emerald-500" />
+                      {study.deliverables}
                     </p>
                   </div>
-                  <p className="mt-3 text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
-                    <span className="inline-block size-1.5 rounded-full bg-emerald-500" />
-                    {study.deliverables}
-                  </p>
                 </div>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
 
@@ -368,79 +368,80 @@ export function PortfolioPage() {
 
           {/* Creative Grid */}
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredCreatives.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => setSelectedItem(item)}
-                className="group relative cursor-pointer overflow-hidden rounded-3xl border border-[#C9DFF0] bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-              >
-                {/* Visual Thumbnail Area with Real AI Image & Micro-Animations */}
-                <div className="relative h-64 w-full bg-slate-900 p-5 flex flex-col justify-between text-white overflow-hidden">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/40" />
+            {filteredCreatives.map((item, idx) => (
+              <ScrollReveal key={item.id} variant="scale" delay={idx * 60} className="h-full">
+                <div
+                  onClick={() => setSelectedItem(item)}
+                  className="group relative cursor-pointer overflow-hidden rounded-3xl border border-[#C9DFF0] bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-xl h-full flex flex-col justify-between"
+                >
+                  {/* Visual Thumbnail Area with Real AI Image & Micro-Animations */}
+                  <div className="relative h-64 w-full bg-slate-900 p-5 flex flex-col justify-between text-white overflow-hidden">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/40" />
 
-                  {/* Header Row */}
-                  <div className="relative z-10 flex items-center justify-between">
-                    <span className="rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-white uppercase tracking-wider border border-white/20 shadow-xs">
-                      {item.brand}
-                    </span>
-                    <span className="rounded-full bg-emerald-500 px-2.5 py-0.5 text-[10px] font-extrabold text-white shadow-sm flex items-center gap-1">
-                      <span className="size-1.5 rounded-full bg-white animate-pulse" />
-                      {item.tag}
-                    </span>
-                  </div>
-
-                  {/* Center Action Indicator / Play or View */}
-                  <div className="relative z-10 my-auto flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                    <div className="size-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-lg group-hover:bg-[#2B7BC4] transition-colors">
-                      {item.category === "reels" ? (
-                        <Play className="size-6 fill-white text-white ml-0.5" />
-                      ) : item.category === "carousels" ? (
-                        <Layers className="size-6 text-white" />
-                      ) : (
-                        <ImageIcon className="size-6 text-white" />
-                      )}
-                    </div>
-                    <span className="mt-2 text-[11px] font-semibold text-white/90 bg-black/50 backdrop-blur-xs px-2 py-0.5 rounded-full">{item.ratio}</span>
-                  </div>
-
-                  {/* Hover Overlay Button */}
-                  <div className="relative z-10 flex items-center justify-between text-xs font-semibold text-white/90">
-                    <span className="flex items-center gap-1 text-[11px]">
-                      {item.format}
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-white bg-white/25 hover:bg-white/40 backdrop-blur-sm rounded-lg px-2.5 py-1 transition-all text-xs">
-                      <Eye className="size-3.5" /> Inspect Specs
-                    </span>
-                  </div>
-                </div>
-
-                {/* Card Content */}
-                <div className="p-6">
-                  <h4 className="text-base font-bold text-[#0D2137] group-hover:text-[#2B7BC4] transition-colors line-clamp-1">
-                    {item.title}
-                  </h4>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-600 line-clamp-2">
-                    {item.description}
-                  </p>
-
-                  <div className="mt-4 flex flex-wrap gap-1.5 pt-3 border-t border-slate-100">
-                    {item.specs.map((spec) => (
-                      <span
-                        key={spec}
-                        className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
-                      >
-                        {spec}
+                    {/* Header Row */}
+                    <div className="relative z-10 flex items-center justify-between">
+                      <span className="rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-white uppercase tracking-wider border border-white/20 shadow-xs">
+                        {item.brand}
                       </span>
-                    ))}
+                      <span className="rounded-full bg-emerald-500 px-2.5 py-0.5 text-[10px] font-extrabold text-white shadow-sm flex items-center gap-1">
+                        <span className="size-1.5 rounded-full bg-white animate-pulse" />
+                        {item.tag}
+                      </span>
+                    </div>
+
+                    {/* Center Action Indicator / Play or View */}
+                    <div className="relative z-10 my-auto flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                      <div className="size-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-lg group-hover:bg-[#2B7BC4] transition-colors">
+                        {item.category === "reels" ? (
+                          <Play className="size-6 fill-white text-white ml-0.5" />
+                        ) : item.category === "carousels" ? (
+                          <Layers className="size-6 text-white" />
+                        ) : (
+                          <ImageIcon className="size-6 text-white" />
+                        )}
+                      </div>
+                      <span className="mt-2 text-[11px] font-semibold text-white/90 bg-black/50 backdrop-blur-xs px-2 py-0.5 rounded-full">{item.ratio}</span>
+                    </div>
+
+                    {/* Hover Overlay Button */}
+                    <div className="relative z-10 flex items-center justify-between text-xs font-semibold text-white/90">
+                      <span className="flex items-center gap-1 text-[11px]">
+                        {item.format}
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-white bg-white/25 hover:bg-white/40 backdrop-blur-sm rounded-lg px-2.5 py-1 transition-all text-xs">
+                        <Eye className="size-3.5" /> Inspect Specs
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card Content */}
+                  <div className="p-6">
+                    <h4 className="text-base font-bold text-[#0D2137] group-hover:text-[#2B7BC4] transition-colors line-clamp-1">
+                      {item.title}
+                    </h4>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-600 line-clamp-2">
+                      {item.description}
+                    </p>
+
+                    <div className="mt-4 flex flex-wrap gap-1.5 pt-3 border-t border-slate-100">
+                      {item.specs.map((spec) => (
+                        <span
+                          key={spec}
+                          className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
+                        >
+                          {spec}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -532,13 +533,13 @@ export function PortfolioPage() {
               <button
                 type="button"
                 onClick={() => setSelectedItem(null)}
-                className="w-full sm:w-auto rounded-xl border border-slate-200 px-5 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+                className="w-full sm:w-auto rounded-xl border border-slate-200 px-5 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 Close Preview
               </button>
               <Link
                 to="/pricing"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#2B7BC4] px-6 py-2.5 text-xs font-bold text-white hover:bg-[#2B7BC4]/90 transition-colors shadow-md shadow-[#2B7BC4]/20"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-6 py-2.5 text-xs font-bold text-white hover:brightness-110 active:scale-95 transition-all shadow-md shadow-blue-500/20 cursor-pointer"
               >
                 Order Deliverables Like This
                 <ArrowUpRight className="size-3.5" />
@@ -549,18 +550,19 @@ export function PortfolioPage() {
       )}
 
       {/* ── 5. Bottom CTA ─────────────────────────────────────────────── */}
-      <section className="bg-[#0D2137] py-16 sm:py-20 text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+      <section className="bg-gradient-to-br from-[#07192F] via-[#0B2545] to-[#123966] py-16 sm:py-20 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+        <ScrollReveal variant="scale" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
             Want Content That Elevates Your Brand?
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-white/70 max-w-xl mx-auto">
+          <p className="mt-4 text-base sm:text-lg text-blue-100/80 max-w-xl mx-auto">
             Choose a retainer tier that fits your cadence. First deliverables arrive in your client portal within 7 days.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               to="/pricing"
-              className="inline-flex items-center justify-center bg-white text-[#0D2137] hover:bg-slate-100 rounded-xl h-12 px-8 text-sm font-bold transition-all shadow-md w-full sm:w-auto"
+              className="inline-flex items-center justify-center bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-95 text-white rounded-xl h-12 px-8 text-sm font-bold transition-all shadow-lg shadow-blue-600/30 w-full sm:w-auto cursor-pointer"
             >
               Explore Monthly Retainers
             </Link>
@@ -568,13 +570,13 @@ export function PortfolioPage() {
               href="https://wa.me/919941999415"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90 rounded-xl h-12 px-8 text-sm font-bold transition-all shadow-md w-full sm:w-auto gap-2"
+              className="inline-flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/25 text-white rounded-xl h-12 px-8 text-sm font-bold backdrop-blur-md transition-all shadow-md w-full sm:w-auto gap-2 cursor-pointer"
             >
               <span>Speak with Our Creative Director</span>
               <ArrowUpRight className="size-4" />
             </a>
           </div>
-        </div>
+        </ScrollReveal>
       </section>
     </div>
   );

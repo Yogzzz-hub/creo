@@ -21,7 +21,7 @@ export function PortalLayout() {
 
         <main
           id="main-content"
-          className="flex-1 overflow-y-auto px-4 py-6 pb-[calc(var(--bottomtab-height)+1.5rem)] lg:px-8 lg:py-8 lg:pb-8 animate-page-in"
+          className="flex-1 overflow-y-auto px-4 py-4 pb-[calc(var(--bottomtab-height)+1rem)] lg:px-6 lg:py-5 lg:pb-6 animate-page-in"
         >
           <Outlet />
         </main>

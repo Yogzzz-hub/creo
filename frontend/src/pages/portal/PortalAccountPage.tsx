@@ -201,7 +201,7 @@ export function PortalAccountPage() {
       setAiPersona(data.brand_dna?.audience_persona || "");
       setContentThemes(data.brand_dna?.content_themes || []);
       setSaved(true);
-      setSaveMessage("Gemini AI Brand Strategy regenerated!");
+      setSaveMessage("Brand Strategy regenerated successfully!");
       queryClient.invalidateQueries({ queryKey: ["portal-profile"] });
       setTimeout(() => setSaved(false), 3500);
     },
@@ -343,13 +343,13 @@ export function PortalAccountPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 animate-page-in pb-12">
+    <div className="mx-auto max-w-4xl space-y-4 sm:space-y-5 animate-page-in pb-6">
       {/* ── Top Header ────────────────────────────────────────────────────── */}
-      <div className="border-b border-border pb-4">
-        <h1 className="text-2xl sm:text-3xl font-black text-[#0D2137] tracking-tight">
+      <div className="border-b border-border pb-3">
+        <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
           Brand Profile & Settings
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-1">
+        <p className="text-xs text-slate-500 mt-0.5">
           Manage your business identity, AI brand guidelines, security controls, and social channel integrations.
         </p>
       </div>
@@ -361,7 +361,7 @@ export function PortalAccountPage() {
           onClick={() => setActiveTab("business")}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "business"
-              ? "bg-[#2B7BC4] text-white shadow-2xs"
+              ? "bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white shadow-sm shadow-blue-500/20"
               : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           }`}
         >
@@ -374,7 +374,7 @@ export function PortalAccountPage() {
           onClick={() => setActiveTab("brand")}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "brand"
-              ? "bg-[#2B7BC4] text-white shadow-2xs"
+              ? "bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white shadow-sm shadow-blue-500/20"
               : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           }`}
         >
@@ -387,7 +387,7 @@ export function PortalAccountPage() {
           onClick={() => setActiveTab("security")}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "security"
-              ? "bg-[#2B7BC4] text-white shadow-2xs"
+              ? "bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white shadow-sm shadow-blue-500/20"
               : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           }`}
         >
@@ -400,7 +400,7 @@ export function PortalAccountPage() {
           onClick={() => setActiveTab("integrations")}
           className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "integrations"
-              ? "bg-[#2B7BC4] text-white shadow-2xs"
+              ? "bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white shadow-sm shadow-blue-500/20"
               : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
           }`}
         >
@@ -530,7 +530,7 @@ export function PortalAccountPage() {
                 <button
                   type="submit"
                   disabled={updateProfileMutation.isPending}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#2B7BC4] px-6 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#1A5EA8] transition-all cursor-pointer disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-[0.98] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {updateProfileMutation.isPending ? (
                     <Loader2 className="size-3.5 animate-spin" />
@@ -546,7 +546,7 @@ export function PortalAccountPage() {
           {/* ── TAB 2: Brand Profile ─────────────────────────────────────────── */}
           {activeTab === "brand" && (
             <form onSubmit={handleSaveBrandProfile} className="space-y-6">
-              {/* Gemini AI Brand Strategy Live Card */}
+              {/* AI Brand Strategy Live Card */}
               <div className="rounded-2xl border-2 border-[#2B7BC4]/30 bg-gradient-to-br from-white via-[#F8FAFC] to-[#EFF6FF] p-6 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-[#C9DFF0]/60">
                   <div className="flex items-center gap-2.5">
@@ -555,10 +555,10 @@ export function PortalAccountPage() {
                     </div>
                     <div>
                       <h4 className="font-display font-extrabold text-sm sm:text-base text-[#0D2137]">
-                        Gemini AI Strategic Brand Positioning
+                        AI Strategic Brand Positioning
                       </h4>
                       <p className="text-[11px] text-slate-500">
-                        Generated by Google Gemini AI based on your intake responses
+                        Synthesized by Creo Strategic AI based on your intake responses
                       </p>
                     </div>
                   </div>
@@ -577,7 +577,7 @@ export function PortalAccountPage() {
                     ) : (
                       <>
                         <Sparkles className="size-3.5 text-amber-500" />
-                        <span>Regenerate with Gemini AI</span>
+                        <span>Regenerate Strategy with AI</span>
                       </>
                     )}
                   </button>
@@ -769,7 +769,7 @@ export function PortalAccountPage() {
                 <button
                   type="submit"
                   disabled={updateProfileMutation.isPending}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#2B7BC4] px-6 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-[#1A5EA8] transition-all cursor-pointer disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-[0.98] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {updateProfileMutation.isPending ? (
                     <Loader2 className="size-3.5 animate-spin" />
@@ -869,7 +869,7 @@ export function PortalAccountPage() {
                     type="button"
                     onClick={() => changePasswordMutation.mutate()}
                     disabled={changePasswordMutation.isPending || !currentPassword || !newPassword}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#2B7BC4] px-5 py-2 text-xs font-bold text-white hover:bg-[#1A5EA8] transition-all cursor-pointer disabled:opacity-50 mt-1"
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-[0.98] px-5 py-2 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50 mt-1"
                   >
                     {changePasswordMutation.isPending && <Loader2 className="size-3.5 animate-spin" />}
                     <span>Update Password</span>
@@ -1057,7 +1057,7 @@ export function PortalAccountPage() {
                     type="button"
                     onClick={() => connectInstagramMutation.mutate(connectIgInput)}
                     disabled={connectInstagramMutation.isPending || !connectIgInput.trim()}
-                    className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-[#2B7BC4] hover:bg-[#1A5EA8] text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-[0.98] text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-50"
                   >
                     {connectInstagramMutation.isPending ? (
                       <Loader2 className="size-3.5 animate-spin" />

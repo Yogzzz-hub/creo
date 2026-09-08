@@ -48,26 +48,26 @@ export function PortalDashboardPage() {
   const subscriptionActive = !!dashboard?.active_plan && ["active", "trialing"].includes(dashboard?.active_plan?.status);
 
   return (
-    <div className="space-y-8 animate-page-in">
+    <div className="space-y-4 sm:space-y-5 animate-page-in">
       {/* ── Welcome & Status Banner ────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#0D2137] tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
             Welcome back, {user?.full_name?.split(" ")[0] || "Partner"}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-0.5">
             Here is what is happening with your brand pipeline today.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200/80 px-3 py-1.5 rounded-full shadow-2xs">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200/80 px-3 py-1 rounded-full shadow-2xs">
             <div className="size-2 rounded-full bg-emerald-500 animate-pulse" />
             System Active
           </div>
           <Link
             to="/portal/deliverables"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#2B7BC4] px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#2B7BC4]/90 transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-4 py-2 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
           >
             <FileImage className="size-3.5" />
             Deliverables
@@ -77,10 +77,10 @@ export function PortalDashboardPage() {
 
       {/* ── Action Required Alert (if setup incomplete) ─────────────────── */}
       {stage < 5 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 flex items-start gap-3">
-          <AlertCircle className="size-5 text-amber-600 shrink-0 mt-0.5" />
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-amber-900 flex items-start gap-3">
+          <AlertCircle className="size-4.5 text-amber-600 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-bold">Action Required</p>
+            <p className="text-xs font-bold">Action Required</p>
             <p className="text-xs text-amber-800 mt-0.5">
               Please complete your account setup to fully unlock your automated creative workflow.
             </p>
@@ -97,23 +97,23 @@ export function PortalDashboardPage() {
 
       {/* ── Onboarding Progress Card ─────────────────────────────────────── */}
       {stage < 5 && (
-        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
-          <div className="bg-[#E8F4FD]/50 p-6 pb-4 border-b border-[#C9DFF0]/50">
+        <div className="rounded-xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
+          <div className="bg-[#E8F4FD]/50 p-4 pb-3 border-b border-[#C9DFF0]/50">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-[#0D2137] flex items-center gap-2">
+                <h3 className="text-sm font-bold text-[#0D2137] flex items-center gap-2">
                   <Sparkles className="size-4 text-[#2B7BC4]" />
                   Setup Progress
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-[11px] text-slate-500 mt-0.5">
                   Complete these steps to start generating leads and automated creatives
                 </p>
               </div>
-              <div className="text-2xl font-bold text-[#2B7BC4]">
+              <div className="text-xl font-bold text-[#2B7BC4]">
                 {Math.round((stage / 5) * 100)}%
               </div>
             </div>
-            <div className="w-full bg-[#E8F4FD] border border-[#C9DFF0] h-2 rounded-full mt-4 overflow-hidden">
+            <div className="w-full bg-[#E8F4FD] border border-[#C9DFF0] h-1.5 rounded-full mt-3 overflow-hidden">
               <div
                 className="bg-[#2B7BC4] h-full transition-all duration-500 ease-in-out"
                 style={{ width: `${(stage / 5) * 100}%` }}
@@ -121,7 +121,7 @@ export function PortalDashboardPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 p-6 bg-white">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 p-4 bg-white">
             <StepItem
               number={1}
               title="Create Account"
@@ -155,21 +155,21 @@ export function PortalDashboardPage() {
 
       {/* ── Retainer Notice (if no active plan) ─────────────────── */}
       {!subscriptionActive && (
-        <div className="rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50/90 via-sky-50/70 to-indigo-50/50 p-5 text-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-2xs">
-          <div className="flex items-start sm:items-center gap-3.5">
-            <div className="size-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-[#2B7BC4] shrink-0">
-              <Sparkles className="size-5" />
+        <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50/90 via-sky-50/70 to-indigo-50/50 p-4 text-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-2xs">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="size-9 rounded-lg bg-blue-500/10 flex items-center justify-center text-[#2B7BC4] shrink-0">
+              <Sparkles className="size-4.5" />
             </div>
             <div>
-              <p className="text-sm font-bold text-[#0D2137]">Creative Retainer Required</p>
-              <p className="text-xs text-slate-600 mt-0.5">
+              <p className="text-xs font-bold text-[#0D2137]">Creative Retainer Required</p>
+              <p className="text-[11px] text-slate-600 mt-0.5">
                 Deliverables and Calendar workflows are locked. Activate a monthly retainer to unlock full content production.
               </p>
             </div>
           </div>
           <Link
             to="/portal/payments"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-[#2B7BC4] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#2B7BC4]/90 transition-all shrink-0 shadow-xs"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-4 py-2 text-xs font-bold text-white hover:brightness-110 active:scale-95 transition-all shrink-0 shadow-md shadow-blue-500/20"
           >
             Choose Plan
             <ArrowRight className="size-3.5" />
@@ -181,7 +181,7 @@ export function PortalDashboardPage() {
       <PortalAnnouncements />
 
       {/* ── Stat Metric Cards ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
           title="Upcoming Posts"
           value={subscriptionActive ? pendingCount.toString() : "0"}
@@ -209,15 +209,15 @@ export function PortalDashboardPage() {
       </div>
 
       {/* ── Recent Activity & Quick Links ───────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
         {/* Recent Activity Card */}
-        <div className="lg:col-span-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-6">
-          <div className="space-y-1">
-            <h3 className="text-base font-bold text-[#0D2137]">Recent Activity</h3>
-            <p className="text-xs text-slate-500">Your latest workspace updates and delivery milestones</p>
+        <div className="lg:col-span-4 rounded-xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs space-y-4">
+          <div className="space-y-0.5">
+            <h3 className="text-sm font-bold text-[#0D2137]">Recent Activity</h3>
+            <p className="text-[11px] text-slate-500">Your latest workspace updates and delivery milestones</p>
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-3.5">
             <div className="flex items-center gap-3.5">
               <div className="bg-[#E8F4FD] p-2 rounded-full text-[#2B7BC4]">
                 <CheckCircle2 className="size-4" />
@@ -289,13 +289,13 @@ export function PortalDashboardPage() {
         </div>
 
         {/* Quick Links Card */}
-        <div className="lg:col-span-3 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-6 flex flex-col justify-between">
-          <div className="space-y-1">
-            <h3 className="text-base font-bold text-[#0D2137]">Quick Links</h3>
-            <p className="text-xs text-slate-500">Frequently accessed tools and settings</p>
+        <div className="lg:col-span-3 rounded-xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs space-y-4 flex flex-col justify-between">
+          <div className="space-y-0.5">
+            <h3 className="text-sm font-bold text-[#0D2137]">Quick Links</h3>
+            <p className="text-[11px] text-slate-500">Frequently accessed tools and settings</p>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             <Link
               to="/portal/account"
               className="flex items-center justify-between p-3 rounded-xl border border-slate-200/60 hover:border-[#2B7BC4]/50 hover:bg-[#E8F4FD]/40 transition-all group"

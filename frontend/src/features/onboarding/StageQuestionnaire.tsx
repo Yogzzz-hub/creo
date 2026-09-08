@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Sparkles,
   ArrowRight,
@@ -14,6 +14,9 @@ import {
   Instagram,
   ShieldAlert,
   Edit3,
+  Cpu,
+  Target,
+  Zap,
 } from "lucide-react";
 
 import { fetchBrandDNAStatus, submitQuestionnaire, completeOnboarding } from "../../lib/onboarding-api";
@@ -125,7 +128,7 @@ function BrandDNACard({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-display font-extrabold text-lg sm:text-xl text-[#0D2137]">
-                Synthesized Gemini Brand DNA
+                Synthesized Brand Strategy DNA
               </h3>
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase tracking-wider">
                 <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -133,7 +136,7 @@ function BrandDNACard({
               </span>
             </div>
             <p className="text-xs text-[#64748B] mt-0.5">
-              Formulated via Google Gemini AI • Ready for Pod Dispatch
+              Formulated via Creo Strategic AI • Ready for Pod Dispatch
             </p>
           </div>
         </div>
@@ -271,6 +274,202 @@ function BrandDNACard({
   );
 }
 
+function BrandGenerationLoading({
+  companyName,
+  industry,
+  tones,
+  palette,
+}: {
+  companyName: string;
+  industry: string;
+  tones: string[];
+  palette: string[];
+}) {
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [progress, setProgress] = useState(15);
+
+  const steps = [
+    {
+      title: "Analyzing Brand Architecture & Market Positioning",
+      detail: `Synthesizing industry dynamics and market vectors for ${industry}...`,
+      icon: Building2,
+    },
+    {
+      title: "Calibrating Audience Psychographics & Intent",
+      detail: "Formulating core customer pain points, triggers, and high-retention hooks...",
+      icon: Target,
+    },
+    {
+      title: "Synthesizing Archetype & 30-Day Content Pillars",
+      detail: `Infusing ${tones.slice(0, 3).join(", ") || "core"} tone guidelines & editorial voice...`,
+      icon: Zap,
+    },
+    {
+      title: "Configuring Dedicated Creative Pod Parameters",
+      detail: "Algorithmic matching for Lead Video Editor, Graphic Designer & Team Lead...",
+      icon: Cpu,
+    },
+  ];
+
+  useEffect(() => {
+    const stepInterval = setInterval(() => {
+      setCurrentStepIndex((prev) => (prev < steps.length - 1 ? prev + 1 : prev));
+    }, 700);
+
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 95) return prev;
+        const jump = Math.floor(Math.random() * 8) + 4;
+        return Math.min(prev + jump, 95);
+      });
+    }, 220);
+
+    return () => {
+      clearInterval(stepInterval);
+      clearInterval(progressInterval);
+    };
+  }, [steps.length]);
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border-2 border-[#2B7BC4]/30 bg-gradient-to-b from-[#0D2137]/[0.02] via-white to-[#EFF6FF]/60 p-6 sm:p-10 shadow-xl text-center">
+      {/* Ambient background glows */}
+      <div className="absolute -top-24 -left-24 size-64 rounded-full bg-[#2B7BC4]/10 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 -right-24 size-64 rounded-full bg-[#8B5CF6]/10 blur-3xl pointer-events-none" />
+
+      {/* Central Pulsing Neural Orb */}
+      <div className="relative mx-auto size-28 sm:size-32 flex items-center justify-center mb-6">
+        {/* Outer pulsing ring */}
+        <div className="absolute inset-0 rounded-full border-2 border-[#2B7BC4]/20 animate-ping opacity-60" />
+        {/* Rotating gradient dashed ring */}
+        <div className="absolute -inset-2 rounded-full border-2 border-dashed border-[#2B7BC4]/40 animate-spin [animation-duration:10s]" />
+        {/* Counter-rotating dotted ring */}
+        <div className="absolute -inset-4 rounded-full border border-dotted border-[#8B5CF6]/30 animate-spin [animation-duration:16s] [animation-direction:reverse]" />
+        {/* Core glowing sphere */}
+        <div className="relative size-16 sm:size-20 rounded-2xl bg-gradient-to-tr from-[#0D2137] via-[#1F68A9] to-[#2B7BC4] shadow-xl shadow-[#2B7BC4]/30 flex items-center justify-center text-white">
+          <Sparkles className="size-8 text-amber-300 animate-pulse" />
+        </div>
+      </div>
+
+      {/* Header Info */}
+      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2B7BC4]/10 border border-[#2B7BC4]/30 text-[#1F68A9] text-xs font-bold uppercase tracking-wider mb-2">
+        <span className="relative flex size-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2B7BC4] opacity-75"></span>
+          <span className="relative inline-flex rounded-full size-2 bg-[#2B7BC4]"></span>
+        </span>
+        <span>Strategic AI Brand Engine Active</span>
+      </div>
+
+      <h3 className="text-xl sm:text-2xl font-bold font-display text-[#0D2137] tracking-tight mb-1.5">
+        Synthesizing Brand Strategy DNA
+      </h3>
+      <p className="text-xs sm:text-sm text-[#64748B] max-w-lg mx-auto mb-6">
+        Formulating bespoke positioning vectors, tone archetypes, and content taxonomy for{" "}
+        <span className="font-semibold text-[#0D2137]">{companyName}</span>.
+      </p>
+
+      {/* Progress Bar */}
+      <div className="max-w-md mx-auto mb-7">
+        <div className="flex justify-between items-center text-xs font-mono font-semibold text-[#0D2137] mb-1.5">
+          <span className="text-[#64748B]">Synthesis Engine</span>
+          <span className="text-[#2B7BC4] font-bold">{progress}%</span>
+        </div>
+        <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200 shadow-inner">
+          <motion.div
+            className="h-full rounded-full bg-gradient-to-r from-[#2B7BC4] via-[#6366F1] to-[#059669]"
+            animate={{ width: `${progress}%` }}
+            transition={{ ease: "easeOut", duration: 0.25 }}
+          />
+        </div>
+      </div>
+
+      {/* Step Progress Checklist */}
+      <div className="max-w-lg mx-auto text-left space-y-2.5 mb-6 bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-[#C9DFF0]/60 shadow-2xs">
+        {steps.map((step, idx) => {
+          const isDone = idx < currentStepIndex;
+          const isCurrent = idx === currentStepIndex;
+          const Icon = step.icon;
+
+          return (
+            <div
+              key={idx}
+              className={`flex items-start gap-3 p-2.5 rounded-lg transition-all ${
+                isCurrent
+                  ? "bg-[#EFF6FF] border border-[#BFDBFE] shadow-2xs"
+                  : isDone
+                  ? "bg-white/60"
+                  : "opacity-60"
+              }`}
+            >
+              <div className="mt-0.5 flex-shrink-0">
+                {isDone ? (
+                  <div className="size-5 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-600 shadow-2xs">
+                    <Check className="size-3 stroke-[3]" />
+                  </div>
+                ) : isCurrent ? (
+                  <div className="size-5 rounded-full bg-blue-100 border border-blue-300 flex items-center justify-center text-[#2B7BC4] shadow-2xs">
+                    <RefreshCw className="size-3 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="size-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
+                    <Icon className="size-3" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div
+                  className={`text-xs font-bold leading-tight ${
+                    isDone
+                      ? "text-[#0D2137]"
+                      : isCurrent
+                      ? "text-[#1F68A9] font-extrabold"
+                      : "text-slate-400"
+                  }`}
+                >
+                  {step.title}
+                </div>
+                <div
+                  className={`text-[11px] leading-snug mt-0.5 truncate ${
+                    isCurrent ? "text-slate-600" : "text-slate-400"
+                  }`}
+                >
+                  {step.detail}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Live Data Badge Stream */}
+      <div className="flex flex-wrap items-center justify-center gap-2 pt-3 border-t border-slate-200/80 text-[11px] text-slate-500">
+        <span className="font-semibold text-slate-700">Active Inputs:</span>
+        <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 font-medium">
+          {industry}
+        </span>
+        {tones.slice(0, 3).map((t) => (
+          <span
+            key={t}
+            className="px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700 font-medium"
+          >
+            {t}
+          </span>
+        ))}
+        {palette.length > 0 && (
+          <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200">
+            {palette.slice(0, 4).map((c) => (
+              <span
+                key={c}
+                className="size-2.5 rounded-full border border-black/10 inline-block shadow-2xs"
+                style={{ backgroundColor: c }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function StageQuestionnaire({ userId, onComplete }: StageQuestionnaireProps) {
   const [activeTab, setActiveTab] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState<QuestionnairePayload>({
@@ -355,7 +554,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
     setForm((f) => ({ ...f, color_palette: colors }));
   };
 
-  const handleGenerateGeminiBrand = async () => {
+  const handleGenerateBrandStrategy = async () => {
     const company = form.company_name.trim();
     const audience = form.target_audience.trim();
     const desc = (form.business_description ?? "").trim();
@@ -392,16 +591,22 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
         instagram_username: form.instagram_username.trim(),
         color_palette: form.color_palette.length > 0 ? form.color_palette : ["#0D2137", "#2B7BC4"],
       };
-      await submitQuestionnaire(userId, payload);
+
+      // Run submission alongside a minimum display window (2.8s) so the animation sequence completes smoothly
+      await Promise.all([
+        submitQuestionnaire(userId, payload),
+        new Promise((resolve) => setTimeout(resolve, 2800)),
+      ]);
       setSubmitted(true);
 
-      // Give 1.5s then poll or fetch brand DNA
+      // Fetch brand DNA status
       const statusRes = await fetchBrandDNAStatus(userId);
       if (statusRes.brand_dna) {
         setBrandDNA(statusRes.brand_dna);
       }
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
+      setSubmitted(false);
     } finally {
       setSynthesizing(false);
     }
@@ -419,28 +624,75 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
     }
   };
 
+  const isLoadingDNA = synthesizing || (submitted && !brandDNA);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-3xl mx-auto rounded-2xl border border-[#C9DFF0] bg-white p-6 sm:p-10 shadow-sm"
+      className="max-w-4xl lg:max-w-5xl w-full mx-auto rounded-2xl border border-[#C9DFF0] bg-white p-8 sm:p-10 lg:p-12 shadow-sm"
     >
-      <header className="mb-8">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F4FD] border border-[#C9DFF0] text-[#2B7BC4] text-xs font-bold uppercase tracking-wider mb-3">
-          <Sparkles className="size-3.5" />
-          <span>Step 4 of 5 • Post-Payment Brand Intake</span>
+      <header className="mb-6 sm:mb-8">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#E8F4FD] border border-[#C9DFF0] text-[#2B7BC4] text-[11px] font-bold uppercase tracking-wider mb-2.5">
+          <Sparkles className="size-3" />
+          <span>Step 4 of 5 • Brand Intake</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold font-display text-[#0D2137] tracking-tight">
-          Brand Discovery & Gemini AI Strategy
+        <h2 className="text-2xl sm:text-3xl font-bold font-display text-[#0D2137] tracking-tight">
+          Brand Discovery & Strategic AI DNA
         </h2>
-        <p className="text-xs sm:text-sm text-[#64748B] mt-2 leading-relaxed">
-          Enter your brand essentials below. Creo uses Google Gemini AI to formulate your strategic Brand DNA,
+        <p className="text-xs sm:text-sm text-[#64748B] mt-1.5 leading-normal">
+          Enter your brand essentials below. Creo uses strategic AI intelligence to formulate your bespoke Brand DNA,
           then algorithmically matches and dispatches your dedicated creative pod.
         </p>
       </header>
 
       <AnimatePresence mode="wait">
-        {!submitted || !brandDNA ? (
+        {isLoadingDNA ? (
+          <motion.div
+            key="synthesizing"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.3 }}
+          >
+            <BrandGenerationLoading
+              companyName={form.company_name.trim() || "Your Brand"}
+              industry={form.industry || "General Industry"}
+              tones={form.tone_keywords}
+              palette={form.color_palette}
+            />
+            {error && (
+              <div className="mt-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-800 flex items-center gap-2">
+                <ShieldAlert className="size-4 text-rose-600 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+          </motion.div>
+        ) : brandDNA ? (
+          /* Brand DNA Generated View */
+          <motion.div
+            key="generated"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <BrandDNACard
+              dna={brandDNA}
+              onEdit={() => {
+                setSubmitted(false);
+                setBrandDNA(null);
+              }}
+              onConfirmDispatch={handleConfirmAndDispatch}
+              isDispatching={dispatching}
+            />
+
+            {error && (
+              <div className="mt-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-800">
+                ⚠ {error}
+              </div>
+            )}
+          </motion.div>
+        ) : (
           <motion.div
             key="form"
             initial={{ opacity: 0 }}
@@ -449,17 +701,17 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
             className="space-y-6"
           >
             {/* 3-Section Tab Switcher */}
-            <div className="grid grid-cols-3 gap-2 p-1.5 bg-[#F8FAFC] border border-[#C9DFF0] rounded-xl">
+            <div className="grid grid-cols-3 gap-2 p-1.5 bg-[#F8FAFC] border border-[#C9DFF0] rounded-2xl mb-6 sm:mb-8">
               <button
                 type="button"
                 onClick={() => setActiveTab(1)}
-                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   activeTab === 1
                     ? "bg-[#2B7BC4] text-white shadow-xs"
                     : "text-[#64748B] hover:text-[#0D2137] hover:bg-white/60"
                 }`}
               >
-                <Building2 className="size-3.5" />
+                <Building2 className="size-4" />
                 <span className="hidden sm:inline">1. Brand Identity</span>
                 <span className="sm:hidden">1. Identity</span>
               </button>
@@ -467,13 +719,13 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
               <button
                 type="button"
                 onClick={() => setActiveTab(2)}
-                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   activeTab === 2
                     ? "bg-[#2B7BC4] text-white shadow-xs"
                     : "text-[#64748B] hover:text-[#0D2137] hover:bg-white/60"
                 }`}
               >
-                <Users className="size-3.5" />
+                <Users className="size-4" />
                 <span className="hidden sm:inline">2. Audience & Goals</span>
                 <span className="sm:hidden">2. Audience</span>
               </button>
@@ -481,26 +733,33 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
               <button
                 type="button"
                 onClick={() => setActiveTab(3)}
-                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   activeTab === 3
                     ? "bg-[#2B7BC4] text-white shadow-xs"
                     : "text-[#64748B] hover:text-[#0D2137] hover:bg-white/60"
                 }`}
               >
-                <Palette className="size-3.5" />
+                <Palette className="size-4" />
                 <span className="hidden sm:inline">3. Tone & Strategy</span>
                 <span className="sm:hidden">3. Tone</span>
               </button>
             </div>
 
+            {error && (
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-800 flex items-center gap-2">
+                <ShieldAlert className="size-4 text-rose-600 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
             {/* TAB 1: Brand Identity & Basics */}
             {activeTab === 1 && (
-              <div className="space-y-4 pt-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-6 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
                   <div>
                     <label
                       htmlFor="company-name"
-                      className="block text-xs font-bold text-[#0D2137] mb-1.5 uppercase tracking-wider"
+                      className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider"
                     >
                       Company / Brand Name <span className="text-rose-500">*</span>
                     </label>
@@ -509,14 +768,14 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                       value={form.company_name}
                       onChange={(e) => setForm((f) => ({ ...f, company_name: e.target.value }))}
                       placeholder="e.g. Apex Studio"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                     />
                   </div>
 
                   <div>
                     <label
                       htmlFor="industry"
-                      className="block text-xs font-bold text-[#0D2137] mb-1.5 uppercase tracking-wider"
+                      className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider"
                     >
                       Industry Sector
                     </label>
@@ -524,7 +783,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                       id="industry"
                       value={form.industry}
                       onChange={(e) => setForm((f) => ({ ...f, industry: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all cursor-pointer"
+                      className="w-full px-4 py-3 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all cursor-pointer"
                     >
                       {INDUSTRY_OPTIONS.map((ind) => (
                         <option key={ind} value={ind}>
@@ -535,22 +794,22 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
                   <div>
                     <label
                       htmlFor="logo-assets"
-                      className="block text-xs font-bold text-[#0D2137] mb-1.5 uppercase tracking-wider"
+                      className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider"
                     >
                       Official Logo / Asset Cloud Link
                     </label>
                     <div className="relative">
-                      <Globe className="size-4 text-slate-400 absolute left-3 top-3" />
+                      <Globe className="size-4 text-slate-400 absolute left-3.5 top-3.5" />
                       <input
                         id="logo-assets"
                         value={form.official_logo_assets}
                         onChange={(e) => setForm((f) => ({ ...f, official_logo_assets: e.target.value }))}
                         placeholder="Google Drive, Figma, or Dropbox URL"
-                        className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                       />
                     </div>
                   </div>
@@ -558,7 +817,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                   <div>
                     <label
                       htmlFor="website"
-                      className="block text-xs font-bold text-[#0D2137] mb-1.5 uppercase tracking-wider"
+                      className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider"
                     >
                       Website / Storefront URL
                     </label>
@@ -567,7 +826,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                       value={form.website_url}
                       onChange={(e) => setForm((f) => ({ ...f, website_url: e.target.value }))}
                       placeholder="https://yourbrand.com"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                     />
                   </div>
                 </div>
@@ -575,28 +834,39 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                 <div>
                   <label
                     htmlFor="desc"
-                    className="block text-xs font-bold text-[#0D2137] mb-1.5 uppercase tracking-wider"
+                    className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider"
                   >
                     Business Description & Core Offerings <span className="text-rose-500">*</span>
                   </label>
                   <textarea
                     id="desc"
-                    rows={3}
+                    rows={4}
                     value={form.business_description}
                     onChange={(e) => setForm((f) => ({ ...f, business_description: e.target.value }))}
                     placeholder="Describe what your company does, your primary product or service, and what makes your brand stand out..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                   />
                 </div>
 
-                <div className="flex justify-end pt-2">
+                <div className="flex justify-end pt-6 sm:pt-8 border-t border-[#C9DFF0]/60 mt-8 sm:mt-10">
                   <button
                     type="button"
-                    onClick={() => setActiveTab(2)}
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] transition-all cursor-pointer"
+                    onClick={() => {
+                      if (!form.company_name.trim()) {
+                        setError("Please enter your Company / Brand Name.");
+                        return;
+                      }
+                      if (!(form.business_description ?? "").trim()) {
+                        setError("Please provide a brief Business Description.");
+                        return;
+                      }
+                      setError(null);
+                      setActiveTab(2);
+                    }}
+                    className="inline-flex items-center gap-2 px-8 py-3.5 sm:py-4 rounded-xl bg-[#2B7BC4] text-white text-sm font-bold hover:bg-[#1A5EA8] shadow-sm transition-all cursor-pointer"
                   >
                     <span>Next: Target Audience & Goals</span>
-                    <ArrowRight className="size-3.5" />
+                    <ArrowRight className="size-4" />
                   </button>
                 </div>
               </div>
@@ -604,12 +874,12 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
 
             {/* TAB 2: Target Audience & Goals */}
             {activeTab === 2 && (
-              <div className="space-y-4 pt-2">
+              <div className="space-y-6 pt-2">
                 <div>
-                  <p className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider">
+                  <p className="block text-xs font-bold text-[#0D2137] mb-3 uppercase tracking-wider">
                     Primary Content Goal <span className="text-rose-500">*</span>
                   </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
                     {GOAL_OPTIONS.map((g) => {
                       const selected = form.primary_goal === g;
                       return (
@@ -617,7 +887,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                           key={g}
                           type="button"
                           onClick={() => setForm((f) => ({ ...f, primary_goal: g }))}
-                          className={`p-2.5 rounded-xl text-xs font-semibold text-left transition-all border cursor-pointer ${
+                          className={`p-3.5 sm:p-4 rounded-xl text-xs sm:text-sm font-semibold text-left transition-all border cursor-pointer ${
                             selected
                               ? "bg-[#E8F4FD] border-[#2B7BC4] text-[#2B7BC4] shadow-xs"
                               : "bg-white border-slate-200 text-[#475569] hover:border-[#C9DFF0]"
@@ -625,7 +895,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                         >
                           <div className="flex items-center justify-between">
                             <span>{g}</span>
-                            {selected && <Check className="size-3.5 text-[#2B7BC4]" />}
+                            {selected && <Check className="size-4 text-[#2B7BC4]" />}
                           </div>
                         </button>
                       );
@@ -636,7 +906,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                 <div>
                   <label
                     htmlFor="audience-summary"
-                    className="block text-xs font-bold text-[#0D2137] mb-1.5 uppercase tracking-wider"
+                    className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider"
                   >
                     Target Audience Summary <span className="text-rose-500">*</span>
                   </label>
@@ -645,15 +915,15 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                     value={form.target_audience}
                     onChange={(e) => setForm((f) => ({ ...f, target_audience: e.target.value }))}
                     placeholder="e.g. Modern consumers, young professionals and founders aged 22–38"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
                   <div>
                     <label
                       htmlFor="age"
-                      className="block text-xs font-bold text-[#0D2137] mb-1.5 uppercase tracking-wider"
+                      className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider"
                     >
                       Age Range
                     </label>
@@ -662,14 +932,14 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                       value={form.audience_age_range}
                       onChange={(e) => setForm((f) => ({ ...f, audience_age_range: e.target.value }))}
                       placeholder="e.g. 24–40"
-                      className="w-full px-3.5 py-2 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137]"
+                      className="w-full px-4 py-3 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                     />
                   </div>
 
                   <div>
                     <label
                       htmlFor="gender"
-                      className="block text-xs font-bold text-[#0D2137] mb-1.5 uppercase tracking-wider"
+                      className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider"
                     >
                       Gender Demographic
                     </label>
@@ -677,7 +947,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                       id="gender"
                       value={form.audience_gender}
                       onChange={(e) => setForm((f) => ({ ...f, audience_gender: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] cursor-pointer"
+                      className="w-full px-4 py-3 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] cursor-pointer focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                     >
                       <option value="All Genders">All Genders</option>
                       <option value="Female-Identifying">Female-Identifying</option>
@@ -689,7 +959,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                   <div>
                     <label
                       htmlFor="loc"
-                      className="block text-xs font-bold text-[#0D2137] mb-1.5 uppercase tracking-wider"
+                      className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider"
                     >
                       Target Location
                     </label>
@@ -698,7 +968,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                       value={form.audience_location}
                       onChange={(e) => setForm((f) => ({ ...f, audience_location: e.target.value }))}
                       placeholder="e.g. Pan-India / Metros"
-                      className="w-full px-3.5 py-2 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137]"
+                      className="w-full px-4 py-3 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                     />
                   </div>
                 </div>
@@ -706,7 +976,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                 <div>
                   <label
                     htmlFor="pain-points"
-                    className="block text-xs font-bold text-[#0D2137] mb-1.5 uppercase tracking-wider"
+                    className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider"
                   >
                     Customer Pain Points & Core Problem Solved
                   </label>
@@ -715,44 +985,54 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                     value={form.audience_problems_solved}
                     onChange={(e) => setForm((f) => ({ ...f, audience_problems_solved: e.target.value }))}
                     placeholder="e.g. Difficulty finding reliable creative agencies with predictable delivery schedules"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                   />
                 </div>
 
                 <div>
                   <label
                     htmlFor="ig"
-                    className="block text-xs font-bold text-[#0D2137] mb-1.5 uppercase tracking-wider"
+                    className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider"
                   >
                     Instagram Handle
                   </label>
                   <div className="relative">
-                    <Instagram className="size-4 text-slate-400 absolute left-3 top-3" />
+                    <Instagram className="size-4 text-slate-400 absolute left-3.5 top-3.5" />
                     <input
                       id="ig"
                       value={form.instagram_username}
                       onChange={(e) => setForm((f) => ({ ...f, instagram_username: e.target.value }))}
                       placeholder="@yourbrand"
-                      className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-between pt-2">
+                <div className="flex justify-between items-center pt-6 sm:pt-8 border-t border-[#C9DFF0]/60 mt-8 sm:mt-10">
                   <button
                     type="button"
-                    onClick={() => setActiveTab(1)}
-                    className="px-4 py-2.5 rounded-xl border border-[#C9DFF0] text-xs font-bold text-[#64748B] hover:text-[#0D2137] transition-all cursor-pointer"
+                    onClick={() => {
+                      setError(null);
+                      setActiveTab(1);
+                    }}
+                    className="px-6 py-3.5 sm:py-4 rounded-xl border border-[#C9DFF0] text-xs sm:text-sm font-bold text-[#64748B] hover:text-[#0D2137] hover:bg-slate-50 transition-all cursor-pointer"
                   >
-                    ← Back
+                    ← Back to Identity
                   </button>
                   <button
                     type="button"
-                    onClick={() => setActiveTab(3)}
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] transition-all cursor-pointer"
+                    onClick={() => {
+                      if (!form.target_audience.trim()) {
+                        setError("Please describe your Target Audience.");
+                        return;
+                      }
+                      setError(null);
+                      setActiveTab(3);
+                    }}
+                    className="inline-flex items-center gap-2 px-8 py-3.5 sm:py-4 rounded-xl bg-[#2B7BC4] text-white text-xs sm:text-sm font-bold hover:bg-[#1A5EA8] shadow-sm transition-all cursor-pointer"
                   >
                     <span>Next: Tone & Visual Style</span>
-                    <ArrowRight className="size-3.5" />
+                    <ArrowRight className="size-4" />
                   </button>
                 </div>
               </div>
@@ -760,13 +1040,13 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
 
             {/* TAB 3: Tone, Style & Strategy */}
             {activeTab === 3 && (
-              <div className="space-y-5 pt-2">
+              <div className="space-y-6 pt-2">
                 {/* Tone Keywords */}
                 <div>
-                  <p className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider">
+                  <p className="block text-xs font-bold text-[#0D2137] mb-3 uppercase tracking-wider">
                     Brand Tone Keywords (Select all that fit) <span className="text-rose-500">*</span>
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5">
                     {TONE_OPTIONS.map((tone) => {
                       const active = form.tone_keywords.includes(tone);
                       return (
@@ -774,7 +1054,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                           key={tone}
                           type="button"
                           onClick={() => toggleTone(tone)}
-                          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                          className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                             active
                               ? "bg-[#2B7BC4] text-white shadow-xs border border-[#2B7BC4]"
                               : "bg-slate-50 text-[#64748B] border border-[#C9DFF0] hover:bg-white hover:text-[#0D2137]"
@@ -789,25 +1069,25 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
 
                 {/* Color Palette */}
                 <div>
-                  <p className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider">
+                  <p className="block text-xs font-bold text-[#0D2137] mb-3 uppercase tracking-wider">
                     Brand Color Palette (Up to 5 Colors)
                   </p>
 
                   {/* Preset palettes */}
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <span className="text-[11px] font-semibold text-[#64748B] self-center">Presets:</span>
+                  <div className="flex flex-wrap gap-2.5 mb-3.5">
+                    <span className="text-xs font-semibold text-[#64748B] self-center">Presets:</span>
                     {PRESET_PALETTES.map((preset) => (
                       <button
                         key={preset.name}
                         type="button"
                         onClick={() => applyPresetPalette(preset.colors)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#C9DFF0] bg-white text-[11px] font-semibold text-[#0D2137] hover:bg-[#F0F7FD] transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#C9DFF0] bg-white text-xs font-semibold text-[#0D2137] hover:bg-[#F0F7FD] transition-colors cursor-pointer"
                       >
                         <div className="flex -space-x-1">
                           {preset.colors.map((c) => (
                             <span
                               key={c}
-                              className="size-3 rounded-full border border-white"
+                              className="size-3.5 rounded-full border border-white"
                               style={{ backgroundColor: c }}
                             />
                           ))}
@@ -817,23 +1097,23 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                     ))}
                   </div>
 
-                  <div className="flex gap-2 items-center flex-wrap">
+                  <div className="flex gap-2.5 items-center flex-wrap">
                     {form.color_palette.map((c) => (
                       <ColorSwatch key={c} color={c} onRemove={() => removeColor(c)} />
                     ))}
                     {form.color_palette.length < 5 && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         <input
                           type="color"
                           value={colorInput}
                           onChange={(e) => setColorInput(e.target.value)}
-                          className="size-8 rounded-lg cursor-pointer border-0 bg-transparent p-0"
+                          className="size-9 rounded-xl cursor-pointer border-0 bg-transparent p-0"
                           aria-label="Pick custom colour"
                         />
                         <button
                           type="button"
                           onClick={addColor}
-                          className="px-3 py-1 bg-white border border-[#C9DFF0] rounded-lg text-xs font-semibold text-[#0D2137] hover:bg-[#F0F7FD] transition-colors cursor-pointer"
+                          className="px-3.5 py-1.5 bg-white border border-[#C9DFF0] rounded-xl text-xs font-semibold text-[#0D2137] hover:bg-[#F0F7FD] transition-colors cursor-pointer"
                         >
                           + Add Color
                         </button>
@@ -844,10 +1124,10 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
 
                 {/* Content Focus Formats */}
                 <div>
-                  <p className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider">
+                  <p className="block text-xs font-bold text-[#0D2137] mb-3 uppercase tracking-wider">
                     Deliverable Format Focus
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5">
                     {CONTENT_FOCUS_OPTIONS.map((opt) => {
                       const active = (form.content_focus ?? []).includes(opt);
                       return (
@@ -855,7 +1135,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                           key={opt}
                           type="button"
                           onClick={() => toggleFocus(opt)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border cursor-pointer ${
+                          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all border cursor-pointer ${
                             active
                               ? "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-2xs font-bold"
                               : "bg-white border-slate-200 text-slate-600 hover:border-[#C9DFF0]"
@@ -869,11 +1149,11 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                 </div>
 
                 {/* Style references & Topics to avoid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
                   <div>
                     <label
                       htmlFor="style-refs"
-                      className="block text-xs font-bold text-[#0D2137] mb-1.5 uppercase tracking-wider"
+                      className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider"
                     >
                       Style References / Inspo Links
                     </label>
@@ -887,14 +1167,14 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                         }))
                       }
                       placeholder="@apple, minimalist editorial, motion posters"
-                      className="w-full px-3 py-2 rounded-xl border border-[#C9DFF0] bg-white text-xs text-[#0D2137]"
+                      className="w-full px-4 py-3 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                     />
                   </div>
 
                   <div>
                     <label
                       htmlFor="avoid"
-                      className="block text-xs font-bold text-[#0D2137] mb-1.5 uppercase tracking-wider"
+                      className="block text-xs font-bold text-[#0D2137] mb-2 uppercase tracking-wider"
                     >
                       Topics or Angles to Avoid
                     </label>
@@ -903,72 +1183,46 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                       value={form.topics_to_avoid}
                       onChange={(e) => setForm((f) => ({ ...f, topics_to_avoid: e.target.value }))}
                       placeholder="e.g. Overly corporate jargon, clip-art"
-                      className="w-full px-3 py-2 rounded-xl border border-[#C9DFF0] bg-white text-xs text-[#0D2137]"
+                      className="w-full px-4 py-3 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-between pt-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-6 sm:pt-8 border-t border-[#C9DFF0]/60 mt-8 sm:mt-10">
                   <button
                     type="button"
-                    onClick={() => setActiveTab(2)}
-                    className="px-4 py-2.5 rounded-xl border border-[#C9DFF0] text-xs font-bold text-[#64748B] hover:text-[#0D2137] transition-all cursor-pointer"
+                    onClick={() => {
+                      setError(null);
+                      setActiveTab(2);
+                    }}
+                    className="px-6 py-3.5 sm:py-4 rounded-xl border border-[#C9DFF0] text-xs sm:text-sm font-bold text-[#64748B] hover:text-[#0D2137] hover:bg-slate-50 transition-all cursor-pointer text-center"
                   >
-                    ← Back
+                    ← Back to Audience
+                  </button>
+
+                  <button
+                    id="submit-questionnaire-btn"
+                    type="button"
+                    onClick={handleGenerateBrandStrategy}
+                    disabled={synthesizing}
+                    className="flex-1 inline-flex items-center justify-center gap-2.5 py-4 px-8 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1A5EA8] text-white font-bold text-sm sm:text-base hover:brightness-105 shadow-md shadow-blue-500/25 transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {synthesizing ? (
+                      <>
+                        <RefreshCw className="size-4 animate-spin" />
+                        <span>Synthesizing Strategic Brand DNA…</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="size-4 text-amber-300" />
+                        <span>Generate Brand Strategy with AI →</span>
+                      </>
+                    )}
                   </button>
                 </div>
-              </div>
-            )}
-
-            {error && (
-              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-800 flex items-center gap-2">
-                <ShieldAlert className="size-4 text-rose-600 flex-shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {/* Synthesize Button */}
-            <div className="pt-3">
-              <button
-                id="submit-questionnaire-btn"
-                type="button"
-                onClick={handleGenerateGeminiBrand}
-                disabled={synthesizing}
-                className="w-full inline-flex items-center justify-center gap-2.5 py-4 px-6 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1A5EA8] text-white font-bold text-sm sm:text-base hover:brightness-105 shadow-md shadow-blue-500/25 transition-all disabled:opacity-50 cursor-pointer"
-              >
-                {synthesizing ? (
-                  <>
-                    <RefreshCw className="size-4 animate-spin" />
-                    <span>Synthesizing Brand Strategy via Gemini AI Engine…</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="size-4 text-amber-300" />
-                    <span>Generate Brand Strategy with Gemini AI →</span>
-                  </>
-                )}
-              </button>
-              <p className="text-[11px] text-[#64748B] text-center mt-2">
-                Gemini 1.5 Flash evaluates your brand persona, content pillars, and tone guidelines.
-              </p>
-            </div>
-          </motion.div>
-        ) : (
-          /* Brand DNA Generated View */
-          <motion.div key="generated" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <BrandDNACard
-              dna={brandDNA}
-              onEdit={() => {
-                setSubmitted(false);
-                setBrandDNA(null);
-              }}
-              onConfirmDispatch={handleConfirmAndDispatch}
-              isDispatching={dispatching}
-            />
-
-            {error && (
-              <div className="mt-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-800">
-                ⚠ {error}
+                <p className="text-xs text-[#64748B] text-center mt-2">
+                  Our proprietary AI engine evaluates your brand persona, content pillars, and tone guidelines.
+                </p>
               </div>
             )}
           </motion.div>

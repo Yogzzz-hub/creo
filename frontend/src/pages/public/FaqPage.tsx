@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { ScrollReveal } from "../../components/ui/ScrollReveal";
 import {
   ChevronDown,
   Search,
@@ -115,51 +116,63 @@ export function FaqPage() {
               Everything you need to know about working with Creo.
             </p>
 
-            {/* Search Bar */}
-            <div className="mt-6 max-w-md mx-auto relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setOpenIndex(null);
-                }}
-                placeholder="Search questions..."
-                className="w-full rounded-2xl border border-[#C9DFF0] bg-white pl-11 pr-4 py-2.5 text-sm text-[#0D2137] shadow-sm focus:ring-2 focus:ring-[#2B7BC4]/30 focus:border-[#2B7BC4] outline-none transition-all"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Category Filters + Accordion ────────────────────────────────── */}
-      <section className="bg-white py-12 sm:py-16">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          {/* Category Pills */}
-          <div className="flex flex-wrap justify-center gap-2 mb-8">
-            {CATEGORIES.map((cat) => {
-              const Icon = cat.icon;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => {
-                    setActiveCategory(cat.id);
+              {/* Search Bar */}
+              <div className="mt-6 max-w-md mx-auto relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
                     setOpenIndex(null);
                   }}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
-                    activeCategory === cat.id
-                      ? "bg-[#2B7BC4] text-white shadow-md shadow-[#2B7BC4]/20"
-                      : "bg-slate-100 text-slate-600 hover:bg-[#E8F4FD] hover:text-[#2B7BC4]"
-                  }`}
-                >
-                  <Icon className="size-3.5" />
-                  {cat.label}
-                </button>
-              );
-            })}
+                  placeholder="Search questions..."
+                  className="w-full rounded-2xl border border-[#C9DFF0] bg-white pl-11 pr-10 py-2.5 text-sm text-[#0D2137] shadow-sm focus:ring-2 focus:ring-[#2B7BC4]/30 focus:border-[#2B7BC4] outline-none transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setOpenIndex(null);
+                    }}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
+        </section>
+
+        {/* ── Category Filters + Accordion ────────────────────────────────── */}
+        <section className="bg-white py-12 sm:py-16">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+            {/* Category Pills */}
+            <ScrollReveal variant="up" className="flex flex-wrap justify-center gap-2 mb-8">
+              {CATEGORIES.map((cat) => {
+                const Icon = cat.icon;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveCategory(cat.id);
+                      setOpenIndex(null);
+                    }}
+                    className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
+                      activeCategory === cat.id
+                        ? "bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white shadow-md shadow-blue-500/20"
+                        : "bg-slate-100 text-slate-600 hover:bg-[#E8F4FD] hover:text-[#2B7BC4]"
+                    }`}
+                  >
+                    <Icon className="size-3.5" />
+                    {cat.label}
+                  </button>
+                );
+              })}
+            </ScrollReveal>
 
           {/* FAQ Items */}
           <div className="space-y-3">
@@ -177,8 +190,10 @@ export function FaqPage() {
               filteredItems.map((item, index) => {
                 const isOpen = openIndex === index;
                 return (
-                  <div
-                    key={index}
+                  <ScrollReveal
+                    key={item.question}
+                    variant="up"
+                    delay={Math.min(index * 35, 200)}
                     className={`rounded-2xl border transition-all duration-300 ${
                       isOpen
                         ? "border-[#2B7BC4]/30 bg-[#E8F4FD]/20 shadow-md shadow-[#2B7BC4]/5"
@@ -231,14 +246,14 @@ export function FaqPage() {
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </ScrollReveal>
                 );
               })
             )}
           </div>
 
           {/* Still Have Questions Banner */}
-          <div className="mt-12 rounded-2xl border border-[#C9DFF0] bg-gradient-to-r from-[#E8F4FD] to-sky-50 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <ScrollReveal variant="scale" delay={100} className="mt-12 rounded-2xl border border-[#C9DFF0] bg-gradient-to-r from-[#E8F4FD] to-sky-50 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-start sm:items-center gap-3">
               <div className="size-10 rounded-xl bg-[#2B7BC4] text-white flex items-center justify-center shrink-0 shadow-sm">
                 <Clock className="size-5" />
@@ -257,34 +272,35 @@ export function FaqPage() {
               href="https://wa.me/919941999415?text=Hi%2C%20I%20have%20a%20question%20about%20Creo"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2B7BC4] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#2B7BC4]/90 transition-colors shadow-md shrink-0"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-95 px-5 py-2.5 text-xs font-bold text-white transition-all shadow-md shadow-blue-500/20 shrink-0 cursor-pointer"
             >
               <MessageSquare className="size-3.5" />
               Chat with Us
             </a>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* ── Bottom CTA ──────────────────────────────────────────────────── */}
-      <section className="bg-[#0D2137] py-12 sm:py-16 text-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+      <section className="bg-gradient-to-br from-[#07192F] via-[#0B2545] to-[#123966] py-14 sm:py-18 text-white relative overflow-hidden">
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+        <ScrollReveal variant="scale" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
             Ready to start?
           </h2>
-          <p className="mt-3 text-xs sm:text-base text-white/70 max-w-xl mx-auto">
+          <p className="mt-3 text-xs sm:text-base text-blue-100/80 max-w-xl mx-auto">
             Join 50+ brands growing with Creo every week.
           </p>
-          <div className="mt-6">
+          <div className="mt-7">
             <Link
               to="/pricing"
-              className="inline-flex items-center justify-center gap-2 bg-white text-[#0D2137] hover:bg-slate-100 rounded-xl h-11 px-7 text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-95 text-white rounded-xl h-12 px-8 text-sm font-bold shadow-lg shadow-blue-600/30 transition-all cursor-pointer"
             >
               Explore Retainer Plans
               <ArrowRight className="size-4" />
             </Link>
           </div>
-        </div>
+        </ScrollReveal>
       </section>
     </div>
   );

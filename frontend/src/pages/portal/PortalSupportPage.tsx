@@ -121,14 +121,56 @@ export function PortalSupportPage() {
 
   const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
 
-  if (!isSubLoading && !isSubscribed) {
+  // If user hasn't completed payment in onboarding (stage < 4), lock immediately on frame 0 without waiting
+  const isUnpaidOnboarding = (user?.onboarding_stage ?? 1) < 4;
+
+  if (isUnpaidOnboarding) {
     return (
-      <div className="mx-auto max-w-5xl space-y-6 animate-page-in">
-        <div className="border-b border-border pb-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#0D2137] tracking-tight">
+      <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5 animate-page-in">
+        <div className="border-b border-border pb-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
             Client Support Desk
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-0.5">
+            Request revisions, deliverable updates, strategy adjustments, or technical inquiries directly with your team.
+          </p>
+        </div>
+        <SubscriptionLockedState
+          title="Support Desk Locked"
+          description="Direct concierge ticket dispatch, revision requests, and dedicated account manager SLA handling require an active production retainer. Choose a plan to activate support."
+        />
+      </div>
+    );
+  }
+
+  // While checking subscription status for onboarded users, show clean loading state instead of flashing unlocked UI
+  if (isSubLoading) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5 animate-page-in">
+        <div className="border-b border-border pb-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
+            Client Support Desk
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Request revisions, deliverable updates, strategy adjustments, or technical inquiries directly with your team.
+          </p>
+        </div>
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-12 text-center shadow-xs flex flex-col items-center justify-center min-h-[320px]">
+          <Loader2 className="size-8 text-[#2B7BC4] animate-spin mb-3" />
+          <p className="text-xs font-semibold text-slate-500">Checking workspace access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isSubscribed) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5 animate-page-in">
+        <div className="border-b border-border pb-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
+            Client Support Desk
+          </h1>
+          <p className="text-xs text-slate-500 mt-0.5">
             Request revisions, deliverable updates, strategy adjustments, or technical inquiries directly with your team.
           </p>
         </div>
@@ -141,14 +183,14 @@ export function PortalSupportPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 animate-page-in">
+    <div className="mx-auto max-w-5xl space-y-4 sm:space-y-5 animate-page-in">
       {/* ── Top Header ────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border pb-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#0D2137] tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0D2137] tracking-tight">
             Client Support Desk
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-0.5">
             Request revisions, deliverable updates, strategy adjustments, or technical inquiries directly with your team.
           </p>
         </div>
@@ -166,7 +208,7 @@ export function PortalSupportPage() {
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#2B7BC4] px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#2B7BC4]/90 transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-4 py-2 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
           >
             <Plus className="size-3.5" />
             Open Ticket
@@ -333,7 +375,7 @@ export function PortalSupportPage() {
                 <button
                   type="submit"
                   disabled={createTicketMutation.isPending}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#2B7BC4] px-4 py-2 text-xs font-semibold text-white hover:bg-[#2B7BC4]/90 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-5 py-2.5 text-xs font-bold text-white hover:brightness-110 active:scale-95 shadow-md shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
                 >
                   {createTicketMutation.isPending ? (
                     <Loader2 className="size-3.5 animate-spin" />
