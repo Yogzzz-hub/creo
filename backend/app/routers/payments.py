@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
-from app.models.billing import Plan
+from app.models.billing import PaymentEvent, Plan, Subscription, UsageCounter
 from app.schemas.billing import (
     ConfirmPaymentRequest,
     ConfirmPaymentResponse,
