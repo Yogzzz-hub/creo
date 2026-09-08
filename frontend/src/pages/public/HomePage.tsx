@@ -11,7 +11,6 @@ import {
   Film,
   Layers,
   Clock,
-  ChevronDown,
   Loader2,
   Calendar,
 } from "lucide-react";
@@ -113,30 +112,10 @@ const COMPARISON_ROWS = [
 
 
 
-const FAQS = [
-  {
-    q: "How quickly do I receive my first batch of content?",
-    a: "Your first complete batch of ready-to-publish assets arrives in your private portal exactly 7 days after completing the brand intake questionnaire.",
-  },
-  {
-    q: "What if I need revisions or changes on deliverables?",
-    a: "Every deliverable includes 2 complete rounds of revisions. You can leave timestamped comments and feedback directly in your portal, and our team updates the files within 24 to 48 hours.",
-  },
-  {
-    q: "Is there any long-term contract or lock-in period?",
-    a: "None at all. All Creo retainers are strictly month-to-month subscriptions. You can upgrade, downgrade, pause, or cancel at any time directly from your billing portal.",
-  },
-  {
-    q: "Do you also schedule and post to my Instagram account?",
-    a: "Yes! With your authorization, our platform connects directly to your Instagram account to auto-schedule and publish approved reels and posts at optimal audience peak hours.",
-  },
-];
-
 export function HomePage() {
   const [email, setEmail] = useState("");
   const [leadStatus, setLeadStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [leadError, setLeadError] = useState("");
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   async function handleLeadSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -251,15 +230,6 @@ export function HomePage() {
                     </div>
                     <span className="font-semibold text-white">4.9/5 Rating</span> from 50+ founders
                   </div>
-                </div>
-
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="size-4 text-emerald-400" />
-                  <span>Guaranteed 7-Day First Drop</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="size-4 text-emerald-400" />
-                  <span>No Long-Term Lock-in</span>
                 </div>
               </div>
             </div>
@@ -605,59 +575,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ── 9. FAQ Quick Preview ─────────────────────────────────────────── */}
-      <section className="py-20 bg-white border-t border-slate-100" id="faq">
-        <div className="max-w-4xl mx-auto px-6 sm:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold tracking-tight text-[#0D2137]">
-              Frequently Asked Questions
-            </h2>
-            <p className="text-slate-600 mt-2 text-sm">
-              Quick answers to common questions about our creative retainers.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {FAQS.map((faq, idx) => {
-              const isOpen = openFaq === idx;
-              return (
-                <div
-                  key={faq.q}
-                  className="rounded-2xl border border-slate-200/90 bg-white overflow-hidden transition-all duration-200"
-                >
-                  <button
-                    onClick={() => setOpenFaq(isOpen ? null : idx)}
-                    className="w-full text-left p-6 flex items-center justify-between gap-4 font-bold text-[#0D2137] hover:text-[#2B7BC4] cursor-pointer"
-                  >
-                    <span>{faq.q}</span>
-                    <ChevronDown
-                      className={`size-5 text-slate-400 transition-transform duration-200 shrink-0 ${
-                        isOpen ? "rotate-180 text-[#2B7BC4]" : ""
-                      }`}
-                    />
-                  </button>
-                  {isOpen && (
-                    <div className="px-6 pb-6 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-4">
-                      {faq.a}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="text-center mt-10">
-            <Link
-              to="/faq"
-              className="text-sm font-bold text-[#2B7BC4] hover:underline"
-            >
-              Have more questions? Read our full FAQ documentation →
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 10. Final Call to Action ─────────────────────────────────────── */}
+      {/* ── 9. Final Call to Action ─────────────────────────────────────── */}
       <section className="py-24 bg-gradient-to-r from-[#07192F] via-[#0B2545] to-[#123966] text-white text-center relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-6 sm:px-8 relative z-10">
           <h2 className="text-4xl sm:text-5xl font-black tracking-tight leading-tight">
