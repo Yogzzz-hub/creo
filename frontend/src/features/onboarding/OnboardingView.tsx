@@ -27,9 +27,11 @@ const STAGES = [
 function ProgressStepper({
   activeStep,
   maxUnlockedStep,
+  onSelectStep,
 }: {
   activeStep: number;
   maxUnlockedStep: number;
+  onSelectStep?: (step: number) => void;
 }) {
   return (
     <div className="w-full max-w-4xl lg:max-w-5xl mx-auto mb-8 sm:mb-10 px-2 sm:px-4">
@@ -57,11 +59,17 @@ function ProgressStepper({
           {STAGES.map((s) => {
             const isDone = s.step < maxUnlockedStep;
             const isActive = s.step === activeStep;
+            const isUnlocked = s.step <= maxUnlockedStep;
 
             return (
               <div key={s.step} className="flex flex-col items-center flex-1 relative z-10">
-                <div className="flex flex-col items-center select-none">
-                  {/* Step circle - Crisp, flat, no glowing outer halo or white ring */}
+                <div
+                  onClick={() => isUnlocked && onSelectStep?.(s.step)}
+                  className={`flex flex-col items-center select-none ${
+                    isUnlocked ? "cursor-pointer hover:opacity-90" : "cursor-not-allowed"
+                  }`}
+                >
+                  {/* Step circle */}
                   <div className="relative flex items-center justify-center">
                     <div
                       className={`relative size-8 sm:size-9 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-colors duration-200 ${
@@ -394,6 +402,7 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
       <ProgressStepper
         activeStep={currentStep}
         maxUnlockedStep={maxUnlockedStep}
+        onSelectStep={(step) => setActiveStep(step)}
       />
 
       {/* Dynamic Stage Views */}

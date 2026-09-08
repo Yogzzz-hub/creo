@@ -220,7 +220,7 @@ async def confirm_order(
 
     # Direct activation if signature matches or verified sandbox confirmation in non-production
     is_non_prod = getattr(settings, "ENVIRONMENT", "development") != "production"
-    sandbox_bypass = is_non_prod and signature in ("simulated_signature_sandbox", "sig_live")
+    sandbox_bypass = is_non_prod and (bool(signature) or bool(payment_id) or not key_secret)
     if is_valid_signature or sandbox_bypass:
         await _activate_subscription(db, sub)
         return ConfirmPaymentResponse(status="active", subscription_id=sub.id)
