@@ -864,8 +864,14 @@ export function PortalPaymentsPage() {
 
   const isSubscribed =
     !isExpired &&
-    !!data?.subscription &&
-    (data?.is_active ?? ["active", "trialing"].includes(data?.subscription?.status));
+    (data?.is_active === true ||
+      (!!data?.subscription && ["active", "trialing"].includes(data?.subscription?.status)));
+
+  useEffect(() => {
+    if (isSubscribed && paymentStatus === "error") {
+      setPaymentStatus("idle");
+    }
+  }, [isSubscribed, paymentStatus]);
 
   const posterUsed = quotas["static_post"]?.used ?? 0;
   const posterTotal =
