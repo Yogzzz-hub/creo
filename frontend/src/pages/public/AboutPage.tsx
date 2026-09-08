@@ -96,20 +96,20 @@ export function AboutPage() {
   return (
     <div className="w-full">
       {/* ── Hero Section ─────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#E8F4FD] via-[#F0F7FD] to-white">
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#E8F4FD] via-[#F0F7FD] to-white pt-10 pb-8 sm:pt-14 sm:pb-10">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#2B7BC4]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-28 relative z-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-[#2B7BC4] shadow-sm border border-[#C9DFF0] mb-6">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-[#2B7BC4] shadow-sm border border-[#C9DFF0] mb-4">
               <Sparkles className="size-3.5" />
               Building Brands Since 2023
             </div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-[#0D2137] sm:text-6xl">
+            <h1 className="text-3xl font-extrabold tracking-tight text-[#0D2137] sm:text-5xl">
               We don&apos;t just market brands.
               <br />
               <span className="text-[#2B7BC4]">We grow them.</span>
             </h1>
-            <p className="mt-6 text-lg leading-relaxed text-slate-600 sm:text-xl max-w-2xl mx-auto">
+            <p className="mt-4 text-sm sm:text-base leading-relaxed text-slate-600 max-w-2xl mx-auto">
               Creo exists because every business deserves a growth partner — not
               just a vendor. We started with a simple belief: consistent,
               high-quality content delivered on time can transform a brand.
@@ -119,18 +119,18 @@ export function AboutPage() {
       </section>
 
       {/* ── Trust Metrics Strip ──────────────────────────────────────────── */}
-      <section className="py-12 border-b border-[#C9DFF0] bg-white">
+      <section className="py-8 sm:py-10 border-b border-[#C9DFF0] bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
             {TRUST_METRICS.map((m) => (
               <div
                 key={m.label}
-                className="text-center p-4 rounded-2xl bg-[#E8F4FD]/40 border border-[#C9DFF0]/50"
+                className="text-center p-3.5 sm:p-4 rounded-2xl bg-[#E8F4FD]/40 border border-[#C9DFF0]/50"
               >
-                <div className="text-3xl sm:text-4xl font-extrabold text-[#0D2137] tracking-tight">
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#0D2137] tracking-tight">
                   {m.value}
                 </div>
-                <div className="text-xs sm:text-sm font-medium text-slate-600 mt-1">
+                <div className="text-xs sm:text-sm font-medium text-slate-600 mt-0.5">
                   {m.label}
                 </div>
               </div>
@@ -139,32 +139,53 @@ export function AboutPage() {
         </div>
       </section>
 
-      {/* ── Mission Statement ────────────────────────────────────────────── */}
-      <section className="bg-white py-16 sm:py-24">
+      {/* ── Mission Statement & Studio Showcase ──────────────────────────── */}
+      <section className="bg-white py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <span className="text-xs font-bold uppercase tracking-widest text-[#2B7BC4]">
               Our Mission
             </span>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#0D2137] sm:text-4xl">
+            <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0D2137]">
               Why we exist — not just what we do
             </h2>
-            <p className="mt-6 text-lg leading-relaxed text-slate-600">
+            <p className="mt-4 text-sm sm:text-base leading-relaxed text-slate-600">
               Most businesses know they need to post on social media. Few know
               how to do it consistently, on-brand, and with real strategy behind
               it. Creo bridges that gap. We combine creative firepower with
               growth thinking so that every reel, every post, every story moves
               your brand forward.
             </p>
-            <p className="mt-4 text-lg leading-relaxed text-slate-600">
-              We&apos;re not here to sell you vanity metrics. We&apos;re here
-              to build something that lasts — a brand people remember, a
-              presence people trust, and results you can actually see.
-            </p>
+          </div>
+
+          {/* Creative Studio Showcase Visual */}
+          <div className="mt-8 max-w-4xl mx-auto rounded-3xl overflow-hidden border border-slate-200/90 shadow-xl relative group">
+            <div className="aspect-[16/8] sm:aspect-[21/9] w-full overflow-hidden bg-slate-900 relative">
+              <img
+                src="/assets/workflow/studio_master.jpg"
+                alt="Creo Creative Studio & Production Suite"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0D2137]/90 via-[#0D2137]/30 to-transparent" />
+              <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 right-4 sm:right-6 flex flex-col sm:flex-row sm:items-end justify-between gap-2 text-white">
+                <div>
+                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-cyan-300">
+                    Creo Production Suite
+                  </span>
+                  <h3 className="text-sm sm:text-xl font-extrabold text-white mt-0.5">
+                    High-End Motion & Editorial Creative Lab
+                  </h3>
+                </div>
+                <span className="text-[10px] sm:text-xs font-medium text-slate-300 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 w-fit">
+                  4K Master Workflow · 7-Day SLAs
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Core Commitments */}
-          <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
             {[
               { icon: Clock, title: "7-Day Onboarding", desc: "From sign-up to first content delivery in one week" },
               { icon: Shield, title: "No Lock-In Contracts", desc: "Monthly retainers. Cancel anytime. We earn your trust." },
@@ -172,14 +193,14 @@ export function AboutPage() {
             ].map((item) => (
               <div
                 key={item.title}
-                className="flex items-start gap-3 p-5 rounded-2xl border border-[#C9DFF0]/50 bg-[#E8F4FD]/20 hover:bg-[#E8F4FD]/40 transition-colors"
+                className="flex items-start gap-3 p-4 rounded-2xl border border-[#C9DFF0]/50 bg-[#E8F4FD]/20 hover:bg-[#E8F4FD]/40 transition-colors"
               >
-                <div className="size-10 shrink-0 rounded-xl bg-[#2B7BC4]/10 text-[#2B7BC4] flex items-center justify-center">
-                  <item.icon className="size-5" />
+                <div className="size-9 shrink-0 rounded-xl bg-[#2B7BC4]/10 text-[#2B7BC4] flex items-center justify-center">
+                  <item.icon className="size-4.5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-[#0D2137]">{item.title}</h4>
-                  <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">{item.desc}</p>
+                  <h4 className="text-xs sm:text-sm font-bold text-[#0D2137]">{item.title}</h4>
+                  <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -188,34 +209,34 @@ export function AboutPage() {
       </section>
 
       {/* ── Differentiators ──────────────────────────────────────────────── */}
-      <section className="bg-[#F8F9FA] py-16 sm:py-24 border-y border-[#C9DFF0]/50">
+      <section className="bg-[#F8F9FA] py-12 sm:py-16 border-y border-[#C9DFF0]/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <span className="text-xs font-bold uppercase tracking-widest text-[#2B7BC4]">
               Why Creo
             </span>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#0D2137] sm:text-4xl">
+            <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0D2137]">
               What makes us different
             </h2>
-            <p className="mt-3 text-base text-slate-600 sm:text-lg">
+            <p className="mt-2 text-xs sm:text-sm text-slate-600">
               We&apos;re built for businesses that want measurable results, not
               just posts.
             </p>
           </div>
 
-          <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {DIFFERENTIATORS.map((item, idx) => (
               <div
                 key={item.title}
-                className="group rounded-3xl border border-[#C9DFF0] bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                className="group rounded-2xl border border-[#C9DFF0] bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
               >
-                <div className={`mb-5 flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br ${item.accent} text-white shadow-md transition-transform duration-300 group-hover:scale-110 ${idx % 2 === 0 ? "group-hover:rotate-3" : "group-hover:-rotate-3"}`}>
-                  <item.icon className="size-6" />
+                <div className={`mb-4 flex size-11 items-center justify-center rounded-xl bg-gradient-to-br ${item.accent} text-white shadow-md transition-transform duration-300 group-hover:scale-110 ${idx % 2 === 0 ? "group-hover:rotate-3" : "group-hover:-rotate-3"}`}>
+                  <item.icon className="size-5" />
                 </div>
-                <h3 className="text-lg font-bold text-[#0D2137] group-hover:text-[#2B7BC4] transition-colors">
+                <h3 className="text-base font-bold text-[#0D2137] group-hover:text-[#2B7BC4] transition-colors">
                   {item.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
                   {item.description}
                 </p>
               </div>
@@ -225,38 +246,38 @@ export function AboutPage() {
       </section>
 
       {/* ── Team Section ─────────────────────────────────────────────────── */}
-      <section className="bg-white py-16 sm:py-24">
+      <section className="bg-white py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <span className="text-xs font-bold uppercase tracking-widest text-[#2B7BC4]">
               Our Team
             </span>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#0D2137] sm:text-4xl">
+            <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0D2137]">
               The people behind your growth
             </h2>
-            <p className="mt-3 text-base text-slate-600 sm:text-lg">
+            <p className="mt-2 text-xs sm:text-sm text-slate-600">
               Small team. Big experience. Obsessed with your results.
             </p>
           </div>
 
-          <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {TEAM.map((member) => (
               <div
                 key={member.name}
-                className="group rounded-3xl border border-[#C9DFF0] bg-white p-7 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                className="group rounded-2xl border border-[#C9DFF0] bg-white p-6 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
               >
-                <div className={`mx-auto mb-5 flex size-20 items-center justify-center rounded-2xl bg-gradient-to-br ${member.gradient} text-white shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
-                  <span className="text-xl font-black tracking-wider">
+                <div className={`mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br ${member.gradient} text-white shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
+                  <span className="text-lg font-black tracking-wider">
                     {member.initials}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-[#0D2137]">
+                <h3 className="text-base font-bold text-[#0D2137]">
                   {member.name}
                 </h3>
                 <p className="text-xs font-semibold text-[#2B7BC4] mt-0.5">
                   {member.role}
                 </p>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                <p className="mt-2 text-xs leading-relaxed text-slate-600">
                   {member.description}
                 </p>
               </div>
@@ -266,18 +287,18 @@ export function AboutPage() {
       </section>
 
       {/* ── Bottom CTA ───────────────────────────────────────────────────── */}
-      <section className="bg-[#0D2137] py-16 sm:py-20 text-white">
+      <section className="bg-[#0D2137] py-12 sm:py-16 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
             Ready to grow your brand?
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-white/70 max-w-xl mx-auto">
+          <p className="mt-3 text-xs sm:text-base text-white/70 max-w-xl mx-auto">
             Join 50+ businesses that chose Creo as their dedicated growth partner.
           </p>
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <Link
               to="/pricing"
-              className="inline-flex items-center justify-center gap-2 bg-white text-[#0D2137] hover:bg-slate-100 rounded-xl h-12 px-8 text-sm font-bold transition-all shadow-md w-full sm:w-auto"
+              className="inline-flex items-center justify-center gap-2 bg-white text-[#0D2137] hover:bg-slate-100 rounded-xl h-11 px-7 text-xs sm:text-sm font-bold transition-all shadow-md w-full sm:w-auto cursor-pointer"
             >
               Explore Our Retainer Plans
               <ArrowRight className="size-4" />
@@ -286,7 +307,7 @@ export function AboutPage() {
               href="https://wa.me/919941999415"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90 rounded-xl h-12 px-8 text-sm font-bold transition-all shadow-md w-full sm:w-auto"
+              className="inline-flex items-center justify-center bg-[#2B7BC4] text-white hover:bg-[#2B7BC4]/90 rounded-xl h-11 px-7 text-xs sm:text-sm font-bold transition-all shadow-md w-full sm:w-auto cursor-pointer"
             >
               Speak with Ashok
             </a>

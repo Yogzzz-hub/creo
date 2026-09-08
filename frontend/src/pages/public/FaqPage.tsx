@@ -100,23 +100,23 @@ export function FaqPage() {
   return (
     <div className="w-full">
       {/* ── Hero Section ────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#E8F4FD] via-[#F0F7FD] to-white">
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#E8F4FD] via-[#F0F7FD] to-white pt-10 pb-8 sm:pt-14 sm:pb-10">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#2B7BC4]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-28 relative z-10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-[#2B7BC4] shadow-sm border border-[#C9DFF0] mb-6">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-[#2B7BC4] shadow-sm border border-[#C9DFF0] mb-4">
               <MessageSquare className="size-3.5" />
               Quick Answers to Common Questions
             </div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-[#0D2137] sm:text-5xl">
+            <h1 className="text-3xl font-extrabold tracking-tight text-[#0D2137] sm:text-5xl">
               Frequently Asked Questions
             </h1>
-            <p className="mt-6 text-lg leading-relaxed text-slate-600 sm:text-xl">
+            <p className="mt-4 text-sm sm:text-base leading-relaxed text-slate-600">
               Everything you need to know about working with Creo.
             </p>
 
             {/* Search Bar */}
-            <div className="mt-8 max-w-md mx-auto relative">
+            <div className="mt-6 max-w-md mx-auto relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
               <input
                 type="text"
@@ -126,7 +126,7 @@ export function FaqPage() {
                   setOpenIndex(null);
                 }}
                 placeholder="Search questions..."
-                className="w-full rounded-2xl border border-[#C9DFF0] bg-white pl-11 pr-4 py-3 text-sm text-[#0D2137] shadow-sm focus:ring-2 focus:ring-[#2B7BC4]/30 focus:border-[#2B7BC4] outline-none transition-all"
+                className="w-full rounded-2xl border border-[#C9DFF0] bg-white pl-11 pr-4 py-2.5 text-sm text-[#0D2137] shadow-sm focus:ring-2 focus:ring-[#2B7BC4]/30 focus:border-[#2B7BC4] outline-none transition-all"
               />
             </div>
           </div>
@@ -134,10 +134,10 @@ export function FaqPage() {
       </section>
 
       {/* ── Category Filters + Accordion ────────────────────────────────── */}
-      <section className="bg-white py-16 sm:py-24">
+      <section className="bg-white py-12 sm:py-16">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           {/* Category Pills */}
-          <div className="flex flex-wrap justify-center gap-2 mb-10">
+          <div className="flex flex-wrap justify-center gap-2 mb-8">
             {CATEGORIES.map((cat) => {
               const Icon = cat.icon;
               return (
@@ -267,18 +267,18 @@ export function FaqPage() {
       </section>
 
       {/* ── Bottom CTA ──────────────────────────────────────────────────── */}
-      <section className="bg-[#0D2137] py-16 sm:py-20 text-white">
+      <section className="bg-[#0D2137] py-12 sm:py-16 text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
             Ready to start?
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-white/70 max-w-xl mx-auto">
+          <p className="mt-3 text-xs sm:text-base text-white/70 max-w-xl mx-auto">
             Join 50+ brands growing with Creo every week.
           </p>
-          <div className="mt-8">
+          <div className="mt-6">
             <Link
               to="/pricing"
-              className="inline-flex items-center justify-center gap-2 bg-white text-[#0D2137] hover:bg-slate-100 rounded-xl h-12 px-8 text-sm font-bold shadow-md transition-all"
+              className="inline-flex items-center justify-center gap-2 bg-white text-[#0D2137] hover:bg-slate-100 rounded-xl h-11 px-7 text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer"
             >
               Explore Retainer Plans
               <ArrowRight className="size-4" />

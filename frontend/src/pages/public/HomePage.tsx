@@ -143,7 +143,7 @@ export function HomePage() {
     <div className="w-full bg-white text-[#0D2137] overflow-hidden">
       {/* ── 1. Hero Section (Blue to White Left-to-Right Gradient) ─────────── */}
       <section
-        className="relative overflow-hidden bg-gradient-to-r from-[#07192F] via-[#0B2545] via-25% via-[#123966] via-50% via-[#1D5E9E] via-72% to-[#EAF3FB] to-95% text-white pt-12 pb-20 lg:pt-16 lg:pb-28"
+        className="relative overflow-hidden bg-gradient-to-r from-[#07192F] via-[#0B2545] via-25% via-[#123966] via-50% via-[#1D5E9E] via-72% to-[#EAF3FB] to-95% text-white pt-8 pb-12 lg:pt-12 lg:pb-16"
         id="hero"
       >
         {/* Subtle Tech Grid Pattern */}
@@ -370,16 +370,15 @@ export function HomePage() {
       </section>
 
       {/* ── 2. Brand Partners & Key Impact Numbers ───────────────────────── */}
-      <section className="py-14 bg-gradient-to-b from-white via-slate-50/60 to-white border-b border-slate-200/70" id="stats">
+      <section className="py-10 sm:py-12 bg-gradient-to-b from-white via-slate-50/60 to-white border-b border-slate-200/70" id="stats">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-
 
           {/* 5 Impact Metric Cards */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 sm:gap-6 text-center">
             {METRICS.map((m, idx) => (
               <div
                 key={m.label}
-                className={`p-6 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-center items-center transition-all duration-300 hover:border-blue-200 hover:shadow-md ${
+                className={`p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-center items-center transition-all duration-300 hover:border-blue-200 hover:shadow-md ${
                   idx === 4 ? "col-span-2 md:col-span-1" : ""
                 }`}
               >
@@ -394,21 +393,19 @@ export function HomePage() {
         </div>
       </section>
 
-
-
       {/* ── 4. How It Works: The 7-Day Roadmap ───────────────────────────── */}
-      <section className="py-24 bg-gradient-to-b from-[#F4F9FD] to-white border-y border-slate-200/70" id="how-it-works">
+      <section className="py-12 sm:py-16 bg-gradient-to-b from-[#F4F9FD] to-white border-y border-slate-200/70" id="how-it-works">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#2B7BC4] border border-blue-200/80 shadow-2xs mb-4">
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#2B7BC4] border border-blue-200/80 shadow-2xs mb-3">
               <Clock className="size-3.5" />
               <span>Turnaround Timeline</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0D2137]">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#0D2137]">
               From Sign-Up to First Batch <br />
               <span className="text-[#2B7BC4]">in Exactly 7 Days</span>
             </h2>
-            <p className="mt-4 text-base sm:text-lg text-slate-600">
+            <p className="mt-3 text-sm sm:text-base text-slate-600">
               No protracted 6-week agency setups. A streamlined 5-step workflow engineered for rapid execution.
             </p>
           </div>
@@ -462,14 +459,14 @@ export function HomePage() {
       </section>
 
       {/* ── 5. Why Brands Switch to Creo (Comparison Matrix) ─────────────── */}
-      <section className="py-24 bg-white" id="comparison">
+      <section className="py-12 sm:py-16 bg-white" id="comparison">
         <div className="max-w-6xl mx-auto px-6 sm:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0D2137]">
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#0D2137]">
               Why Ambitious Brands <br />
               <span className="text-[#2B7BC4]">Choose Creo Over the Rest</span>
             </h2>
-            <p className="mt-4 text-base sm:text-lg text-slate-600">
+            <p className="mt-3 text-sm sm:text-base text-slate-600">
               Traditional agencies are too slow. Freelancers are too unreliable. Creo gives you the sweet spot: agency-grade output with startup agility.
             </p>
           </div>
@@ -503,12 +500,10 @@ export function HomePage() {
         </div>
       </section>
 
-
-
       {/* ── 7. Retainer Quick-Glance Section ──────────────────────────────── */}
-      <section className="py-20 bg-white" id="pricing-glance">
+      <section className="py-12 sm:py-16 bg-white" id="pricing-glance">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="rounded-3xl bg-gradient-to-r from-[#0D2137] via-[#123966] to-[#1D5E9E] p-8 sm:p-12 lg:p-16 text-white shadow-2xl relative overflow-hidden">
+          <div className="rounded-3xl bg-gradient-to-r from-[#0D2137] via-[#123966] to-[#1D5E9E] p-8 sm:p-12 lg:p-14 text-white shadow-2xl relative overflow-hidden">
             <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl pointer-events-none" />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
@@ -516,33 +511,33 @@ export function HomePage() {
                 <span className="text-xs font-bold uppercase tracking-widest text-cyan-300">
                   Predictable Month-to-Month Retainers
                 </span>
-                <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight mt-2 text-white">
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight mt-2 text-white">
                   Plans Starting at Just ₹25,000 / month
                 </h3>
-                <p className="mt-4 text-base text-blue-100/90 leading-relaxed max-w-xl">
+                <p className="mt-3 text-sm sm:text-base text-blue-100/90 leading-relaxed max-w-xl">
                   Choose between Starter Growth, Brand Accelerator, or Enterprise Pro. Every plan includes dedicated video editors, graphic designers, and auto-scheduling.
                 </p>
 
-                <div className="mt-8 flex flex-wrap items-center gap-4 sm:gap-6 text-sm">
+                <div className="mt-6 flex flex-wrap items-center gap-4 sm:gap-6 text-xs sm:text-sm">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="size-4.5 text-emerald-400" />
+                    <CheckCircle2 className="size-4 text-emerald-400" />
                     <span>8 to 30 Deliverables / Month</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="size-4.5 text-emerald-400" />
+                    <CheckCircle2 className="size-4 text-emerald-400" />
                     <span>2 Revision Rounds</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="size-4.5 text-emerald-400" />
+                    <CheckCircle2 className="size-4 text-emerald-400" />
                     <span>Zero Setup Fees</span>
                   </div>
                 </div>
               </div>
 
-              <div className="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-4 justify-center">
+              <div className="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-3 justify-center">
                 <Link
                   to="/pricing"
-                  className="px-8 py-4 rounded-2xl bg-white text-[#0D2137] font-extrabold text-center hover:bg-slate-50 transition-all duration-200 shadow-lg hover:scale-105"
+                  className="px-7 py-3.5 rounded-xl bg-white text-[#0D2137] font-extrabold text-sm text-center hover:bg-slate-50 transition-all duration-200 shadow-lg hover:scale-105"
                 >
                   View Full Plans & Pricing →
                 </Link>
@@ -550,7 +545,7 @@ export function HomePage() {
                   href="https://wa.me/919941999415"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-8 py-4 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold text-center backdrop-blur-md transition-all duration-200"
+                  className="px-7 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold text-sm text-center backdrop-blur-md transition-all duration-200"
                 >
                   Schedule Custom Demo
                 </a>
@@ -561,17 +556,17 @@ export function HomePage() {
       </section>
 
       {/* ── 8. Free 30-Day Content Calendar Template (Lead Magnet) ────────── */}
-      <section className="py-24 bg-gradient-to-b from-[#EAF3FB] to-white relative" id="lead-magnet">
+      <section className="py-12 sm:py-16 bg-gradient-to-b from-[#EAF3FB] to-white relative" id="lead-magnet">
         <div className="max-w-4xl mx-auto px-6 sm:px-8 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#2B7BC4] border border-blue-200 mb-4 shadow-2xs">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#2B7BC4] border border-blue-200 mb-3 shadow-2xs">
             <Calendar className="size-3.5" />
             <span>Free Agency Resource</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#0D2137] mb-4">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0D2137] mb-3">
             Download the 30-Day Content Calendar Blueprint
           </h2>
-          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto mb-6 leading-relaxed">
             The exact social media content matrix we use for our top retainer brands. Includes 30 post concepts, proven video hooks, and call-to-action scripts.
           </p>
 
@@ -624,22 +619,22 @@ export function HomePage() {
       </section>
 
       {/* ── 9. Final Call to Action ─────────────────────────────────────── */}
-      <section className="py-24 bg-gradient-to-r from-[#07192F] via-[#0B2545] to-[#123966] text-white text-center relative overflow-hidden border-b border-white/10">
+      <section className="py-12 sm:py-16 bg-gradient-to-r from-[#07192F] via-[#0B2545] to-[#123966] text-white text-center relative overflow-hidden border-b border-white/10">
         <div className="max-w-4xl mx-auto px-6 sm:px-8 relative z-10">
-          <h2 className="text-4xl sm:text-5xl font-black tracking-tight leading-tight">
+          <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
             Ready to Put Your Brand Content <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-cyan-300">
               on Complete Autopilot?
             </span>
           </h2>
-          <p className="mt-6 text-lg text-blue-100/90 max-w-2xl mx-auto">
+          <p className="mt-4 text-sm sm:text-base text-blue-100/90 max-w-2xl mx-auto">
             Get onboarded in 7 days. Your first batch of high-impact reels, carousels, and stories arrives next week.
           </p>
 
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <Link
               to="/pricing"
-              className="px-9 py-4 rounded-full bg-white text-[#0B2545] font-extrabold text-base hover:bg-slate-50 transition-all duration-200 shadow-xl hover:scale-105"
+              className="px-8 py-3.5 rounded-full bg-white text-[#0B2545] font-extrabold text-sm sm:text-base hover:bg-slate-50 transition-all duration-200 shadow-xl hover:scale-105"
             >
               Get Started with a Plan
             </Link>
@@ -647,7 +642,7 @@ export function HomePage() {
               href="https://wa.me/919941999415"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-9 py-4 rounded-full bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold text-base backdrop-blur-md transition-all duration-200"
+              className="px-8 py-3.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold text-sm sm:text-base backdrop-blur-md transition-all duration-200"
             >
               Book a 15-Min Intro Call
             </a>

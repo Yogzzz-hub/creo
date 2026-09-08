@@ -119,28 +119,28 @@ export function PricingPage() {
   return (
     <div className="w-full bg-[#FAFAF8] text-[#14171C]">
       {/* ── Hero Section ─────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#E8F4FD] via-[#F4F9FD] to-[#FAFAF8] pt-20 pb-24 sm:pt-28 sm:pb-32">
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#E8F4FD] via-[#F4F9FD] to-[#FAFAF8] pt-10 pb-10 sm:pt-14 sm:pb-12">
         {/* Glow backdrop */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-blue-400/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#2B7BC4]/10 border border-[#2B7BC4]/20 px-4 py-1.5 text-xs font-bold text-[#2B7BC4] mb-5 shadow-2xs">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#2B7BC4]/10 border border-[#2B7BC4]/20 px-3.5 py-1 text-xs font-bold text-[#2B7BC4] mb-3.5 shadow-2xs">
             <Sparkles className="size-3.5 text-[#2B7BC4]" />
             <span>Transparent Creative Retainers</span>
           </div>
 
-          <h1 className="text-4xl font-black tracking-tight text-[#0D2137] sm:text-6xl max-w-3xl mx-auto leading-[1.1]">
+          <h1 className="text-3xl font-black tracking-tight text-[#0D2137] sm:text-5xl max-w-3xl mx-auto leading-[1.15]">
             Predictable Pricing for <br />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#2B7BC4] to-[#1F5C96]">
               Explosive Social Growth
             </span>
           </h1>
 
-          <p className="mt-6 text-base sm:text-xl leading-relaxed text-slate-600 max-w-2xl mx-auto font-normal">
+          <p className="mt-4 text-sm sm:text-base leading-relaxed text-slate-600 max-w-2xl mx-auto font-normal">
             Fixed monthly investment. Zero hidden agency markups. Dedicated creative teams delivering brand-defining reels, posters, and stories every week.
           </p>
 
-          <div className="mt-8 flex items-center justify-center gap-6 text-xs sm:text-sm font-semibold text-slate-600">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-5 text-xs sm:text-sm font-semibold text-slate-600">
             <span className="flex items-center gap-1.5">
               <Check className="size-4 text-emerald-600" />
               Cancel Anytime
@@ -158,7 +158,7 @@ export function PricingPage() {
       </section>
 
       {/* ── Pricing Cards Grid ────────────────────────────────────────────── */}
-      <section id="plans" className="-mt-12 sm:-mt-16 pb-24 relative z-20">
+      <section id="plans" className="pb-16 sm:pb-20 relative z-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-3 items-stretch">
             {plans.map((plan) => {
@@ -274,13 +274,13 @@ export function PricingPage() {
       </section>
 
       {/* ── Feature Comparison Matrix ────────────────────────────────────── */}
-      <section className="bg-white py-16 sm:py-24 border-y border-slate-200/80">
+      <section className="bg-white py-12 sm:py-16 border-y border-slate-200/80">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#0D2137] tracking-tight">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#0D2137] tracking-tight">
               Compare Retainer Inclusions
             </h2>
-            <p className="text-slate-500 text-sm sm:text-base mt-2">
+            <p className="text-slate-500 text-xs sm:text-sm mt-1.5">
               Everything required to transform your brand into a recognized category leader.
             </p>
           </div>
@@ -345,7 +345,7 @@ export function PricingPage() {
       </section>
 
       {/* ── Trust & Security Triggers ─────────────────────────────────────── */}
-      <section className="py-16 sm:py-20 bg-[#F4F9FD]">
+      <section className="py-12 sm:py-14 bg-[#F4F9FD]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <div className="flex items-start gap-4 rounded-2xl bg-white p-6 border border-slate-200/80 shadow-xs">
@@ -400,10 +400,10 @@ export function PricingPage() {
       </section>
 
       {/* ── Bottom CTA ────────────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-br from-[#0D2137] to-[#122B48] py-20 text-white relative overflow-hidden">
+      <section className="bg-gradient-to-br from-[#0D2137] to-[#122B48] py-14 sm:py-16 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
             Ready to Put Your Content Production on Autopilot?
           </h2>
           <p className="mt-4 text-sm sm:text-lg text-slate-300 max-w-xl mx-auto">

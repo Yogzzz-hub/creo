@@ -3,7 +3,6 @@ import { Link } from "react-router";
 import {
   ArrowUpRight,
   ImageIcon,
-  Film,
   Layers,
   CheckCircle2,
   Eye,
@@ -119,6 +118,7 @@ interface CreativeItem {
   specs: string[];
   description: string;
   gradient: string;
+  image: string;
 }
 
 const CREATIVES: CreativeItem[] = [
@@ -133,6 +133,7 @@ const CREATIVES: CreativeItem[] = [
     specs: ["Retina Color Space", "Typography Lockup", "Color-matched Palette"],
     description: "Designed for premium organic feed aesthetics with high-contrast neutral palettes and negative space typography.",
     gradient: "from-slate-700 via-sky-800 to-indigo-900",
+    image: "/assets/portfolio/scandi_living.jpg",
   },
   {
     id: "cr-2",
@@ -145,6 +146,7 @@ const CREATIVES: CreativeItem[] = [
     specs: ["Seamless Slide Flow", "Swipe Arrows", "Saves Rate +22%"],
     description: "Educational multi-card carousel crafted to maximize bookmarking and algorithmic distribution.",
     gradient: "from-amber-700 via-orange-800 to-amber-950",
+    image: "/assets/portfolio/sourdough_carousel.jpg",
   },
   {
     id: "cr-3",
@@ -157,6 +159,7 @@ const CREATIVES: CreativeItem[] = [
     specs: ["Specular Lighting", "Ingredient Badges", "Custom Shadows"],
     description: "Clinical yet organic cosmetic product spotlight highlighting pure ingredients and certified dermatological safety.",
     gradient: "from-emerald-800 via-teal-800 to-cyan-950",
+    image: "/assets/portfolio/botanical_serum.jpg",
   },
   {
     id: "cr-4",
@@ -169,6 +172,7 @@ const CREATIVES: CreativeItem[] = [
     specs: ["Native 4K 60fps", "Beat-synced Transitions", "Dynamic Subtitles"],
     description: "Adrenaline-fueled training reel cut to trending audio with animated kinetic typography overlays.",
     gradient: "from-zinc-900 via-stone-800 to-red-950",
+    image: "/assets/portfolio/zenith_fitness.jpg",
   },
   {
     id: "cr-5",
@@ -181,6 +185,7 @@ const CREATIVES: CreativeItem[] = [
     specs: ["Night Color Grading", "3D Callout Badges", "Binaural Audio"],
     description: "Sleek low-light urban cinematography highlighting whisper-quiet acceleration and regenerative braking.",
     gradient: "from-blue-950 via-indigo-900 to-purple-950",
+    image: "/assets/portfolio/pulse_mobility.jpg",
   },
   {
     id: "cr-6",
@@ -193,6 +198,7 @@ const CREATIVES: CreativeItem[] = [
     specs: ["Macro Texture Crops", "Fabric Transparency", "Direct Shop Tags"],
     description: "High-fashion digital catalog featuring intricate handloom textures and direct SKU catalog mapping.",
     gradient: "from-rose-900 via-stone-800 to-pink-950",
+    image: "/assets/portfolio/mulberry_silk.jpg",
   },
 ];
 
@@ -208,21 +214,21 @@ export function PortfolioPage() {
   return (
     <div className="w-full">
       {/* ── 1. Hero Section ────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#E8F4FD] via-[#F4F9FD] to-white py-20 sm:py-28">
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#E8F4FD] via-[#F4F9FD] to-white pt-10 pb-8 sm:pt-14 sm:pb-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-[#2B7BC4] shadow-sm border border-[#C9DFF0] mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-1 text-xs font-semibold text-[#2B7BC4] shadow-2xs border border-[#C9DFF0] mb-4">
             <Sparkles className="size-3.5" />
             Proven Campaign Execution Across 50+ Retainers
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-[#0D2137] sm:text-6xl">
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#0D2137] sm:text-5xl">
             Our Work Speaks <br />
             <span className="text-[#2B7BC4]">in Measurable Growth</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600 sm:text-xl">
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
             Every reel, carousel, and creative asset we deliver is engineered for audience retention,
             brand differentiation, and commercial conversion.
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm font-semibold text-slate-600">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-5 text-xs sm:text-sm font-semibold text-slate-600">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="size-4 text-emerald-600" />
               <span>Native 4K & High-Res Formats</span>
@@ -240,21 +246,21 @@ export function PortfolioPage() {
       </section>
 
       {/* ── 2. Case Studies Section ────────────────────────────────────── */}
-      <section className="bg-white py-16 sm:py-24">
+      <section className="bg-white py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <span className="text-xs font-bold uppercase tracking-widest text-[#2B7BC4]">
               Performance Highlights
             </span>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#0D2137] sm:text-4xl">
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#0D2137] sm:text-3xl">
               Real Brands, Verifiable Returns
             </h2>
-            <p className="mt-3 text-base text-slate-600 sm:text-lg">
+            <p className="mt-2 text-sm text-slate-600 sm:text-base">
               We replace subjective opinions with structured weekly production and measurable engagement lifts.
             </p>
           </div>
 
-          <div className="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {CASE_STUDIES.map((study) => (
               <div
                 key={study.brand}
@@ -319,23 +325,23 @@ export function PortfolioPage() {
       </section>
 
       {/* ── 3. Creative Showcase Gallery ────────────────────────────────── */}
-      <section className="bg-[#F8F9FA] py-16 sm:py-24 border-y border-[#C9DFF0]">
+      <section className="bg-[#F8F9FA] py-12 sm:py-16 border-y border-[#C9DFF0]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <span className="text-xs font-bold uppercase tracking-widest text-[#2B7BC4]">
               Deliverables Portfolio
             </span>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#0D2137] sm:text-4xl">
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#0D2137] sm:text-3xl">
               Engineered for Thumbs to Stop Scrolling
             </h2>
-            <p className="mt-3 text-base text-slate-600 sm:text-lg">
+            <p className="mt-2 text-sm text-slate-600 sm:text-base">
               Explore recent production outputs designed for Instagram, LinkedIn, and Meta Ad networks.
             </p>
           </div>
 
           {/* Filter Tabs */}
-          <div className="mt-10 flex justify-center">
-            <div className="inline-flex rounded-2xl bg-white p-1.5 shadow-sm border border-[#C9DFF0]">
+          <div className="mt-8 flex justify-center">
+            <div className="inline-flex rounded-2xl bg-white p-1.5 shadow-xs border border-[#C9DFF0]">
               {(
                 [
                   { id: "all", label: "All Formats" },
@@ -348,7 +354,7 @@ export function PortfolioPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`rounded-xl px-5 py-2 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                  className={`rounded-xl px-4 py-1.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                     activeTab === tab.id
                       ? "bg-[#2B7BC4] text-white shadow-md shadow-[#2B7BC4]/20"
                       : "text-slate-600 hover:text-[#0D2137]"
@@ -361,51 +367,54 @@ export function PortfolioPage() {
           </div>
 
           {/* Creative Grid */}
-          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredCreatives.map((item) => (
               <div
                 key={item.id}
                 onClick={() => setSelectedItem(item)}
-                className="group relative cursor-pointer overflow-hidden rounded-3xl border border-[#C9DFF0] bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                className="group relative cursor-pointer overflow-hidden rounded-3xl border border-[#C9DFF0] bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
-                {/* Visual Thumbnail Area */}
-                <div
-                  className={`relative h-60 w-full bg-gradient-to-br ${item.gradient} p-6 flex flex-col justify-between text-white overflow-hidden`}
-                >
-                  {/* Subtle Background Pattern */}
-                  <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+                {/* Visual Thumbnail Area with Real AI Image & Micro-Animations */}
+                <div className="relative h-64 w-full bg-slate-900 p-5 flex flex-col justify-between text-white overflow-hidden">
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/40" />
 
                   {/* Header Row */}
                   <div className="relative z-10 flex items-center justify-between">
-                    <span className="rounded-full bg-black/40 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-white uppercase tracking-wider border border-white/20">
+                    <span className="rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-white uppercase tracking-wider border border-white/20 shadow-xs">
                       {item.brand}
                     </span>
-                    <span className="rounded-full bg-emerald-500/90 px-2.5 py-0.5 text-[10px] font-extrabold text-white shadow-sm">
+                    <span className="rounded-full bg-emerald-500 px-2.5 py-0.5 text-[10px] font-extrabold text-white shadow-sm flex items-center gap-1">
+                      <span className="size-1.5 rounded-full bg-white animate-pulse" />
                       {item.tag}
                     </span>
                   </div>
 
-                  {/* Center Format Icon */}
+                  {/* Center Action Indicator / Play or View */}
                   <div className="relative z-10 my-auto flex flex-col items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                    <div className="size-16 rounded-2xl bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-lg">
+                    <div className="size-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/40 flex items-center justify-center shadow-lg group-hover:bg-[#2B7BC4] transition-colors">
                       {item.category === "reels" ? (
-                        <Film className="size-8 text-white" />
+                        <Play className="size-6 fill-white text-white ml-0.5" />
                       ) : item.category === "carousels" ? (
-                        <Layers className="size-8 text-white" />
+                        <Layers className="size-6 text-white" />
                       ) : (
-                        <ImageIcon className="size-8 text-white" />
+                        <ImageIcon className="size-6 text-white" />
                       )}
                     </div>
-                    <span className="mt-2 text-xs font-semibold text-white/80">{item.ratio}</span>
+                    <span className="mt-2 text-[11px] font-semibold text-white/90 bg-black/50 backdrop-blur-xs px-2 py-0.5 rounded-full">{item.ratio}</span>
                   </div>
 
                   {/* Hover Overlay Button */}
                   <div className="relative z-10 flex items-center justify-between text-xs font-semibold text-white/90">
-                    <span className="flex items-center gap-1">
-                      {item.category === "reels" && <Play className="size-3 fill-current" />}
+                    <span className="flex items-center gap-1 text-[11px]">
                       {item.format}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-white bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg px-3 py-1 transition-colors">
+                    <span className="inline-flex items-center gap-1 text-white bg-white/25 hover:bg-white/40 backdrop-blur-sm rounded-lg px-2.5 py-1 transition-all text-xs">
                       <Eye className="size-3.5" /> Inspect Specs
                     </span>
                   </div>
@@ -471,20 +480,27 @@ export function PortfolioPage() {
             </h3>
 
             <div
-              className={`mt-6 h-44 rounded-2xl bg-gradient-to-br ${selectedItem.gradient} flex items-center justify-center text-white shadow-inner`}
+              className="relative mt-6 h-52 rounded-2xl overflow-hidden shadow-inner bg-slate-900"
             >
-              <div className="text-center">
-                <div className="mx-auto size-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 mb-2">
-                  {selectedItem.category === "reels" ? (
-                    <Film className="size-7 text-white" />
-                  ) : selectedItem.category === "carousels" ? (
-                    <Layers className="size-7 text-white" />
-                  ) : (
-                    <ImageIcon className="size-7 text-white" />
-                  )}
+              <img
+                src={selectedItem.image}
+                alt={selectedItem.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/30 flex items-center justify-center text-white">
+                <div className="text-center">
+                  <div className="mx-auto size-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 mb-2">
+                    {selectedItem.category === "reels" ? (
+                      <Play className="size-6 fill-white text-white ml-0.5" />
+                    ) : selectedItem.category === "carousels" ? (
+                      <Layers className="size-6 text-white" />
+                    ) : (
+                      <ImageIcon className="size-6 text-white" />
+                    )}
+                  </div>
+                  <p className="text-sm font-bold text-white">{selectedItem.format}</p>
+                  <p className="text-xs text-white/80">{selectedItem.ratio}</p>
                 </div>
-                <p className="text-sm font-bold text-white">{selectedItem.format}</p>
-                <p className="text-xs text-white/80">{selectedItem.ratio}</p>
               </div>
             </div>
 
