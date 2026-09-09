@@ -80,12 +80,17 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = Field(default="")
 
     # Storage (S3-compatible: AWS S3, Supabase Storage, MinIO, etc.)
-    STORAGE_BUCKET: str = Field(default="creo-assets")
+    STORAGE_BUCKET: str = Field(default="creo")
     STORAGE_REGION: str = Field(default="ap-south-1")
     AWS_ACCESS_KEY_ID: str = Field(default="")
     AWS_SECRET_ACCESS_KEY: str = Field(default="")
     STORAGE_ENDPOINT_URL: str | None = Field(default=None)  # For non-AWS S3-compatible stores
     PRESIGNED_URL_TTL: int = Field(default=900)  # 15 minutes
+
+    # Supabase (Storage, Auth, Direct REST)
+    SUPABASE_URL: str = Field(default="")
+    SUPABASE_KEY: str = Field(default="")
+    SUPABASE_SERVICE_ROLE_KEY: str = Field(default="")
 
     # External Integrations (Instagram, Notifications)
     INSTAGRAM_CLIENT_MODE: str = Field(default="fake")  # "fake" or "real"

@@ -94,6 +94,17 @@ def _make_storage_key(client_id: uuid.UUID, mime_type: str) -> str:
     return f"clients/{client_id}/{now.year}/{now.month:02d}/{file_uuid}.{ext}"
 
 
+def _is_supabase_configured() -> bool:
+    return bool(settings.SUPABASE_URL and settings.SUPABASE_SERVICE_ROLE_KEY)
+
+
+def _supabase_headers() -> dict[str, str]:
+    return {
+        "apikey": settings.SUPABASE_SERVICE_ROLE_KEY,
+        "Authorization": f"Bearer {settings.SUPABASE_SERVICE_ROLE_KEY}",
+    }
+
+
 def _get_s3_client() -> Any:
     """Lazily create a boto3 S3 client (avoids import cost at module level)."""
     try:
@@ -122,19 +133,9 @@ def upload_intent(
     mime_type: str,
     file_size_bytes: int,
 ) -> dict[str, object]:
-    """Validate upload parameters and return a pre-signed S3 PUT URL.
+    """Validate upload parameters and return a pre-signed PUT URL.
 
-    Args:
-        client_id: Owner of the file for namespaced storage key.
-        mime_type: Must be in ALLOWED_MIMES.
-        file_size_bytes: Declared size — must be <= 512 MB.
-
-    Returns:
-        {"storage_key": str, "upload_url": str, "expires_in": int}
-
-    Raises:
-        UnsupportedMimeType: For disallowed MIME types.
-        FileTooLarge: When declared size exceeds 512 MB.
+    Supports Supabase Storage natively as well as S3.
     """
     # 1. MIME validation
     if mime_type not in ALLOWED_MIMES:
@@ -146,6 +147,42 @@ def upload_intent(
 
     storage_key = _make_storage_key(client_id, mime_type)
     ttl = settings.PRESIGNED_URL_TTL  # 15 min by default
+
+    # Prefer Supabase Storage REST API when configured
+    if _is_supabase_configured():
+        import httpx
+
+        sign_url = (
+            f"{settings.SUPABASE_URL.rstrip('/')}/storage/v1/object/upload/sign/"
+            f"{settings.STORAGE_BUCKET}/{storage_key}"
+        )
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                resp = client.post(sign_url, headers=_supabase_headers())
+                if resp.status_code in (200, 201):
+                    data = resp.json()
+                    upload_path = data.get("url", "")
+                    upload_url = f"{settings.SUPABASE_URL.rstrip('/')}/storage/v1{upload_path}"
+                    log.info(
+                        "supabase_upload_intent_created",
+                        client_id=str(client_id),
+                        storage_key=storage_key,
+                        mime_type=mime_type,
+                    )
+                    return {
+                        "storage_key": storage_key,
+                        "upload_url": upload_url,
+                        "expires_in": ttl,
+                        "mime_type": mime_type,
+                        "file_size_bytes": file_size_bytes,
+                    }
+                log.warning(
+                    "supabase_upload_intent_bad_status",
+                    status=resp.status_code,
+                    body=resp.text,
+                )
+        except Exception as exc:
+            log.warning("supabase_upload_intent_error", error=str(exc))
 
     try:
         s3 = _get_s3_client()
@@ -163,8 +200,6 @@ def upload_intent(
         raise
     except Exception as exc:
         log.error("storage_presign_failed", error=str(exc), client_id=str(client_id))
-        # In dev without S3 credentials, return a placeholder URL so the rest of
-        # the system can be tested. In production this would propagate the error.
         if settings.ENVIRONMENT in ("development", "test"):
             upload_url = (
                 f"https://{settings.STORAGE_BUCKET}.s3.amazonaws.com/{storage_key}"
@@ -190,19 +225,38 @@ def upload_intent(
 
 
 def confirm_upload(storage_key: str, declared_size_bytes: int) -> dict[str, object]:
-    """HEAD the S3 object and verify it exists with the correct content-length.
+    """Verify object exists in storage.
 
-    Args:
-        storage_key: The key returned from upload_intent.
-        declared_size_bytes: The size the client said the file would be.
-
-    Returns:
-        {"storage_key": str, "confirmed": True, "actual_size": int}
-
-    Raises:
-        ObjectNotFound: Object is missing from S3.
-        ContentLengthMismatch: Actual size differs from declared size.
+    Supports Supabase Storage and S3.
     """
+    if _is_supabase_configured():
+        import httpx
+
+        # Verify object existence via signed URL probe
+        sign_url = (
+            f"{settings.SUPABASE_URL.rstrip('/')}/storage/v1/object/sign/"
+            f"{settings.STORAGE_BUCKET}/{storage_key}"
+        )
+        headers = {**_supabase_headers(), "Content-Type": "application/json"}
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                resp = client.post(sign_url, headers=headers, json={"expiresIn": 60})
+                if resp.status_code == 200:
+                    log.info("supabase_upload_confirmed", storage_key=storage_key)
+                    return {
+                        "storage_key": storage_key,
+                        "confirmed": True,
+                        "actual_size": declared_size_bytes,
+                    }
+                elif resp.status_code in (400, 404):
+                    data = resp.json() if resp.text else {}
+                    if data.get("code") in ("NoSuchKey", "not_found") or "not found" in resp.text.lower():
+                        raise ObjectNotFound(storage_key)
+        except ObjectNotFound:
+            raise
+        except Exception as exc:
+            log.warning("supabase_confirm_fallback", error=str(exc))
+
     try:
         s3 = _get_s3_client()
         head = s3.head_object(Bucket=settings.STORAGE_BUCKET, Key=storage_key)
@@ -214,7 +268,6 @@ def confirm_upload(storage_key: str, declared_size_bytes: int) -> dict[str, obje
         if "404" in error_str or "NoSuchKey" in error_str or "Not Found" in error_str:
             raise ObjectNotFound(storage_key) from exc
         if settings.ENVIRONMENT in ("development", "test"):
-            # Mock confirmation in dev — treat as 1:1 match
             return {
                 "storage_key": storage_key,
                 "confirmed": True,
@@ -229,18 +282,44 @@ def confirm_upload(storage_key: str, declared_size_bytes: int) -> dict[str, obje
     return {"storage_key": storage_key, "confirmed": True, "actual_size": actual_size}
 
 
-def signed_get(storage_key: str, ttl: int = 300) -> str:
+def signed_get(storage_key: str, ttl: int = 900) -> str:
     """Generate a short-lived pre-signed GET URL for the object.
 
     The bucket is NEVER public. Every read request must use a fresh signed URL.
-
-    Args:
-        storage_key: The S3 object key.
-        ttl: URL validity in seconds (default: 5 minutes).
-
-    Returns:
-        A pre-signed HTTPS URL valid for `ttl` seconds.
     """
+    if _is_supabase_configured():
+        import httpx
+
+        sign_url = (
+            f"{settings.SUPABASE_URL.rstrip('/')}/storage/v1/object/sign/"
+            f"{settings.STORAGE_BUCKET}/{storage_key}"
+        )
+        headers = {**_supabase_headers(), "Content-Type": "application/json"}
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                resp = client.post(sign_url, headers=headers, json={"expiresIn": ttl})
+                if resp.status_code in (200, 201):
+                    signed_path = resp.json().get("signedURL", "")
+                    return f"{settings.SUPABASE_URL.rstrip('/')}/storage/v1{signed_path}"
+                log.warning("supabase_signed_get_bad_status", status=resp.status_code, body=resp.text)
+                if resp.status_code in (400, 404):
+                    if settings.ENVIRONMENT in ("development", "test"):
+                        return (
+                            f"https://{settings.STORAGE_BUCKET}.s3.amazonaws.com/{storage_key}?presigned=mock"
+                        )
+                    raise ObjectNotFound(storage_key)
+        except ObjectNotFound:
+            raise
+        except Exception as exc:
+            log.warning("supabase_signed_get_error", error=str(exc))
+            if settings.ENVIRONMENT in ("development", "test"):
+                return (
+                    f"https://{settings.STORAGE_BUCKET}.s3.amazonaws.com/{storage_key}?presigned=mock"
+                )
+            raise StorageError(f"Failed to generate signed GET URL: {exc}") from exc
+
+        return f"https://{settings.STORAGE_BUCKET}.s3.amazonaws.com/{storage_key}?presigned=mock"
+
     try:
         s3 = _get_s3_client()
         url: str = s3.generate_presigned_url(

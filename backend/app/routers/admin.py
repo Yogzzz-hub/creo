@@ -37,6 +37,7 @@ from app.models.ops import Announcement, AuditLog, LeaveRequest
 from app.models.support import Ticket, TicketMessage
 from app.models.user import ClientProfile, StaffProfile, User
 from app.models.work import Deliverable, Task
+from app.services import storage_service
 
 logger = logging.getLogger(__name__)
 
@@ -1128,7 +1129,11 @@ async def list_admin_deliverables(
             "status": d.status.value,
             "date": d.scheduled_at.strftime("%b %d, %I:%M %p") if d.scheduled_at else (d.created_at.strftime("%b %d, %Y") if d.created_at else "Today"),
             "round": f"Round {d.revision_round} of 2" if d.revision_round > 1 else "Draft 1",
-            "file_url": d.file_url,
+            "file_url": (
+                storage_service.signed_get(d.file_url)
+                if (d.file_url and not (d.file_url.startswith("http://") or d.file_url.startswith("https://") or d.file_url.startswith("/static/")))
+                else d.file_url
+            ),
             "description": d.rejection_comment or f"High-resolution social media creative formatted for Instagram brand channel.",
             "assigned_name": assignee_name or "Creative Studio",
             "created_at": d.created_at.isoformat() if d.created_at else None,
@@ -1484,7 +1489,11 @@ async def get_admin_calendar(
             "date": event_date.strftime("%Y-%m-%d") if event_date else "",
             "day": event_date.day if event_date else 1,
             "time": event_date.strftime("%I:%M %p") if event_date else "06:00 PM",
-            "file_url": d.file_url,
+            "file_url": (
+                storage_service.signed_get(d.file_url)
+                if (d.file_url and not (d.file_url.startswith("http://") or d.file_url.startswith("https://") or d.file_url.startswith("/static/")))
+                else d.file_url
+            ),
         })
     return events
 

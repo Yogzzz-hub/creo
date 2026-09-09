@@ -398,6 +398,18 @@ async def schedule_deliverable(
 # ── Version History ────────────────────────────────────────────────────────────
 
 
+def _resolve_deliverable_url(raw_url_or_key: str | None) -> str | None:
+    if not raw_url_or_key:
+        return None
+    if raw_url_or_key.startswith("http://") or raw_url_or_key.startswith("https://") or raw_url_or_key.startswith("/static/"):
+        return raw_url_or_key
+    try:
+        return storage_service.signed_get(raw_url_or_key)
+    except Exception as exc:
+        log.warning("deliverable_url_sign_failed", key=raw_url_or_key, error=str(exc))
+        return raw_url_or_key
+
+
 @router.get("/{deliverable_id}/versions")
 async def get_versions(
     deliverable_id: uuid.UUID,
@@ -423,7 +435,7 @@ async def get_versions(
             "version": v.version,
             "status": v.status.value,
             "revision_round": v.revision_round,
-            "file_url": v.file_url,
+            "file_url": _resolve_deliverable_url(v.file_url),
             "created_at": v.created_at.isoformat() if v.created_at else None,
             "approved_at": v.approved_at.isoformat() if v.approved_at else None,
         }
@@ -505,7 +517,7 @@ async def portal_list_deliverables(
                 "root_id": str(d.root_id),
                 "version": d.version,
                 "status": d.status.value,
-                "file_url": d.file_url,
+                "file_url": _resolve_deliverable_url(d.file_url),
                 "file_type": d.file_type,
                 "revision_round": d.revision_round,
                 "rejection_comment": d.rejection_comment,
