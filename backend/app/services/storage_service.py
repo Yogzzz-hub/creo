@@ -108,9 +108,11 @@ def _supabase_headers() -> dict[str, str]:
 def _get_s3_client() -> Any:
     """Lazily create a boto3 S3 client (avoids import cost at module level)."""
     try:
-        import boto3
+        import importlib
 
-        kwargs: dict[str, object] = {
+        boto3: Any = importlib.import_module("boto3")
+
+        kwargs: dict[str, Any] = {
             "region_name": settings.STORAGE_REGION,
         }
         if settings.AWS_ACCESS_KEY_ID:
@@ -121,7 +123,7 @@ def _get_s3_client() -> Any:
             kwargs["endpoint_url"] = settings.STORAGE_ENDPOINT_URL
 
         return boto3.client("s3", **kwargs)
-    except ImportError as exc:
+    except (ImportError, ModuleNotFoundError) as exc:
         raise StorageError(
             "boto3 is not installed. Add it to pyproject.toml dependencies.",
             code="BOTO3_MISSING",
