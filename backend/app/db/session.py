@@ -13,8 +13,9 @@ from app.config import settings
 
 # PgBouncer transaction-mode safe connection args:
 # statement_cache_size=0 disables asyncpg's prepared statement cache
+_db_url = (settings.DATABASE_URL or "").strip().strip("'").strip('"')
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    _db_url,
     connect_args={"statement_cache_size": 0},
     poolclass=NullPool,
 )

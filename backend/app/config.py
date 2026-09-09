@@ -48,6 +48,13 @@ class Settings(BaseSettings):
         default="postgresql+asyncpg://postgres:postgrespassword@localhost:5432/creo"
     )
 
+    @field_validator("DATABASE_URL", "DIRECT_DATABASE_URL", "REDIS_URL", mode="before")
+    @classmethod
+    def strip_urls(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return v.strip().strip("'").strip('"')
+        return v
+
     # Redis & Celery
     REDIS_URL: str = Field(default="redis://localhost:6379/0")
     CELERY_BROKER_URL: str = Field(default="redis://localhost:6379/0")

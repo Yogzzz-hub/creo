@@ -278,7 +278,7 @@ async def health_check() -> JSONResponse:
 
     overall_status = "ok" if (db_status == "ok" and redis_status == "ok") else "degraded"
     http_code = (
-        status.HTTP_200_OK if overall_status == "ok" else status.HTTP_503_SERVICE_UNAVAILABLE
+        status.HTTP_200_OK if db_status == "ok" else status.HTTP_503_SERVICE_UNAVAILABLE
     )
 
     payload: dict[str, Any] = {
