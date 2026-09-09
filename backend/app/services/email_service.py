@@ -75,7 +75,7 @@ async def send_otp_email(to_email: str, otp_code: str) -> bool:
     # Format digits into clean individual spans for guaranteed alignment (Light mode)
     digits_html = "".join(
         f'<td style="padding: 0 4px;"><div style="width: 42px; height: 52px; line-height: 52px; background: #F8FAFC; border: 2px solid #2B7BC4; border-radius: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 28px; font-weight: 800; color: #0D2137; text-align: center; box-shadow: 0 2px 8px rgba(43, 123, 196, 0.12);">{d}</div></td>'
-        for d in str(otp_code)
+        for d in otp_code
     )
 
     html_content = f"""<!DOCTYPE html>
