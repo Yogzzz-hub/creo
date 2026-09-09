@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     # Google OAuth
     GOOGLE_CLIENT_ID: str = Field(default="")
     GOOGLE_CLIENT_SECRET: str = Field(default="")
-    GOOGLE_REDIRECT_URI: str = Field(default="https://creo-ev42.onrender.com")
+    GOOGLE_REDIRECT_URI: str = Field(default="https://creo-fhhl.onrender.com")
 
     # Google Gmail SMTP
     SMTP_SERVER: str = Field(default="smtp.gmail.com")

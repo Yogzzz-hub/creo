@@ -8,7 +8,8 @@ import urllib.parse
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import RedirectResponse
 import httpx
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select, func
@@ -763,46 +764,61 @@ async def get_google_auth_url(redirect_uri: str | None = None) -> dict[str, Any]
     return {"url": url, "state": state, "client_id": client_id}
 
 
-@router.post("/google/callback", response_model=dict[str, Any])
-async def google_auth_callback(
-    payload: OAuthCallbackRequest,
-    db: AsyncSession = Depends(get_db),
+async def _process_google_code(
+    code: str,
+    redirect_uri: str,
+    db: AsyncSession,
 ) -> dict[str, Any]:
-    """Exchange Google OAuth authorization code for session."""
+    """Internal helper to exchange Google code and issue JWT tokens."""
     client_id = settings.GOOGLE_CLIENT_ID
     client_secret = settings.GOOGLE_CLIENT_SECRET
-    redirect_uri = payload.redirect_uri or settings.GOOGLE_REDIRECT_URI or "http://localhost:5173/auth/google/callback"
-
     user_info: dict[str, Any] = {}
 
-    if client_id and client_secret and payload.code != "mock_code":
+    if client_id and client_secret and code != "mock_code":
+        # Check primary redirect URI and candidate fallback URIs in case
+        # Google Console registered the root or api path
+        candidate_uris = [redirect_uri]
+        for fallback in [
+            settings.GOOGLE_REDIRECT_URI,
+            "https://creo-fhhl.onrender.com",
+            "https://creo-fhhl.onrender.com/api/v1/auth/google/callback",
+            "https://creo-fhhl.onrender.com/auth/google/callback",
+            "http://localhost:5173/auth/google/callback",
+        ]:
+            if fallback and fallback not in candidate_uris:
+                candidate_uris.append(fallback)
+
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
-                token_resp = await client.post(
-                    "https://oauth2.googleapis.com/token",
-                    data={
-                        "code": payload.code,
-                        "client_id": client_id,
-                        "client_secret": client_secret,
-                        "redirect_uri": redirect_uri,
-                        "grant_type": "authorization_code",
-                    },
-                )
-                if token_resp.status_code == 200:
-                    token_data = token_resp.json()
-                    access_token = token_data.get("access_token")
-                    info_resp = await client.get(
-                        "https://www.googleapis.com/oauth2/v2/userinfo",
-                        headers={"Authorization": f"Bearer {access_token}"},
+                for uri in candidate_uris:
+                    token_resp = await client.post(
+                        "https://oauth2.googleapis.com/token",
+                        data={
+                            "code": code,
+                            "client_id": client_id,
+                            "client_secret": client_secret,
+                            "redirect_uri": uri,
+                            "grant_type": "authorization_code",
+                        },
                     )
-                    if info_resp.status_code == 200:
-                        user_info = info_resp.json()
+                    if token_resp.status_code == 200:
+                        token_data = token_resp.json()
+                        access_token = token_data.get("access_token")
+                        info_resp = await client.get(
+                            "https://www.googleapis.com/oauth2/v2/userinfo",
+                            headers={"Authorization": f"Bearer {access_token}"},
+                        )
+                        if info_resp.status_code == 200:
+                            user_info = info_resp.json()
+                            break
+                    else:
+                        logger.debug("google_token_exchange_try", uri=uri, status=token_resp.status_code)
         except Exception as e:
             logger.warning("google_oauth_exchange_failed", error=str(e))
 
     # Verify that we actually received valid Google user profile
     if not user_info or not user_info.get("email"):
-        if payload.code == "mock_code":
+        if code == "mock_code":
             email = "demo-client@example.com"
             full_name = "Demo Client"
         else:
@@ -875,6 +891,37 @@ async def google_auth_callback(
             "must_reset_password": bool(getattr(user, "must_reset_password", False)),
         },
     }
+
+
+@router.post("/google/callback", response_model=dict[str, Any])
+async def google_auth_callback(
+    payload: OAuthCallbackRequest,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Exchange Google OAuth authorization code for session (JSON POST)."""
+    redirect_uri = payload.redirect_uri or settings.GOOGLE_REDIRECT_URI or "http://localhost:5173/auth/google/callback"
+    return await _process_google_code(payload.code, redirect_uri, db)
+
+
+@router.get("/google/callback")
+async def google_auth_callback_get(
+    code: str = Query(..., description="Google OAuth authorization code"),
+    state: str | None = Query(None, description="OAuth state parameter"),
+    redirect_uri: str | None = Query(None, description="Optional original redirect URI"),
+    db: AsyncSession = Depends(get_db),
+) -> Any:
+    """Direct browser redirect callback from Google OAuth."""
+    resolved_redirect = redirect_uri or settings.GOOGLE_REDIRECT_URI or "https://creo-fhhl.onrender.com"
+    data = await _process_google_code(code, resolved_redirect, db)
+    token = data["access_token"]
+
+    # If state contains frontend origin or default to frontend origin
+    frontend_base = "http://localhost:5173"
+    if state and (state.startswith("http://") or state.startswith("https://")):
+        frontend_base = state.rstrip("/")
+
+    target_url = f"{frontend_base}/auth/google/callback?token={urllib.parse.quote(token)}"
+    return RedirectResponse(url=target_url)
 
 
 class RefreshTokenRequest(BaseModel):

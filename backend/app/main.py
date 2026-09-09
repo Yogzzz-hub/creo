@@ -8,11 +8,15 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 import redis.asyncio as aioredis
-from fastapi import FastAPI, Request, status
+import urllib.parse
+from fastapi import Depends, FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.session import engine, get_db
 
 from app.config import settings
 from app.core.errors import AppError, app_error_handler
@@ -188,6 +192,34 @@ os.makedirs(_uploads_dir, exist_ok=True)
 app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 app.mount("/uploads", StaticFiles(directory=_uploads_dir), name="uploads")
 
+
+
+@app.get("/", tags=["Root"])
+async def root(
+    request: Request,
+    code: str | None = None,
+    state: str | None = None,
+    db: AsyncSession = Depends(get_db),
+) -> Any:
+    """Root endpoint — returns API service status or handles direct Google OAuth browser redirects."""
+    if code:
+        from app.routers.auth import _process_google_code
+
+        data = await _process_google_code(code, "https://creo-fhhl.onrender.com", db)
+        token = data["access_token"]
+        frontend_base = "http://localhost:5173"
+        if state and (state.startswith("http://") or state.startswith("https://")):
+            frontend_base = state.rstrip("/")
+        return RedirectResponse(
+            url=f"{frontend_base}/auth/google/callback?token={urllib.parse.quote(token)}"
+        )
+    return {
+        "name": "Creo API",
+        "status": "online",
+        "version": settings.VERSION,
+        "docs": "/docs",
+        "health": "/health",
+    }
 
 
 @app.get("/health", tags=["Health"])

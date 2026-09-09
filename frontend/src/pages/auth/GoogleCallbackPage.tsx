@@ -31,6 +31,23 @@ export function GoogleCallbackPage() {
   }, []);
 
   useEffect(() => {
+    const token = searchParams.get("token");
+    if (token) {
+      setAuthToken(token);
+      refresh().then(() => {
+        setStatus("success");
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 600);
+      }).catch(() => {
+        setStatus("success");
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 600);
+      });
+      return;
+    }
+
     const code = searchParams.get("code");
     if (!code) {
       setStatus("error");

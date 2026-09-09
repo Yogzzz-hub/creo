@@ -225,7 +225,7 @@ async def send_otp_email(to_email: str, otp_code: str) -> bool:
   <div class="wrapper">
     <div class="container">
       <div class="header">
-        <a href="https://creo-ev42.onrender.com" class="logo">CREO<span>.</span></a>
+        <a href="https://creo-fhhl.onrender.com" class="logo">CREO<span>.</span></a>
         <br>
         <span class="badge">Security Verification</span>
       </div>
