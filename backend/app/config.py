@@ -79,12 +79,12 @@ class Settings(BaseSettings):
     # AI Service — Gemini
     GEMINI_API_KEY: str = Field(default="")
 
-    # Storage (S3-compatible: AWS S3, Supabase Storage, MinIO, etc.)
+    # Storage (S3-compatible: AWS S3, Supabase Storage, Cloudflare R2, MinIO)
     STORAGE_BUCKET: str = Field(default="creo")
-    STORAGE_REGION: str = Field(default="ap-south-1")
+    STORAGE_REGION: str = Field(default="auto")
     AWS_ACCESS_KEY_ID: str = Field(default="")
     AWS_SECRET_ACCESS_KEY: str = Field(default="")
-    STORAGE_ENDPOINT_URL: str | None = Field(default=None)  # For non-AWS S3-compatible stores
+    STORAGE_ENDPOINT_URL: str | None = Field(default=None)  # For non-AWS S3-compatible stores (e.g. Cloudflare R2)
     PRESIGNED_URL_TTL: int = Field(default=900)  # 15 minutes
 
     # Supabase (Storage, Auth, Direct REST)

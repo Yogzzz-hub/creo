@@ -94,6 +94,10 @@ def _make_storage_key(client_id: uuid.UUID, mime_type: str) -> str:
     return f"clients/{client_id}/{now.year}/{now.month:02d}/{file_uuid}.{ext}"
 
 
+def _is_s3_configured() -> bool:
+    return bool(settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY)
+
+
 def _is_supabase_configured() -> bool:
     return bool(settings.SUPABASE_URL and settings.SUPABASE_SERVICE_ROLE_KEY)
 
@@ -113,7 +117,7 @@ def _get_s3_client() -> Any:
         boto3: Any = importlib.import_module("boto3")
 
         kwargs: dict[str, Any] = {
-            "region_name": settings.STORAGE_REGION,
+            "region_name": settings.STORAGE_REGION or "auto",
         }
         if settings.AWS_ACCESS_KEY_ID:
             kwargs["aws_access_key_id"] = settings.AWS_ACCESS_KEY_ID
@@ -137,7 +141,7 @@ def upload_intent(
 ) -> dict[str, object]:
     """Validate upload parameters and return a pre-signed PUT URL.
 
-    Supports Supabase Storage natively as well as S3.
+    Supports Cloudflare R2, AWS S3, and Supabase Storage.
     """
     # 1. MIME validation
     if mime_type not in ALLOWED_MIMES:
@@ -150,7 +154,40 @@ def upload_intent(
     storage_key = _make_storage_key(client_id, mime_type)
     ttl = settings.PRESIGNED_URL_TTL  # 15 min by default
 
-    # Prefer Supabase Storage REST API when configured
+    # 1. Prioritize Cloudflare R2 / S3 if credentials configured
+    if _is_s3_configured():
+        try:
+            s3 = _get_s3_client()
+            upload_url = s3.generate_presigned_url(
+                "put_object",
+                Params={
+                    "Bucket": settings.STORAGE_BUCKET,
+                    "Key": storage_key,
+                    "ContentType": mime_type,
+                    "ContentLength": file_size_bytes,
+                },
+                ExpiresIn=ttl,
+            )
+            log.info(
+                "r2_upload_intent_created",
+                client_id=str(client_id),
+                storage_key=storage_key,
+                mime_type=mime_type,
+                file_size_bytes=file_size_bytes,
+            )
+            return {
+                "storage_key": storage_key,
+                "upload_url": upload_url,
+                "expires_in": ttl,
+                "mime_type": mime_type,
+                "file_size_bytes": file_size_bytes,
+            }
+        except Exception as exc:
+            log.error("r2_presign_failed", error=str(exc), client_id=str(client_id))
+            if not _is_supabase_configured():
+                raise StorageError(f"Failed to generate upload URL: {exc}") from exc
+
+    # 2. Supabase Storage REST API fallback
     if _is_supabase_configured():
         import httpx
 
@@ -229,8 +266,37 @@ def upload_intent(
 def confirm_upload(storage_key: str, declared_size_bytes: int) -> dict[str, object]:
     """Verify object exists in storage.
 
-    Supports Supabase Storage and S3.
+    Prioritizes Cloudflare R2 / S3 when configured, falling back to Supabase Storage.
     """
+    # 1. Prioritize Cloudflare R2 / S3 if credentials configured
+    if _is_s3_configured():
+        try:
+            s3 = _get_s3_client()
+            head = s3.head_object(Bucket=settings.STORAGE_BUCKET, Key=storage_key)
+            actual_size = head.get("ContentLength", 0)
+            if actual_size != declared_size_bytes:
+                raise ContentLengthMismatch(declared=declared_size_bytes, actual=actual_size)
+            log.info("r2_upload_confirmed", storage_key=storage_key, size_bytes=actual_size)
+            return {"storage_key": storage_key, "confirmed": True, "actual_size": actual_size}
+        except ContentLengthMismatch:
+            raise
+        except StorageError:
+            raise
+        except Exception as exc:
+            error_str = str(exc)
+            if "404" in error_str or "NoSuchKey" in error_str or "Not Found" in error_str:
+                raise ObjectNotFound(storage_key) from exc
+            log.warning("r2_confirm_failed", error=str(exc))
+            if not _is_supabase_configured():
+                if settings.ENVIRONMENT in ("development", "test"):
+                    return {
+                        "storage_key": storage_key,
+                        "confirmed": True,
+                        "actual_size": declared_size_bytes,
+                    }
+                raise StorageError(f"HEAD request failed: {exc}") from exc
+
+    # 2. Supabase Storage fallback
     if _is_supabase_configured():
         import httpx
 
@@ -259,36 +325,41 @@ def confirm_upload(storage_key: str, declared_size_bytes: int) -> dict[str, obje
         except Exception as exc:
             log.warning("supabase_confirm_fallback", error=str(exc))
 
-    try:
-        s3 = _get_s3_client()
-        head = s3.head_object(Bucket=settings.STORAGE_BUCKET, Key=storage_key)
-        actual_size = head.get("ContentLength", 0)
-    except StorageError:
-        raise
-    except Exception as exc:
-        error_str = str(exc)
-        if "404" in error_str or "NoSuchKey" in error_str or "Not Found" in error_str:
-            raise ObjectNotFound(storage_key) from exc
-        if settings.ENVIRONMENT in ("development", "test"):
-            return {
-                "storage_key": storage_key,
-                "confirmed": True,
-                "actual_size": declared_size_bytes,
-            }
-        raise StorageError(f"HEAD request failed: {exc}") from exc
-
-    if actual_size != declared_size_bytes:
-        raise ContentLengthMismatch(declared=declared_size_bytes, actual=actual_size)
-
-    log.info("upload_confirmed", storage_key=storage_key, size_bytes=actual_size)
-    return {"storage_key": storage_key, "confirmed": True, "actual_size": actual_size}
+    if settings.ENVIRONMENT in ("development", "test"):
+        return {
+            "storage_key": storage_key,
+            "confirmed": True,
+            "actual_size": declared_size_bytes,
+        }
+    raise StorageError(f"No storage provider configured for confirmation of {storage_key}")
 
 
 def signed_get(storage_key: str, ttl: int = 900) -> str:
     """Generate a short-lived pre-signed GET URL for the object.
 
     The bucket is NEVER public. Every read request must use a fresh signed URL.
+    Prioritizes Cloudflare R2 / S3 when configured, falling back to Supabase Storage.
     """
+    # 1. Prioritize Cloudflare R2 / S3 if credentials configured
+    if _is_s3_configured():
+        try:
+            s3 = _get_s3_client()
+            url: str = s3.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": settings.STORAGE_BUCKET, "Key": storage_key},
+                ExpiresIn=ttl,
+            )
+            return url
+        except StorageError:
+            raise
+        except Exception as exc:
+            log.warning("r2_signed_get_failed", error=str(exc))
+            if not _is_supabase_configured():
+                if settings.ENVIRONMENT in ("development", "test"):
+                    return f"https://{settings.STORAGE_BUCKET}.s3.amazonaws.com/{storage_key}?presigned=mock"
+                raise StorageError(f"Failed to generate signed GET URL: {exc}") from exc
+
+    # 2. Supabase Storage fallback
     if _is_supabase_configured():
         import httpx
 
@@ -320,24 +391,10 @@ def signed_get(storage_key: str, ttl: int = 900) -> str:
                 )
             raise StorageError(f"Failed to generate signed GET URL: {exc}") from exc
 
+    if settings.ENVIRONMENT in ("development", "test"):
         return f"https://{settings.STORAGE_BUCKET}.s3.amazonaws.com/{storage_key}?presigned=mock"
 
-    try:
-        s3 = _get_s3_client()
-        url: str = s3.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": settings.STORAGE_BUCKET, "Key": storage_key},
-            ExpiresIn=ttl,
-        )
-        return url
-    except StorageError:
-        raise
-    except Exception as exc:
-        if settings.ENVIRONMENT in ("development", "test"):
-            return (
-                f"https://{settings.STORAGE_BUCKET}.s3.amazonaws.com/{storage_key}?presigned=mock"
-            )
-        raise StorageError(f"Failed to generate signed GET URL: {exc}") from exc
+    raise StorageError("No storage provider configured to generate signed GET URL")
 
 
 StorageKind = Literal["upload_intent", "confirm", "signed_get"]
