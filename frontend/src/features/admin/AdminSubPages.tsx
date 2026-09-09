@@ -164,8 +164,12 @@ export function AdminClientsPage() {
                       {client.plan_name || "Growth Tier"}
                     </span>
                   </div>
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E8F4FD] text-[#2B7BC4] border border-[#C9DFF0]">
-                    Stage {client.onboarding_stage} / 5
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    client.onboarding_stage >= 4
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : "bg-[#E8F4FD] text-[#2B7BC4] border border-[#C9DFF0]"
+                  }`}>
+                    {client.onboarding_stage >= 4 ? "Stage 4 / 4 • Done" : `Stage ${Math.max(1, client.onboarding_stage)} / 4`}
                   </span>
                 </div>
 
@@ -218,8 +222,12 @@ export function AdminClientsPage() {
                       <div className="text-[11px] text-slate-400">{client.email}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#E8F4FD] text-[#2B7BC4] border border-[#C9DFF0]">
-                        Stage {client.onboarding_stage} / 5
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        client.onboarding_stage >= 4
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-[#E8F4FD] text-[#2B7BC4] border border-[#C9DFF0]"
+                      }`}>
+                        {client.onboarding_stage >= 4 ? "Stage 4 / 4 • Completed" : `Stage ${Math.max(1, client.onboarding_stage)} / 4`}
                       </span>
                     </td>
                     <td className="px-4 py-3">

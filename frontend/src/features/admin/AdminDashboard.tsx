@@ -340,7 +340,9 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
                   </div>
                   <div>
                     <span className="text-[11px] text-slate-400 font-medium">Onboarding:</span>
-                    <p className="font-bold text-[#0D2137] mt-0.5">Stage {c.onboarding_stage}/5</p>
+                    <p className="font-bold text-[#0D2137] mt-0.5">
+                      {c.onboarding_stage >= 4 ? "Stage 4/4 (Done)" : `Stage ${Math.max(1, c.onboarding_stage)}/4`}
+                    </p>
                   </div>
                 </div>
 
@@ -411,9 +413,15 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
                       )}
                     </td>
                     <td className="py-3.5 px-5">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                        Stage {c.onboarding_stage}/5
-                      </span>
+                      {c.onboarding_stage >= 4 ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Stage 4/4 • Completed
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                          Stage {Math.max(1, c.onboarding_stage)}/4
+                        </span>
+                      )}
                     </td>
                     <td className="py-3.5 px-5">
                       <div className="font-bold text-[#0D2137]">

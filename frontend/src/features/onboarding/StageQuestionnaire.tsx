@@ -635,7 +635,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
       <header className="mb-6 sm:mb-8">
         <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#E8F4FD] border border-[#C9DFF0] text-[#2B7BC4] text-[11px] font-bold uppercase tracking-wider mb-2.5">
           <Sparkles className="size-3" />
-          <span>Step 4 of 5 • Brand Intake</span>
+          <span>Step 4 of 4 • Brand Intake</span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-bold font-display text-[#0D2137] tracking-tight">
           Brand Discovery & Strategic AI DNA
