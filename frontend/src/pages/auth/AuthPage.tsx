@@ -309,7 +309,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
 
   // ── Form Panel Content ──
   const renderFormPanel = () => (
-    <div className="flex flex-col justify-center p-6 sm:p-8 lg:p-10 bg-white h-full">
+    <div className="flex flex-col justify-center p-4 sm:p-8 lg:p-10 bg-white h-full">
       <div className="w-full max-w-sm mx-auto space-y-4">
 
         {/* View Switcher Tabs (Sign In vs Create Account) — only on login/signup */}
@@ -740,7 +740,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
       </header>
 
       {/* ── Main Sliding Dual-Panel Container ─────────────────────────── */}
-      <div className="max-w-5xl w-full mx-auto my-auto rounded-3xl bg-white/95 backdrop-blur-2xl border border-white/40 shadow-2xl shadow-black/50 overflow-hidden relative z-10 shrink">
+      <div className="max-w-5xl w-full mx-auto my-2 sm:my-auto rounded-2xl sm:rounded-3xl bg-white/95 backdrop-blur-2xl border border-white/40 shadow-2xl shadow-black/50 overflow-hidden relative z-10 shrink">
         {/* Desktop: Sliding Dual-Panel Layout */}
         <div className="hidden lg:block relative w-full overflow-hidden" style={{ minHeight: 560 }}>
           {/* Form Panel (50% width, slides between 0% and 100%) */}
@@ -780,12 +780,25 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
           </motion.div>
         </div>
 
-        {/* Mobile: Stacked Layout (no sliding, just vertical stack) */}
-        <div className="lg:hidden">
-          <div className="bg-gradient-to-br from-white via-slate-50/70 to-sky-50/40 border-b border-slate-200/80">
-            {renderBrandingPanel()}
-          </div>
+        {/* Mobile: Form-First Stacked Layout */}
+        <div className="lg:hidden flex flex-col">
           {renderFormPanel()}
+          <div className="bg-gradient-to-br from-slate-50 via-white to-sky-50/40 border-t border-slate-200/70 p-4 sm:p-6">
+            <div className="flex flex-wrap items-center justify-center gap-2 text-center text-xs text-slate-600 mb-2">
+              <span className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-full border border-slate-200/80 font-bold text-[11px] text-[#0D2137] shadow-2xs">
+                ⚡ 48h Turnaround
+              </span>
+              <span className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-full border border-slate-200/80 font-bold text-[#0D2137] shadow-2xs">
+                🔒 Enterprise Security
+              </span>
+              <span className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-full border border-slate-200/80 font-bold text-[#0D2137] shadow-2xs">
+                <span className="text-amber-500">★</span> 4.9/5 Rating
+              </span>
+            </div>
+            <p className="text-[10px] text-center text-slate-400">
+              © {new Date().getFullYear()} Creo Technologies Inc. All rights reserved.
+            </p>
+          </div>
         </div>
       </div>
 
