@@ -4,11 +4,49 @@ Creo is an end-to-end full-stack SaaS platform designed for high-growth direct-t
 
 ---
 
-## 🏗 System Architecture
+## 🏛 Canonical Production Architecture
+
+| Component | Final Choice | Purpose / Role |
+| :--- | :--- | :--- |
+| **Frontend** | React 19 + Vite + TypeScript | High-performance SPA with client-side routing & micro-animations |
+| **Frontend Hosting** | **Cloudflare Pages** | Worldwide edge delivery, $0 bandwidth fees, instant git deploys |
+| **DNS / CDN / WAF** | **Cloudflare Free** | Global DDoS mitigation, free SSL, edge caching, and fast routing |
+| **Backend** | **FastAPI (Python 3.11+)** | High-throughput async API, Pydantic v2 validation, AI pipelines |
+| **Backend Hosting** | **Render** (`creo-fhhl.onrender.com`) | Managed Python container hosting with continuous git deploy |
+| **Database** | **Supabase PostgreSQL** | Relational data, RLS security, transaction pooler (`ap-southeast-1`) |
+| **Authentication** | **Supabase Auth + Google OAuth** | Dual-redirect authentication, JWT sessions with role-based access |
+| **Cache & Queue** | **Upstash Redis Free** | Ephemeral cache, token revocation, rate limiting & message queue |
+| **Media Storage** | **Cloudflare R2** (Bucket `creo`) | 5 TB media storage with **$0 network egress fees** |
+| **Upload Flow** | **Direct Browser-to-R2 (Pre-signed PUT)** | Offloads large video/reel uploads from backend server |
+| **Media Delivery** | **Private Pre-Signed GET (15-min TTL)** | Strict multi-tenant security with zero public bucket exposure |
+| **Background Jobs** | **FastAPI Background Tasks & Celery** | Async notification dispatch, email delivery, and media indexing |
+| **Payments** | **Razorpay** | Monthly retainer subscriptions and instant add-on credits |
+| **CI / CD** | **GitHub Actions** | Automated linting, type validation, unit tests, and build checks |
+| **Monitoring** | **UptimeRobot Free + Provider Logs** | Continuous endpoint health tracking (`/health` & `/api/v1/health`) |
+
+---
+
+### 💰 Monthly Operating Cost Breakdown (2,000 Active Clients)
+
+| Infrastructure Item | Monthly Cost | Budget Tier (< ₹4,000/mo) |
+| :--- | :--- | :--- |
+| Cloudflare Pages | **₹0** (Free tier) | ₹0 |
+| Cloudflare DNS / CDN / WAF | **₹0** (Free tier) | ₹0 |
+| FastAPI Backend (Render) | **₹600 – ₹1,500** | ₹600 |
+| Supabase PostgreSQL & Auth | **₹0 – ₹2,500** | ₹0 (Free tier / Pro when scaled) |
+| Upstash Redis (Cache / Queue) | **₹0** (Free tier 10k cmd/day) | ₹0 |
+| Cloudflare R2 Media Storage | **~₹7,100** (5 TB media) | **~₹1,500 – ₹2,000** (1 TB media) |
+| UptimeRobot Monitoring | **₹0** (Free tier) | ₹0 |
+| **Total Estimated Operating Cost** | **₹8,000 – ₹11,000 / month** | **< ₹4,000 / month** |
+
+---
+
+## 🏗 Directory Structure
 
 ```
 creo/
 ├── frontend/                 # React 19 + Vite + Tailwind CSS v4 + @dnd-kit
+│   ├── public/               # Static assets & Cloudflare Pages _redirects
 │   ├── src/
 │   │   ├── components/       # Reusable UI, Portal Header/Sidebar, Public Navbar/Footer
 │   │   ├── features/         # Admin Dashboard, Kanban Pipeline, Deliverables Review, Onboarding
@@ -19,13 +57,13 @@ creo/
 │   ├── app/
 │   │   ├── routers/          # Admin, Auth, Calendar, Deliverables, Payments, Portal, Teams, Tickets
 │   │   ├── models/           # User, Plan, Subscription, Deliverable, Ticket, Leave, Task
-│   │   ├── services/         # State machines, Quota tracking, SLA monitor, Notification dispatcher
+│   │   ├── services/         # Storage (R2/S3), Quota, SLA, Notifications, Brand DNA
 │   │   └── workers/          # Background tasks (Celery/Redis worker & beat publisher)
 │   ├── alembic/              # Database schema migrations
 │   └── requirements.txt
-├── docker-compose.yml        # PostgreSQL & Redis infrastructure services
+├── .github/workflows/        # GitHub Actions CI pipeline
+├── docker-compose.yml        # Local PostgreSQL & Redis infrastructure services
 ├── render.yaml               # Render blueprint for FastAPI backend & Celery worker
-├── vercel.json               # Vercel configuration for Vite SPA frontend
 └── README.md
 ```
 
