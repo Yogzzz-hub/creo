@@ -36,7 +36,10 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(path, {
+  const apiBase = ((import.meta.env.VITE_API_URL as string) || "").replace(/\/$/, "");
+  const requestUrl = path.startsWith("/api") && apiBase ? `${apiBase}${path}` : path;
+
+  const response = await fetch(requestUrl, {
     ...options,
     headers,
     credentials: "include",

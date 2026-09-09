@@ -60,10 +60,11 @@ app = FastAPI(
 # Request ID tracking middleware
 app.add_middleware(RequestIdMiddleware)
 
-# Strict CORS configuration
+# CORS configuration (explicit origins + preview regex for Vercel, Cloudflare Pages, and Render)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=r"^https:\/\/([a-zA-Z0-9\-_]+\.)*(vercel\.app|pages\.dev|onrender\.com)$|^http:\/\/localhost(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
