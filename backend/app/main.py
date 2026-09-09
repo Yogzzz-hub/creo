@@ -190,6 +190,7 @@ app.mount("/uploads", StaticFiles(directory=_uploads_dir), name="uploads")
 
 
 
+@app.get("/health", tags=["Health"])
 @app.get("/api/v1/health", tags=["Health"])
 async def health_check() -> JSONResponse:
     """Verify live connectivity to PostgreSQL and Redis.
