@@ -281,6 +281,7 @@ export function AdminDeliverablesPage() {
   const [phoneFrameMode, setPhoneFrameMode] = useState<boolean>(true);
   const [copiedCaption, setCopiedCaption] = useState<boolean>(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [isVideoLoading, setIsVideoLoading] = useState<boolean>(true);
 
   // Close enlarge modal on Escape key
   useEffect(() => {
@@ -291,6 +292,7 @@ export function AdminDeliverablesPage() {
       }
     };
     if (previewItem) {
+      setIsVideoLoading(true);
       window.addEventListener("keydown", handleKeyDown);
     }
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -302,7 +304,12 @@ export function AdminDeliverablesPage() {
         ? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
         : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1200&auto=format&fit=crop";
     }
-    return url;
+    const apiBase = ((import.meta.env.VITE_API_URL as string) || "").replace(/\/$/, "");
+    let resolved = url;
+    if (url.startsWith("/") && apiBase && !url.startsWith(apiBase)) {
+      resolved = `${apiBase}${url}`;
+    }
+    return encodeURI(resolved);
   };
 
   const isVideoAsset = (url?: string, type?: string) => {
@@ -719,7 +726,7 @@ export function AdminDeliverablesPage() {
                           className="h-full w-full object-cover opacity-85 group-hover/thumb:opacity-100 group-hover/thumb:scale-105 transition-all duration-300"
                           muted
                           playsInline
-                          preload="metadata"
+                          preload="none"
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="size-10 rounded-full bg-black/60 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-lg group-hover/thumb:scale-110 group-hover/thumb:bg-[#2B7BC4] transition-all">
@@ -1275,17 +1282,31 @@ export function AdminDeliverablesPage() {
                     /* 9:16 Mobile Phone Bezel Frame */
                     <div className="h-[96%] max-h-[580px] aspect-[9/16] rounded-[36px] border-[5px] border-slate-700 bg-black shadow-2xl overflow-hidden relative flex flex-col items-center justify-center ring-1 ring-white/20">
                       {/* Top Notch / Dynamic Island */}
-                      <div className="absolute top-2.5 z-20 w-24 h-4 bg-slate-900 rounded-full flex items-center justify-center">
+                      <div className="absolute top-2.5 z-20 w-24 h-4 bg-slate-900 rounded-full flex items-center justify-center pointer-events-none">
                         <div className="size-2 rounded-full bg-slate-800 mr-2" />
                         <div className="size-2.5 rounded-full bg-slate-850" />
                       </div>
+
+                      {/* Video Loading Spinner */}
+                      {isVideoLoading && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-xs z-10 pointer-events-none">
+                          <Loader2 className="size-8 text-[#2B7BC4] animate-spin mb-2" />
+                          <span className="text-[11px] font-medium text-slate-300">Loading Reel...</span>
+                        </div>
+                      )}
 
                       <video
                         src={getResolvedMediaUrl(previewItem.file_url, previewItem.type)}
                         controls
                         autoPlay
+                        muted
                         loop
                         playsInline
+                        preload="auto"
+                        onWaiting={() => setIsVideoLoading(true)}
+                        onPlaying={() => setIsVideoLoading(false)}
+                        onCanPlay={() => setIsVideoLoading(false)}
+                        onLoadedData={() => setIsVideoLoading(false)}
                         className="h-full w-full object-cover"
                       />
 
@@ -1296,13 +1317,27 @@ export function AdminDeliverablesPage() {
                     </div>
                   ) : (
                     /* Wide / Full Theater Video Player */
-                    <div className="w-full h-full max-h-[82vh] flex items-center justify-center">
+                    <div className="w-full h-full max-h-[82vh] flex items-center justify-center relative">
+                      {/* Video Loading Spinner */}
+                      {isVideoLoading && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-xs z-10 pointer-events-none rounded-xl">
+                          <Loader2 className="size-8 text-[#2B7BC4] animate-spin mb-2" />
+                          <span className="text-[11px] font-medium text-slate-300">Loading Reel...</span>
+                        </div>
+                      )}
+
                       <video
                         src={getResolvedMediaUrl(previewItem.file_url, previewItem.type)}
                         controls
                         autoPlay
+                        muted
                         loop
                         playsInline
+                        preload="auto"
+                        onWaiting={() => setIsVideoLoading(true)}
+                        onPlaying={() => setIsVideoLoading(false)}
+                        onCanPlay={() => setIsVideoLoading(false)}
+                        onLoadedData={() => setIsVideoLoading(false)}
                         className="max-h-full max-w-full rounded-xl shadow-2xl object-contain"
                       />
                     </div>
