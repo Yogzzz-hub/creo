@@ -100,7 +100,7 @@ export function PortalDashboardPage() {
       {stage < 4 && (
         <div className="rounded-xl border border-slate-200/80 bg-white shadow-xs overflow-hidden">
           <div className="bg-[#E8F4FD]/50 p-4 pb-3 border-b border-[#C9DFF0]/50">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-bold text-[#0D2137] flex items-center gap-2">
                   <Sparkles className="size-4 text-[#2B7BC4]" />
@@ -110,8 +110,17 @@ export function PortalDashboardPage() {
                   Complete these steps to start generating leads and automated creatives
                 </p>
               </div>
-              <div className="text-xl font-bold text-[#2B7BC4]">
-                {progressPercent}%
+              <div className="flex items-center gap-3">
+                <div className="text-xl font-bold text-[#2B7BC4]">
+                  {progressPercent}%
+                </div>
+                <Link
+                  to={`/onboarding?step=${Math.min(4, Math.max(1, stage + 1))}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2B7BC4] hover:bg-[#1A5EA8] text-white text-xs font-bold transition-all shadow-xs"
+                >
+                  <span>Resume Setup (Step {Math.min(4, Math.max(1, stage + 1))})</span>
+                  <ArrowRight className="size-3.5" />
+                </Link>
               </div>
             </div>
             <div className="w-full bg-[#E8F4FD] border border-[#C9DFF0] h-1.5 rounded-full mt-3 overflow-hidden">
@@ -128,27 +137,28 @@ export function PortalDashboardPage() {
               title="Create Account"
               description="Verified email"
               status="completed"
+              to="/onboarding?step=1"
             />
             <StepItem
               number={2}
               title="Service Agreement"
               description="Review and accept terms"
               status={stage >= 2 ? "completed" : "current"}
-              to="/onboarding"
+              to="/onboarding?step=2"
             />
             <StepItem
               number={3}
               title="Payment Setup"
               description="Activate subscription"
               status={stage >= 3 ? "completed" : stage >= 2 ? "current" : "upcoming"}
-              to="/portal/payments"
+              to={stage >= 2 ? "/onboarding?step=3" : `/onboarding?step=${Math.min(4, Math.max(1, stage + 1))}`}
             />
             <StepItem
               number={4}
               title="Brand Profile"
               description="Complete questionnaire"
               status={stage >= 4 ? "completed" : stage >= 3 ? "current" : "upcoming"}
-              to="/portal/account"
+              to={stage >= 3 ? "/onboarding?step=4" : `/onboarding?step=${Math.min(4, Math.max(1, stage + 1))}`}
             />
           </div>
         </div>
@@ -409,17 +419,17 @@ function StepItem({
   const content = (
     <div
       className={`relative flex flex-col items-center text-center p-4 rounded-xl transition-all duration-200 ${
-        status === "current" ? "bg-[#2B7BC4]/5 hover:bg-[#2B7BC4]/10 hover:scale-[1.02]" : ""
-      } ${status === "upcoming" ? "opacity-50 grayscale" : ""} ${
-        to && status !== "upcoming" ? "cursor-pointer hover:bg-[#E8F4FD]/60 hover:scale-[1.02]" : ""
+        status === "current" ? "bg-[#2B7BC4]/5 ring-2 ring-[#2B7BC4]/20 hover:bg-[#2B7BC4]/10 hover:scale-[1.02]" : ""
+      } ${status === "upcoming" ? "opacity-60 grayscale hover:grayscale-0 hover:opacity-90" : ""} ${
+        to ? "cursor-pointer hover:bg-[#E8F4FD]/60 hover:scale-[1.02] shadow-2xs hover:shadow-xs" : ""
       }`}
     >
       <div
         className={`flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-bold mb-3 transition-colors ${
           status === "completed"
-            ? "border-[#2B7BC4] bg-[#2B7BC4] text-white"
+            ? "border-[#2B7BC4] bg-[#2B7BC4] text-white shadow-xs"
             : status === "current"
-            ? "border-[#2B7BC4] text-[#2B7BC4] bg-white ring-4 ring-[#2B7BC4]/15"
+            ? "border-[#2B7BC4] text-[#2B7BC4] bg-white ring-4 ring-[#2B7BC4]/15 shadow-xs"
             : "border-slate-300 text-slate-400 bg-slate-50"
         }`}
       >
@@ -430,8 +440,12 @@ function StepItem({
     </div>
   );
 
-  if (to && status !== "upcoming") {
-    return <Link to={to}>{content}</Link>;
+  if (to) {
+    return (
+      <Link to={to} className="block group">
+        {content}
+      </Link>
+    );
   }
   return content;
 }

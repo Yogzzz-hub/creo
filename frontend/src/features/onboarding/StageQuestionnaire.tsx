@@ -501,9 +501,23 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
   const [error, setError] = useState<string | null>(null);
   const [brandDNA, setBrandDNA] = useState<BrandDNA | null>(null);
 
-  // Poll Brand DNA status if submitted
+  // Check if Brand DNA was already created for this user (so returning users don't see blank questionnaire)
   useQuery({
-    queryKey: ["brand-dna-status", userId],
+    queryKey: ["brand-dna-status-initial", userId],
+    queryFn: () => fetchBrandDNAStatus(userId),
+    staleTime: 10000,
+    select: (data) => {
+      if (data?.brand_dna) {
+        setBrandDNA(data.brand_dna);
+        setSubmitted(true);
+      }
+      return data;
+    },
+  });
+
+  // Poll Brand DNA status if submitted and waiting
+  useQuery({
+    queryKey: ["brand-dna-status-live", userId],
     queryFn: () => fetchBrandDNAStatus(userId),
     enabled: submitted && !brandDNA,
     refetchInterval: (query) => {
@@ -520,6 +534,32 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
       return data;
     },
   });
+
+  // Restore draft questionnaire on mount if user previously typed answers
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`creo_brand_draft_${userId}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === "object") {
+          setForm((prev) => ({ ...prev, ...parsed }));
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, [userId]);
+
+  // Persist draft questionnaire whenever form changes
+  useEffect(() => {
+    if (!submitted && !brandDNA) {
+      try {
+        localStorage.setItem(`creo_brand_draft_${userId}`, JSON.stringify(form));
+      } catch {
+        // ignore
+      }
+    }
+  }, [form, userId, submitted, brandDNA]);
 
 
   const toggleTone = useCallback((tone: string) => {
@@ -598,6 +638,11 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
         new Promise((resolve) => setTimeout(resolve, 2800)),
       ]);
       setSubmitted(true);
+      try {
+        localStorage.removeItem(`creo_brand_draft_${userId}`);
+      } catch {
+        // ignore
+      }
 
       // Fetch brand DNA status
       const statusRes = await fetchBrandDNAStatus(userId);

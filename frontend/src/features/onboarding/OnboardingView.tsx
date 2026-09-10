@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router";
 import { CheckCircle2, Mail, ShieldCheck, ArrowRight, RefreshCw } from "lucide-react";
 import { acceptTerms, fetchOnboardingStatus } from "../../lib/onboarding-api";
 import { useAuth } from "../../lib/auth-context";
@@ -312,9 +313,13 @@ function StageVerifyEmail({
 export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [termsSubmitting, setTermsSubmitting] = useState(false);
   const [activeStep, setActiveStep] = useState<number | null>(null);
   const [assignedTeam, setAssignedTeam] = useState<AssignedTeamMember[] | undefined>(undefined);
+
+  const requestedStepParam = searchParams.get("step");
+  const requestedStep = requestedStepParam ? parseInt(requestedStepParam, 10) : null;
 
   const {
     data: status,
@@ -337,24 +342,59 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
   const backendStage = status?.stage ?? 1;
   const maxUnlockedStep = Math.min(5, Math.max(1, backendStage + 1));
 
+  const handleSelectStep = (step: number) => {
+    setActiveStep(step);
+    try {
+      localStorage.setItem(`creo_onboard_step_${userId}`, String(step));
+    } catch {
+      // ignore
+    }
+    setSearchParams({ step: String(step) }, { replace: true });
+  };
+
   useEffect(() => {
     if (status) {
+      const bStage = status.stage ?? 1;
+      const maxUnlocked = Math.min(5, Math.max(1, bStage + 1));
+
       setActiveStep((prev) => {
-        // Initial setup on mount
-        if (prev === null) {
-          return maxUnlockedStep;
+        // If URL requested a valid unlocked step:
+        if (requestedStep && requestedStep >= 1 && requestedStep <= maxUnlocked) {
+          try {
+            localStorage.setItem(`creo_onboard_step_${userId}`, String(requestedStep));
+          } catch {
+            // ignore
+          }
+          return requestedStep;
         }
-        // Advance only if user is strictly behind unlocked steps and not actively on step 4
-        if (prev < maxUnlockedStep && prev !== 4) {
-          return maxUnlockedStep;
+
+        // On initial mount, resume from localStorage if valid
+        if (prev === null) {
+          try {
+            const savedStr = localStorage.getItem(`creo_onboard_step_${userId}`);
+            const saved = savedStr ? parseInt(savedStr, 10) : null;
+            if (saved && saved >= 1 && saved <= maxUnlocked) {
+              return saved;
+            }
+          } catch {
+            // ignore
+          }
+          // Default to the furthest unlocked step (never resets to step 1)
+          return maxUnlocked;
+        }
+
+        // Advance only if user is strictly behind unlocked steps and not actively working on step 4
+        if (prev < maxUnlocked && prev !== 4) {
+          return maxUnlocked;
         }
         return prev;
       });
+
       if (status.assigned_team && status.assigned_team.length > 0) {
         setAssignedTeam(status.assigned_team);
       }
     }
-  }, [status, maxUnlockedStep]);
+  }, [status, requestedStep, userId]);
 
   const currentStep = activeStep ?? maxUnlockedStep;
 
@@ -363,7 +403,7 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
     try {
       await acceptTerms(userId);
       await queryClient.invalidateQueries({ queryKey: ["onboarding-status", userId] });
-      setActiveStep(3); // Advance to Payment
+      handleSelectStep(3); // Advance to Payment
     } finally {
       setTermsSubmitting(false);
     }
@@ -407,7 +447,7 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
       <ProgressStepper
         activeStep={currentStep}
         maxUnlockedStep={maxUnlockedStep}
-        onSelectStep={(step) => setActiveStep(step)}
+        onSelectStep={(step) => handleSelectStep(step)}
       />
 
       {/* Dynamic Stage Views */}
@@ -418,7 +458,7 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
               key="verify"
               userEmail={user?.email}
               isAlreadyVerified={backendStage >= 1}
-              onContinueToTerms={() => setActiveStep(2)}
+              onContinueToTerms={() => handleSelectStep(2)}
             />
           )}
 
@@ -438,7 +478,7 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
               isAlreadyPaid={backendStage >= 3}
               onPaymentComplete={() => {
                 void refreshStatus();
-                setActiveStep(4);
+                handleSelectStep(4);
               }}
             />
           )}
@@ -452,7 +492,7 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
                   setAssignedTeam(team);
                 }
                 void refreshStatus();
-                setActiveStep(5);
+                handleSelectStep(5);
               }}
             />
           )}
