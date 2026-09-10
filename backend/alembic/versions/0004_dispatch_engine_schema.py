@@ -1,7 +1,7 @@
 """Add dispatch engine schema fields: daily_points, last_assigned_at, effort_points, is_revision, parent_assignee_id, calendar status and client timezone.
 
-Revision ID: 0003_dispatch_engine
-Revises: 0002_views
+Revision ID: 0004_dispatch_engine
+Revises: 0003_phase5_schema
 Create Date: 2026-09-10 21:20:00.000000
 
 """
@@ -11,8 +11,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '0003_dispatch_engine'
-down_revision = '0002_views'
+revision = '0004_dispatch_engine'
+down_revision = '0003_phase5_schema'
 branch_labels = None
 depends_on = None
 

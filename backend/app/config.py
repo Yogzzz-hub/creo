@@ -166,4 +166,4 @@ class Settings(BaseSettings):
 
 
 # Instantiate settings at module level so configuration errors are raised immediately
-settings = Settings()  # type: ignore[call-arg]
+settings = Settings()
