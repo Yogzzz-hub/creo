@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
@@ -23,6 +24,8 @@ import {
   RefreshCw,
   Sliders,
   Lock,
+  Users,
+  MessageSquare,
 } from "lucide-react";
 
 
@@ -37,6 +40,14 @@ interface ProfileResponse {
   brand_summary: string;
   brand_dna: Record<string, any>;
   questionnaire_answers?: Record<string, any>;
+  assigned_team?: Array<{
+    id: string;
+    name: string;
+    email: string;
+    raw_role: string;
+    role: string;
+    is_primary?: boolean;
+  }>;
 }
 
 const TONE_OPTIONS = [
@@ -67,7 +78,7 @@ const GOAL_OPTIONS = [
 export function PortalAccountPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"business" | "brand" | "security" | "integrations">("business");
+  const [activeTab, setActiveTab] = useState<"business" | "brand" | "security" | "integrations" | "pod">("business");
 
   // Tab 1: Business Profile Fields
   const [fullName, setFullName] = useState("");
@@ -407,6 +418,22 @@ export function PortalAccountPage() {
           <Link2 className="size-3.5" />
           <span>Integrations</span>
           {igConnected && (
+            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("pod")}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            activeTab === "pod"
+              ? "bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white shadow-sm shadow-blue-500/20"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          }`}
+        >
+          <Users className="size-3.5" />
+          <span>Creative Pod</span>
+          {profile?.assigned_team && profile.assigned_team.length > 0 && (
             <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
           )}
         </button>
@@ -1003,6 +1030,95 @@ export function PortalAccountPage() {
                     <p className="font-bold text-slate-800">Reels (9:16), Carousels, Stories</p>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB 5: Dedicated Creative Pod / Handlers ────────────────── */}
+          {activeTab === "pod" && (
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Users className="size-4 text-[#2B7BC4]" />
+                      <h3 className="text-sm font-bold text-[#0D2137]">Your Dedicated Creative Pod & Handlers</h3>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Active Pod
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      These vetted professionals are assigned specifically to craft, edit, storyboard, and direct your brand's content pipeline.
+                    </p>
+                  </div>
+                  <Link
+                    to="/portal/support"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-all shadow-2xs self-start sm:self-auto"
+                  >
+                    <MessageSquare className="size-3.5 text-[#2B7BC4]" />
+                    <span>Open Pod Ticket</span>
+                  </Link>
+                </div>
+
+                {profile?.assigned_team && profile.assigned_team.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                    {profile.assigned_team.map((member) => {
+                      const initials = member.name
+                        ? member.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
+                        : "CR";
+
+                      const badgeColor =
+                        member.raw_role === "team_lead"
+                          ? "from-[#2B7BC4] to-[#1A5EA8]"
+                          : member.raw_role === "video_editor"
+                          ? "from-purple-600 to-indigo-700"
+                          : "from-sky-500 to-blue-600";
+
+                      return (
+                        <div
+                          key={member.id || member.email}
+                          className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 flex flex-col justify-between space-y-4 hover:border-[#2B7BC4]/40 hover:bg-white hover:shadow-xs transition-all"
+                        >
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className={`size-11 rounded-xl bg-gradient-to-br ${badgeColor} text-white flex items-center justify-center font-bold text-xs shadow-xs`}>
+                                {initials}
+                              </div>
+                              {member.is_primary ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                                  Primary Lead
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                  Production Specialist
+                                </span>
+                              )}
+                            </div>
+
+                            <div>
+                              <h4 className="text-sm font-bold text-[#0D2137]">{member.name}</h4>
+                              <p className="text-xs font-semibold text-[#2B7BC4] mt-0.5">{member.role}</p>
+                              <p className="text-xs text-slate-500 mt-1 font-mono text-[11px]">{member.email}</p>
+                            </div>
+                          </div>
+
+                          <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                            <span className="text-slate-500 text-[11px]">Creative Assignment</span>
+                            <span className="font-semibold text-emerald-600 flex items-center gap-1 text-[11px]">
+                              <CheckCircle2 className="size-3" />
+                              Active Handler
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center rounded-xl bg-slate-50 border border-slate-200 text-slate-500 text-xs">
+                    Your creative pod will be assigned upon completion of your onboarding brand profile.
+                  </div>
+                )}
               </div>
             </div>
           )}

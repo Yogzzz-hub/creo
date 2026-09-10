@@ -16,7 +16,7 @@ from app.models.enums import DeliverableStatus, TicketStatus
 from app.models.ops import Announcement
 from app.models.support import Ticket
 from app.models.user import ClientProfile, User
-from app.models.work import Deliverable
+from app.models.work import ClientAssignment, Deliverable
 
 router = APIRouter(prefix="/portal", tags=["Portal"])
 
@@ -119,6 +119,35 @@ async def get_portal_dashboard(
         for d in recent_delivs
     ]
 
+    # 6. Assigned creative pod / handlers
+    ca_stmt = (
+        select(ClientAssignment, User)
+        .join(User, User.id == ClientAssignment.user_id)
+        .where(ClientAssignment.client_id == target_client_id)
+        .order_by(
+            (ClientAssignment.role == "team_lead").desc(),
+            (ClientAssignment.role == "video_editor").desc(),
+        )
+    )
+    ca_res = await db.execute(ca_stmt)
+    assigned_team = []
+    for ca, u in ca_res.all():
+        role_label = "Team Member"
+        if ca.role == "team_lead":
+            role_label = "Team Lead & Account Director"
+        elif ca.role == "video_editor":
+            role_label = "Lead Video Editor (Reels & Motion)"
+        elif ca.role == "graphic_designer":
+            role_label = "Lead Graphic Designer (Posters & Carousels)"
+        assigned_team.append({
+            "id": str(u.id),
+            "name": u.full_name or u.email.split("@")[0].capitalize(),
+            "email": u.email,
+            "raw_role": ca.role,
+            "role": role_label,
+            "is_primary": ca.is_primary,
+        })
+
     effective_account_status = (
         "active" if active_plan and current_stage >= 5
         else "pending_onboarding" if active_plan
@@ -145,6 +174,7 @@ async def get_portal_dashboard(
         "days_remaining": sub_check["days_remaining"],
         "server_time_utc": sub_check["server_time_utc"],
         "recent_activity": recent_activity,
+        "assigned_team": assigned_team,
     }
 
 
@@ -170,6 +200,35 @@ async def get_portal_profile(
     two_fa = brand_dna_data.get("two_fa_enabled", False)
     phone = brand_dna_data.get("phone", "")
 
+    # Query assigned creative pod
+    ca_stmt = (
+        select(ClientAssignment, User)
+        .join(User, User.id == ClientAssignment.user_id)
+        .where(ClientAssignment.client_id == client_id)
+        .order_by(
+            (ClientAssignment.role == "team_lead").desc(),
+            (ClientAssignment.role == "video_editor").desc(),
+        )
+    )
+    ca_res = await db.execute(ca_stmt)
+    assigned_team = []
+    for ca, u in ca_res.all():
+        role_label = "Team Member"
+        if ca.role == "team_lead":
+            role_label = "Team Lead & Account Director"
+        elif ca.role == "video_editor":
+            role_label = "Lead Video Editor (Reels & Motion)"
+        elif ca.role == "graphic_designer":
+            role_label = "Lead Graphic Designer (Posters & Carousels)"
+        assigned_team.append({
+            "id": str(u.id),
+            "name": u.full_name or u.email.split("@")[0].capitalize(),
+            "email": u.email,
+            "raw_role": ca.role,
+            "role": role_label,
+            "is_primary": ca.is_primary,
+        })
+
     return {
         "full_name": user.full_name if user else "",
         "email": user.email if user else "",
@@ -181,6 +240,7 @@ async def get_portal_profile(
         "brand_summary": profile.brand_summary if profile else "",
         "brand_dna": brand_dna_data,
         "questionnaire_answers": quest.answers if quest else {},
+        "assigned_team": assigned_team,
     }
 
 

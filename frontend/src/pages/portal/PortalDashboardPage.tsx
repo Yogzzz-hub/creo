@@ -11,11 +11,21 @@ import {
   AlertCircle,
   MessageSquare,
   Search,
+  Users,
 } from "lucide-react";
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
 
 import { PortalAnnouncements } from "../../components/portal/PortalAnnouncements";
+
+export interface TeamHandler {
+  id: string;
+  name: string;
+  email: string;
+  raw_role: string;
+  role: string;
+  is_primary?: boolean;
+}
 
 interface DashboardData {
   pending_deliverable_count: number;
@@ -27,6 +37,7 @@ interface DashboardData {
   terms_accepted?: boolean;
   active_plan?: { status: string; name?: string } | null;
   created_at?: string | null;
+  assigned_team?: TeamHandler[];
 }
 
 
@@ -376,6 +387,90 @@ export function PortalDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Dedicated Creative Pod / Handlers ──────────────────────────── */}
+      {dashboard?.assigned_team && dashboard.assigned_team.length > 0 && (
+        <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-white via-slate-50/50 to-blue-50/30 p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-3">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Users className="size-4 text-[#2B7BC4]" />
+                <h3 className="text-sm font-bold text-[#0D2137]">Your Dedicated Creative Pod & Handlers</h3>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Active Team
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">
+                Direct creative professionals and team leads assigned to manage and produce your brand pipeline.
+              </p>
+            </div>
+            <Link
+              to="/portal/support"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-all shadow-2xs shrink-0 self-start sm:self-auto"
+            >
+              <MessageSquare className="size-3.5 text-[#2B7BC4]" />
+              <span>Contact Team</span>
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+            {dashboard.assigned_team.map((member) => {
+              const initials = member.name
+                ? member.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase()
+                : "CR";
+
+              const badgeColor = member.raw_role === "team_lead"
+                ? "from-[#2B7BC4] to-[#1A5EA8]"
+                : member.raw_role === "video_editor"
+                ? "from-purple-600 to-indigo-700"
+                : "from-sky-500 to-blue-600";
+
+              return (
+                <div
+                  key={member.id || member.email}
+                  className="rounded-xl border border-slate-200/80 bg-white p-4 flex flex-col justify-between space-y-3 hover:border-[#2B7BC4]/40 hover:shadow-xs transition-all"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`size-10 rounded-xl bg-gradient-to-br ${badgeColor} text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0`}>
+                      {initials}
+                    </div>
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="text-xs font-bold text-[#0D2137] truncate">{member.name}</p>
+                        {member.is_primary && (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                            Lead
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] font-medium text-[#2B7BC4] leading-tight">
+                        {member.role}
+                      </p>
+                      <p className="text-[11px] text-slate-400 truncate">
+                        {member.email}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                    <span className="text-slate-400">Assigned Production</span>
+                    <span className="font-semibold text-emerald-600 flex items-center gap-1">
+                      <CheckCircle2 className="size-3" />
+                      Active Handler
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
