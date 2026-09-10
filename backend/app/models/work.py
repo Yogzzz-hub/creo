@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
     BigInteger,
@@ -20,7 +20,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -40,14 +40,10 @@ class Task(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         index=True,
     )
     assigned_to: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id"),
-        nullable=True,
-        index=True,
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True
     )
     deliverable_type: Mapped[DeliverableType] = mapped_column(
-        pg_enum(DeliverableType, "deliverable_type"),
-        nullable=False,
+        pg_enum(DeliverableType, "deliverable_type"), nullable=False
     )
     status: Mapped[TaskStatus] = mapped_column(
         pg_enum(TaskStatus, "task_status"),
@@ -56,7 +52,9 @@ class Task(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         index=True,
     )
     due_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    sla_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    sla_due_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
     last_sla_notified_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, default=None
     )
@@ -65,6 +63,9 @@ class Task(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     parent_assignee_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
+    preferred_sub_skill: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    concept_status: Mapped[str] = mapped_column(String(30), default="approved", nullable=False)
+    blueprint: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True, default=None)
 
     assignee: Mapped[User | None] = relationship(
         "User", foreign_keys=[assigned_to], back_populates="assigned_tasks"
@@ -106,6 +107,7 @@ class Deliverable(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         index=True,
     )
     revision_round: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    revisions_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     parent_deliverable_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("deliverables.id"),
@@ -163,6 +165,11 @@ class ContentCalendar(Base, UUIDPrimaryKeyMixin):
     status: Mapped[str] = mapped_column(String(20), default="approved", nullable=False)
     is_locked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     slot_kind: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    slot_strategy: Mapped[str] = mapped_column(String(20), default="anchor", nullable=False)
+    flex_deadline: Mapped[date | None] = mapped_column(Date, nullable=True)
+    concept_status: Mapped[str] = mapped_column(String(30), default="approved", nullable=False)
+    blueprint: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True, default=None)
+    selected_hook: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True, default=None)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

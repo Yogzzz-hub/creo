@@ -115,3 +115,15 @@ def rebalance_nightly_sweep_task() -> dict[str, int]:
     """Nightly rebalance sweep for unplanned leave, overloaded windows, and SLA risks."""
     return run_async_safe(_rebalance_nightly_sweep_async())
 
+
+async def _flex_deadline_sweep_async() -> dict[str, int]:
+    from app.services.dispatch_engine import flex_deadline_sweep
+    async with async_session_factory() as db:
+        return await flex_deadline_sweep(db)
+
+
+@celery_app.task(name="app.workers.tasks.scheduler.flex_deadline_sweep_task", queue="default")
+def flex_deadline_sweep_task() -> dict[str, int]:
+    """Auto-converts unfilled flex slots past flex_deadline to anchor evergreen."""
+    return run_async_safe(_flex_deadline_sweep_async())
+

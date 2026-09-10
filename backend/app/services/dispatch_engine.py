@@ -24,6 +24,11 @@ from app.models.enums import DeliverableType, TaskStatus, UserRole
 from app.models.ops import AuditLog, Notification
 from app.models.user import ClientProfile, StaffProfile, User
 from app.models.work import ClientAssignment, ContentCalendar, Deliverable, Task
+from app.services.blueprint_service import (
+    assign_funnel_stages,
+    generate_creative_blueprint,
+    generate_deterministic_blueprint,
+)
 
 logger = logging.getLogger("creo.dispatch_engine")
 
@@ -144,8 +149,9 @@ committed AS (
 available AS (
   SELECT sp.user_id,
          sp.daily_capacity,
-         GREATEST(sp.daily_points, sp.daily_capacity * :task_points) AS daily_points,
+         COALESCE(NULLIF(sp.daily_points, 0), sp.daily_capacity * 3) AS daily_points,
          sp.skills,
+         sp.sub_skills,
          sp.last_assigned_at,
          (SELECT COUNT(*) FROM generate_series(w.w_start::timestamp, w.w_end::timestamp, '1 day'::interval) d
            WHERE EXTRACT(isodow FROM d) < 6
@@ -172,7 +178,8 @@ SELECT a.user_id,
        (COALESCE(c.points_in_window, 0)::float / NULLIF(a.daily_points * a.working_days, 0)) AS utilization,
        a.last_assigned_at,
        a.daily_capacity,
-       COALESCE(c.active_wip, 0) AS active_wip
+       COALESCE(c.active_wip, 0) AS active_wip,
+       a.sub_skills
   FROM available a
   LEFT JOIN committed c ON c.staff_id = a.user_id
  WHERE (:has_staff_id = FALSE OR a.user_id = :filter_staff_id)
@@ -181,8 +188,13 @@ SELECT a.user_id,
    AND a.working_days > 0
    AND COALESCE(c.active_wip, 0) < a.daily_capacity
    AND COALESCE(c.points_in_window, 0) + :task_points <= (a.daily_points * a.working_days)
- ORDER BY utilization ASC,
-          a.last_assigned_at ASC NULLS FIRST
+ ORDER BY
+   CASE WHEN (:has_orig_creator = TRUE AND a.user_id = :orig_creator_id) THEN 0
+        WHEN (:has_pod_owner = TRUE AND a.user_id = :pod_owner_id) THEN 1
+        ELSE 2 END,
+   CASE WHEN (:has_sub_skill = TRUE AND :preferred_sub_skill = ANY(a.sub_skills)) THEN 0 ELSE 1 END,
+   utilization ASC,
+   a.last_assigned_at ASC NULLS FIRST
  LIMIT 10;
 """)
 
@@ -225,6 +237,12 @@ async def is_eligible(
             "required_skill": required_skill,
             "deliv_type": kind,
             "task_points": effort,
+            "has_orig_creator": False,
+            "orig_creator_id": uuid.uuid4(),
+            "has_pod_owner": False,
+            "pod_owner_id": uuid.uuid4(),
+            "has_sub_skill": False,
+            "preferred_sub_skill": "",
         },
     )
     row = res.fetchone()
@@ -389,6 +407,23 @@ async def assign_load_first(
     w_end = due
     w_start = due - timedelta(days=2)
 
+    # Fetch pod specialist if available
+    pod_role = "video_editor" if skill == "video" else "graphic_designer"
+    pod_query = (
+        select(ClientAssignment.user_id)
+        .where(ClientAssignment.client_id == task.client_id)
+        .where(ClientAssignment.role == pod_role)
+        .limit(1)
+    )
+    pod_staff_id = (await db.execute(pod_query)).scalar_one_or_none()
+
+    has_orig = bool(task.is_revision and task.parent_assignee_id)
+    orig_id = task.parent_assignee_id or uuid.uuid4()
+    has_pod = bool(pod_staff_id)
+    pod_id = pod_staff_id or uuid.uuid4()
+    has_sub = bool(task.preferred_sub_skill)
+    pref_sub = task.preferred_sub_skill or ""
+
     # Query candidate ranking
     res = await db.execute(
         ELIGIBILITY_SQL,
@@ -401,6 +436,12 @@ async def assign_load_first(
             "required_skill": skill,
             "deliv_type": kind,
             "task_points": effort,
+            "has_orig_creator": has_orig,
+            "orig_creator_id": orig_id,
+            "has_pod_owner": has_pod,
+            "pod_owner_id": pod_id,
+            "has_sub_skill": has_sub,
+            "preferred_sub_skill": pref_sub,
         },
     )
     rows = res.fetchall()
@@ -408,6 +449,7 @@ async def assign_load_first(
     for row in rows:
         cand_id = row[0]
         capacity_points = row[1]
+        cand_sub_skills = row[7] if len(row) > 7 and row[7] else []
 
         # LOCK FIRST, THEN RE-VERIFY within transaction
         lock_res = await db.execute(
@@ -433,7 +475,22 @@ async def assign_load_first(
         pts = await points_in_window(db, cand_id, due)
         max_pts = max(capacity_points, staff_row.daily_capacity * effort)
         if pts + effort <= max_pts:
-            return await commit_assignment(db, task, cand_id, reason, actor_id=actor_id)
+            effective_reason = reason
+            if has_sub and pref_sub not in cand_sub_skills:
+                effective_reason = f"{reason}_sub_skill_unmatched"
+                db.add(
+                    AuditLog(
+                        entity="task",
+                        entity_id=task.id,
+                        action="sub_skill_unmatched",
+                        to_value={
+                            "preferred_sub_skill": pref_sub,
+                            "assigned_to": str(cand_id),
+                            "staff_sub_skills": cand_sub_skills,
+                        },
+                    )
+                )
+            return await commit_assignment(db, task, cand_id, effective_reason, actor_id=actor_id)
 
     # Nobody eligible
     await backlog_and_alert(db, task, skill=skill)
@@ -597,7 +654,8 @@ async def draft_month_calendar(
         .where(ContentCalendar.status == "draft")
     )
 
-    created_slots: list[ContentCalendar] = []
+    # Fetch client Brand DNA
+    brand_dna = client_prof.brand_dna if client_prof and client_prof.brand_dna else {}
 
     for kind, quota in quotas.items():
         if quota <= 0:
@@ -619,21 +677,48 @@ async def draft_month_calendar(
             all_biz_days = [d for d in business_days_in_range(start_from, month_end) if d not in chosen]
             chosen += evenly_spaced(all_biz_days, n=remaining_needed)
 
-        for slot_day in chosen:
+        # 70/30 Anchor + Flex partition
+        anchor_quota = max(1, round(quota * 0.7))
+        funnel_stages = assign_funnel_stages(anchor_quota)
+
+        for i, slot_day in enumerate(chosen):
             # Localize publication time in client timezone, then convert to UTC datetime
             local_dt = datetime.combine(slot_day, time(hour=hour, minute=minute), tzinfo=client_tz)
             utc_dt = local_dt.astimezone(timezone.utc)
-
             format_label = "Reel" if kind == "reel" else "Poster" if kind in ["poster", "static_post"] else "Carousel / Story"
+
+            is_flex = i >= anchor_quota
+            if not is_flex:
+                stage = funnel_stages[i] if i < len(funnel_stages) else "reach"
+                bp = generate_deterministic_blueprint(brand_dna, kind, stage)
+                bp_dict = bp.model_dump()
+                selected_hook = bp_dict["hooks"][0] if bp_dict.get("hooks") else None
+                slot_strategy = "anchor"
+                flex_deadline = None
+                concept_status = "concept_pending"
+                caption = bp.premise
+            else:
+                bp_dict = None
+                selected_hook = None
+                slot_strategy = "flex"
+                flex_deadline = subtract_business_days(slot_day, 5)
+                concept_status = "approved"
+                caption = f"Brand {format_label} · Flexible News/Trend Reserve"
+
             slot = ContentCalendar(
                 client_id=client_id,
                 deliverable_id=None,
                 publish_date=slot_day,
                 scheduled_time=utc_dt,
-                caption=f"Brand {format_label} · Scheduled campaign release",
+                caption=caption,
                 status="draft",
                 is_locked=False,
                 slot_kind=kind,
+                slot_strategy=slot_strategy,
+                flex_deadline=flex_deadline,
+                concept_status=concept_status,
+                blueprint=bp_dict,
+                selected_hook=selected_hook,
             )
             db.add(slot)
             created_slots.append(slot)
@@ -694,6 +779,7 @@ async def approve_calendar_month(
 
         # Determine effort points
         effort = get_task_effort_points(deliv_type, is_revision=False)
+        pref_skill = "motion_graphics_2d" if kind == "reel" else "carousel_typography" if kind == "carousel" else None
 
         new_task = Task(
             client_id=client_id,
@@ -704,6 +790,9 @@ async def approve_calendar_month(
             effort_points=effort,
             is_revision=False,
             assigned_to=None,
+            preferred_sub_skill=pref_skill,
+            concept_status=slot.concept_status,
+            blueprint=slot.blueprint,
         )
         db.add(new_task)
         await db.flush()
@@ -854,3 +943,65 @@ async def rebalance_nightly_sweep(db: AsyncSession) -> dict[str, int]:
         "escalated_backlog": escalated_backlog,
         "notified_sla_risk": notified_sla_risk,
     }
+
+
+# --- Part 9: Flex Slot Management & Auto-Conversion Sweep ---
+
+async def propose_flex_fill(
+    db: AsyncSession,
+    client_id: uuid.UUID,
+    slot_id: uuid.UUID,
+    theme: str,
+    urgency: str | None = None,
+) -> ContentCalendar | None:
+    """Propose filling an open flex slot with a targeted theme, immediately generating a creative blueprint."""
+    slot = await db.get(ContentCalendar, slot_id)
+    if not slot or slot.client_id != client_id or slot.slot_strategy not in ("flex", "swapped"):
+        return None
+
+    client_prof = await db.get(ClientProfile, client_id)
+    brand_dna = client_prof.brand_dna if client_prof and client_prof.brand_dna else {}
+
+    kind = slot.slot_kind or "reel"
+    bp = await generate_creative_blueprint(brand_dna, kind, "reach", theme=theme)
+    bp_dict = bp.model_dump()
+
+    slot.slot_strategy = "swapped"
+    slot.caption = f"Flash Topic: {theme}"
+    slot.blueprint = bp_dict
+    slot.selected_hook = bp_dict["hooks"][0] if bp_dict.get("hooks") else None
+    slot.concept_status = "concept_pending"
+    await db.commit()
+    logger.info("Filled flex slot %s for client %s with theme '%s'", slot_id, client_id, theme)
+    return slot
+
+
+async def flex_deadline_sweep(db: AsyncSession, target_date: date | None = None) -> dict[str, Any]:
+    """Auto-convert unfilled flex slots past flex_deadline to anchor evergreen to safeguard paid quota."""
+    today = target_date or date.today()
+    stmt = (
+        select(ContentCalendar)
+        .where(ContentCalendar.slot_strategy == "flex")
+        .where(ContentCalendar.flex_deadline <= today)
+        .where(ContentCalendar.status != "archived")
+    )
+    unfilled = (await db.execute(stmt)).scalars().all()
+    converted_count = 0
+    for slot in unfilled:
+        client_prof = await db.get(ClientProfile, slot.client_id)
+        brand_dna = client_prof.brand_dna if client_prof and client_prof.brand_dna else {}
+        kind = slot.slot_kind or "reel"
+        bp = generate_deterministic_blueprint(brand_dna, kind, "authority", theme="Foundational Brand Pillar")
+        bp_dict = bp.model_dump()
+
+        slot.slot_strategy = "anchor"
+        slot.caption = bp.premise
+        slot.blueprint = bp_dict
+        slot.selected_hook = bp_dict["hooks"][0] if bp_dict.get("hooks") else None
+        slot.concept_status = "concept_pending"
+        converted_count += 1
+
+    if converted_count > 0:
+        await db.commit()
+    logger.info("Flex deadline sweep completed: auto-converted %d slots", converted_count)
+    return {"auto_converted": converted_count}

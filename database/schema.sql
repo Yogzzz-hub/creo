@@ -166,6 +166,7 @@ CREATE TABLE IF NOT EXISTS staff_profiles (
     daily_points INT DEFAULT 8 NOT NULL,
     last_assigned_at TIMESTAMPTZ,
     skills TEXT[] DEFAULT '{}'::text[] NOT NULL,
+    sub_skills TEXT[] DEFAULT '{}'::text[] NOT NULL,
     is_accepting_work BOOLEAN DEFAULT true NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
@@ -267,6 +268,9 @@ CREATE TABLE IF NOT EXISTS tasks (
     effort_points INT DEFAULT 1 NOT NULL,
     is_revision BOOLEAN DEFAULT false NOT NULL,
     parent_assignee_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    preferred_sub_skill VARCHAR(50),
+    concept_status VARCHAR(30) DEFAULT 'approved' NOT NULL,
+    blueprint JSONB DEFAULT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
@@ -298,6 +302,7 @@ CREATE TABLE IF NOT EXISTS deliverables (
     file_size_bytes BIGINT DEFAULT 0 NOT NULL,
     status deliverable_status DEFAULT 'pending_approval' NOT NULL,
     revision_round INT DEFAULT 1 NOT NULL,
+    revisions_count INT DEFAULT 0 NOT NULL,
     parent_deliverable_id UUID REFERENCES deliverables(id),
     rejection_comment TEXT,
     approved_at TIMESTAMPTZ,
@@ -341,6 +346,11 @@ CREATE TABLE IF NOT EXISTS content_calendar (
     status VARCHAR(20) DEFAULT 'approved' NOT NULL,
     is_locked BOOLEAN DEFAULT false NOT NULL,
     slot_kind VARCHAR(50),
+    slot_strategy VARCHAR(20) DEFAULT 'anchor' NOT NULL CHECK (slot_strategy IN ('anchor', 'flex', 'swapped')),
+    flex_deadline DATE,
+    concept_status VARCHAR(30) DEFAULT 'approved' NOT NULL,
+    blueprint JSONB DEFAULT NULL,
+    selected_hook JSONB DEFAULT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 

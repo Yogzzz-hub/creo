@@ -105,4 +105,10 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(hour=2, minute=0),
         "options": {"queue": "default"},
     },
+    # Daily flex slot deadline auto-conversion sweep at 00:30 IST
+    "flex-deadline-sweep": {
+        "task": "app.workers.tasks.scheduler.flex_deadline_sweep_task",
+        "schedule": crontab(hour=0, minute=30),
+        "options": {"queue": "default"},
+    },
 }

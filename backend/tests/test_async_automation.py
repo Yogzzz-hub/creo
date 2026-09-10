@@ -18,7 +18,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import async_session_factory
@@ -97,6 +97,8 @@ async def test_acceptance_1_due_publish_pickup() -> None:
     fake_instagram_client.reset()
 
     async with async_session_factory() as db:
+        await db.execute(text("UPDATE deliverables SET status = 'archived' WHERE status = 'scheduled' AND scheduled_at < now() - INTERVAL '1 hour'"))
+        await db.commit()
         user, deliverable = await _create_test_client_and_deliverable(
             db,
             status=DeliverableStatus.SCHEDULED,

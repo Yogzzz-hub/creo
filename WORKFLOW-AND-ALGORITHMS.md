@@ -417,6 +417,48 @@ Implemented via Celery Beat tasks in [scheduler.py](backend/app/workers/tasks/sc
    - Escalates backlog tasks aging > 24 hours to team leads.
    - Dispatches priority alerts for tasks within 24 hours of their SLA deadline.
    - **Strict Invariant**: Never reassigns a task already marked `in_production` (protects in-flight work and specialist trust).
+3. **Flex Deadline Sweep (`flex_deadline_sweep_task`)**: Runs daily at 00:30 IST to auto-convert unfilled flex slots whose deadline has arrived to evergreen anchor blueprints, protecting client quota.
+
+### 5.6 Creative Blueprints on Every Slot (Tier 1)
+
+Every calendar slot arrives as a production-ready brief synthesized from Brand DNA + slot kind + funnel stage:
+- **Strict Pydantic Blueprint Schema**:
+  - `hooks`: Exactly 3 hooks (A/B/C) with diverse psychological angles (`curiosity_gap`, `pain_point`, `contrarian`, `story`, `demo`), hook copy, and brand rationale.
+  - `premise`: Core thesis and concept under 280 characters.
+  - `beats`: 3 to 6 shot-by-shot storyboard sequence with visual cues and narration scripts.
+  - `audio_direction`: Actionable mood, BPM range (e.g. `85-95 BPM`), and vocal rules (`No vocals in first 3s`). Described by musical properties rather than broken audio links, avoiding Meta Graph API audio upload restrictions.
+  - `on_screen_text` & `cta`: Key overlay phrases and call to action under 120 characters.
+  - `respects`: Non-empty list echoing at least one brand taboo from `do_not`.
+- **Enforced 40/40/20 Funnel Distribution**: 40% Reach (top-of-funnel discovery), 40% Authority (mid-funnel trust and breakdown), 20% Conversion (bottom-of-funnel CTA). Ratios are assigned across month slots *prior* to LLM prompt generation.
+- **Prompt Injection Defense**: Client free text is enclosed inside delimited `<brand_dna>` data blocks with explicit system boundaries; all model output is parsed into strict Pydantic models.
+- **Fallback Chain**: Gemini 1.5 Flash $\rightarrow$ deterministic blueprint synthesized from Brand DNA rules. A slot is never empty.
+
+### 5.7 Client Concept Approval Gate (Tier 2)
+
+Moves editorial disagreement to the concept stage, preventing downstream post-production revisions:
+- **State Machine Integration**: Added `concept_pending` and `concept_approved` states. A deliverable/task cannot enter `in_production` until the client or AM approves a concept hook.
+- **Client Portal Review Dock**: Clients review Hook A, B, and C in the calendar preview modal, pick their preferred angle, and click "Approve Hook & Launch Production".
+- **Daily-Capped Angle Re-roll**: Clients can re-roll angles (`POST /calendar/slots/{id}/reroll-concept`) up to 5 times per client per day, guarded by a clean HTTP 429 quota return.
+- **Revision Rate Instrumentation**: `revisions_count` is tracked on every `Deliverable` from day one, split by client and editor, to measure impact over time.
+
+### 5.8 70/30 Anchor + Flex Calendar Structure (Tier 3)
+
+Combines consistent campaign cadence with cultural flexibility:
+- **70% Anchor Slots**: Planned at month start with generated blueprints and standard lead times.
+- **30% Flex Slots**: Reserved buffer with `slot_strategy IN ('anchor', 'flex', 'swapped')` and `flex_deadline`. Account managers and clients can hot-swap flex slots using `POST /calendar/flex/{slot}/propose` with custom trending topics or breaking announcements.
+- **Flex Deadline Protection**: Unfilled flex slots 5 business days before scheduled publication automatically convert to evergreen anchor blueprints via `flex_deadline_sweep`, ensuring client quota is never lost.
+
+### 5.9 Sub-Skill Affinity in Dispatch (Tier 4)
+
+Enhanced staff dispatch ranking with granular creative capabilities:
+- **Granular Sub-Skills**: `sub_skills TEXT[]` on staff profiles (`motion_graphics_2d`, `talking_head_fastcut`, `cinematic_colorgrade`, `carousel_typography`, `ugc_native`, `product_tabletop`).
+- **Blueprint Preference**: Blueprint generation sets `preferred_sub_skill` on tasks.
+- **Lexicographic Ranking**: Capacity is a hard gate in SQL `WHERE` clause. Ranking is strictly lexicographic:
+  1. Continuity tier (Original creator $\rightarrow$ Pod owner $\rightarrow$ Open pool).
+  2. Sub-skill affinity (`preferred_sub_skill = ANY(sub_skills)`).
+  3. Utilization ASC.
+  4. Round-robin fairness (`last_assigned_at ASC NULLS FIRST`).
+- **Preferential Non-Starvation**: If no specialist with the preferred sub-skill is free, the task dispatches to the next eligible qualified staff member and logs a `sub_skill_unmatched` audit entry.
 
 ## 6. Task Kanban and SLA algorithms
 

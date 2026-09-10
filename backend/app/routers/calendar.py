@@ -109,6 +109,11 @@ async def get_calendar_entries(
             "calendar_status": cal.status or "approved",
             "is_locked": cal.is_locked or False,
             "slot_kind": cal.slot_kind,
+            "slot_strategy": getattr(cal, "slot_strategy", "anchor"),
+            "flex_deadline": cal.flex_deadline.strftime("%Y-%m-%d") if cal.flex_deadline else None,
+            "concept_status": getattr(cal, "concept_status", "approved"),
+            "blueprint": cal.blueprint,
+            "selected_hook": cal.selected_hook,
             "raw_status": d.status.value if d else "scheduled",
             "version": d.version if d else 1,
             "thumbnail_url": d.file_url if d else None,
@@ -206,4 +211,123 @@ async def approve_draft_calendar_endpoint(
         "status": "approved",
         "client_id": str(target_id),
         **res,
+    }
+
+
+from pydantic import BaseModel
+
+
+class ApproveConceptRequest(BaseModel):
+    selected_hook: dict[str, Any]
+
+
+class ProposeFlexRequest(BaseModel):
+    theme: str
+    urgency: str | None = None
+
+
+@router.post("/slots/{slot_id}/approve-concept", response_model=dict[str, Any])
+@router.post("/{client_id}/slots/{slot_id}/approve-concept", response_model=dict[str, Any])
+async def approve_concept_endpoint(
+    slot_id: uuid.UUID,
+    payload: ApproveConceptRequest,
+    client_id: uuid.UUID | None = None,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Tier 2: Client concept approval gate. Selects chosen hook A/B/C and unlocks task production."""
+    target_id = client_id or actor.client_id or actor.user_id
+    slot = await db.get(ContentCalendar, slot_id)
+    if not slot or slot.client_id != target_id:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Calendar slot not found")
+
+    slot.selected_hook = payload.selected_hook
+    slot.concept_status = "concept_approved"
+
+    # Also sync to any existing task for this slot
+    task_stmt = select(Task).where(Task.client_id == target_id).where(Task.due_date <= slot.publish_date)
+    task_res = (await db.execute(task_stmt)).scalars().first()
+    if task_res:
+        task_res.concept_status = "concept_approved"
+        task_res.blueprint = slot.blueprint
+
+    await db.commit()
+    return {
+        "status": "concept_approved",
+        "slot_id": str(slot_id),
+        "selected_hook": slot.selected_hook,
+    }
+
+
+@router.post("/slots/{slot_id}/reroll-concept", response_model=dict[str, Any])
+@router.post("/{client_id}/slots/{slot_id}/reroll-concept", response_model=dict[str, Any])
+async def reroll_concept_endpoint(
+    slot_id: uuid.UUID,
+    client_id: uuid.UUID | None = None,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Tier 2: Re-roll angle for a slot concept under capped daily quota (5 re-rolls/day)."""
+    from fastapi import HTTPException
+    target_id = client_id or actor.client_id or actor.user_id
+    slot = await db.get(ContentCalendar, slot_id)
+    if not slot or slot.client_id != target_id:
+        raise HTTPException(status_code=404, detail="Calendar slot not found")
+
+    from app.services.blueprint_service import check_and_increment_reroll_quota, generate_creative_blueprint
+    from app.models.user import ClientProfile
+
+    allowed, remaining = check_and_increment_reroll_quota(target_id)
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="Daily concept re-roll quota reached (5/5). Try again tomorrow.",
+        )
+
+    client_prof = await db.get(ClientProfile, target_id)
+    brand_dna = client_prof.brand_dna if client_prof and client_prof.brand_dna else {}
+
+    kind = slot.slot_kind or "reel"
+    stage = "reach" if not slot.blueprint else slot.blueprint.get("funnel_stage", "reach")
+
+    bp = await generate_creative_blueprint(brand_dna, kind, stage)
+    bp_dict = bp.model_dump()
+
+    slot.blueprint = bp_dict
+    slot.selected_hook = bp_dict["hooks"][0] if bp_dict.get("hooks") else None
+    slot.concept_status = "concept_pending"
+    await db.commit()
+
+    return {
+        "status": "concept_rerolled",
+        "slot_id": str(slot_id),
+        "blueprint": bp_dict,
+        "remaining_daily_rerolls": remaining,
+    }
+
+
+@router.post("/flex/{slot_id}/propose", response_model=dict[str, Any])
+@router.post("/{client_id}/flex/{slot_id}/propose", response_model=dict[str, Any])
+async def propose_flex_fill_endpoint(
+    slot_id: uuid.UUID,
+    payload: ProposeFlexRequest,
+    client_id: uuid.UUID | None = None,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Tier 3: Hot-swap an open flex slot with a trending topic or announcement."""
+    from fastapi import HTTPException
+    target_id = client_id or actor.client_id or actor.user_id
+    from app.services.dispatch_engine import propose_flex_fill
+
+    slot = await propose_flex_fill(db, target_id, slot_id, theme=payload.theme, urgency=payload.urgency)
+    if not slot:
+        raise HTTPException(status_code=400, detail="Could not fill flex slot. Slot may not be flex or does not exist.")
+
+    return {
+        "status": "flex_swapped",
+        "slot_id": str(slot_id),
+        "slot_strategy": slot.slot_strategy,
+        "blueprint": slot.blueprint,
     }

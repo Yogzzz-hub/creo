@@ -125,6 +125,7 @@ class StaffProfile(Base, TimestampMixin):
         DateTime(timezone=True), nullable=True
     )
     skills: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
+    sub_skills: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
     is_accepting_work: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     user: Mapped[User] = relationship("User", foreign_keys=[user_id], back_populates="staff_profile")

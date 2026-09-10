@@ -189,3 +189,59 @@ export interface TicketItem {
   deliverable_file_type?: string | null;
 }
 
+// ── Creative Intelligence & Blueprints ──────────────────────────────────────
+
+export interface BlueprintHook {
+  angle: "curiosity_gap" | "pain_point" | "contrarian" | "story" | "demo";
+  text: string;
+  rationale: string;
+}
+
+export interface BlueprintBeat {
+  timestamp_range: string;
+  shot_type: string;
+  visual_cue: string;
+  script_line: string;
+}
+
+export interface AudioDirection {
+  genre_mood: string;
+  bpm_range: string;
+  vocal_rules: string;
+}
+
+export interface CreativeBlueprint {
+  hooks: BlueprintHook[];
+  premise: string;
+  beats: BlueprintBeat[];
+  audio_direction: AudioDirection;
+  on_screen_text: string[];
+  cta: string;
+  funnel_stage: "reach" | "authority" | "conversion";
+  respects: string[];
+}
+
+export interface CalendarEntryItem {
+  id: string;
+  deliverable_id: string | null;
+  type: string;
+  format_label: string;
+  topic: string;
+  title: string;
+  date: string;
+  scheduled_at: string;
+  scheduled_time: string;
+  status: string;
+  calendar_status: "draft" | "approved";
+  is_locked: boolean;
+  slot_kind: string | null;
+  slot_strategy: "anchor" | "flex" | "swapped";
+  flex_deadline: string | null;
+  concept_status: "concept_pending" | "concept_revision" | "concept_approved" | "approved";
+  blueprint: CreativeBlueprint | null;
+  selected_hook: BlueprintHook | null;
+  thumbnail_url?: string | null;
+  file_url?: string | null;
+  caption: string;
+}
+
