@@ -46,7 +46,16 @@ export function PortalDashboardPage() {
   const ticketCount = dashboard?.open_ticket_count ?? 0;
   const termsAccepted = dashboard?.terms_accepted ?? false;
   const subscriptionActive = !!dashboard?.active_plan && ["active", "trialing"].includes(dashboard?.active_plan?.status);
-  const progressPercent = stage >= 4 ? 100 : Math.min(100, Math.round((stage / 4) * 100));
+
+  // Exact step-by-step completion facts (Zero-false-progression)
+  const isStep1Done = stage >= 1;
+  const isStep2Done = termsAccepted || stage >= 2;
+  const isStep3Done = subscriptionActive || stage >= 3;
+  const isStep4Done = stage >= 4;
+
+  const currentResumeStep = !isStep1Done ? 1 : !isStep2Done ? 2 : !isStep3Done ? 3 : !isStep4Done ? 4 : 5;
+  const completedCount = (isStep1Done ? 1 : 0) + (isStep2Done ? 1 : 0) + (isStep3Done ? 1 : 0) + (isStep4Done ? 1 : 0);
+  const progressPercent = Math.min(100, Math.round((completedCount / 4) * 100));
 
   return (
     <div className="space-y-4 sm:space-y-5 animate-page-in">
@@ -115,10 +124,10 @@ export function PortalDashboardPage() {
                   {progressPercent}%
                 </div>
                 <Link
-                  to={`/onboarding?step=${Math.min(4, Math.max(1, stage + 1))}`}
+                  to={`/onboarding?step=${Math.min(4, currentResumeStep)}`}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2B7BC4] hover:bg-[#1A5EA8] text-white text-xs font-bold transition-all shadow-xs"
                 >
-                  <span>Resume Setup (Step {Math.min(4, Math.max(1, stage + 1))})</span>
+                  <span>Resume Setup (Step {Math.min(4, currentResumeStep)})</span>
                   <ArrowRight className="size-3.5" />
                 </Link>
               </div>
@@ -136,29 +145,29 @@ export function PortalDashboardPage() {
               number={1}
               title="Create Account"
               description="Verified email"
-              status="completed"
+              status={isStep1Done ? "completed" : "current"}
               to="/onboarding?step=1"
             />
             <StepItem
               number={2}
               title="Service Agreement"
               description="Review and accept terms"
-              status={stage >= 2 ? "completed" : "current"}
+              status={isStep2Done ? "completed" : isStep1Done ? "current" : "upcoming"}
               to="/onboarding?step=2"
             />
             <StepItem
               number={3}
               title="Payment Setup"
               description="Activate subscription"
-              status={stage >= 3 ? "completed" : stage >= 2 ? "current" : "upcoming"}
-              to={stage >= 2 ? "/onboarding?step=3" : `/onboarding?step=${Math.min(4, Math.max(1, stage + 1))}`}
+              status={isStep3Done ? "completed" : isStep2Done ? "current" : "upcoming"}
+              to={isStep2Done ? "/onboarding?step=3" : "/onboarding?step=2"}
             />
             <StepItem
               number={4}
               title="Brand Profile"
               description="Complete questionnaire"
-              status={stage >= 4 ? "completed" : stage >= 3 ? "current" : "upcoming"}
-              to={stage >= 3 ? "/onboarding?step=4" : `/onboarding?step=${Math.min(4, Math.max(1, stage + 1))}`}
+              status={isStep4Done ? "completed" : isStep3Done ? "current" : "upcoming"}
+              to={isStep3Done ? "/onboarding?step=4" : isStep2Done ? "/onboarding?step=3" : "/onboarding?step=2"}
             />
           </div>
         </div>
