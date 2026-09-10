@@ -47,22 +47,7 @@ async def create_order(
     user_stmt = select(User).where(User.id == client_id)
     existing_user = (await db.execute(user_stmt)).scalar_one_or_none()
     if not existing_user:
-        first_client = (
-            await db.execute(select(User).where(User.role == UserRole.CLIENT).limit(1))
-        ).scalar_one_or_none()
-        if first_client:
-            client_id = first_client.id
-        else:
-            new_user = User(
-                id=client_id,
-                auth_id=f"client_{client_id}",
-                email="client@example.com",
-                full_name="Creo Client",
-                role=UserRole.CLIENT,
-                account_status=AccountStatus.ACTIVE,
-            )
-            db.add(new_user)
-            await db.flush()
+        raise NotFound(f"Client account {client_id} not found", code="CLIENT_NOT_FOUND")
 
     now = datetime.now(UTC)
     from app.services.subscription_guard import expire_stale_subscriptions
@@ -219,8 +204,8 @@ async def confirm_order(
         is_valid_signature = hmac.compare_digest(expected, signature)
 
     # Direct activation if signature matches or verified sandbox confirmation in non-production
-    is_non_prod = getattr(settings, "ENVIRONMENT", "development") != "production"
-    sandbox_bypass = is_non_prod or not key_secret
+    is_non_prod = getattr(settings, "ENVIRONMENT", "development") not in ("production", "prod")
+    sandbox_bypass = is_non_prod and not key_secret
     if is_valid_signature or sandbox_bypass:
         await _activate_subscription(db, sub)
         return ConfirmPaymentResponse(status="active", subscription_id=sub.id)
@@ -321,6 +306,15 @@ async def record_and_process_webhook(
             provider=provider.value,
             event_id=event_id,
         )
+        existing_stmt = select(PaymentEvent).where(
+            PaymentEvent.provider == provider,
+            PaymentEvent.provider_event_id == event_id,
+        )
+        existing = (await db.execute(existing_stmt)).scalar_one_or_none()
+        if existing and existing.processed_at is None:
+            logger.info("webhook_event_retry_unprocessed", event_id=event_id)
+            await process_event(db, existing.id)
+            return True
         await db.commit()
         return False
 

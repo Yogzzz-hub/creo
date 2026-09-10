@@ -166,8 +166,7 @@ async def submit_questionnaire(
     if profile:
         profile.company_name = data.company_name
         profile.instagram_username = data.instagram_username
-        if not profile.onboarding_completed_at:
-            profile.onboarding_completed_at = now
+        if not profile.onboarding_deadline:
             profile.onboarding_deadline = now + timedelta(days=7)
 
     await db.commit()
@@ -189,6 +188,36 @@ async def complete_onboarding(db: AsyncSession, client_id: uuid.UUID) -> Onboard
     profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
     profile_res = await db.execute(profile_stmt)
     profile = profile_res.scalar_one()
+
+    # Idempotent check: if already completed, return existing assignment
+    if profile.onboarding_completed_at is not None:
+        ca_stmt = (
+            select(ClientAssignment, User)
+            .join(User, User.id == ClientAssignment.user_id)
+            .where(ClientAssignment.client_id == client_id)
+        )
+        ca_res = await db.execute(ca_stmt)
+        existing_rows = ca_res.all()
+        if existing_rows:
+            assigned_team = []
+            for ca, u in existing_rows:
+                role_label = "Team Member"
+                if ca.role == "team_lead":
+                    role_label = "Team Lead & Account Director"
+                elif ca.role == "video_editor":
+                    role_label = "Lead Video Editor (Reels & Motion)"
+                elif ca.role == "graphic_designer":
+                    role_label = "Lead Graphic Designer (Posters & Carousels)"
+                assigned_team.append({
+                    "id": str(u.id),
+                    "name": u.full_name or u.email,
+                    "role": role_label,
+                })
+            return OnboardingCompleteResponse(
+                status="completed",
+                onboarding_completed_at=profile.onboarding_completed_at,
+                assigned_team=assigned_team,
+            )
 
     profile.onboarding_completed_at = now
     profile.onboarding_deadline = now + timedelta(days=7)

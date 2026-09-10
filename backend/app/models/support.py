@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -12,6 +12,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, UUIDPrimaryKeyMixin
 from app.models.enums import TicketPriority, TicketStatus, pg_enum
+
+if TYPE_CHECKING:
+    from app.models.user import User
+    from app.models.work import Deliverable
 
 
 class Ticket(Base, UUIDPrimaryKeyMixin):
@@ -26,6 +30,11 @@ class Ticket(Base, UUIDPrimaryKeyMixin):
     assigned_to: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id"),
+        nullable=True,
+    )
+    deliverable_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("deliverables.id", ondelete="SET NULL"),
         nullable=True,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -44,6 +53,8 @@ class Ticket(Base, UUIDPrimaryKeyMixin):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
+    assignee: Mapped[User | None] = relationship("User", foreign_keys=[assigned_to])
+    deliverable: Mapped[Deliverable | None] = relationship("Deliverable", foreign_keys=[deliverable_id])
     messages: Mapped[list[TicketMessage]] = relationship(
         "TicketMessage", back_populates="ticket", cascade="all, delete-orphan"
     )

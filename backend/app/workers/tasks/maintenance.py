@@ -11,7 +11,7 @@ from typing import Any
 from sqlalchemy import select, text
 
 from app.db.session import async_session_factory
-from app.models.enums import AccountStatus
+from app.models.enums import AccountStatus, UserRole
 from app.models.user import ClientProfile, User
 from app.services.instagram_client import get_instagram_client
 from app.services.sla_service import breach_sweep
@@ -110,7 +110,10 @@ async def expire_stale_onboarding_async() -> int:
 async def weekly_client_reports_async() -> int:
     """Generate and dispatch weekly summary reports for all active clients."""
     async with async_session_factory() as db:
-        stmt = select(User).where(User.account_status == AccountStatus.ACTIVE)
+        stmt = select(User).where(
+            User.account_status == AccountStatus.ACTIVE,
+            User.role == UserRole.CLIENT,
+        )
         res = await db.execute(stmt)
         clients = res.scalars().all()
 

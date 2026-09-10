@@ -58,9 +58,6 @@ async def submit_questionnaire(
     quest = await onboarding_service.submit_questionnaire(db, client_id, body)
     # Synthesize brand DNA
     await brand_dna.generate_brand_dna(db, client_id, quest.id)
-    # Automatically assign creative pod and generate 30-day feasible calendar & tasks
-    from app.services.fair_dispatch_service import assign_client_and_generate_schedule
-    await assign_client_and_generate_schedule(db, client_id)
     return {"status": "ok", "message": "Questionnaire submitted successfully"}
 
 

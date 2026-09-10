@@ -29,7 +29,7 @@ from sqlalchemy.orm import aliased
 
 from app.core.cache import invalidate_user_session
 from app.core.errors import NotFound
-from app.core.rbac import Actor, AdminActor, StaffActor, TeamLeadActor
+from app.core.rbac import Actor, AdminActor, InvestorActor, SalesActor, StaffActor, TeamLeadActor
 from app.db.session import get_db
 from app.models.billing import Plan
 from app.models.enums import AccountStatus, DeliverableStatus, TicketStatus, UserRole
@@ -934,7 +934,7 @@ async def update_admin_settings(
 @router.get("/sales")
 async def get_admin_sales(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = SalesActor,
 ) -> dict[str, Any]:
     """Sales pipeline, subscription breakdowns, and custom pricing."""
     sql = text("""
@@ -957,7 +957,7 @@ async def get_admin_sales(
             "name": r[0],
             "display_name": r[1],
             "monthly_price": float(r[2] or 0),
-            "scarcity_slots": r[3] or 10,
+            "scarcity_slots": r[3] if r[3] is not None else 10,
             "active_subs": r[4] or 0,
         }
         for r in plan_rows
@@ -977,13 +977,13 @@ async def get_admin_sales(
 @router.get("/reports")
 async def get_admin_reports(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = InvestorActor,
 ) -> dict[str, Any]:
     """Executive operational reports and analytics."""
     sql = text("""
         SELECT
             COUNT(d.id) AS total_deliverables,
-            COUNT(d.id) FILTER (WHERE d.status::text = 'approved') AS approved_count,
+            COUNT(d.id) FILTER (WHERE d.status::text IN ('approved', 'scheduled', 'publishing', 'published')) AS approved_count,
             COUNT(d.id) FILTER (WHERE d.status::text = 'revision_requested') AS revision_count
         FROM deliverables d;
     """)
@@ -992,17 +992,17 @@ async def get_admin_reports(
 
     total_d = d_row[0] if d_row else 0
     approved_d = d_row[1] if d_row else 0
-    delivery_rate = round((approved_d / total_d * 100) if total_d > 0 else 94.8, 1)
+    delivery_rate = round((approved_d / total_d * 100) if total_d > 0 else 0.0, 1)
 
     # 1. Query KPI metrics from mv_exec_kpis
     kpi_res = await db.execute(
         text("SELECT mrr_minor, active_clients, churned_last_30d, avg_turnaround_hours FROM mv_exec_kpis LIMIT 1;")
     )
     kpi_row = kpi_res.fetchone()
-    mrr_inr = (kpi_row[0] / 100) if kpi_row and kpi_row[0] else 185000
-    active_clients = kpi_row[1] if kpi_row and kpi_row[1] else 4
-    raw_turnaround = float(kpi_row[3] or 31.4) if kpi_row else 31.4
-    avg_turnaround = abs(round(raw_turnaround, 1)) if raw_turnaround != 0 else 31.4
+    mrr_inr = (kpi_row[0] / 100) if kpi_row and kpi_row[0] else 0
+    active_clients = kpi_row[1] if kpi_row and kpi_row[1] else 0
+    raw_turnaround = float(kpi_row[3] or 0.0) if kpi_row else 0.0
+    avg_turnaround = abs(round(raw_turnaround, 1))
 
     # 2. Format distribution from tasks
     format_counts_res = await db.execute(
@@ -1243,17 +1243,41 @@ async def update_deliverable_status(
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> dict[str, Any]:
-    """Admin override for deliverable quality and review status."""
+    """Admin override for deliverable quality and review status with audit logging."""
     deliverable = await db.get(Deliverable, deliverable_id)
     if not deliverable:
         raise HTTPException(status_code=404, detail="Deliverable not found")
 
     try:
-        deliverable.status = DeliverableStatus(payload.status)
+        new_status = DeliverableStatus(payload.status)
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid status: {payload.status}")
 
-    await db.commit()
+    prev_status = deliverable.status
+    from app.services.deliverable_state import transition
+    try:
+        await transition(
+            db,
+            deliverable,
+            new_status,
+            actor_id=actor.user_id,
+            actor_role=actor.role,
+            reason="Admin/Lead operations override",
+        )
+    except Exception as exc:
+        deliverable.status = new_status
+        audit = AuditLog(
+            actor_id=actor.user_id,
+            actor_role=actor.role,
+            entity="deliverable",
+            entity_id=deliverable.id,
+            action="admin_status_override",
+            from_value={"status": prev_status.value if hasattr(prev_status, "value") else str(prev_status)},
+            to_value={"status": new_status.value, "reason": str(exc)},
+        )
+        db.add(audit)
+        await db.commit()
+
     await db.refresh(deliverable)
     return {"status": "updated", "id": str(deliverable_id), "new_status": deliverable.status.value}
 
@@ -1473,27 +1497,109 @@ async def get_admin_calendar(
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> list[dict[str, Any]]:
-    """Retrieve content calendar scheduled deliverables from DB."""
-    stmt = (
+    """Retrieve content calendar scheduled deliverables and publication entries from DB."""
+    events: list[dict[str, Any]] = []
+    seen_deliverable_ids = set()
+
+    # 1. Query ContentCalendar entries joined with Client, Profile, Task, Deliverable
+    cal_stmt = (
+        select(
+            ContentCalendar,
+            User.email,
+            ClientProfile.company_name,
+            Deliverable,
+            Task.deliverable_type,
+        )
+        .join(User, User.id == ContentCalendar.client_id)
+        .outerjoin(ClientProfile, ClientProfile.user_id == ContentCalendar.client_id)
+        .outerjoin(Deliverable, Deliverable.id == ContentCalendar.deliverable_id)
+        .outerjoin(Task, Task.id == Deliverable.task_id)
+        .order_by(ContentCalendar.publish_date.asc(), ContentCalendar.scheduled_time.asc().nulls_last())
+        .limit(500)
+    )
+    cal_res = await db.execute(cal_stmt)
+    cal_rows = cal_res.fetchall()
+
+    for cal, email, company_name, d, deliv_type in cal_rows:
+        if d:
+            seen_deliverable_ids.add(d.id)
+
+        client_name = company_name or email.split("@")[0].capitalize()
+        event_dt = cal.scheduled_time or datetime.combine(cal.publish_date, datetime.min.time().replace(hour=11), tzinfo=timezone.utc)
+        
+        # Determine format label
+        format_label = "Poster"
+        cap = (cal.caption or "").lower()
+        if deliv_type:
+            val = str(deliv_type.value if hasattr(deliv_type, "value") else deliv_type).lower()
+            if "reel" in val or "video" in val:
+                format_label = "Reel"
+            elif "carousel" in val or "story" in val:
+                format_label = "Story"
+            else:
+                format_label = "Poster"
+        elif "reel" in cap or "video" in cap:
+            format_label = "Reel"
+        elif "story" in cap or "carousel" in cap:
+            format_label = "Story"
+        elif d and ("video" in d.file_type.lower() or "mp4" in d.file_type.lower()):
+            format_label = "Reel"
+
+        status_str = "scheduled"
+        file_url = None
+        if d:
+            status_str = (
+                "approved"
+                if d.status.value == "approved"
+                else "scheduled"
+                if d.status.value in ["draft", "pending_approval"]
+                else d.status.value
+            )
+            file_url = (
+                storage_service.signed_get(d.file_url)
+                if (d.file_url and not (d.file_url.startswith("http://") or d.file_url.startswith("https://") or d.file_url.startswith("/static/")))
+                else d.file_url
+            )
+
+        title = cal.caption or f"{format_label} · {client_name}"
+
+        events.append({
+            "id": str(cal.id),
+            "deliverable_id": str(d.id) if d else None,
+            "client_name": client_name,
+            "title": title,
+            "type": format_label,
+            "status": status_str,
+            "date": cal.publish_date.strftime("%Y-%m-%d"),
+            "day": cal.publish_date.day,
+            "month": cal.publish_date.month,
+            "year": cal.publish_date.year,
+            "time": event_dt.strftime("%I:%M %p") if event_dt else "11:00 AM",
+            "caption": cal.caption or "",
+            "file_url": file_url,
+        })
+
+    # 2. Query standalone deliverables not yet attached to a ContentCalendar row
+    deliv_stmt = (
         select(
             Deliverable,
             Task.deliverable_type,
-            ContentCalendar.caption,
             User.email,
             ClientProfile.company_name,
         )
         .join(User, User.id == Deliverable.client_id)
         .outerjoin(Task, Task.id == Deliverable.task_id)
-        .outerjoin(ContentCalendar, ContentCalendar.deliverable_id == Deliverable.id)
         .outerjoin(ClientProfile, ClientProfile.user_id == Deliverable.client_id)
+        .where(
+            Deliverable.id.not_in(seen_deliverable_ids) if seen_deliverable_ids else True
+        )
         .order_by(Deliverable.scheduled_at.asc().nulls_last(), Deliverable.created_at.asc())
-        .limit(300)
+        .limit(200)
     )
-    res = await db.execute(stmt)
-    rows = res.fetchall()
+    deliv_res = await db.execute(deliv_stmt)
+    deliv_rows = deliv_res.fetchall()
 
-    events = []
-    for d, deliv_type, caption, email, company_name in rows:
+    for d, deliv_type, email, company_name in deliv_rows:
         client_name = company_name or email.split("@")[0].capitalize()
         event_date = d.scheduled_at or d.created_at
         format_label = "Reel"
@@ -1512,10 +1618,11 @@ async def get_admin_calendar(
         else:
             format_label = "Poster"
 
-        title = caption or f"{format_label} · {client_name}"
+        title = f"{format_label} · {client_name}"
 
         events.append({
             "id": str(d.id),
+            "deliverable_id": str(d.id),
             "client_name": client_name,
             "title": title,
             "type": format_label,
@@ -1525,13 +1632,14 @@ async def get_admin_calendar(
             "month": event_date.month if event_date else 1,
             "year": event_date.year if event_date else 2026,
             "time": event_date.strftime("%I:%M %p") if event_date else "11:00 AM",
-            "caption": caption or "",
+            "caption": "",
             "file_url": (
                 storage_service.signed_get(d.file_url)
                 if (d.file_url and not (d.file_url.startswith("http://") or d.file_url.startswith("https://") or d.file_url.startswith("/static/")))
                 else d.file_url
             ),
         })
+
     return events
 
 

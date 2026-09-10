@@ -23,7 +23,7 @@ from pydantic import BaseModel
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import Forbidden, NotFound
+from app.core.errors import Conflict, Forbidden, NotFound
 from app.core.rbac import (
     Actor,
     StaffActor,
@@ -31,10 +31,10 @@ from app.core.rbac import (
 )
 from app.db.session import get_db
 from app.models.billing import Plan, Subscription
-from app.models.enums import DeliverableType, SubscriptionStatus, TaskStatus, UserRole
+from app.models.enums import DeliverableStatus, DeliverableType, SubscriptionStatus, TaskStatus, UserRole
 from app.models.ops import AuditLog
 from app.models.user import User
-from app.models.work import Task
+from app.models.work import Deliverable, Task
 from app.services.dispatch_service import dispatch_task
 from app.services.sla_service import breach_sweep, compute_sla_due_at
 
@@ -318,14 +318,23 @@ async def move_task(
         raise NotFound(f"Task {task_id} not found", code="TASK_NOT_FOUND")
 
     # Permission check: creatives cannot move straight to ready_to_publish without QA
-    if payload.to_status == TaskStatus.READY_TO_PUBLISH and actor.role in [
-        UserRole.EDITOR,
-        UserRole.DESIGNER,
-    ]:
-        raise Forbidden(
-            "Creatives cannot move tasks directly to ready_to_publish; team lead QA required",
-            code="UNAUTHORIZED_MOVE",
+    if payload.to_status == TaskStatus.READY_TO_PUBLISH:
+        if actor.role in [UserRole.EDITOR, UserRole.DESIGNER]:
+            raise Forbidden(
+                "Creatives cannot move tasks directly to ready_to_publish; team lead QA required",
+                code="UNAUTHORIZED_MOVE",
+            )
+        # Verify linked deliverables do not have unresolved rejections
+        deliv_res = await db.execute(
+            select(Deliverable).where(Deliverable.task_id == task_id)
         )
+        delivs = deliv_res.scalars().all()
+        for d in delivs:
+            if d.status in [DeliverableStatus.QA_REJECTED, DeliverableStatus.REVISION_REQUESTED]:
+                raise Conflict(
+                    f"Cannot move task to ready_to_publish: deliverable {d.id} has unresolved status ({d.status.value})",
+                    code="DELIVERABLE_NOT_APPROVED",
+                )
 
     prev_status = task.status
     task.status = payload.to_status

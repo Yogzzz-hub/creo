@@ -1,4 +1,4 @@
-import { Check, CheckCircle2, MessageSquare, X } from "lucide-react";
+import { Check, CheckCircle2, LifeBuoy, MessageSquare, X } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import type { DeliverableItem } from "../../types/api";
 
@@ -148,6 +148,27 @@ export function DecisionDock({
               <MessageSquare size={16} style={{ color: "var(--color-waiting)" }} />
               Ask for changes
             </button>
+
+            <a
+              href={`/portal/support?deliverableId=${deliverable.id}`}
+              style={{
+                padding: "8px 14px",
+                borderRadius: 8,
+                backgroundColor: "rgba(43, 123, 196, 0.15)",
+                border: "1px solid rgba(43, 123, 196, 0.4)",
+                color: "#93C5FD",
+                fontWeight: 500,
+                fontSize: "0.875rem",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                textDecoration: "none",
+              }}
+            >
+              <LifeBuoy size={16} />
+              Open Ticket
+            </a>
 
             <button
               type="button"

@@ -356,6 +356,7 @@ CREATE TABLE IF NOT EXISTS tickets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     client_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
     assigned_to UUID REFERENCES users(id),
+    deliverable_id UUID REFERENCES deliverables(id) ON DELETE SET NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     status ticket_status DEFAULT 'open' NOT NULL,
@@ -500,25 +501,37 @@ WHERE u.role = 'client';
 
 -- 5.2 EXECUTIVE KPI MATERIALIZED VIEW
 CREATE MATERIALIZED VIEW IF NOT EXISTS mv_exec_kpis AS
+WITH sub_stats AS (
+    SELECT
+        COALESCE(
+            SUM(p.price_minor) FILTER (WHERE s.status IN ('trialing', 'active')),
+            0
+        )::BIGINT AS mrr_minor,
+        COUNT(DISTINCT s.client_id) FILTER (
+            WHERE s.status IN ('trialing', 'active')
+        )::INT AS active_clients,
+        COUNT(DISTINCT s.client_id) FILTER (
+            WHERE s.status = 'canceled' AND s.current_period_end >= NOW() - INTERVAL '30 days'
+        )::INT AS churned_last_30d
+    FROM subscriptions s
+    JOIN plans p ON p.id = s.plan_id
+),
+deliv_stats AS (
+    SELECT
+        COALESCE(
+            AVG(EXTRACT(EPOCH FROM (d.approved_at - d.created_at)) / 3600.0)
+            FILTER (WHERE d.status IN ('approved', 'published') AND d.approved_at IS NOT NULL),
+            0.0
+        )::FLOAT AS avg_turnaround_hours
+    FROM deliverables d
+)
 SELECT
     NOW() AS refreshed_at,
-    COALESCE(
-        SUM(p.price_minor) FILTER (WHERE s.status IN ('trialing', 'active')),
-        0
-    )::BIGINT AS mrr_minor,
-    COUNT(DISTINCT s.client_id) FILTER (
-        WHERE s.status IN ('trialing', 'active')
-    )::INT AS active_clients,
-    COUNT(DISTINCT s.client_id) FILTER (
-        WHERE s.status = 'canceled' AND s.current_period_end >= NOW() - INTERVAL '30 days'
-    )::INT AS churned_last_30d,
-    COALESCE(
-        AVG(EXTRACT(EPOCH FROM (d.approved_at - d.created_at)) / 3600.0)
-        FILTER (WHERE d.status IN ('approved', 'published') AND d.approved_at IS NOT NULL),
-        0.0
-    )::FLOAT AS avg_turnaround_hours
-FROM plans p
-LEFT JOIN subscriptions s ON s.plan_id = p.id
-LEFT JOIN deliverables d ON d.client_id = s.client_id;
+    COALESCE(sub_stats.mrr_minor, 0)::BIGINT AS mrr_minor,
+    COALESCE(sub_stats.active_clients, 0)::INT AS active_clients,
+    COALESCE(sub_stats.churned_last_30d, 0)::INT AS churned_last_30d,
+    COALESCE(deliv_stats.avg_turnaround_hours, 0.0)::FLOAT AS avg_turnaround_hours
+FROM sub_stats
+CROSS JOIN deliv_stats;
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_mv_exec_kpis_snapshot ON mv_exec_kpis(refreshed_at);

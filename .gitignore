@@ -68,3 +68,10 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Uploaded deliverables & media
+backend/app/static/uploads/*
+!backend/app/static/uploads/.gitkeep
+!backend/app/static/uploads/deliverables/
+backend/app/static/uploads/deliverables/*
+!backend/app/static/uploads/deliverables/.gitkeep

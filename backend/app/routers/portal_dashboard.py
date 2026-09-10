@@ -28,7 +28,10 @@ async def get_portal_dashboard(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Fetch aggregated real-time dashboard data for a client."""
-    target_client_id = client_id or actor.client_id or actor.user_id
+    if actor.role == "client":
+        target_client_id = actor.client_id or actor.user_id
+    else:
+        target_client_id = client_id or actor.client_id or actor.user_id
 
     # If default actor ID was used and no client_id query param, pick the first client with deliverables
     if str(target_client_id) == "00000000-0000-0000-0000-000000000001":
@@ -323,10 +326,19 @@ async def change_password(
 
     client_id = actor.client_id or actor.user_id
     user = await db.get(User, client_id)
-    if user:
-        from app.core.security import hash_password
-        user.hashed_password = hash_password(new_pass)
-        await db.commit()
+    if not user:
+        return {"status": "error", "message": "User not found."}
+
+    from app.core.security import hash_password, verify_password, validate_password_strength
+    if user.hashed_password and not verify_password(current_pass, user.hashed_password):
+        return {"status": "error", "message": "Current password is incorrect."}
+
+    valid, err = validate_password_strength(new_pass)
+    if not valid:
+        return {"status": "error", "message": err}
+
+    user.hashed_password = hash_password(new_pass)
+    await db.commit()
 
     return {"status": "success", "message": "Password changed successfully."}
 

@@ -23,7 +23,11 @@ async def get_calendar_entries(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict[str, Any]]:
     """Retrieve scheduled and published content calendar entries with format metadata."""
-    target_client_id = client_id or actor.client_id or actor.user_id
+    if actor.role == "client":
+        target_client_id = actor.client_id or actor.user_id
+    else:
+        actual_client_id = client_id if isinstance(client_id, uuid.UUID) else None
+        target_client_id = actual_client_id or actor.client_id or actor.user_id
 
     # If client role, require active, unexpired subscription
     if actor.role == "client":

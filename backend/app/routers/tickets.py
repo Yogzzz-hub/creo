@@ -23,6 +23,8 @@ class CreateTicketRequest(BaseModel):
     title: str = Field(..., min_length=3, max_length=255)
     description: str = Field(..., min_length=5)
     priority: TicketPriority = TicketPriority.MEDIUM
+    assigned_to: uuid.UUID | None = None
+    deliverable_id: uuid.UUID | None = None
 
 
 class CreateTicketMessageRequest(BaseModel):
@@ -36,16 +38,30 @@ async def list_tickets(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict[str, Any]]:
     """List tickets for the current client or all tickets for agency staff."""
-    target_client_id = client_id or actor.client_id or actor.user_id
+    if actor.role == "client":
+        target_client_id = actor.client_id or actor.user_id
+    else:
+        target_client_id = client_id or actor.client_id or actor.user_id
 
     stmt = (
         select(Ticket)
-        .options(selectinload(Ticket.messages))
+        .options(
+            selectinload(Ticket.messages),
+            selectinload(Ticket.assignee),
+            selectinload(Ticket.deliverable),
+        )
         .where(Ticket.client_id == target_client_id)
         .order_by(Ticket.created_at.desc())
     )
     res = await db.execute(stmt)
     tickets = res.scalars().all()
+
+    def get_deliv_title(d: Any) -> str | None:
+        if not d:
+            return None
+        ft = getattr(d, "file_type", "") or ""
+        deliv_type = "Reel" if "video" in ft.lower() else "Deliverable"
+        return f"{deliv_type} (v{d.version})"
 
     return [
         {
@@ -56,6 +72,13 @@ async def list_tickets(
             "priority": t.priority.value,
             "created_at": t.created_at.isoformat() if t.created_at else None,
             "message_count": len(t.messages),
+            "assigned_to": str(t.assigned_to) if t.assigned_to else None,
+            "assignee_name": t.assignee.full_name or t.assignee.email if t.assignee else None,
+            "assignee_role": t.assignee.role.value if t.assignee and hasattr(t.assignee.role, "value") else (str(t.assignee.role) if t.assignee else None),
+            "deliverable_id": str(t.deliverable_id) if t.deliverable_id else None,
+            "deliverable_title": get_deliv_title(t.deliverable),
+            "deliverable_file_url": t.deliverable.file_url if t.deliverable else None,
+            "deliverable_file_type": t.deliverable.file_type if t.deliverable else None,
         }
         for t in tickets
     ]
@@ -76,10 +99,26 @@ async def create_ticket(
         description=payload.description,
         priority=payload.priority,
         status=TicketStatus.OPEN,
+        assigned_to=payload.assigned_to,
+        deliverable_id=payload.deliverable_id,
     )
     db.add(ticket)
     await db.commit()
     await db.refresh(ticket)
+
+    # Alert assigned specialist if specified
+    if payload.assigned_to:
+        from app.models.ops import Notification
+        db.add(
+            Notification(
+                user_id=payload.assigned_to,
+                title="🎫 New Support Request Assigned",
+                message=f"New support ticket '{payload.title}' was assigned to you by client.",
+                link="/admin/support",
+                is_read=False,
+            )
+        )
+        await db.commit()
 
     return {
         "id": str(ticket.id),
@@ -87,6 +126,8 @@ async def create_ticket(
         "description": ticket.description,
         "status": ticket.status.value,
         "priority": ticket.priority.value,
+        "assigned_to": str(ticket.assigned_to) if ticket.assigned_to else None,
+        "deliverable_id": str(ticket.deliverable_id) if ticket.deliverable_id else None,
         "created_at": ticket.created_at.isoformat(),
     }
 
@@ -100,13 +141,27 @@ async def get_ticket(
     """Get ticket detail and threaded chat messages."""
     stmt = (
         select(Ticket)
-        .options(selectinload(Ticket.messages))
+        .options(
+            selectinload(Ticket.messages),
+            selectinload(Ticket.assignee),
+            selectinload(Ticket.deliverable),
+        )
         .where(Ticket.id == ticket_id)
     )
     res = await db.execute(stmt)
     ticket = res.scalar_one_or_none()
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
+
+    client_id = actor.client_id or actor.user_id
+    if actor.role == "client" and ticket.client_id != client_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this ticket")
+
+    deliv_title = None
+    if ticket.deliverable:
+        ft = getattr(ticket.deliverable, "file_type", "") or ""
+        dtype = "Reel" if "video" in ft.lower() else "Deliverable"
+        deliv_title = f"{dtype} (v{ticket.deliverable.version})"
 
     return {
         "id": str(ticket.id),
@@ -115,6 +170,13 @@ async def get_ticket(
         "status": ticket.status.value,
         "priority": ticket.priority.value,
         "created_at": ticket.created_at.isoformat(),
+        "assigned_to": str(ticket.assigned_to) if ticket.assigned_to else None,
+        "assignee_name": ticket.assignee.full_name or ticket.assignee.email if ticket.assignee else None,
+        "assignee_role": ticket.assignee.role.value if ticket.assignee and hasattr(ticket.assignee.role, "value") else (str(ticket.assignee.role) if ticket.assignee else None),
+        "deliverable_id": str(ticket.deliverable_id) if ticket.deliverable_id else None,
+        "deliverable_title": deliv_title,
+        "deliverable_file_url": ticket.deliverable.file_url if ticket.deliverable else None,
+        "deliverable_file_type": ticket.deliverable.file_type if ticket.deliverable else None,
         "messages": [
             {
                 "id": str(m.id),
@@ -140,6 +202,10 @@ async def add_ticket_message(
     ticket = res.scalar_one_or_none()
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
+
+    client_id = actor.client_id or actor.user_id
+    if actor.role == "client" and ticket.client_id != client_id:
+        raise HTTPException(status_code=403, detail="Not authorized to reply to this ticket")
 
     msg = TicketMessage(
         ticket_id=ticket.id,

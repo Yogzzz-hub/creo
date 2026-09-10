@@ -33,8 +33,18 @@ def run_async_safe(coro: Any) -> Any:
 
 
 async def dispatch_due_publishes_async() -> list[uuid.UUID]:
-    """Atomically claim due scheduled deliverables using FOR UPDATE SKIP LOCKED."""
+    """Atomically claim due scheduled deliverables using FOR UPDATE SKIP LOCKED and recover stale claims."""
     async with async_session_factory() as db:
+        # Recover stale claims: reset deliverables stranded in 'publishing' for > 30 minutes back to 'scheduled'
+        stale_query = text("""
+            UPDATE deliverables
+               SET status = 'scheduled', updated_at = now()
+             WHERE status = 'publishing'
+               AND updated_at < now() - INTERVAL '30 minutes';
+        """)
+        await db.execute(stale_query)
+        await db.commit()
+
         # Atomic claim query per CLAUDE.md Invariant 19 and BUILD-PROMPTS.md Phase 6
         query = text("""
             UPDATE deliverables
@@ -63,8 +73,14 @@ async def dispatch_due_publishes_async() -> list[uuid.UUID]:
                 try:
                     publish_deliverable_task.apply_async((str(deliv_id),), retry=False)
                 except Exception as e:
-                    # In test environments where Celery broker may not be running, log warning
-                    logger.warning("Could not enqueue publish task via Celery broker: %s", e)
+                    logger.warning("Could not enqueue publish task via Celery broker: %s. Reverting status to scheduled.", e)
+                    revert_query = text("""
+                        UPDATE deliverables
+                           SET status = 'scheduled', updated_at = now()
+                         WHERE id = :deliv_id AND status = 'publishing';
+                    """)
+                    await db.execute(revert_query, {"deliv_id": deliv_id})
+                    await db.commit()
 
         return claimed_ids
 

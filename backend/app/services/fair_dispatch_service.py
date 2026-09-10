@@ -176,11 +176,14 @@ async def assign_client_and_generate_schedule(
         {"cid": client_id},
     )
     await db.execute(
+        text("UPDATE deliverables SET task_id = NULL WHERE client_id = :cid;"),
+        {"cid": client_id},
+    )
+    await db.execute(
         text("""
             DELETE FROM deliverables 
             WHERE client_id = :cid 
-              AND status IN ('draft', 'pending_approval')
-              AND task_id IS NOT NULL;
+              AND status IN ('draft', 'pending_approval');
         """),
         {"cid": client_id},
     )
@@ -244,7 +247,8 @@ async def assign_client_and_generate_schedule(
 
     # 6. Generate Feasible Calendar Schedule (Working Days, Staggered Cadence, SLA Buffer)
     today = date.today()
-    start_business_day = _add_business_days(today, 1)
+    # Minimum 3 business days lead buffer so task due dates (pub_date - 2 business days) are strictly tomorrow or later
+    start_business_day = _add_business_days(today, 3)
 
     # We will schedule assets across 4 production weeks (Monday through Friday)
     # Deliverables schedule:

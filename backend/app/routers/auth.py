@@ -194,11 +194,8 @@ async def verify_registration(
     if res.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="An account with this email address already exists.")
 
+    # Public registration is strictly CLIENT; staff/admin must be invited or provisioned
     assigned_role = UserRole.CLIENT
-    if email_clean.endswith("@creo.agency") or email_clean.startswith("admin@") or "admin" in email_clean:
-        assigned_role = UserRole.SUPER_ADMIN
-    elif email_clean.startswith("team@") or email_clean.startswith("editor@") or email_clean.startswith("lead@"):
-        assigned_role = UserRole.TEAM_LEAD
 
     hashed_pw = hash_password(payload.password)
     user = User(

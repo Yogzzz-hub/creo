@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import Depends, HTTPException, status
-from sqlalchemy import select, text
+from sqlalchemy import case, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
@@ -73,7 +73,10 @@ async def check_client_subscription(
         select(Subscription, Plan)
         .join(Plan, Subscription.plan_id == Plan.id)
         .where(Subscription.client_id == client_id)
-        .order_by(Subscription.created_at.desc())
+        .order_by(
+            case((Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]), 0), else_=1).asc(),
+            Subscription.created_at.desc(),
+        )
         .limit(1)
     )
     res = await db.execute(stmt)

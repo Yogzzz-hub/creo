@@ -336,7 +336,7 @@ export function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer"]}
+                  allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer", "sales", "investor_relations"]}
                 >
                   <OpsLayout />
                 </ProtectedRoute>

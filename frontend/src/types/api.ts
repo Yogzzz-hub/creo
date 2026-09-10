@@ -169,3 +169,23 @@ export interface Announcement {
   author?: string;
   created_at: string | null;
 }
+
+// ── Support Tickets ─────────────────────────────────────────────────────────
+
+export interface TicketItem {
+  id: string;
+  title: string;
+  description: string;
+  status: "open" | "in_progress" | "resolved" | "closed";
+  priority: "low" | "medium" | "high" | "urgent";
+  created_at: string;
+  message_count?: number;
+  assigned_to?: string | null;
+  assignee_name?: string | null;
+  assignee_role?: string | null;
+  deliverable_id?: string | null;
+  deliverable_title?: string | null;
+  deliverable_file_url?: string | null;
+  deliverable_file_type?: string | null;
+}
+

@@ -32,6 +32,7 @@ async def consume(db: AsyncSession, client_id: uuid.UUID, kind: DeliverableType)
         ValueError: When no usage_counter row exists for this client/kind/period.
     """
     today = date.today()
+    effective_kind = DeliverableType.CAROUSEL if kind == DeliverableType.STORY else kind
     stmt = text("""
         UPDATE usage_counters
            SET used = used + 1
@@ -44,7 +45,7 @@ async def consume(db: AsyncSession, client_id: uuid.UUID, kind: DeliverableType)
     """)
     result = await db.execute(
         stmt,
-        {"client_id": client_id, "kind": kind.value, "today": today},
+        {"client_id": client_id, "kind": effective_kind.value, "today": today},
     )
     row = result.fetchone()
     if row is None:
@@ -60,7 +61,7 @@ async def consume(db: AsyncSession, client_id: uuid.UUID, kind: DeliverableType)
         """)
         check_res = await db.execute(
             check_stmt,
-            {"client_id": client_id, "kind": kind.value, "today": today},
+            {"client_id": client_id, "kind": effective_kind.value, "today": today},
         )
         counter_row = check_res.fetchone()
         if counter_row is not None:
@@ -75,7 +76,54 @@ async def consume(db: AsyncSession, client_id: uuid.UUID, kind: DeliverableType)
                     "remaining": 0,
                 },
             )
-        # No row at all — this shouldn't happen in normal flow after payment activation
+
+        # Check if the client has an active subscription and auto-seed the monthly counters
+        from app.services.subscription_guard import check_client_subscription
+        sub_check = await check_client_subscription(db, client_id)
+        if sub_check.get("is_active") and sub_check.get("plan"):
+            plan = sub_check["plan"]
+            from datetime import timedelta
+            from sqlalchemy.dialects.postgresql import insert as pg_insert
+            from app.models.billing import UsageCounter
+
+            period_start = today.replace(day=1)
+            if period_start.month == 12:
+                period_end = date(period_start.year + 1, 1, 1) - timedelta(days=1)
+            else:
+                period_end = date(period_start.year, period_start.month + 1, 1) - timedelta(days=1)
+
+            for k, q in [
+                (DeliverableType.REEL, plan.reel_quota),
+                (DeliverableType.CAROUSEL, plan.story_quota),
+                (DeliverableType.STATIC_POST, plan.poster_quota),
+            ]:
+                c_stmt = (
+                    pg_insert(UsageCounter)
+                    .values(
+                        id=uuid.uuid4(),
+                        client_id=client_id,
+                        period_start=period_start,
+                        period_end=period_end,
+                        kind=k,
+                        quota=q,
+                        used=0,
+                    )
+                    .on_conflict_do_nothing(index_elements=["client_id", "period_start", "kind"])
+                )
+                await db.execute(c_stmt)
+            await db.commit()
+
+            # Retry atomic increment
+            retry_res = await db.execute(
+                stmt,
+                {"client_id": client_id, "kind": effective_kind.value, "today": today},
+            )
+            retry_row = retry_res.fetchone()
+            if retry_row is not None:
+                await db.commit()
+                return
+
+        # No active subscription or uninitialized counter
         raise QuotaExceeded(
             f"No usage counter found for {kind.value} — ensure subscription is active",
             code="QUOTA_NOT_INITIALIZED",
@@ -93,6 +141,7 @@ async def release(db: AsyncSession, client_id: uuid.UUID, kind: DeliverableType)
         kind: The deliverable type to release.
     """
     today = date.today()
+    effective_kind = DeliverableType.CAROUSEL if kind == DeliverableType.STORY else kind
     stmt = text("""
         UPDATE usage_counters
            SET used = used - 1
@@ -105,7 +154,7 @@ async def release(db: AsyncSession, client_id: uuid.UUID, kind: DeliverableType)
     """)
     result = await db.execute(
         stmt,
-        {"client_id": client_id, "kind": kind.value, "today": today},
+        {"client_id": client_id, "kind": effective_kind.value, "today": today},
     )
     if result.fetchone() is None:
         # used was already 0, ignore silently — idempotent cancellation

@@ -150,10 +150,15 @@ async def execute_publish_deliverable_async(
                 if deliverable.file_type.lower() in ("video/mp4", "mp4", "reel")
                 else "IMAGE"
             )
+            from app.services import storage_service
+            public_file_url = deliverable.file_url
+            if public_file_url and not (public_file_url.startswith("http://") or public_file_url.startswith("https://")):
+                public_file_url = storage_service.signed_get(public_file_url, expires_in=3600)
+
             creation_id = await ig_client.create_media_container(
                 ig_user_id=ig_user_id,
                 media_type=media_type,
-                file_url=deliverable.file_url,
+                file_url=public_file_url,
                 caption=f"Release {deliverable.id}",
                 thumb_offset=0,
             )
