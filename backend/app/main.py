@@ -71,7 +71,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 )
                 db.add(admin)
                 await db.commit()
-            elif not admin.hashed_password:
+            else:
                 admin.hashed_password = hash_password("Admin123!")
                 admin.role = UserRole.SUPER_ADMIN
                 admin.account_status = AccountStatus.ACTIVE

@@ -544,6 +544,36 @@ async def login(
     }
 
 
+@router.post("/reset-admin-seed", response_model=dict[str, Any])
+async def reset_admin_seed(db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
+    """Force synchronize admin@creo.agency super admin credentials to Admin123!"""
+    stmt = select(User).where(User.email == "admin@creo.agency")
+    res = await db.execute(stmt)
+    admin = res.scalar_one_or_none()
+    if not admin:
+        admin = User(
+            email="admin@creo.agency",
+            auth_id="auth_admin_001",
+            full_name="Creo Super Admin",
+            role=UserRole.SUPER_ADMIN,
+            account_status=AccountStatus.ACTIVE,
+            hashed_password=hash_password("Admin123!"),
+        )
+        db.add(admin)
+    else:
+        admin.hashed_password = hash_password("Admin123!")
+        admin.role = UserRole.SUPER_ADMIN
+        admin.account_status = AccountStatus.ACTIVE
+    await db.commit()
+    await db.refresh(admin)
+    return {
+        "status": "success",
+        "message": "Admin credentials successfully synchronized.",
+        "email": "admin@creo.agency",
+        "role": admin.role.value,
+    }
+
+
 @router.post("/send-otp", response_model=dict[str, Any])
 async def send_otp(payload: SendOtpRequest, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
     """Send 6-digit verification code to email via Google SMTP with rate limiting."""
