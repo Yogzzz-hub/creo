@@ -42,6 +42,8 @@ import {
   Smartphone,
   Sliders,
   Shield,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   fetchClientRoster,
@@ -1517,6 +1519,8 @@ export function AdminDeliverablesPage() {
 export function AdminTasksPage() {
   const [queue, setQueue] = useState<AdminQueueData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     fetchAdminQueue(undefined, "admin")
@@ -1524,6 +1528,21 @@ export function AdminTasksPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  const allTasks = queue?.backlog || [];
+  const filteredTasks = allTasks.filter((task) => {
+    if (filterStatus !== "all" && (task.status || "in_production") !== filterStatus) {
+      return false;
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const client = (task.client_company || task.client_email || "").toLowerCase();
+      const assignee = (task.assignee_name || task.assignee_email || "").toLowerCase();
+      const deliv = (task.deliverable_type || "").toLowerCase();
+      return client.includes(q) || assignee.includes(q) || deliv.includes(q);
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-6">
@@ -1534,20 +1553,20 @@ export function AdminTasksPage() {
             <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">Task Dispatch Queue</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Workload distribution, creative assignments, and SLA deadlines
+            Workload distribution, creative pod assignments, and SLA production deadlines
           </p>
         </div>
         <Link
           to="/dashboard"
           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#2B7BC4] text-white text-xs font-semibold hover:bg-[#1A5EA8] transition-colors shadow-xs"
         >
-          Open Kanban Board →
+          Open Creative Kanban →
         </Link>
       </div>
 
       {/* Staff Capacity Grid */}
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-        <h3 className="text-sm font-bold text-[#0D2137] mb-4">Creative Staff Workload & WIP</h3>
+        <h3 className="text-sm font-bold text-[#0D2137] mb-4">Creative Pod Staff Workload & Headroom</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {(queue?.staff || []).map((member) => {
             const ratio = (member.active_wip / Math.max(member.daily_capacity, 1)) * 100;
@@ -1557,8 +1576,12 @@ export function AdminTasksPage() {
                 className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-xs text-[#0D2137]">{member.full_name || member.email}</span>
-                  <span className="text-[10px] uppercase font-bold text-slate-500">{member.department}</span>
+                  <span className="font-semibold text-xs text-[#0D2137] truncate max-w-[140px]" title={member.full_name || member.email}>
+                    {member.full_name || member.email}
+                  </span>
+                  <span className="text-[10px] uppercase font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                    {member.department}
+                  </span>
                 </div>
                 <div className="flex justify-between text-[11px] text-slate-500">
                   <span>Active WIP:</span>
@@ -1568,7 +1591,7 @@ export function AdminTasksPage() {
                 </div>
                 <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${
+                    className={`h-full rounded-full transition-all ${
                       ratio >= 100 ? "bg-rose-500" : ratio >= 70 ? "bg-amber-500" : "bg-emerald-500"
                     }`}
                     style={{ width: `${Math.min(ratio, 100)}%` }}
@@ -1580,13 +1603,45 @@ export function AdminTasksPage() {
         </div>
       </div>
 
-      {/* Backlog Table */}
+      {/* Pipeline Tasks Table */}
       <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/50 font-bold text-xs text-[#0D2137] flex justify-between items-center">
-          <span>Active Pipeline Tasks</span>
-          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-[#2B7BC4] border border-blue-100">
-            {queue?.backlog.length || 0} items
-          </span>
+        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-sm text-[#0D2137]">Active Pipeline Tasks</span>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-[#2B7BC4] border border-blue-100">
+              {filteredTasks.length} {filteredTasks.length === 1 ? "task" : "tasks"}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search client or assignee..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#2B7BC4] w-48 sm:w-60"
+              />
+            </div>
+
+            <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-xs">
+              {(["all", "in_production", "internal_qa", "backlog"] as const).map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setFilterStatus(st)}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold capitalize transition-all cursor-pointer ${
+                    filterStatus === st
+                      ? "bg-[#2B7BC4] text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  }`}
+                >
+                  {st === "all" ? "All" : st.replace("_", " ")}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Mobile Task Cards (< 768px) */}
@@ -1596,21 +1651,35 @@ export function AdminTasksPage() {
               <Loader2 className="size-5 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
               Loading task queue...
             </div>
-          ) : (queue?.backlog || []).length === 0 ? (
+          ) : filteredTasks.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-500">
-              No tasks currently in backlog.
+              No tasks match the active filter.
             </div>
           ) : (
-            (queue?.backlog || []).slice(0, 15).map((task) => (
+            filteredTasks.slice(0, 25).map((task) => (
               <div key={task.id} className="p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-[#0D2137]">{task.client_company || "Agency Client"}</span>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase bg-blue-50 text-[#2B7BC4] border border-blue-100 font-mono">
+                  <span className="font-bold text-sm text-[#0D2137]">{task.client_company || task.client_email || "Agency Client"}</span>
+                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono ${
+                    task.deliverable_type === "reel"
+                      ? "bg-purple-50 text-purple-700 border border-purple-200"
+                      : task.deliverable_type === "static_post" || task.deliverable_type === "poster"
+                      ? "bg-blue-50 text-blue-700 border border-blue-200"
+                      : "bg-amber-50 text-amber-700 border border-amber-200"
+                  }`}>
                     {task.deliverable_type}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span className="font-mono text-[11px]">#{task.id.slice(0, 8)}</span>
+                  <span className="font-medium text-slate-700">
+                    👤 {task.assignee_name || "Unassigned"} {task.assignee_role ? `(${task.assignee_role})` : ""}
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-slate-100 text-slate-600">
+                    {task.status || "In Production"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono pt-1">
+                  <span>#{task.id.slice(0, 8)}</span>
                   <span>Due: <strong className="text-[#0D2137]">{task.sla_due_at ? new Date(task.sla_due_at).toLocaleDateString() : "Immediate"}</strong></span>
                 </div>
               </div>
@@ -1624,28 +1693,67 @@ export function AdminTasksPage() {
             <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200">
               <tr>
                 <th className="px-5 py-3">Task ID</th>
-                <th className="px-5 py-3">Client Company</th>
-                <th className="px-5 py-3">Deliverable Type</th>
+                <th className="px-5 py-3">Client</th>
+                <th className="px-5 py-3">Deliverable</th>
+                <th className="px-5 py-3">Assigned Member</th>
+                <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">SLA Due</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-6 text-center text-slate-400">
+                  <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
+                    <Loader2 className="size-5 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
                     Loading task queue...
                   </td>
                 </tr>
-              ) : (queue?.backlog || []).slice(0, 15).map((task) => (
-                <tr key={task.id} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="px-5 py-3 font-mono text-xs text-[#0D2137]">#{task.id.slice(0, 8)}</td>
-                  <td className="px-5 py-3 font-semibold text-[#0D2137]">{task.client_company || "Agency Client"}</td>
-                  <td className="px-5 py-3 font-mono text-[11px] uppercase font-bold text-[#2B7BC4]">{task.deliverable_type}</td>
-                  <td className="px-5 py-3 font-mono text-slate-500">
-                    {task.sla_due_at ? new Date(task.sla_due_at).toLocaleDateString() : "Immediate"}
+              ) : filteredTasks.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
+                    No tasks match the active filter.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredTasks.slice(0, 35).map((task) => (
+                  <tr key={task.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="px-5 py-3 font-mono text-xs text-[#0D2137]">#{task.id.slice(0, 8)}</td>
+                    <td className="px-5 py-3 font-semibold text-[#0D2137]">
+                      <div>{task.client_company || "Agency Client"}</div>
+                      {task.client_email && <div className="text-[10px] text-slate-400 font-normal">{task.client_email}</div>}
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono border ${
+                        task.deliverable_type === "reel"
+                          ? "bg-purple-50 text-purple-700 border-purple-200"
+                          : task.deliverable_type === "static_post" || task.deliverable_type === "poster"
+                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                          : "bg-amber-50 text-amber-700 border-amber-200"
+                      }`}>
+                        {task.deliverable_type}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="font-semibold text-slate-800">{task.assignee_name || "Unassigned"}</div>
+                      <div className="text-[10px] text-slate-400 capitalize">{task.assignee_role || "Creative Pod"}</div>
+                    </td>
+                    <td className="px-5 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                        task.status === "ready_to_publish" || task.status === "completed"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : task.status === "internal_qa"
+                          ? "bg-amber-50 text-amber-700 border border-amber-200"
+                          : "bg-blue-50 text-[#2B7BC4] border border-blue-200"
+                      }`}>
+                        {(task.status || "in_production").replace("_", " ")}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3 font-mono text-slate-600">
+                      {task.sla_due_at ? new Date(task.sla_due_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "Immediate"}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -1657,11 +1765,21 @@ export function AdminTasksPage() {
 // ─────────────────────────────────────────────────────────────────────────────
 // 4. ADMIN CALENDAR PAGE
 // ─────────────────────────────────────────────────────────────────────────────
+const CALENDAR_MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+const WEEKDAY_HEADERS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 export function AdminCalendarPage() {
+  const today = new Date();
+  const [currentYear, setCurrentYear] = useState<number>(today.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState<number>(today.getMonth());
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const dates = Array.from({ length: 31 }, (_, i) => i + 1);
+  const [selectedFormat, setSelectedFormat] = useState<string>("all");
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -1670,6 +1788,46 @@ export function AdminCalendarPage() {
       .catch(() => setEvents([]))
       .finally(() => setLoading(false));
   }, []);
+
+  const navigateMonth = (direction: number) => {
+    const total = currentYear * 12 + currentMonth + direction;
+    const newY = Math.floor(total / 12);
+    const newM = ((total % 12) + 12) % 12;
+    setCurrentYear(newY);
+    setCurrentMonth(newM);
+  };
+
+  const goToToday = () => {
+    setCurrentYear(today.getFullYear());
+    setCurrentMonth(today.getMonth());
+  };
+
+  // Month grid calculation
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const firstDayWeekday = new Date(currentYear, currentMonth, 1).getDay(); // 0 = Sun
+
+  const calendarCells: (number | null)[] = [];
+  for (let i = 0; i < firstDayWeekday; i++) {
+    calendarCells.push(null);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    calendarCells.push(d);
+  }
+
+  // Filter events for the active month and format
+  const monthEvents = events.filter((e) => {
+    if (!e.date) return false;
+    const d = new Date(e.date + "T00:00:00");
+    const matchesMonth = d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+    if (!matchesMonth) return false;
+    if (selectedFormat !== "all") {
+      const typeStr = (e.type || "").toLowerCase();
+      if (selectedFormat === "reel" && !typeStr.includes("reel")) return false;
+      if (selectedFormat === "poster" && !typeStr.includes("poster")) return false;
+      if (selectedFormat === "story" && !typeStr.includes("story") && !typeStr.includes("carousel")) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-6">
@@ -1680,12 +1838,60 @@ export function AdminCalendarPage() {
             <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">Content Calendar</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Master scheduling timeline across all brand accounts queried from database deliverables
+            Agency master scheduling timeline across all brand accounts and creative pods
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-[#2B7BC4] text-xs font-semibold border border-blue-200">
-            {events.length} Scheduled Deliverables
+
+        {/* Month Navigation & Format Filter */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => navigateMonth(-1)}
+              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+              title="Previous Month"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <span className="text-xs font-bold text-[#0D2137] px-2 min-w-[120px] text-center">
+              {CALENDAR_MONTHS[currentMonth]} {currentYear}
+            </span>
+            <button
+              type="button"
+              onClick={() => navigateMonth(1)}
+              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+              title="Next Month"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={goToToday}
+              className="ml-1 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+            >
+              Today
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 text-xs shadow-2xs">
+            {(["all", "reel", "poster", "story"] as const).map((fmt) => (
+              <button
+                key={fmt}
+                type="button"
+                onClick={() => setSelectedFormat(fmt)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-all cursor-pointer ${
+                  selectedFormat === fmt
+                    ? "bg-[#2B7BC4] text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                }`}
+              >
+                {fmt === "all" ? "All Formats" : fmt}
+              </button>
+            ))}
+          </div>
+
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-[#2B7BC4] text-xs font-semibold border border-blue-200">
+            {monthEvents.length} Assets Scheduled
           </span>
         </div>
       </div>
@@ -1694,8 +1900,10 @@ export function AdminCalendarPage() {
         {/* Mobile Agenda List (< 768px) */}
         <div className="block md:hidden">
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Upcoming Agenda</span>
-            <span className="text-xs font-semibold text-[#2B7BC4]">{events.length} Items</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              {CALENDAR_MONTHS[currentMonth]} {currentYear} Agenda
+            </span>
+            <span className="text-xs font-semibold text-[#2B7BC4]">{monthEvents.length} Items</span>
           </div>
 
           {loading ? (
@@ -1703,80 +1911,156 @@ export function AdminCalendarPage() {
               <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
               Loading scheduled deliverables...
             </div>
-          ) : events.length === 0 ? (
+          ) : monthEvents.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-500">
-              No deliverables scheduled for this cycle.
+              No deliverables scheduled for {CALENDAR_MONTHS[currentMonth]} {currentYear}.
             </div>
           ) : (
             <div className="space-y-3">
-              {events.slice(0, 20).map((item, idx) => (
-                <div key={item.id || idx} className="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="size-7 rounded-lg bg-[#2B7BC4] text-white flex items-center justify-center font-bold text-xs font-mono">
-                        {item.day || (item.date ? new Date(item.date).getDate() : "—")}
-                      </span>
-                      <div>
-                        <h4 className="font-bold text-xs text-[#0D2137] truncate max-w-[200px]">
-                          {item.title || `${item.type || "Content"} · ${item.client_name || "Client"}`}
-                        </h4>
-                        <span className="text-[10px] text-slate-500 font-medium">
-                          {item.time || "Scheduled"}
+              {monthEvents.map((item, idx) => {
+                const dayNum = item.date ? new Date(item.date + "T00:00:00").getDate() : item.day;
+                const typeStr = (item.type || "").toLowerCase();
+                return (
+                  <div
+                    key={item.id || idx}
+                    onClick={() => setSelectedEvent(item)}
+                    className="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer space-y-2"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="size-8 rounded-lg bg-[#2B7BC4] text-white flex items-center justify-center font-bold text-xs font-mono shrink-0">
+                          {dayNum}
                         </span>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase ${
+                              typeStr.includes("reel")
+                                ? "bg-purple-100 text-purple-700"
+                                : typeStr.includes("poster")
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-amber-100 text-amber-700"
+                            }`}>
+                              {item.type || "Asset"}
+                            </span>
+                            <h4 className="font-bold text-xs text-[#0D2137] truncate max-w-[160px]">
+                              {item.client_name || "Client"}
+                            </h4>
+                          </div>
+                          <span className="text-[10px] text-slate-500 font-medium">
+                            {item.time || "11:00 AM"} • {item.title || "Scheduled Deliverable"}
+                          </span>
+                        </div>
                       </div>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${
+                          item.status === "approved"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : "bg-blue-50 text-[#2B7BC4] border border-blue-200"
+                        }`}
+                      >
+                        {item.status || "Scheduled"}
+                      </span>
                     </div>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                        item.status === "approved"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "bg-blue-50 text-[#2B7BC4] border border-blue-200"
-                      }`}
-                    >
-                      {item.status || "Planned"}
-                    </span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* Desktop 7-Column Grid (>= 768px) */}
+        {/* Desktop 7-Column Grid (>= 768px) with Weekday Offset Padding */}
         <div className="hidden md:block">
-          <div className="grid grid-cols-7 gap-3 mb-3 text-center text-xs font-bold uppercase text-slate-400">
-            {days.map((d) => (
-              <div key={d}>{d}</div>
+          <div className="grid grid-cols-7 gap-2.5 mb-2.5 text-center text-xs font-bold uppercase text-slate-400">
+            {WEEKDAY_HEADERS.map((w) => (
+              <div key={w} className="py-1">
+                {w}
+              </div>
             ))}
           </div>
+
           {loading ? (
-            <div className="py-16 text-center text-slate-400">
+            <div className="py-20 text-center text-slate-400">
               <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
               Loading scheduled deliverables...
             </div>
           ) : (
-            <div className="grid grid-cols-7 gap-3">
-              {dates.map((date) => {
-                const dayEvents = events.filter((e) => e.day === date || (e.date && new Date(e.date).getDate() === date));
+            <div className="grid grid-cols-7 gap-2.5">
+              {calendarCells.map((dateNum, idx) => {
+                if (dateNum === null) {
+                  return (
+                    <div
+                      key={`blank-${idx}`}
+                      className="min-h-[115px] p-2 rounded-xl bg-slate-50/20 border border-slate-100/60 opacity-40 pointer-events-none"
+                    />
+                  );
+                }
+
+                const dayEvents = monthEvents.filter((e) => {
+                  const d = new Date(e.date + "T00:00:00");
+                  return d.getDate() === dateNum;
+                });
+
+                const isToday =
+                  today.getFullYear() === currentYear &&
+                  today.getMonth() === currentMonth &&
+                  today.getDate() === dateNum;
+
                 return (
                   <div
-                    key={date}
-                    className="min-h-[110px] p-2.5 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between hover:border-[#2B7BC4] transition-colors"
+                    key={`day-${dateNum}`}
+                    className={`min-h-[120px] p-2 rounded-xl border transition-all flex flex-col justify-between ${
+                      isToday
+                        ? "border-[#2B7BC4] bg-blue-50/20 shadow-xs"
+                        : "border-slate-200/80 bg-slate-50/40 hover:border-slate-300"
+                    }`}
                   >
-                    <span className="text-xs font-bold text-[#0D2137]">{date}</span>
-                    <div className="space-y-1 my-1 overflow-y-auto max-h-[80px]">
-                      {dayEvents.map((item, idx) => (
-                        <div
-                          key={item.id || idx}
-                          className={`p-1.5 rounded-md text-[10px] leading-tight border ${
-                            item.status === "approved"
-                              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                              : "bg-[#E8F4FD] border-[#C9DFF0] text-[#2B7BC4]"
-                          }`}
-                        >
-                          <div className="font-semibold truncate">{item.title || `${item.type} · ${item.client_name}`}</div>
-                          <div className="text-[9px] opacity-75">{item.time || "Scheduled"}</div>
-                        </div>
-                      ))}
+                    <div className="flex items-center justify-between mb-1">
+                      <span
+                        className={`size-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                          isToday
+                            ? "bg-[#2B7BC4] text-white"
+                            : "text-[#0D2137]"
+                        }`}
+                      >
+                        {dateNum}
+                      </span>
+                      {dayEvents.length > 0 && (
+                        <span className="text-[10px] font-bold text-slate-400">
+                          {dayEvents.length}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-1 my-1 overflow-y-auto max-h-[85px] scrollbar-thin">
+                      {dayEvents.map((item, itemIdx) => {
+                        const typeStr = (item.type || "").toLowerCase();
+                        const isReel = typeStr.includes("reel");
+                        const isPoster = typeStr.includes("poster");
+
+                        return (
+                          <div
+                            key={item.id || itemIdx}
+                            onClick={() => setSelectedEvent(item)}
+                            className={`p-1.5 rounded-lg text-[10px] leading-tight border transition-all cursor-pointer hover:scale-[1.02] ${
+                              item.status === "approved"
+                                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                                : isReel
+                                ? "bg-purple-50 border-purple-200 text-purple-800"
+                                : isPoster
+                                ? "bg-blue-50 border-blue-200 text-blue-800"
+                                : "bg-amber-50 border-amber-200 text-amber-800"
+                            }`}
+                          >
+                            <div className="font-bold truncate flex items-center gap-1">
+                              <span className="size-1.5 rounded-full shrink-0 bg-current" />
+                              <span>{item.type || "Asset"} · {item.client_name || "Client"}</span>
+                            </div>
+                            <div className="text-[9px] opacity-75 truncate mt-0.5">
+                              {item.time || "11:00 AM"}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -1785,6 +2069,99 @@ export function AdminCalendarPage() {
           )}
         </div>
       </div>
+
+      {/* Item Detail Modal / Preview Drawer */}
+      {selectedEvent && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          onClick={() => setSelectedEvent(null)}
+        >
+          <div
+            className="max-w-lg w-full rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                    (selectedEvent.type || "").toLowerCase().includes("reel")
+                      ? "bg-purple-50 text-purple-700 border border-purple-200"
+                      : "bg-blue-50 text-blue-700 border border-blue-200"
+                  }`}>
+                    {selectedEvent.type || "Asset"}
+                  </span>
+                  <span className="text-xs font-bold text-slate-500">
+                    {selectedEvent.client_name}
+                  </span>
+                </div>
+                <h3 className="font-bold text-base text-[#0D2137]">
+                  {selectedEvent.title || "Scheduled Deliverable"}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedEvent(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {/* Media Preview */}
+            {selectedEvent.file_url && (
+              <div className="rounded-xl overflow-hidden border border-slate-200 bg-black max-h-[300px] flex items-center justify-center">
+                {(selectedEvent.type || "").toLowerCase().includes("reel") || (selectedEvent.file_url || "").includes(".mp4") ? (
+                  <video
+                    src={selectedEvent.file_url}
+                    controls
+                    autoPlay
+                    muted
+                    className="max-h-[280px] w-auto mx-auto"
+                  />
+                ) : (
+                  <img
+                    src={selectedEvent.file_url}
+                    alt={selectedEvent.title}
+                    className="max-h-[280px] w-full object-contain"
+                  />
+                )}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">Scheduled Date</span>
+                <span className="font-semibold text-[#0D2137]">
+                  {selectedEvent.date} ({selectedEvent.time || "11:00 AM"})
+                </span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">Status</span>
+                <span className="font-semibold text-emerald-700 capitalize">
+                  {selectedEvent.status || "Scheduled"}
+                </span>
+              </div>
+            </div>
+
+            {selectedEvent.caption && (
+              <div className="text-xs p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-600">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1">Caption</span>
+                {selectedEvent.caption}
+              </div>
+            )}
+
+            <div className="pt-2 flex justify-end gap-2">
+              <Link
+                to="/admin/deliverables"
+                className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-white text-xs font-semibold hover:bg-[#1A5EA8] transition-colors"
+                onClick={() => setSelectedEvent(null)}
+              >
+                Inspect in Deliverables Hub →
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

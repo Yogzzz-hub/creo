@@ -36,7 +36,7 @@ from app.models.enums import AccountStatus, DeliverableStatus, TicketStatus, Use
 from app.models.ops import Announcement, AuditLog, LeaveRequest
 from app.models.support import Ticket, TicketMessage
 from app.models.user import ClientProfile, StaffProfile, User
-from app.models.work import Deliverable, Task
+from app.models.work import ContentCalendar, Deliverable, Task
 from app.services import storage_service
 
 logger = logging.getLogger(__name__)
@@ -261,28 +261,43 @@ async def get_dispatch_queue(
     actor: Actor = AdminActor,
 ) -> dict[str, Any]:
     """Global dispatch queue and staff capacity breakdown."""
-    # 1. Backlog tasks awaiting dispatch
-    backlog_res = await db.execute(
+    # 1. Backlog and active pipeline tasks awaiting dispatch or in production
+    active_res = await db.execute(
         text("""
-        SELECT t.id, t.client_id, t.deliverable_type, t.sla_due_at, t.created_at,
-               cp.company_name AS client_company
+        SELECT t.id, t.client_id, t.deliverable_type, t.status, t.due_date, t.sla_due_at, t.created_at,
+               cp.company_name AS client_company,
+               c.email AS client_email,
+               u.full_name AS assignee_name,
+               u.email AS assignee_email,
+               u.role AS assignee_role
         FROM tasks t
         LEFT JOIN client_profiles cp ON cp.user_id = t.client_id
-        WHERE t.status = 'backlog'
-        ORDER BY t.created_at ASC;
+        LEFT JOIN users c ON c.id = t.client_id
+        LEFT JOIN users u ON u.id = t.assigned_to
+        WHERE t.status IN ('backlog', 'in_production', 'internal_qa', 'client_review')
+        ORDER BY t.due_date ASC NULLS LAST, t.created_at DESC;
     """)
     )
-    backlog_tasks = [
+    active_rows = active_res.fetchall()
+    active_tasks = [
         {
             "id": str(r[0]),
             "client_id": str(r[1]),
             "deliverable_type": r[2],
-            "sla_due_at": r[3].isoformat() if r[3] else None,
-            "created_at": r[4].isoformat() if r[4] else None,
-            "client_company": r[5],
+            "status": r[3],
+            "due_date": r[4].isoformat() if r[4] else None,
+            "sla_due_at": r[5].isoformat() if r[5] else None,
+            "created_at": r[6].isoformat() if r[6] else None,
+            "client_company": r[7] or (r[8].split("@")[0].capitalize() if r[8] else "Client"),
+            "client_email": r[8],
+            "assignee_name": r[9] or (r[10].split("@")[0].capitalize() if r[10] else "Unassigned"),
+            "assignee_email": r[10],
+            "assignee_role": r[11],
         }
-        for r in backlog_res.fetchall()
+        for r in active_rows
     ]
+    # Keep backlog populated with all active tasks so existing UI immediately displays pipeline items
+    backlog_tasks = active_tasks
 
     # 2. Staff capacity overview
     staff_res = await db.execute(
@@ -1462,33 +1477,55 @@ async def get_admin_calendar(
     stmt = (
         select(
             Deliverable,
+            Task.deliverable_type,
+            ContentCalendar.caption,
             User.email,
             ClientProfile.company_name,
         )
         .join(User, User.id == Deliverable.client_id)
+        .outerjoin(Task, Task.id == Deliverable.task_id)
+        .outerjoin(ContentCalendar, ContentCalendar.deliverable_id == Deliverable.id)
         .outerjoin(ClientProfile, ClientProfile.user_id == Deliverable.client_id)
-        .order_by(Deliverable.created_at.desc())
-        .limit(60)
+        .order_by(Deliverable.scheduled_at.asc().nulls_last(), Deliverable.created_at.asc())
+        .limit(300)
     )
     res = await db.execute(stmt)
     rows = res.fetchall()
 
     events = []
-    for d, email, company_name in rows:
+    for d, deliv_type, caption, email, company_name in rows:
         client_name = company_name or email.split("@")[0].capitalize()
         event_date = d.scheduled_at or d.created_at
-        file_clean = d.file_type.split("/")[-1].lower() if "/" in d.file_type else d.file_type.lower()
-        format_label = "Reel" if "mp4" in file_clean or "video" in file_clean or "reel" in file_clean else "Carousel" if "carousel" in file_clean else "Poster"
+        format_label = "Reel"
+        if deliv_type:
+            val = str(deliv_type.value if hasattr(deliv_type, "value") else deliv_type).lower()
+            if "reel" in val or "video" in val:
+                format_label = "Reel"
+            elif "carousel" in val or "story" in val:
+                format_label = "Story"
+            else:
+                format_label = "Poster"
+        elif "video" in d.file_type.lower() or "mp4" in d.file_type.lower():
+            format_label = "Reel"
+        elif "carousel" in d.file_type.lower():
+            format_label = "Story"
+        else:
+            format_label = "Poster"
+
+        title = caption or f"{format_label} · {client_name}"
 
         events.append({
             "id": str(d.id),
             "client_name": client_name,
-            "title": f"{format_label} · {client_name}",
+            "title": title,
             "type": format_label,
-            "status": d.status.value,
+            "status": "approved" if d.status.value == "approved" else "scheduled" if d.status.value in ["draft", "pending_approval"] else d.status.value,
             "date": event_date.strftime("%Y-%m-%d") if event_date else "",
             "day": event_date.day if event_date else 1,
-            "time": event_date.strftime("%I:%M %p") if event_date else "06:00 PM",
+            "month": event_date.month if event_date else 1,
+            "year": event_date.year if event_date else 2026,
+            "time": event_date.strftime("%I:%M %p") if event_date else "11:00 AM",
+            "caption": caption or "",
             "file_url": (
                 storage_service.signed_get(d.file_url)
                 if (d.file_url and not (d.file_url.startswith("http://") or d.file_url.startswith("https://") or d.file_url.startswith("/static/")))

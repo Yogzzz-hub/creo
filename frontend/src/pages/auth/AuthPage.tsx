@@ -71,7 +71,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
   const routeByRole = (role: string) => {
     if (redirectedFrom) {
       const decoded = decodeURIComponent(redirectedFrom);
-      const isTeam = role === "team_member" || role === "team_lead";
+      const isTeam = role === "team_member" || role === "team_lead" || role === "editor" || role === "designer";
       const isAdminOnly =
         decoded === "/admin" ||
         decoded === "/admin/" ||
@@ -95,7 +95,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
 
     if (role === "admin" || role === "super_admin") {
       navigate("/admin");
-    } else if (role === "team_member" || role === "team_lead") {
+    } else if (role === "team_member" || role === "team_lead" || role === "editor" || role === "designer") {
       navigate("/dashboard");
     } else {
       if (selectedPlan) {

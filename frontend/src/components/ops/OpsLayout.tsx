@@ -39,16 +39,16 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { label: "Clients Roster", href: "/admin/clients", icon: Users, roles: ["admin", "super_admin"] },
 
   // Team Lead & Member Primary Home
-  { label: "Kanban Board", href: "/dashboard", icon: LayoutDashboard, roles: ["team_member", "team_lead"] },
+  { label: "Kanban Board", href: "/dashboard", icon: LayoutDashboard, roles: ["team_member", "team_lead", "editor", "designer"] },
 
   // Operations & Production (Shared)
-  { label: "Task Queue", href: "/admin/tasks", icon: CheckSquare, roles: ["admin", "super_admin", "team_lead", "team_member"] },
-  { label: "Content Calendar", href: "/admin/calendar", icon: CalendarDays, roles: ["admin", "super_admin", "team_lead", "team_member"] },
-  { label: "Deliverables", href: "/admin/deliverables", icon: FileStack, roles: ["admin", "super_admin", "team_lead", "team_member"] },
-  { label: "Support Tickets", href: "/admin/support", icon: LifeBuoy, roles: ["admin", "super_admin", "team_lead", "team_member"] },
+  { label: "Task Queue", href: "/admin/tasks", icon: CheckSquare, roles: ["admin", "super_admin", "team_lead", "team_member", "editor", "designer"] },
+  { label: "Content Calendar", href: "/admin/calendar", icon: CalendarDays, roles: ["admin", "super_admin", "team_lead", "team_member", "editor", "designer"] },
+  { label: "Deliverables", href: "/admin/deliverables", icon: FileStack, roles: ["admin", "super_admin", "team_lead", "team_member", "editor", "designer"] },
+  { label: "Support Tickets", href: "/admin/support", icon: LifeBuoy, roles: ["admin", "super_admin", "team_lead", "team_member", "editor", "designer"] },
   { label: "Team Management", href: "/admin/teams", icon: UserCog, roles: ["admin", "super_admin", "team_lead"] },
-  { label: "Leave Requests", href: "/admin/leave", icon: CalendarCheck, roles: ["admin", "super_admin", "team_lead", "team_member"] },
-  { label: "Announcements", href: "/admin/announcements", icon: Megaphone, roles: ["admin", "super_admin", "team_lead", "team_member"] },
+  { label: "Leave Requests", href: "/admin/leave", icon: CalendarCheck, roles: ["admin", "super_admin", "team_lead", "team_member", "editor", "designer"] },
+  { label: "Announcements", href: "/admin/announcements", icon: Megaphone, roles: ["admin", "super_admin", "team_lead", "team_member", "editor", "designer"] },
 
   // Executive Management & Specialized Roles
   { label: "Financial Reports", href: "/admin/reports", icon: BarChart3, roles: ["admin", "super_admin", "investor_relations"] },
@@ -67,7 +67,7 @@ export function OpsLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const userRole = user?.role || "admin";
-  const isTeamStaff = userRole === "team_lead" || userRole === "team_member";
+  const isTeamStaff = userRole === "team_lead" || userRole === "team_member" || userRole === "editor" || userRole === "designer";
   const isAdmin = userRole === "admin" || userRole === "super_admin";
 
   const isKanban =

@@ -6,6 +6,8 @@ export const ROLE_HOMES: Record<string, string> = {
   client: "/portal",
   team_member: "/dashboard",
   team_lead: "/dashboard",
+  editor: "/dashboard",
+  designer: "/dashboard",
   sales: "/admin/sales",
   admin: "/admin",
   super_admin: "/admin",

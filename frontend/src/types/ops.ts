@@ -87,9 +87,15 @@ export interface AdminQueueData {
     id: string;
     client_id: string;
     deliverable_type: string;
+    status?: string;
+    due_date?: string | null;
     sla_due_at: string | null;
     created_at: string | null;
     client_company: string | null;
+    client_email?: string | null;
+    assignee_name?: string | null;
+    assignee_email?: string | null;
+    assignee_role?: string | null;
   }>;
   staff: StaffQueueItem[];
 }

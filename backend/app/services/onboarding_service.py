@@ -170,10 +170,6 @@ async def submit_questionnaire(
             profile.onboarding_completed_at = now
             profile.onboarding_deadline = now + timedelta(days=7)
 
-    # Pod Assignment & Initial Calendar Generation
-    from app.services.fair_dispatch_service import assign_client_and_generate_schedule
-    await assign_client_and_generate_schedule(db, client_id)
-
     await db.commit()
     await db.refresh(quest)
     return quest

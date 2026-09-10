@@ -77,7 +77,12 @@ export function GoogleCallbackPage() {
           setTimeout(() => {
             if (res.user.role === "admin" || res.user.role === "super_admin") {
               navigate("/admin");
-            } else if (res.user.role === "team_member" || res.user.role === "team_lead") {
+            } else if (
+              res.user.role === "team_member" ||
+              res.user.role === "team_lead" ||
+              res.user.role === "editor" ||
+              res.user.role === "designer"
+            ) {
               navigate("/dashboard");
             } else {
               navigate("/portal");

@@ -26,7 +26,7 @@ export function Navbar() {
   const userPortalLabel =
     user?.role === "admin" || user?.role === "super_admin"
       ? "Admin Console"
-      : user?.role === "team_member" || user?.role === "team_lead"
+      : user?.role === "team_member" || user?.role === "team_lead" || user?.role === "editor" || user?.role === "designer"
       ? "Team Kanban"
       : "Client Portal";
 
