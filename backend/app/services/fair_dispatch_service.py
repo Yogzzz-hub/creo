@@ -61,7 +61,7 @@ async def assign_client_and_generate_schedule(
     client_profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
     client_profile = (await db.execute(client_profile_stmt)).scalar_one_or_none()
 
-    # 2. Select Team Lead (Fair Min-WIP + Round-Robin tie-break)
+    # 2. Select Team Lead (Fair Min-WIP + Round-Robin tie-break, prioritizing real agency team)
     tl_query = text("""
         SELECT
             u.id,
@@ -74,7 +74,9 @@ async def assign_client_and_generate_schedule(
         WHERE u.role IN ('team_lead', 'admin')
           AND u.account_status = 'active'
         GROUP BY u.id, u.full_name, u.email
-        ORDER BY active_clients ASC, last_assigned_at ASC NULLS FIRST;
+        ORDER BY 
+            (CASE WHEN u.email LIKE '%creo.agency' THEN 0 WHEN u.full_name IS NOT NULL AND u.email NOT LIKE '%example.com%' AND u.email NOT LIKE '%test%' THEN 1 ELSE 2 END) ASC,
+            active_clients ASC, last_assigned_at ASC NULLS FIRST;
     """)
     tl_res = await db.execute(tl_query)
     tl_candidates = tl_res.fetchall()
@@ -87,6 +89,7 @@ async def assign_client_and_generate_schedule(
         admin_res = await db.execute(
             select(User.id, User.full_name, User.email)
             .where(User.role.in_([UserRole.SUPER_ADMIN, UserRole.ADMIN]))
+            .order_by((User.email.like("%creo.agency%")).desc())
             .limit(1)
         )
         row = admin_res.first()
@@ -115,7 +118,8 @@ async def assign_client_and_generate_schedule(
         LEFT JOIN tasks t ON t.assigned_to = u.id
         WHERE u.account_status = 'active'
           AND sp.is_accepting_work = true
-        GROUP BY u.id, u.full_name, u.email, u.role, sp.department, sp.daily_capacity, sp.skills, sp.team_lead_id;
+        GROUP BY u.id, u.full_name, u.email, u.role, sp.department, sp.daily_capacity, sp.skills, sp.team_lead_id
+        ORDER BY (CASE WHEN u.email LIKE '%creo.agency' THEN 0 WHEN u.full_name IS NOT NULL AND u.email NOT LIKE '%example.com%' AND u.email NOT LIKE '%test%' THEN 1 ELSE 2 END) ASC;
     """)
     staff_res = await db.execute(staff_query)
     all_staff = staff_res.fetchall()
@@ -154,19 +158,36 @@ async def assign_client_and_generate_schedule(
     if not design_candidates:
         design_candidates = [s for s in all_staff if is_design_capable(s)]
 
-    # Sort by lowest utilization ratio, highest headroom
-    def candidate_score(c: Any) -> tuple[float, int]:
+    # Sort by agency preference, lowest utilization ratio, highest headroom
+    def candidate_score(c: Any) -> tuple[int, float, int]:
+        is_creo = 0 if (c[2] and "creo.agency" in c[2]) else 1
         capacity = max(1, c[5])
         wip = c[7]
         utilization = wip / capacity
         headroom = c[8]
-        return (utilization, -headroom)
+        return (is_creo, utilization, -headroom)
 
     best_editor = sorted(video_candidates, key=candidate_score)[0] if video_candidates else None
     best_designer = sorted(design_candidates, key=candidate_score)[0] if design_candidates else None
 
-    # 4. Save Client Assignments
-    # Remove any existing primary assignment for cleanliness
+    # 4. Save Client Assignments & Clean Previous Auto-Generated Draft Data (Idempotent)
+    await db.execute(
+        text("DELETE FROM content_calendar WHERE client_id = :cid;"),
+        {"cid": client_id},
+    )
+    await db.execute(
+        text("""
+            DELETE FROM deliverables 
+            WHERE client_id = :cid 
+              AND status IN ('draft', 'pending_approval')
+              AND task_id IS NOT NULL;
+        """),
+        {"cid": client_id},
+    )
+    await db.execute(
+        text("DELETE FROM tasks WHERE client_id = :cid AND status IN ('backlog', 'in_production', 'internal_qa');"),
+        {"cid": client_id},
+    )
     await db.execute(
         text("DELETE FROM client_assignments WHERE client_id = :cid;"),
         {"cid": client_id},
@@ -304,38 +325,15 @@ async def assign_client_and_generate_schedule(
         await db.flush()
         created_tasks.append(new_task)
 
-        # Mark first reel as PENDING_APPROVAL so client can immediately test reviewing & requesting changes
-        is_first_pending = (idx == 0)
-        deliv_status = DeliverableStatus.PENDING_APPROVAL if is_first_pending else DeliverableStatus.DRAFT
-
-        is_video = item["deliv_type"] == DeliverableType.REEL
-        file_url = demo_video_url if is_video else demo_image_url
         scheduled_dt = datetime.combine(pub_date, datetime.min.time(), tzinfo=timezone.utc) + timedelta(hours=11)
 
-        new_deliverable = Deliverable(
-            root_id=uuid.uuid4(),
-            version=1,
-            client_id=client_id,
-            task_id=new_task.id,
-            submitted_by=item["assignee_id"],
-            file_url=file_url,
-            file_type=item["file_type"],
-            file_size_bytes=10485760 if is_video else 2097152,
-            status=deliv_status,
-            revision_round=1,
-            scheduled_at=scheduled_dt,
-        )
-        db.add(new_deliverable)
-        await db.flush()
-        created_deliverables.append(new_deliverable)
-
-        # Content calendar entry
+        # Content calendar entry (deliverable is populated when team uploads real creative)
         calendar_entry = ContentCalendar(
             client_id=client_id,
-            deliverable_id=new_deliverable.id,
+            deliverable_id=None,
             publish_date=pub_date,
             scheduled_time=scheduled_dt,
-            caption=f"Brand campaign {item['type'].upper()} — Scheduled high-engagement publication",
+            caption=f"Brand campaign {item['type'].upper()} · Scheduled high-engagement publication",
         )
         db.add(calendar_entry)
 
@@ -354,16 +352,6 @@ async def assign_client_and_generate_schedule(
                 f"Your 30-day feasible calendar with {len(scheduled_items)} planned assets is now live."
             ),
             link="/portal/calendar",
-        )
-    )
-
-    # If first reel is delivered for review, notify client immediately
-    db.add(
-        Notification(
-            user_id=client_id,
-            title="New Reel Delivered for Your Review 🎬",
-            message="Your creative pod delivered your first brand reel! Review it in your deliverables dock now.",
-            link="/portal/deliverables",
         )
     )
 

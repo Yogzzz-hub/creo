@@ -32,23 +32,38 @@ async def get_calendar_entries(
         if not sub_check["is_active"]:
             return []
 
+    from datetime import datetime, timezone
+
+    # 1. Query content calendar entries (joined with deliverables if already uploaded)
     stmt = (
         select(
+            ContentCalendar,
             Deliverable,
             Task.deliverable_type,
-            ContentCalendar.caption,
         )
+        .outerjoin(Deliverable, Deliverable.id == ContentCalendar.deliverable_id)
         .outerjoin(Task, Task.id == Deliverable.task_id)
-        .outerjoin(ContentCalendar, ContentCalendar.deliverable_id == Deliverable.id)
-        .where(Deliverable.client_id == target_client_id)
-        .order_by(Deliverable.scheduled_at.asc().nulls_last(), Deliverable.created_at.asc())
+        .where(ContentCalendar.client_id == target_client_id)
+        .order_by(ContentCalendar.publish_date.asc(), ContentCalendar.scheduled_time.asc().nulls_last())
     )
     res = await db.execute(stmt)
-    rows = res.all()
+    cal_rows = res.all()
 
     calendar_list = []
-    for d, d_type, caption in rows:
-        sched_dt = d.scheduled_at or d.created_at
+    seen_deliverable_ids = set()
+
+    for cal, d, d_type in cal_rows:
+        if d:
+            seen_deliverable_ids.add(d.id)
+        
+        sched_dt = cal.scheduled_time or (
+            datetime.combine(cal.publish_date, datetime.min.time(), tzinfo=timezone.utc)
+            if cal.publish_date else datetime.now(timezone.utc)
+        )
+        
+        caption = cal.caption or ""
+        caption_lower = caption.lower()
+        
         type_str = "reel"
         if d_type:
             val = str(d_type.value if hasattr(d_type, "value") else d_type).lower()
@@ -58,18 +73,67 @@ async def get_calendar_entries(
                 type_str = "story"
             else:
                 type_str = "poster"
-        elif "video" in d.file_type.lower() or "mp4" in d.file_type.lower():
+        elif "reel" in caption_lower or (d and ("video" in (d.file_type or "").lower() or "mp4" in (d.file_type or "").lower())):
             type_str = "reel"
+        elif "story" in caption_lower or "carousel" in caption_lower:
+            type_str = "story"
         else:
             type_str = "poster"
 
         format_label = "Reel" if type_str == "reel" else "Poster" if type_str == "poster" else "Story"
         
-        # Clean, human-friendly title
         if caption and not caption.startswith("Brand campaign"):
             topic_text = caption
         else:
             topic_text = f"Brand {format_label} · Scheduled Post"
+
+        status_val = "scheduled"
+        if d:
+            status_val = "approved" if d.status.value == "approved" else "scheduled" if d.status.value in ["draft", "pending_approval"] else d.status.value
+
+        calendar_list.append({
+            "id": str(cal.id),
+            "deliverable_id": str(d.id) if d else None,
+            "type": type_str,
+            "format_label": format_label,
+            "topic": topic_text,
+            "title": topic_text,
+            "date": cal.publish_date.strftime("%Y-%m-%d") if cal.publish_date else sched_dt.strftime("%Y-%m-%d"),
+            "scheduled_at": sched_dt.isoformat(),
+            "scheduled_time": sched_dt.strftime("%I:%M %p"),
+            "status": status_val,
+            "raw_status": d.status.value if d else "scheduled",
+            "version": d.version if d else 1,
+            "thumbnail_url": d.file_url if d else None,
+            "file_url": d.file_url if d else None,
+            "file_type": d.file_type if d else ("video/mp4" if type_str == "reel" else "image/jpeg"),
+            "caption": caption or topic_text,
+            "permalink": d.ig_permalink if d else None,
+        })
+
+    # 2. Also include any standalone deliverables that don't have a calendar row yet
+    deliv_stmt = (
+        select(Deliverable, Task.deliverable_type)
+        .outerjoin(Task, Task.id == Deliverable.task_id)
+        .where(Deliverable.client_id == target_client_id)
+        .order_by(Deliverable.scheduled_at.asc().nulls_last(), Deliverable.created_at.asc())
+    )
+    deliv_rows = (await db.execute(deliv_stmt)).all()
+    for d, d_type in deliv_rows:
+        if d.id in seen_deliverable_ids:
+            continue
+        sched_dt = d.scheduled_at or d.created_at
+        type_str = "reel"
+        if d_type:
+            val = str(d_type.value if hasattr(d_type, "value") else d_type).lower()
+            type_str = "reel" if ("reel" in val or "video" in val) else "story" if ("carousel" in val or "story" in val) else "poster"
+        elif "video" in (d.file_type or "").lower():
+            type_str = "reel"
+        else:
+            type_str = "poster"
+
+        format_label = "Reel" if type_str == "reel" else "Poster" if type_str == "poster" else "Story"
+        topic_text = f"Brand {format_label} · Deliverable v{d.version}"
 
         calendar_list.append({
             "id": str(d.id),
@@ -87,7 +151,7 @@ async def get_calendar_entries(
             "thumbnail_url": d.file_url,
             "file_url": d.file_url,
             "file_type": d.file_type,
-            "caption": caption or topic_text,
+            "caption": topic_text,
             "permalink": d.ig_permalink,
         })
 
