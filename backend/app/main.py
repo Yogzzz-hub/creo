@@ -254,7 +254,7 @@ async def health_check() -> JSONResponse:
                 r = aioredis.from_url(  # type: ignore[no-untyped-call]
                     settings.REDIS_URL,
                     decode_responses=True,
-                    socket_timeout=1.0,
+                    socket_timeout=3.0,
                 )
                 ping_res = await r.ping()
                 await r.aclose()

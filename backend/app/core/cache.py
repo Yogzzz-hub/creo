@@ -34,8 +34,8 @@ async def get_redis() -> Any:
             _redis_client = aioredis.from_url(  # type: ignore[no-untyped-call]
                 settings.REDIS_URL,
                 decode_responses=True,
-                socket_connect_timeout=0.2,
-                socket_timeout=0.2,
+                socket_connect_timeout=3.0,
+                socket_timeout=3.0,
             )
     return _redis_client
 
