@@ -780,6 +780,8 @@ async def _process_google_code(
         candidate_uris = [redirect_uri]
         for fallback in [
             settings.GOOGLE_REDIRECT_URI,
+            "https://creo.yogalakshmibaskar20.workers.dev",
+            "https://creo.yogalakshmibaskar20.workers.dev/auth/google/callback",
             "https://creo-fhhl.onrender.com",
             "https://creo-fhhl.onrender.com/api/v1/auth/google/callback",
             "https://creo-fhhl.onrender.com/auth/google/callback",
