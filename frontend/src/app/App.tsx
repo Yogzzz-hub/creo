@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, Component, type ReactNode, type ErrorInfo } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "../lib/auth-context";
@@ -92,6 +92,40 @@ function RouteLoading() {
   );
 }
 
+class OnboardingErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  override componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("OnboardingErrorBoundary caught:", error, info);
+  }
+  override render() {
+    if (this.state.hasError) {
+      return (
+        <div className="w-full max-w-md mx-auto p-8 rounded-2xl bg-white border border-[#C9DFF0] shadow-sm text-center my-12">
+          <p className="text-sm text-rose-600 font-semibold mb-2">Something interrupted onboarding display.</p>
+          <p className="text-xs text-[#64748B] mb-5">{this.state.error?.message || "Please reload to continue."}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="px-5 py-2.5 rounded-xl bg-[#2B7BC4] text-white font-semibold text-xs hover:bg-[#1A5EA8] transition-colors"
+          >
+            Reload Onboarding
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function OnboardingPageWrapper() {
   const { user } = useAuth();
   const userId = user?.id || "00000000-0000-0000-0000-000000000001";
@@ -142,14 +176,16 @@ function OnboardingPageWrapper() {
 
       {/* Main Onboarding Canvas - full page view with generous space */}
       <main className="flex-1 max-w-5xl lg:max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex flex-col items-center">
-        <Suspense fallback={<RouteLoading />}>
-          <OnboardingView
-            userId={userId}
-            onPortalLaunch={() => {
-              window.location.href = "/portal";
-            }}
-          />
-        </Suspense>
+        <OnboardingErrorBoundary>
+          <Suspense fallback={<RouteLoading />}>
+            <OnboardingView
+              userId={userId}
+              onPortalLaunch={() => {
+                window.location.href = "/portal";
+              }}
+            />
+          </Suspense>
+        </OnboardingErrorBoundary>
       </main>
     </div>
   );
@@ -300,7 +336,7 @@ export function App() {
             <Route
               element={
                 <ProtectedRoute
-                  allowedRoles={["admin", "super_admin", "team_lead", "team_member"]}
+                  allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer"]}
                 >
                   <OpsLayout />
                 </ProtectedRoute>

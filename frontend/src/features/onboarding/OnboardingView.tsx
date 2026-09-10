@@ -340,7 +340,12 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
   useEffect(() => {
     if (status) {
       setActiveStep((prev) => {
-        if (prev === null || prev < maxUnlockedStep) {
+        // Initial setup on mount
+        if (prev === null) {
+          return maxUnlockedStep;
+        }
+        // Advance only if user is strictly behind unlocked steps and not actively on step 4
+        if (prev < maxUnlockedStep && prev !== 4) {
           return maxUnlockedStep;
         }
         return prev;
@@ -407,7 +412,7 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
 
       {/* Dynamic Stage Views */}
       <div className="w-full">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           {currentStep === 1 && (
             <StageVerifyEmail
               key="verify"

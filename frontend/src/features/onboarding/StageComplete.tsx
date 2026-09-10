@@ -28,9 +28,11 @@ function getInitials(name: string): string {
 }
 
 
-function Avatar({ name, role }: { name: string; role: string }) {
-  const initials = getInitials(name);
-  const styling = ROLE_COLORS[role] || { bg: "#475569", text: "#FFFFFF", ring: "#CBD5E1" };
+function Avatar({ name, role }: { name?: string; role?: string }) {
+  const safeName = name || "Creative Specialist";
+  const safeRole = role || "Creative Pod Specialist";
+  const initials = getInitials(safeName);
+  const styling = ROLE_COLORS[safeRole] || { bg: "#475569", text: "#FFFFFF", ring: "#CBD5E1" };
 
   return (
     <div
@@ -87,24 +89,16 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
       transition={{ duration: 0.3 }}
       className="max-w-4xl lg:max-w-5xl w-full mx-auto rounded-3xl border border-[#C9DFF0] bg-gradient-to-b from-white via-[#F8FAFC] to-[#F0F7FD] p-6 sm:p-10 lg:p-12 shadow-xl text-center relative overflow-hidden"
     >
-      {/* Ambient Glow Effects */}
-      <div className="absolute -top-32 left-1/2 -translate-x-1/2 size-72 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 right-0 size-72 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-
-      {/* Celebration Icon */}
+      {/* Onboarding Complete Header Badge */}
       <motion.div
-        initial={{ scale: 0, rotate: -15 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: "spring", stiffness: 260, damping: 20 }}
-        className="size-16 sm:size-20 rounded-3xl bg-gradient-to-tr from-[#0D2137] to-[#2B7BC4] flex items-center justify-center mx-auto mb-4 text-3xl sm:text-4xl shadow-lg shadow-blue-500/20 text-white"
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-extrabold uppercase tracking-wider mb-4 shadow-xs"
       >
-        🚀
+        <CheckCircle2 className="size-4.5 text-emerald-600" />
+        <span>Onboarding Complete • Creative Pod Assigned</span>
       </motion.div>
-
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-extrabold uppercase tracking-wider mb-3 shadow-xs">
-        <CheckCircle2 className="size-4 text-emerald-600" />
-        <span>Onboarding Complete • Pod Assigned</span>
-      </div>
 
       <h2 className="text-2xl sm:text-4xl font-black font-display text-[#0D2137] tracking-tight">
         Your Dedicated Creative Pod is Live!
@@ -160,7 +154,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
           &ldquo;{dna?.ai_summary_line || dna?.summary || "Formulating bespoke positioning vectors, tone archetypes, and content taxonomy for your brand."}&rdquo;
         </p>
 
-        {dna?.recommended_formats && dna.recommended_formats.length > 0 && (
+        {dna?.recommended_formats && Array.isArray(dna.recommended_formats) && dna.recommended_formats.length > 0 && (
           <div className="flex gap-2 flex-wrap mb-4">
             {dna.recommended_formats.map((f) => (
               <span
@@ -174,7 +168,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
         )}
 
         {/* Colour palette */}
-        {dna?.palette && dna.palette.length > 0 && (
+        {dna?.palette && Array.isArray(dna.palette) && dna.palette.length > 0 && (
           <div className="flex gap-2 items-center">
             <span className="text-xs font-semibold text-slate-500 mr-1">Brand Palette:</span>
             {dna.palette.map((c) => (
