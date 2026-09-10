@@ -151,10 +151,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getGoogleAuthUrl = async () => {
     const callbackUrl = window.location.origin + "/auth/google/callback";
-    const res = await request<{ url: string }>(
-      `/api/v1/auth/google/url?redirect_uri=${encodeURIComponent(callbackUrl)}`
-    );
-    return res.url;
+    try {
+      const res = await request<{ url: string }>(
+        `/api/v1/auth/google/url?redirect_uri=${encodeURIComponent(callbackUrl)}`
+      );
+      if (res?.url) return res.url;
+    } catch (e) {
+      console.warn("Backend /auth/google/url request failed, using client OAuth fallback", e);
+    }
+
+    const clientId =
+      (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) ||
+      "810637569983-c6evh2ce0evjkgdmsgcicghl4lmnvfer.apps.googleusercontent.com";
+    const state = Math.random().toString(36).substring(2);
+    return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&response_type=code&scope=openid%20email%20profile&redirect_uri=${encodeURIComponent(
+      callbackUrl
+    )}&state=${state}&access_type=offline&prompt=consent`;
   };
 
   const logout = async () => {
