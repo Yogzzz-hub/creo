@@ -501,39 +501,27 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
   const [error, setError] = useState<string | null>(null);
   const [brandDNA, setBrandDNA] = useState<BrandDNA | null>(null);
 
-  // Check if Brand DNA was already created for this user (so returning users don't see blank questionnaire)
-  useQuery({
-    queryKey: ["brand-dna-status-initial", userId],
+  // Query Brand DNA status (initial check or live polling when submitted)
+  const { data: dnaData } = useQuery({
+    queryKey: ["brand-dna-status", userId],
     queryFn: () => fetchBrandDNAStatus(userId),
-    staleTime: 10000,
-    select: (data) => {
-      if (data?.brand_dna) {
-        setBrandDNA(data.brand_dna);
-        setSubmitted(true);
-      }
-      return data;
-    },
-  });
-
-  // Poll Brand DNA status if submitted and waiting
-  useQuery({
-    queryKey: ["brand-dna-status-live", userId],
-    queryFn: () => fetchBrandDNAStatus(userId),
-    enabled: submitted && !brandDNA,
     refetchInterval: (query) => {
       const state = query.state.data;
       if (state?.status === "completed" || state?.status === "failed") {
         return false;
       }
-      return 1500;
+      return submitted && !brandDNA ? 1500 : false;
     },
-    select: (data) => {
-      if (data.status === "completed" && data.brand_dna) {
-        setBrandDNA(data.brand_dna);
-      }
-      return data;
-    },
+    staleTime: 5000,
   });
+
+  // Safely sync brand DNA into local state in useEffect (never inside render or select)
+  useEffect(() => {
+    if (dnaData?.brand_dna && !brandDNA) {
+      setBrandDNA(dnaData.brand_dna);
+      setSubmitted(true);
+    }
+  }, [dnaData, brandDNA]);
 
   // Restore draft questionnaire on mount if user previously typed answers
   useEffect(() => {
