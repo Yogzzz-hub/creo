@@ -90,3 +90,28 @@ def dispatch_due_publishes_task() -> list[str]:
     """Celery Beat scheduled task entrypoint."""
     claimed = run_async_safe(dispatch_due_publishes_async())
     return [str(uid) for uid in claimed]
+
+
+async def _assign_upcoming_window_async() -> int:
+    from app.services.dispatch_engine import assign_upcoming_window
+    async with async_session_factory() as db:
+        return await assign_upcoming_window(db, horizon_days=10)
+
+
+@celery_app.task(name="app.workers.tasks.scheduler.assign_upcoming_window_task", queue="default")
+def assign_upcoming_window_task() -> int:
+    """Dispatches tasks entering the 10-day rolling horizon using continuity-first policy."""
+    return run_async_safe(_assign_upcoming_window_async())
+
+
+async def _rebalance_nightly_sweep_async() -> dict[str, int]:
+    from app.services.dispatch_engine import rebalance_nightly_sweep
+    async with async_session_factory() as db:
+        return await rebalance_nightly_sweep(db)
+
+
+@celery_app.task(name="app.workers.tasks.scheduler.rebalance_nightly_sweep_task", queue="default")
+def rebalance_nightly_sweep_task() -> dict[str, int]:
+    """Nightly rebalance sweep for unplanned leave, overloaded windows, and SLA risks."""
+    return run_async_safe(_rebalance_nightly_sweep_async())
+

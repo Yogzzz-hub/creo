@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import {
   ChevronLeft,
@@ -30,6 +30,9 @@ interface CalendarEntry {
   scheduled_at?: string;
   scheduled_time?: string;
   status: string;
+  calendar_status?: string;
+  is_locked?: boolean;
+  slot_kind?: string;
   raw_status?: string;
   file_url?: string;
   file_type?: string;
@@ -114,6 +117,9 @@ export function PortalCalendarPage() {
   const [selectedFormat, setSelectedFormat] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"month" | "list">("month");
   const [previewEntry, setPreviewEntry] = useState<CalendarEntry | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
+  const [approvalMessage, setApprovalMessage] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const { data: subData, isLoading: isSubLoading } = useQuery({
     queryKey: ["client-subscription"],
@@ -240,6 +246,26 @@ export function PortalCalendarPage() {
 
   const selectedDayEntries = selectedDay ? getDayEntries(selectedDay) : [];
 
+  const hasDraftSlots = useMemo(() => {
+    return entries.some((e) => e.calendar_status === "draft");
+  }, [entries]);
+
+  const handleApproveCalendar = async () => {
+    try {
+      setIsApproving(true);
+      const res = await request<any>("/api/v1/calendar/approve", { method: "POST" });
+      setApprovalMessage(
+        `Campaign plan approved! ${res?.approved_slots ?? "All"} slots locked and creative production initiated.`
+      );
+      await queryClient.invalidateQueries({ queryKey: ["calendar-entries"] });
+    } catch (err: any) {
+      console.error(err);
+      setApprovalMessage(err?.message || "Failed to approve campaign plan");
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
   if (isSubLoading || isEntriesLoading) {
     return (
       <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5 animate-page-in">
@@ -301,6 +327,41 @@ export function PortalCalendarPage() {
             Automated 30-day feasible calendar with dedicated creative pod assignment.
           </p>
         </div>
+
+        {/* Draft Campaign Approval Banner */}
+        {hasDraftSlots && (
+          <div className="rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-50/90 via-purple-50/80 to-blue-50/80 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide uppercase bg-indigo-600 text-white">
+                  Draft Campaign Plan
+                </span>
+                <h3 className="text-sm font-bold text-slate-900">Your 30-day content plan is ready for review!</h3>
+              </div>
+              <p className="text-xs text-slate-600">
+                Review your quota-distributed release dates. Once approved, your creative pod will immediately launch production on the first 10-day sprint.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleApproveCalendar}
+              disabled={isApproving}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0D2137] hover:bg-[#153456] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 shrink-0"
+            >
+              {isApproving ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5 text-emerald-400" />}
+              <span>{isApproving ? "Approving Plan..." : "Approve 30-Day Campaign"}</span>
+            </button>
+          </div>
+        )}
+
+        {approvalMessage && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-800 font-semibold flex items-center justify-between">
+            <span>{approvalMessage}</span>
+            <button type="button" onClick={() => setApprovalMessage(null)} className="text-emerald-700 hover:text-emerald-900">
+              <X className="size-4" />
+            </button>
+          </div>
+        )}
 
         {/* View Switcher & Quick Filters */}
         <div className="flex flex-wrap items-center gap-2.5">

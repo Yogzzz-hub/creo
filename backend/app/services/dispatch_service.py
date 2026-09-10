@@ -120,80 +120,29 @@ async def dispatch_task(
     actor_role: UserRole | None = None,
     required_skill_override: str | None = None,
 ) -> uuid.UUID | None:
-    """Dispatch a task to the lowest-load eligible staff member.
+    """Dispatch a task to the lowest-load eligible staff member using the unified dispatch engine.
 
     If nobody is eligible, leaves task in backlog and notifies team lead.
     """
+    from app.services.dispatch_engine import assign_continuity_first, assign_load_first, get_task_effort_points
+
     task = await db.get(Task, task_id)
     if not task:
         return None
 
-    assignee_id = await find_eligible_assignee(
-        db,
-        deliverable_type=task.deliverable_type,
-        required_skill_override=required_skill_override,
-    )
+    if not task.effort_points:
+        task.effort_points = get_task_effort_points(task.deliverable_type, task.is_revision)
 
-    if assignee_id:
-        prev_status = task.status
-        prev_assignee = task.assigned_to
-        task.assigned_to = assignee_id
-        task.status = TaskStatus.IN_PRODUCTION
-
-        audit = AuditLog(
+    if required_skill_override:
+        return await assign_load_first(
+            db,
+            task,
+            reason="skill_override_dispatch",
+            required_skill_override=required_skill_override,
             actor_id=actor_id,
-            actor_role=actor_role,
-            entity="task",
-            entity_id=task.id,
-            action="task_dispatched",
-            from_value={
-                "status": (
-                    prev_status.value if hasattr(prev_status, "value") else str(prev_status)
-                ),
-                "assigned_to": str(prev_assignee) if prev_assignee else None,
-            },
-            to_value={"status": TaskStatus.IN_PRODUCTION.value, "assigned_to": str(assignee_id)},
         )
-        db.add(audit)
-        await db.commit()
-        await db.refresh(task)
-        logger.info("Task %s dispatched to %s", task.id, assignee_id)
-        return assignee_id
 
-    # Fallback: Nobody is eligible
-    task.status = TaskStatus.BACKLOG
-    audit = AuditLog(
-        actor_id=actor_id,
-        actor_role=actor_role,
-        entity="task",
-        entity_id=task.id,
-        action="dispatch_failed",
-        to_value={"reason": "NO_ELIGIBLE_STAFF", "status": TaskStatus.BACKLOG.value},
-    )
-    db.add(audit)
-
-    # Notify team lead and admin
-    leads_res = await db.execute(
-        select(User.id)
-        .where(User.role.in_([UserRole.TEAM_LEAD, UserRole.ADMIN, UserRole.SUPER_ADMIN]))
-        .order_by(User.created_at.desc())
-    )
-    lead_ids = leads_res.scalars().all()
-    for lead_id in lead_ids[:3]:
-        notif = Notification(
-            user_id=lead_id,
-            title="Dispatch backlog: No eligible staff",
-            message=(
-                f"Task {task.id} ({task.deliverable_type.value}) could not be assigned: "
-                "no creative capacity available."
-            ),
-            link=f"/kanban?task={task.id}",
-        )
-        db.add(notif)
-
-    await db.commit()
-    logger.warning("Task %s could not be dispatched: no eligible staff", task.id)
-    return None
+    return await assign_continuity_first(db, task, actor_id=actor_id)
 
 
 async def dispatch_next(

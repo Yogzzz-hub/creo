@@ -89,6 +89,8 @@ class ClientProfile(Base, TimestampMixin):
     )
     brand_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     brand_dna: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+    timezone: Mapped[str] = mapped_column(String(50), default="Asia/Kolkata", nullable=False)
+    calendar_template: Mapped[dict[str, Any] | None] = mapped_column(JSONB, default=None, nullable=True)
     terms_accepted_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -118,6 +120,10 @@ class StaffProfile(Base, TimestampMixin):
     )
     department: Mapped[str] = mapped_column(String(50), default="creative", nullable=False)
     daily_capacity: Mapped[int] = mapped_column(Integer, default=4, nullable=False)
+    daily_points: Mapped[int] = mapped_column(Integer, default=8, nullable=False)
+    last_assigned_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     skills: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, nullable=False)
     is_accepting_work: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 

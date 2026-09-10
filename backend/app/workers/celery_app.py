@@ -93,4 +93,16 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(hour=8, minute=0, day_of_week="monday"),
         "options": {"queue": "default"},
     },
+    # Nightly rolling 10-day task window assignment at 01:00 IST
+    "assign-upcoming-window": {
+        "task": "app.workers.tasks.scheduler.assign_upcoming_window_task",
+        "schedule": crontab(hour=1, minute=0),
+        "options": {"queue": "default"},
+    },
+    # Nightly operational rebalance sweep at 02:00 IST
+    "nightly-rebalance-sweep": {
+        "task": "app.workers.tasks.scheduler.rebalance_nightly_sweep_task",
+        "schedule": crontab(hour=2, minute=0),
+        "options": {"queue": "default"},
+    },
 }

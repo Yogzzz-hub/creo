@@ -60,9 +60,17 @@ class Task(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     last_sla_notified_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True, default=None
     )
+    effort_points: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    is_revision: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    parent_assignee_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
 
     assignee: Mapped[User | None] = relationship(
         "User", foreign_keys=[assigned_to], back_populates="assigned_tasks"
+    )
+    parent_assignee: Mapped[User | None] = relationship(
+        "User", foreign_keys=[parent_assignee_id]
     )
     deliverables: Mapped[list[Deliverable]] = relationship("Deliverable", back_populates="task")
 
@@ -152,6 +160,9 @@ class ContentCalendar(Base, UUIDPrimaryKeyMixin):
     publish_date: Mapped[date] = mapped_column(Date, nullable=False)
     scheduled_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     caption: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), default="approved", nullable=False)
+    is_locked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    slot_kind: Mapped[str | None] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -303,127 +303,129 @@ The actual service uses this conditional-update pattern. One atomic update avoid
 
 Client upload intent consumes quota before media confirmation. An abandoned-upload compensation job is described in comments but was not found in the configured periodic jobs. Staff upload paths do not uniformly apply this quota flow.
 
-## 5. Team assignment and calendar generation
+## 5. Team assignment, calendar generation, and dispatch engine
 
-Source: [fair_dispatch_service.py](backend/app/services/fair_dispatch_service.py).
+Sources: [dispatch_engine.py](backend/app/services/dispatch_engine.py), [fair_dispatch_service.py](backend/app/services/fair_dispatch_service.py), [dispatch_service.py](backend/app/services/dispatch_service.py).
 
-This onboarding algorithm is separate from individual task dispatch. It chooses a client team and generates a batch of scheduled work.
+The dispatch and planning architecture uses **one unified eligibility engine with two calling policies**:
+- **Policy A (Continuity-First)**: Routes revisions and client tasks to the Original Creator -> Dedicated Pod Specialist -> Open Pool fallback.
+- **Policy B (Load-First)**: Windowed capacity ranking under pessimistic row locking (`FOR UPDATE`).
 
-### 5.1 Lead selection
+### 5.1 Effort model and capacity denomination
 
-Candidates are active `team_lead` or `admin` users. For each candidate the query counts matching lead assignments and finds the latest assignment timestamp. Sort priority is:
+Workload capacity is denominated in **Effort Points**, not raw task counts:
 
-1. Agency email preference, then other non-test-looking accounts, then remaining accounts.
-2. Fewest existing lead assignments.
-3. Oldest latest-assignment timestamp; never-assigned candidates first.
+| Format kind | Deliverable type | Base effort points | Revision effort points (0.4×) | Lead days |
+|---|---|---:|---:|---:|
+| `reel` | `REEL` | 5 pts | 2 pts | 4 business days |
+| `shoot_day` | `SHOOT_DAY` | 8 pts | 4 pts | 6 business days |
+| `carousel` | `CAROUSEL` | 3 pts | 2 pts | 3 business days |
+| `poster` / `static_post` | `STATIC_POST` | 2 pts | 1 pt | 2 business days |
+| `story` | `CAROUSEL` / `STORY` | 1 pt | 1 pt | 1 business day |
 
-If no candidate exists, select an admin/super-admin fallback. If none exists, fail.
+Staff profiles define `daily_points` (default: 8 pts/day, calibrated against `daily_capacity`). An editor with 8 points/day carries approximately 1 Reel + 1 Carousel, or 4 Posters.
 
-The assignment count is not filtered by client subscription activity, despite its `active_clients` label. Selection is not protected by a lead-row allocation lock and has no final deterministic ID tie-breaker. It should not be described as strict round-robin fairness.
+### 5.2 Windowed eligibility engine
 
-### 5.2 Specialist selection
+Load is evaluated over the task's **Delivery Window** `[due_date - 2 days, due_date]`, not just today:
 
-Load active users with staff profiles and `is_accepting_work = true`. For each:
-
-```text
-WIP         = number of assigned tasks in in_production or internal_qa
-headroom    = daily_capacity - WIP
-utilization = WIP / max(1, daily_capacity)
+```sql
+WITH deliv_window AS (
+  SELECT CAST(:w_start AS DATE) AS w_start,
+         CAST(:w_end AS DATE)   AS w_end
+),
+committed AS (
+  SELECT t.assigned_to AS staff_id,
+         COALESCE(SUM(t.effort_points), 0) AS points_in_window,
+         COUNT(t.id) AS active_wip
+    FROM tasks t, deliv_window w
+   WHERE t.status IN ('in_production', 'internal_qa')
+     AND (t.due_date BETWEEN w.w_start AND w.w_end OR t.due_date IS NULL)
+   GROUP BY t.assigned_to
+),
+available AS (
+  SELECT sp.user_id,
+         sp.daily_capacity,
+         GREATEST(sp.daily_points, sp.daily_capacity * :task_points) AS daily_points,
+         sp.skills,
+         sp.last_assigned_at,
+         (SELECT COUNT(*) FROM generate_series(w.w_start::timestamp, w.w_end::timestamp, '1 day'::interval) d
+           WHERE EXTRACT(isodow FROM d) < 6
+             AND NOT EXISTS (
+               SELECT 1 FROM leave_requests l
+                WHERE l.user_id = sp.user_id
+                  AND l.status = 'approved'
+                  AND d::date BETWEEN l.start_date AND l.end_date)) AS working_days
+    FROM staff_profiles sp
+    JOIN users u ON u.id = sp.user_id AND u.account_status = 'active'
+   CROSS JOIN deliv_window w
+   WHERE sp.is_accepting_work = TRUE
+     AND NOT EXISTS (
+       SELECT 1 FROM leave_requests l
+        WHERE l.user_id = sp.user_id
+          AND l.status = 'approved'
+          AND w.w_end BETWEEN l.start_date AND l.end_date
+     )
+)
+SELECT a.user_id,
+       (a.daily_points * a.working_days) AS capacity_points,
+       COALESCE(c.points_in_window, 0) AS used_points,
+       (COALESCE(c.points_in_window, 0)::float / NULLIF(a.daily_points * a.working_days, 0)) AS utilization,
+       a.last_assigned_at,
+       a.daily_capacity,
+       COALESCE(c.active_wip, 0) AS active_wip
+  FROM available a
+  LEFT JOIN committed c ON c.staff_id = a.user_id
+ WHERE (:has_override = TRUE AND :required_skill = ANY(a.skills)
+      OR :has_override = FALSE AND (:required_skill = ANY(a.skills) OR :deliv_type = ANY(a.skills)))
+   AND a.working_days > 0
+   AND COALESCE(c.active_wip, 0) < a.daily_capacity
+   AND COALESCE(c.points_in_window, 0) + :task_points <= (a.daily_points * a.working_days)
+ ORDER BY utilization ASC,
+          a.last_assigned_at ASC NULLS FIRST
+ LIMIT 10;
 ```
 
-Prefer the selected lead's pod if it contains at least two staff; otherwise use all staff. Identify video-capable and design-capable candidates using department, role, and skill-text matches. If a specialty is absent from that pool, try agency-wide staff.
+**Key Improvements:**
+1. Leave is evaluated across the delivery window; any staff on approved leave on the due date is strictly excluded.
+2. Capacity scales down proportionally if someone is partially on leave inside the delivery window.
+3. Tie-breaking rewards `last_assigned_at ASC NULLS FIRST` (longest waiting) rather than punishing fast workers.
 
-Rank each specialty by `(agency_preference, utilization, -headroom)` and select the first. If no specialist exists, tasks fall back to the lead. When the same person supplies both specialties, only one specialist assignment row is written.
+### 5.3 Durable pod assignment
 
-Unlike the individual-task dispatcher, this algorithm does not reject staff on approved leave or enforce positive headroom as an eligibility condition. It does not reserve per-day capacity when creating the batch.
+Onboarding completion establishes durable team **ownership**, not individual task assignments:
+- **Team Lead**: Lowest active client count (`COUNT(client_assignments.id) ASC`), tie-broken by oldest assignment timestamp, prioritizing `@creo.agency` internal team accounts.
+- **Video Editor & Graphic Designer**: Lowest client assignment count, with affinity to the selected Team Lead's pod.
 
-### 5.3 Regeneration behavior
+### 5.4 Quota-driven calendar drafting & client approval gate
 
-Before rebuilding, the service deletes the client's calendar entries, selected task-linked draft/pending-approval deliverables, tasks in backlog/production/internal-QA, and client assignments. It then recreates assignments and planned work.
+1. **Draft Generation**: Quotas from subscription plan (`reel_quota`, `poster_quota`, `story_quota`) are evenly distributed (`evenly_spaced`) across preferred template days in the client's local timezone (`client_profiles.timezone`, default: `Asia/Kolkata` at 19:30 for Reels, 12:30 for Posters, 18:00 for Carousels, 20:00 for Stories).
+2. **Draft State**: Created with `status = 'draft'` and `is_locked = False`. No production tasks are spawned yet.
+3. **Approval Gate**: Client (or account manager) reviews the draft plan and executes `POST /api/v1/calendar/approve`.
+4. **Materialization**:
+   - Calendar slots lock (`status = 'approved'`, `is_locked = True`).
+   - Production tasks are created with format-specific lead times (`due_date = publish_date - LEAD_DAYS[kind]`).
+   - Tasks entering the **10-day rolling horizon** are immediately dispatched via `assign_continuity_first`.
 
-This is destructive regeneration, not an idempotent no-op. Existing work may be replaced; retained foreign-key-linked deliverables can also conflict with task deletion. Calling questionnaire submission followed by explicit completion invokes this process twice.
+### 5.5 Nightly rolling horizon & rebalance sweeps
 
-### 5.4 Calendar cadence algorithm
+Implemented via Celery Beat tasks in [scheduler.py](backend/app/workers/tasks/scheduler.py):
+1. **Rolling 10-Day Window Dispatcher (`assign_upcoming_window_task`)**: Runs nightly at 01:00 IST to dispatch backlog tasks due within 10 days to dedicated pod specialists.
+2. **Operational Rebalance Sweep (`rebalance_nightly_sweep_task`)**: Runs nightly at 02:00 IST:
+   - Detects newly approved leave covering unstarted backlog tasks and reassigns them.
+   - Escalates backlog tasks aging > 24 hours to team leads.
+   - Dispatches priority alerts for tasks within 24 hours of their SLA deadline.
+   - **Strict Invariant**: Never reassigns a task already marked `in_production` (protects in-flight work and specialist trust).
 
-1. Read quotas from the newest subscription's plan; if none exists, use service defaults.
-2. Start on the next business day after local `date.today()`.
-3. Iterate at most 35 business days, stopping earlier if all quantities are placed.
-4. Place at most one asset per date according to this cadence:
-
-| Day | Format | Assignee |
-|---|---|---|
-| Monday | Static poster | Designer or lead |
-| Tuesday | Reel | Editor or lead |
-| Wednesday | Story allocation represented as carousel | Designer or lead |
-| Thursday | Reel | Editor or lead |
-| Friday | Static poster | Designer or lead |
-
-5. For each planned asset, create an `in_production` task.
-6. Set task due date to two business days before publication and SLA time to 18:00 UTC on that date.
-7. Create a calendar row at 11:00 UTC on publication day, with no linked deliverable yet.
-8. Write client, lead, and specialist notifications and commit.
-
-```text
-for each eligible weekday, up to 35 business days:
-    choose that weekday's format
-    if remaining quota for that format > 0:
-        create task and calendar entry
-        decrement remaining count
-```
-
-Important consequences:
-
-- Thirty-five business days are roughly seven weeks, not a strict 30-day calendar.
-- The first asset's task deadline can precede onboarding because the schedule starts tomorrow but subtracts two business days.
-- Unused format days are not repurposed for other remaining formats.
-- Quotas can remain unplaced after the iteration cap; returned per-format quota values are not necessarily counts actually scheduled.
-- No holiday calendar, client timezone, subscription-end boundary, or per-day specialist capacity is enforced here.
-- Calendar placeholders do not create publishable media. Real deliverables must be uploaded and linked later.
-
-## 6. Task dispatch, Kanban, and SLA algorithms
+## 6. Task Kanban and SLA algorithms
 
 Sources: [dispatcher](backend/app/services/dispatch_service.py), [tasks router](backend/app/routers/tasks.py), [Kanban UI](frontend/src/features/kanban/KanbanBoard.tsx), [SLA service](backend/app/services/sla_service.py).
 
-### 6.1 Individual task creation
+### 6.1 Kanban board state machine
 
-`POST /tasks` accepts client, format, optional due date, and optional auto-dispatch. It looks up an active/trialing plan, calculates an SLA, inserts a backlog task and audit event, commits, and optionally invokes the workload dispatcher.
+The board aggregates columns (`backlog`, `in_production`, `internal_qa`, `client_review`, `ready_to_publish`) using optimized SQL aggregation.
 
-### 6.2 Ranked eligibility algorithm
-
-| Deliverable kind | Default skill |
-|---|---|
-| Reel, shoot day | `video` |
-| Carousel, story, static post | `graphics` |
-
-Eligibility requires accepting work, no approved leave covering today, a matching skill or deliverable-kind skill, and `WIP < daily_capacity`. An explicit skill override uses that skill match directly.
-
-Candidates are ranked by `WIP / daily_capacity`, with a random tie-break. Up to five candidates are returned. For each, the service locks the staff profile with `FOR UPDATE`, recounts WIP, and accepts the first still below capacity.
-
-Example: A has 2 active tasks and capacity 4; B has 3 and capacity 4. A's ratio is 0.50 and B's is 0.75, so A ranks first. If A reaches capacity before the lock is acquired, the recount rejects A and the service tries another candidate.
-
-Success assigns the task, moves it to production, writes an audit record, and commits. Failure moves it to backlog, writes `NO_ELIGIBLE_STAFF`, and notifies up to three leads/admins. The failure branch does not explicitly clear an existing assignee.
-
-`dispatch_next()` takes the oldest unassigned backlog task using `FOR UPDATE SKIP LOCKED`. This helper does not by itself establish a continuously running backlog consumer.
-
-Limitations: the candidate query does not explicitly filter user account status or pod membership. Under the lock it rechecks capacity/WIP, not every original eligibility attribute. “Daily capacity” functions as concurrent active-WIP capacity, because there is no daily date filter in the WIP count.
-
-### 6.3 Manual assignment and reassignment
-
-Manual assignment checks that the target user exists and moves backlog work to production. Lead-level reassignment changes the assignee and audits the action. Manual/bulk paths do not uniformly enforce automated skill, leave, or capacity rules.
-
-### 6.4 Kanban model and drag-and-drop algorithm
-
-The board contains backlog, production, internal QA, client review, and ready-to-publish columns. `completed` exists in the task enum but is not returned as a displayed column.
-
-The backend aggregates all five columns in one SQL query using filtered `json_agg`, joining assignee and client names. Its SQL currently has no per-creative or per-pod ownership filter.
-
-The UI resolves the destination from a column or hovered card, snapshots the board, moves the card optimistically, and sends `PATCH /tasks/{id}/move`. Failure restores the previous state and displays an error.
-
-Task movement is not a complete state machine: the backend accepts enum destinations and specifically blocks editors/designers from setting `ready_to_publish`, but does not validate every source-to-destination edge. Task status and deliverable status are separate fields; moving a task does not automatically execute a deliverable transition.
-
-### 6.5 SLA calculation
-
-Task creation uses elapsed-hour deadlines:
+### 6.2 SLA turnaround tiers
 
 | Plan | Reel | Carousel | Story | Static post | Shoot day |
 |---|---:|---:|---:|---:|---:|
@@ -431,13 +433,7 @@ Task creation uses elapsed-hour deadlines:
 | Growth | 36 h | 36 h | 18 h | 18 h | 48 h |
 | Scale | 24 h | 24 h | 12 h | 12 h | 24 h |
 
-Unknown/missing tiers fall back to starter. Formula: `sla_due_at = base_time_or_now + configured_hours`. This does not exclude weekends. Onboarding calendar generation uses the different business-day calculation described above.
-
-### 6.6 Breach detection
-
-Select tasks with a passed SLA, a non-null deadline, status other than ready-to-publish/completed, and no previous notification timestamp. For each, stamp `last_sla_notified_at`, write an audit event, notify the assignee and up to two leads/admins, and commit.
-
-Sequential repeated sweeps skip already stamped tasks. No explicit row-lock claim protects this sweep from simultaneous workers, so strict concurrent exactly-once notification is not established. Changing a deadline later does not automatically reset its notification marker.
+Formula: `sla_due_at = base_time_or_now + configured_hours`. Production calendar assets use format-specific lead dates (`LEAD_DAYS`) set to 18:00 UTC on the due date.
 
 ## 7. Deliverables, QA, revisions, and media
 

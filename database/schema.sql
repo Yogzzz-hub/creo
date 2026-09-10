@@ -142,6 +142,8 @@ CREATE TABLE IF NOT EXISTS client_profiles (
     ig_token_expires_at TIMESTAMPTZ,
     brand_summary TEXT,
     brand_dna JSONB DEFAULT '{}'::jsonb NOT NULL,
+    timezone VARCHAR(50) DEFAULT 'Asia/Kolkata' NOT NULL,
+    calendar_template JSONB DEFAULT NULL,
     terms_accepted_at TIMESTAMPTZ,
     terms_version VARCHAR(50),
     onboarding_completed_at TIMESTAMPTZ,
@@ -161,6 +163,8 @@ CREATE TABLE IF NOT EXISTS staff_profiles (
     team_lead_id UUID REFERENCES users(id) ON DELETE SET NULL,
     department VARCHAR(50) DEFAULT 'creative' NOT NULL,
     daily_capacity INT DEFAULT 4 NOT NULL,
+    daily_points INT DEFAULT 8 NOT NULL,
+    last_assigned_at TIMESTAMPTZ,
     skills TEXT[] DEFAULT '{}'::text[] NOT NULL,
     is_accepting_work BOOLEAN DEFAULT true NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -260,6 +264,9 @@ CREATE TABLE IF NOT EXISTS tasks (
     due_date DATE,
     sla_due_at TIMESTAMPTZ,
     last_sla_notified_at TIMESTAMPTZ DEFAULT NULL,
+    effort_points INT DEFAULT 1 NOT NULL,
+    is_revision BOOLEAN DEFAULT false NOT NULL,
+    parent_assignee_id UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
@@ -270,6 +277,8 @@ CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_kanban ON tasks(status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_tasks_sla ON tasks(status, sla_due_at)
     WHERE status NOT IN ('ready_to_publish', 'completed');
+CREATE INDEX IF NOT EXISTS idx_tasks_window ON tasks(assigned_to, due_date)
+    WHERE status IN ('in_production', 'internal_qa');
 
 DROP TRIGGER IF EXISTS trg_tasks_updated_at ON tasks;
 CREATE TRIGGER trg_tasks_updated_at
@@ -329,6 +338,9 @@ CREATE TABLE IF NOT EXISTS content_calendar (
     publish_date DATE NOT NULL,
     scheduled_time TIMESTAMPTZ,
     caption TEXT,
+    status VARCHAR(20) DEFAULT 'approved' NOT NULL,
+    is_locked BOOLEAN DEFAULT false NOT NULL,
+    slot_kind VARCHAR(50),
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 

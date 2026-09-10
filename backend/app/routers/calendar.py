@@ -106,6 +106,9 @@ async def get_calendar_entries(
             "scheduled_at": sched_dt.isoformat(),
             "scheduled_time": sched_dt.strftime("%I:%M %p"),
             "status": status_val,
+            "calendar_status": cal.status or "approved",
+            "is_locked": cal.is_locked or False,
+            "slot_kind": cal.slot_kind,
             "raw_status": d.status.value if d else "scheduled",
             "version": d.version if d else 1,
             "thumbnail_url": d.file_url if d else None,
@@ -150,6 +153,9 @@ async def get_calendar_entries(
             "scheduled_at": sched_dt.isoformat(),
             "scheduled_time": sched_dt.strftime("%I:%M %p"),
             "status": "approved" if d.status.value == "approved" else "scheduled" if d.status.value in ["draft", "pending_approval"] else d.status.value,
+            "calendar_status": "approved",
+            "is_locked": True,
+            "slot_kind": type_str,
             "raw_status": d.status.value,
             "version": d.version,
             "thumbnail_url": d.file_url,
@@ -160,3 +166,44 @@ async def get_calendar_entries(
         })
 
     return calendar_list
+
+
+@router.post("/draft-month", response_model=dict[str, Any])
+@router.post("/{client_id}/draft-month", response_model=dict[str, Any])
+async def draft_calendar_month_endpoint(
+    client_id: uuid.UUID | None = None,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Generate quota-driven draft content calendar slots spread evenly across client template days."""
+    target_id = client_id or actor.client_id or actor.user_id
+    from app.services.dispatch_engine import draft_month_calendar
+
+    slots = await draft_month_calendar(db, target_id)
+    return {
+        "status": "drafted",
+        "client_id": str(target_id),
+        "total_slots": len(slots),
+        "reels": sum(1 for s in slots if s.slot_kind == "reel"),
+        "posters": sum(1 for s in slots if s.slot_kind in ["poster", "static_post"]),
+        "stories": sum(1 for s in slots if s.slot_kind in ["story", "carousel"]),
+    }
+
+
+@router.post("/approve", response_model=dict[str, Any])
+@router.post("/{client_id}/approve", response_model=dict[str, Any])
+async def approve_draft_calendar_endpoint(
+    client_id: uuid.UUID | None = None,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Approve draft calendar slots, lock schedule, materialize tasks, and dispatch the rolling 10-day window."""
+    target_id = client_id or actor.client_id or actor.user_id
+    from app.services.dispatch_engine import approve_calendar_month
+
+    res = await approve_calendar_month(db, target_id, actor_id=actor.user_id)
+    return {
+        "status": "approved",
+        "client_id": str(target_id),
+        **res,
+    }
