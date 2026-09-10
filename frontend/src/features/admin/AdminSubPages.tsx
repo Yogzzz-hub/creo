@@ -306,7 +306,12 @@ export function AdminDeliverablesPage() {
         ? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
         : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1200&auto=format&fit=crop";
     }
-    const apiBase = ((import.meta.env.VITE_API_URL as string) || "").replace(/\/$/, "");
+    const apiBase = (
+      (import.meta.env.VITE_API_URL as string) ||
+      (typeof window !== "undefined" && (window.location.hostname.includes("workers.dev") || window.location.hostname.includes("pages.dev"))
+        ? "https://creo-fhhl.onrender.com"
+        : "")
+    ).replace(/\/$/, "");
     let resolved = url;
     if (url.startsWith("/") && apiBase && !url.startsWith(apiBase)) {
       resolved = `${apiBase}${url}`;

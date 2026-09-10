@@ -36,7 +36,12 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const apiBase = ((import.meta.env.VITE_API_URL as string) || "").replace(/\/$/, "");
+  const apiBase = (
+    (import.meta.env.VITE_API_URL as string) ||
+    (typeof window !== "undefined" && (window.location.hostname.includes("workers.dev") || window.location.hostname.includes("pages.dev"))
+      ? "https://creo-fhhl.onrender.com"
+      : "")
+  ).replace(/\/$/, "");
   const requestUrl = path.startsWith("/api") && apiBase ? `${apiBase}${path}` : path;
 
   const response = await fetch(requestUrl, {
