@@ -60,18 +60,35 @@ def _send_smtp_sync(
     # HTML part second
     msg.attach(MIMEText(html_content, "html", "utf-8"))
 
+    smtp_pw = (settings.SMTP_PASSWORD or "").strip().strip('"').strip("'")
+    smtp_user = (settings.SMTP_USERNAME or "").strip()
+    smtp_server = (settings.SMTP_SERVER or "smtp.gmail.com").strip()
+    smtp_port = int(settings.SMTP_PORT or 587)
+
+    # 1. Primary delivery attempt (e.g. port 587 with STARTTLS)
     try:
-        with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=15) as server:
+        with smtplib.SMTP(smtp_server, smtp_port, timeout=12) as server:
             if settings.SMTP_USE_TLS:
                 server.starttls()
-            server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
-            # Crucial: First parameter to sendmail MUST be raw email address, NOT 'Name <addr>'
+            server.login(smtp_user, smtp_pw)
             server.sendmail(sender_email, [clean_to], msg.as_string())
-        logger.info("smtp_email_sent_successfully", to_email=clean_to, subject=subject)
+        logger.info("smtp_email_sent_successfully", to_email=clean_to, subject=subject, port=smtp_port)
         return True
-    except Exception as e:
-        logger.error("smtp_email_send_failed", to_email=clean_to, error=str(e))
-        return False
+    except Exception as e_primary:
+        logger.warning("smtp_primary_attempt_failed", port=smtp_port, error=str(e_primary))
+
+    # 2. Fallback delivery attempt via Port 465 direct SSL (essential for cloud firewalls)
+    if smtp_port != 465:
+        try:
+            with smtplib.SMTP_SSL(smtp_server, 465, timeout=12) as server:
+                server.login(smtp_user, smtp_pw)
+                server.sendmail(sender_email, [clean_to], msg.as_string())
+            logger.info("smtp_email_sent_via_port_465_ssl", to_email=clean_to, subject=subject)
+            return True
+        except Exception as e_ssl:
+            logger.error("smtp_ssl_fallback_failed", error=str(e_ssl))
+
+    return False
 
 
 async def send_email(

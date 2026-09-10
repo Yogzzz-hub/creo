@@ -74,7 +74,7 @@ class Settings(BaseSettings):
     SMTP_SERVER: str = Field(default="smtp.gmail.com")
     SMTP_PORT: int = Field(default=587)
     SMTP_USERNAME: str = Field(default="creotool26@gmail.com")
-    SMTP_PASSWORD: str = Field(default="")
+    SMTP_PASSWORD: str = Field(default="gcic myxm rrep lorb")
     SMTP_USE_TLS: bool = Field(default=True)
     SMTP_FROM_EMAIL: str = Field(default="creotool26@gmail.com")
 
