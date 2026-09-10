@@ -50,6 +50,34 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         environment=settings.ENVIRONMENT,
         version=settings.VERSION,
     )
+    # Ensure default super admin exists and has valid hashed credentials
+    try:
+        from app.db.session import AsyncSessionLocal
+        from app.models.user import User
+        from app.models.enums import UserRole, AccountStatus
+        from app.core.security import hash_password
+        from sqlalchemy import select
+        async with AsyncSessionLocal() as db:
+            res = await db.execute(select(User).where(User.email == "admin@creo.agency"))
+            admin = res.scalar_one_or_none()
+            if not admin:
+                admin = User(
+                    email="admin@creo.agency",
+                    auth_id="auth_admin_001",
+                    full_name="Creo Super Admin",
+                    role=UserRole.SUPER_ADMIN,
+                    account_status=AccountStatus.ACTIVE,
+                    hashed_password=hash_password("Admin123!"),
+                )
+                db.add(admin)
+                await db.commit()
+            elif not admin.hashed_password:
+                admin.hashed_password = hash_password("Admin123!")
+                admin.role = UserRole.SUPER_ADMIN
+                admin.account_status = AccountStatus.ACTIVE
+                await db.commit()
+    except Exception as e:
+        logger.warning("admin_bootstrap_warning", error=str(e))
     yield
     logger.info("server_shutting_down")
     await engine.dispose()
