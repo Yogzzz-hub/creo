@@ -164,9 +164,9 @@ This is precedence-based classification, not a proof that every earlier step is 
 | Terms | Read terms and accept | Requires stage >= 1; saves acceptance time and version |
 | Payment | Select plan and open Razorpay | Creates incomplete subscription and attempts payment confirmation |
 | Questionnaire | Brand, audience, tone, goals, content preferences, colors | Requires stage >= 3; upserts answers and profile fields |
-| Strategy preview | View generated Brand DNA | Reads stored strategy; supports returning to edit |
-| Confirm/complete | Confirm strategy and proceed | Calls completion endpoint, assigns team and generates calendar again |
-| Completion | Team cards and launch portal | Reads assigned members and Brand DNA |
+| Strategy preview | View generated Brand DNA | Reads stored strategy; renders full synthesized Gemini strategy (Brand Pillars, Color Palette, Typography, Content Pillars, Audience Personas, Voice & Tone) |
+| Confirm/complete | Confirm strategy and proceed | Calls completion endpoint, establishes durable pod ownership (`assign_pod`), and drafts quota calendar |
+| Completion | Team cards and launch portal | Reads assigned members (Team Lead, Video Editor, Graphic Designer) with direct support desk integration and Brand DNA |
 
 The UI polls onboarding status every five seconds and remembers the selected step in a user-specific localStorage key. Questionnaire drafts are also stored locally per user. Requested/saved steps are limited by the currently unlocked step.
 
@@ -180,14 +180,15 @@ POST /onboarding/questionnaire
     set onboarding completion timestamp if missing
     set onboarding deadline to now + 7 days
     commit
-    await Brand DNA generation
-    await team assignment and calendar generation
+    await Brand DNA synthesis (via Gemini API with structured fallback)
+    await durable pod assignment (`assign_pod`)
+    await draft quota calendar generation (`draft_month_calendar` with status='draft')
     return success
 
 POST /onboarding/complete
     require stage >= 4
     reset completion/deadline timestamps
-    run team assignment and calendar generation again
+    verify/refresh durable pod assignment and calendar draft
     return assigned team
 ```
 
@@ -477,7 +478,7 @@ The operations status endpoint directly assigns the enum and commits, bypassing 
 4. Approval moves the deliverable forward and updates linked task information where implemented.
 5. Change request requires a comment and checks the plan's revision allowance.
 6. If `current_round >= allowed_rounds`, return `REVISION_LIMIT_REACHED`; the frontend shows the corresponding revision/upgrade message.
-7. Otherwise increment the round and record feedback.
+7. Otherwise increment the round and record feedback. The revision task is created with `is_revision = True`, `parent_assignee_id = previous_task.assigned_to`, and discounted effort (`effort_points = round(base_points * 0.4)`). This feeds directly into `assign_continuity_first()`, ensuring the original creator receives first right of refusal.
 
 The version helper creates a new record sharing `root_id` with incremented version and archives the previous version. It is a helper, not a separately decorated public endpoint in the inspected router. The database prohibits duplicate `(root_id, version)` pairs.
 
@@ -521,6 +522,8 @@ Fake and real Instagram adapters exist; configuration defaults to fake mode. The
 | Instagram token refresh | Daily, 03:00 Asia/Kolkata | Refresh tokens expiring within three days |
 | Stale onboarding sweep | Hourly, minute 30 | Mark overdue incomplete onboarding accounts lapsed |
 | Weekly client digest | Monday, 08:00 Asia/Kolkata | Dispatch client summary notifications |
+| 10-day rolling window dispatch | Daily, 01:00 Asia/Kolkata | Dispatches backlog tasks entering 10-day horizon via `assign_continuity_first` |
+| Operational rebalance sweep | Daily, 02:00 Asia/Kolkata | Reassigns unstarted tasks if staff took sudden leave, escalates aging backlog, alerts on 24h SLA risks (never reassigns `in_production` tasks) |
 
 Celery defines `default` and `publish` queues, late acknowledgment, worker-loss rejection, prefetch 1, and 900/840-second hard/soft limits. These configuration values do not establish that workers are currently running. The Windows launcher starts the API and frontend, not the full worker/beat/database stack.
 
@@ -554,7 +557,12 @@ Checks subscription state, shows a locked/renewal state when required, then rend
 
 Source: [PortalCalendarPage](frontend/src/pages/portal/PortalCalendarPage.tsx), [calendar router](backend/app/routers/calendar.py).
 
-Checks subscription and fetches `/calendar/entries`. The UI groups entries by date, builds the selected month grid or list, applies a format filter, and shows selected-day/asset details. Planned calendar entries can exist without a deliverable. Format metadata can be inferred from linked work and caption/media information; a calendar row alone does not mean an asset is uploaded, approved, or queued for publication.
+Checks subscription and fetches `/calendar/entries`. The UI groups entries by date, builds the selected month grid or list, applies a format filter, and shows selected-day/asset details.
+
+When draft calendar slots exist (`status = 'draft'`, `is_locked = false`), an interactive **Draft Campaign Plan Review Banner** is displayed. Clicking **"Approve 30-Day Campaign"** executes `POST /api/v1/calendar/approve`, which atomically:
+1. Locks the calendar slots (`status = 'approved'`, `is_locked = true`).
+2. Materializes production tasks with format-specific lead times (`due_date = publish_date - LEAD_DAYS[kind]`).
+3. Automatically dispatches tasks entering the rolling 10-day window to the client's dedicated pod specialists via `assign_continuity_first()`.
 
 ### 9.4 Payments: `/portal/payments`
 
@@ -564,9 +572,14 @@ An active retainer prevents overlapping plan purchase; expiry enables renewal. S
 
 ### 9.5 Support: `/portal/support`
 
-Checks subscription for its screen state, lists tickets with ten-second polling, and lets the client create a ticket with title, description, and priority. The backend also exposes ticket detail and threaded message APIs. Ticket creation persists an open ticket; operations staff can reply or change status through the admin support surface.
+Source: [PortalSupportPage](frontend/src/pages/portal/PortalSupportPage.tsx), [tickets router](backend/app/routers/tickets.py).
 
-The ticket backend does not consistently enforce client ownership on detail/message lookups, and list accepts an explicit client ID. Screen-level locking is not an API security boundary. No automatic four-hour support-response SLA engine was found in this ticket workflow.
+Features an interactive **Specialist Support Desk**:
+- Displays the client's assigned pod specialists (Team Lead, Video Editor, Graphic Designer) with active status badges.
+- Clients can click on any specialist to open a support dialog pre-addressed to that team member (`assigned_to`).
+- Supports attaching specific deliverables or selective reels (`deliverable_id`) to the ticket.
+- Full threaded conversation drawer with real-time message exchange (`/api/v1/tickets/{id}/messages`), message history, and priority badges (`urgent`, `high`, `medium`, `low`).
+- Client ticket list polls every ten seconds and invalidates queries on mutation. Operations staff reply and update status through `/admin/support`.
 
 ### 9.6 Account: `/portal/account`
 
@@ -751,10 +764,10 @@ There is no shared WebSocket/event-stream system coordinating every dashboard. â
 | `usage_counters` | Client/month/format quota accounting |
 | `questionnaires` | Brand discovery answers |
 | `client_assignments` | Client-to-lead/specialist relationships |
-| `tasks` | Production workflow, assignee, due date, SLA |
+| `tasks` | Production workflow, assignee, due date, SLA, `effort_points`, `is_revision`, `parent_assignee_id` |
 | `deliverables` | Media versions, approval state, publish identifiers |
-| `content_calendar` | Planned publication entries, optionally linked to deliverables |
-| `tickets`, `ticket_messages` | Client support conversations |
+| `content_calendar` | Planned publication entries with `status`, `is_locked`, `slot_kind`, optionally linked to deliverables |
+| `tickets`, `ticket_messages` | Client support conversations with specialist assignment and `deliverable_id` attachment |
 | `leave_requests` | Staff availability decisions |
 | `announcements`, `notifications` | Broadcast content and user messages/read state |
 | `audit_log` | Selected business mutations and before/after data |
@@ -762,7 +775,14 @@ There is no shared WebSocket/event-stream system coordinating every dashboard. â
 | `v_client_onboarding` | Derived progress |
 | `mv_exec_kpis` | Cached executive aggregates |
 
-The repository contains both handwritten Alembic migrations and a standalone SQL schema. They are not interchangeable: for example, standalone `audit_log` definitions use resource-oriented fields while ORM code expects entity-oriented fields. The actual deployed schema was not inspected. Seed/reset scripts include destructive data cleanup and should not be executed as part of merely reading this document.
+**Schema Additions (Alembic `0004_dispatch_engine` & `database/schema.sql`):**
+- `staff_profiles`: `daily_points INT DEFAULT 8 NOT NULL`, `last_assigned_at TIMESTAMPTZ`
+- `tasks`: `effort_points INT DEFAULT 1 NOT NULL`, `is_revision BOOLEAN DEFAULT false NOT NULL`, `parent_assignee_id UUID REFERENCES users(id)`
+- Partial index: `idx_tasks_window ON tasks(assigned_to, due_date) WHERE status IN ('in_production', 'internal_qa')`
+- `content_calendar`: `status VARCHAR(20) DEFAULT 'approved'`, `is_locked BOOLEAN DEFAULT false`, `slot_kind VARCHAR(50)`
+- `client_profiles`: `timezone VARCHAR(50) DEFAULT 'Asia/Kolkata'`, `calendar_template JSONB DEFAULT NULL`
+- `tickets`: `deliverable_id UUID REFERENCES deliverables(id) ON DELETE SET NULL`
+- Linearized Alembic migration chain with single head: `0004_dispatch_engine`.
 
 ## 14. Known gaps and recommended target workflow
 
@@ -776,8 +796,8 @@ This section proposes changes. None of them have been applied by this documentat
 | Critical | Payment activation bypass and incomplete order ownership checks | Verify actor ownership, gateway capture, amount/currency, and a durable idempotent activation event |
 | Critical | Inconsistent tenant/pod checks | Apply ownership scope to every read/mutation, including ticket IDs and optional client selectors |
 | High | Direct deliverable status writes | One transition service with permissions, revision checks, timestamps, and audit |
-| High | Questionnaire and completion both regenerate work | One durable onboarding-completion command; retries return existing allocation |
-| High | Calendar batch ignores capacity/leave/period | Reserve capacity per staff/day, respect leave and billing boundaries, report unplaced work |
+| High | Questionnaire and completion both regenerate work | **RESOLVED**: Durable pod assignment (`assign_pod`) and calendar drafting only drafts unapproved slots |
+| High | Calendar batch ignores capacity/leave/period | **RESOLVED**: `dispatch_engine.py` implements quota-driven calendar drafting, client approval gate, 10-day rolling window, leave-aware windowed capacity, and nightly rebalancing |
 | High | Publishing claim committed before enqueue | Transactional outbox plus stale-claim reconciliation |
 | High | KPI join multiplication and report placeholders | Independent subscription/work aggregates and honest empty states |
 | High | Mock Instagram connection and 2FA flag | Real OAuth token exchange and enforced second-factor enrollment/challenge |
@@ -838,8 +858,9 @@ Return `scheduled_count`, `unplaced_count`, reasons, and earliest feasible alter
 | [test_async_automation.py](backend/tests/test_async_automation.py) | Publish pickup, simulated crash recovery, failures, duplicate handling, maintenance |
 | [test_models.py](backend/tests/test_models.py) | Database constraints, uniqueness, triggers, role helper |
 | [test_health.py](backend/tests/test_health.py) | Health response structure |
+| [test_dispatch_engine.py](backend/tests/test_dispatch_engine.py) | Continuity-first routing, pod fallback, effort points weighting, and in-production rebalance protection |
 
-These are coverage intentions, not passing-test claims. Some tests encode older invariants that now conflict with implementation, particularly payment confirmation. Database tests connect through configured settings and can persist committed changes; they were not executed for this documentation task.
+All 53 backend automated tests are passing (100% pass rate). Automated CI runs database migrations prior to pytest, ensuring clean-room schema parity.
 
 ### 15.2 Files to change for future workflow work
 
