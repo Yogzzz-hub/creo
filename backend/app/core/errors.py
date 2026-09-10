@@ -100,8 +100,8 @@ class Unauthorized(AppError):
 
 
 async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
-    """Render AppError exceptions into the canonical error envelope."""
-    return JSONResponse(
+    """Render AppError exceptions into the canonical error envelope with guaranteed CORS headers."""
+    resp = JSONResponse(
         status_code=exc.status_code,
         content={
             "error": {
@@ -111,3 +111,10 @@ async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
             }
         },
     )
+    origin = request.headers.get("origin")
+    if origin:
+        resp.headers["Access-Control-Allow-Origin"] = origin
+        resp.headers["Access-Control-Allow-Credentials"] = "true"
+        resp.headers["Access-Control-Allow-Methods"] = "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT"
+        resp.headers["Access-Control-Allow-Headers"] = "*"
+    return resp

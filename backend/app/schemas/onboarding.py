@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class OnboardingStatusResponse(BaseModel):
@@ -33,14 +33,26 @@ class TermsAcceptRequest(BaseModel):
 class QuestionnaireSubmitRequest(BaseModel):
     """Brand questionnaire submission with comprehensive brand discovery details."""
 
-    company_name: str = Field(min_length=1, max_length=255)
+    company_name: str = Field(default="", max_length=255)
     industry: str = Field(default="", max_length=255)
     official_logo_assets: str = Field(default="", max_length=1000)
     website_url: str = Field(default="", max_length=500)
     business_description: str = Field(default="", max_length=2000)
     instagram_username: str = Field(default="", max_length=100)
     primary_goal: str = Field(default="", max_length=255)
-    target_audience: str = Field(min_length=1, max_length=500)
+    target_audience: str = Field(default="", max_length=500)
+
+    @model_validator(mode="before")
+    @classmethod
+    def resolve_aliases(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if not data.get("company_name") and data.get("business_name"):
+                data["company_name"] = data["business_name"]
+            if not data.get("company_name") and data.get("brand_name"):
+                data["company_name"] = data["brand_name"]
+            if not data.get("target_audience") and data.get("audience"):
+                data["target_audience"] = data["audience"]
+        return data
     audience_age_range: str = Field(default="", max_length=100)
     audience_gender: str = Field(default="", max_length=100)
     audience_location: str = Field(default="", max_length=255)

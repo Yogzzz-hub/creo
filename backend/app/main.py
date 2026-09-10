@@ -123,19 +123,31 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
     import time
 
     client_ip = request.client.host if request.client else "unknown"
+    origin = request.headers.get("origin")
+
+    # Helper to attach CORS to early returns
+    def _add_cors(res: JSONResponse) -> JSONResponse:
+        if origin:
+            res.headers["Access-Control-Allow-Origin"] = origin
+            res.headers["Access-Control-Allow-Credentials"] = "true"
+            res.headers["Access-Control-Allow-Methods"] = "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT"
+            res.headers["Access-Control-Allow-Headers"] = "*"
+        return res
 
     # 1. Payload size check (exempt upload routes for media files)
     if not request.url.path.endswith("/upload") and not request.url.path.endswith("/upload-intent"):
         content_length = request.headers.get("content-length")
         if content_length and int(content_length) > MAX_CONTENT_LENGTH:
-            return JSONResponse(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                content={
-                    "error": {
-                        "code": "PAYLOAD_TOO_LARGE",
-                        "message": f"Request payload exceeds maximum allowed size of {MAX_CONTENT_LENGTH // (1024*1024)}MB.",
-                    }
-                },
+            return _add_cors(
+                JSONResponse(
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                    content={
+                        "error": {
+                            "code": "PAYLOAD_TOO_LARGE",
+                            "message": f"Request payload exceeds maximum allowed size of {MAX_CONTENT_LENGTH // (1024*1024)}MB.",
+                        }
+                    },
+                )
             )
 
     # 2. IP-based request throttling / anti-DDoS (exempt health endpoint)
@@ -145,28 +157,44 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
         timestamps = [t for t in _ip_request_timestamps.get(client_ip, []) if t > cutoff]
         if len(timestamps) >= MAX_REQUESTS_PER_WINDOW:
             _ip_request_timestamps[client_ip] = timestamps
-            return JSONResponse(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                content={
-                    "error": {
-                        "code": "RATE_LIMIT_EXCEEDED",
-                        "message": "Too many requests from your IP address. Please slow down.",
-                    }
-                },
+            return _add_cors(
+                JSONResponse(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    content={
+                        "error": {
+                            "code": "RATE_LIMIT_EXCEEDED",
+                            "message": "Too many requests from your IP address. Please slow down.",
+                        }
+                    },
+                )
             )
         timestamps.append(now)
         _ip_request_timestamps[client_ip] = timestamps
 
-    response = await call_next(request)
+    try:
+        response = await call_next(request)
+    except Exception as exc:
+        logger.error("unhandled_request_exception", error=str(exc), path=request.url.path)
+        return _add_cors(
+            JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content={
+                    "error": {
+                        "code": "INTERNAL_SERVER_ERROR",
+                        "message": "An unexpected server error occurred.",
+                        "details": str(exc),
+                    }
+                },
+            )
+        )
 
-    # 3. Comprehensive OWASP Recommended Security Headers
+    # 3. Comprehensive OWASP Recommended Security Headers (Excluding CSP which breaks cross-origin SPA APIs)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
-    response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
     return response
 
 
@@ -182,7 +210,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         msg = err.get("msg", "Validation error")
         messages.append(f"{field}: {msg}" if field else msg)
     message = "; ".join(messages) if messages else "Invalid request payload"
-    return JSONResponse(
+    resp = JSONResponse(
         status_code=422,
         content={
             "error": {
@@ -192,6 +220,13 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             }
         },
     )
+    origin = request.headers.get("origin")
+    if origin:
+        resp.headers["Access-Control-Allow-Origin"] = origin
+        resp.headers["Access-Control-Allow-Credentials"] = "true"
+        resp.headers["Access-Control-Allow-Methods"] = "DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT"
+        resp.headers["Access-Control-Allow-Headers"] = "*"
+    return resp
 
 # API v1 feature routers
 app.include_router(auth.router, prefix="/api/v1")

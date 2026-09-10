@@ -115,6 +115,9 @@ class Settings(BaseSettings):
             "http://127.0.0.1:5173",
             "http://localhost:3000",
             "http://127.0.0.1:3000",
+            "https://creo.yogalakshmibaskar20.workers.dev",
+            "https://creo-fhhl.onrender.com",
+            "https://creo.pages.dev",
         ]
     )
     BACKEND_CORS_ORIGINS: list[str] | str | None = Field(default=None)
