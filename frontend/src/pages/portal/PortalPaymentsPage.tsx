@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { request } from "../../lib/http";
 import { openRazorpayCheckout } from "../../lib/razorpay";
+import { useAuth } from "../../lib/auth-context";
 import {
   Download,
   Zap,
@@ -713,10 +714,17 @@ function AddonModal({
 /* ─── Main Page ─────────────────────────────────────────────────────────── */
 
 export function PortalPaymentsPage() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showAddonModal, setShowAddonModal] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success" | "error">("idle");
+
+  const { data: dashboard } = useQuery({
+    queryKey: ["portal-dashboard", user?.id],
+    queryFn: () => request<any>("/api/v1/portal/dashboard"),
+    enabled: !!user?.id,
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ["client-subscription"],
@@ -729,6 +737,10 @@ export function PortalPaymentsPage() {
     queryKey: ["payment-plans"],
     queryFn: () => request<Plan[]>("/api/v1/payments/plans"),
   });
+
+  const stage = dashboard?.onboarding_stage ?? user?.onboarding_stage ?? 1;
+  const termsAccepted = dashboard?.terms_accepted ?? false;
+  const isStep2Done = termsAccepted || stage >= 2;
 
   const createOrderMutation = useMutation({
     mutationFn: (planId: string) =>
@@ -760,22 +772,19 @@ export function PortalPaymentsPage() {
   });
 
   const handleSelectPlan = async (plan: Plan) => {
+    if (!isStep2Done) {
+      setShowPlanModal(false);
+      window.location.href = "/onboarding?step=2";
+      return;
+    }
+
     setShowPlanModal(false);
     setPaymentStatus("processing");
 
     try {
       const order = await createOrderMutation.mutateAsync(plan.id);
 
-      if (typeof (window as any).Razorpay === "undefined") {
-        await confirmMutation.mutateAsync({
-          order_id: order.order_id,
-          payment_id: `pay_sandbox_${Date.now()}`,
-          signature: `sig_sandbox_${Date.now()}`,
-        });
-        return;
-      }
-
-      openRazorpayCheckout(
+      await openRazorpayCheckout(
         {
           key: order.key_id,
           amount: order.amount_minor,
@@ -792,12 +801,10 @@ export function PortalPaymentsPage() {
             signature: payment.razorpay_signature || `sig_sandbox_${Date.now()}`,
           });
         },
-        async () => {
-          await confirmMutation.mutateAsync({
-            order_id: order.order_id,
-            payment_id: `pay_sandbox_${Date.now()}`,
-            signature: `sig_sandbox_${Date.now()}`,
-          });
+        () => {
+          // User closed/exited checkout without completing payment
+          setPaymentStatus("idle");
+          queryClient.invalidateQueries({ queryKey: ["client-subscription"] });
         }
       );
     } catch {
@@ -866,6 +873,11 @@ export function PortalPaymentsPage() {
     !isExpired &&
     (data?.is_active === true ||
       (!!data?.subscription && ["active", "trialing"].includes(data?.subscription?.status)));
+
+  const isIncomplete =
+    !isSubscribed &&
+    !isExpired &&
+    data?.subscription?.status === "incomplete";
 
   useEffect(() => {
     if (isSubscribed && paymentStatus === "error") {
@@ -980,6 +992,37 @@ export function PortalPaymentsPage() {
         </div>
       )}
 
+      {/* ── Service Agreement Required Banner (if step 2 not done) ──────── */}
+      {!isStep2Done && (
+        <div className="rounded-3xl border border-amber-300 bg-gradient-to-r from-amber-50 via-orange-50/60 to-amber-50 p-5 sm:p-6 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm backdrop-blur-xs">
+          <div className="flex items-start gap-4">
+            <div className="size-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-700 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+              <AlertCircle className="size-5.5 text-amber-700" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-200/80 text-amber-900">
+                  Step 2 Required
+                </span>
+                <h3 className="text-sm sm:text-base font-bold text-amber-950">
+                  Service Agreement Required Before Payment
+                </h3>
+              </div>
+              <p className="text-xs text-amber-800/90 mt-1 leading-relaxed max-w-2xl">
+                You must review and accept our Master Service Agreement terms in account setup before selecting a plan and activating your creative retainer.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/onboarding?step=2"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs font-bold shadow-md shadow-amber-600/25 transition-all shrink-0 cursor-pointer"
+          >
+            <span>Resume Setup (Step 2: Agreement)</span>
+            <ArrowRight className="size-3.5" />
+          </Link>
+        </div>
+      )}
+
       {/* ── Top Header ────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-3xl p-6 sm:p-7 shadow-xs">
         <div>
@@ -1034,7 +1077,11 @@ export function PortalPaymentsPage() {
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Current Retainer</p>
             <p className="text-lg font-black text-[#0D2137] mt-0.5">
-              {data?.subscription ? (plan?.display_name || "Growth Retainer") : "None (Pending Payment)"}
+              {isSubscribed
+                ? (plan?.display_name || "Growth Retainer")
+                : isIncomplete
+                ? `${plan?.display_name || "Plan"} (Incomplete)`
+                : "None (Pending Payment)"}
             </p>
           </div>
           <div className="size-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#2B7BC4]">
@@ -1046,7 +1093,9 @@ export function PortalPaymentsPage() {
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Monthly Quota</p>
             <p className="text-lg font-black text-[#0D2137] mt-0.5">
-              {data?.subscription ? `${posterUsed + reelUsed + storyUsed} / ${posterTotal + reelTotal + storyTotal} Assets` : "0 / 0 Assets"}
+              {isSubscribed
+                ? `${posterUsed + reelUsed + storyUsed} / ${posterTotal + reelTotal + storyTotal} Assets`
+                : "0 / 0 Assets"}
             </p>
           </div>
           <div className="size-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
@@ -1152,7 +1201,7 @@ export function PortalPaymentsPage() {
                 </span>
               </div>
             </>
-          ) : data?.subscription ? (
+          ) : isSubscribed ? (
             <>
               <div className="space-y-5">
                 <div className="flex items-center justify-between">
@@ -1217,6 +1266,86 @@ export function PortalPaymentsPage() {
                 </span>
               </div>
             </>
+          ) : isIncomplete ? (
+            <>
+              <div className="space-y-5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-wider text-amber-700 flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                    <AlertCircle className="size-3.5 text-amber-600" />
+                    Payment Incomplete
+                  </span>
+                  <span className="rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs px-3 py-1 font-bold flex items-center gap-1.5 shadow-2xs">
+                    <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    Pending Payment
+                  </span>
+                </div>
+
+                <div>
+                  <h2 className="text-3xl font-black text-[#0D2137] tracking-tight">
+                    {plan?.display_name || "Growth Tier"}
+                  </h2>
+                  <div className="flex items-baseline gap-1.5 mt-1.5">
+                    <span className="text-2xl font-extrabold text-[#0D2137]">
+                      ₹{((plan?.price_minor || 0) / 100).toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-500">/ month + GST</span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-xs text-amber-950 space-y-2">
+                  <p className="font-bold flex items-center gap-1.5 text-amber-900">
+                    <AlertCircle className="size-4 text-amber-600 shrink-0" />
+                    Checkout Incomplete — Retainer Inactive
+                  </p>
+                  <p className="text-[11px] text-amber-800 leading-relaxed">
+                    A checkout order was initialized for {plan?.display_name || "this plan"}, but payment was exited before completion. Your monthly creative quota and dedicated squad are currently inactive.
+                  </p>
+                  <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                    {!isStep2Done ? (
+                      <Link
+                        to="/onboarding?step=2"
+                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#2B7BC4] hover:bg-[#1A5EA8] text-white text-xs font-bold transition-all shadow-xs"
+                      >
+                        <span>Resume Setup (Step 2: Agreement)</span>
+                        <ArrowRight className="size-3.5" />
+                      </Link>
+                    ) : (
+                      <Link
+                        to="/onboarding?step=3"
+                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#2B7BC4] hover:bg-[#1A5EA8] text-white text-xs font-bold transition-all shadow-xs"
+                      >
+                        <span>Resume Setup (Step 3: Payment)</span>
+                        <ArrowRight className="size-3.5" />
+                      </Link>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isStep2Done) {
+                          window.location.href = "/onboarding?step=2";
+                        } else {
+                          setShowPlanModal(true);
+                        }
+                      }}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all cursor-pointer"
+                    >
+                      <span>Choose Different Plan</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-slate-500">
+                <span className="flex items-center gap-1.5 text-amber-700 font-medium">
+                  <Clock className="size-3.5 text-amber-500" />
+                  Order pending completion
+                </span>
+                <span className="text-amber-800 font-bold flex items-center gap-1.5">
+                  <Lock className="size-3.5 text-amber-600" />
+                  Payment Required
+                </span>
+              </div>
+            </>
           ) : (
             <div className="text-center py-8 space-y-4">
               <div className="size-14 mx-auto rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#2B7BC4] shadow-xs">
@@ -1225,17 +1354,29 @@ export function PortalPaymentsPage() {
               <div>
                 <p className="text-base font-bold text-[#0D2137]">No Active Retainer</p>
                 <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-                  Choose a production plan to assign your creative pod and unlock monthly quotas.
+                  {!isStep2Done
+                    ? "Please complete your Service Agreement in onboarding before setting up payment."
+                    : "Choose a production plan to assign your creative pod and unlock monthly quotas."}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowPlanModal(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white text-xs font-bold rounded-2xl hover:from-[#246bb0] hover:to-[#174e7e] shadow-md shadow-blue-500/25 transition-all cursor-pointer"
-              >
-                <Zap className="size-3.5" />
-                Choose Production Plan
-              </button>
+              {!isStep2Done ? (
+                <Link
+                  to="/onboarding?step=2"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white text-xs font-bold rounded-2xl hover:from-[#246bb0] hover:to-[#174e7e] shadow-md shadow-blue-500/25 transition-all cursor-pointer"
+                >
+                  <span>Resume Setup (Step 2: Service Agreement)</span>
+                  <ArrowRight className="size-3.5" />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowPlanModal(true)}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white text-xs font-bold rounded-2xl hover:from-[#246bb0] hover:to-[#174e7e] shadow-md shadow-blue-500/25 transition-all cursor-pointer"
+                >
+                  <Zap className="size-3.5" />
+                  Choose Production Plan
+                </button>
+              )}
             </div>
           )}
         </div>

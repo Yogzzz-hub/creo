@@ -49,6 +49,15 @@ export function PortalSidebar() {
     refetchOnMount: "always",
   });
 
+  const { data: dashboard } = useQuery({
+    queryKey: ["portal-dashboard", user?.id],
+    queryFn: () => request<any>("/api/v1/portal/dashboard"),
+    enabled: !!user?.id,
+  });
+
+  const stage = dashboard?.onboarding_stage ?? user?.onboarding_stage ?? 1;
+  const termsAccepted = dashboard?.terms_accepted ?? false;
+
   const isExpired =
     subData?.is_expired === true ||
     subData?.subscription?.status === "expired" ||
@@ -61,6 +70,13 @@ export function PortalSidebar() {
     (!isExpired &&
       (subData?.is_active === true ||
         (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status))));
+
+  const isStep1Done = stage >= 1;
+  const isStep2Done = termsAccepted || stage >= 2;
+  const isStep3Done = isSubscribed || stage >= 3;
+  const isStep4Done = stage >= 4;
+  const currentResumeStep = !isStep1Done ? 1 : !isStep2Done ? 2 : !isStep3Done ? 3 : !isStep4Done ? 4 : 5;
+  const isSetupIncomplete = user?.role === "client" && currentResumeStep < 5;
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -82,13 +98,23 @@ export function PortalSidebar() {
 
         <nav className="flex flex-1 flex-col gap-1.5">
           {NAV_ITEMS.map((item) => {
+            const isPaymentItem = item.href === "/portal/payments";
+            const targetHref =
+              isPaymentItem && isSetupIncomplete
+                ? `/onboarding?step=${currentResumeStep}`
+                : item.href;
             const active = isActive(item.href, location.pathname);
             const isLocked = item.requiresSub && !isSubscribed;
 
             return (
               <Link
                 key={item.href}
-                to={item.href}
+                to={targetHref}
+                title={
+                  isPaymentItem && isSetupIncomplete
+                    ? `Resume Setup (Step ${currentResumeStep})`
+                    : undefined
+                }
                 className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0EA5E9]/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D2137] ${
                   active
                     ? "bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white font-semibold shadow-md shadow-blue-500/20"
@@ -97,6 +123,11 @@ export function PortalSidebar() {
               >
                 <item.icon className="size-4 shrink-0" />
                 <span className="flex-1">{item.label}</span>
+                {isPaymentItem && isSetupIncomplete && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    Step {currentResumeStep}
+                  </span>
+                )}
                 {isLocked && (
                   <span
                     title="Locked until active retainer"
@@ -112,7 +143,11 @@ export function PortalSidebar() {
           <div className="mt-auto space-y-2">
             {!isSubscribed && (
               <Link
-                to="/portal/payments"
+                to={
+                  isSetupIncomplete
+                    ? `/onboarding?step=${currentResumeStep}`
+                    : "/portal/payments"
+                }
                 className="flex items-center justify-between gap-2.5 rounded-xl bg-gradient-to-r from-sky-500/10 via-blue-500/10 to-indigo-500/10 border border-sky-500/25 px-3 py-2.5 text-xs font-semibold text-sky-200 hover:bg-sky-500/15 hover:border-sky-400/40 transition-all group shadow-sm"
               >
                 <div className="flex items-center gap-2">
@@ -120,12 +155,18 @@ export function PortalSidebar() {
                     <Lock className="size-3" />
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-white font-bold text-xs">Locked Features</span>
-                    <span className="text-[9px] text-sky-300/80 font-normal">Choose plan to unlock</span>
+                    <span className="text-white font-bold text-xs">
+                      {isSetupIncomplete ? "Setup Incomplete" : "Locked Features"}
+                    </span>
+                    <span className="text-[9px] text-sky-300/80 font-normal">
+                      {isSetupIncomplete
+                        ? `Resume Step ${currentResumeStep} of 4`
+                        : "Choose plan to unlock"}
+                    </span>
                   </div>
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded-md bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 text-white font-bold uppercase tracking-wider transition-all shadow-xs">
-                  Unlock
+                  {isSetupIncomplete ? "Resume" : "Unlock"}
                 </span>
               </Link>
             )}
@@ -154,6 +195,15 @@ export function MobileBottomTabBar() {
     queryFn: () => request<any>("/api/v1/payments/subscription"),
   });
 
+  const { data: dashboard } = useQuery({
+    queryKey: ["portal-dashboard", user?.id],
+    queryFn: () => request<any>("/api/v1/portal/dashboard"),
+    enabled: !!user?.id,
+  });
+
+  const stage = dashboard?.onboarding_stage ?? user?.onboarding_stage ?? 1;
+  const termsAccepted = dashboard?.terms_accepted ?? false;
+
   const isExpired =
     subData?.is_expired === true ||
     subData?.subscription?.status === "expired" ||
@@ -167,19 +217,31 @@ export function MobileBottomTabBar() {
       (subData?.is_active === true ||
         (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status))));
 
+  const isStep1Done = stage >= 1;
+  const isStep2Done = termsAccepted || stage >= 2;
+  const isStep3Done = isSubscribed || stage >= 3;
+  const isStep4Done = stage >= 4;
+  const currentResumeStep = !isStep1Done ? 1 : !isStep2Done ? 2 : !isStep3Done ? 3 : !isStep4Done ? 4 : 5;
+  const isSetupIncomplete = user?.role === "client" && currentResumeStep < 5;
+
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-border bg-white px-1 lg:hidden"
       style={{ height: "var(--bottomtab-height)" }}
     >
       {BOTTOM_TAB_ITEMS.map((item) => {
+        const isPlanItem = item.href === "/portal/payments";
+        const targetHref =
+          isPlanItem && isSetupIncomplete
+            ? `/onboarding?step=${currentResumeStep}`
+            : item.href;
         const active = isActive(item.href, location.pathname);
         const isLocked = item.requiresSub && !isSubscribed;
 
         return (
           <Link
             key={item.href}
-            to={item.href}
+            to={targetHref}
             className={`relative flex flex-1 flex-col items-center gap-0.5 py-1 text-[10px] font-medium transition-colors ${
               active ? "text-[#2B7BC4]" : "text-gray-400"
             }`}
@@ -192,7 +254,7 @@ export function MobileBottomTabBar() {
                 </span>
               )}
             </div>
-            {item.label}
+            {isPlanItem && isSetupIncomplete ? "Setup" : item.label}
           </Link>
         );
       })}

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "../../lib/auth-context";
 import {
   Lock,
   Zap,
@@ -24,6 +26,21 @@ export function SubscriptionLockedState({
   title = "Production Workspace Locked",
   description = "An active creative retainer is required to access production deliverables and scheduling. Subscribe to a plan to activate your dedicated creative team.",
 }: SubscriptionLockedStateProps) {
+  const { user } = useAuth();
+  const { data: dashboard } = useQuery({
+    queryKey: ["portal-dashboard", user?.id],
+    queryFn: () => request<any>("/api/v1/portal/dashboard"),
+    enabled: !!user?.id,
+  });
+
+  const stage = dashboard?.onboarding_stage ?? user?.onboarding_stage ?? 1;
+  const termsAccepted = dashboard?.terms_accepted ?? false;
+  const isStep1Done = stage >= 1;
+  const isStep2Done = termsAccepted || stage >= 2;
+  const isStep3Done = stage >= 3;
+  const isStep4Done = stage >= 4;
+  const currentResumeStep = !isStep1Done ? 1 : !isStep2Done ? 2 : !isStep3Done ? 3 : !isStep4Done ? 4 : 5;
+  const isSetupIncomplete = user?.role === "client" && currentResumeStep < 5;
   const [showModal, setShowModal] = useState(false);
   const [inquirySubject, setInquirySubject] = useState("");
   const [inquiryMsg, setInquiryMsg] = useState("");
@@ -115,11 +132,11 @@ export function SubscriptionLockedState({
           {/* Call to Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
             <Link
-              to="/portal/payments"
+              to={isSetupIncomplete ? `/onboarding?step=${currentResumeStep}` : "/portal/payments"}
               className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-7 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#246bb0] hover:to-[#174e7e] transition-all cursor-pointer"
             >
               <Zap className="size-4" />
-              Choose Production Plan
+              {isSetupIncomplete ? `Resume Account Setup (Step ${currentResumeStep})` : "Choose Production Plan"}
               <ArrowRight className="size-3.5" />
             </Link>
             <button

@@ -126,8 +126,8 @@ async def check_client_subscription(
     # Still valid and in period
     is_active = sub.status in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING)
     delta = period_end - now_utc
-    seconds_remaining = max(0, int(delta.total_seconds()))
-    days_remaining = max(0, math.ceil(delta.total_seconds() / 86400))
+    seconds_remaining = max(0, int(delta.total_seconds())) if is_active else 0
+    days_remaining = max(0, math.ceil(delta.total_seconds() / 86400)) if is_active else 0
 
     return {
         "has_subscription": True,

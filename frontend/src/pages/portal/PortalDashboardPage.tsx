@@ -199,10 +199,10 @@ export function PortalDashboardPage() {
             </div>
           </div>
           <Link
-            to="/portal/payments"
+            to={currentResumeStep < 5 ? `/onboarding?step=${currentResumeStep}` : "/portal/payments"}
             className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-4 py-2 text-xs font-bold text-white hover:brightness-110 active:scale-95 transition-all shrink-0 shadow-md shadow-blue-500/20"
           >
-            Choose Plan
+            {currentResumeStep < 5 ? `Resume Setup (Step ${currentResumeStep})` : "Choose Plan"}
             <ArrowRight className="size-3.5" />
           </Link>
         </div>
@@ -309,10 +309,10 @@ export function PortalDashboardPage() {
                   <p className="text-xs text-slate-500">Subscribe to a plan in Payments to start creative deliverables.</p>
                 </div>
                 <Link
-                  to="/portal/payments"
+                  to={currentResumeStep < 5 ? `/onboarding?step=${currentResumeStep}` : "/portal/payments"}
                   className="text-xs font-semibold text-[#2B7BC4] hover:underline flex items-center gap-1"
                 >
-                  Subscribe <ArrowRight className="size-3" />
+                  {currentResumeStep < 5 ? `Resume Setup (Step ${currentResumeStep})` : "Subscribe"} <ArrowRight className="size-3" />
                 </Link>
               </div>
             )}

@@ -183,23 +183,10 @@ export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: Stage
           setPhase("confirmed");
           setTimeout(onPaymentComplete, 1000);
         },
-        async () => {
-          // In test/sandbox fallback, confirm order on modal close
-          try {
-            await confirmPayment(
-              userId,
-              order.order_id,
-              `pay_sandbox_${Date.now()}`,
-              "sig_sandbox",
-              "razorpay",
-            );
-          } catch {
-            // ignore
-          }
-          queryClient.invalidateQueries({ queryKey: ["client-subscription"] });
-          queryClient.invalidateQueries({ queryKey: ["onboarding-status"] });
-          setPhase("confirmed");
-          setTimeout(onPaymentComplete, 1000);
+        () => {
+          // User closed/exited checkout without completing payment
+          setPhase("select");
+          setErrorMsg("Payment was cancelled or not completed. Please select a plan and complete payment to activate your subscription.");
         },
       );
     } catch (err: unknown) {
