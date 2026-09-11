@@ -245,8 +245,19 @@ async def approve_concept_endpoint(
     slot.selected_hook = payload.selected_hook
     slot.concept_status = "concept_approved"
 
-    # Also sync to any existing task for this slot
-    task_stmt = select(Task).where(Task.client_id == target_id).where(Task.due_date <= slot.publish_date)
+    # Also sync to any existing task for this slot (match by type + date proximity)
+    from app.models.enums import DeliverableType, TaskStatus
+    kind_to_type = {"reel": DeliverableType.REEL, "carousel": DeliverableType.CAROUSEL, "story": DeliverableType.STORY}
+    slot_deliv_type = kind_to_type.get(slot.slot_kind or "", DeliverableType.STATIC_POST)
+    task_stmt = (
+        select(Task)
+        .where(Task.client_id == target_id)
+        .where(Task.deliverable_type == slot_deliv_type)
+        .where(Task.due_date <= slot.publish_date)
+        .where(Task.status.notin_([TaskStatus.COMPLETED]))
+        .order_by(Task.due_date.desc())
+        .limit(1)
+    )
     task_res = (await db.execute(task_stmt)).scalars().first()
     if task_res:
         task_res.concept_status = "concept_approved"

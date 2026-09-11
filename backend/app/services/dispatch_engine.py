@@ -657,6 +657,8 @@ async def draft_month_calendar(
     # Fetch client Brand DNA
     brand_dna = client_prof.brand_dna if client_prof and client_prof.brand_dna else {}
 
+    created_slots: list[ContentCalendar] = []
+
     for kind, quota in quotas.items():
         if quota <= 0:
             continue

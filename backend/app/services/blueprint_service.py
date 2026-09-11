@@ -24,9 +24,19 @@ from app.schemas.blueprint import AudioDirection, Beat, Blueprint, Hook
 
 logger = get_logger(__name__)
 
-# Daily in-memory re-roll tracker: client_str -> (date, count)
-_REROLL_TRACKER: dict[str, tuple[date, int]] = {}
+# Daily re-roll quota tracking (Redis-backed with in-memory fallback)
+_REROLL_TRACKER: dict[str, tuple[date, int]] = {}  # Fallback only
 MAX_DAILY_REROLLS = 5
+
+
+def _get_redis_client():
+    """Lazily get a Redis connection for reroll tracking."""
+    try:
+        import redis
+        from app.config import settings
+        return redis.Redis.from_url(settings.REDIS_URL, decode_responses=True)
+    except Exception:
+        return None
 
 
 def assign_funnel_stages(total_count: int) -> list[Literal["reach", "authority", "conversion"]]:
@@ -88,10 +98,35 @@ def check_and_increment_reroll_quota(
 ) -> tuple[bool, int]:
     """Check and record a client re-roll attempt against their daily quota.
     
+    Uses Redis INCR with 86400s TTL for persistence across server restarts.
+    Falls back to in-memory tracker if Redis is unavailable.
+    
     Returns:
         (is_allowed: bool, remaining_today: int)
     """
     today = datetime.now(UTC).date()
+    redis_key = f"creo:reroll:{client_id}:{today.isoformat()}"
+
+    # Try Redis first for persistence
+    r = _get_redis_client()
+    if r:
+        try:
+            current = r.incr(redis_key)
+            if current == 1:
+                # First reroll today — set TTL to expire at end of day (max 86400s)
+                r.expire(redis_key, 86400)
+
+            if current > max_daily:
+                # Already over quota — don't count this attempt
+                r.decr(redis_key)
+                return False, 0
+
+            remaining = max(0, max_daily - current)
+            return True, remaining
+        except Exception as err:
+            logger.warning("redis_reroll_tracking_failed_using_fallback", error=str(err))
+
+    # In-memory fallback (for local dev or Redis outage)
     cid_str = str(client_id)
     last_date, count = _REROLL_TRACKER.get(cid_str, (today, 0))
 
