@@ -48,12 +48,22 @@ async def get_current_actor(
 
             # Enforce mandatory password reset isolation
             if payload.get("must_reset_password") is True:
-                path = request.url.path
-                if not (path.endswith("/auth/set-mandatory-password") or path.endswith("/auth/me") or path.endswith("/auth/logout")):
-                    raise Forbidden(
-                        "Mandatory password reset required. Please set a new password before accessing other features.",
-                        code="PASSWORD_RESET_REQUIRED",
-                    )
+                from app.db.session import AsyncSessionLocal
+                from app.models.user import User
+                from sqlalchemy import select
+
+                async with AsyncSessionLocal() as session:
+                    u_res = await session.execute(select(User.must_reset_password).where(User.id == actor_id))
+                    db_must_reset = u_res.scalar_one_or_none()
+
+                if db_must_reset is True:
+                    path = request.url.path
+                    if not (path.endswith("/auth/set-mandatory-password") or path.endswith("/auth/me") or path.endswith("/auth/logout")):
+                        raise Forbidden(
+                            "Mandatory password reset required. Please set a new password before accessing other features.",
+                            code="PASSWORD_RESET_REQUIRED",
+                        )
+
 
             role_str = payload.get("role", "client").lower()
             try:

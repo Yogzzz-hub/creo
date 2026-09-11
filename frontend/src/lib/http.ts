@@ -36,11 +36,19 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
     headers.set("Authorization", `Bearer ${token}`);
   }
 
+  const isLocalhost =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname.startsWith("192.168."));
+
   const apiBase = (
-    (import.meta.env.VITE_API_URL as string) ||
-    (typeof window !== "undefined" && (window.location.hostname.includes("workers.dev") || window.location.hostname.includes("pages.dev"))
-      ? "https://creo-fhhl.onrender.com"
-      : "")
+    isLocalhost
+      ? "" // Always use relative path locally so Vite proxy routes to local backend on 8000
+      : (typeof window !== "undefined" &&
+         (window.location.hostname.includes("workers.dev") || window.location.hostname.includes("pages.dev"))
+          ? "https://creo-fhhl.onrender.com"
+          : (import.meta.env.VITE_API_URL as string) || "")
   ).replace(/\/$/, "");
   const requestUrl = path.startsWith("/api") && apiBase ? `${apiBase}${path}` : path;
 

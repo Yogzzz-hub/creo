@@ -717,6 +717,16 @@ async def get_me(
         sub_check = await check_client_subscription(db, user.id)
         has_active_sub = sub_check["is_active"]
 
+    refreshed_token = None
+    if not bool(getattr(user, "must_reset_password", False)):
+        refreshed_token = create_access_token(
+            subject=user.id,
+            role=user.role.value,
+            email=user.email,
+            client_id=user.id if user.role == UserRole.CLIENT else None,
+            extra_claims={"must_reset_password": False},
+        )
+
     return {
         "id": str(user.id),
         "email": user.email,
@@ -727,7 +737,9 @@ async def get_me(
         "onboarding_stage": stage,
         "terms_accepted": profile.terms_accepted_at is not None if profile else False,
         "has_active_subscription": has_active_sub,
+        "access_token": refreshed_token,
     }
+
 
 
 @router.get("/me/role", response_model=dict[str, Any])

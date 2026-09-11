@@ -52,7 +52,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const data = await request<AuthUser>("/api/v1/auth/me");
+      const data = await request<AuthUser & { access_token?: string }>("/api/v1/auth/me");
+      if (data.access_token && data.access_token !== currentToken) {
+        setToken(data.access_token);
+      }
       setUser(data);
     } catch {
       setUser(null);
@@ -60,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
+
   };
 
   useEffect(() => {
