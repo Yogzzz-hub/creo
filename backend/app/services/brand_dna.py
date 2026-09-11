@@ -28,17 +28,39 @@ logger = get_logger(__name__)
 
 def generate_deterministic_brand_dna(answers: dict[str, Any]) -> BrandDNASummary:
     """Generate deterministic, high-quality Brand DNA fallback adhering to agency standards."""
-    company = answers.get("company_name", "Your Brand")
-    industry = answers.get("industry", "Digital & Consumer")
-    goal = answers.get("primary_goal", "Brand Awareness & Customer Growth")
-    audience = answers.get("target_audience", "Engaged digital consumers and industry professionals")
-    age_range = answers.get("audience_age_range", "22-42")
-    problems = answers.get("audience_problems_solved", "Finding reliable, high-aesthetic solutions that drive ROI.")
-    tones = answers.get("tone_keywords", ["Modern", "Authoritative", "Dynamic"])
-    palette = answers.get("color_palette", ["#0E1116", "#2B7BC4", "#065F46", "#F0A202"])
-    focus = answers.get("content_focus", [])
+    def _clean_str(val: Any, default: str) -> str:
+        if val is None:
+            return default
+        s = str(val).strip()
+        return s if s else default
 
-    tone_str = ", ".join(tones) if isinstance(tones, list) and tones else "Modern, Authoritative"
+    company = _clean_str(answers.get("company_name"), "Your Brand")
+    industry = _clean_str(answers.get("industry"), "Digital & Consumer")
+    goal = _clean_str(answers.get("primary_goal"), "Brand Awareness & Customer Growth")
+    audience = _clean_str(answers.get("target_audience"), "Engaged digital consumers and industry professionals")
+    age_range = _clean_str(answers.get("audience_age_range"), "22-42")
+    problems = _clean_str(answers.get("audience_problems_solved"), "Finding reliable, high-aesthetic solutions that drive ROI.")
+
+    raw_tones = answers.get("tone_keywords")
+    if isinstance(raw_tones, list) and raw_tones:
+        tones = [str(t).strip() for t in raw_tones if t is not None and str(t).strip()]
+    else:
+        tones = ["Modern", "Authoritative", "Dynamic"]
+    if not tones:
+        tones = ["Modern", "Authoritative", "Dynamic"]
+
+    raw_palette = answers.get("color_palette")
+    if isinstance(raw_palette, list) and raw_palette:
+        palette = [str(c).strip() for c in raw_palette if c is not None and str(c).strip()]
+    else:
+        palette = ["#0E1116", "#2B7BC4", "#065F46", "#F0A202"]
+    if not palette:
+        palette = ["#0E1116", "#2B7BC4", "#065F46"]
+
+    raw_focus = answers.get("content_focus")
+    focus = [str(f).strip() for f in raw_focus if f is not None and str(f).strip()] if isinstance(raw_focus, list) else []
+
+    tone_str = ", ".join(tones)
     summary_line = (
         f"{company} elevates {industry.lower()} through a {tone_str.lower()} visual identity "
         f"tailored to solve core pain points for {audience}."
@@ -60,12 +82,12 @@ def generate_deterministic_brand_dna(answers: dict[str, Any]) -> BrandDNASummary
         "Customer Transformations & Case Studies",
         "Educational Breakdowns & Industry Insights",
     ]
-    if focus and isinstance(focus, list) and len(focus) > 0:
+    if focus and len(focus) > 0:
         content_themes = [f"Focus: {item}" for item in focus[:4]]
 
     return BrandDNASummary(
         tone=tone_str,
-        palette=palette if isinstance(palette, list) and palette else ["#0E1116", "#2B7BC4", "#065F46"],
+        palette=palette,
         target_audience=audience,
         ai_summary_line=summary_line,
         audience_persona=persona,
@@ -161,9 +183,11 @@ async def generate_brand_dna(
     # Persist to profile and questionnaire
     profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
     profile = (await db.execute(profile_stmt)).scalar_one_or_none()
-    if profile:
-        profile.brand_dna = result_dna.model_dump()
-        profile.brand_summary = result_dna.ai_summary_line
+    if not profile:
+        profile = ClientProfile(user_id=client_id)
+        db.add(profile)
+    profile.brand_dna = result_dna.model_dump()
+    profile.brand_summary = result_dna.ai_summary_line
 
     if quest:
         quest.ai_summary_line = result_dna.ai_summary_line
