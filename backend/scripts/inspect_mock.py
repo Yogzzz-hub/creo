@@ -4,7 +4,7 @@ sys.path.insert(0, ".")
 from app.db.session import async_session_factory
 from sqlalchemy import text
 
-async def list_clients():
+async def list_clients() -> None:
     async with async_session_factory() as session:
         query = """
             SELECT id, email, full_name, created_at 

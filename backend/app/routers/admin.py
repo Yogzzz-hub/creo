@@ -17,7 +17,7 @@ import json
 import logging
 import uuid
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any
 
@@ -28,7 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.core.cache import invalidate_user_session
-from app.core.errors import NotFound
+from app.core.errors import Conflict, Forbidden, NotFound
 from app.core.rbac import Actor, AdminActor, InvestorActor, SalesActor, StaffActor, TeamLeadActor
 from app.db.session import get_db
 from app.models.billing import Plan
@@ -963,7 +963,7 @@ async def get_admin_sales(
         for r in plan_rows
     ]
 
-    custom_pricing = []
+    custom_pricing: list[dict[str, Any]] = []
 
     return {
         "plans": plans,
@@ -1590,9 +1590,11 @@ async def get_admin_calendar(
         .join(User, User.id == Deliverable.client_id)
         .outerjoin(Task, Task.id == Deliverable.task_id)
         .outerjoin(ClientProfile, ClientProfile.user_id == Deliverable.client_id)
-        .where(
-            Deliverable.id.not_in(seen_deliverable_ids) if seen_deliverable_ids else True
-        )
+    )
+    if seen_deliverable_ids:
+        deliv_stmt = deliv_stmt.where(Deliverable.id.not_in(seen_deliverable_ids))
+    deliv_stmt = (
+        deliv_stmt
         .order_by(Deliverable.scheduled_at.asc().nulls_last(), Deliverable.created_at.asc())
         .limit(200)
     )

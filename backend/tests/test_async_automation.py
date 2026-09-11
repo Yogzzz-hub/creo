@@ -97,7 +97,7 @@ async def test_acceptance_1_due_publish_pickup() -> None:
     fake_instagram_client.reset()
 
     async with async_session_factory() as db:
-        await db.execute(text("UPDATE deliverables SET status = 'archived' WHERE status = 'scheduled' AND scheduled_at < now() - INTERVAL '1 hour'"))
+        await db.execute(text("UPDATE deliverables SET status = 'archived' WHERE status = 'scheduled'"))
         await db.commit()
         user, deliverable = await _create_test_client_and_deliverable(
             db,

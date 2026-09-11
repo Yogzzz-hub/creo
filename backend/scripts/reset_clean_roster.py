@@ -26,6 +26,8 @@ sys.path.insert(0, ".")
 from sqlalchemy import delete, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from typing import TypedDict
+
 from app.core.security import hash_password
 from app.db.session import async_session_factory
 from app.models.billing import Plan
@@ -35,8 +37,17 @@ from app.models.work import ClientAssignment, ContentCalendar, Deliverable, Task
 from app.services.fair_dispatch_service import assign_client_and_generate_schedule
 
 
+class StaffRosterItem(TypedDict):
+    email: str
+    full_name: str
+    role: UserRole
+    department: str
+    skills: list[str]
+    team_lead_email: str | None
+
+
 # Defined roster of 1 Super Admin, 2 Admins, and 4 Teams (each 3 members)
-STAFF_ROSTER = [
+STAFF_ROSTER: list[StaffRosterItem] = [
     # 1. Super Admin
     {
         "email": "admin@creo.agency",

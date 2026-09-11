@@ -29,7 +29,7 @@ _REROLL_TRACKER: dict[str, tuple[date, int]] = {}  # Fallback only
 MAX_DAILY_REROLLS = 5
 
 
-def _get_redis_client():
+def _get_redis_client() -> Any | None:
     """Lazily get a Redis connection for reroll tracking."""
     try:
         import redis
@@ -39,7 +39,10 @@ def _get_redis_client():
         return None
 
 
-def assign_funnel_stages(total_count: int) -> list[Literal["reach", "authority", "conversion"]]:
+FunnelStage = Literal["reach", "authority", "conversion"]
+
+
+def assign_funnel_stages(total_count: int) -> list[FunnelStage]:
     """Deterministically pre-allocate 40/40/20 funnel mix across slots before prompt generation.
     
     Enforces that the ratio is an invariant property of the calendar rather than
@@ -65,18 +68,16 @@ def assign_funnel_stages(total_count: int) -> list[Literal["reach", "authority",
         else:
             reach_target -= 1
 
-    pool: list[Literal["reach", "authority", "conversion"]] = (
-        ["reach"] * reach_target +
-        ["authority"] * authority_target +
-        ["conversion"] * conversion_target
-    )
+    r_val: FunnelStage = "reach"
+    a_val: FunnelStage = "authority"
+    c_val: FunnelStage = "conversion"
+    reach_list: list[FunnelStage] = [r_val for _ in range(reach_target)]
+    auth_list: list[FunnelStage] = [a_val for _ in range(authority_target)]
+    conv_list: list[FunnelStage] = [c_val for _ in range(conversion_target)]
 
     # Interleave evenly: Reach -> Authority -> Conversion -> Reach -> Authority...
-    interleaved: list[Literal["reach", "authority", "conversion"]] = []
+    interleaved: list[FunnelStage] = []
     r_idx, a_idx, c_idx = 0, 0, 0
-    reach_list = ["reach"] * reach_target
-    auth_list = ["authority"] * authority_target
-    conv_list = ["conversion"] * conversion_target
 
     while len(interleaved) < total_count:
         if r_idx < len(reach_list):

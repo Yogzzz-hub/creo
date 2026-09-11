@@ -153,7 +153,7 @@ async def execute_publish_deliverable_async(
             from app.services import storage_service
             public_file_url = deliverable.file_url
             if public_file_url and not (public_file_url.startswith("http://") or public_file_url.startswith("https://")):
-                public_file_url = storage_service.signed_get(public_file_url, expires_in=3600)
+                public_file_url = storage_service.signed_get(public_file_url, ttl=3600)
 
             creation_id = await ig_client.create_media_container(
                 ig_user_id=ig_user_id,
@@ -182,12 +182,16 @@ async def execute_publish_deliverable_async(
             )
 
         # ── PHASE 2: Transcoding Polling Loop ─────────────────────────────
-        logger.info("Phase 2: Polling container %s status", deliverable.ig_creation_id)
+        if not deliverable.ig_creation_id:
+            raise TransientIGError("Missing Instagram creation_id on deliverable")
+        active_creation_id: str = deliverable.ig_creation_id
+
+        logger.info("Phase 2: Polling container %s status", active_creation_id)
         deadline = time.monotonic() + max_poll_seconds
         is_finished = False
 
         while time.monotonic() < deadline:
-            status_code = await ig_client.get_container_status(deliverable.ig_creation_id)
+            status_code = await ig_client.get_container_status(active_creation_id)
             if status_code == "FINISHED":
                 is_finished = True
                 break
@@ -220,10 +224,10 @@ async def execute_publish_deliverable_async(
             raise TransientIGError("Instagram container transcoding timed out (>300s)")
 
         # ── PHASE 3: Media Publish ─────────────────────────────────────────
-        logger.info("Phase 3: Publishing media container %s", deliverable.ig_creation_id)
+        logger.info("Phase 3: Publishing media container %s", active_creation_id)
         pub_result = await ig_client.publish_container(
             ig_user_id=ig_user_id,
-            creation_id=deliverable.ig_creation_id,
+            creation_id=active_creation_id,
         )
 
         deliverable.ig_media_id = pub_result["media_id"]

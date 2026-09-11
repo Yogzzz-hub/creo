@@ -10,7 +10,8 @@ import asyncio
 import concurrent.futures
 import logging
 import uuid
-from typing import Any
+from collections.abc import Coroutine
+from typing import Any, TypeVar
 
 from sqlalchemy import text
 
@@ -19,8 +20,10 @@ from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
 
-def run_async_safe(coro: Any) -> Any:
+
+def run_async_safe(coro: Coroutine[Any, Any, T]) -> T:
     """Run an async coroutine safely from sync Celery worker threads."""
     try:
         loop = asyncio.get_running_loop()

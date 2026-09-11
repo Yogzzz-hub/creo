@@ -63,7 +63,7 @@ def _send_smtp_sync(
     smtp_pw = (settings.SMTP_PASSWORD or "").strip().strip('"').strip("'")
     smtp_user = (settings.SMTP_USERNAME or "").strip()
     smtp_server = (settings.SMTP_SERVER or "smtp.gmail.com").strip()
-    smtp_port = int(settings.SMTP_PORT or 587)
+    smtp_port = settings.SMTP_PORT or 587
 
     # 1. Primary delivery attempt (e.g. port 587 with STARTTLS)
     try:

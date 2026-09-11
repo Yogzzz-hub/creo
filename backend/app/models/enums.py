@@ -6,12 +6,16 @@ from typing import Any
 from sqlalchemy import Enum as SAEnum
 
 
+def _get_enum_values(enum_members: Any) -> list[str]:
+    return [str(e.value) for e in enum_members]
+
+
 def pg_enum(enum_cls: type[Any], name: str) -> SAEnum:
     return SAEnum(
         enum_cls,
         name=name,
         create_type=False,
-        values_callable=lambda x: [e.value for e in x],
+        values_callable=_get_enum_values,
     )
 
 

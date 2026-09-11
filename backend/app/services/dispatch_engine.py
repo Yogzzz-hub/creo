@@ -127,7 +127,7 @@ def evenly_spaced(items: list[date], n: int) -> list[date]:
     if n >= len(items):
         return items[:]
     step = len(items) / float(n)
-    return [items[int(round(i * step))] for i in range(n)]
+    return [items[round(i * step)] for i in range(n)]
 
 
 # --- Part 2: Unified Eligibility SQL Query ---
@@ -209,7 +209,7 @@ async def points_in_window(db: AsyncSession, staff_id: uuid.UUID, task_due_date:
         .where((Task.due_date.between(w_start, task_due_date)) | (Task.due_date.is_(None)))
     )
     res = await db.execute(stmt)
-    return int(res.scalar() or 0)
+    return res.scalar() or 0
 
 
 async def is_eligible(
@@ -449,7 +449,7 @@ async def assign_load_first(
     for row in rows:
         cand_id = row[0]
         capacity_points = row[1]
-        cand_sub_skills = row[7] if len(row) > 7 and row[7] else []
+        cand_sub_skills: list[str] = row[7] if len(row) > 7 and row[7] else []
 
         # LOCK FIRST, THEN RE-VERIFY within transaction
         lock_res = await db.execute(

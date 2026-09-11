@@ -3,13 +3,13 @@
 Configures CORS, middleware, exception handlers, and the canonical health check.
 """
 
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Any
 
 import redis.asyncio as aioredis
 import urllib.parse
-from fastapi import Depends, FastAPI, Request, status
+from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -114,7 +114,9 @@ MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500 Megabytes max request size for vid
 
 
 @app.middleware("http")
-async def security_and_rate_limit_middleware(request: Request, call_next):
+async def security_and_rate_limit_middleware(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     """Zero-trust security middleware:
     - Payload size limitation to prevent DOS / memory exhaustion
     - Sliding-window IP request throttling
@@ -195,6 +197,7 @@ async def security_and_rate_limit_middleware(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none';"
     return response
 
 

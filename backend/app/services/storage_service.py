@@ -317,7 +317,7 @@ def confirm_upload(storage_key: str, declared_size_bytes: int) -> dict[str, obje
                         "actual_size": declared_size_bytes,
                     }
                 elif resp.status_code in (400, 404):
-                    data = resp.json() if resp.text else {}
+                    data: dict[str, Any] = resp.json() if resp.text else {}
                     if data.get("code") in ("NoSuchKey", "not_found") or "not found" in resp.text.lower():
                         raise ObjectNotFound(storage_key)
         except ObjectNotFound:
@@ -334,12 +334,14 @@ def confirm_upload(storage_key: str, declared_size_bytes: int) -> dict[str, obje
     raise StorageError(f"No storage provider configured for confirmation of {storage_key}")
 
 
-def signed_get(storage_key: str, ttl: int = 900) -> str:
+def signed_get(storage_key: str, ttl: int = 900, expires_in: int | None = None) -> str:
     """Generate a short-lived pre-signed GET URL for the object.
 
     The bucket is NEVER public. Every read request must use a fresh signed URL.
     Prioritizes Cloudflare R2 / S3 when configured, falling back to Supabase Storage.
     """
+    effective_ttl = expires_in if expires_in is not None else ttl
+
     # 1. Prioritize Cloudflare R2 / S3 if credentials configured
     if _is_s3_configured():
         try:
@@ -347,7 +349,7 @@ def signed_get(storage_key: str, ttl: int = 900) -> str:
             url: str = s3.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": settings.STORAGE_BUCKET, "Key": storage_key},
-                ExpiresIn=ttl,
+                ExpiresIn=effective_ttl,
             )
             return url
         except StorageError:
@@ -370,7 +372,7 @@ def signed_get(storage_key: str, ttl: int = 900) -> str:
         headers = {**_supabase_headers(), "Content-Type": "application/json"}
         try:
             with httpx.Client(timeout=10.0) as client:
-                resp = client.post(sign_url, headers=headers, json={"expiresIn": ttl})
+                resp = client.post(sign_url, headers=headers, json={"expiresIn": effective_ttl})
                 if resp.status_code in (200, 201):
                     signed_path = resp.json().get("signedURL", "")
                     return f"{settings.SUPABASE_URL.rstrip('/')}/storage/v1{signed_path}"
