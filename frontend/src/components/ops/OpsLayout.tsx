@@ -20,6 +20,7 @@ import {
   Shield,
   UserCog,
   Users,
+  ChevronLeft,
   X,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -231,7 +232,23 @@ export function OpsLayout() {
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         {/* Desktop Top Bar */}
         <header className="hidden lg:flex h-14 items-center justify-between border-b border-[#C9DFF0] bg-white px-6 shadow-2xs shrink-0">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            {location.pathname !== "/admin" && location.pathname !== "/dashboard" && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.history.length > 2) {
+                    navigate(-1);
+                  } else {
+                    navigate(isTeamStaff ? "/dashboard" : "/admin");
+                  }
+                }}
+                className="flex size-7 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:text-[#0D2137] hover:bg-slate-100 transition-colors cursor-pointer mr-1"
+                title="Go Back"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+            )}
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
               {isTeamStaff ? "Creative Pod" : "Operations Suite"}
             </span>
@@ -349,6 +366,22 @@ export function OpsLayout() {
             >
               <Menu className="size-5" />
             </button>
+            {location.pathname !== "/admin" && location.pathname !== "/dashboard" && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.history.length > 2) {
+                    navigate(-1);
+                  } else {
+                    navigate(isTeamStaff ? "/dashboard" : "/admin");
+                  }
+                }}
+                className="flex size-7 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:text-[#0D2137] hover:bg-slate-100 transition-colors"
+                title="Go Back"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+            )}
             <div className="flex items-center gap-2">
               <span className="size-7 flex items-center justify-center rounded-lg bg-gradient-to-br from-[#2B7BC4] to-[#1A5EA8] font-bold text-white shadow-xs text-xs">
                 C

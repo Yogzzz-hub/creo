@@ -11,6 +11,7 @@ import { useCallback, useRef, useState } from "react";
 interface StageTermsProps {
   userId: string;
   onAccepted: () => void;
+  onBack?: () => void;
   isSubmitting: boolean;
 }
 
@@ -71,7 +72,7 @@ and agree to be bound by this Master Service Agreement.
 
 — End of Agreement —`;
 
-export function StageTerms({ onAccepted, isSubmitting }: StageTermsProps) {
+export function StageTerms({ onAccepted, onBack, isSubmitting }: StageTermsProps) {
   const [hasScrolled, setHasScrolled] = useState(false);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -146,21 +147,32 @@ export function StageTerms({ onAccepted, isSubmitting }: StageTermsProps) {
         </motion.p>
       )}
 
-      <motion.button
-        id="accept-terms-btn"
-        type="button"
-        onClick={onAccepted}
-        disabled={!hasScrolled || isSubmitting}
-        whileHover={hasScrolled && !isSubmitting ? { scale: 1.01 } : {}}
-        whileTap={hasScrolled && !isSubmitting ? { scale: 0.99 } : {}}
-        className={`w-full py-3.5 sm:py-4 px-8 rounded-xl font-bold text-sm sm:text-base transition-all shadow-sm ${
-          hasScrolled && !isSubmitting
-            ? "bg-[#2B7BC4] text-white hover:bg-[#1A5EA8] cursor-pointer shadow-blue-500/20"
-            : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
-        }`}
-      >
-        {isSubmitting ? "Accepting Terms…" : "Accept Agreement & Continue to Payment →"}
-      </motion.button>
+      <div className="flex flex-col sm:flex-row items-center gap-3">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="w-full sm:w-auto py-3.5 sm:py-4 px-6 rounded-xl border border-[#C9DFF0] text-xs sm:text-sm font-bold text-[#64748B] hover:text-[#0D2137] hover:bg-[#F8FAFC] transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0"
+          >
+            <span>← Back to Step 1</span>
+          </button>
+        )}
+        <motion.button
+          id="accept-terms-btn"
+          type="button"
+          onClick={onAccepted}
+          disabled={!hasScrolled || isSubmitting}
+          whileHover={hasScrolled && !isSubmitting ? { scale: 1.01 } : {}}
+          whileTap={hasScrolled && !isSubmitting ? { scale: 0.99 } : {}}
+          className={`flex-1 w-full py-3.5 sm:py-4 px-8 rounded-xl font-bold text-sm sm:text-base transition-all shadow-sm ${
+            hasScrolled && !isSubmitting
+              ? "bg-[#2B7BC4] text-white hover:bg-[#1A5EA8] cursor-pointer shadow-blue-500/20"
+              : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+          }`}
+        >
+          {isSubmitting ? "Accepting Terms…" : "Accept Agreement & Continue to Payment →"}
+        </motion.button>
+      </div>
     </motion.div>
   );
 }

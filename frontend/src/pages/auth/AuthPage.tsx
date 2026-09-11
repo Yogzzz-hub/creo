@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Zap,
   ArrowRight,
+  ArrowLeft,
   CheckCircle2,
   KeyRound,
   Edit2,
@@ -653,6 +654,20 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
                 )}
               </button>
             </div>
+
+            <div className="text-center pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setView("login");
+                  setError(null);
+                }}
+                className="text-xs font-semibold text-slate-500 hover:text-[#2B7BC4] transition-colors cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <ArrowLeft className="size-3.5" />
+                <span>Back to Sign In</span>
+              </button>
+            </div>
           </form>
         )}
           </motion.div>
@@ -737,6 +752,13 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
           </div>
         </Link>
 
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold backdrop-blur-md transition-all group cursor-pointer shadow-xs"
+        >
+          <ArrowLeft className="size-3.5 group-hover:-translate-x-0.5 transition-transform" />
+          <span>Back to Home</span>
+        </Link>
       </header>
 
       {/* ── Main Sliding Dual-Panel Container ─────────────────────────── */}

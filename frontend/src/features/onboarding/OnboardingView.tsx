@@ -467,6 +467,7 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
               key="terms"
               userId={userId}
               onAccepted={handleTermsAccepted}
+              onBack={() => handleSelectStep(1)}
               isSubmitting={termsSubmitting}
             />
           )}
@@ -476,6 +477,7 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
               key="payment"
               userId={userId}
               isAlreadyPaid={backendStage >= 3}
+              onBack={() => handleSelectStep(2)}
               onPaymentComplete={() => {
                 void refreshStatus();
                 handleSelectStep(4);

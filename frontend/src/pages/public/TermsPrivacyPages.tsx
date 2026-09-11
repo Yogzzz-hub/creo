@@ -7,6 +7,7 @@ import {
   Clock,
   Lock,
   ArrowRight,
+  ArrowLeft,
   FileText,
   ChevronRight,
   CreditCard,
@@ -290,6 +291,15 @@ export function TermsPage() {
       <section className="relative overflow-hidden bg-gradient-to-b from-[#E8F4FD] via-[#F4F9FD] to-[#FAFAF8] pt-10 pb-8 sm:pt-14 sm:pb-10 border-b border-slate-200/80">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#2B7BC4]/10 rounded-full blur-3xl pointer-events-none" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <div className="mb-2">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#2B7BC4] transition-colors"
+            >
+              <ArrowLeft className="size-3.5" />
+              <span>Back to Home</span>
+            </Link>
+          </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-1 text-xs font-bold text-[#2B7BC4] shadow-2xs border border-[#C9DFF0] mb-3">
             <ShieldCheck className="size-3.5" />
             <span>Official Legal Governance</span>
@@ -485,6 +495,15 @@ export function PrivacyPage() {
       <section className="relative overflow-hidden bg-gradient-to-b from-[#E8F4FD] via-[#F4F9FD] to-[#FAFAF8] pt-10 pb-8 sm:pt-14 sm:pb-10 border-b border-slate-200/80">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <div className="mb-2">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#2B7BC4] transition-colors"
+            >
+              <ArrowLeft className="size-3.5" />
+              <span>Back to Home</span>
+            </Link>
+          </div>
           <div className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-1 text-xs font-bold text-[#2B7BC4] shadow-2xs border border-[#C9DFF0] mb-3">
             <Lock className="size-3.5" />
             <span>Zero-Trust Data Protection</span>

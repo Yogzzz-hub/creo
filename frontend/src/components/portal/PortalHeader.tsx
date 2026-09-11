@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { Bell, Settings, LifeBuoy, LogOut, Building2, ExternalLink } from "lucide-react";
+import { Bell, Settings, LifeBuoy, LogOut, Building2, ExternalLink, ChevronLeft } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
@@ -108,9 +108,25 @@ export function PortalHeader() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-white px-4 sm:px-8">
-      {/* Dynamic Page Title */}
-      <div className="flex items-center">
-        <h1 className="text-sm font-semibold tracking-wider text-[#0D2137]">
+      {/* Dynamic Page Title & Back Button */}
+      <div className="flex items-center gap-2.5">
+        {location.pathname !== "/portal" && location.pathname !== "/portal/" && (
+          <button
+            type="button"
+            onClick={() => {
+              if (window.history.length > 2) {
+                navigate(-1);
+              } else {
+                navigate("/portal");
+              }
+            }}
+            className="flex size-8 items-center justify-center rounded-xl border border-[#C9DFF0] bg-[#E8F4FD]/60 text-[#2B7BC4] hover:bg-[#D5EBFA] hover:border-[#2B7BC4]/40 transition-all cursor-pointer shadow-2xs group"
+            title="Go Back"
+          >
+            <ChevronLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
+          </button>
+        )}
+        <h1 className="text-sm font-bold tracking-wider text-[#0D2137]">
           {getPageTitle()}
         </h1>
       </div>

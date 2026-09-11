@@ -16,6 +16,7 @@ import type { Plan } from "../../types/api";
 interface StagePaymentProps {
   userId: string;
   onPaymentComplete: () => void;
+  onBack?: () => void;
   isAlreadyPaid?: boolean;
 }
 
@@ -93,7 +94,7 @@ function PlanCard({
 
 type PaymentPhase = "select" | "processing" | "polling" | "confirmed";
 
-export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: StagePaymentProps) {
+export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid }: StagePaymentProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
@@ -249,21 +250,32 @@ export function StagePayment({ userId, onPaymentComplete, isAlreadyPaid }: Stage
               </div>
             )}
 
-            <motion.button
-              id="checkout-btn"
-              type="button"
-              onClick={handleCheckout}
-              disabled={!selectedPlanId || phase === "processing"}
-              whileHover={selectedPlanId && phase !== "processing" ? { scale: 1.01 } : {}}
-              whileTap={selectedPlanId && phase !== "processing" ? { scale: 0.99 } : {}}
-              className={`w-full py-3 px-6 rounded-xl font-bold text-sm transition-all shadow-sm ${
-                selectedPlanId && phase !== "processing"
-                  ? "bg-[#2B7BC4] text-white hover:bg-[#1A5EA8] cursor-pointer shadow-blue-500/20"
-                  : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
-              }`}
-            >
-              {phase === "processing" ? "Opening Razorpay Gateway…" : "Proceed to Secure Checkout →"}
-            </motion.button>
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              {onBack && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="w-full sm:w-auto py-3 px-5 rounded-xl border border-[#C9DFF0] text-xs font-bold text-[#64748B] hover:text-[#0D2137] hover:bg-[#F8FAFC] transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5 shrink-0"
+                >
+                  <span>← Back to Service Agreement</span>
+                </button>
+              )}
+              <motion.button
+                id="checkout-btn"
+                type="button"
+                onClick={handleCheckout}
+                disabled={!selectedPlanId || phase === "processing"}
+                whileHover={selectedPlanId && phase !== "processing" ? { scale: 1.01 } : {}}
+                whileTap={selectedPlanId && phase !== "processing" ? { scale: 0.99 } : {}}
+                className={`flex-1 w-full py-3 px-6 rounded-xl font-bold text-sm transition-all shadow-sm ${
+                  selectedPlanId && phase !== "processing"
+                    ? "bg-[#2B7BC4] text-white hover:bg-[#1A5EA8] cursor-pointer shadow-blue-500/20"
+                    : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
+                }`}
+              >
+                {phase === "processing" ? "Opening Razorpay Gateway…" : "Proceed to Secure Checkout →"}
+              </motion.button>
+            </div>
           </motion.div>
         )}
 
