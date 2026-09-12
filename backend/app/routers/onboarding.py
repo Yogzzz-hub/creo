@@ -49,16 +49,17 @@ async def submit_questionnaire(
     body: QuestionnaireSubmitRequest,
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
-) -> dict[str, str]:
-    """Submit brand discovery questionnaire and enqueue Brand DNA generation.
-
-    Guards strictly on stage >= 3 (Payment Required).
-    """
+) -> dict[str, Any]:
+    """Submit brand discovery questionnaire and synthesize Brand DNA."""
     client_id = actor.client_id or actor.user_id
     quest = await onboarding_service.submit_questionnaire(db, client_id, body)
     # Synthesize brand DNA
-    await brand_dna.generate_brand_dna(db, client_id, quest.id)
-    return {"status": "ok", "message": "Questionnaire submitted successfully"}
+    dna = await brand_dna.generate_brand_dna(db, client_id, quest.id)
+    return {
+        "status": "ok",
+        "message": "Questionnaire submitted successfully",
+        "brand_dna": dna.model_dump() if dna else None,
+    }
 
 
 @router.get("/brand-dna/status", response_model=BrandDNAStatusResponse)

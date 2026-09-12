@@ -523,6 +523,19 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
     }
   }, [dnaData, brandDNA]);
 
+  // Safety timeout: If synthesis stays pending for >12s without brandDNA, abort loading and show explicit error with Retry button
+  useEffect(() => {
+    if (submitted && !brandDNA && !synthesizing) {
+      const timer = setTimeout(() => {
+        if (!brandDNA) {
+          setError("AI Brand Synthesis timed out. Please click below to retry.");
+          setSubmitted(false);
+        }
+      }, 12000);
+      return () => clearTimeout(timer);
+    }
+  }, [submitted, brandDNA, synthesizing]);
+
   // Restore draft questionnaire on mount if user previously typed answers
   useEffect(() => {
     try {
@@ -610,6 +623,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
 
     setError(null);
     setSynthesizing(true);
+    setSubmitted(true);
     try {
       const payload: QuestionnairePayload = {
         ...form,
@@ -620,26 +634,33 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
         color_palette: form.color_palette.length > 0 ? form.color_palette : ["#0D2137", "#2B7BC4"],
       };
 
-      // Run submission alongside a minimum display window (2.8s) so the animation sequence completes smoothly
-      await Promise.all([
+      const [submitRes] = await Promise.all([
         submitQuestionnaire(userId, payload),
-        new Promise((resolve) => setTimeout(resolve, 2800)),
+        new Promise((resolve) => setTimeout(resolve, 2000)),
       ]);
-      setSubmitted(true);
+
+      const returnedDNA = (submitRes as any)?.brand_dna;
+      if (returnedDNA) {
+        setBrandDNA(returnedDNA);
+      } else {
+        const statusRes = await fetchBrandDNAStatus(userId);
+        if (statusRes.brand_dna) {
+          setBrandDNA(statusRes.brand_dna);
+        } else {
+          throw new Error("AI Brand Strategy synthesis returned no data. Please click below to retry.");
+        }
+      }
+
       try {
         localStorage.removeItem(`creo_brand_draft_${userId}`);
       } catch {
         // ignore
       }
-
-      // Fetch brand DNA status
-      const statusRes = await fetchBrandDNAStatus(userId);
-      if (statusRes.brand_dna) {
-        setBrandDNA(statusRes.brand_dna);
-      }
     } catch (err: unknown) {
-      if (err instanceof Error) setError(err.message);
+      const errorMsg = err instanceof Error ? err.message : "Failed to generate AI Brand Strategy. Please try again.";
+      setError(errorMsg);
       setSubmitted(false);
+      setBrandDNA(null);
     } finally {
       setSynthesizing(false);
     }
@@ -783,9 +804,18 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
             </div>
 
             {error && (
-              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-800 flex items-center gap-2">
-                <ShieldAlert className="size-4 text-rose-600 flex-shrink-0" />
-                <span>{error}</span>
+              <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="size-4 text-rose-600 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleGenerateBrandStrategy}
+                  className="px-3.5 py-1.5 rounded-lg bg-rose-600 text-white font-bold hover:bg-rose-700 transition-all text-xs cursor-pointer shadow-xs self-start sm:self-auto shrink-0 flex items-center gap-1.5"
+                >
+                  <RefreshCw className="size-3.5" /> Retry AI Synthesis
+                </button>
               </div>
             )}
 

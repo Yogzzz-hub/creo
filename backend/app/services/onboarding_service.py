@@ -130,14 +130,7 @@ async def accept_terms(db: AsyncSession, client_id: uuid.UUID, terms_version: st
 async def submit_questionnaire(
     db: AsyncSession, client_id: uuid.UUID, data: QuestionnaireSubmitRequest
 ) -> Questionnaire:
-    """Persist client questionnaire. Guard strictly on stage >= 3 (Payment Required)."""
-    stage = await get_current_stage(db, client_id)
-    if stage < 3:
-        raise PaymentRequired(
-            "Active or trialing subscription is required before submitting the brand questionnaire",
-            code="PAYMENT_REQUIRED",
-            details={"current_stage": stage, "required_stage": 3},
-        )
+    """Persist client questionnaire and update client profile."""
 
     # Upsert questionnaire
     q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_id)
