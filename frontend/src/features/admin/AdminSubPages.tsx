@@ -2357,8 +2357,8 @@ export function AdminSupportPage() {
 
       {/* Reply & Thread Detail Modal */}
       {activeReply && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-fade-in">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-scale-in border border-slate-100">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 className="text-base font-bold text-[#0D2137] flex items-center gap-2">
@@ -2370,7 +2370,7 @@ export function AdminSupportPage() {
               <button
                 type="button"
                 onClick={() => setActiveReply(null)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 cursor-pointer"
+                className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -2427,7 +2427,7 @@ export function AdminSupportPage() {
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-900 focus:bg-white focus:border-[#2B7BC4] focus:outline-none"
+                  className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-[#0D2137] shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%232B7BC4%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_0.6rem_center] bg-no-repeat pr-8 hover:border-[#2B7BC4]/60 focus:border-[#2B7BC4] focus:outline-none cursor-pointer"
                 >
                   <option value="open">Open (Keep in queue)</option>
                   <option value="in_progress">In Progress (Staff Working)</option>
@@ -2884,10 +2884,10 @@ export function AdminTeamsPage() {
 
       {/* ── Add Member Modal (with Password & Pod selector) ────────────────── */}
       {addModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-fade-in">
           <form
             onSubmit={handleCreateMember}
-            className="w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-scale-in border border-slate-100"
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
@@ -2899,7 +2899,7 @@ export function AdminTeamsPage() {
               <button
                 type="button"
                 onClick={() => setAddModalOpen(false)}
-                className="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 cursor-pointer"
+                className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -2914,7 +2914,7 @@ export function AdminTeamsPage() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Arjun Mehta"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-[#2B7BC4]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 font-medium focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                 />
               </div>
 
@@ -2926,7 +2926,7 @@ export function AdminTeamsPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="arjun@creo.agency"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:border-[#2B7BC4]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 font-medium focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                 />
               </div>
 
@@ -2949,7 +2949,7 @@ export function AdminTeamsPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter login password"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-900 focus:outline-none focus:border-[#2B7BC4] pr-16"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-900 focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 pr-16 transition-all"
                   />
                   <button
                     type="button"
@@ -2976,7 +2976,7 @@ export function AdminTeamsPage() {
                         setSkillsInput("Posters, Carousels, Figma, Graphics");
                       }
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D2137] shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%232B7BC4%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_0.75rem_center] bg-no-repeat pr-9 hover:border-[#2B7BC4]/60 focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 focus:outline-none transition-all cursor-pointer"
                   >
                     <option value="editor">Editor (Reels & Motion)</option>
                     <option value="designer">Designer (Posters & Carousels)</option>
@@ -2989,7 +2989,7 @@ export function AdminTeamsPage() {
                   <select
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D2137] shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%232B7BC4%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_0.75rem_center] bg-no-repeat pr-9 hover:border-[#2B7BC4]/60 focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 focus:outline-none transition-all cursor-pointer"
                   >
                     <option value="video">Video Editing</option>
                     <option value="graphics">Graphic Design</option>
@@ -3008,7 +3008,7 @@ export function AdminTeamsPage() {
                   <select
                     value={selectedTeamLeadId}
                     onChange={(e) => setSelectedTeamLeadId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D2137] shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%232B7BC4%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_0.75rem_center] bg-no-repeat pr-9 hover:border-[#2B7BC4]/60 focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 focus:outline-none transition-all cursor-pointer"
                   >
                     <option value="">-- Select Team Lead --</option>
                     {existingTeamLeads.map((tl) => (
@@ -3073,10 +3073,10 @@ export function AdminTeamsPage() {
 
       {/* ── Edit Capacity & Pacing Modal ───────────────────────────────────── */}
       {editingMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-fade-in">
           <form
             onSubmit={handleSaveCapacity}
-            className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4"
+            className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 animate-scale-in border border-slate-100"
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
@@ -3088,7 +3088,7 @@ export function AdminTeamsPage() {
               <button
                 type="button"
                 onClick={() => setEditingMember(null)}
-                className="rounded-xl p-1 text-slate-400 hover:bg-slate-100 cursor-pointer"
+                className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -3105,7 +3105,7 @@ export function AdminTeamsPage() {
                   max={15}
                   value={editCapacity}
                   onChange={(e) => setEditCapacity(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                 />
               </div>
 
@@ -3117,7 +3117,7 @@ export function AdminTeamsPage() {
                   type="text"
                   value={editSkills}
                   onChange={(e) => setEditSkills(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
                 />
               </div>
 
@@ -3157,8 +3157,8 @@ export function AdminTeamsPage() {
 
       {/* ── Deactivate Member Confirmation Modal ────────────────────────────── */}
       {deletingMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-fade-in">
+          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl space-y-4 animate-scale-in border border-slate-100">
             <div className="flex items-center gap-3 text-red-600">
               <AlertTriangle className="size-6 shrink-0" />
               <h3 className="text-base font-bold text-[#0D2137]">Remove Team Member?</h3>
@@ -3190,7 +3190,7 @@ export function AdminTeamsPage() {
 
       {/* ── Generated Credentials Reveal Modal ────────────────────────────── */}
       {credentialsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-fade-in">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 sm:p-7 shadow-2xl space-y-4 animate-[zoomIn_0.15s_ease-out]">
             <div className="text-center space-y-1">
               <div className="size-14 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 text-2xl shadow-xs">

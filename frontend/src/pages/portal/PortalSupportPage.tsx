@@ -522,17 +522,19 @@ export function PortalSupportPage() {
 
       {/* ── New Support Ticket Modal ──────────────────────────────────────── */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl space-y-4 animate-page-in max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-fade-in">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-100 bg-white p-6 sm:p-7 shadow-2xl space-y-4 animate-scale-in max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
               <h3 className="text-base font-bold text-[#0D2137] flex items-center gap-2">
-                <LifeBuoy className="size-4 text-[#2B7BC4]" />
-                New Creative Request / Support Ticket
+                <div className="size-8 rounded-xl bg-[#E8F4FD] text-[#2B7BC4] flex items-center justify-center border border-[#C9DFF0]">
+                  <LifeBuoy className="size-4" />
+                </div>
+                <span>New Creative Request / Support Ticket</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -541,13 +543,13 @@ export function PortalSupportPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* 1. Direct Request to Specialist */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   Direct Request to Specialist (Optional)
                 </label>
                 <select
                   value={selectedSpecialistId}
                   onChange={(e) => setSelectedSpecialistId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 focus:bg-white focus:border-[#2B7BC4] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D2137] shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%232B7BC4%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_0.85rem_center] bg-no-repeat pr-9 hover:border-[#2B7BC4]/60 focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 focus:outline-none transition-all cursor-pointer"
                 >
                   <option value="">🌟 General Creative Pod (Any Available Lead)</option>
                   {assignedTeam.map((m) => (
@@ -563,15 +565,15 @@ export function PortalSupportPage() {
 
               {/* 2. Selective Reel / Deliverable Picker */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-semibold text-slate-700">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
                     Reference Specific Reel / Deliverable (Optional)
                   </label>
                   {selectedDeliverableId && (
                     <button
                       type="button"
                       onClick={() => setSelectedDeliverableId("")}
-                      className="text-[11px] text-rose-600 hover:underline cursor-pointer"
+                      className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
                     >
                       Clear Selection
                     </button>
@@ -588,7 +590,7 @@ export function PortalSupportPage() {
                       setTitle(`${isReel ? "Reel" : "Deliverable"} #${val.slice(0, 6)} Revision`);
                     }
                   }}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 focus:bg-white focus:border-[#2B7BC4] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D2137] shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%232B7BC4%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_0.85rem_center] bg-no-repeat pr-9 hover:border-[#2B7BC4]/60 focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 focus:outline-none transition-all cursor-pointer"
                 >
                   <option value="">None (General Inquiry / Strategic Request)</option>
                   {clientDeliverables.map((d) => {
@@ -619,24 +621,24 @@ export function PortalSupportPage() {
 
               {/* 3. Subject */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Subject</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Subject</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Request hook pacing adjustment on Reel #1"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 focus:bg-white focus:border-[#2B7BC4] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 font-medium shadow-2xs hover:border-slate-300 focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 focus:outline-none transition-all"
                 />
               </div>
 
               {/* 4. Priority */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Priority</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Priority</label>
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as any)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 focus:bg-white focus:border-[#2B7BC4] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D2137] shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%232B7BC4%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_0.85rem_center] bg-no-repeat pr-9 hover:border-[#2B7BC4]/60 focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 focus:outline-none transition-all cursor-pointer"
                 >
                   <option value="low">Low (General Inquiry / Backlog Idea)</option>
                   <option value="medium">Medium (Standard Modification)</option>
@@ -648,10 +650,10 @@ export function PortalSupportPage() {
               {/* 5. Suggestion Presets & Details */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-bold text-slate-700">
                     Suggestions & Instructions
                   </label>
-                  <span className="text-[10px] text-slate-400 font-medium">Click to insert preset:</span>
+                  <span className="text-[10px] text-slate-400 font-semibold">Click to insert preset:</span>
                 </div>
 
                 {/* Preset Chips */}
@@ -659,28 +661,28 @@ export function PortalSupportPage() {
                   <button
                     type="button"
                     onClick={() => appendSuggestion("Hook timing: Speed up transition in first 0:02 seconds.")}
-                    className="text-[10px] font-semibold text-[#2B7BC4] bg-[#E8F4FD] border border-[#C9DFF0] px-2 py-0.5 rounded-md hover:bg-[#2B7BC4] hover:text-white transition-colors cursor-pointer"
+                    className="text-[10px] font-bold text-[#2B7BC4] bg-[#E8F4FD] border border-[#C9DFF0] px-2.5 py-1 rounded-lg hover:bg-[#2B7BC4] hover:text-white transition-all cursor-pointer shadow-2xs"
                   >
                     + Hook Timing
                   </button>
                   <button
                     type="button"
                     onClick={() => appendSuggestion("Audio swap: Replace background track with trending upbeat audio.")}
-                    className="text-[10px] font-semibold text-[#2B7BC4] bg-[#E8F4FD] border border-[#C9DFF0] px-2 py-0.5 rounded-md hover:bg-[#2B7BC4] hover:text-white transition-colors cursor-pointer"
+                    className="text-[10px] font-bold text-[#2B7BC4] bg-[#E8F4FD] border border-[#C9DFF0] px-2.5 py-1 rounded-lg hover:bg-[#2B7BC4] hover:text-white transition-all cursor-pointer shadow-2xs"
                   >
                     + Audio Swap
                   </button>
                   <button
                     type="button"
                     onClick={() => appendSuggestion("Caption & Text: Make hook text bold yellow with drop shadow.")}
-                    className="text-[10px] font-semibold text-[#2B7BC4] bg-[#E8F4FD] border border-[#C9DFF0] px-2 py-0.5 rounded-md hover:bg-[#2B7BC4] hover:text-white transition-colors cursor-pointer"
+                    className="text-[10px] font-bold text-[#2B7BC4] bg-[#E8F4FD] border border-[#C9DFF0] px-2.5 py-1 rounded-lg hover:bg-[#2B7BC4] hover:text-white transition-all cursor-pointer shadow-2xs"
                   >
                     + Bold Captions
                   </button>
                   <button
                     type="button"
                     onClick={() => appendSuggestion("Color grading: Enhance contrast and match brand palette hex.")}
-                    className="text-[10px] font-semibold text-[#2B7BC4] bg-[#E8F4FD] border border-[#C9DFF0] px-2 py-0.5 rounded-md hover:bg-[#2B7BC4] hover:text-white transition-colors cursor-pointer"
+                    className="text-[10px] font-bold text-[#2B7BC4] bg-[#E8F4FD] border border-[#C9DFF0] px-2.5 py-1 rounded-lg hover:bg-[#2B7BC4] hover:text-white transition-all cursor-pointer shadow-2xs"
                   >
                     + Color Grade
                   </button>
@@ -692,22 +694,22 @@ export function PortalSupportPage() {
                   placeholder="Detail your suggestions, timestamp ranges (e.g. 0:01 - 0:04), or creative direction..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs text-slate-900 focus:bg-white focus:border-[#2B7BC4] focus:outline-none resize-none leading-relaxed"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 font-medium shadow-2xs hover:border-slate-300 focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 focus:outline-none resize-none leading-relaxed transition-all"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createTicketMutation.isPending}
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-5 py-2.5 text-xs font-bold text-white hover:brightness-110 active:scale-95 shadow-md shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-5 py-2.5 text-xs font-bold text-white hover:brightness-110 active:scale-95 shadow-md shadow-blue-500/20 disabled:opacity-50 cursor-pointer transition-all"
                 >
                   {createTicketMutation.isPending ? (
                     <Loader2 className="size-3.5 animate-spin" />
