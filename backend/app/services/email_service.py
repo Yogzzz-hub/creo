@@ -89,7 +89,30 @@ async def send_email(
     html_content: str,
     text_content: str | None = None,
 ) -> bool:
-    """Non-blocking email delivery executing SMTP on a worker thread."""
+    """Non-blocking email delivery executing SMTP or Resend HTTP API on Port 443."""
+    if settings.RESEND_API_KEY:
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(
+                    "https://api.resend.com/emails",
+                    headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+                    json={
+                        "from": "Creo Verification <onboarding@resend.dev>",
+                        "to": [to_email],
+                        "subject": subject,
+                        "html": html_content,
+                        "text": text_content,
+                    },
+                )
+                if resp.status_code < 400:
+                    logger.info("resend_email_sent_successfully", to_email=to_email)
+                    return True
+                else:
+                    logger.warning("resend_api_failed", status=resp.status_code, body=resp.text)
+        except Exception as e_resend:
+            logger.warning("resend_api_exception", error=str(e_resend))
+
     return await asyncio.to_thread(
         _send_smtp_sync,
         to_email=to_email,
