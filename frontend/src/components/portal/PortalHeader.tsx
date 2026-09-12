@@ -106,11 +106,22 @@ export function PortalHeader() {
     }
   }
 
+  const isMainPortalPage = [
+    "/portal",
+    "/portal/",
+    "/portal/deliverables",
+    "/portal/calendar",
+    "/portal/payments",
+    "/portal/support",
+    "/portal/account",
+    "/portal/addons",
+  ].includes(location.pathname);
+
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-white px-4 sm:px-8">
       {/* Dynamic Page Title & Back Button */}
       <div className="flex items-center gap-2.5">
-        {location.pathname !== "/portal" && location.pathname !== "/portal/" && (
+        {!isMainPortalPage && (
           <button
             type="button"
             onClick={() => {

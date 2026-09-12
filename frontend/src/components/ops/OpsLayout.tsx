@@ -74,6 +74,25 @@ export function OpsLayout() {
   const isKanban =
     location.pathname === "/dashboard" || location.pathname === "/kanban";
 
+  const isMainOpsPage = [
+    "/admin",
+    "/admin/",
+    "/dashboard",
+    "/kanban",
+    "/admin/clients",
+    "/admin/queue",
+    "/admin/tasks",
+    "/admin/calendar",
+    "/admin/deliverables",
+    "/admin/support",
+    "/admin/teams",
+    "/admin/leave",
+    "/admin/announcements",
+    "/admin/sla",
+    "/admin/kpis",
+    "/admin/settings",
+  ].includes(location.pathname);
+
   const { data: notifData } = useQuery<{ unread_count: number; items: any[] }>({
     queryKey: ["notifications", user?.id],
     queryFn: async () => {
@@ -214,7 +233,7 @@ export function OpsLayout() {
         {/* Desktop Top Bar */}
         <header className="hidden lg:flex h-14 items-center justify-between border-b border-[#C9DFF0] bg-white px-6 shadow-2xs shrink-0">
           <div className="flex items-center gap-2.5">
-            {location.pathname !== "/admin" && location.pathname !== "/dashboard" && (
+            {!isMainOpsPage && (
               <button
                 type="button"
                 onClick={() => {
@@ -339,7 +358,7 @@ export function OpsLayout() {
             >
               <Menu className="size-5" />
             </button>
-            {location.pathname !== "/admin" && location.pathname !== "/dashboard" && (
+            {!isMainOpsPage && (
               <button
                 type="button"
                 onClick={() => {
