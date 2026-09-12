@@ -57,6 +57,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { label: "Add-ons Catalog", href: "/admin/addons", icon: Puzzle, roles: ["admin", "super_admin"] },
   { label: "SLA Escalations", href: "/admin/escalations", icon: AlertTriangle, roles: ["admin", "super_admin"] },
   { label: "Settings", href: "/admin/settings", icon: Settings, roles: ["admin", "super_admin"] },
+  { label: "Kanban Board", href: "/kanban", icon: LayoutDashboard, roles: ["admin", "super_admin"] },
 ];
 
 export function OpsLayout() {
@@ -90,6 +91,11 @@ export function OpsLayout() {
     "/admin/announcements",
     "/admin/sla",
     "/admin/kpis",
+    "/admin/reports",
+    "/admin/kpi",
+    "/admin/sales",
+    "/admin/addons",
+    "/admin/escalations",
     "/admin/settings",
   ].includes(location.pathname);
 
