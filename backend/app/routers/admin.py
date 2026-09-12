@@ -25,7 +25,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
 from sqlalchemy import delete, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import aliased
+from sqlalchemy.orm import aliased, selectinload
 
 from app.core.cache import invalidate_user_session
 from app.core.errors import Conflict, Forbidden, NotFound
@@ -1288,6 +1288,7 @@ async def update_deliverable_status(
 class AdminTicketReply(BaseModel):
     message_text: str | None = None
     message: str | None = None
+    status: str | None = None
 
 
 class AdminTicketStatusUpdate(BaseModel):
@@ -1301,38 +1302,55 @@ async def list_admin_support_tickets(
 ) -> list[dict[str, Any]]:
     """List all client support tickets from DB with message counts and status."""
     stmt = (
-        select(
-            Ticket,
-            User.email.label("client_email"),
-            User.full_name.label("client_name"),
-            ClientProfile.company_name.label("company_name"),
-            func.count(TicketMessage.id).label("message_count"),
+        select(Ticket)
+        .options(
+            selectinload(Ticket.messages),
+            selectinload(Ticket.assignee),
+            selectinload(Ticket.deliverable),
         )
-        .join(User, User.id == Ticket.client_id)
-        .outerjoin(ClientProfile, ClientProfile.user_id == Ticket.client_id)
-        .outerjoin(TicketMessage, TicketMessage.ticket_id == Ticket.id)
-        .group_by(Ticket.id, User.id, ClientProfile.user_id)
         .order_by(Ticket.created_at.desc())
     )
     res = await db.execute(stmt)
-    rows = res.fetchall()
+    tickets = res.scalars().all()
 
-    tickets = []
-    for t, client_email, client_name, company_name, msg_count in rows:
+    results = []
+    for t in tickets:
+        client_res = await db.execute(
+            select(User.email, User.full_name, ClientProfile.company_name)
+            .outerjoin(ClientProfile, ClientProfile.user_id == User.id)
+            .where(User.id == t.client_id)
+        )
+        c_row = client_res.first()
+        client_email = c_row[0] if c_row else ""
+        client_name = c_row[1] if c_row else ""
+        company_name = c_row[2] if c_row else ""
+
         client_label = company_name or client_name or (client_email.split("@")[0].capitalize() if client_email else "Client")
-        tickets.append({
+
+        deliv_title = None
+        if t.deliverable:
+            ft = getattr(t.deliverable, "file_type", "") or ""
+            dtype = "Reel" if "video" in ft.lower() else "Deliverable"
+            deliv_title = f"{dtype} (v{t.deliverable.version})"
+
+        results.append({
             "id": str(t.id),
             "subject": t.title,
+            "title": t.title,
             "description": t.description,
             "client": client_label,
             "client_id": str(t.client_id),
             "priority": t.priority.value,
             "status": t.status.value,
+            "assigned_to": str(t.assigned_to) if t.assigned_to else None,
+            "assignee_name": t.assignee.full_name or t.assignee.email if t.assignee else None,
+            "deliverable_id": str(t.deliverable_id) if t.deliverable_id else None,
+            "deliverable_title": deliv_title,
             "time": t.created_at.strftime("%b %d, %I:%M %p") if t.created_at else "Recently",
             "created_at": t.created_at.isoformat() if t.created_at else "",
-            "message_count": msg_count or 0,
+            "message_count": len(t.messages),
         })
-    return tickets
+    return results
 
 
 @router.get("/support/tickets/{ticket_id}/messages")
@@ -1344,7 +1362,7 @@ async def get_admin_ticket_messages(
     """Retrieve message history for a specific ticket."""
     stmt = (
         select(TicketMessage, User.full_name, User.email, User.role)
-        .join(User, User.id == TicketMessage.sender_id)
+        .outerjoin(User, User.id == TicketMessage.sender_id)
         .where(TicketMessage.ticket_id == ticket_id)
         .order_by(TicketMessage.created_at.asc())
     )
@@ -1354,8 +1372,8 @@ async def get_admin_ticket_messages(
         {
             "id": str(msg.id),
             "sender_id": str(msg.sender_id),
-            "sender_name": full_name or email.split("@")[0],
-            "sender_role": role.value if hasattr(role, "value") else str(role),
+            "sender_name": full_name or (email.split("@")[0] if email else "User/Staff"),
+            "sender_role": (role.value if hasattr(role, "value") else str(role)) if role else "user",
             "message": msg.message,
             "created_at": msg.created_at.isoformat() if msg.created_at else "",
         }
@@ -1370,7 +1388,7 @@ async def post_admin_ticket_message(
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> dict[str, Any]:
-    """Reply to a client support ticket and optionally resolve it."""
+    """Reply to a client support ticket and optionally update its status."""
     ticket = await db.get(Ticket, ticket_id)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
@@ -1386,7 +1404,14 @@ async def post_admin_ticket_message(
         attachments=[],
     )
     db.add(msg)
-    ticket.status = TicketStatus.RESOLVED
+    if payload.status:
+        try:
+            ticket.status = TicketStatus(payload.status)
+        except ValueError:
+            ticket.status = TicketStatus.RESOLVED
+    else:
+        ticket.status = TicketStatus.RESOLVED
+
     await db.commit()
     await db.refresh(msg)
 

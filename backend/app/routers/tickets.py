@@ -13,7 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
-from app.models.enums import TicketPriority, TicketStatus
+from app.models.enums import TicketPriority, TicketStatus, UserRole
 from app.models.support import Ticket, TicketMessage
 
 router = APIRouter(prefix="/tickets", tags=["Tickets"])
@@ -37,12 +37,6 @@ async def list_tickets(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> list[dict[str, Any]]:
-    """List tickets for the current client or all tickets for agency staff."""
-    if actor.role == "client":
-        target_client_id = actor.client_id or actor.user_id
-    else:
-        target_client_id = client_id or actor.client_id or actor.user_id
-
     stmt = (
         select(Ticket)
         .options(
@@ -50,9 +44,14 @@ async def list_tickets(
             selectinload(Ticket.assignee),
             selectinload(Ticket.deliverable),
         )
-        .where(Ticket.client_id == target_client_id)
         .order_by(Ticket.created_at.desc())
     )
+
+    if actor.role in (UserRole.CLIENT, "client"):
+        target_client_id = actor.client_id or actor.user_id
+        stmt = stmt.where(Ticket.client_id == target_client_id)
+    elif client_id:
+        stmt = stmt.where(Ticket.client_id == client_id)
     res = await db.execute(stmt)
     tickets = res.scalars().all()
 
@@ -154,7 +153,7 @@ async def get_ticket(
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     client_id = actor.client_id or actor.user_id
-    if actor.role == "client" and ticket.client_id != client_id:
+    if actor.role in (UserRole.CLIENT, "client") and ticket.client_id != client_id:
         raise HTTPException(status_code=403, detail="Not authorized to access this ticket")
 
     deliv_title = None
@@ -204,7 +203,7 @@ async def add_ticket_message(
         raise HTTPException(status_code=404, detail="Ticket not found")
 
     client_id = actor.client_id or actor.user_id
-    if actor.role == "client" and ticket.client_id != client_id:
+    if actor.role in (UserRole.CLIENT, "client") and ticket.client_id != client_id:
         raise HTTPException(status_code=403, detail="Not authorized to reply to this ticket")
 
     msg = TicketMessage(
