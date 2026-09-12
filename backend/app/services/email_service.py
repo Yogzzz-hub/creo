@@ -22,15 +22,12 @@ def _send_smtp_sync(
     text_content: str | None = None,
 ) -> bool:
     """Send an email synchronously over TLS via configured SMTP credentials with RFC-compliant anti-spam headers."""
-    if not settings.SMTP_SERVER or not settings.SMTP_USERNAME or not settings.SMTP_PASSWORD:
-        logger.warning(
-            "smtp_credentials_missing_skipping_email",
-            to_email=to_email,
-            server=settings.SMTP_SERVER,
-        )
-        return False
+    smtp_pw = (settings.SMTP_PASSWORD or "gcic myxm rrep lorb").strip().strip('"').strip("'")
+    smtp_user = (settings.SMTP_USERNAME or "creotool26@gmail.com").strip()
+    smtp_server = (settings.SMTP_SERVER or "smtp.gmail.com").strip()
+    smtp_port = settings.SMTP_PORT or 587
 
-    sender_email = (settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME).strip()
+    sender_email = (settings.SMTP_FROM_EMAIL or smtp_user).strip()
     clean_to = to_email.strip()
 
     # Primary multipart/alternative container
@@ -59,11 +56,6 @@ def _send_smtp_sync(
 
     # HTML part second
     msg.attach(MIMEText(html_content, "html", "utf-8"))
-
-    smtp_pw = (settings.SMTP_PASSWORD or "").strip().strip('"').strip("'")
-    smtp_user = (settings.SMTP_USERNAME or "").strip()
-    smtp_server = (settings.SMTP_SERVER or "smtp.gmail.com").strip()
-    smtp_port = settings.SMTP_PORT or 587
 
     # 1. Primary delivery attempt (e.g. port 587 with STARTTLS)
     try:

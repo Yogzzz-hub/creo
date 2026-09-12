@@ -142,11 +142,10 @@ async def register_intent(
     _otp_store[f"reg:{email_clean}"] = [otp_code, expires_at, 0]
 
     email_sent = False
-    if settings.SMTP_PASSWORD:
-        try:
-            email_sent = await send_otp_email(email_clean, otp_code)
-        except Exception as e:
-            logger.warning("register_otp_dispatch_error", error=str(e), email=email_clean)
+    try:
+        email_sent = await send_otp_email(email_clean, otp_code)
+    except Exception as e:
+        logger.warning("register_otp_dispatch_error", error=str(e), email=email_clean)
 
     return {
         "status": "sent",
@@ -269,11 +268,10 @@ async def forgot_password(
     _otp_store[f"reset:{email_clean}"] = [otp_code, expires_at, 0]
 
     email_sent = False
-    if settings.SMTP_PASSWORD:
-        try:
-            email_sent = await send_otp_email(email_clean, otp_code)
-        except Exception as e:
-            logger.warning("reset_otp_dispatch_error", error=str(e), email=email_clean)
+    try:
+        email_sent = await send_otp_email(email_clean, otp_code)
+    except Exception as e:
+        logger.warning("reset_otp_dispatch_error", error=str(e), email=email_clean)
 
     return {
         "status": "sent",
@@ -588,11 +586,10 @@ async def send_otp(payload: SendOtpRequest, db: AsyncSession = Depends(get_db)) 
     _otp_store[email_clean] = [otp_code, expires_at, 0]
 
     email_sent = False
-    if settings.SMTP_PASSWORD:
-        try:
-            email_sent = await send_otp_email(email_clean, otp_code)
-        except Exception as e:
-            logger.warning("otp_email_dispatch_error", error=str(e), email=email_clean)
+    try:
+        email_sent = await send_otp_email(email_clean, otp_code)
+    except Exception as e:
+        logger.warning("otp_email_dispatch_error", error=str(e), email=email_clean)
 
     return {
         "status": "sent",
