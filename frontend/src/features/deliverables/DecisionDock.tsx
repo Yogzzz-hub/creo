@@ -1,4 +1,4 @@
-import { Check, CheckCircle2, LifeBuoy, MessageSquare, X } from "lucide-react";
+import { Check, CheckCircle2, LifeBuoy, Loader2, MessageSquare, X } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import type { DeliverableItem } from "../../types/api";
 
@@ -129,6 +129,7 @@ export function DecisionDock({
           <>
             <button
               type="button"
+              disabled={isApproving}
               onClick={() => onRequestChanges(deliverable)}
               style={{
                 padding: "8px 16px",
@@ -138,7 +139,8 @@ export function DecisionDock({
                 color: "var(--color-ink-text)",
                 fontWeight: 500,
                 fontSize: "0.875rem",
-                cursor: "pointer",
+                cursor: isApproving ? "not-allowed" : "pointer",
+                opacity: isApproving ? 0.5 : 1,
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
@@ -189,7 +191,7 @@ export function DecisionDock({
                 boxShadow: "0 2px 10px rgba(35, 162, 109, 0.3)",
               }}
             >
-              <CheckCircle2 size={16} />
+              {isApproving ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> : <CheckCircle2 size={16} />}
               {isApproving ? "Approving..." : "Approve"}
             </button>
           </>

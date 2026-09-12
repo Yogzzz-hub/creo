@@ -7,7 +7,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy import func, select, update
+from sqlalchemy import delete as sa_delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rbac import Actor, get_current_actor
@@ -71,14 +71,15 @@ async def mark_notification_read(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Mark a notification as read."""
+    """Delete a single notification (dismiss it)."""
     notif = await db.get(Notification, notification_id)
     if not notif or notif.user_id != actor.user_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found")
 
-    notif.is_read = True
+    await db.delete(notif)
     await db.commit()
-    return {"status": "ok", "id": str(notification_id), "is_read": True}
+    return {"status": "deleted", "id": str(notification_id)}
+
 
 
 @router.post("/mark-all-read", response_model=dict[str, Any])
@@ -86,15 +87,11 @@ async def mark_all_read(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Mark all notifications as read for current actor."""
-    stmt = (
-        update(Notification)
-        .where(Notification.user_id == actor.user_id, Notification.is_read.is_(False))
-        .values(is_read=True)
-    )
-    await db.execute(stmt)
+    """Delete all notifications for the current actor (clear inbox)."""
+    stmt = sa_delete(Notification).where(Notification.user_id == actor.user_id)
+    result = await db.execute(stmt)
     await db.commit()
-    return {"status": "all_marked_read"}
+    return {"status": "all_cleared", "deleted": result.rowcount}
 
 
 @router.post("/send", response_model=dict[str, Any])

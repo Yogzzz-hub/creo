@@ -801,9 +801,10 @@ export function AdminDeliverablesPage() {
                       type="button"
                       disabled={updatingId === item.id}
                       onClick={() => handleStatusUpdate(item.id, "approved")}
-                      className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold hover:bg-emerald-100 cursor-pointer disabled:opacity-50"
+                      className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold hover:bg-emerald-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                     >
-                      Approve
+                      {updatingId === item.id && <Loader2 className="size-3 animate-spin" />}
+                      {updatingId === item.id ? "Approving..." : "Approve"}
                     </button>
                   ) : (
                     <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
@@ -3276,6 +3277,8 @@ export function AdminAnnouncementsPage() {
   const [targetDepts, setTargetDepts] = useState<string[]>(["all"]);
   const [deptInput, setDeptInput] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [publishing, setPublishing] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchAnnouncements = useCallback(() => {
     setLoading(true);
@@ -3316,6 +3319,7 @@ export function AdminAnnouncementsPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !content) return;
+    setPublishing(true);
     try {
       await request("/api/v1/admin/announcements", {
         method: "POST",
@@ -3334,15 +3338,20 @@ export function AdminAnnouncementsPage() {
       fetchAnnouncements();
     } catch {
       alert("Failed to broadcast announcement.");
+    } finally {
+      setPublishing(false);
     }
   };
 
   const handleDelete = async (id: string) => {
+    setDeletingId(id);
     try {
       await request(`/api/v1/admin/announcements/${id}`, { method: "DELETE" });
       setAnnouncements((prev) => prev.filter((a) => a.id !== id));
     } catch {
       setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -3464,11 +3473,12 @@ export function AdminAnnouncementsPage() {
                     {item.can_delete !== false && (
                       <button
                         type="button"
+                        disabled={deletingId === item.id}
                         onClick={() => handleDelete(item.id)}
-                        className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer transition-colors"
+                        className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Delete announcement"
                       >
-                        <Trash2 className="size-3.5" />
+                        {deletingId === item.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
                       </button>
                     )}
                   </div>
@@ -3603,16 +3613,19 @@ export function AdminAnnouncementsPage() {
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
               <button
                 type="button"
+                disabled={publishing}
                 onClick={() => setCreateOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-xs font-bold text-white hover:bg-[#1A5EA8] shadow-xs cursor-pointer"
+                disabled={publishing}
+                className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-xs font-bold text-white hover:bg-[#1A5EA8] shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
               >
-                Publish Now
+                {publishing && <Loader2 className="size-3.5 animate-spin" />}
+                {publishing ? "Publishing..." : "Publish Now"}
               </button>
             </div>
           </form>
@@ -3789,6 +3802,7 @@ export function AdminReportsPage() {
 export function AdminAddonsPage() {
   const [addons, setAddons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [completingId, setCompletingId] = useState<string | null>(null);
 
   const fetchAddons = useCallback(() => {
     setLoading(true);
@@ -3803,6 +3817,7 @@ export function AdminAddonsPage() {
   }, [fetchAddons]);
 
   const handleComplete = async (addonId: string) => {
+    setCompletingId(addonId);
     try {
       await request(`/api/v1/admin/addons/${addonId}/complete`, { method: "POST" });
       setAddons((prev) =>
@@ -3810,6 +3825,8 @@ export function AdminAddonsPage() {
       );
     } catch {
       // local
+    } finally {
+      setCompletingId(null);
     }
   };
 
@@ -3867,10 +3884,12 @@ export function AdminAddonsPage() {
                 {addon.pending_requests > 0 && (
                   <button
                     type="button"
+                    disabled={completingId === addon.id}
                     onClick={() => handleComplete(addon.id)}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                   >
-                    Mark Fulfilled
+                    {completingId === addon.id && <Loader2 className="size-3 animate-spin" />}
+                    {completingId === addon.id ? "Fulfilling..." : "Mark Fulfilled"}
                   </button>
                 )}
               </div>
@@ -3888,6 +3907,7 @@ export function AdminAddonsPage() {
 export function AdminEscalationsPage() {
   const [escalations, setEscalations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
 
   const fetchEscalations = useCallback(() => {
     setLoading(true);
@@ -3902,11 +3922,14 @@ export function AdminEscalationsPage() {
   }, [fetchEscalations]);
 
   const handleResolve = async (id: string) => {
+    setResolvingId(id);
     try {
       await request(`/api/v1/admin/escalations/${id}/resolve`, { method: "POST" });
       setEscalations((prev) => prev.filter((e) => e.id !== id));
     } catch {
       setEscalations((prev) => prev.filter((e) => e.id !== id));
+    } finally {
+      setResolvingId(null);
     }
   };
 
@@ -3966,10 +3989,12 @@ export function AdminEscalationsPage() {
                     <td className="px-4 py-3 text-right">
                       <button
                         type="button"
+                        disabled={resolvingId === esc.id}
                         onClick={() => handleResolve(esc.id)}
-                        className="px-3 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-xs cursor-pointer"
+                        className="px-3 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                       >
-                        Resolve
+                        {resolvingId === esc.id && <Loader2 className="size-3 animate-spin" />}
+                        {resolvingId === esc.id ? "Resolving..." : "Resolve"}
                       </button>
                     </td>
                   </tr>
@@ -4086,6 +4111,7 @@ export function AdminSettingsPage() {
     stripe_enabled: true,
   });
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     request<any>("/api/v1/admin/settings")
@@ -4095,6 +4121,7 @@ export function AdminSettingsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
     try {
       await request("/api/v1/admin/settings", {
         method: "POST",
@@ -4105,6 +4132,8 @@ export function AdminSettingsPage() {
     } catch {
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -4187,9 +4216,11 @@ export function AdminSettingsPage() {
           {!saved && <div />}
           <button
             type="submit"
-            className="px-5 py-2.5 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] shadow-xs cursor-pointer"
+            disabled={saving}
+            className="px-5 py-2.5 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
           >
-            Save All Configurations
+            {saving && <Loader2 className="size-3.5 animate-spin" />}
+            {saving ? "Saving..." : "Save All Configurations"}
           </button>
         </div>
       </form>
@@ -4209,6 +4240,8 @@ export function AdminLeavePage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "my_requests" | "approved">("all");
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [processingAction, setProcessingAction] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   // Apply Leave Modal state
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -4231,6 +4264,7 @@ export function AdminLeavePage() {
 
   const handleAction = async (id: string, action: "approve" | "reject") => {
     setProcessingId(id);
+    setProcessingAction(action);
     try {
       await request(`/api/v1/admin/leave/${id}/${action}`, { method: "POST" });
       fetchLeave();
@@ -4238,16 +4272,20 @@ export function AdminLeavePage() {
       alert(err?.message || `Failed to ${action} leave request.`);
     } finally {
       setProcessingId(null);
+      setProcessingAction(null);
     }
   };
 
   const handleCancel = async (id: string) => {
     if (!window.confirm("Are you sure you want to cancel this leave request?")) return;
+    setCancellingId(id);
     try {
       await request(`/api/v1/admin/leave/${id}`, { method: "DELETE" });
       setLeaveRequests((prev) => prev.filter((lr) => lr.id !== id));
     } catch (err: any) {
       alert(err?.message || "Failed to cancel leave request.");
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -4465,29 +4503,33 @@ export function AdminLeavePage() {
                     <>
                       <button
                         type="button"
-                        disabled={processingId === lr.id}
+                        disabled={processingId === lr.id || cancellingId === lr.id}
                         onClick={() => handleAction(lr.id, "approve")}
-                        className="flex-1 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 cursor-pointer disabled:opacity-50 text-center transition-colors"
+                        className="flex-1 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-center transition-colors flex items-center justify-center gap-1"
                       >
-                        Approve
+                        {processingId === lr.id && processingAction === "approve" && <Loader2 className="size-3 animate-spin" />}
+                        {processingId === lr.id && processingAction === "approve" ? "Approving..." : "Approve"}
                       </button>
                       <button
                         type="button"
-                        disabled={processingId === lr.id}
+                        disabled={processingId === lr.id || cancellingId === lr.id}
                         onClick={() => handleAction(lr.id, "reject")}
-                        className="flex-1 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold hover:bg-rose-100 cursor-pointer disabled:opacity-50 text-center transition-colors"
+                        className="flex-1 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold hover:bg-rose-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-center transition-colors flex items-center justify-center gap-1"
                       >
-                        Reject
+                        {processingId === lr.id && processingAction === "reject" && <Loader2 className="size-3 animate-spin" />}
+                        {processingId === lr.id && processingAction === "reject" ? "Rejecting..." : "Reject"}
                       </button>
                     </>
                   )}
                   {lr.can_cancel && (
                     <button
                       type="button"
+                      disabled={cancellingId === lr.id || processingId === lr.id}
                       onClick={() => handleCancel(lr.id)}
-                      className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-rose-50 hover:text-rose-700 cursor-pointer transition-colors"
+                      className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-rose-50 hover:text-rose-700 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                     >
-                      Cancel
+                      {cancellingId === lr.id && <Loader2 className="size-3 animate-spin" />}
+                      {cancellingId === lr.id ? "Cancelling..." : "Cancel"}
                     </button>
                   )}
                 </div>
@@ -4586,30 +4628,34 @@ export function AdminLeavePage() {
                           <>
                             <button
                               type="button"
-                              disabled={processingId === lr.id}
+                              disabled={processingId === lr.id || cancellingId === lr.id}
                               onClick={() => handleAction(lr.id, "approve")}
-                              className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold hover:bg-emerald-100 cursor-pointer disabled:opacity-50 transition-colors"
+                              className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold hover:bg-emerald-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
                             >
-                              Approve
+                              {processingId === lr.id && processingAction === "approve" && <Loader2 className="size-3 animate-spin" />}
+                              {processingId === lr.id && processingAction === "approve" ? "Approving..." : "Approve"}
                             </button>
                             <button
                               type="button"
-                              disabled={processingId === lr.id}
+                              disabled={processingId === lr.id || cancellingId === lr.id}
                               onClick={() => handleAction(lr.id, "reject")}
-                              className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold hover:bg-rose-100 cursor-pointer disabled:opacity-50 transition-colors"
+                              className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold hover:bg-rose-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
                             >
-                              Reject
+                              {processingId === lr.id && processingAction === "reject" && <Loader2 className="size-3 animate-spin" />}
+                              {processingId === lr.id && processingAction === "reject" ? "Rejecting..." : "Reject"}
                             </button>
                           </>
                         )}
                         {lr.can_cancel && (
                           <button
                             type="button"
+                            disabled={cancellingId === lr.id || processingId === lr.id}
                             onClick={() => handleCancel(lr.id)}
-                            className="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-500 border border-slate-200 text-[11px] font-semibold hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 cursor-pointer transition-colors"
+                            className="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-500 border border-slate-200 text-[11px] font-semibold hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                             title="Cancel this leave request"
                           >
-                            Cancel
+                            {cancellingId === lr.id && <Loader2 className="size-3 animate-spin" />}
+                            {cancellingId === lr.id ? "Cancelling..." : "Cancel"}
                           </button>
                         )}
                         {!lr.can_approve && !lr.can_cancel && (

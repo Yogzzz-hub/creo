@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import {
   AlertTriangle,
@@ -26,6 +26,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
+import { AnnouncementToast } from "./AnnouncementToast";
 
 interface NavItem {
   label: string;
@@ -67,6 +68,7 @@ export function OpsLayout() {
   const queryClient = useQueryClient();
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const bellRef = useRef<HTMLButtonElement>(null);
 
   const userRole = user?.role || "admin";
   const isTeamStaff = userRole === "team_lead" || userRole === "team_member" || userRole === "editor" || userRole === "designer";
@@ -115,19 +117,18 @@ export function OpsLayout() {
     try {
       await request("/api/v1/notifications/mark-all-read", { method: "POST" });
       queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+      setNotificationOpen(false);
     } catch {
       // ignore
     }
   };
 
   const handleItemClick = async (item: any) => {
-    if (!item.is_read) {
-      try {
-        await request(`/api/v1/notifications/${item.id}/read`, { method: "PATCH" });
-        queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
-      } catch {
-        // ignore
-      }
+    try {
+      await request(`/api/v1/notifications/${item.id}/read`, { method: "PATCH" });
+      queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
+    } catch {
+      // ignore
     }
     if (item.link) {
       setNotificationOpen(false);
@@ -275,6 +276,7 @@ export function OpsLayout() {
             <div className="relative">
               <button
                 type="button"
+                ref={bellRef}
                 onClick={() => setNotificationOpen(!notificationOpen)}
                 className="relative flex size-9 items-center justify-center rounded-lg text-[#0D2137]/70 hover:bg-slate-100 hover:text-[#0D2137] transition-colors cursor-pointer"
                 aria-label="Notifications"
@@ -300,13 +302,13 @@ export function OpsLayout() {
                         </span>
                       )}
                     </div>
-                    {unreadCount > 0 && (
+                    {notifications.length > 0 && (
                       <button
                         type="button"
                         onClick={handleMarkAllRead}
-                        className="text-[11px] font-semibold text-slate-500 hover:text-[#2B7BC4] cursor-pointer"
+                        className="text-[11px] font-semibold text-slate-500 hover:text-red-500 cursor-pointer transition-colors"
                       >
-                        Mark all read
+                        Clear all
                       </button>
                     )}
                   </div>
@@ -543,6 +545,7 @@ export function OpsLayout() {
           }`}
         >
           <div className={isKanban ? "w-full h-full flex flex-col flex-1 min-h-0" : "max-w-[1600px] w-full mx-auto"}>
+            <AnnouncementToast bellRef={bellRef} />
             <Outlet />
           </div>
         </main>
