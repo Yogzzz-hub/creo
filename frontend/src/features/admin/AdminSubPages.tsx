@@ -3461,22 +3461,33 @@ export function AdminAnnouncementsPage() {
                           </span>
                         ))}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(item.id)}
-                      className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
-                      title="Delete announcement"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
+                    {item.can_delete !== false && (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(item.id)}
+                        className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer transition-colors"
+                        title="Delete announcement"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    )}
                   </div>
                   <h3 className="font-bold text-sm text-[#0D2137]">{item.title}</h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">{item.content}</p>
+                  <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{item.content}</p>
                 </div>
 
                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                  <span className="font-medium text-slate-500">By {item.author || "Admin"}</span>
-                  <span>{item.created_at ? new Date(item.created_at).toLocaleDateString() : "Recent"}</span>
+                  <span className="font-medium text-slate-500">
+                    By {item.author || "Creo Admin"}
+                    {item.author_role && (
+                      <span className="ml-1 text-[10px] text-slate-400 font-normal capitalize">
+                        • {item.author_role.replace("_", " ")}
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-medium text-slate-500 font-mono text-[10px]">
+                    {item.created_at_ist || (item.created_at ? new Date(item.created_at).toLocaleDateString() : "Recent")}
+                  </span>
                 </div>
               </div>
             );
@@ -3486,10 +3497,10 @@ export function AdminAnnouncementsPage() {
 
       {/* Create Announcement Modal */}
       {createOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
           <form
             onSubmit={handleCreate}
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4"
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 border border-slate-100"
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-bold text-[#0D2137]">Broadcast Announcement</h3>
@@ -4193,7 +4204,15 @@ export function AdminLeavePage() {
   const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState<"all" | "pending" | "my_requests" | "approved">("all");
   const [processingId, setProcessingId] = useState<string | null>(null);
+
+  // Apply Leave Modal state
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchLeave = useCallback(() => {
     setLoading(true);
@@ -4211,25 +4230,63 @@ export function AdminLeavePage() {
     setProcessingId(id);
     try {
       await request(`/api/v1/admin/leave/${id}/${action}`, { method: "POST" });
-      setLeaveRequests((prev) =>
-        prev.map((lr) =>
-          lr.id === id ? { ...lr, status: action === "approve" ? "approved" : "rejected" } : lr
-        )
-      );
-    } catch {
-      // Local fallback
+      fetchLeave();
+    } catch (err: any) {
+      alert(err?.message || `Failed to ${action} leave request.`);
     } finally {
       setProcessingId(null);
     }
   };
 
+  const handleCancel = async (id: string) => {
+    if (!window.confirm("Are you sure you want to cancel this leave request?")) return;
+    try {
+      await request(`/api/v1/admin/leave/${id}`, { method: "DELETE" });
+      setLeaveRequests((prev) => prev.filter((lr) => lr.id !== id));
+    } catch (err: any) {
+      alert(err?.message || "Failed to cancel leave request.");
+    }
+  };
+
+  const handleApply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!startDate || !endDate || !reason.trim()) return;
+    if (startDate > endDate) {
+      alert("End date must be on or after start date.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await request("/api/v1/admin/leave", {
+        method: "POST",
+        body: JSON.stringify({ start_date: startDate, end_date: endDate, reason: reason.trim() }),
+      });
+      setCreateModalOpen(false);
+      setStartDate("");
+      setEndDate("");
+      setReason("");
+      fetchLeave();
+    } catch (err: any) {
+      alert(err?.message || "Failed to submit leave request.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const filtered = leaveRequests.filter((lr) => {
-    if (statusFilter === "all") return true;
-    return lr.status === statusFilter;
+    if (activeTab === "pending") return lr.status === "pending";
+    if (activeTab === "approved") return lr.status === "approved";
+    if (activeTab === "my_requests") return lr.is_self;
+    if (statusFilter !== "all") return lr.status === statusFilter;
+    return true;
   });
+
+  const pendingCount = leaveRequests.filter((lr) => lr.status === "pending").length;
+  const myRequestsCount = leaveRequests.filter((lr) => lr.is_self).length;
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
           <div className="flex items-center gap-2">
@@ -4237,21 +4294,89 @@ export function AdminLeavePage() {
             <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">Staff Leave Requests</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Review and approve team time-off requests queried directly from database
+            Hierarchical time-off approval workflow: Team Leads review pod requests, Admins oversee agency operations
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#0D2137] focus:outline-none focus:border-[#2B7BC4]"
+          <button
+            type="button"
+            onClick={() => setCreateModalOpen(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] shadow-xs cursor-pointer transition-colors"
           >
-            <option value="all">All Status ({leaveRequests.length})</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
+            <Plus className="size-4" /> Apply for Leave
+          </button>
         </div>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+        <div className="flex items-center gap-1.5 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setActiveTab("all")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === "all"
+                ? "bg-[#0D2137] text-white shadow-2xs"
+                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            All Requests ({leaveRequests.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("pending")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "pending"
+                ? "bg-amber-600 text-white shadow-2xs"
+                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            Pending Review
+            {pendingCount > 0 && (
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                activeTab === "pending" ? "bg-white text-amber-700" : "bg-amber-100 text-amber-800"
+              }`}>
+                {pendingCount}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("approved")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === "approved"
+                ? "bg-emerald-600 text-white shadow-2xs"
+                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            Approved
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("my_requests")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === "my_requests"
+                ? "bg-[#2B7BC4] text-white shadow-2xs"
+                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            My Submissions ({myRequestsCount})
+          </button>
+        </div>
+
+        <select
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setActiveTab("all");
+          }}
+          className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#0D2137] focus:outline-none focus:border-[#2B7BC4]"
+        >
+          <option value="all">Filter Status (All)</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
@@ -4271,8 +4396,22 @@ export function AdminLeavePage() {
               <div key={lr.id} className="p-4 space-y-2.5">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="font-bold text-sm text-[#0D2137]">{lr.employee_name}</div>
-                    <div className="text-[11px] text-slate-500 capitalize">{lr.department?.replace("_", " ")}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-sm text-[#0D2137]">{lr.employee_name}</span>
+                      {lr.is_self && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-[#2B7BC4] border border-blue-200">
+                          You
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                      <span className="font-medium capitalize">{lr.role?.replace("_", " ") || "Staff"}</span>
+                      <span>•</span>
+                      <span className="capitalize">{lr.department?.replace("_", " ")}</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
+                      Reports to: <span className="text-slate-600 font-medium">{lr.team_lead_name}</span>
+                    </div>
                   </div>
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${
@@ -4288,32 +4427,48 @@ export function AdminLeavePage() {
                 </div>
 
                 <div className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                  <div className="font-mono text-[11px] text-slate-500 font-semibold mb-1">
+                  <div className="font-mono text-[11px] text-slate-600 font-semibold mb-1">
                     📅 {lr.start_date} to {lr.end_date}
                   </div>
                   {lr.reason && <p className="text-slate-700">{lr.reason}</p>}
+                  {lr.approved_by_name && (
+                    <div className="text-[10px] text-slate-500 mt-1.5 pt-1.5 border-t border-slate-200">
+                      Reviewed by: <span className="font-semibold text-[#0D2137]">{lr.approved_by_name}</span>
+                    </div>
+                  )}
                 </div>
 
-                {lr.status === "pending" && (
-                  <div className="flex items-center gap-2 pt-1">
+                <div className="flex items-center gap-2 pt-1">
+                  {lr.can_approve && (
+                    <>
+                      <button
+                        type="button"
+                        disabled={processingId === lr.id}
+                        onClick={() => handleAction(lr.id, "approve")}
+                        className="flex-1 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 cursor-pointer disabled:opacity-50 text-center transition-colors"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        disabled={processingId === lr.id}
+                        onClick={() => handleAction(lr.id, "reject")}
+                        className="flex-1 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold hover:bg-rose-100 cursor-pointer disabled:opacity-50 text-center transition-colors"
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+                  {lr.can_cancel && (
                     <button
                       type="button"
-                      disabled={processingId === lr.id}
-                      onClick={() => handleAction(lr.id, "approve")}
-                      className="flex-1 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 cursor-pointer disabled:opacity-50 text-center transition-colors"
+                      onClick={() => handleCancel(lr.id)}
+                      className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-rose-50 hover:text-rose-700 cursor-pointer transition-colors"
                     >
-                      Approve
+                      Cancel
                     </button>
-                    <button
-                      type="button"
-                      disabled={processingId === lr.id}
-                      onClick={() => handleAction(lr.id, "reject")}
-                      className="flex-1 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold hover:bg-rose-100 cursor-pointer disabled:opacity-50 text-center transition-colors"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ))
           )}
@@ -4324,11 +4479,11 @@ export function AdminLeavePage() {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-[#0D2137] border-b border-slate-200 font-semibold">
               <tr>
-                <th className="px-4 py-3">Team Member</th>
-                <th className="px-4 py-3">Department</th>
+                <th className="px-4 py-3">Staff Member</th>
+                <th className="px-4 py-3">Hierarchy / Pod</th>
                 <th className="px-4 py-3">Dates</th>
                 <th className="px-4 py-3">Reason</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Status & Reviewer</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
@@ -4349,54 +4504,96 @@ export function AdminLeavePage() {
               ) : (
                 filtered.map((lr) => (
                   <tr key={lr.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3 font-semibold text-[#0D2137]">
-                      {lr.employee_name}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-[#0D2137]">{lr.employee_name}</span>
+                        {lr.is_self && (
+                          <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-50 text-[#2B7BC4] border border-blue-200">
+                            You
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-400 flex items-center gap-1">
+                        <span>{lr.employee_email}</span>
+                        <span>•</span>
+                        <span className="font-medium capitalize text-slate-600">{lr.role?.replace("_", " ")}</span>
+                      </div>
                     </td>
-                    <td className="px-4 py-3 capitalize text-slate-500">
-                      {lr.department?.replace("_", " ")}
+                    <td className="px-4 py-3">
+                      <div className="text-slate-700 font-medium">
+                        {lr.team_lead_name}
+                      </div>
+                      <div className="text-[10px] text-slate-400 capitalize">
+                        {lr.department?.replace("_", " ")} Dept
+                      </div>
                     </td>
                     <td className="px-4 py-3 font-mono text-[11px] text-slate-600">
-                      {lr.start_date} to {lr.end_date}
+                      <div>{lr.start_date} to {lr.end_date}</div>
+                      {lr.created_at_ist && (
+                        <div className="text-[10px] text-slate-400 font-sans mt-0.5">
+                          Req: {lr.created_at_ist}
+                        </div>
+                      )}
                     </td>
-                    <td className="px-4 py-3 text-slate-600 max-w-xs truncate">
+                    <td className="px-4 py-3 text-slate-600 max-w-xs truncate" title={lr.reason}>
                       {lr.reason}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                          lr.status === "approved"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : lr.status === "rejected"
-                            ? "bg-rose-50 text-rose-700 border border-rose-200"
-                            : "bg-amber-50 text-amber-700 border border-amber-200"
-                        }`}
-                      >
-                        {lr.status}
-                      </span>
+                      <div className="space-y-1">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                            lr.status === "approved"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : lr.status === "rejected"
+                              ? "bg-rose-50 text-rose-700 border border-rose-200"
+                              : "bg-amber-50 text-amber-700 border border-amber-200"
+                          }`}
+                        >
+                          {lr.status}
+                        </span>
+                        {lr.approved_by_name && (
+                          <div className="text-[10px] text-slate-400">
+                            By {lr.approved_by_name}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {lr.status === "pending" ? (
-                        <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {lr.can_approve && (
+                          <>
+                            <button
+                              type="button"
+                              disabled={processingId === lr.id}
+                              onClick={() => handleAction(lr.id, "approve")}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold hover:bg-emerald-100 cursor-pointer disabled:opacity-50 transition-colors"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              disabled={processingId === lr.id}
+                              onClick={() => handleAction(lr.id, "reject")}
+                              className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold hover:bg-rose-100 cursor-pointer disabled:opacity-50 transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        {lr.can_cancel && (
                           <button
                             type="button"
-                            disabled={processingId === lr.id}
-                            onClick={() => handleAction(lr.id, "approve")}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold hover:bg-emerald-100 cursor-pointer disabled:opacity-50"
+                            onClick={() => handleCancel(lr.id)}
+                            className="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-500 border border-slate-200 text-[11px] font-semibold hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 cursor-pointer transition-colors"
+                            title="Cancel this leave request"
                           >
-                            Approve
+                            Cancel
                           </button>
-                          <button
-                            type="button"
-                            disabled={processingId === lr.id}
-                            onClick={() => handleAction(lr.id, "reject")}
-                            className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold hover:bg-rose-100 cursor-pointer disabled:opacity-50"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 text-xs">—</span>
-                      )}
+                        )}
+                        {!lr.can_approve && !lr.can_cancel && (
+                          <span className="text-slate-400 text-xs">—</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -4405,6 +4602,93 @@ export function AdminLeavePage() {
           </table>
         </div>
       </div>
+
+      {/* Apply Leave Request Modal */}
+      {createModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
+          <form
+            onSubmit={handleApply}
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 border border-slate-100"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="size-5 text-[#2B7BC4]" />
+                <h3 className="text-base font-bold text-[#0D2137]">Apply for Leave / Time Off</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCreateModalOpen(false)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">End Date</label>
+                  <input
+                    type="date"
+                    required
+                    min={startDate}
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Reason for Leave</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="e.g. Scheduled medical appointment, family commitments, or annual personal leave..."
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4] resize-none"
+                />
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-[11px] text-slate-500 space-y-1">
+                <div className="font-semibold text-[#0D2137] flex items-center gap-1">
+                  <Shield className="size-3.5 text-[#2B7BC4]" /> Approval Hierarchy
+                </div>
+                <p>Team member requests are routed to your assigned Team Lead. Team Lead requests are routed to Agency Administration.</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setCreateModalOpen(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-xs font-bold text-white hover:bg-[#1A5EA8] cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
+              >
+                {submitting && <Loader2 className="size-3.5 animate-spin" />}
+                {submitting ? "Submitting..." : "Submit Request"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

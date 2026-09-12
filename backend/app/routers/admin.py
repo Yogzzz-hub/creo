@@ -17,13 +17,13 @@ import json
 import logging
 import uuid
 import os
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
-from sqlalchemy import delete, func, select, text
+from sqlalchemy import delete, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, selectinload
 
@@ -33,7 +33,7 @@ from app.core.rbac import Actor, AdminActor, InvestorActor, SalesActor, StaffAct
 from app.db.session import get_db
 from app.models.billing import Plan
 from app.models.enums import AccountStatus, DeliverableStatus, DeliverableType, TaskStatus, TicketStatus, UserRole
-from app.models.ops import Announcement, AuditLog, LeaveRequest
+from app.models.ops import Announcement, AuditLog, LeaveRequest, Notification
 from app.models.support import Ticket, TicketMessage
 from app.models.user import ClientProfile, StaffProfile, User
 from app.models.work import ContentCalendar, Deliverable, Task
@@ -535,7 +535,7 @@ class AnnouncementCreateRequest(BaseModel):
     title: str
     content: str
     type: str = "broadcast"
-    target_departments: list[str] = []
+    target_departments: list[str] = ["all"]
 
 
 @router.get("/announcements")
@@ -543,26 +543,43 @@ async def get_announcements(
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> list[dict[str, Any]]:
-    """List all agency announcements."""
+    """List all agency announcements with author info and IST timestamps."""
     stmt = (
-        select(Announcement, User.full_name, User.email)
+        select(Announcement, User.full_name, User.email, User.role)
         .join(User, User.id == Announcement.author_id, isouter=True)
         .order_by(Announcement.created_at.desc())
     )
     res = await db.execute(stmt)
     rows = res.fetchall()
 
+    from datetime import timedelta
+    ist_tz = timezone(timedelta(hours=5, minutes=30))
+    is_admin = actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN, "admin", "super_admin")
+
     announcements = []
-    for ann, author_name, author_email in rows:
+    for ann, author_name, author_email, author_role in rows:
+        created_ist_str = ""
+        if ann.created_at:
+            created_ist = ann.created_at.astimezone(ist_tz)
+            created_ist_str = created_ist.strftime("%d %b %Y, %I:%M %p IST")
+
+        role_str = author_role.value if hasattr(author_role, "value") else str(author_role or "admin")
+        can_delete = is_admin or ann.author_id == actor.user_id
+
         announcements.append(
             {
                 "id": str(ann.id),
                 "title": ann.title,
                 "content": ann.content,
-                "type": ann.type,
-                "target_departments": ann.target_departments or [],
-                "author": author_name or author_email or "Agency Admin",
+                "type": ann.type or "broadcast",
+                "target_departments": ann.target_departments or ["all"],
+                "author": author_name or (author_email.split("@")[0].capitalize() if author_email else "Creo Admin"),
+                "author_email": author_email,
+                "author_role": role_str,
+                "author_id": str(ann.author_id),
+                "can_delete": can_delete,
                 "created_at": ann.created_at.isoformat() if ann.created_at else None,
+                "created_at_ist": created_ist_str,
             }
         )
     return announcements
@@ -574,15 +591,69 @@ async def create_announcement(
     db: AsyncSession = Depends(get_db),
     actor: Actor = TeamLeadActor,
 ) -> dict[str, Any]:
-    """Broadcast new agency announcement."""
+    """Broadcast new agency announcement to staff and clients."""
+    clean_title = payload.title.strip()
+    clean_content = payload.content.strip()
+
+    if not clean_title:
+        raise HTTPException(status_code=400, detail="Announcement title cannot be empty.")
+    if not clean_content:
+        raise HTTPException(status_code=400, detail="Announcement content cannot be empty.")
+
+    target_depts = payload.target_departments if payload.target_departments else ["all"]
+    clean_type = payload.type.strip().lower() if payload.type else "broadcast"
+
     ann = Announcement(
         author_id=actor.user_id,
-        title=payload.title,
-        content=payload.content,
-        type=payload.type,
-        target_departments=payload.target_departments,
+        title=clean_title,
+        content=clean_content,
+        type=clean_type,
+        target_departments=target_depts,
     )
     db.add(ann)
+    await db.flush()
+
+    # Fan out in-app notifications to active staff
+    try:
+        users_stmt = (
+            select(User.id, StaffProfile.department)
+            .outerjoin(StaffProfile, StaffProfile.user_id == User.id)
+            .where(User.account_status == "active")
+        )
+        users_res = await db.execute(users_stmt)
+        user_rows = users_res.fetchall()
+
+        notifs = []
+        for uid, udept in user_rows:
+            if uid == actor.user_id:
+                continue
+            if "all" in target_depts or (udept and udept.lower() in [d.lower() for d in target_depts]):
+                notifs.append(
+                    Notification(
+                        user_id=uid,
+                        title=f"Broadcast: {clean_title[:50]}",
+                        message=clean_content[:200],
+                        link="/admin/announcements",
+                    )
+                )
+
+        if notifs:
+            db.add_all(notifs[:100])
+    except Exception as exc:
+        logger.warning("announcement_notification_fanout_failed", error=str(exc))
+
+    # Audit log
+    db.add(
+        AuditLog(
+            actor_id=actor.user_id,
+            actor_role=actor.role if isinstance(actor.role, UserRole) else None,
+            entity="announcements",
+            entity_id=ann.id,
+            action="announcement_broadcast",
+            to_value={"title": clean_title, "type": clean_type, "target_departments": target_depts},
+        )
+    )
+
     await db.commit()
     await db.refresh(ann)
 
@@ -591,6 +662,7 @@ async def create_announcement(
         "id": str(ann.id),
         "title": ann.title,
         "type": ann.type,
+        "target_departments": ann.target_departments,
     }
 
 
@@ -600,9 +672,16 @@ async def delete_announcement(
     db: AsyncSession = Depends(get_db),
     actor: Actor = TeamLeadActor,
 ) -> dict[str, Any]:
-    """Delete an announcement."""
-    stmt = delete(Announcement).where(Announcement.id == announcement_id)
-    await db.execute(stmt)
+    """Delete an announcement. Admin can delete any; Team Lead can delete their own."""
+    ann = await db.get(Announcement, announcement_id)
+    if not ann:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+
+    is_admin = actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN, "admin", "super_admin")
+    if not is_admin and ann.author_id != actor.user_id:
+        raise HTTPException(status_code=403, detail="You can only delete announcements you authored.")
+
+    await db.delete(ann)
     await db.commit()
     return {"status": "deleted", "id": str(announcement_id)}
 
@@ -1499,40 +1578,231 @@ async def update_ticket_status(
 
 # --- Leave Management Endpoints ---
 
+class LeaveApplyRequest(BaseModel):
+    start_date: date
+    end_date: date
+    reason: str
+
+
 @router.get("/leave")
 async def list_admin_leave_requests(
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> list[dict[str, Any]]:
-    """List team member leave requests from DB."""
+    """
+    List staff leave requests from DB with strict hierarchical scoping:
+    - Admin / Super Admin: views all leave requests across the agency.
+    - Team Lead: views leave requests from their pod members + their own leave requests.
+    - Team Member (editor, designer, etc.): views only their own leave requests.
+    """
+    is_admin = actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN, "admin", "super_admin")
+    is_tl = actor.role in (UserRole.TEAM_LEAD, "team_lead")
+
+    tl_user = aliased(User, name="tl_user")
+    appr_user = aliased(User, name="appr_user")
+
     stmt = (
         select(
             LeaveRequest,
             User.full_name,
             User.email,
+            User.role,
             StaffProfile.department,
+            StaffProfile.team_lead_id,
+            tl_user.full_name.label("team_lead_name"),
+            appr_user.full_name.label("approver_name"),
         )
         .join(User, User.id == LeaveRequest.user_id)
         .outerjoin(StaffProfile, StaffProfile.user_id == LeaveRequest.user_id)
+        .outerjoin(tl_user, tl_user.id == StaffProfile.team_lead_id)
+        .outerjoin(appr_user, appr_user.id == LeaveRequest.approved_by)
         .order_by(LeaveRequest.created_at.desc())
     )
+
+    # Scoping filter based on actor role
+    if not is_admin:
+        if is_tl:
+            stmt = stmt.where(
+                or_(
+                    StaffProfile.team_lead_id == actor.user_id,
+                    LeaveRequest.user_id == actor.user_id,
+                )
+            )
+        else:
+            stmt = stmt.where(LeaveRequest.user_id == actor.user_id)
+
     res = await db.execute(stmt)
     rows = res.fetchall()
 
-    return [
-        {
-            "id": str(lr.id),
-            "team_member_id": str(lr.user_id),
-            "employee_name": full_name or email.split("@")[0].capitalize(),
-            "department": dept or "creative",
-            "start_date": lr.start_date.isoformat(),
-            "end_date": lr.end_date.isoformat(),
-            "reason": lr.reason or "Scheduled Time Off",
-            "status": lr.status,
-            "created_at": lr.created_at.isoformat() if lr.created_at else "",
-        }
-        for lr, full_name, email, dept in rows
-    ]
+    from datetime import timedelta
+    ist_tz = timezone(timedelta(hours=5, minutes=30))
+
+    results = []
+    for lr, full_name, email, role, dept, tl_id, tl_name, appr_name in rows:
+        is_self = lr.user_id == actor.user_id
+        is_pod_member = tl_id == actor.user_id
+
+        # Workflow Hierarchy Permissions:
+        # - Admin can approve/reject any pending request
+        # - Team Lead can ONLY approve/reject pod members' requests (never their own!)
+        # - Team members cannot approve/reject
+        can_approve = False
+        can_reject = False
+        if lr.status == "pending":
+            if is_admin:
+                can_approve = True
+                can_reject = True
+            elif is_tl and is_pod_member and not is_self:
+                can_approve = True
+                can_reject = True
+
+        can_cancel = lr.status == "pending" and (is_self or is_admin)
+        role_str = role.value if hasattr(role, "value") else str(role)
+
+        created_ist_str = ""
+        if lr.created_at:
+            created_ist = lr.created_at.astimezone(ist_tz)
+            created_ist_str = created_ist.strftime("%d %b %Y, %I:%M %p IST")
+
+        # Determine reporting hierarchy string
+        if role_str == "team_lead":
+            reports_to = "Agency Admin"
+        elif tl_name:
+            reports_to = tl_name
+        else:
+            reports_to = "Unassigned Lead"
+
+        results.append(
+            {
+                "id": str(lr.id),
+                "team_member_id": str(lr.user_id),
+                "employee_name": full_name or email.split("@")[0].capitalize(),
+                "employee_email": email,
+                "role": role_str,
+                "department": dept or "creative",
+                "team_lead_id": str(tl_id) if tl_id else None,
+                "team_lead_name": reports_to,
+                "start_date": lr.start_date.isoformat(),
+                "end_date": lr.end_date.isoformat(),
+                "reason": lr.reason or "Scheduled Time Off",
+                "status": lr.status,
+                "approved_by": str(lr.approved_by) if lr.approved_by else None,
+                "approved_by_name": appr_name,
+                "can_approve": can_approve,
+                "can_reject": can_reject,
+                "can_cancel": can_cancel,
+                "is_self": is_self,
+                "created_at": lr.created_at.isoformat() if lr.created_at else "",
+                "created_at_ist": created_ist_str,
+            }
+        )
+
+    return results
+
+
+@router.post("/leave")
+async def create_leave_request(
+    payload: LeaveApplyRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = StaffActor,
+) -> dict[str, Any]:
+    """
+    Submit a time-off leave request.
+    - Available to team members, team leads, and staff.
+    - If team member: routed to their assigned Team Lead (and Admin).
+    - If team lead: routed to Agency Admin.
+    """
+    if payload.start_date > payload.end_date:
+        raise HTTPException(
+            status_code=400,
+            detail="Leave end date must be on or after start date.",
+        )
+
+    # Check for overlapping existing active/pending requests for this user
+    overlap_stmt = select(LeaveRequest).where(
+        LeaveRequest.user_id == actor.user_id,
+        LeaveRequest.status.in_(["pending", "approved"]),
+        LeaveRequest.start_date <= payload.end_date,
+        LeaveRequest.end_date >= payload.start_date,
+    )
+    overlap_res = await db.execute(overlap_stmt)
+    if overlap_res.scalars().first():
+        raise HTTPException(
+            status_code=400,
+            detail="You already have an active or pending leave request covering these dates.",
+        )
+
+    lr = LeaveRequest(
+        user_id=actor.user_id,
+        start_date=payload.start_date,
+        end_date=payload.end_date,
+        reason=payload.reason.strip() if payload.reason else "Scheduled Leave",
+        status="pending",
+    )
+    db.add(lr)
+    await db.flush()
+
+    # Find applicant's details & assigned team lead
+    user_stmt = select(User, StaffProfile).outerjoin(StaffProfile, StaffProfile.user_id == User.id).where(User.id == actor.user_id)
+    u_res = await db.execute(user_stmt)
+    u_row = u_res.first()
+    applicant_name = (u_row[0].full_name or u_row[0].email) if u_row else "Staff Member"
+    sp = u_row[1] if u_row else None
+
+    # Emit notifications according to hierarchy:
+    try:
+        notifs = []
+        if sp and sp.team_lead_id:
+            notifs.append(
+                Notification(
+                    user_id=sp.team_lead_id,
+                    title=f"Leave Request: {applicant_name}",
+                    message=f"{applicant_name} requested time off ({payload.start_date} to {payload.end_date}): {payload.reason}",
+                    link="/admin/leave",
+                )
+            )
+        else:
+            admin_stmt = select(User.id).where(User.role.in_([UserRole.ADMIN, UserRole.SUPER_ADMIN]))
+            admin_res = await db.execute(admin_stmt)
+            for admin_id in admin_res.scalars().all():
+                notifs.append(
+                    Notification(
+                        user_id=admin_id,
+                        title=f"Leave Request: {applicant_name}",
+                        message=f"{applicant_name} submitted time-off request ({payload.start_date} to {payload.end_date}): {payload.reason}",
+                        link="/admin/leave",
+                    )
+                )
+
+        if notifs:
+            db.add_all(notifs)
+    except Exception as exc:
+        logger.warning("leave_notification_failed", error=str(exc))
+
+    # Audit log
+    db.add(
+        AuditLog(
+            actor_id=actor.user_id,
+            actor_role=actor.role if isinstance(actor.role, UserRole) else None,
+            entity="leave_requests",
+            entity_id=lr.id,
+            action="leave_requested",
+            to_value={"start_date": str(payload.start_date), "end_date": str(payload.end_date), "reason": payload.reason},
+        )
+    )
+
+    await db.commit()
+    await db.refresh(lr)
+
+    return {
+        "status": "submitted",
+        "id": str(lr.id),
+        "start_date": lr.start_date.isoformat(),
+        "end_date": lr.end_date.isoformat(),
+        "reason": lr.reason,
+        "leave_status": lr.status,
+        "message": "Leave request submitted successfully.",
+    }
 
 
 @router.post("/leave/{leave_id}/approve")
@@ -1541,12 +1811,64 @@ async def approve_leave_request(
     db: AsyncSession = Depends(get_db),
     actor: Actor = TeamLeadActor,
 ) -> dict[str, Any]:
-    """Approve team member leave request."""
-    lr = await db.get(LeaveRequest, leave_id)
-    if not lr:
+    """
+    Approve staff leave request enforcing workflow hierarchy:
+    - Admin / Super Admin: Can approve any leave request.
+    - Team Lead: Can approve pod members' requests, CANNOT approve their own request.
+    """
+    lr_stmt = select(LeaveRequest, StaffProfile).outerjoin(StaffProfile, StaffProfile.user_id == LeaveRequest.user_id).where(LeaveRequest.id == leave_id)
+    lr_res = await db.execute(lr_stmt)
+    row = lr_res.first()
+    if not row:
         raise HTTPException(status_code=404, detail="Leave request not found")
+
+    lr, sp = row[0], row[1]
+    is_admin = actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN, "admin", "super_admin")
+
+    if lr.status != "pending":
+        raise HTTPException(status_code=400, detail=f"Leave request is already {lr.status}.")
+
+    # Hierarchy validation
+    if not is_admin:
+        if lr.user_id == actor.user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Team Leads cannot approve their own leave requests. Agency Admin approval is required.",
+            )
+        if not sp or sp.team_lead_id != actor.user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You are only authorized to approve leave requests for team members in your pod.",
+            )
+
     lr.status = "approved"
     lr.approved_by = actor.user_id
+
+    # Notify applicant
+    try:
+        db.add(
+            Notification(
+                user_id=lr.user_id,
+                title="Leave Request Approved",
+                message=f"Your leave request from {lr.start_date} to {lr.end_date} has been approved.",
+                link="/admin/leave",
+            )
+        )
+    except Exception as exc:
+        logger.warning("leave_approval_notification_failed", error=str(exc))
+
+    # Audit log
+    db.add(
+        AuditLog(
+            actor_id=actor.user_id,
+            actor_role=actor.role if isinstance(actor.role, UserRole) else None,
+            entity="leave_requests",
+            entity_id=lr.id,
+            action="leave_approved",
+            to_value={"approved_by": str(actor.user_id)},
+        )
+    )
+
     await db.commit()
     return {"status": "approved", "id": str(leave_id)}
 
@@ -1557,14 +1879,93 @@ async def reject_leave_request(
     db: AsyncSession = Depends(get_db),
     actor: Actor = TeamLeadActor,
 ) -> dict[str, Any]:
-    """Reject team member leave request."""
+    """
+    Reject staff leave request enforcing workflow hierarchy:
+    - Admin / Super Admin: Can reject any leave request.
+    - Team Lead: Can reject pod members' requests, CANNOT reject their own request.
+    """
+    lr_stmt = select(LeaveRequest, StaffProfile).outerjoin(StaffProfile, StaffProfile.user_id == LeaveRequest.user_id).where(LeaveRequest.id == leave_id)
+    lr_res = await db.execute(lr_stmt)
+    row = lr_res.first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Leave request not found")
+
+    lr, sp = row[0], row[1]
+    is_admin = actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN, "admin", "super_admin")
+
+    if lr.status != "pending":
+        raise HTTPException(status_code=400, detail=f"Leave request is already {lr.status}.")
+
+    # Hierarchy validation
+    if not is_admin:
+        if lr.user_id == actor.user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Team Leads cannot reject their own leave requests. Action must be taken by an Agency Admin.",
+            )
+        if not sp or sp.team_lead_id != actor.user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You are only authorized to reject leave requests for team members in your pod.",
+            )
+
+    lr.status = "rejected"
+    lr.approved_by = actor.user_id
+
+    # Notify applicant
+    try:
+        db.add(
+            Notification(
+                user_id=lr.user_id,
+                title="Leave Request Rejected",
+                message=f"Your leave request from {lr.start_date} to {lr.end_date} has been rejected.",
+                link="/admin/leave",
+            )
+        )
+    except Exception as exc:
+        logger.warning("leave_rejection_notification_failed", error=str(exc))
+
+    # Audit log
+    db.add(
+        AuditLog(
+            actor_id=actor.user_id,
+            actor_role=actor.role if isinstance(actor.role, UserRole) else None,
+            entity="leave_requests",
+            entity_id=lr.id,
+            action="leave_rejected",
+            to_value={"rejected_by": str(actor.user_id)},
+        )
+    )
+
+    await db.commit()
+    return {"status": "rejected", "id": str(leave_id)}
+
+
+@router.delete("/leave/{leave_id}")
+async def cancel_leave_request(
+    leave_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = StaffActor,
+) -> dict[str, Any]:
+    """
+    Cancel/withdraw a leave request.
+    - Applicant can withdraw if pending.
+    - Admin/Super Admin can cancel or delete anytime.
+    """
     lr = await db.get(LeaveRequest, leave_id)
     if not lr:
         raise HTTPException(status_code=404, detail="Leave request not found")
-    lr.status = "rejected"
-    lr.approved_by = actor.user_id
+
+    is_admin = actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN, "admin", "super_admin")
+    if not is_admin and lr.user_id != actor.user_id:
+        raise HTTPException(status_code=403, detail="You can only cancel your own leave requests.")
+
+    if not is_admin and lr.status != "pending":
+        raise HTTPException(status_code=400, detail="Cannot cancel a leave request that is already approved or rejected.")
+
+    await db.delete(lr)
     await db.commit()
-    return {"status": "rejected", "id": str(leave_id)}
+    return {"status": "cancelled", "id": str(leave_id)}
 
 
 # --- Content Calendar Endpoints ---
