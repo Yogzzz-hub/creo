@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
-import { Menu, X, LogOut, ArrowLeft } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 
 import { getRoleHome } from "../auth/ProtectedRoute";
@@ -56,22 +56,6 @@ export function Navbar() {
     >
       <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2.5">
-          {location.pathname !== "/" && (
-            <button
-              type="button"
-              onClick={() => {
-                if (window.history.length > 2) {
-                  navigate(-1);
-                } else {
-                  navigate("/");
-                }
-              }}
-              className="flex size-8 items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:text-[#0D2137] hover:bg-slate-100 transition-colors cursor-pointer shadow-2xs"
-              title="Go Back"
-            >
-              <ArrowLeft className="size-4" />
-            </button>
-          )}
           <Link to="/" className="text-xl font-bold text-[#0D2137]">
             Creo
           </Link>
