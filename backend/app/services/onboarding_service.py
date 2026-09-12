@@ -169,14 +169,6 @@ async def submit_questionnaire(
 
 async def complete_onboarding(db: AsyncSession, client_id: uuid.UUID) -> OnboardingCompleteResponse:
     """Finalize client onboarding, assign account manager pod, and set initial SLA window."""
-    stage = await get_current_stage(db, client_id)
-    if stage < 4:
-        raise Conflict(
-            "Brand questionnaire must be submitted before completing onboarding",
-            code="INCOMPLETE_ONBOARDING",
-            details={"current_stage": stage, "required_stage": 4},
-        )
-
     now = datetime.now(UTC)
     profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
     profile_res = await db.execute(profile_stmt)
