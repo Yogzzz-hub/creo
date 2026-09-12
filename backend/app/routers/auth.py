@@ -821,9 +821,9 @@ async def _process_google_code(
             settings.GOOGLE_REDIRECT_URI,
             "https://creo.yogalakshmibaskar20.workers.dev",
             "https://creo.yogalakshmibaskar20.workers.dev/auth/google/callback",
-            "https://creo-fhhl.onrender.com",
-            "https://creo-fhhl.onrender.com/api/v1/auth/google/callback",
-            "https://creo-fhhl.onrender.com/auth/google/callback",
+            "https://creo-dsxr.onrender.com",
+            "https://creo-dsxr.onrender.com/api/v1/auth/google/callback",
+            "https://creo-dsxr.onrender.com/auth/google/callback",
             "http://localhost:5173/auth/google/callback",
         ]:
             if fallback and fallback not in candidate_uris:
@@ -952,7 +952,7 @@ async def google_auth_callback_get(
     db: AsyncSession = Depends(get_db),
 ) -> Any:
     """Direct browser redirect callback from Google OAuth."""
-    resolved_redirect = redirect_uri or settings.GOOGLE_REDIRECT_URI or "https://creo-fhhl.onrender.com"
+    resolved_redirect = redirect_uri or settings.GOOGLE_REDIRECT_URI or "https://creo-dsxr.onrender.com"
     data = await _process_google_code(code, resolved_redirect, db)
     token = data["access_token"]
 

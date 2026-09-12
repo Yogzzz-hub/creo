@@ -12,7 +12,7 @@ Creo is an end-to-end full-stack SaaS platform designed for high-growth direct-t
 | **Frontend Hosting** | **Cloudflare Pages** | Worldwide edge delivery, $0 bandwidth fees, instant git deploys |
 | **DNS / CDN / WAF** | **Cloudflare Free** | Global DDoS mitigation, free SSL, edge caching, and fast routing |
 | **Backend** | **FastAPI (Python 3.11+)** | High-throughput async API, Pydantic v2 validation, AI pipelines |
-| **Backend Hosting** | **Render** (`creo-fhhl.onrender.com`) | Managed Python container hosting with continuous git deploy |
+| **Backend Hosting** | **Render** (`creo-dsxr.onrender.com`) | Managed Python container hosting with continuous git deploy |
 | **Database** | **Supabase PostgreSQL** | Relational data, RLS security, transaction pooler (`ap-southeast-1`) |
 | **Authentication** | **Supabase Auth + Google OAuth** | Dual-redirect authentication, JWT sessions with role-based access |
 | **Cache & Queue** | **Upstash Redis Free** | Ephemeral cache, token revocation, rate limiting & message queue |

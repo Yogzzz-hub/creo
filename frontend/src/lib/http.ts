@@ -47,7 +47,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
       ? "" // Always use relative path locally so Vite proxy routes to local backend on 8000
       : (typeof window !== "undefined" &&
          (window.location.hostname.includes("workers.dev") || window.location.hostname.includes("pages.dev"))
-          ? "https://creo-fhhl.onrender.com"
+          ? "https://creo-dsxr.onrender.com"
           : (import.meta.env.VITE_API_URL as string) || "")
   ).replace(/\/$/, "");
   const requestUrl = path.startsWith("/api") && apiBase ? `${apiBase}${path}` : path;

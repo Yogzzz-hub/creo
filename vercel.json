@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://creo-fhhl.onrender.com/api/:path*"
+      "destination": "https://creo-dsxr.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",

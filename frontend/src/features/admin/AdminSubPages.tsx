@@ -309,7 +309,7 @@ export function AdminDeliverablesPage() {
     const apiBase = (
       (import.meta.env.VITE_API_URL as string) ||
       (typeof window !== "undefined" && (window.location.hostname.includes("workers.dev") || window.location.hostname.includes("pages.dev"))
-        ? "https://creo-fhhl.onrender.com"
+        ? "https://creo-dsxr.onrender.com"
         : "")
     ).replace(/\/$/, "");
     let resolved = url;

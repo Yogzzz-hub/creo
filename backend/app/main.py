@@ -294,7 +294,7 @@ async def root(
     if code:
         from app.routers.auth import _process_google_code
 
-        data = await _process_google_code(code, "https://creo-fhhl.onrender.com", db)
+        data = await _process_google_code(code, "https://creo-dsxr.onrender.com", db)
         token = data["access_token"]
         frontend_base = "http://localhost:5173"
         if state and (state.startswith("http://") or state.startswith("https://")):

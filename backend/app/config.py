@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     # Google OAuth
     GOOGLE_CLIENT_ID: str = Field(default="")
     GOOGLE_CLIENT_SECRET: str = Field(default="")
-    GOOGLE_REDIRECT_URI: str = Field(default="https://creo-fhhl.onrender.com")
+    GOOGLE_REDIRECT_URI: str = Field(default="https://creo-dsxr.onrender.com")
 
     # Google Gmail SMTP
     SMTP_SERVER: str = Field(default="smtp.gmail.com")
@@ -116,7 +116,7 @@ class Settings(BaseSettings):
             "http://localhost:3000",
             "http://127.0.0.1:3000",
             "https://creo.yogalakshmibaskar20.workers.dev",
-            "https://creo-fhhl.onrender.com",
+            "https://creo-dsxr.onrender.com",
             "https://creo.pages.dev",
         ]
     )
