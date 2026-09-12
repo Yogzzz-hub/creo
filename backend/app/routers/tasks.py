@@ -105,7 +105,29 @@ async def get_kanban_board(
     actor: Actor = StaffActor,
 ) -> KanbanBoardResponse:
     """Return kanban columns in ONE database query using json_agg per column."""
-    sql = text("""
+    where_conditions: list[str] = []
+    params: dict[str, Any] = {}
+
+    if actor.role == UserRole.EDITOR:
+        # Video Editors only see Video tasks (reel, shoot_day) or tasks explicitly assigned to them
+        where_conditions.append("(t.deliverable_type IN ('reel', 'shoot_day') OR t.assigned_to = :actor_id)")
+        params["actor_id"] = actor.user_id
+    elif actor.role == UserRole.DESIGNER:
+        # Graphic Designers only see Graphic Design tasks (static_post, carousel, story) or tasks explicitly assigned to them
+        where_conditions.append("(t.deliverable_type IN ('static_post', 'carousel', 'story') OR t.assigned_to = :actor_id)")
+        params["actor_id"] = actor.user_id
+    elif actor.role == UserRole.TEAM_LEAD:
+        # Team Leads see unassigned backlog tasks, tasks assigned to them, or tasks assigned to members of their pod
+        where_conditions.append("""(
+            t.assigned_to IS NULL 
+            OR t.assigned_to = :actor_id 
+            OR t.assigned_to IN (SELECT user_id FROM staff_profiles WHERE team_lead_id = :actor_id)
+        )""")
+        params["actor_id"] = actor.user_id
+
+    where_sql = ("WHERE " + " AND ".join(where_conditions)) if where_conditions else ""
+
+    sql = text(f"""
         SELECT
             COALESCE(
                 json_agg(t.*) FILTER (WHERE t.status = 'backlog'), '[]'::json
@@ -142,11 +164,12 @@ async def get_kanban_board(
             LEFT JOIN users u ON u.id = t.assigned_to
             LEFT JOIN users c ON c.id = t.client_id
             LEFT JOIN client_profiles cp ON cp.user_id = t.client_id
+            {where_sql}
             ORDER BY t.created_at DESC
         ) t;
     """)
 
-    result = await db.execute(sql)
+    result = await db.execute(sql, params)
     row = result.fetchone()
 
     def parse_col(val: Any) -> list[dict[str, Any]]:
