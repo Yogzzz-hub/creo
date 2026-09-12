@@ -27,10 +27,9 @@ def upgrade() -> None:
         SELECT
             u.id AS client_id,
             CASE
-                WHEN cp.onboarding_completed_at IS NOT NULL THEN 5
-                WHEN q.id IS NOT NULL                      THEN 4
-                WHEN s.id IS NOT NULL                      THEN 3
-                WHEN cp.terms_accepted_at IS NOT NULL      THEN 2
+                WHEN s.id IS NOT NULL AND s.status IN ('trialing', 'active') AND cp.onboarding_completed_at IS NOT NULL THEN 4
+                WHEN s.id IS NOT NULL AND s.status IN ('trialing', 'active') THEN 3
+                WHEN cp.terms_accepted_at IS NOT NULL THEN 2
                 WHEN (
                     u.email_verified_at IS NOT NULL
                     OR u.account_status != 'pending_verification'
@@ -40,7 +39,6 @@ def upgrade() -> None:
         FROM users u
         LEFT JOIN client_profiles cp ON cp.user_id = u.id
         LEFT JOIN subscriptions s ON s.client_id = u.id AND s.status IN ('trialing', 'active')
-        LEFT JOIN questionnaires q ON q.user_id = u.id
         WHERE u.role = 'client';
     """)
 

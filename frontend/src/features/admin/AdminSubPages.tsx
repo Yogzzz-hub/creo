@@ -170,11 +170,21 @@ export function AdminClientsPage() {
                     </span>
                   </div>
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    client.onboarding_stage >= 4
+                    client.onboarding_stage >= 4 && client.plan_name && client.plan_name !== "No Plan"
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                      : "bg-[#E8F4FD] text-[#2B7BC4] border border-[#C9DFF0]"
+                      : client.onboarding_stage === 3 && client.plan_name && client.plan_name !== "No Plan"
+                      ? "bg-blue-50 text-[#2B7BC4] border border-blue-200"
+                      : !client.plan_name || client.plan_name === "No Plan"
+                      ? "bg-amber-50 text-amber-800 border border-amber-200"
+                      : "bg-slate-100 text-slate-700 border border-slate-200"
                   }`}>
-                    {client.onboarding_stage >= 4 ? "Stage 4 / 4 • Done" : `Stage ${Math.max(1, client.onboarding_stage)} / 4`}
+                    {client.onboarding_stage >= 4 && client.plan_name && client.plan_name !== "No Plan"
+                      ? "Stage 4 / 4 • Done"
+                      : client.onboarding_stage === 3 && client.plan_name && client.plan_name !== "No Plan"
+                      ? "Stage 3 / 4 • Strategy Pending"
+                      : !client.plan_name || client.plan_name === "No Plan"
+                      ? "Stage 2 / 4 • Payment Pending"
+                      : `Stage ${Math.max(1, client.onboarding_stage)} / 4 • Setup Pending`}
                   </span>
                 </div>
               </div>
@@ -218,11 +228,21 @@ export function AdminClientsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        client.onboarding_stage >= 4
+                        client.onboarding_stage >= 4 && client.plan_name && client.plan_name !== "No Plan"
                           ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "bg-[#E8F4FD] text-[#2B7BC4] border border-[#C9DFF0]"
+                          : client.onboarding_stage === 3 && client.plan_name && client.plan_name !== "No Plan"
+                          ? "bg-blue-50 text-[#2B7BC4] border border-blue-200"
+                          : !client.plan_name || client.plan_name === "No Plan"
+                          ? "bg-amber-50 text-amber-800 border border-amber-200"
+                          : "bg-slate-100 text-slate-700 border border-slate-200"
                       }`}>
-                        {client.onboarding_stage >= 4 ? "Stage 4 / 4 • Completed" : `Stage ${Math.max(1, client.onboarding_stage)} / 4`}
+                        {client.onboarding_stage >= 4 && client.plan_name && client.plan_name !== "No Plan"
+                          ? "Stage 4 / 4 • Completed"
+                          : client.onboarding_stage === 3 && client.plan_name && client.plan_name !== "No Plan"
+                          ? "Stage 3 / 4 • Strategy Pending"
+                          : !client.plan_name || client.plan_name === "No Plan"
+                          ? "Stage 2 / 4 • Payment Pending"
+                          : `Stage ${Math.max(1, client.onboarding_stage)} / 4 • Setup Pending`}
                       </span>
                     </td>
                     <td className="px-4 py-3">

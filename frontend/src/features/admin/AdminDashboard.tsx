@@ -190,8 +190,14 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
             <span>
               Live Synced:{" "}
               {kpis?.refreshed_at
-                ? new Date(kpis.refreshed_at).toLocaleTimeString()
-                : "Pending"}
+                ? new Date(kpis.refreshed_at).toLocaleTimeString("en-IN", {
+                    timeZone: "Asia/Kolkata",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true,
+                  }) + " IST"
+                : "Live (IST)"}
             </span>
           </div>
         </div>
@@ -341,7 +347,13 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
                   <div>
                     <span className="text-[11px] text-slate-400 font-medium">Onboarding:</span>
                     <p className="font-bold text-[#0D2137] mt-0.5">
-                      {c.onboarding_stage >= 4 ? "Stage 4/4 (Done)" : `Stage ${Math.max(1, c.onboarding_stage)}/4`}
+                      {c.onboarding_stage >= 4 && (c.subscription_status === 'active' || c.subscription_status === 'trialing')
+                        ? "Stage 4/4 (Done)"
+                        : c.onboarding_stage === 3 && (c.subscription_status === 'active' || c.subscription_status === 'trialing')
+                        ? "Stage 3/4 (Active)"
+                        : !c.plan_name || c.plan_name === 'No Plan' || c.subscription_status !== 'active'
+                        ? "Stage 2/4 (Payment Pending)"
+                        : `Stage ${Math.max(1, c.onboarding_stage)}/4`}
                     </p>
                   </div>
                 </div>
@@ -413,13 +425,21 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
                       )}
                     </td>
                     <td className="py-3.5 px-5">
-                      {c.onboarding_stage >= 4 ? (
+                      {c.onboarding_stage >= 4 && (c.subscription_status === 'active' || c.subscription_status === 'trialing') ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           Stage 4/4 • Completed
                         </span>
+                      ) : c.onboarding_stage === 3 && (c.subscription_status === 'active' || c.subscription_status === 'trialing') ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-[#2B7BC4] border border-blue-200">
+                          Stage 3/4 • Strategy Pending
+                        </span>
+                      ) : !c.plan_name || c.plan_name === 'No Plan' || c.subscription_status !== 'active' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                          Stage 2/4 • Payment Pending
+                        </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                          Stage {Math.max(1, c.onboarding_stage)}/4
+                          Stage {Math.max(1, c.onboarding_stage)}/4 • Setup Pending
                         </span>
                       )}
                     </td>
