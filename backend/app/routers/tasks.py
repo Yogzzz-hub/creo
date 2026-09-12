@@ -108,15 +108,15 @@ async def get_kanban_board(
     where_conditions: list[str] = []
     params: dict[str, Any] = {}
 
-    if actor.role == UserRole.EDITOR:
+    if actor.role in (UserRole.EDITOR, "editor"):
         # Video Editors only see Video tasks (reel, shoot_day) or tasks explicitly assigned to them
         where_conditions.append("(t.deliverable_type IN ('reel', 'shoot_day') OR t.assigned_to = :actor_id)")
         params["actor_id"] = actor.user_id
-    elif actor.role == UserRole.DESIGNER:
+    elif actor.role in (UserRole.DESIGNER, "designer"):
         # Graphic Designers only see Graphic Design tasks (static_post, carousel, story) or tasks explicitly assigned to them
         where_conditions.append("(t.deliverable_type IN ('static_post', 'carousel', 'story') OR t.assigned_to = :actor_id)")
         params["actor_id"] = actor.user_id
-    elif actor.role == UserRole.TEAM_LEAD:
+    elif actor.role in (UserRole.TEAM_LEAD, "team_lead"):
         # Team Leads see unassigned backlog tasks, tasks assigned to them, or tasks assigned to members of their pod
         where_conditions.append("""(
             t.assigned_to IS NULL 

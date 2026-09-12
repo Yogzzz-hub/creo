@@ -583,7 +583,7 @@ async def get_team_members(
     actor: Actor = TeamLeadActor,
 ) -> list[dict[str, Any]]:
     """List staff profiles and creative roster. Scoped to pod for Team Leads."""
-    is_tl_only = actor.role == UserRole.TEAM_LEAD
+    is_tl_only = actor.role in (UserRole.TEAM_LEAD, "team_lead")
 
     where_clause = "WHERE u.role IN ('editor', 'designer', 'team_lead', 'admin', 'super_admin')"
     params: dict[str, Any] = {}
@@ -668,7 +668,7 @@ async def create_team_member(
 
     # Team Lead restrictions
     target_tl_id = payload.team_lead_id
-    if actor.role == UserRole.TEAM_LEAD:
+    if actor.role in (UserRole.TEAM_LEAD, "team_lead"):
         # Team Lead can only create editors or designers within their own pod
         if user_role not in [UserRole.EDITOR, UserRole.DESIGNER]:
             user_role = UserRole.EDITOR
@@ -725,7 +725,7 @@ async def update_team_member(
         raise NotFound(f"Staff profile for {user_id} not found")
 
     # If actor is team_lead, they can ONLY edit members assigned to their pod
-    if actor.role == UserRole.TEAM_LEAD and sp.team_lead_id != actor.user_id and user_id != actor.user_id:
+    if actor.role in (UserRole.TEAM_LEAD, "team_lead") and sp.team_lead_id != actor.user_id and user_id != actor.user_id:
         raise Forbidden("Team Leads can only adjust capacity and skills for their own team members.")
 
     if payload.daily_capacity is not None:
@@ -761,7 +761,7 @@ async def remove_team_member(
 
     sp = await db.get(StaffProfile, user_id)
     # If actor is team_lead, they can ONLY remove members from their pod
-    if actor.role == UserRole.TEAM_LEAD and (not sp or sp.team_lead_id != actor.user_id):
+    if actor.role in (UserRole.TEAM_LEAD, "team_lead") and (not sp or sp.team_lead_id != actor.user_id):
         raise Forbidden("Team Leads can only remove members belonging to their own pod.")
 
     user.account_status = AccountStatus.SUSPENDED

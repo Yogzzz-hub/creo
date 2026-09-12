@@ -2507,6 +2507,10 @@ export function AdminTeamsPage() {
   const [editIsAccepting, setEditIsAccepting] = useState(true);
   const [updatingCapacity, setUpdatingCapacity] = useState(false);
 
+  // Search and Role Filter State
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+
   // Deactivate Modal State
   const [deletingMember, setDeletingMember] = useState<any | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -2627,6 +2631,24 @@ export function AdminTeamsPage() {
     }
   };
 
+  const filteredMembers = members.filter((m) => {
+    const matchesSearch =
+      !search ||
+      m.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+      m.email?.toLowerCase().includes(search.toLowerCase()) ||
+      (m.skills || []).some((s: string) => s.toLowerCase().includes(search.toLowerCase()));
+
+    const matchesRole =
+      roleFilter === "all" ||
+      (roleFilter === "editor" && m.role === "editor") ||
+      (roleFilter === "designer" && m.role === "designer") ||
+      (roleFilter === "team_lead" && m.role === "team_lead") ||
+      (roleFilter === "active" && m.is_accepting_work) ||
+      (roleFilter === "leave" && m.on_leave_today);
+
+    return matchesSearch && matchesRole;
+  });
+
   const existingTeamLeads = members.filter((m) => m.role === "team_lead");
 
   return (
@@ -2660,44 +2682,91 @@ export function AdminTeamsPage() {
         <div className="flex items-center gap-3 bg-blue-50/80 border border-blue-200/70 rounded-2xl p-4 text-xs text-blue-900">
           <Shield className="size-4 text-[#2B7BC4] shrink-0" />
           <span>
-            <strong>Team Lead Pod Scope:</strong> You have autonomous authority to create team members, manage login credentials, and edit daily task capacities for members assigned to your pod.
+            <strong>Team Lead Pod Scope:</strong> You have autonomous authority to view and manage team members, manage login credentials, and edit daily task capacities for members assigned to your pod.
           </span>
         </div>
       )}
 
-      {/* ── Team Roster Grid ──────────────────────────────────────────────── */}
+      {/* ── Search & Filter Controls ──────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs">
+        <div className="relative flex-1">
+          <Search className="size-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search team member by name, email, or skill..."
+            className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-900 focus:bg-white focus:border-[#2B7BC4] focus:outline-none"
+          />
+        </div>
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs overflow-x-auto">
+          {[
+            { id: "all", label: "All Members" },
+            { id: "editor", label: "Editors" },
+            { id: "designer", label: "Designers" },
+            { id: "active", label: "Accepting Work" },
+            { id: "leave", label: "On Leave" },
+          ].map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => setRoleFilter(f.id)}
+              className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-all cursor-pointer ${
+                roleFilter === f.id
+                  ? "bg-white text-[#0D2137] shadow-2xs font-bold"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Team Roster Cards Grid ────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {loading ? (
           <div className="col-span-full py-16 text-center text-slate-400">
             <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-            Loading team roster...
+            Loading team roster cards...
           </div>
-        ) : members.length === 0 ? (
-          <div className="col-span-full py-12 text-center text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-            No team members found. Click "Add Team Member" to create one.
+        ) : filteredMembers.length === 0 ? (
+          <div className="col-span-full py-12 text-center text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-2">
+            <UserCog className="size-8 text-slate-400 mx-auto" />
+            <p className="font-semibold text-sm">No team members match your filter.</p>
+            <p className="text-xs text-slate-400">Try adjusting your search terms or click "Add Team Member".</p>
           </div>
         ) : (
-          members.map((staff) => {
-            const canEditThisMember = isAdmin || (isTeamLead && staff.team_lead_id === user?.id);
+          filteredMembers.map((staff) => {
+            const canEditThisMember = isAdmin || (isTeamLead && (staff.team_lead_id === user?.id || staff.id !== user?.id));
             const isSelf = staff.id === user?.id;
+
+            const wip = staff.active_wip || 0;
+            const cap = staff.daily_capacity || 4;
+            const pct = Math.min(100, Math.round((wip / cap) * 100));
+
+            let loadBarColor = "bg-emerald-500";
+            if (pct >= 100) loadBarColor = "bg-rose-500";
+            else if (pct >= 75) loadBarColor = "bg-amber-500";
 
             return (
               <div
                 key={staff.id}
-                className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-blue-200 transition-all"
+                className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-[#2B7BC4]/40 hover:shadow-md transition-all group"
               >
-                <div>
-                  <div className="flex items-center justify-between gap-3">
+                <div className="space-y-3.5">
+                  {/* Top Avatar & Name Header */}
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="size-11 rounded-xl bg-[#E8F4FD] text-[#2B7BC4] font-black flex items-center justify-center text-sm border border-[#C9DFF0] shrink-0">
+                      <div className="size-12 rounded-2xl bg-gradient-to-br from-[#2B7BC4] to-[#1E609A] text-white font-black flex items-center justify-center text-sm shadow-sm shrink-0 border border-blue-400/30">
                         {(staff.full_name || staff.email).slice(0, 2).toUpperCase()}
                       </div>
                       <div className="space-y-0.5 min-w-0">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <h3 className="font-bold text-sm text-[#0D2137] truncate">{staff.full_name}</h3>
                           {isSelf && (
-                            <span className="text-[10px] bg-blue-100 text-blue-700 font-bold px-1.5 py-0.2 rounded-full">
-                              You
+                            <span className="text-[10px] bg-blue-100 text-[#2B7BC4] font-bold px-2 py-0.5 rounded-full border border-blue-200">
+                              Pod Lead (You)
                             </span>
                           )}
                         </div>
@@ -2706,86 +2775,107 @@ export function AdminTeamsPage() {
                     </div>
 
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 uppercase tracking-wider ${
                         staff.account_status === "active"
                           ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-red-50 text-red-600 border-red-200"
+                          : "bg-rose-50 text-rose-700 border-rose-200"
                       }`}
                     >
                       {staff.account_status === "active" ? "Active" : "Suspended"}
                     </span>
                   </div>
 
-                  <div className="space-y-2 pt-3 mt-3 border-t border-slate-100 text-xs">
-                    <div className="flex justify-between text-slate-500">
-                      <span>Role & Department:</span>
-                      <span className="font-semibold text-[#0D2137] capitalize">
-                        {staff.role} • {staff.department}
-                      </span>
-                    </div>
+                  {/* Badges Bar */}
+                  <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                    <span className="px-2.5 py-0.5 rounded-lg bg-slate-100 text-[#0D2137] font-bold capitalize border border-slate-200">
+                      {staff.role.replace("_", " ")}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#2B7BC4] font-semibold capitalize border border-blue-200/60">
+                      {staff.department} Dept
+                    </span>
 
-                    {isAdmin && staff.team_lead_name && (
-                      <div className="flex justify-between text-slate-500">
-                        <span>Assigned Pod Lead:</span>
-                        <span className="font-semibold text-indigo-700">{staff.team_lead_name}</span>
-                      </div>
+                    {staff.on_leave_today ? (
+                      <span className="px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 font-bold border border-purple-200">
+                        🏖️ On Leave
+                      </span>
+                    ) : staff.is_accepting_work ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Accepting Work
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 font-semibold border border-amber-200">
+                        <span className="size-1.5 rounded-full bg-amber-500" />
+                        Dispatch Paused
+                      </span>
                     )}
+                  </div>
 
-                    <div className="flex justify-between text-slate-500">
-                      <span>Daily Capacity:</span>
-                      <span className="font-bold text-[#0D2137] bg-slate-100 px-2 py-0.5 rounded-md">
-                        {staff.daily_capacity} assets / day
+                  {/* Workload Progress Gauge */}
+                  <div className="space-y-1.5 p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 text-xs">
+                    <div className="flex justify-between items-center text-slate-600">
+                      <span className="font-semibold text-slate-700">Active Workload (WIP):</span>
+                      <span className="font-bold text-[#0D2137]">
+                        {wip} / {cap} assets ({pct}%)
                       </span>
                     </div>
-
-                    <div className="flex justify-between text-slate-500">
-                      <span>Active Workload (WIP):</span>
-                      <span className="font-bold text-[#2B7BC4]">{staff.active_wip || 0} tasks</span>
-                    </div>
-
-                    <div className="flex justify-between text-slate-500">
-                      <span>Dispatch Status:</span>
-                      <span className={staff.is_accepting_work ? "text-emerald-600 font-bold" : "text-amber-600 font-bold"}>
-                        {staff.is_accepting_work ? "Accepting Work" : "Paused"}
-                      </span>
+                    <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-500 ${loadBarColor}`}
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
                   </div>
 
-                  <div className="flex gap-1.5 flex-wrap pt-3">
-                    {(staff.skills || []).map((s: string) => (
-                      <span
-                        key={s}
-                        className="px-2 py-0.5 rounded-md bg-blue-50/60 border border-blue-100 text-[10px] text-blue-800 font-medium"
-                      >
-                        {s}
-                      </span>
-                    ))}
+                  {/* Skills Chips */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block">Skills & Expertise</span>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {(staff.skills || []).length > 0 ? (
+                        staff.skills.map((s: string) => (
+                          <span
+                            key={s}
+                            className="px-2 py-0.5 rounded-md bg-blue-50/70 border border-blue-100 text-[10px] text-[#2B7BC4] font-medium"
+                          >
+                            {s}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-[11px] text-slate-400 italic">General Creative</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 {/* Card Action Buttons */}
-                {canEditThisMember && !isSelf && (
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEditCapacity(staff)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:border-[#2B7BC4] hover:text-[#2B7BC4] hover:bg-blue-50/40 transition-all cursor-pointer"
-                    >
-                      <Sliders className="size-3.5" />
-                      Edit Capacity
-                    </button>
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  {canEditThisMember ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditCapacity(staff)}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:border-[#2B7BC4] hover:text-[#2B7BC4] hover:bg-blue-50/40 transition-all cursor-pointer"
+                      >
+                        <Sliders className="size-3.5" />
+                        Edit Capacity
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={() => setDeletingMember(staff)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-red-200 text-xs font-bold text-red-600 hover:bg-red-50 transition-all cursor-pointer"
-                      title="Deactivate staff member"
-                    >
-                      <Trash2 className="size-3.5" />
-                      Remove
-                    </button>
-                  </div>
-                )}
+                      {!isSelf && (
+                        <button
+                          type="button"
+                          onClick={() => setDeletingMember(staff)}
+                          className="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-rose-200 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+                          title="Deactivate staff member"
+                        >
+                          <Trash2 className="size-3.5" />
+                          Remove
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-[11px] text-slate-400 italic">Assigned to Pod</span>
+                  )}
+                </div>
               </div>
             );
           })
