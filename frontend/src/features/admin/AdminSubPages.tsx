@@ -4251,9 +4251,16 @@ export function AdminLeavePage() {
     }
   };
 
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!startDate || !endDate || !reason.trim()) return;
+    if (startDate < todayStr) {
+      alert("Leave start date cannot be in the past. Please select today or a future date.");
+      return;
+    }
     if (startDate > endDate) {
       alert("End date must be on or after start date.");
       return;
@@ -4646,8 +4653,14 @@ export function AdminLeavePage() {
                   <input
                     type="date"
                     required
+                    min={todayStr}
                     value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      if (endDate && endDate < e.target.value) {
+                        setEndDate(e.target.value);
+                      }
+                    }}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
                   />
                 </div>
@@ -4656,7 +4669,7 @@ export function AdminLeavePage() {
                   <input
                     type="date"
                     required
-                    min={startDate}
+                    min={startDate || todayStr}
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"

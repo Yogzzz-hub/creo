@@ -1837,6 +1837,13 @@ async def create_leave_request(
     - If team member: routed to their assigned Team Lead (and Admin).
     - If team lead: routed to Agency Admin.
     """
+    ist_today = datetime.now(timezone.utc).date()
+    if payload.start_date < ist_today:
+        raise HTTPException(
+            status_code=400,
+            detail="Leave start date cannot be in the past. Please select today or a future date.",
+        )
+
     if payload.start_date > payload.end_date:
         raise HTTPException(
             status_code=400,
