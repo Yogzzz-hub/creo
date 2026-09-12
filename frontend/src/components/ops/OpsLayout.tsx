@@ -179,25 +179,6 @@ export function OpsLayout() {
             </Link>
           )}
 
-          {/* Client Tools Preview */}
-          <p className="px-3 pt-5 pb-2 text-[10px] font-bold uppercase tracking-widest text-[#6BAED6]/60">
-            Client Surface
-          </p>
-
-          <Link
-            to="/portal"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium text-[#6BAED6] transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <ExternalLink className="size-4 shrink-0" />
-            Client Portal
-          </Link>
-          <Link
-            to="/portal/calendar"
-            className="flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium text-[#6BAED6] transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <CalendarCheck className="size-4 shrink-0" />
-            Client Calendar
-          </Link>
         </nav>
 
         {/* User Footer */}
@@ -259,14 +240,6 @@ export function OpsLayout() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Quick Portal Preview button */}
-            <Link
-              to="/portal"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 text-xs font-medium hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              <ExternalLink className="size-3.5" />
-              Client Portal
-            </Link>
 
             {/* Notification Bell */}
             <div className="relative">
@@ -496,26 +469,6 @@ export function OpsLayout() {
                   </Link>
                 )}
 
-                <p className="px-3 pt-5 pb-2 text-[10px] font-bold uppercase tracking-widest text-[#6BAED6]/60">
-                  Client Surface
-                </p>
-
-                <Link
-                  to="/portal"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-medium text-[#6BAED6] hover:bg-white/10 hover:text-white transition-colors"
-                >
-                  <ExternalLink className="size-4 shrink-0" />
-                  Client Portal
-                </Link>
-                <Link
-                  to="/portal/calendar"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-medium text-[#6BAED6] hover:bg-white/10 hover:text-white transition-colors"
-                >
-                  <CalendarCheck className="size-4 shrink-0" />
-                  Client Calendar
-                </Link>
               </nav>
 
               {/* Drawer User Footer */}

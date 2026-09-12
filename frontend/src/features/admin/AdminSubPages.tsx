@@ -174,15 +174,6 @@ export function AdminClientsPage() {
                     {client.onboarding_stage >= 4 ? "Stage 4 / 4 • Done" : `Stage ${Math.max(1, client.onboarding_stage)} / 4`}
                   </span>
                 </div>
-
-                <div className="pt-2 flex justify-end border-t border-slate-100">
-                  <Link
-                    to="/portal"
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#2B7BC4] hover:underline"
-                  >
-                    Inspect Client Portal →
-                  </Link>
-                </div>
               </div>
             ))
           )}
@@ -197,20 +188,19 @@ export function AdminClientsPage() {
                 <th className="px-4 py-3">Onboarding Stage</th>
                 <th className="px-4 py-3">Current Plan</th>
                 <th className="px-4 py-3">Account Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
                     <Loader2 className="size-5 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
                     Loading client roster...
                   </td>
                 </tr>
               ) : filteredClients.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
                     No clients found matching filter criteria.
                   </td>
                 </tr>
@@ -247,14 +237,6 @@ export function AdminClientsPage() {
                       >
                         {client.account_status}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        to="/portal"
-                        className="text-xs font-semibold text-[#2B7BC4] hover:underline"
-                      >
-                        Inspect Portal →
-                      </Link>
                     </td>
                   </tr>
                 ))
