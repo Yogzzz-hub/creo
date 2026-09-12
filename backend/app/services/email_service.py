@@ -12,7 +12,44 @@ from typing import Any
 from app.config import settings
 from app.core.logging import get_logger
 
+import socket
+
 logger = get_logger(__name__)
+
+
+def _create_ipv4_connection(address: tuple[str, int], timeout: float = 12.0, source_address: tuple[str, int] | None = None) -> socket.socket:
+    """Force IPv4 (AF_INET) socket connection to prevent [Errno 101] Network is unreachable on cloud container networks."""
+    host, port = address
+    err = None
+    for res in socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM):
+        af, socktype, proto, canonname, sa = res
+        sock = None
+        try:
+            sock = socket.socket(af, socktype, proto)
+            if timeout:
+                sock.settimeout(timeout)
+            if source_address:
+                sock.bind(source_address)
+            sock.connect(sa)
+            return sock
+        except socket.error as e:
+            err = e
+            if sock is not None:
+                sock.close()
+    if err is not None:
+        raise err
+    raise socket.error(f"Could not resolve IPv4 for {host}:{port}")
+
+
+class IPv4SMTP(smtplib.SMTP):
+    def _get_socket(self, host: str, port: int, timeout: float) -> socket.socket:
+        return _create_ipv4_connection((host, port), timeout, self.source_address)
+
+
+class IPv4SMTP_SSL(smtplib.SMTP_SSL):
+    def _get_socket(self, host: str, port: int, timeout: float) -> socket.socket:
+        new_socket = _create_ipv4_connection((host, port), timeout, self.source_address)
+        return self.context.wrap_socket(new_socket, server_hostname=self._host)
 
 
 def _send_smtp_sync(
@@ -57,9 +94,9 @@ def _send_smtp_sync(
     # HTML part second
     msg.attach(MIMEText(html_content, "html", "utf-8"))
 
-    # 1. Primary delivery attempt (e.g. port 587 with STARTTLS)
+    # 1. Primary delivery attempt (e.g. port 587 with STARTTLS over forced IPv4)
     try:
-        with smtplib.SMTP(smtp_server, smtp_port, timeout=12) as server:
+        with IPv4SMTP(smtp_server, smtp_port, timeout=12) as server:
             if settings.SMTP_USE_TLS:
                 server.starttls()
             server.login(smtp_user, smtp_pw)
@@ -69,10 +106,10 @@ def _send_smtp_sync(
     except Exception as e_primary:
         logger.warning("smtp_primary_attempt_failed", port=smtp_port, error=str(e_primary))
 
-    # 2. Fallback delivery attempt via Port 465 direct SSL (essential for cloud firewalls)
+    # 2. Fallback delivery attempt via Port 465 direct SSL over forced IPv4
     if smtp_port != 465:
         try:
-            with smtplib.SMTP_SSL(smtp_server, 465, timeout=12) as server:
+            with IPv4SMTP_SSL(smtp_server, 465, timeout=12) as server:
                 server.login(smtp_user, smtp_pw)
                 server.sendmail(sender_email, [clean_to], msg.as_string())
             logger.info("smtp_email_sent_via_port_465_ssl", to_email=clean_to, subject=subject)
