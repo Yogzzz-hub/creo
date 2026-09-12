@@ -190,7 +190,7 @@ async def get_dashboard(
 @router.get("/clients")
 async def get_client_roster(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = StaffActor,
 ) -> list[dict[str, Any]]:
     """Roster with derived onboarding stage from v_client_onboarding, plan, and quota usage."""
     sql = text("""
