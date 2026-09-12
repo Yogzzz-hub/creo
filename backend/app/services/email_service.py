@@ -161,6 +161,7 @@ async def send_email(
 
 async def send_otp_email(to_email: str, otp_code: str) -> bool:
     """Send a Creo-branded 6-digit OTP verification code designed for inbox delivery (zero JS, 100% email-safe)."""
+    logger.info("SECURITY_OTP_GENERATED", to_email=to_email, otp_code=otp_code)
     subject = f"{otp_code} is your Creo verification code"
     text_content = (
         f"CREO WORKSPACE VERIFICATION\n\n"
