@@ -4201,6 +4201,9 @@ export function AdminSettingsPage() {
 // 13. ADMIN LEAVE APPROVALS PAGE (Matched from creo)
 // ─────────────────────────────────────────────────────────────────────────────
 export function AdminLeavePage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
+
   const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -4291,20 +4294,30 @@ export function AdminLeavePage() {
         <div>
           <div className="flex items-center gap-2">
             <UserCog className="size-5 text-[#2B7BC4]" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">Staff Leave Requests</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">
+              {isAdmin ? "Staff Leave Approvals" : "Staff Leave Requests"}
+            </h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Hierarchical time-off approval workflow: Team Leads review pod requests, Admins oversee agency operations
+            {isAdmin
+              ? "Review, approve, and manage time-off requests submitted by Team Leads and creative pod members"
+              : "Hierarchical time-off approval workflow: Team Leads review pod requests, Admins oversee agency operations"}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setCreateModalOpen(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] shadow-xs cursor-pointer transition-colors"
-          >
-            <Plus className="size-4" /> Apply for Leave
-          </button>
+          {!isAdmin ? (
+            <button
+              type="button"
+              onClick={() => setCreateModalOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] shadow-xs cursor-pointer transition-colors"
+            >
+              <Plus className="size-4" /> Apply for Leave
+            </button>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-[#2B7BC4] text-xs font-bold border border-blue-200">
+              <Shield className="size-3.5" /> Executive Approver Mode
+            </span>
+          )}
         </div>
       </div>
 
@@ -4351,17 +4364,19 @@ export function AdminLeavePage() {
           >
             Approved
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("my_requests")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === "my_requests"
-                ? "bg-[#2B7BC4] text-white shadow-2xs"
-                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-            }`}
-          >
-            My Submissions ({myRequestsCount})
-          </button>
+          {!isAdmin && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("my_requests")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === "my_requests"
+                  ? "bg-[#2B7BC4] text-white shadow-2xs"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              My Submissions ({myRequestsCount})
+            </button>
+          )}
         </div>
 
         <select

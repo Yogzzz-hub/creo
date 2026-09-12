@@ -140,6 +140,11 @@ export function OpsLayout() {
     if (!item.roles) return true;
     if (isAdmin) return item.href !== "/dashboard" || item.roles.includes("admin");
     return item.roles.includes(userRole);
+  }).map((item) => {
+    if (isAdmin && item.href === "/admin/leave") {
+      return { ...item, label: "Leave Approvals" };
+    }
+    return item;
   });
 
   return (
