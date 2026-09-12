@@ -29,9 +29,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import Conflict, Forbidden
 from app.models.billing import Subscription
-from app.models.enums import DeliverableStatus, SubscriptionStatus, UserRole
+from app.models.enums import DeliverableStatus, DeliverableType, SubscriptionStatus, TaskStatus, UserRole
 from app.models.ops import AuditLog
-from app.models.work import Deliverable
+from app.models.work import Deliverable, Task
 
 # ── State transition graph ────────────────────────────────────────────────────
 # Key: current status. Value: set of allowed target statuses.
@@ -243,7 +243,14 @@ async def transition(
         elif reason and to_str == DeliverableStatus.REVISION_REQUESTED:
             deliverable.rejection_comment = reason
 
-    # 6. Write audit log in the SAME transaction
+    # 6. Automate Kanban Task Status synchronization
+    try:
+        await sync_task_with_deliverable(db, deliverable, to_status)
+    except Exception as err:
+        import structlog
+        structlog.get_logger(__name__).warning("failed_to_sync_task_with_deliverable", deliverable_id=str(deliverable.id), error=str(err))
+
+    # 7. Write audit log in the SAME transaction
     audit_extra: dict[str, Any] = {"reason": reason}
     if qa_notes:
         audit_extra["qa_notes"] = qa_notes
@@ -267,3 +274,59 @@ async def transition(
     await db.commit()
     await db.refresh(deliverable)
     return deliverable
+
+
+async def sync_task_with_deliverable(
+    db: AsyncSession,
+    deliverable: Deliverable,
+    to_status: DeliverableStatus,
+) -> Task | None:
+    """Automate Kanban task progression based on deliverable lifecycle events."""
+    task = None
+    if deliverable.task_id:
+        task = await db.get(Task, deliverable.task_id)
+
+    if not task:
+        stmt = (
+            select(Task)
+            .where(Task.client_id == deliverable.client_id)
+            .order_by(Task.updated_at.desc())
+            .limit(1)
+        )
+        task = (await db.execute(stmt)).scalar_one_or_none()
+        if task:
+            deliverable.task_id = task.id
+
+    if not task:
+        deliv_type = (
+            DeliverableType.REEL
+            if ("reel" in (deliverable.file_type or "").lower() or "video" in (deliverable.file_type or "").lower())
+            else DeliverableType.STATIC_POST
+        )
+        task = Task(
+            client_id=deliverable.client_id,
+            deliverable_type=deliv_type,
+            status=TaskStatus.BACKLOG,
+            assigned_to=deliverable.submitted_by,
+        )
+        db.add(task)
+        await db.flush()
+        deliverable.task_id = task.id
+
+    to_str = to_status.value if hasattr(to_status, "value") else str(to_status)
+
+    if to_str == DeliverableStatus.DRAFT.value:
+        task.status = TaskStatus.BACKLOG
+    elif to_str in (DeliverableStatus.IN_PRODUCTION.value, DeliverableStatus.QA_REJECTED.value):
+        task.status = TaskStatus.IN_PRODUCTION
+    elif to_str == DeliverableStatus.PENDING_QA.value:
+        task.status = TaskStatus.INTERNAL_QA
+    elif to_str == DeliverableStatus.PENDING_APPROVAL.value:
+        task.status = TaskStatus.CLIENT_REVIEW
+    elif to_str in (DeliverableStatus.APPROVED.value, DeliverableStatus.SCHEDULED.value, DeliverableStatus.PUBLISHED.value):
+        task.status = TaskStatus.READY_TO_PUBLISH
+    elif to_str == DeliverableStatus.REVISION_REQUESTED.value:
+        task.status = TaskStatus.IN_PRODUCTION
+        task.is_revision = True
+
+    return task

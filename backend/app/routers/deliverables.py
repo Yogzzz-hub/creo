@@ -138,10 +138,15 @@ async def confirm_upload(
         file_url=storage_key,
         file_type=file_ext,
         file_size_bytes=actual_size,
-        status=DeliverableStatus.IN_PRODUCTION,
+        status=DeliverableStatus.PENDING_QA,
         revision_round=0,
     )
     db.add(deliverable)
+    await db.flush()
+
+    # Automate Kanban progression: upload by team moves task to Internal QA
+    await deliverable_state.sync_task_with_deliverable(db, deliverable, DeliverableStatus.PENDING_QA)
+
     await db.commit()
     await db.refresh(deliverable)
 

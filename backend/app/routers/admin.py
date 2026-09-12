@@ -32,12 +32,12 @@ from app.core.errors import Conflict, Forbidden, NotFound
 from app.core.rbac import Actor, AdminActor, InvestorActor, SalesActor, StaffActor, TeamLeadActor
 from app.db.session import get_db
 from app.models.billing import Plan
-from app.models.enums import AccountStatus, DeliverableStatus, TicketStatus, UserRole
+from app.models.enums import AccountStatus, DeliverableStatus, DeliverableType, TaskStatus, TicketStatus, UserRole
 from app.models.ops import Announcement, AuditLog, LeaveRequest
 from app.models.support import Ticket, TicketMessage
 from app.models.user import ClientProfile, StaffProfile, User
 from app.models.work import ContentCalendar, Deliverable, Task
-from app.services import storage_service
+from app.services import deliverable_state, storage_service
 
 logger = logging.getLogger(__name__)
 
@@ -1668,5 +1668,188 @@ async def get_admin_calendar(
         })
 
     return events
+
+
+# --- Admin Deliverables Management & Automated Kanban Sync ---
+
+class AdminDeliverableCreateRequest(BaseModel):
+    client_id: uuid.UUID
+    title: str = ""
+    type: str = "reel"
+    file_url: str
+    file_type: str = "video/mp4"
+    status: str = "pending_approval"
+    revision_round: int = 1
+    description: str = ""
+    scheduled_at: str | None = None
+
+
+class AdminDeliverableStatusUpdate(BaseModel):
+    status: str
+
+
+@router.get("/deliverables")
+async def list_admin_deliverables(
+    client_id: uuid.UUID | None = None,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = StaffActor,
+) -> list[dict[str, Any]]:
+    """List creative deliverables with client information and task links."""
+    stmt = (
+        select(
+            Deliverable,
+            User.email,
+            ClientProfile.company_name,
+            Task.id.label("task_id"),
+            Task.status.label("task_status"),
+        )
+        .join(User, User.id == Deliverable.client_id)
+        .outerjoin(ClientProfile, ClientProfile.user_id == Deliverable.client_id)
+        .outerjoin(Task, Task.id == Deliverable.task_id)
+    )
+    if client_id:
+        stmt = stmt.where(Deliverable.client_id == client_id)
+
+    stmt = stmt.order_by(Deliverable.created_at.desc()).limit(300)
+    res = await db.execute(stmt)
+    rows = res.fetchall()
+
+    results = []
+    for d, email, company, t_id, t_status in rows:
+        c_name = company or email.split("@")[0].capitalize()
+        status_val = d.status.value if hasattr(d.status, "value") else str(d.status)
+        deliv_type = "reel" if ("video" in (d.file_type or "").lower() or "mp4" in (d.file_type or "").lower()) else "static_post"
+
+        results.append({
+            "id": str(d.id),
+            "root_id": str(d.root_id),
+            "client_id": str(d.client_id),
+            "client_name": c_name,
+            "title": f"{deliv_type.replace('_', ' ').capitalize()} · {c_name}",
+            "type": deliv_type,
+            "file_url": (
+                storage_service.signed_get(d.file_url)
+                if (d.file_url and not (d.file_url.startswith("http://") or d.file_url.startswith("https://") or d.file_url.startswith("/uploads/") or d.file_url.startswith("/static/")))
+                else d.file_url
+            ),
+            "file_type": d.file_type,
+            "status": status_val,
+            "version": d.version,
+            "revision_round": d.revision_round,
+            "task_id": str(t_id) if t_id else None,
+            "task_status": t_status.value if hasattr(t_status, "value") else (str(t_status) if t_status else None),
+            "created_at": d.created_at.isoformat() if d.created_at else None,
+            "scheduled_at": d.scheduled_at.isoformat() if d.scheduled_at else None,
+        })
+    return results
+
+
+@router.post("/deliverables/upload")
+async def upload_admin_deliverable_file(
+    file: UploadFile = File(...),
+    actor: Actor = StaffActor,
+) -> dict[str, str]:
+    """Upload media file directly to local server storage."""
+    import time
+    from app.main import _uploads_dir
+
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    clean_name = f"{int(time.time())}_{uuid.uuid4().hex[:8]}{ext}"
+    dest_path = os.path.join(_uploads_dir, clean_name)
+
+    content = await file.read()
+    with open(dest_path, "wb") as f:
+        f.write(content)
+
+    return {
+        "file_url": f"/uploads/{clean_name}",
+        "filename": file.filename or clean_name,
+        "file_type": file.content_type or "application/octet-stream",
+    }
+
+
+@router.post("/deliverables")
+async def create_admin_deliverable(
+    payload: AdminDeliverableCreateRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = StaffActor,
+) -> dict[str, Any]:
+    """Staff uploads/creates a new deliverable. Automates Kanban task progression into Internal QA."""
+    # Validate target status
+    target_status = DeliverableStatus.PENDING_QA
+    try:
+        if payload.status:
+            target_status = DeliverableStatus(payload.status)
+    except ValueError:
+        target_status = DeliverableStatus.PENDING_QA
+
+    deliverable = Deliverable(
+        id=uuid.uuid4(),
+        root_id=uuid.uuid4(),
+        version=1,
+        client_id=payload.client_id,
+        submitted_by=actor.user_id,
+        file_url=payload.file_url,
+        file_type=payload.file_type or "video/mp4",
+        file_size_bytes=1024 * 1024,
+        status=target_status,
+        revision_round=payload.revision_round,
+    )
+    if payload.scheduled_at:
+        try:
+            deliverable.scheduled_at = datetime.fromisoformat(payload.scheduled_at)
+        except Exception:
+            pass
+
+    db.add(deliverable)
+    await db.flush()
+
+    # Automate Kanban task progression: upload by team moves task to Internal QA
+    await deliverable_state.sync_task_with_deliverable(db, deliverable, target_status)
+
+    await db.commit()
+    await db.refresh(deliverable)
+
+    return {
+        "id": str(deliverable.id),
+        "status": deliverable.status.value,
+        "task_id": str(deliverable.task_id) if deliverable.task_id else None,
+        "file_url": deliverable.file_url,
+    }
+
+
+@router.patch("/deliverables/{deliverable_id}/status")
+async def update_admin_deliverable_status(
+    deliverable_id: uuid.UUID,
+    payload: AdminDeliverableStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = StaffActor,
+) -> dict[str, Any]:
+    """Update deliverable status. Automatically syncs and moves the corresponding Kanban task."""
+    deliverable = await db.get(Deliverable, deliverable_id)
+    if not deliverable:
+        raise HTTPException(status_code=404, detail="Deliverable not found")
+
+    try:
+        new_status = DeliverableStatus(payload.status)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid status: {payload.status}")
+
+    deliverable.status = new_status
+    if new_status == DeliverableStatus.APPROVED:
+        deliverable.approved_at = datetime.now(timezone.utc)
+
+    # Sync corresponding Task on the Kanban board
+    await deliverable_state.sync_task_with_deliverable(db, deliverable, new_status)
+
+    await db.commit()
+    await db.refresh(deliverable)
+
+    return {
+        "id": str(deliverable.id),
+        "status": deliverable.status.value,
+        "task_id": str(deliverable.task_id) if deliverable.task_id else None,
+    }
+
 
 

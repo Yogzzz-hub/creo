@@ -420,7 +420,34 @@ export function KanbanBoard({ actorRole = "admin" }: { actorRole?: string }) {
 
   useEffect(() => {
     loadBoard();
-  }, [loadBoard]);
+
+    // Automated live synchronization: Poll every 4 seconds to reflect client approvals,
+    // revision requests, and team uploads in real time without refreshing
+    const interval = setInterval(() => {
+      if (!activeTask) {
+        fetchKanbanBoard(undefined, actorRole)
+          .then((data) => {
+            setBoard(data);
+            setErrorMsg(null);
+          })
+          .catch(() => {});
+      }
+    }, 4000);
+
+    const onFocus = () => {
+      if (!activeTask) {
+        fetchKanbanBoard(undefined, actorRole)
+          .then((data) => setBoard(data))
+          .catch(() => {});
+      }
+    };
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [loadBoard, actorRole, activeTask]);
 
   // Update horizontal scroll indicators and active column indicator
   const updateScrollState = React.useCallback(() => {

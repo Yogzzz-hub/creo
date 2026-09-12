@@ -13,8 +13,9 @@ from sqlalchemy.orm import selectinload
 
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
-from app.models.enums import TicketPriority, TicketStatus, UserRole
+from app.models.enums import DeliverableType, TaskStatus, TicketPriority, TicketStatus, UserRole
 from app.models.support import Ticket, TicketMessage
+from app.models.work import Deliverable, Task
 
 router = APIRouter(prefix="/tickets", tags=["Tickets"])
 
@@ -102,6 +103,30 @@ async def create_ticket(
         deliverable_id=payload.deliverable_id,
     )
     db.add(ticket)
+
+    # Automate Kanban task progression based on client request
+    if payload.deliverable_id:
+        deliv = await db.get(Deliverable, payload.deliverable_id)
+        if deliv and deliv.task_id:
+            deliv_task = await db.get(Task, deliv.task_id)
+            if deliv_task:
+                deliv_task.status = TaskStatus.IN_PRODUCTION
+                deliv_task.is_revision = True
+    else:
+        # Client submitted a general creative request brief
+        deliv_type = (
+            DeliverableType.REEL
+            if "reel" in payload.title.lower() or "video" in payload.title.lower()
+            else DeliverableType.STATIC_POST
+        )
+        task = Task(
+            client_id=client_id,
+            deliverable_type=deliv_type,
+            status=TaskStatus.IN_PRODUCTION if payload.assigned_to else TaskStatus.BACKLOG,
+            assigned_to=payload.assigned_to,
+        )
+        db.add(task)
+
     await db.commit()
     await db.refresh(ticket)
 
