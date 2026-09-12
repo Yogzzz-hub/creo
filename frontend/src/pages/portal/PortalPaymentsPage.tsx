@@ -29,6 +29,8 @@ import {
   Image as ImageIcon,
   AlertCircle,
 } from "lucide-react";
+import { InvoiceModal } from "../../components/portal/InvoiceModal";
+import { generateInvoicePDF, type InvoiceData } from "../../lib/pdf-invoice";
 
 /* ─── Monotonic Timer Hook (Clock Tampering Resistant) ─────────────────────── */
 
@@ -718,6 +720,7 @@ export function PortalPaymentsPage() {
   const queryClient = useQueryClient();
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showAddonModal, setShowAddonModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success" | "error">("idle");
 
   const { data: dashboard } = useQuery({
@@ -951,6 +954,12 @@ export function PortalPaymentsPage() {
             setShowAddonModal(false);
             setShowPlanModal(true);
           }}
+        />
+      )}
+      {selectedInvoice && (
+        <InvoiceModal
+          invoice={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
         />
       )}
 
@@ -1541,39 +1550,65 @@ export function PortalPaymentsPage() {
                   </td>
                 </tr>
               ) : (
-                invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors group">
-                    <td className="py-4 px-4 font-mono text-xs font-bold text-[#0D2137] flex items-center gap-2.5">
-                      <FileText className="size-4 text-slate-400 group-hover:text-[#2B7BC4] transition-colors" />
-                      {inv.id}
-                    </td>
-                    <td className="py-4 px-4 text-xs font-medium text-slate-600">{inv.date}</td>
-                    <td className="py-4 px-4 text-xs font-bold text-slate-800">{inv.plan}</td>
-                    <td className="py-4 px-4 text-xs font-extrabold text-[#0D2137]">{inv.amount}</td>
-                    <td className="py-4 px-4">
-                      <span
-                        className={`rounded-full px-3 py-1 text-[11px] font-bold border inline-flex items-center gap-1.5 ${
-                          inv.status === "Paid" || inv.status === "Active"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : "bg-amber-50 text-amber-700 border-amber-200"
-                        }`}
-                      >
-                        <span className="size-1.5 rounded-full bg-emerald-500" />
-                        {inv.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-right">
-                      <button
-                        type="button"
-                        onClick={() => alert(`Downloading invoice ${inv.id}...`)}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2B7BC4] hover:text-[#1F5C96] bg-blue-50/70 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-100 transition-all cursor-pointer"
-                      >
-                        <Download className="size-3.5" />
-                        PDF
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                invoices.map((inv) => {
+                  const invData: InvoiceData = {
+                    ...inv,
+                    clientName: user?.full_name,
+                    clientEmail: user?.email,
+                    companyName: (user as any)?.company_name || (dashboard as any)?.brand_name,
+                  };
+                  return (
+                    <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors group">
+                      <td className="py-4 px-4 font-mono text-xs font-bold text-[#0D2137]">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedInvoice(invData)}
+                          className="flex items-center gap-2.5 hover:text-[#2B7BC4] hover:underline cursor-pointer text-left"
+                          title="Click to preview tax invoice"
+                        >
+                          <FileText className="size-4 text-slate-400 group-hover:text-[#2B7BC4] transition-colors" />
+                          <span>{inv.id}</span>
+                        </button>
+                      </td>
+                      <td className="py-4 px-4 text-xs font-medium text-slate-600">{inv.date}</td>
+                      <td className="py-4 px-4 text-xs font-bold text-slate-800">{inv.plan}</td>
+                      <td className="py-4 px-4 text-xs font-extrabold text-[#0D2137]">{inv.amount}</td>
+                      <td className="py-4 px-4">
+                        <span
+                          className={`rounded-full px-3 py-1 text-[11px] font-bold border inline-flex items-center gap-1.5 ${
+                            inv.status === "Paid" || inv.status === "Active"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : "bg-amber-50 text-amber-700 border-amber-200"
+                          }`}
+                        >
+                          <span className="size-1.5 rounded-full bg-emerald-500" />
+                          {inv.status}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedInvoice(invData)}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer"
+                            title="Preview invoice modal"
+                          >
+                            Preview
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => generateInvoicePDF(invData)}
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2B7BC4] hover:text-[#1F5C96] bg-blue-50/80 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-100 shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95"
+                            title="Download PDF File"
+                          >
+                            <Download className="size-3.5" />
+                            PDF
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
