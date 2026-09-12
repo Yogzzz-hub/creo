@@ -428,6 +428,26 @@ export function PortalCalendarPage() {
           </div>
         </div>
 
+        {/* 7-Day Creative Strategy & Warmup Indicator */}
+        <div className="rounded-xl border border-blue-200 bg-[#F0F7FD] p-4 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-[#2B7BC4] text-white shrink-0 mt-0.5">
+              <ShieldCheck className="size-4" />
+            </div>
+            <div>
+              <p className="font-bold text-[#0D2137] flex items-center gap-2">
+                <span>7-Day Strategy & Production Lock Phase Active</span>
+                <span className="px-2 py-0.5 rounded-full bg-[#2B7BC4]/10 text-[#2B7BC4] text-[10px] font-extrabold uppercase">
+                  Days 1–7
+                </span>
+              </p>
+              <p className="text-slate-600 mt-0.5 leading-relaxed">
+                Days 1 to 7 are dedicated to brand research, scripting, and creative alignment. No deliverables are published during this warmup period. All Reels, Posters, and Stories are allocated from <strong>Day 8</strong> onwards across your 30-day production cycle based on your plan quota.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Campaign Approval Banner if draft slots exist */}
         {hasDraftSlots && (
           <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">

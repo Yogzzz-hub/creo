@@ -644,8 +644,12 @@ async def draft_month_calendar(
     except Exception:
         client_tz = ZoneInfo("Asia/Kolkata")
 
-    # Start scheduling minimum 3 business days ahead for creative breathing room
-    start_from = add_business_days(date.today(), 3)
+    # 7-Day Strategy & Creative Preparation Lock Buffer:
+    # Days 1 to 7 are strictly locked for brand research, scripting, and asset prep (no deliverables scheduled).
+    # Content allocation begins on Day 8 and distributes monthly plan quotas across a 30-day window (Day 8 to Day 37).
+    sub_start_date = (sub_row[0].created_at.date() if sub_row and sub_row[0].created_at else date.today())
+    start_from = sub_start_date + timedelta(days=7)
+    window_end = start_from + timedelta(days=30)
 
     # Clean previous draft slots
     await db.execute(
@@ -669,14 +673,14 @@ async def draft_month_calendar(
         hour, minute = [int(p) for p in time_str.split(":")]
 
         candidate_days = [
-            d for d in business_days_in_range(start_from, month_end, preferred_weekdays)
+            d for d in business_days_in_range(start_from, window_end, preferred_weekdays)
         ]
 
         chosen = evenly_spaced(candidate_days, n=quota)
         if len(chosen) < quota:
-            # Fall back to other business days if preferred days are insufficient
+            # Fall back to other business days in 30-day window if preferred days are insufficient
             remaining_needed = quota - len(chosen)
-            all_biz_days = [d for d in business_days_in_range(start_from, month_end) if d not in chosen]
+            all_biz_days = [d for d in business_days_in_range(start_from, window_end) if d not in chosen]
             chosen += evenly_spaced(all_biz_days, n=remaining_needed)
 
         # 70/30 Anchor + Flex partition
