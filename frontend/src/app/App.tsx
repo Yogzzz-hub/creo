@@ -2,6 +2,7 @@ import { Suspense, lazy, Component, type ReactNode, type ErrorInfo } from "react
 import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "../lib/auth-context";
+import { ConfirmProvider } from "../components/ui/ConfirmDialog";
 import { request } from "../lib/http";
 import type { HealthResponse } from "../types/api";
 
@@ -254,194 +255,196 @@ function HealthPage() {
 export function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Suspense fallback={<RouteLoading />}>
-          <Routes>
-            {/* 1. Public Marketing Pages (Open to All) */}
-            <Route element={<PublicLayout />}>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/pricing" element={<PricingPage />} />
-              <Route path="/portfolio" element={<PortfolioPage />} />
-              <Route path="/clients" element={<ClientsPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/faq" element={<FaqPage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
-            </Route>
+      <ConfirmProvider>
+        <BrowserRouter>
+          <Suspense fallback={<RouteLoading />}>
+            <Routes>
+              {/* 1. Public Marketing Pages (Open to All) */}
+              <Route element={<PublicLayout />}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/portfolio" element={<PortfolioPage />} />
+                <Route path="/clients" element={<ClientsPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/faq" element={<FaqPage />} />
+                <Route path="/terms" element={<TermsPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+              </Route>
 
-            {/* 2. Authentication Flow (Public Only - redirect to role home if authenticated) */}
-            <Route
-              path="/login"
-              element={
-                <PublicOnlyRoute>
-                  <AuthPage defaultView="login" />
-                </PublicOnlyRoute>
-              }
-            />
-            <Route
-              path="/signup"
-              element={
-                <PublicOnlyRoute>
-                  <AuthPage defaultView="signup" />
-                </PublicOnlyRoute>
-              }
-            />
-            <Route
-              path="/auth"
-              element={
-                <PublicOnlyRoute>
-                  <AuthPage defaultView="login" />
-                </PublicOnlyRoute>
-              }
-            />
-            <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
-            <Route path="/auth/callback/google" element={<GoogleCallbackPage />} />
+              {/* 2. Authentication Flow (Public Only - redirect to role home if authenticated) */}
+              <Route
+                path="/login"
+                element={
+                  <PublicOnlyRoute>
+                    <AuthPage defaultView="login" />
+                  </PublicOnlyRoute>
+                }
+              />
+              <Route
+                path="/signup"
+                element={
+                  <PublicOnlyRoute>
+                    <AuthPage defaultView="signup" />
+                  </PublicOnlyRoute>
+                }
+              />
+              <Route
+                path="/auth"
+                element={
+                  <PublicOnlyRoute>
+                    <AuthPage defaultView="login" />
+                  </PublicOnlyRoute>
+                }
+              />
+              <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+              <Route path="/auth/callback/google" element={<GoogleCallbackPage />} />
 
-            {/* 3. Onboarding Multi-stage Flow (Client + Admin) */}
-            <Route
-              path="/onboarding"
-              element={
-                <ProtectedRoute allowedRoles={["client", "admin", "super_admin"]}>
-                  <OnboardingPageWrapper />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/onboarding/:stage"
-              element={
-                <ProtectedRoute allowedRoles={["client", "admin", "super_admin"]}>
-                  <OnboardingPageWrapper />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* 4. Client Portal Surface (Client + Admin Review) */}
-            <Route
-              path="/portal"
-              element={
-                <ProtectedRoute allowedRoles={["client", "admin", "super_admin"]}>
-                  <PortalLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<PortalDashboardPage />} />
-              <Route path="deliverables" element={<PortalDeliverablesPage />} />
-              <Route path="calendar" element={<PortalCalendarPage />} />
-              <Route path="payments" element={<PortalPaymentsPage />} />
-              <Route path="support" element={<PortalSupportPage />} />
-              <Route path="account" element={<PortalAccountPage />} />
-            </Route>
-
-            {/* 5. Agency Operations Surface (Ops Paper Surface - Admin, Super Admin, Team) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer", "sales", "investor_relations"]}
-                >
-                  <OpsLayout />
-                </ProtectedRoute>
-              }
-            >
-              {/* Executive Admin Suite (Admin & Super Admin only - Team members auto-redirect to /dashboard) */}
+              {/* 3. Onboarding Multi-stage Flow (Client + Admin) */}
               <Route
-                path="/admin"
+                path="/onboarding"
                 element={
-                  <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                    <AdminDashboard actorRole="admin" />
+                  <ProtectedRoute allowedRoles={["client", "admin", "super_admin"]}>
+                    <OnboardingPageWrapper />
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="/admin/dashboard"
+                path="/onboarding/:stage"
                 element={
-                  <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                    <AdminDashboard actorRole="admin" />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/clients"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                    <AdminClientsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/admin/calendar" element={<AdminCalendarPage />} />
-              <Route path="/admin/deliverables" element={<AdminDeliverablesPage />} />
-              <Route path="/admin/tasks" element={<AdminTasksPage />} />
-              <Route path="/admin/support" element={<AdminSupportPage />} />
-              <Route
-                path="/admin/teams"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                    <AdminTeamsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/admin/leave" element={<AdminLeavePage />} />
-              <Route path="/admin/announcements" element={<AdminAnnouncementsPage />} />
-              <Route
-                path="/admin/reports"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "super_admin", "investor_relations"]}>
-                    <AdminReportsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/kpi"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "super_admin", "investor_relations"]}>
-                    <AdminReportsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/sales"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "super_admin", "sales"]}>
-                    <AdminSalesPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/addons"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                    <AdminAddonsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/escalations"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                    <AdminEscalationsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/settings"
-                element={
-                  <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                    <AdminSettingsPage />
+                  <ProtectedRoute allowedRoles={["client", "admin", "super_admin"]}>
+                    <OnboardingPageWrapper />
                   </ProtectedRoute>
                 }
               />
 
-              {/* Creative Team Kanban Workspace */}
-              <Route path="/dashboard" element={<KanbanBoard actorRole="team_lead" />} />
-              <Route path="/kanban" element={<KanbanBoard actorRole="team_lead" />} />
-            </Route>
+              {/* 4. Client Portal Surface (Client + Admin Review) */}
+              <Route
+                path="/portal"
+                element={
+                  <ProtectedRoute allowedRoles={["client", "admin", "super_admin"]}>
+                    <PortalLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<PortalDashboardPage />} />
+                <Route path="deliverables" element={<PortalDeliverablesPage />} />
+                <Route path="calendar" element={<PortalCalendarPage />} />
+                <Route path="payments" element={<PortalPaymentsPage />} />
+                <Route path="support" element={<PortalSupportPage />} />
+                <Route path="account" element={<PortalAccountPage />} />
+              </Route>
 
-            {/* 6. System Smoke Test & Fallbacks */}
-            <Route path="/health" element={<HealthPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-        <MandatoryPasswordResetModal />
-      </BrowserRouter>
+              {/* 5. Agency Operations Surface (Ops Paper Surface - Admin, Super Admin, Team) */}
+              <Route
+                element={
+                  <ProtectedRoute
+                    allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer", "sales", "investor_relations"]}
+                  >
+                    <OpsLayout />
+                  </ProtectedRoute>
+                }
+              >
+                {/* Executive Admin Suite (Admin & Super Admin only - Team members auto-redirect to /dashboard) */}
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <AdminDashboard actorRole="admin" />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/dashboard"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <AdminDashboard actorRole="admin" />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/clients"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <AdminClientsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/admin/calendar" element={<AdminCalendarPage />} />
+                <Route path="/admin/deliverables" element={<AdminDeliverablesPage />} />
+                <Route path="/admin/tasks" element={<AdminTasksPage />} />
+                <Route path="/admin/support" element={<AdminSupportPage />} />
+                <Route
+                  path="/admin/teams"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
+                      <AdminTeamsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/admin/leave" element={<AdminLeavePage />} />
+                <Route path="/admin/announcements" element={<AdminAnnouncementsPage />} />
+                <Route
+                  path="/admin/reports"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "investor_relations"]}>
+                      <AdminReportsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/kpi"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "investor_relations"]}>
+                      <AdminReportsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/sales"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "sales"]}>
+                      <AdminSalesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/addons"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <AdminAddonsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/escalations"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <AdminEscalationsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/settings"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <AdminSettingsPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Creative Team Kanban Workspace */}
+                <Route path="/dashboard" element={<KanbanBoard actorRole="team_lead" />} />
+                <Route path="/kanban" element={<KanbanBoard actorRole="team_lead" />} />
+              </Route>
+
+              {/* 6. System Smoke Test & Fallbacks */}
+              <Route path="/health" element={<HealthPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+          <MandatoryPasswordResetModal />
+        </BrowserRouter>
+      </ConfirmProvider>
     </AuthProvider>
   );
 }

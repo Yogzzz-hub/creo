@@ -34,6 +34,7 @@ import {
 } from "../../lib/ops-api";
 import type { AdminKPIs, AdminQueueData, ClientRosterItem, SLABreachItem } from "../../types/ops";
 import { FixPlanModal } from "../../components/admin/FixPlanModal";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) {
   const [kpis, setKpis] = useState<AdminKPIs | null>(null);
@@ -86,14 +87,25 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
     }
   };
 
+  const confirm = useConfirm();
+
   const handleRemovePlan = async (clientId: string, clientName: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to remove the active plan for "${clientName}"?\n\nThis will cancel their subscription and reset deliverable quotas to zero (for refund or accidental payment cases). The client account will remain active so they can continue to access the portal.`,
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: `Remove Retainer Plan for "${clientName}"?`,
+      description: `Are you sure you want to remove the active plan for "${clientName}"? This action will immediately terminate the client's current billing cycle and reset their quotas.`,
+      details: [
+        "Subscription will be canceled immediately in database & billing records",
+        "All monthly deliverable quotas (Reels, Static Posts, Stories) will be reset to 0",
+        "Client account remains active so they can continue to access the portal",
+      ],
+      confirmText: "Yes, Remove Plan",
+      cancelText: "Keep Plan",
+      tone: "danger",
+      icon: "remove_plan",
+    });
+
+    if (!ok) return;
+
     try {
       await removeClientPlan(clientId, "Admin removed plan / refund request", actorRole);
       setMessage({

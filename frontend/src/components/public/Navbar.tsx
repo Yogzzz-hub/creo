@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
 import { Menu, X, LogOut } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
-
+import { useConfirm } from "../ui/ConfirmDialog";
 import { getRoleHome } from "../auth/ProtectedRoute";
 
 const NAV_LINKS = [
@@ -38,7 +38,19 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const confirm = useConfirm();
+
   async function handleLogout() {
+    const ok = await confirm({
+      title: "Sign Out of Creo?",
+      description: "Are you sure you want to sign out? You will need to log back in to access your dashboard.",
+      confirmText: "Sign Out",
+      cancelText: "Stay Logged In",
+      tone: "warning",
+      icon: "logout",
+    });
+    if (!ok) return;
+
     setLoggingOut(true);
     try {
       await logout();

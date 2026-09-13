@@ -27,6 +27,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { AnnouncementToast } from "./AnnouncementToast";
+import { useConfirm } from "../ui/ConfirmDialog";
 
 interface NavItem {
   label: string;
@@ -148,6 +149,22 @@ export function OpsLayout() {
     return item;
   });
 
+  const confirm = useConfirm();
+
+  const handleLogout = async () => {
+    const ok = await confirm({
+      title: "Sign Out of Operations Suite?",
+      description: "Are you sure you want to end your current session? You will need to sign back in with your credentials to access the ops dashboard.",
+      confirmText: "Sign Out",
+      cancelText: "Stay Logged In",
+      tone: "warning",
+      icon: "logout",
+    });
+    if (ok) {
+      await logout();
+    }
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#F9FAFB] text-[#0D2137]">
       {/* Internal Sidebar — fixed height, scrollable nav only */}
@@ -231,7 +248,7 @@ export function OpsLayout() {
 
           <button
             type="button"
-            onClick={() => logout()}
+            onClick={handleLogout}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium text-[#6BAED6] transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
           >
             <LogOut className="size-4" />
@@ -522,9 +539,9 @@ export function OpsLayout() {
 
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     setMobileMenuOpen(false);
-                    logout();
+                    await handleLogout();
                   }}
                   className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-medium text-rose-300 hover:bg-rose-500/10 transition-colors cursor-pointer"
                 >

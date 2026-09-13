@@ -47,15 +47,18 @@ import {
   Shield,
   ChevronLeft,
   ChevronRight,
+  PackageMinus,
 } from "lucide-react";
 import {
   fetchClientRoster,
   fetchAdminQueue,
+  removeClientPlan,
 } from "../../lib/ops-api";
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
 import type { ClientRosterItem, AdminQueueData } from "../../types/ops";
 import { FixPlanModal } from "../../components/admin/FixPlanModal";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -67,6 +70,33 @@ export function AdminClientsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [fixingClient, setFixingClient] = useState<ClientRosterItem | null>(null);
+
+  const confirm = useConfirm();
+
+  const handleRemovePlan = async (clientId: string, clientName: string) => {
+    const ok = await confirm({
+      title: `Remove Retainer Plan for "${clientName}"?`,
+      description: `Are you sure you want to remove the active plan for "${clientName}"? This action will immediately terminate the client's current billing cycle and reset their quotas.`,
+      details: [
+        "Subscription will be canceled immediately in database & billing records",
+        "All monthly deliverable quotas (Reels, Static Posts, Stories) will be reset to 0",
+        "Client account remains active so they can continue to access the portal",
+      ],
+      confirmText: "Yes, Remove Plan",
+      cancelText: "Keep Plan",
+      tone: "danger",
+      icon: "remove_plan",
+    });
+
+    if (!ok) return;
+
+    try {
+      await removeClientPlan(clientId, "Admin removed plan / refund request", "admin");
+      loadClients();
+    } catch (err: any) {
+      alert(err?.message || "Failed to remove client plan.");
+    }
+  };
 
   const loadClients = () => {
     fetchClientRoster(undefined, "admin")
@@ -257,15 +287,29 @@ export function AdminClientsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setFixingClient(client)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-[#2B7BC4] bg-[#E8F4FD] hover:bg-[#D5EBFA] border border-[#C9DFF0] transition-colors cursor-pointer shadow-2xs"
-                        title="Fix or change retainer plan (Starter Growth, Brand Accelerator, Enterprise Domination)"
-                      >
-                        <Sparkles className="size-3.5 text-[#2B7BC4]" />
-                        <span>Fix Plan</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setFixingClient(client)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-[#2B7BC4] bg-[#E8F4FD] hover:bg-[#D5EBFA] border border-[#C9DFF0] transition-colors cursor-pointer shadow-2xs"
+                          title="Fix or change retainer plan (Starter Growth, Brand Accelerator, Enterprise Domination)"
+                        >
+                          <Sparkles className="size-3.5 text-[#2B7BC4]" />
+                          <span>Fix Plan</span>
+                        </button>
+
+                        {client.plan_name && client.plan_name !== "No Plan" && (client.subscription_status === 'active' || client.subscription_status === 'trialing') && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePlan(client.client_id, client.company_name || client.email)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
+                            title="Cancel active subscription and reset quotas (e.g. for refund or accidental payment)"
+                          >
+                            <PackageMinus className="size-3.5" />
+                            <span>Remove</span>
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -4250,6 +4294,7 @@ export function AdminSettingsPage() {
 export function AdminLeavePage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
+  const confirm = useConfirm();
 
   const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -4293,7 +4338,16 @@ export function AdminLeavePage() {
   };
 
   const handleCancel = async (id: string) => {
-    if (!window.confirm("Are you sure you want to cancel this leave request?")) return;
+    const ok = await confirm({
+      title: "Cancel Leave Request?",
+      description: "Are you sure you want to cancel this leave request? This action cannot be undone.",
+      confirmText: "Yes, Cancel Leave",
+      cancelText: "Keep Request",
+      tone: "warning",
+      icon: "warning",
+    });
+    if (!ok) return;
+
     setCancellingId(id);
     try {
       await request(`/api/v1/admin/leave/${id}`, { method: "DELETE" });

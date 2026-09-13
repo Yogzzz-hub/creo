@@ -13,6 +13,7 @@ import {
 import { useAuth } from "../../lib/auth-context";
 import { useQuery } from "@tanstack/react-query";
 import { request } from "../../lib/http";
+import { useConfirm } from "../ui/ConfirmDialog";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/portal", icon: LayoutDashboard },
@@ -78,7 +79,19 @@ export function PortalSidebar() {
   const currentResumeStep = !isStep1Done ? 1 : !isStep2Done ? 2 : !isStep3Done ? 3 : !isStep4Done ? 4 : 5;
   const isSetupIncomplete = user?.role === "client" && currentResumeStep < 5;
 
+  const confirm = useConfirm();
+
   async function handleLogout() {
+    const ok = await confirm({
+      title: "Sign Out of Client Portal?",
+      description: "Are you sure you want to end your session? You will need to sign back in to view your deliverables and active calendar.",
+      confirmText: "Sign Out",
+      cancelText: "Stay Logged In",
+      tone: "warning",
+      icon: "logout",
+    });
+    if (!ok) return;
+
     setLoggingOut(true);
     try {
       await logout();

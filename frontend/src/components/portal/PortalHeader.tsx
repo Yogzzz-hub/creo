@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { AnnouncementToast } from "../ops/AnnouncementToast";
+import { useConfirm } from "../ui/ConfirmDialog";
 
 interface NotificationItem {
   id: string;
@@ -98,7 +99,19 @@ export function PortalHeader() {
   const initial = displayName.charAt(0).toUpperCase();
   const businessName = (user as any)?.business_name || "";
 
+  const confirm = useConfirm();
+
   async function handleLogout() {
+    const ok = await confirm({
+      title: "Sign Out of Client Portal?",
+      description: "Are you sure you want to end your session? You will be redirected to the sign-in page.",
+      confirmText: "Sign Out",
+      cancelText: "Stay in Portal",
+      tone: "warning",
+      icon: "logout",
+    });
+    if (!ok) return;
+
     setLoggingOut(true);
     try {
       await logout();
