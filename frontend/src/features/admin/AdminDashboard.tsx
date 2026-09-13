@@ -21,6 +21,7 @@ import {
   TrendingUp,
   UserX,
   Users,
+  Sparkles,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import {
@@ -32,6 +33,7 @@ import {
   removeClientPlan,
 } from "../../lib/ops-api";
 import type { AdminKPIs, AdminQueueData, ClientRosterItem, SLABreachItem } from "../../types/ops";
+import { FixPlanModal } from "../../components/admin/FixPlanModal";
 
 export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) {
   const [kpis, setKpis] = useState<AdminKPIs | null>(null);
@@ -41,6 +43,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"roster" | "queue" | "slas">("roster");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [fixingClient, setFixingClient] = useState<ClientRosterItem | null>(null);
 
   const loadAllData = React.useCallback(async () => {
     try {
@@ -375,8 +378,18 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
                 )}
 
                 {/* Action button */}
-                <div className="pt-2 flex justify-end">
-                  {c.plan_name && c.plan_name !== "No Plan" && (c.subscription_status === 'active' || c.subscription_status === 'trialing') ? (
+                <div className="pt-2 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFixingClient(c)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#2B7BC4] bg-[#E8F4FD] hover:bg-[#D5EBFA] border border-[#C9DFF0] cursor-pointer transition-colors shadow-2xs"
+                    title="Fix or change retainer plan (Starter Growth, Brand Accelerator, Enterprise Domination)"
+                  >
+                    <Sparkles className="size-3.5 text-[#2B7BC4]" />
+                    <span>Fix Plan</span>
+                  </button>
+
+                  {c.plan_name && c.plan_name !== "No Plan" && (c.subscription_status === 'active' || c.subscription_status === 'trialing') && (
                     <button
                       type="button"
                       onClick={() => handleRemovePlan(c.client_id, c.company_name || c.email)}
@@ -386,10 +399,6 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
                       <PackageMinus className="size-3.5" />
                       <span>Remove Plan</span>
                     </button>
-                  ) : (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium text-slate-400 bg-slate-50 border border-slate-200/60">
-                      No Active Plan
-                    </span>
                   )}
                 </div>
               </div>
@@ -489,21 +498,29 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
                       )}
                     </td>
                     <td className="py-3.5 px-5 text-right">
-                      {c.plan_name && c.plan_name !== "No Plan" && (c.subscription_status === 'active' || c.subscription_status === 'trialing') ? (
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => handleRemovePlan(c.client_id, c.company_name || c.email)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
-                          title="Cancel active subscription and reset quotas (e.g. for refund or accidental payment)"
+                          onClick={() => setFixingClient(c)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#2B7BC4] bg-[#E8F4FD] hover:bg-[#D5EBFA] border border-[#C9DFF0] transition-colors cursor-pointer shadow-2xs"
+                          title="Fix or change retainer plan (Starter Growth, Brand Accelerator, Enterprise Domination)"
                         >
-                          <PackageMinus className="size-3.5" />
-                          <span>Remove Plan</span>
+                          <Sparkles className="size-3.5 text-[#2B7BC4]" />
+                          <span>Fix Plan</span>
                         </button>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 font-medium italic">
-                          No Active Plan
-                        </span>
-                      )}
+
+                        {c.plan_name && c.plan_name !== "No Plan" && (c.subscription_status === 'active' || c.subscription_status === 'trialing') && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePlan(c.client_id, c.company_name || c.email)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
+                            title="Cancel active subscription and reset quotas (e.g. for refund or accidental payment)"
+                          >
+                            <PackageMinus className="size-3.5" />
+                            <span>Remove</span>
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -802,6 +819,20 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
           </div>
         </div>
       )}
+
+      {/* Fix Plan Modal (Admin assigns / changes between the 3 retainer plans) */}
+      <FixPlanModal
+        isOpen={Boolean(fixingClient)}
+        client={fixingClient}
+        onClose={() => setFixingClient(null)}
+        onSuccess={(planDisplayName) => {
+          setMessage({
+            type: "success",
+            text: `Successfully fixed retainer plan to ${planDisplayName}. Deliverables and quotas are updated.`,
+          });
+          loadAllData();
+        }}
+      />
     </div>
   );
 }

@@ -96,6 +96,32 @@ export async function removeClientPlan(
   );
 }
 
+export async function fixClientPlan(
+  clientId: string,
+  planName: "starter" | "growth" | "pro",
+  customNotes?: string,
+  _role = "admin",
+): Promise<{
+  status: string;
+  client_id: string;
+  plan_name: string;
+  plan_display_name: string;
+  monthly_price: number;
+  quotas: { reel: number; static_post: number; carousel: number };
+  message: string;
+}> {
+  return request(
+    `/api/v1/admin/clients/${clientId}/fix-plan`,
+    {
+      method: "POST",
+      body: JSON.stringify({ plan_name: planName, custom_notes: customNotes }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  );
+}
+
 export async function refreshKPIs(
   _adminUserId?: string,
   _role = "admin",

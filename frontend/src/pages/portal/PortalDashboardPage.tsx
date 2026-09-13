@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -12,9 +13,11 @@ import {
   MessageSquare,
   Search,
   Users,
+  PhoneCall,
 } from "lucide-react";
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
+import { PlanBargainCallModal } from "../../components/portal/PlanBargainCallModal";
 
 
 export interface TeamHandler {
@@ -42,6 +45,7 @@ interface DashboardData {
 
 export function PortalDashboardPage() {
   const { user } = useAuth();
+  const [bargainModalOpen, setBargainModalOpen] = useState(false);
 
   const { data: dashboard } = useQuery<DashboardData>({
     queryKey: ["portal-dashboard", user?.id],
@@ -197,15 +201,48 @@ export function PortalDashboardPage() {
               </p>
             </div>
           </div>
-          <Link
-            to={currentResumeStep < 5 ? `/onboarding?step=${currentResumeStep}` : "/portal/payments"}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-4 py-2 text-xs font-bold text-white hover:brightness-110 active:scale-95 transition-all shrink-0 shadow-md shadow-blue-500/20"
-          >
-            {currentResumeStep < 5 ? `Resume Setup (Step ${currentResumeStep})` : "Choose Plan"}
-            <ArrowRight className="size-3.5" />
-          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setBargainModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#C9DFF0] bg-white px-3.5 py-2 text-xs font-bold text-[#2B7BC4] hover:bg-[#E8F4FD] transition-all shrink-0 cursor-pointer shadow-2xs"
+            >
+              <PhoneCall className="size-3.5 text-[#2B7BC4]" />
+              <span>Book a Call to Bargain</span>
+            </button>
+            <Link
+              to={currentResumeStep < 5 ? `/onboarding?step=${currentResumeStep}` : "/portal/payments"}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-4 py-2 text-xs font-bold text-white hover:brightness-110 active:scale-95 transition-all shrink-0 shadow-md shadow-blue-500/20"
+            >
+              {currentResumeStep < 5 ? `Resume Setup (Step ${currentResumeStep})` : "Choose Plan"}
+              <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
         </div>
       )}
+
+      {/* ── Retainer Bargain / Custom Scope Call Card ─────────────────── */}
+      <div className="rounded-2xl border border-[#C9DFF0] bg-gradient-to-r from-white via-[#E8F4FD]/40 to-white p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="size-10 rounded-xl bg-[#E8F4FD] border border-[#C9DFF0] flex items-center justify-center text-[#2B7BC4] shrink-0 shadow-2xs">
+            <PhoneCall className="size-5 text-[#2B7BC4]" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-[#0D2137]">Need a Custom Retainer or Want to Negotiate?</h3>
+            <p className="text-xs text-slate-500 mt-0.5 max-w-xl leading-relaxed">
+              Bargain rates directly with our Agency Director, customize your reel/story quotas, or discuss bespoke multi-brand contracts.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setBargainModalOpen(true)}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2B7BC4] hover:bg-[#1E609A] px-4 py-2.5 text-xs font-bold text-white shadow-xs transition-all shrink-0 cursor-pointer"
+        >
+          <PhoneCall className="size-3.5" />
+          <span>Book a Call to Bargain</span>
+        </button>
+      </div>
 
 
       {/* ── Stat Metric Cards ───────────────────────────────────────────── */}
@@ -468,6 +505,12 @@ export function PortalDashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Plan Negotiation Call Modal */}
+      <PlanBargainCallModal
+        isOpen={bargainModalOpen}
+        onClose={() => setBargainModalOpen(false)}
+      />
     </div>
   );
 }

@@ -5,15 +5,16 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
 from app.models.billing import Plan, Subscription
-from app.models.enums import DeliverableStatus, TicketStatus
-from app.models.ops import Announcement
+from app.models.enums import DeliverableStatus, TicketStatus, UserRole
+from app.models.ops import Announcement, AuditLog, Notification
 from app.models.support import Ticket
 from app.models.user import ClientProfile, User
 from app.models.work import ClientAssignment, Deliverable
@@ -510,3 +511,81 @@ async def list_announcements(
         }
         for a, author_name, author_email in rows
     ]
+
+
+class PlanBargainCallRequest(BaseModel):
+    target_topic: str = "Plan Pricing & Retainer Negotiation"
+    proposed_offer: str | None = None
+    phone_number: str
+    preferred_time: str = "Immediate / ASAP"
+    notes: str | None = None
+
+
+@router.post("/book-call", response_model=dict[str, Any])
+async def book_plan_bargain_call(
+    payload: PlanBargainCallRequest,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Client books a consultation/bargain call with Admin directly from client dashboard."""
+    client_user = await db.get(User, actor.user_id)
+    if not client_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    client_name = client_user.full_name or client_user.email.split("@")[0]
+    phone = payload.phone_number.strip()
+    if not phone:
+        raise HTTPException(status_code=400, detail="Phone number is required to schedule a call.")
+
+    # 1. Alert all active Admin and Super Admin users
+    admin_stmt = select(User.id).where(
+        User.role.in_([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+        User.account_status == "active",
+    )
+    admin_res = await db.execute(admin_stmt)
+    admin_ids = admin_res.scalars().all()
+
+    notifs = []
+    offer_str = f" • Proposed Offer: {payload.proposed_offer}" if payload.proposed_offer else ""
+    notes_str = f" • Notes: {payload.notes}" if payload.notes else ""
+    for aid in admin_ids:
+        notifs.append(
+            Notification(
+                user_id=aid,
+                title=f"📞 Plan Bargain Call: {client_name}",
+                message=f"{client_name} ({client_user.email}) requested a call to bargain plan: {payload.target_topic}. Contact: {phone} (Preferred: {payload.preferred_time}){offer_str}{notes_str}",
+                link="/admin/clients",
+            )
+        )
+    if notifs:
+        db.add_all(notifs)
+
+    # 2. Add Audit Log
+    db.add(
+        AuditLog(
+            actor_id=actor.user_id,
+            actor_role=actor.role if isinstance(actor.role, UserRole) else None,
+            entity="plan_bargain_call",
+            entity_id=actor.user_id,
+            action="book_bargain_call",
+            to_value={
+                "client_id": str(actor.user_id),
+                "client_name": client_name,
+                "phone": phone,
+                "topic": payload.target_topic,
+                "offer": payload.proposed_offer,
+                "preferred_time": payload.preferred_time,
+                "notes": payload.notes,
+            },
+        )
+    )
+
+    await db.commit()
+
+    return {
+        "status": "call_requested",
+        "client_name": client_name,
+        "phone": phone,
+        "topic": payload.target_topic,
+        "message": f"Negotiation call request logged successfully. Our Agency Director will call you at {phone} ({payload.preferred_time}).",
+    }

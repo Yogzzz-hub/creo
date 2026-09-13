@@ -17,7 +17,7 @@ import json
 import logging
 import uuid
 import os
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 
@@ -36,6 +36,7 @@ from app.models.enums import (
     AccountStatus,
     DeliverableStatus,
     DeliverableType,
+    PaymentProvider,
     SubscriptionStatus,
     TaskStatus,
     TicketStatus,
@@ -617,6 +618,181 @@ async def remove_client_plan(
         "client_id": str(client_id),
         "cancelled_subscriptions": len(cancelled_ids),
         "message": f"Client plan removed successfully ({len(cancelled_ids)} subscription(s) canceled, quotas reset).",
+    }
+
+
+class FixClientPlanRequest(BaseModel):
+    plan_name: str  # "starter", "growth", "pro" (or "accelerator", "enterprise", or UUID)
+    custom_notes: str | None = None
+
+
+@router.post("/clients/{client_id}/fix-plan")
+async def fix_client_plan(
+    client_id: uuid.UUID,
+    payload: FixClientPlanRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Admin sets or fixes one of the 3 agency retainer plans for a client.
+
+    1. Activates subscription for the selected plan (Starter Growth, Brand Accelerator, Enterprise Domination).
+    2. Configures and aligns deliverable monthly quotas (Reels, Static Posters, Carousels/Stories).
+    3. Completes onboarding status (stage 4) and activates account workflow.
+    4. Notifies the client and registers an audit trail.
+    """
+    user = await db.get(User, client_id)
+    if not user:
+        raise NotFound(f"Client {client_id} not found", code="CLIENT_NOT_FOUND")
+
+    # Normalize plan identifier
+    raw_name = payload.plan_name.strip().lower()
+    if raw_name in ("accelerator", "brand accelerator", "growth"):
+        plan_key = "growth"
+    elif raw_name in ("enterprise", "enterprise domination", "pro"):
+        plan_key = "pro"
+    elif raw_name in ("starter", "starter growth"):
+        plan_key = "starter"
+    else:
+        plan_key = raw_name
+
+    # Look up Plan entity
+    plan = None
+    try:
+        plan_uuid = uuid.UUID(payload.plan_name)
+        plan = await db.get(Plan, plan_uuid)
+    except (ValueError, TypeError):
+        pass
+
+    if not plan:
+        plan_stmt = select(Plan).where(func.lower(Plan.name) == plan_key)
+        plan = (await db.execute(plan_stmt)).scalar_one_or_none()
+
+    if not plan:
+        plan_stmt = select(Plan).where(Plan.display_name.ilike(f"%{raw_name}%"))
+        plan = (await db.execute(plan_stmt)).scalar_one_or_none()
+
+    if not plan:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Plan '{payload.plan_name}' not recognized. Valid plans: 'starter' (Starter Growth), 'growth' (Brand Accelerator), 'pro' (Enterprise Domination).",
+        )
+
+    now = datetime.now(UTC)
+    period_end = now + timedelta(days=30)
+
+    # 1. Update existing active subscription or create new one
+    sub_stmt = select(Subscription).where(
+        Subscription.client_id == client_id,
+        Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
+    )
+    existing_sub = (await db.execute(sub_stmt)).scalar_one_or_none()
+
+    if existing_sub:
+        existing_sub.plan_id = plan.id
+        existing_sub.amount = plan.monthly_price
+        existing_sub.status = SubscriptionStatus.ACTIVE
+        existing_sub.current_period_start = now
+        existing_sub.current_period_end = period_end
+    else:
+        new_sub = Subscription(
+            client_id=client_id,
+            plan_id=plan.id,
+            status=SubscriptionStatus.ACTIVE,
+            gateway=PaymentProvider.MANUAL,
+            gateway_subscription_id=f"admin_fixed_{uuid.uuid4().hex[:12]}",
+            amount=plan.monthly_price,
+            current_period_start=now,
+            current_period_end=period_end,
+        )
+        db.add(new_sub)
+
+    # 2. Unlock client account workflow and complete onboarding
+    user.account_status = AccountStatus.ACTIVE
+    prof_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    prof = (await db.execute(prof_stmt)).scalar_one_or_none()
+    if prof:
+        prof.onboarding_completed_at = now
+    else:
+        db.add(ClientProfile(user_id=client_id, onboarding_completed_at=now))
+
+    # 3. Synchronize monthly deliverable usage counters
+    period_start_date = now.date().replace(day=1)
+    if period_start_date.month == 12:
+        period_end_date = date(period_start_date.year + 1, 1, 1) - timedelta(days=1)
+    else:
+        period_end_date = date(period_start_date.year, period_start_date.month + 1, 1) - timedelta(days=1)
+
+    for kind, quota in [
+        (DeliverableType.REEL, plan.reel_quota),
+        (DeliverableType.CAROUSEL, plan.story_quota),
+        (DeliverableType.STATIC_POST, plan.poster_quota),
+    ]:
+        uc_stmt = select(UsageCounter).where(
+            UsageCounter.client_id == client_id,
+            UsageCounter.period_start == period_start_date,
+            UsageCounter.kind == kind,
+        )
+        uc = (await db.execute(uc_stmt)).scalar_one_or_none()
+        if uc:
+            uc.quota = quota
+            if uc.used > quota:
+                uc.used = 0
+            uc.period_end = period_end_date
+        else:
+            db.add(
+                UsageCounter(
+                    client_id=client_id,
+                    period_start=period_start_date,
+                    period_end=period_end_date,
+                    kind=kind,
+                    quota=quota,
+                    used=0,
+                )
+            )
+
+    # 4. Notify client in-app
+    db.add(
+        Notification(
+            user_id=client_id,
+            title=f"🎉 Retainer Plan Fixed: {plan.display_name}",
+            message=f"Your subscription plan has been fixed to {plan.display_name} ({plan.reel_quota} Reels, {plan.poster_quota} Posters, {plan.story_quota} Stories). Deliverables and calendar workflows are now active.",
+            link="/portal",
+        )
+    )
+
+    # 5. Audit Log
+    actor_user = await db.get(User, actor.user_id) if actor.user_id else None
+    db.add(
+        AuditLog(
+            actor_id=actor.user_id if actor_user else None,
+            actor_role=actor.role,
+            entity="client_subscription",
+            entity_id=client_id,
+            action="admin_fix_client_plan",
+            to_value={
+                "client_id": str(client_id),
+                "plan_name": plan.name,
+                "plan_display_name": plan.display_name,
+                "monthly_price": float(plan.monthly_price),
+                "notes": payload.custom_notes or "Admin fixed plan",
+            },
+        )
+    )
+
+    await db.commit()
+
+    return {
+        "status": "plan_fixed",
+        "client_id": str(client_id),
+        "plan_name": plan.name,
+        "plan_display_name": plan.display_name,
+        "monthly_price": float(plan.monthly_price),
+        "quotas": {
+            "reel": plan.reel_quota,
+            "static_post": plan.poster_quota,
+            "carousel": plan.story_quota,
+        },
+        "message": f"Successfully fixed plan to {plan.display_name} for {user.full_name or user.email}.",
     }
 
 

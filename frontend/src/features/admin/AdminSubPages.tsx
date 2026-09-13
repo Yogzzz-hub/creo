@@ -55,6 +55,7 @@ import {
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
 import type { ClientRosterItem, AdminQueueData } from "../../types/ops";
+import { FixPlanModal } from "../../components/admin/FixPlanModal";
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -65,12 +66,17 @@ export function AdminClientsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [fixingClient, setFixingClient] = useState<ClientRosterItem | null>(null);
 
-  useEffect(() => {
+  const loadClients = () => {
     fetchClientRoster(undefined, "admin")
       .then((data) => setClients(data))
       .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadClients();
   }, []);
 
   const filteredClients = clients.filter((c) => {
@@ -162,30 +168,18 @@ export function AdminClientsPage() {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-400">Plan:</span>
-                    <span className="font-semibold text-[#0D2137] capitalize">
-                      {client.plan_name || "Growth Tier"}
-                    </span>
-                  </div>
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    client.onboarding_stage >= 4 && client.plan_name && client.plan_name !== "No Plan"
-                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                      : client.onboarding_stage === 3 && client.plan_name && client.plan_name !== "No Plan"
-                      ? "bg-blue-50 text-[#2B7BC4] border border-blue-200"
-                      : !client.plan_name || client.plan_name === "No Plan"
-                      ? "bg-amber-50 text-amber-800 border border-amber-200"
-                      : "bg-slate-100 text-slate-700 border border-slate-200"
-                  }`}>
-                    {client.onboarding_stage >= 4 && client.plan_name && client.plan_name !== "No Plan"
-                      ? "Stage 4 / 4 • Done"
-                      : client.onboarding_stage === 3 && client.plan_name && client.plan_name !== "No Plan"
-                      ? "Stage 3 / 4 • Strategy Pending"
-                      : !client.plan_name || client.plan_name === "No Plan"
-                      ? "Stage 2 / 4 • Payment Pending"
-                      : `Stage ${Math.max(1, client.onboarding_stage)} / 4 • Setup Pending`}
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
+                  <span className="text-slate-500 font-semibold capitalize">
+                    {client.plan_name || "Growth Tier"}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => setFixingClient(client)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-[#2B7BC4] bg-[#E8F4FD] hover:bg-[#D5EBFA] border border-[#C9DFF0] cursor-pointer transition-colors shadow-2xs"
+                  >
+                    <Sparkles className="size-3 text-[#2B7BC4]" />
+                    <span>Fix Plan</span>
+                  </button>
                 </div>
               </div>
             ))
@@ -201,6 +195,7 @@ export function AdminClientsPage() {
                 <th className="px-4 py-3">Onboarding Stage</th>
                 <th className="px-4 py-3">Current Plan</th>
                 <th className="px-4 py-3">Account Status</th>
+                <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -261,6 +256,17 @@ export function AdminClientsPage() {
                         {client.account_status}
                       </span>
                     </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setFixingClient(client)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-[#2B7BC4] bg-[#E8F4FD] hover:bg-[#D5EBFA] border border-[#C9DFF0] transition-colors cursor-pointer shadow-2xs"
+                        title="Fix or change retainer plan (Starter Growth, Brand Accelerator, Enterprise Domination)"
+                      >
+                        <Sparkles className="size-3.5 text-[#2B7BC4]" />
+                        <span>Fix Plan</span>
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -268,6 +274,16 @@ export function AdminClientsPage() {
           </table>
         </div>
       </div>
+
+      {/* Fix Plan Modal */}
+      <FixPlanModal
+        isOpen={Boolean(fixingClient)}
+        client={fixingClient}
+        onClose={() => setFixingClient(null)}
+        onSuccess={() => {
+          loadClients();
+        }}
+      />
     </div>
   );
 }

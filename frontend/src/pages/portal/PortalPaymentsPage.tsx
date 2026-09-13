@@ -28,8 +28,10 @@ import {
   Smartphone,
   Image as ImageIcon,
   AlertCircle,
+  PhoneCall,
 } from "lucide-react";
 import { InvoiceModal } from "../../components/portal/InvoiceModal";
+import { PlanBargainCallModal } from "../../components/portal/PlanBargainCallModal";
 import { generateInvoicePDF, type InvoiceData } from "../../lib/pdf-invoice";
 
 /* ─── Monotonic Timer Hook (Clock Tampering Resistant) ─────────────────────── */
@@ -117,6 +119,7 @@ function PlanPickerModal({
   onSelect,
   onClose,
   onOpenAddon,
+  onOpenBargain,
 }: {
   plans: Plan[];
   currentPlanName?: string;
@@ -128,6 +131,7 @@ function PlanPickerModal({
   onSelect: (plan: Plan) => void;
   onClose: () => void;
   onOpenAddon?: () => void;
+  onOpenBargain?: () => void;
 }) {
   const realPlans = plans.filter((p) =>
     ["starter", "growth", "pro"].includes(p.name)
@@ -370,6 +374,36 @@ function PlanPickerModal({
               </div>
             );
           })}
+        </div>
+
+        {/* Bargain & Custom Pricing CTA in Plan Picker */}
+        <div className="mt-3 p-3 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/25 flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+          <div className="flex items-center gap-2.5">
+            <div className="size-8 rounded-xl bg-amber-500/20 text-amber-800 flex items-center justify-center shrink-0">
+              <PhoneCall className="size-4" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-amber-950">
+                Want custom deliverables or want to bargain pricing?
+              </p>
+              <p className="text-[11px] text-amber-800/90 mt-0.5">
+                Schedule a call with Creo Leadership to propose your budget and customize your agency retainer.
+              </p>
+            </div>
+          </div>
+          {onOpenBargain && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenBargain();
+              }}
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs font-bold shrink-0 transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+            >
+              <PhoneCall className="size-3.5" />
+              <span>Book Call to Bargain →</span>
+            </button>
+          )}
         </div>
       </div>
     </div>,
@@ -720,6 +754,7 @@ export function PortalPaymentsPage() {
   const queryClient = useQueryClient();
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showAddonModal, setShowAddonModal] = useState(false);
+  const [showBargainModal, setShowBargainModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success" | "error">("idle");
 
@@ -942,8 +977,13 @@ export function PortalPaymentsPage() {
           onSelect={handleSelectPlan}
           onClose={() => setShowPlanModal(false)}
           onOpenAddon={() => setShowAddonModal(true)}
+          onOpenBargain={() => setShowBargainModal(true)}
         />
       )}
+      <PlanBargainCallModal
+        isOpen={showBargainModal}
+        onClose={() => setShowBargainModal(false)}
+      />
       {showAddonModal && (
         <AddonModal
           hasActiveSubscription={isSubscribed}
@@ -1047,7 +1087,15 @@ export function PortalPaymentsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setShowBargainModal(true)}
+            className="inline-flex items-center gap-2 rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-900 px-4 py-2.5 text-xs font-bold transition-all shadow-xs cursor-pointer"
+          >
+            <PhoneCall className="size-3.5 text-amber-600" />
+            <span>Book Call to Bargain</span>
+          </button>
           <button
             type="button"
             onClick={() => {
