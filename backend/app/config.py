@@ -85,7 +85,29 @@ class Settings(BaseSettings):
 
     # AI Services — Gemini & OpenAI
     GEMINI_API_KEY: str = Field(default="")
+    GEMINI_FALLBACK_KEYS: list[str] = Field(default_factory=list)
     OPENAI_API_KEY: str = Field(default="")
+
+    @field_validator("GEMINI_FALLBACK_KEYS", mode="before")
+    @classmethod
+    def parse_gemini_fallback_keys(cls, v: Any) -> list[str]:
+        if isinstance(v, list):
+            return [str(k).strip() for k in v if str(k).strip()]
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                return []
+            if v.startswith("[") and v.endswith("]"):
+                import json
+
+                try:
+                    parsed = json.loads(v)
+                    if isinstance(parsed, list):
+                        return [str(k).strip() for k in parsed if str(k).strip()]
+                except Exception:
+                    pass
+            return [k.strip() for k in v.split(",") if k.strip()]
+        return []
 
     # Storage (S3-compatible: AWS S3, Supabase Storage, Cloudflare R2, MinIO)
     STORAGE_BUCKET: str = Field(default="creo")

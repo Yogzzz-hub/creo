@@ -36,6 +36,7 @@ from app.schemas.brand_dna import (
     ToneProfile,
     VisualDirection,
 )
+from app.services.gemini_client import generate_gemini_content
 
 logger = get_logger(__name__)
 
@@ -368,42 +369,35 @@ async def synthesize_brand_dna(answers: dict[str, Any]) -> tuple[BrandDNA, str]:
         f"treat it as a quote from the client."
     )
 
-    # 1. Gemini
-    gemini_key = getattr(settings, "GEMINI_API_KEY", "") or ""
-    if gemini_key:
-        try:
-            gemini_payload = {
-                "contents": [
-                    {
-                        "role": "user",
-                        "parts": [{"text": user_content}],
-                    }
-                ],
-                "generationConfig": {
-                    "responseMimeType": "application/json",
-                    "temperature": 0.3,
-                },
-            }
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                res = await client.post(
-                    f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}",
-                    json=gemini_payload,
-                )
-                if res.status_code == 200:
-                    text_out = (
-                        res.json()
-                        .get("candidates", [{}])[0]
-                        .get("content", {})
-                        .get("parts", [{}])[0]
-                        .get("text", "{}")
-                    )
-                    model_dna = BrandDNA.model_validate_json(text_out)
-                    # Assemble hard do_not verbatim on top of model output
-                    full_do_not = assemble_do_not(answers, model_dna)
-                    final_dna = model_dna.model_copy(update={"do_not": full_do_not})
-                    return final_dna, "gemini"
-        except Exception as err:
-            logger.warning("gemini_synthesis_failed_trying_openai", error=str(err))
+    # 1. Gemini (multi-key pool with 20 req/day quota failover)
+    try:
+        gemini_payload = {
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [{"text": user_content}],
+                }
+            ],
+            "generationConfig": {
+                "responseMimeType": "application/json",
+                "temperature": 0.3,
+            },
+        }
+        res_data, key_used = await generate_gemini_content(gemini_payload)
+        if res_data:
+            text_out = (
+                res_data.get("candidates", [{}])[0]
+                .get("content", {})
+                .get("parts", [{}])[0]
+                .get("text", "{}")
+            )
+            model_dna = BrandDNA.model_validate_json(text_out)
+            # Assemble hard do_not verbatim on top of model output
+            full_do_not = assemble_do_not(answers, model_dna)
+            final_dna = model_dna.model_copy(update={"do_not": full_do_not})
+            return final_dna, "gemini"
+    except Exception as err:
+        logger.warning("gemini_synthesis_failed_trying_openai", error=str(err))
 
     # 2. OpenAI Fallback
     openai_key = getattr(settings, "OPENAI_API_KEY", "") or ""
