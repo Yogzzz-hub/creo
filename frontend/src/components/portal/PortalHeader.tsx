@@ -4,6 +4,7 @@ import { Bell, Settings, LifeBuoy, LogOut, Building2, ExternalLink, ChevronLeft 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
+import { AnnouncementToast } from "../ops/AnnouncementToast";
 
 interface NotificationItem {
   id: string;
@@ -28,6 +29,7 @@ export function PortalHeader() {
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const bellRef = useRef<HTMLButtonElement>(null);
 
   const { data: notifData } = useQuery<NotificationPayload>({
     queryKey: ["notifications", user?.id],
@@ -159,6 +161,7 @@ export function PortalHeader() {
         {/* Notification Bell with Live Unread Badge */}
         <div className="relative">
           <button
+            ref={bellRef}
             type="button"
             onClick={() => {
               setNotificationOpen(!notificationOpen);
@@ -310,6 +313,9 @@ export function PortalHeader() {
           )}
         </div>
       </div>
+
+      {/* Floating Announcement Toast (Light Mode with Parabolic Flight to Bell) */}
+      <AnnouncementToast bellRef={bellRef} isClientPortal={true} />
     </header>
   );
 }

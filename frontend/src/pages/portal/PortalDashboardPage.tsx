@@ -16,7 +16,6 @@ import {
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
 
-import { PortalAnnouncements } from "../../components/portal/PortalAnnouncements";
 
 export interface TeamHandler {
   id: string;
@@ -208,8 +207,6 @@ export function PortalDashboardPage() {
         </div>
       )}
 
-      {/* ── Agency & Technical Bulletins ───────────────────────────────── */}
-      <PortalAnnouncements />
 
       {/* ── Stat Metric Cards ───────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

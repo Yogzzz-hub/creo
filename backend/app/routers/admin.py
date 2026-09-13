@@ -807,32 +807,45 @@ async def create_announcement(
     db.add(ann)
     await db.flush()
 
-    # Fan out in-app notifications to active staff
+    # Fan out in-app notifications to active staff and clients
     try:
         users_stmt = (
-            select(User.id, StaffProfile.department)
+            select(User.id, User.role, StaffProfile.department)
             .outerjoin(StaffProfile, StaffProfile.user_id == User.id)
             .where(User.account_status == "active")
         )
         users_res = await db.execute(users_stmt)
         user_rows = users_res.fetchall()
 
+        target_depts_lower = [d.lower() for d in target_depts]
         notifs = []
-        for uid, udept in user_rows:
+        for uid, urole, udept in user_rows:
             if uid == actor.user_id:
                 continue
-            if "all" in target_depts or (udept and udept.lower() in [d.lower() for d in target_depts]):
+            role_str = str(urole).lower() if urole else ""
+            is_client = "client" in role_str
+
+            should_notify = False
+            if "all" in target_depts_lower:
+                should_notify = True
+            elif is_client and ("clients" in target_depts_lower or "client" in target_depts_lower):
+                should_notify = True
+            elif not is_client and udept and udept.lower() in target_depts_lower:
+                should_notify = True
+
+            if should_notify:
                 notifs.append(
                     Notification(
                         user_id=uid,
-                        title=f"Broadcast: {clean_title[:50]}",
+                        title=f"📢 Broadcast: {clean_title[:50]}",
                         message=clean_content[:200],
-                        link="/admin/announcements",
+                        link="/portal" if is_client else "/admin/announcements",
                     )
                 )
 
         if notifs:
-            db.add_all(notifs[:100])
+            for i in range(0, len(notifs), 100):
+                db.add_all(notifs[i : i + 100])
     except Exception as exc:
         logger.warning("announcement_notification_fanout_failed", error=str(exc))
 
