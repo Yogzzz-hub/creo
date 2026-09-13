@@ -127,10 +127,228 @@ async def accept_terms(db: AsyncSession, client_id: uuid.UUID, terms_version: st
     await db.commit()
 
 
+QUESTION_MAPPING_V1_TO_V2 = {
+    "old Q1": "A3",
+    "old Q2": "G1",
+    "old Q3": "G2",
+    "old Q4": "G4",
+    "old Q5": "G3",
+    "old Q6": "A5",
+    "old Q7": "B3",
+    "old Q8": "B3",
+    "old Q9": "G2",
+    "old Q10": "F4",
+    "old Q11": "B1",
+    "old Q12": "B3",
+    "old Q13": "B4",
+    "old Q14": "C5",
+    "old Q15": "B5",
+    "old Q16": "B5",
+    "old Q17": ["C8", "D8"],
+    "old Q18": ["C1", "C2", "C3", "C4", "C5", "C6", "D6"],
+    "old Q19": ["C6", "C7", "D7", "E7"],
+    "old Q20": "A6",
+}
+
+
+def map_legacy_answers_to_sections(answers: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Map legacy 20-question branding form answers to new 7-section schema per §4."""
+    sec_a: dict[str, Any] = {
+        "brand_name": answers.get("company_name", ""),
+        "instagram_handle": answers.get("instagram_username", ""),
+        "one_liner": answers.get("brand_description") or answers.get("q1") or "",
+        "category": answers.get("industry") or answers.get("q4") or "other",
+        "products": answers.get("core_offerings") or answers.get("q6") or [],
+        "primary_goal": answers.get("primary_goal") or answers.get("q20") or "brand_awareness",
+        "goal_notes": "",
+    }
+    sec_b: dict[str, Any] = {
+        "ideal_customer": answers.get("target_audience") or answers.get("q11") or "",
+        "problem": answers.get("q8") or answers.get("q12") or answers.get("q7") or "",
+        "why_chosen": answers.get("differentiators") or answers.get("q7") or answers.get("q8") or answers.get("q12") or "",
+        "objections": answers.get("q13") or answers.get("buyer_objections") or "",
+        "competitors": answers.get("competitors") or answers.get("q15") or [],
+        "languages": ["english"],
+        "caption_script": "english_only",
+        "locations": [],
+    }
+    sec_c: dict[str, Any] = {
+        "humour": 4,
+        "formality": 4,
+        "respectfulness": 8,
+        "energy": 7,
+        "voice_words": answers.get("voice_tone") or answers.get("q14") or ["warm", "bold"],
+        "anti_voice_words": ["corporate", "salesy"],
+        "forbidden_phrases": answers.get("brand_taboos") or answers.get("q19") or "",
+        "admired_brands": answers.get("q17") or [],
+    }
+    sec_d: dict[str, Any] = {
+        "brand_guidelines": "none",
+        "colours": answers.get("color_palette") or ["#0D2137", "#2B7BC4"],
+        "fonts": "",
+        "visual_direction": answers.get("q18") or ["clean_minimal"],
+        "visual_avoid": answers.get("q19") or "",
+        "reference_accounts": answers.get("q17") or [],
+    }
+    sec_e: dict[str, Any] = {
+        "on_camera": ["founder"],
+        "founder_comfort": "yes_confident",
+        "shoot_locations": ["our_store_office"],
+        "shoot_city": "Mumbai",
+        "availability": ["weekday_morning"],
+        "samples": "yes",
+        "format_exclusions": [],
+        "cta_destination": "website",
+        "cta_target": "",
+        "legal_constraints": "",
+        "approval_speed": "founder_same_day",
+    }
+    sec_f: dict[str, Any] = {
+        "best_posts": [],
+        "worst_posts": [],
+        "frequency": "weekly",
+        "what_failed": answers.get("q10") or "",
+    }
+    sec_g: dict[str, Any] = {
+        "origin": answers.get("q2") or "",
+        "stands_for": answers.get("q3") or answers.get("q9") or "",
+        "remembered_for": answers.get("q5") or "",
+        "vision": answers.get("q4") or "",
+    }
+    return {
+        "a": sec_a,
+        "b": sec_b,
+        "c": sec_c,
+        "d": sec_d,
+        "e": sec_e,
+        "f": sec_f,
+        "g": sec_g,
+    }
+
+
+async def save_questionnaire_section(
+    db: AsyncSession,
+    client_id: uuid.UUID,
+    section: str,
+    data: dict[str, Any],
+) -> dict[str, Any]:
+    """Autosave an individual questionnaire section (a..g) and unlock core if sections A-E are complete."""
+    sec = section.lower()
+    if sec not in ["a", "b", "c", "d", "e", "f", "g"]:
+        raise Conflict(f"Invalid section '{section}'. Expected one of a..g", code="INVALID_SECTION")
+
+    q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_id)
+    quest = (await db.execute(q_stmt)).scalar_one_or_none()
+
+    now = datetime.now(UTC)
+    if not quest:
+        quest = Questionnaire(
+            id=uuid.uuid4(),
+            user_id=client_id,
+            section_a={},
+            section_b={},
+            section_c={},
+            section_d={},
+            section_e={},
+            section_f={},
+            section_g={},
+            version=1,
+        )
+        db.add(quest)
+
+    # Persist section data
+    setattr(quest, f"section_{sec}", data)
+
+    # Sync Section A details to ClientProfile
+    if sec == "a":
+        p_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+        profile = (await db.execute(p_stmt)).scalar_one_or_none()
+        if profile:
+            if data.get("brand_name"):
+                profile.company_name = str(data["brand_name"])
+            if data.get("instagram_handle"):
+                profile.instagram_username = str(data["instagram_handle"])
+
+    # Core unlock condition: check if Sections A-E have their essential fields
+    has_a = bool(quest.section_a and (quest.section_a.get("brand_name") or quest.section_a.get("one_liner")))
+    has_b = bool(quest.section_b and quest.section_b.get("ideal_customer"))
+    has_c = bool(quest.section_c and ("humour" in quest.section_c or quest.section_c.get("voice_words")))
+    has_d = bool(quest.section_d and (quest.section_d.get("visual_direction") or quest.section_d.get("colours")))
+    has_e = bool(quest.section_e and quest.section_e.get("on_camera"))
+
+    if has_a and has_b and has_c and has_d and has_e:
+        if not quest.core_completed_at:
+            quest.core_completed_at = now
+            if not quest.submitted_at:
+                quest.submitted_at = now
+
+    # Extended completion check
+    has_f = bool(quest.section_f and bool(quest.section_f))
+    has_g = bool(quest.section_g and bool(quest.section_g))
+    if quest.core_completed_at and has_f and has_g:
+        if not quest.extended_completed_at:
+            quest.extended_completed_at = now
+
+    await db.commit()
+    await db.refresh(quest)
+
+    return {
+        "client_id": str(client_id),
+        "section_saved": sec,
+        "core_completed": quest.core_completed_at is not None,
+        "extended_completed": quest.extended_completed_at is not None,
+        "version": quest.version,
+    }
+
+
+async def get_questionnaire_state(
+    db: AsyncSession,
+    client_id: uuid.UUID,
+) -> dict[str, Any]:
+    """Retrieve full questionnaire state across all sections for restore on return."""
+    q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_id)
+    quest = (await db.execute(q_stmt)).scalar_one_or_none()
+
+    if not quest:
+        return {
+            "client_id": str(client_id),
+            "section_a": {},
+            "section_b": {},
+            "section_c": {},
+            "section_d": {},
+            "section_e": {},
+            "section_f": {},
+            "section_g": {},
+            "core_completed": False,
+            "extended_completed": False,
+            "version": 1,
+        }
+
+    return {
+        "client_id": str(client_id),
+        "section_a": quest.section_a or {},
+        "section_b": quest.section_b or {},
+        "section_c": quest.section_c or {},
+        "section_d": quest.section_d or {},
+        "section_e": quest.section_e or {},
+        "section_f": quest.section_f or {},
+        "section_g": quest.section_g or {},
+        "core_completed": quest.core_completed_at is not None,
+        "extended_completed": quest.extended_completed_at is not None,
+        "version": quest.version or 1,
+    }
+
+
 async def submit_questionnaire(
     db: AsyncSession, client_id: uuid.UUID, data: QuestionnaireSubmitRequest
 ) -> Questionnaire:
-    """Persist client questionnaire and update client profile."""
+    """Persist client questionnaire, map to 7 sections, and update client profile."""
+    stage = await get_current_stage(db, client_id)
+    if stage < 3:
+        raise PaymentRequired(
+            "Active subscription required before questionnaire submission",
+            code="PAYMENT_REQUIRED",
+        )
 
     # Upsert questionnaire
     q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_id)
@@ -139,6 +357,7 @@ async def submit_questionnaire(
 
     now = datetime.now(UTC)
     payload = data.model_dump()
+    mapped = map_legacy_answers_to_sections(payload)
 
     if not quest:
         quest = Questionnaire(
@@ -146,11 +365,36 @@ async def submit_questionnaire(
             user_id=client_id,
             answers=payload,
             submitted_at=now,
+            core_completed_at=now,
+            section_a=mapped["a"],
+            section_b=mapped["b"],
+            section_c=mapped["c"],
+            section_d=mapped["d"],
+            section_e=mapped["e"],
+            section_f=mapped["f"],
+            section_g=mapped["g"],
+            version=1,
         )
         db.add(quest)
     else:
         quest.answers = payload
         quest.submitted_at = now
+        if not quest.core_completed_at:
+            quest.core_completed_at = now
+        if not quest.section_a:
+            quest.section_a = mapped["a"]
+        if not quest.section_b:
+            quest.section_b = mapped["b"]
+        if not quest.section_c:
+            quest.section_c = mapped["c"]
+        if not quest.section_d:
+            quest.section_d = mapped["d"]
+        if not quest.section_e:
+            quest.section_e = mapped["e"]
+        if not quest.section_f:
+            quest.section_f = mapped["f"]
+        if not quest.section_g:
+            quest.section_g = mapped["g"]
 
     # Update profile fields and finalize onboarding
     profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)

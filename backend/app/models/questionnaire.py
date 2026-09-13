@@ -23,6 +23,16 @@ class Questionnaire(Base, UUIDPrimaryKeyMixin):
         index=True,
     )
     answers: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+    section_a: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+    section_b: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+    section_c: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+    section_d: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+    section_e: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+    section_f: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+    section_g: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+    core_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    extended_completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    version: Mapped[int] = mapped_column(default=1, nullable=False)
     ai_summary_line: Mapped[str | None] = mapped_column(Text, nullable=True)
     submitted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

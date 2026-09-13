@@ -83,8 +83,9 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_SECRET: str = Field(default="")
     RAZORPAY_WEBHOOK_SECRET: str = Field(default="webhook_secret_creo-26")
 
-    # AI Service — Gemini
+    # AI Services — Gemini & OpenAI
     GEMINI_API_KEY: str = Field(default="")
+    OPENAI_API_KEY: str = Field(default="")
 
     # Storage (S3-compatible: AWS S3, Supabase Storage, Cloudflare R2, MinIO)
     STORAGE_BUCKET: str = Field(default="creo")

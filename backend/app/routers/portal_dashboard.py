@@ -416,6 +416,45 @@ async def disconnect_instagram_integration(
     }
 
 
+@router.get("/brand-dna", response_model=dict[str, Any])
+async def get_portal_brand_dna(
+    client_id: uuid.UUID | None = Query(None),
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Read-only client view of synthesized Brand DNA."""
+    target_id = client_id if (actor.role != "client" and client_id) else (actor.client_id or actor.user_id)
+    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == target_id)
+    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
+
+    if not profile or not profile.brand_dna:
+        from app.models.questionnaire import Questionnaire
+        q_stmt = select(Questionnaire).where(Questionnaire.user_id == target_id)
+        quest = (await db.execute(q_stmt)).scalar_one_or_none()
+        if quest and quest.core_completed_at:
+            from app.services import brand_dna
+            dna = await brand_dna.run_brand_dna_pipeline(db, target_id)
+            return {
+                "brand_dna": dna.model_dump(),
+                "brand_dna_source": profile.brand_dna_source if profile else "template",
+                "brand_dna_version": profile.brand_dna_version if profile else 1,
+                "summary_line": dna.summary_line,
+            }
+        return {
+            "brand_dna": None,
+            "brand_dna_source": "template",
+            "brand_dna_version": 1,
+            "summary_line": None,
+        }
+
+    return {
+        "brand_dna": profile.brand_dna,
+        "brand_dna_source": profile.brand_dna_source or "template",
+        "brand_dna_version": profile.brand_dna_version or 1,
+        "summary_line": profile.brand_summary or (profile.brand_dna.get("summary_line") if isinstance(profile.brand_dna, dict) else None),
+    }
+
+
 @router.post("/brand-dna/regenerate", response_model=dict[str, Any])
 async def regenerate_brand_dna_profile(
     body: dict[str, Any],
@@ -432,13 +471,13 @@ async def regenerate_brand_dna_profile(
     profile = (await db.execute(profile_stmt)).scalar_one_or_none()
     if profile:
         profile.brand_dna = new_dna.model_dump()
-        profile.brand_summary = new_dna.ai_summary_line
+        profile.brand_summary = new_dna.summary_line
         await db.commit()
 
     return {
         "status": "success",
         "brand_dna": new_dna.model_dump(),
-        "brand_summary": new_dna.ai_summary_line,
+        "brand_summary": new_dna.summary_line,
         "message": "Brand strategy regenerated successfully.",
     }
 

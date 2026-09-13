@@ -276,10 +276,10 @@ async def test_brand_dna_fallback_resilience(db_session: AsyncSession) -> None:
 
     # Generate brand DNA
     result = await brand_dna.generate_brand_dna(db_session, client_id, quest.id)
-    assert result.tone == "Raw, Heavy, Elite"
-    assert "Powerlifters" in result.target_audience
-    assert len(result.palette) >= 2
-    assert len(result.recommended_formats) == 3
+    assert result.tone.humour == 4
+    assert len(result.content_pillars) >= 3
+    assert len(result.visual_direction.primary_colors) >= 2
+    assert result.production.can_shoot_people is True
 
     # Check status endpoint
     transport = ASGITransport(app=app)
@@ -290,8 +290,8 @@ async def test_brand_dna_fallback_resilience(db_session: AsyncSession) -> None:
         )
         assert res.status_code == 200
         data = res.json()
-        assert data["status"] == "completed"
-        assert data["brand_dna"]["tone"] == "Raw, Heavy, Elite"
+        assert data["status"] in ("ready", "template")
+        assert data["brand_dna"]["tone"]["humour"] == 4
 
 
 @pytest.mark.asyncio

@@ -403,6 +403,44 @@ class CycleCommentRequest(BaseModel):
 
 # --- Ops Endpoints ---
 
+@ops_router.patch("/clients/{client_id}/brand-dna", response_model=dict[str, Any])
+async def ops_edit_brand_dna(
+    client_id: uuid.UUID,
+    payload: dict[str, Any],
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Account Manager corrects Brand DNA, writes v+1, invalidates blueprint cache, and logs audit diff."""
+    from app.services import brand_dna
+    dna_dict = payload.get("brand_dna", payload)
+    validated = await brand_dna.edit_brand_dna_ops(db, client_id, dna_dict, actor)
+    return {
+        "status": "success",
+        "client_id": str(client_id),
+        "brand_dna": validated.model_dump(),
+        "summary_line": validated.summary_line,
+        "message": "Brand DNA updated successfully.",
+    }
+
+
+@ops_router.post("/clients/{client_id}/brand-dna/regenerate", response_model=dict[str, Any])
+async def ops_regenerate_brand_dna(
+    client_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Account Manager triggers Brand DNA regeneration, capped per day."""
+    from app.services import brand_dna
+    dna = await brand_dna.regenerate_brand_dna_ops(db, client_id, actor)
+    return {
+        "status": "success",
+        "client_id": str(client_id),
+        "brand_dna": dna.model_dump(),
+        "summary_line": dna.summary_line,
+        "message": "Brand DNA regenerated successfully.",
+    }
+
+
 @ops_router.post("/clients/{client_id}/cycles/generate", response_model=dict[str, Any])
 async def ops_generate_cycle(
     client_id: uuid.UUID,

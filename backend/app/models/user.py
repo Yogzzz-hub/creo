@@ -89,6 +89,8 @@ class ClientProfile(Base, TimestampMixin):
     )
     brand_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     brand_dna: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, nullable=False)
+    brand_dna_version: Mapped[int] = mapped_column(default=1, nullable=False)
+    brand_dna_source: Mapped[str] = mapped_column(String(20), default="template", nullable=False)
     timezone: Mapped[str] = mapped_column(String(50), default="Asia/Kolkata", nullable=False)
     calendar_template: Mapped[dict[str, Any] | None] = mapped_column(JSONB, default=None, nullable=True)
     terms_accepted_at: Mapped[datetime | None] = mapped_column(
