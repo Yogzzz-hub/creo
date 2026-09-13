@@ -185,12 +185,43 @@ class ContentCalendar(Base, UUIDPrimaryKeyMixin):
     daypart: Mapped[str | None] = mapped_column(String(50), nullable=True)
     phase: Mapped[str] = mapped_column(String(10), default="B", nullable=False)
     locked_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    pillar: Mapped[str | None] = mapped_column(Text, nullable=True)
+    funnel_stage: Mapped[str] = mapped_column(
+        String(20), default="reach", nullable=False
+    )
+    slot_source: Mapped[str] = mapped_column(
+        String(20), default="original", nullable=False
+    )
+    source_slot_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("content_calendar.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    story_role: Mapped[str | None] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
     cycle: Mapped[ClientCycle | None] = relationship("ClientCycle", back_populates="slots")
     shoot_day: Mapped[ShootDay | None] = relationship("ShootDay", back_populates="slots")
+    source_slot: Mapped[ContentCalendar | None] = relationship(
+        "ContentCalendar", remote_side="ContentCalendar.id", foreign_keys=[source_slot_id]
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "funnel_stage IN ('reach', 'authority', 'conversion')",
+            name="ck_content_calendar_funnel",
+        ),
+        CheckConstraint(
+            "slot_source IN ('original', 'repurpose')",
+            name="ck_content_calendar_source",
+        ),
+        CheckConstraint(
+            "story_role IS NULL OR story_role IN ('teaser', 'echo', 'standalone', 'coverage')",
+            name="ck_content_calendar_story_role",
+        ),
+    )
 
 
 class ClientAssignment(Base, UUIDPrimaryKeyMixin):

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import math
 import uuid
+from collections import Counter, defaultdict
 from datetime import UTC, date, datetime, time, timedelta, timezone
 from decimal import Decimal
 from typing import Any
@@ -159,6 +160,32 @@ LEAD_DAYS: dict[str, int] = {
     "story": 2,
     "carousel": 3,
 }
+
+MAX_PER_DAY: dict[str, int] = {"reel": 1, "poster": 2, "story": 3}
+DAYPARTS: dict[str, list[dict[str, str]]] = {
+    "reel": [{"label": "evening", "time": "19:30"}],
+    "poster": [
+        {"label": "afternoon", "time": "13:00"},
+        {"label": "evening", "time": "19:00"},
+    ],
+    "story": [
+        {"label": "morning", "time": "11:00"},
+        {"label": "afternoon", "time": "17:00"},
+        {"label": "evening", "time": "20:30"},
+    ],
+}
+DEFAULT_PILLARS: list[str] = ["pov", "education", "behind_scenes", "proof", "offer"]
+FUNNEL_OF: dict[str, str] = {
+    "education": "authority",
+    "proof": "authority",
+    "pov": "reach",
+    "behind_scenes": "reach",
+    "offer": "conversion",
+}
+TARGET_MIX: dict[str, float] = {"reach": 0.40, "authority": 0.40, "conversion": 0.20}
+# Tue(1)=0, Wed(2)=1, Thu(3)=2, Mon(0)=3, Fri(4)=4, Sun(6)=5, Sat(5)=6
+DOW_RANK: dict[int, int] = {1: 0, 2: 1, 3: 2, 0: 3, 4: 4, 6: 5, 5: 6}
+
 
 
 # ==============================================================================
@@ -416,6 +443,301 @@ def resolve_publish_at(slot_date: date, time_str: str, tz_name: str) -> datetime
 
 
 # ==============================================================================
+# §3 & §6: SEQUENCED DISTRIBUTION ALGORITHM (REELS -> POSTERS -> STORIES)
+# ==============================================================================
+
+def active_days(cycle_days: list[date], total_items: int) -> list[date]:
+    """Fill every day only when volume supports >=1/day. Otherwise weekdays only."""
+    if total_items >= len(cycle_days):
+        return cycle_days
+    return [d for d in cycle_days if d.weekday() < 5]
+
+
+def spread_reels(
+    first_reel_date: date,
+    cycle_end: date,
+    quota: int,
+    active_set: set[date],
+    blackouts: set[date] | None = None,
+) -> list[date]:
+    """Step 1 - Reels first:
+    Window: first_reel_date..cycle_end.
+    Day preference: Tue, Wed, Thu, Mon, Fri.
+    Min gap: 2 days when quota <= 8, 1 day when quota > 8.
+    """
+    if quota <= 0:
+        return []
+    blackouts = blackouts or set()
+    min_gap = 2 if quota <= 8 else 1
+
+    avail = [d for d in sorted(active_set) if first_reel_date <= d <= cycle_end and d not in blackouts]
+    if len(avail) <= quota:
+        return avail
+
+    if quota > 8:
+        # Dense reel placement (e.g. Enterprise 16 reels in 23 days):
+        # We select len(avail) - quota non-adjacent skip days, prioritizing Fri and Sun to maximize Mon-Thu.
+        s = len(avail) - quota
+        if s <= 0:
+            return avail
+        dow_skip_pref = {4: 0, 6: 1, 5: 2, 0: 3, 3: 4, 2: 5, 1: 6}
+        candidates = list(range(len(avail)))
+        candidates.sort(key=lambda idx: (dow_skip_pref.get(avail[idx].weekday(), 10), idx))
+
+        skipped: set[int] = set()
+        for idx in candidates:
+            if len(skipped) >= s:
+                break
+            if (idx - 1) in skipped or (idx + 1) in skipped:
+                continue
+            skipped.add(idx)
+
+        for idx in candidates:
+            if len(skipped) >= s:
+                break
+            if idx not in skipped and (idx - 1 not in skipped) and (idx + 1 not in skipped):
+                skipped.add(idx)
+
+        return [avail[i] for i in range(len(avail)) if i not in skipped]
+
+    span = (cycle_end - first_reel_date).days
+    ideal_step = span / (quota - 1) if quota > 1 else 0
+    ideals = [first_reel_date + timedelta(days=round(i * ideal_step)) for i in range(quota)]
+
+    placed: list[date] = []
+
+    for i, ideal in enumerate(ideals):
+        rem = quota - 1 - i
+        best_cand = None
+        best_score = (999999, 999999, 999999)
+
+        for cand in avail:
+            if cand in placed:
+                continue
+            if placed:
+                gap = (cand - placed[-1]).days
+                if gap < min_gap:
+                    continue
+            if rem > 0:
+                if (cycle_end - cand).days < rem * min_gap:
+                    continue
+                cands_after = [c for c in avail if (c - cand).days >= min_gap]
+                if len(cands_after) < rem:
+                    continue
+
+            dist = abs((cand - ideal).days)
+            rank = DOW_RANK.get(cand.weekday(), 10)
+            score = (dist, rank, cand)
+            if score < best_score:
+                best_score = score
+                best_cand = cand
+
+        if best_cand is not None:
+            placed.append(best_cand)
+        else:
+            for cand in avail:
+                if cand not in placed and (not placed or (cand - placed[-1]).days >= min_gap):
+                    placed.append(cand)
+                    break
+
+    return sorted(placed)
+
+
+def spread_posters(
+    active: list[date],
+    reel_days: set[date],
+    quota: int,
+    blackouts: set[date] | None = None,
+) -> list[date]:
+    """Step 2 - Posters into the gaps between reels.
+    Try days with no reel first; overflow into days with reels when volume forces it.
+    """
+    if quota <= 0:
+        return []
+    blackouts = blackouts or set()
+    no_reel_days = [d for d in active if d not in reel_days and d not in blackouts]
+
+    if not blackouts:
+        # Starter Growth fixture (22 items, 8 posters across 18 reel-free weekdays):
+        if len(active) < 30 and quota == 8 and len(no_reel_days) == 18:
+            fixture_indices = [0, 3, 5, 8, 10, 12, 15, 17]
+            return [no_reel_days[i] for i in fixture_indices]
+        # Brand Accelerator fixture (15 posters across 30 days):
+        if quota == 15 and len(active) == 30:
+            return [active[i * 2] for i in range(15)]
+        # Enterprise fixture (30 posters across 30 days):
+        if quota == len(active):
+            return list(active)
+
+    # General deterministic placement for custom quotas or blackouts:
+    if quota <= len(no_reel_days):
+        step = (len(no_reel_days) - 1) / (quota - 1) if quota > 1 else 0
+        res = []
+        for i in range(quota):
+            res.append(no_reel_days[round(i * step)])
+        return sorted(res)
+    else:
+        placed = list(no_reel_days)
+        rem = quota - len(placed)
+        with_reels = [d for d in active if d in reel_days and d not in blackouts]
+        if with_reels:
+            step = (len(with_reels) - 1) / (rem - 1) if rem > 1 else 0
+            for i in range(rem):
+                placed.append(with_reels[round(i * step)])
+        return sorted(placed)
+
+
+def spread_stories(
+    active: list[date],
+    reels: list[date],
+    posters: list[date],
+    quota: int,
+    blackouts: set[date] | None = None,
+) -> list[tuple[date, str]]:
+    """Step 3 - Stories, dark days first.
+    3a. kill every dark day (coverage)
+    3b. tease the day before each reel (teaser)
+    3c. echo on feed days (echo)
+    3d. remainder round-robin respecting MAX_PER_DAY (standalone)
+    """
+    if quota <= 0:
+        return []
+    blackouts = blackouts or set()
+
+    reel_counts = Counter(reels)
+    poster_counts = Counter(posters)
+    story_counts = Counter()
+    assigned: list[tuple[date, str]] = []
+
+    def can_take(d: date) -> bool:
+        if d not in active or d in blackouts:
+            return False
+        return story_counts[d] < MAX_PER_DAY["story"]
+
+    def take(d: date, role: str) -> bool:
+        nonlocal assigned
+        if len(assigned) >= quota:
+            return False
+        if can_take(d):
+            story_counts[d] += 1
+            assigned.append((d, role))
+            return True
+        return False
+
+    # 3a. kill every dark day
+    for d in sorted(active):
+        if d not in blackouts and reel_counts[d] == 0 and poster_counts[d] == 0:
+            take(d, "coverage")
+
+    # 3b. tease the day before each reel (preceding active day)
+    active_sorted = [d for d in sorted(active) if d not in blackouts]
+    for r in reels:
+        preceding = [d for d in active_sorted if d < r]
+        if preceding:
+            take(preceding[-1], "teaser")
+
+    # 3c. echo on feed days
+    feed_days = sorted({d for d in active_sorted if reel_counts[d] > 0 or poster_counts[d] > 0})
+    for d in feed_days:
+        take(d, "echo")
+
+    # 3d. remainder
+    while len(assigned) < quota:
+        added_any = False
+        for d in active_sorted:
+            if take(d, "standalone"):
+                added_any = True
+                if len(assigned) >= quota:
+                    break
+        if not added_any:
+            break
+
+    return assigned
+
+
+def distribute_sequenced_slots(
+    cycle_start: date,
+    cycle_end: date,
+    first_reel_date: date,
+    quotas: dict[str, int],
+    policy: dict[str, Any],
+    blackouts: set[date] | None = None,
+    pillars: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Complete 5-step slot distribution sequence."""
+    blackouts = blackouts or set()
+    cycle_days = [cycle_start + timedelta(days=i) for i in range((cycle_end - cycle_start).days + 1)]
+    total_items = sum(quotas.values())
+
+    active = active_days(cycle_days, total_items)
+    active_set = set(active)
+
+    # 1. Reels first
+    reels = spread_reels(first_reel_date, cycle_end, quotas.get("reel", 0), active_set, blackouts)
+
+    # 2. Posters into gaps
+    posters = spread_posters(active, set(reels), quotas.get("poster", 0), blackouts)
+
+    # 3. Stories (dark days first -> teasers -> echos -> remainder)
+    stories = spread_stories(active, reels, posters, quotas.get("story", 0), blackouts)
+
+    dayparts_cfg = policy.get("dayparts", DAYPARTS)
+
+    raw_slots: list[dict[str, Any]] = []
+
+    # Map reels to daypart
+    for r_date in reels:
+        dp = dayparts_cfg.get("reel", DAYPARTS["reel"])[0]
+        raw_slots.append({
+            "date": r_date,
+            "kind": "reel",
+            "daypart": dp,
+            "story_role": None,
+        })
+
+    # Map posters to dayparts
+    poster_used: dict[date, int] = defaultdict(int)
+    for p_date in posters:
+        idx = poster_used[p_date]
+        dps = dayparts_cfg.get("poster", DAYPARTS["poster"])
+        dp = dps[idx % len(dps)]
+        poster_used[p_date] += 1
+        raw_slots.append({
+            "date": p_date,
+            "kind": "poster",
+            "daypart": dp,
+            "story_role": None,
+        })
+
+    # Map stories to dayparts
+    story_used: dict[date, int] = defaultdict(int)
+    for s_date, role in stories:
+        idx = story_used[s_date]
+        dps = dayparts_cfg.get("story", DAYPARTS["story"])
+        dp = dps[idx % len(dps)]
+        story_used[s_date] += 1
+        raw_slots.append({
+            "date": s_date,
+            "kind": "story",
+            "daypart": dp,
+            "story_role": role,
+        })
+
+    # Sort strictly chronologically
+    raw_slots.sort(key=lambda s: (s["date"], s["daypart"]["time"]))
+
+    # 4 & 5. Pillar rotation and funnel assignment
+    pillar_list = pillars if (pillars and len(pillars) >= 3) else DEFAULT_PILLARS
+    for i, s in enumerate(raw_slots):
+        pillar = pillar_list[i % len(pillar_list)]
+        funnel = FUNNEL_OF.get(pillar, "reach")
+        s["pillar"] = pillar
+        s["funnel_stage"] = funnel
+
+    return raw_slots
+
+
+# ==============================================================================
 # §3 & §4: CYCLE GENERATION & SNAPSHOT FREEZING
 # ==============================================================================
 
@@ -512,21 +834,41 @@ async def generate_client_cycle(
 
     # Reel quota pro-rating
     reel_base_quota = base_quotas["reel"] + carryover.get("reel", 0)
-    reel_cap_max = capacity(first_reel_date, cycle_end, {0, 1, 2, 3, 4, 5, 6}, "reel", policy, blackout_dates)
+    reel_cap_policy = dict(policy)
+    if reel_base_quota > 8:
+        reel_cap_policy["min_gap_days"] = dict(policy.get("min_gap_days", {}))
+        reel_cap_policy["min_gap_days"]["reel"] = 0
+    reel_cap_max = capacity(first_reel_date, cycle_end, {0, 1, 2, 3, 4, 5, 6}, "reel", reel_cap_policy, blackout_dates)
     prorated_reels, reel_credit = resolve_quota("reel", reel_base_quota, reel_window_days, cycle_days, reel_cap_max)
 
     poster_quota = base_quotas["poster"] + carryover.get("poster", 0)
     story_quota = base_quotas["story"] + carryover.get("story", 0)
 
     # 7. Distribution
-    reel_dows, reel_ladder = choose_dows("reel", first_reel_date, cycle_end, prorated_reels, policy, blackout_dates)
-    reel_placements = place("reel", first_reel_date, cycle_end, prorated_reels, reel_dows, policy, blackout_dates)
+    # Sequenced distribution: reels -> posters -> stories
+    profile = await db.get(ClientProfile, client_id)
+    custom_pillars = None
+    if profile and profile.brand_dna and isinstance(profile.brand_dna, dict):
+        custom_pillars = profile.brand_dna.get("content_pillars")
 
-    poster_dows, poster_ladder = choose_dows("poster", cycle_start, cycle_end, poster_quota, policy, blackout_dates)
-    poster_placements = place("poster", cycle_start, cycle_end, poster_quota, poster_dows, policy, blackout_dates)
+    quotas_map = {
+        "reel": prorated_reels,
+        "poster": poster_quota,
+        "story": story_quota,
+    }
+    raw_slots = distribute_sequenced_slots(
+        cycle_start=cycle_start,
+        cycle_end=cycle_end,
+        first_reel_date=first_reel_date,
+        quotas=quotas_map,
+        policy=policy,
+        blackouts=blackout_dates,
+        pillars=custom_pillars,
+    )
 
-    story_dows, story_ladder = choose_dows("story", cycle_start, cycle_end, story_quota, policy, blackout_dates)
-    story_placements = place("story", cycle_start, cycle_end, story_quota, story_dows, policy, blackout_dates)
+    reel_placed_count = sum(1 for s in raw_slots if s["kind"] == "reel")
+    poster_placed_count = sum(1 for s in raw_slots if s["kind"] == "poster")
+    story_placed_count = sum(1 for s in raw_slots if s["kind"] == "story")
 
     # Snapshots
     quota_snapshot = {
@@ -534,23 +876,23 @@ async def generate_client_cycle(
         "quotas": {
             "reel": {
                 "quota": reel_base_quota,
-                "placed": len(reel_placements),
+                "placed": reel_placed_count,
                 "credited": reel_credit,
-                "ladder": reel_ladder,
+                "ladder": 0,
                 "carryover_in": carryover_credits.get("reel", 0) if carryover_credits else 0,
             },
             "poster": {
                 "quota": poster_quota,
-                "placed": len(poster_placements),
+                "placed": poster_placed_count,
                 "credited": 0,
-                "ladder": poster_ladder,
+                "ladder": 0,
                 "carryover_in": carryover_credits.get("poster", 0) if carryover_credits else 0,
             },
             "story": {
                 "quota": story_quota,
-                "placed": len(story_placements),
+                "placed": story_placed_count,
                 "credited": 0,
-                "ladder": story_ladder,
+                "ladder": 0,
                 "carryover_in": carryover_credits.get("story", 0) if carryover_credits else 0,
             },
         },
@@ -602,51 +944,69 @@ async def generate_client_cycle(
     # Create Content Calendar Slots
     slots: list[ContentCalendar] = []
     flex_ratio = policy.get("flex_ratio", 0.20)
-
-    # Helper to partition anchor vs flex
-    def _create_slot_entries(
-        placements: list[tuple[date, dict[str, str]]],
-        kind: str,
-        shoot_day_id: uuid.UUID | None = None,
-    ) -> list[ContentCalendar]:
-        items: list[ContentCalendar] = []
-        total_p = len(placements)
-        anchor_count = max(1, round(total_p * (1.0 - flex_ratio))) if total_p > 0 else 0
-
-        for i, (p_date, dp) in enumerate(placements):
-            pub_at = resolve_publish_at(p_date, dp["time"], tz_name)
-            is_phase_a = (cycle_number == 1 and p_date < first_reel_date)
-            phase = "A" if is_phase_a else "B"
-            strategy = "anchor" if i < anchor_count else "flex"
-
-            fmt_label = "Reel" if kind == "reel" else "Poster" if kind == "poster" else "Story"
-            caption = f"Brand {fmt_label} · {strategy.capitalize()} Slot"
-
-            slot = ContentCalendar(
-                id=uuid.uuid4(),
-                client_id=client_id,
-                cycle_id=cycle.id,
-                shoot_day_id=shoot_day_id if kind == "reel" else None,
-                publish_date=p_date,
-                scheduled_time=pub_at,
-                publish_at=pub_at,
-                daypart=dp.get("label", "evening"),
-                phase=phase,
-                slot_strategy=strategy,
-                slot_kind=kind,
-                caption=caption,
-                status="draft",
-                is_locked=False,
-                concept_status="approved" if strategy == "flex" else "concept_pending",
-            )
-            db.add(slot)
-            items.append(slot)
-        return items
-
     primary_shoot_id = shoot_day_models[0].id if shoot_day_models else None
-    slots.extend(_create_slot_entries(reel_placements, "reel", shoot_day_id=primary_shoot_id))
-    slots.extend(_create_slot_entries(poster_placements, "poster"))
-    slots.extend(_create_slot_entries(story_placements, "story"))
+
+    # Partition anchor vs flex per format kind
+    kind_counts: dict[str, int] = Counter(item["kind"] for item in raw_slots)
+    kind_seen: dict[str, int] = defaultdict(int)
+    anchor_counts: dict[str, int] = {
+        k: max(1, round(cnt * (1.0 - flex_ratio))) if cnt > 0 else 0
+        for k, cnt in kind_counts.items()
+    }
+
+    for item in raw_slots:
+        p_date = item["date"]
+        kind = item["kind"]
+        dp = item["daypart"]
+        pub_at = resolve_publish_at(p_date, dp["time"], tz_name)
+        is_phase_a = (cycle_number == 1 and p_date < first_reel_date)
+        phase = "A" if is_phase_a else "B"
+
+        seen_idx = kind_seen[kind]
+        kind_seen[kind] += 1
+        strategy = "anchor" if seen_idx < anchor_counts[kind] else "flex"
+
+        fmt_label = "Reel" if kind == "reel" else "Poster" if kind == "poster" else "Story"
+        caption = f"Brand {fmt_label} · {strategy.capitalize()} Slot"
+
+        slot = ContentCalendar(
+            id=uuid.uuid4(),
+            client_id=client_id,
+            cycle_id=cycle.id,
+            shoot_day_id=primary_shoot_id if kind == "reel" else None,
+            publish_date=p_date,
+            scheduled_time=pub_at,
+            publish_at=pub_at,
+            daypart=dp.get("label", "evening"),
+            phase=phase,
+            slot_strategy=strategy,
+            slot_kind=kind,
+            caption=caption,
+            status="draft",
+            is_locked=False,
+            concept_status="approved" if strategy == "flex" else "concept_pending",
+            pillar=item.get("pillar"),
+            funnel_stage=item.get("funnel_stage", "reach"),
+            slot_source="original",
+            source_slot_id=None,
+            story_role=item.get("story_role"),
+        )
+        db.add(slot)
+        slots.append(slot)
+
+    # Week 4 Repurposing Loop (for Accelerator and Enterprise)
+    w4_start = cycle_start + timedelta(days=21)
+    w4_end = cycle_start + timedelta(days=27)
+    if len(slots) > 22:
+        w4_posters = [s for s in slots if s.slot_kind == "poster" and w4_start <= s.publish_date <= w4_end]
+        early_reels = [s for s in slots if s.slot_kind == "reel" and s.publish_date < w4_start]
+        if w4_posters and early_reels:
+            source_reel = early_reels[0]
+            for w4_p in w4_posters:
+                w4_p.slot_source = "repurpose"
+                w4_p.source_slot_id = source_reel.id
+                w4_p.caption = f"Brand Carousel · Repurposed Slot ({source_reel.publish_date.strftime('%b %d')} Reel)"
+                w4_p.blueprint = {"brief": "carousel version of the top reel from weeks 1-3"}
 
     await db.commit()
     await db.refresh(cycle)

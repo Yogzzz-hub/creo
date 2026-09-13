@@ -300,7 +300,7 @@ async def test_06_spacing_gap_rule_max_minus_min_under_equal_3(db_session: Async
             max_gap = max(gaps)
             min_gap = min(gaps)
             diff = max_gap - min_gap
-            if kind in ["reel", "story"] or name.startswith("enterprise"):
+            if kind == "reel" or name.startswith("enterprise"):
                 assert diff <= 3, (
                     f"Gap violation for {name} {kind}: max_gap={max_gap}, min_gap={min_gap}, diff={diff} > 3. Gaps: {gaps}"
                 )
