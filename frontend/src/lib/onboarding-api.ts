@@ -56,6 +56,13 @@ export function completeOnboarding(userId: string): Promise<OnboardingCompleteRe
   });
 }
 
+export function resendOnboardingSummary(userId: string): Promise<{ status: string; message: string; notified: number; emails_sent: number }> {
+  return request<{ status: string; message: string; notified: number; emails_sent: number }>("/api/v1/onboarding/resend-summary", {
+    method: "POST",
+    headers: actorHeaders(userId),
+  });
+}
+
 export interface QuestionnaireState {
   client_id: string;
   section_a: Record<string, any>;

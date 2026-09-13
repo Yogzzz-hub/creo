@@ -472,6 +472,14 @@ async def run_brand_dna_pipeline(db: AsyncSession, client_id: uuid.UUID) -> Bran
     await db.commit()
     await db.refresh(profile)
     logger.info("brand_dna_pipeline_completed", client_id=str(client_id), source=source)
+
+    # If pod is already assigned, deliver updated Brand DNA brief to the team
+    try:
+        from app.services.onboarding_service import notify_team_of_new_client_summary
+        await notify_team_of_new_client_summary(db, client_id)
+    except Exception as e_notif:
+        logger.warning("failed_to_notify_team_of_brand_dna", error=str(e_notif))
+
     return dna
 
 

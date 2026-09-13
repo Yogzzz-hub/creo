@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = Field(default="development")
     PORT: int = Field(default=8000)
     VERSION: str = Field(default="0.1.0")
+    FRONTEND_URL: str = Field(default="https://creo.yogalakshmibaskar20.workers.dev")
 
     # Database
     DATABASE_URL: str = Field(

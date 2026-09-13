@@ -142,10 +142,16 @@ export function PortalAccountPage() {
       setToneKeywords(
         answers.tone_keywords && answers.tone_keywords.length > 0
           ? answers.tone_keywords
-          : dna.tone ? dna.tone.split(",").map((s: string) => s.trim()) : ["Bold", "Professional"]
+          : typeof dna.tone === "string"
+          ? dna.tone.split(",").map((s: string) => s.trim())
+          : Array.isArray(dna.tone?.voice_words)
+          ? dna.tone.voice_words
+          : ["Bold", "Professional"]
       );
       if (Array.isArray(dna.palette)) {
         setBrandColors(dna.palette.join(", "));
+      } else if (Array.isArray(dna.visual_direction?.primary_colors)) {
+        setBrandColors(dna.visual_direction.primary_colors.join(", "));
       } else if (dna.brand_colors) {
         setBrandColors(dna.brand_colors);
       }

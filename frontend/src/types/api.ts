@@ -71,15 +71,70 @@ export interface CreateOrderResponse {
   key_id?: string;
 }
 
+export interface ToneProfile {
+  humour?: number;
+  formality?: number;
+  respectfulness?: number;
+  energy?: number;
+  voice_words?: string[];
+  anti_voice_words?: string[];
+  writing_rules?: string[];
+}
+
+export interface ContentPillar {
+  name: string;
+  rationale: string;
+  answers_objection?: string | null;
+  example_angles?: string[];
+  best_formats?: Array<"reel" | "poster" | "carousel" | "story" | string>;
+  funnel_stage?: "reach" | "authority" | "conversion" | string;
+}
+
+export interface AudienceSegment {
+  name: string;
+  description: string;
+  core_pain_point?: string;
+}
+
+export interface VisualDirection {
+  styles?: string[];
+  primary_colors?: string[];
+  visual_avoid?: string[];
+}
+
+export interface ProductionProfile {
+  can_shoot_people?: boolean;
+  founder_on_camera?: boolean;
+  default_reel_style?: string;
+  feasible_formats?: string[];
+  infeasible_formats?: string[];
+}
+
+export interface LanguageRules {
+  primary_languages?: string[];
+  caption_script?: string;
+  on_screen_text_script?: string;
+}
+
 export interface BrandDNA {
+  summary_line?: string;
+  positioning?: string;
+  audience_segments?: AudienceSegment[];
+  tone?: string | ToneProfile;
+  content_pillars?: ContentPillar[];
+  visual_direction?: VisualDirection;
+  language_rules?: LanguageRules;
+  production?: ProductionProfile;
+  cta_bank?: string[];
+  do_not?: string[];
+  confidence_notes?: string[];
+
+  // Legacy & convenience compatibility fields
   company_name?: string;
-  tone: string;
-  target_audience: string;
-  palette: string[];
-  recommended_formats: string[];
-  /** Backend field name from BrandDNASummary */
-  ai_summary_line: string;
-  /** Convenience alias populated from brand_summary in the status response */
+  target_audience?: string;
+  palette?: string[];
+  recommended_formats?: string[];
+  ai_summary_line?: string;
   summary?: string;
   audience_persona?: string;
   goal_alignment?: string;
@@ -87,8 +142,11 @@ export interface BrandDNA {
 }
 
 export interface BrandDNAStatus {
-  status: "pending" | "completed" | "failed";
+  status: "generating" | "ready" | "template" | "pending" | "completed" | "failed";
   brand_dna: BrandDNA | null;
+  brand_dna_source?: string;
+  brand_dna_version?: number;
+  summary_line?: string | null;
 }
 
 export interface QuestionnairePayload {

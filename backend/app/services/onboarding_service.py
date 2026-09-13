@@ -13,8 +13,11 @@ from typing import Any
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.core.errors import Conflict, NotFound, PaymentRequired
+from app.core.logging import get_logger
 from app.models.enums import UserRole
+from app.models.ops import Notification
 from app.models.questionnaire import Questionnaire
 from app.models.user import ClientProfile, User
 from app.models.work import ClientAssignment
@@ -23,6 +26,9 @@ from app.schemas.onboarding import (
     OnboardingStatusResponse,
     QuestionnaireSubmitRequest,
 )
+from app.services.email_service import send_email
+
+logger = get_logger(__name__)
 
 STAGE_NAMES = {
     0: "Account Registered",
@@ -477,9 +483,356 @@ async def complete_onboarding(db: AsyncSession, client_id: uuid.UUID) -> Onboard
         })
 
     await db.commit()
+
+    # Automatically notify and email the assigned team lead & specialists with the client's Brand DNA summary
+    try:
+        await notify_team_of_new_client_summary(db, client_id)
+    except Exception as e_notify:
+        logger.error("failed_to_notify_team_of_onboarding_summary", error=str(e_notify))
+
     return OnboardingCompleteResponse(
         status="completed",
         onboarding_completed_at=now,
         assigned_team=assigned_team,
     )
+
+
+async def notify_team_of_new_client_summary(
+    db: AsyncSession,
+    client_id: uuid.UUID,
+) -> dict[str, Any]:
+    """Dispatch comprehensive Brand DNA brief and client parameters to assigned team lead and specialists."""
+    # 1. Fetch Client Profile & Client User
+    client_stmt = select(User).where(User.id == client_id)
+    client_user = (await db.execute(client_stmt)).scalar_one_or_none()
+
+    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
+
+    company_name = (
+        (profile.company_name if profile and profile.company_name else None)
+        or (client_user.full_name if client_user else None)
+        or "New Client"
+    )
+    ig_handle = profile.instagram_username if profile and profile.instagram_username else "N/A"
+
+    # 2. Resolve Brand DNA data
+    brand_dna_data = profile.brand_dna if profile and profile.brand_dna else {}
+    if not brand_dna_data:
+        try:
+            from app.services.brand_dna import run_brand_dna_pipeline
+            dna_obj = await run_brand_dna_pipeline(db, client_id)
+            if dna_obj:
+                brand_dna_data = dna_obj.model_dump()
+        except Exception as e_dna:
+            logger.warning("could_not_synthesize_brand_dna_for_summary", error=str(e_dna))
+
+    summary_line = (
+        brand_dna_data.get("summary_line")
+        or (profile.brand_summary if profile else None)
+        or "Strategic brand production roadmap active."
+    )
+    positioning = brand_dna_data.get("positioning") or summary_line
+
+    # 3. Query Assigned Pod Handlers
+    ca_stmt = (
+        select(ClientAssignment, User)
+        .join(User, User.id == ClientAssignment.user_id)
+        .where(ClientAssignment.client_id == client_id)
+    )
+    ca_rows = (await db.execute(ca_stmt)).all()
+
+    if not ca_rows:
+        logger.warning("notify_team_no_assignments_found", client_id=str(client_id))
+        return {"notified": 0, "emails_sent": 0}
+
+    team_roster = []
+    for ca, u in ca_rows:
+        role_label = "Pod Specialist"
+        if ca.role == "team_lead":
+            role_label = "Team Lead & Account Director"
+        elif ca.role == "video_editor":
+            role_label = "Lead Video Editor (Reels & Motion)"
+        elif ca.role == "graphic_designer":
+            role_label = "Lead Graphic Designer (Posters & Carousels)"
+        team_roster.append({
+            "user": u,
+            "role_key": ca.role,
+            "role_title": role_label,
+        })
+
+    # 4. Extract Brand DNA components safely
+    tone_data = brand_dna_data.get("tone") or {}
+    voice_words = []
+    anti_voice = []
+    writing_rules = []
+    if isinstance(tone_data, dict):
+        voice_words = [str(w) for w in (tone_data.get("voice_words") or [])]
+        anti_voice = [str(w) for w in (tone_data.get("anti_voice_words") or [])]
+        writing_rules = [str(r) for r in (tone_data.get("writing_rules") or [])]
+    elif isinstance(tone_data, str):
+        voice_words = [w.strip() for w in tone_data.split(",") if w.strip()]
+
+    audience_data = brand_dna_data.get("audience_segments") or []
+    pillars_data = brand_dna_data.get("content_pillars") or []
+    visual_data = brand_dna_data.get("visual_direction") or {}
+    palette = visual_data.get("primary_colors") or brand_dna_data.get("palette") or []
+    visual_styles = visual_data.get("styles") or []
+    do_not_rules = [str(d) for d in (brand_dna_data.get("do_not") or [])]
+    prod_data = brand_dna_data.get("production") or {}
+    feasible_formats = prod_data.get("feasible_formats") or brand_dna_data.get("recommended_formats") or []
+    reel_style = prod_data.get("default_reel_style") or "talking_head"
+
+    frontend_base = (getattr(settings, "FRONTEND_URL", "https://creo.yogalakshmibaskar20.workers.dev") or "https://creo.yogalakshmibaskar20.workers.dev").rstrip("/")
+    portal_link = f"{frontend_base}/portal/calendar"
+
+    notified_count = 0
+    emails_sent_count = 0
+
+    # Build Team Roster HTML rows
+    roster_rows_html = "".join([
+        f'<tr>'
+        f'<td style="padding: 8px 12px; border-bottom: 1px solid #E2E8F0; font-weight: bold; color: #0D2137;">{m["role_title"]}</td>'
+        f'<td style="padding: 8px 12px; border-bottom: 1px solid #E2E8F0; color: #334155;">{m["user"].full_name or m["user"].email}</td>'
+        f'<td style="padding: 8px 12px; border-bottom: 1px solid #E2E8F0; color: #64748B; font-size: 12px;">{m["user"].email}</td>'
+        f'</tr>'
+        for m in team_roster
+    ])
+
+    # Build Content Pillars HTML snippet
+    pillars_html = ""
+    if isinstance(pillars_data, list) and pillars_data:
+        for p in pillars_data:
+            if isinstance(p, dict):
+                p_name = p.get("name", "Content Pillar")
+                p_stage = str(p.get("funnel_stage") or "reach").upper()
+                p_rationale = p.get("rationale", "")
+                p_formats = ", ".join([str(fmt) for fmt in (p.get("best_formats") or [])])
+                pillars_html += f"""
+                <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <strong style="color: #0D2137; font-size: 13px;">{p_name}</strong>
+                    <span style="font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background-color: #E0F2FE; color: #0369A1;">{p_stage}</span>
+                  </div>
+                  <p style="margin: 3px 0 0 0; font-size: 12px; color: #475569; line-height: 1.4;">{p_rationale}</p>
+                  {f'<p style="margin: 4px 0 0 0; font-size: 11px; color: #2B7BC4;"><strong>Best Formats:</strong> {p_formats}</p>' if p_formats else ''}
+                </div>
+                """
+            elif isinstance(p, str):
+                pillars_html += f'<div style="padding: 6px 10px; background: #F8FAFC; border-radius: 6px; margin-bottom: 6px; font-size: 12px; color: #334155;">• {p}</div>'
+
+    # Build Audience HTML snippet
+    audience_html = ""
+    if isinstance(audience_data, list) and audience_data:
+        for a in audience_data:
+            if isinstance(a, dict):
+                a_name = a.get("name", "Audience Segment")
+                a_desc = a.get("description", "")
+                a_pain = a.get("core_pain_point", "")
+                audience_html += f"""
+                <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
+                  <strong style="color: #0D2137; font-size: 13px;">{a_name}</strong>
+                  <p style="margin: 2px 0; font-size: 12px; color: #475569;">{a_desc}</p>
+                  {f'<p style="margin: 4px 0 0 0; font-size: 11px; color: #DC2626;"><strong>Pain Point Solved:</strong> {a_pain}</p>' if a_pain else ''}
+                </div>
+                """
+            elif isinstance(a, str):
+                audience_html += f'<p style="font-size: 12px; color: #475569;">• {a}</p>'
+    elif brand_dna_data.get("target_audience"):
+        audience_html = f'<p style="font-size: 12px; color: #475569;">{brand_dna_data.get("target_audience")}</p>'
+
+    # Build Color Palette chips
+    palette_html = ""
+    if isinstance(palette, list) and palette:
+        palette_html = " ".join([
+            f'<span style="display: inline-block; padding: 3px 8px; margin-right: 4px; margin-bottom: 4px; border-radius: 4px; background-color: {c if str(c).startswith("#") else "#2B7BC4"}; color: #FFFFFF; font-size: 10px; font-family: monospace; font-weight: bold; border: 1px solid rgba(0,0,0,0.1);">{c}</span>'
+            for c in palette
+        ])
+
+    # Build Tone badges
+    voice_badges_html = " ".join([
+        f'<span style="display: inline-block; padding: 2px 8px; margin: 2px; border-radius: 4px; background-color: #EFF6FF; color: #1D4ED8; font-size: 11px; font-weight: bold; border: 1px solid #BFDBFE;">{w}</span>'
+        for w in voice_words
+    ]) if voice_words else '<span style="color: #64748B; font-size: 12px;">Warm, Bold, Authoritative</span>'
+
+    anti_voice_html = " ".join([
+        f'<span style="display: inline-block; padding: 2px 8px; margin: 2px; border-radius: 4px; background-color: #FEF2F2; color: #B91C1C; font-size: 11px; font-weight: bold; border: 1px solid #FECACA;">Avoid {w}</span>'
+        for w in anti_voice
+    ]) if anti_voice else ""
+
+    rules_html = "".join([f'<li style="margin-bottom: 3px;">{r}</li>' for r in writing_rules])
+    do_not_html = "".join([f'<li style="margin-bottom: 3px; color: #991B1B;">{r}</li>' for r in do_not_rules]) if do_not_rules else ""
+
+    # Dispatch to each team member
+    for item in team_roster:
+        member = item["user"]
+        role_title = item["role_title"]
+
+        # 1. In-app Notification
+        notif_msg = (
+            f"Client {company_name} (@{ig_handle}) has completed onboarding.\n"
+            f"Your Assigned Role: {role_title}\n"
+            f"Strategic Vector: \"{positioning}\"\n"
+            f"30-day production roadmap and calendar slots are active in workspace."
+        )
+        notif = Notification(
+            id=uuid.uuid4(),
+            user_id=member.id,
+            title=f"New Client Assigned: {company_name}",
+            message=notif_msg,
+            link=portal_link,
+            is_read=False,
+            sent_at=datetime.now(UTC),
+        )
+        db.add(notif)
+        notified_count += 1
+
+        # 2. Branded HTML Email
+        email_subject = f"[Creo Brief] New Client Assigned: {company_name} — Brand DNA & Roadmap"
+        email_html = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>{email_subject}</title>
+</head>
+<body style="margin:0; padding:0; background-color:#F1F5F9; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F1F5F9; padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width:640px; background-color:#FFFFFF; border-radius:16px; border:1px solid #E2E8F0; overflow:hidden; box-shadow:0 4px 16px rgba(15,23,42,0.06);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #0D2137 0%, #1E609A 100%); padding: 28px 24px; text-align: left;">
+              <div style="font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #93C5FD; margin-bottom: 6px;">
+                CREO PRODUCTION ENGINE • POD ASSIGNMENT
+              </div>
+              <h1 style="margin: 0; color: #FFFFFF; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">
+                New Client Assigned: {company_name}
+              </h1>
+              <p style="margin: 6px 0 0 0; color: #E2E8F0; font-size: 13px;">
+                Instagram: @{ig_handle} • Onboarding Complete & Calendar Drafted
+              </p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 24px;">
+              <p style="font-size: 14px; color: #334155; margin-top: 0;">
+                Hello <strong>{member.full_name or 'Creative Specialist'}</strong>,
+              </p>
+              <div style="background-color: #EFF6FF; border-left: 4px solid #2B7BC4; padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+                <p style="margin: 0; font-size: 13px; color: #1E3A8A; font-weight: 600;">
+                  You have been assigned as: <span style="color: #2B7BC4; font-weight: 800;">{role_title}</span>
+                </p>
+              </div>
+
+              <!-- Strategic Vector -->
+              <div style="background-color: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #2B7BC4; margin-bottom: 6px;">
+                  Core Strategic Positioning
+                </div>
+                <p style="margin: 0; font-size: 15px; font-weight: 700; color: #0D2137; font-style: italic; line-height: 1.5;">
+                  &ldquo;{positioning}&rdquo;
+                </p>
+              </div>
+
+              <!-- Pod Roster -->
+              <div style="margin-bottom: 24px;">
+                <h3 style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #64748B; margin-bottom: 8px;">
+                  Assigned Creative Pod Handlers
+                </h3>
+                <table width="100%" cellspacing="0" cellpadding="0" style="border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; border-collapse: collapse;">
+                  {roster_rows_html}
+                </table>
+              </div>
+
+              <!-- Tone & Voice -->
+              <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #64748B; margin-bottom: 8px;">
+                  Tone Profile & Voice Words
+                </h3>
+                <div style="margin-bottom: 8px;">{voice_badges_html} {anti_voice_html}</div>
+                {f'<ul style="margin: 6px 0; padding-left: 20px; font-size: 12px; color: #475569;">{rules_html}</ul>' if rules_html else ''}
+              </div>
+
+              <!-- Audience -->
+              {f'<div style="margin-bottom: 20px;"><h3 style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #64748B; margin-bottom: 8px;">Target Audience Segments</h3>{audience_html}</div>' if audience_html else ''}
+
+              <!-- Pillars -->
+              {f'<div style="margin-bottom: 20px;"><h3 style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #64748B; margin-bottom: 8px;">30-Day Content Pillars</h3>{pillars_html}</div>' if pillars_html else ''}
+
+              <!-- Visual & Production -->
+              <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #64748B; margin-bottom: 8px;">
+                  Production Directives
+                </h3>
+                {f'<div style="margin-bottom: 8px;"><strong>Brand Palette:</strong> {palette_html}</div>' if palette_html else ''}
+                <div style="font-size: 12px; color: #475569; margin-bottom: 4px;">
+                  <strong>Default Reel Style:</strong> {str(reel_style).replace("_", " ").title()}
+                </div>
+                {f'<div style="font-size: 12px; color: #475569; margin-bottom: 4px;"><strong>Feasible Formats:</strong> {", ".join([str(f) for f in feasible_formats])}</div>' if feasible_formats else ''}
+              </div>
+
+              <!-- Hard Guardrails -->
+              {f'<div style="margin-bottom: 24px; background-color: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 12px;"><h4 style="margin: 0 0 6px 0; font-size: 12px; text-transform: uppercase; color: #B91C1C;">Hard Production Guardrails</h4><ul style="margin: 0; padding-left: 20px; font-size: 12px;">{do_not_html}</ul></div>' if do_not_html else ''}
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 24px;">
+                <tr>
+                  <td align="center">
+                    <a href="{portal_link}" style="display: inline-block; background: linear-gradient(135deg, #2B7BC4 0%, #1E609A 100%); color: #FFFFFF; font-size: 14px; font-weight: 700; text-decoration: none; padding: 14px 28px; border-radius: 12px; box-shadow: 0 4px 12px rgba(43,123,196,0.3);">
+                      Open Client Production Workspace &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 16px 24px; text-align: center; font-size: 11px; color: #94A3B8;">
+              Creo Production Intelligence Engine • Automated Brief Dispatch
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+        plain_text = (
+            f"CREO WORKSPACE POD ASSIGNMENT\n\n"
+            f"Client: {company_name} (@{ig_handle})\n"
+            f"Role: {role_title}\n"
+            f"Strategic Positioning: {positioning}\n\n"
+            f"Tone Voice Words: {', '.join(voice_words)}\n"
+            f"Pillars Defined: {len(pillars_data)}\n\n"
+            f"Open Client Production Workspace: {portal_link}\n"
+        )
+
+        try:
+            if member.email:
+                sent = await send_email(
+                    to_email=member.email,
+                    subject=email_subject,
+                    html_content=email_html,
+                    text_content=plain_text,
+                )
+                if sent:
+                    emails_sent_count += 1
+        except Exception as email_err:
+            logger.warning("failed_to_send_team_brief_email", member=member.email, error=str(email_err))
+
+    await db.commit()
+    logger.info(
+        "team_onboarding_summary_dispatched",
+        client_id=str(client_id),
+        company=company_name,
+        notifications=notified_count,
+        emails=emails_sent_count,
+    )
+    return {"notified": notified_count, "emails_sent": emails_sent_count}
 

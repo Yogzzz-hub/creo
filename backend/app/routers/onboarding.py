@@ -172,6 +172,22 @@ async def complete_onboarding(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> OnboardingCompleteResponse:
-    """Complete client onboarding and assign creative pod."""
+    """Complete client onboarding, assign creative pod, and notify handlers with Brand DNA summary."""
     client_id = actor.client_id or actor.user_id
     return await onboarding_service.complete_onboarding(db, client_id)
+
+
+@router.post("/resend-summary")
+async def resend_onboarding_summary(
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Manually dispatch or re-send client Brand DNA summary brief to assigned creative pod handlers."""
+    client_id = actor.client_id or actor.user_id
+    result = await onboarding_service.notify_team_of_new_client_summary(db, client_id)
+    return {
+        "status": "ok",
+        "message": "Brand DNA summary and onboarding brief dispatched to assigned team lead and specialists.",
+        **result,
+    }
+
