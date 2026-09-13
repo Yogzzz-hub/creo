@@ -31,8 +31,16 @@ from app.core.cache import invalidate_user_session
 from app.core.errors import Conflict, Forbidden, NotFound
 from app.core.rbac import Actor, AdminActor, InvestorActor, SalesActor, StaffActor, TeamLeadActor
 from app.db.session import get_db
-from app.models.billing import Plan, Subscription
-from app.models.enums import AccountStatus, DeliverableStatus, DeliverableType, TaskStatus, TicketStatus, UserRole
+from app.models.billing import Plan, Subscription, UsageCounter
+from app.models.enums import (
+    AccountStatus,
+    DeliverableStatus,
+    DeliverableType,
+    SubscriptionStatus,
+    TaskStatus,
+    TicketStatus,
+    UserRole,
+)
 from app.models.ops import Announcement, AuditLog, LeaveRequest, Notification
 from app.models.support import Ticket, TicketMessage
 from app.models.user import ClientProfile, StaffProfile, User
@@ -526,6 +534,73 @@ async def suspend_user(
         "user_id": str(user_id),
         "account_status": AccountStatus.SUSPENDED.value,
         "token_version": user.token_version,
+    }
+
+
+class RemoveClientPlanRequest(BaseModel):
+    reason: str | None = "Admin removed plan / refund request"
+
+
+@router.post("/clients/{client_id}/remove-plan")
+async def remove_client_plan(
+    client_id: uuid.UUID,
+    payload: RemoveClientPlanRequest | None = None,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Remove a client's plan, cancel active subscriptions, and reset deliverable quotas.
+
+    Used when a client accidentally paid or requested a refund. Does NOT suspend the user account.
+    """
+    user = await db.get(User, client_id)
+    if not user:
+        raise NotFound(f"Client {client_id} not found", code="CLIENT_NOT_FOUND")
+
+    reason = payload.reason if payload and payload.reason else "Admin removed plan / refund request"
+
+    # 1. Cancel all active or trialing subscriptions for this client
+    sub_stmt = select(Subscription).where(
+        Subscription.client_id == client_id,
+        Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
+    )
+    res = await db.execute(sub_stmt)
+    active_subs = res.scalars().all()
+    cancelled_ids = []
+    for sub in active_subs:
+        sub.status = SubscriptionStatus.CANCELED
+        cancelled_ids.append(str(sub.id))
+
+    # 2. Reset active usage counters to zero
+    usage_stmt = select(UsageCounter).where(UsageCounter.client_id == client_id)
+    u_res = await db.execute(usage_stmt)
+    counters = u_res.scalars().all()
+    for counter in counters:
+        counter.quota = 0
+        counter.used = 0
+
+    # 3. Log audit entry
+    actor_user = await db.get(User, actor.user_id) if actor.user_id else None
+    audit = AuditLog(
+        actor_id=actor.user_id if actor_user else None,
+        actor_role=actor.role,
+        entity="client_subscription",
+        entity_id=client_id,
+        action="client_plan_removed",
+        to_value={
+            "client_id": str(client_id),
+            "reason": reason,
+            "cancelled_subscription_ids": cancelled_ids,
+            "reset_counter_count": len(counters),
+        },
+    )
+    db.add(audit)
+    await db.commit()
+
+    return {
+        "status": "plan_removed",
+        "client_id": str(client_id),
+        "cancelled_subscriptions": len(cancelled_ids),
+        "message": f"Client plan removed successfully ({len(cancelled_ids)} subscription(s) canceled, quotas reset).",
     }
 
 

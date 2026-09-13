@@ -79,6 +79,23 @@ export async function suspendUser(
   );
 }
 
+export async function removeClientPlan(
+  clientId: string,
+  reason?: string,
+  _role = "admin",
+): Promise<{ status: string; client_id: string; message: string }> {
+  return request<{ status: string; client_id: string; message: string }>(
+    `/api/v1/admin/clients/${clientId}/remove-plan`,
+    {
+      method: "POST",
+      body: JSON.stringify({ reason: reason || "Admin removed plan / refund request" }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+  );
+}
+
 export async function refreshKPIs(
   _adminUserId?: string,
   _role = "admin",
@@ -87,4 +104,5 @@ export async function refreshKPIs(
     method: "POST",
   });
 }
+
 

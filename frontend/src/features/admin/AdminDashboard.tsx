@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
+  PackageMinus,
   RefreshCw,
   Shield,
   ShieldAlert,
@@ -28,7 +29,7 @@ import {
   fetchClientRoster,
   fetchSLABreaches,
   refreshKPIs,
-  suspendUser,
+  removeClientPlan,
 } from "../../lib/ops-api";
 import type { AdminKPIs, AdminQueueData, ClientRosterItem, SLABreachItem } from "../../types/ops";
 
@@ -82,23 +83,23 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
     }
   };
 
-  const handleSuspendUser = async (userId: string) => {
+  const handleRemovePlan = async (clientId: string, clientName: string) => {
     if (
       !confirm(
-        "Are you sure you want to suspend this user? Their session will be revoked immediately.",
+        `Are you sure you want to remove the active plan for "${clientName}"?\n\nThis will cancel their subscription and reset deliverable quotas to zero (for refund or accidental payment cases). The client account will remain active so they can continue to access the portal.`,
       )
     ) {
       return;
     }
     try {
-      await suspendUser(userId, undefined, actorRole);
+      await removeClientPlan(clientId, "Admin removed plan / refund request", actorRole);
       setMessage({
         type: "success",
-        text: "User suspended successfully. Live sessions invalidated.",
+        text: `Plan removed successfully for ${clientName}. Active subscription canceled and quotas reset.`,
       });
       await loadAllData();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to suspend user.";
+      const msg = err instanceof Error ? err.message : "Failed to remove client plan.";
       setMessage({ type: "error", text: msg });
     }
   };
@@ -374,18 +375,23 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
                 )}
 
                 {/* Action button */}
-                {c.account_status !== "suspended" && (
-                  <div className="pt-2 flex justify-end">
+                <div className="pt-2 flex justify-end">
+                  {c.plan_name && c.plan_name !== "No Plan" && (c.subscription_status === 'active' || c.subscription_status === 'trialing') ? (
                     <button
                       type="button"
-                      onClick={() => handleSuspendUser(c.client_id)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 cursor-pointer transition-colors"
+                      onClick={() => handleRemovePlan(c.client_id, c.company_name || c.email)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 cursor-pointer transition-colors"
+                      title="Cancel active subscription and reset quotas (e.g. for refund or accidental payment)"
                     >
-                      <UserX className="size-3.5" />
-                      <span>Suspend Access</span>
+                      <PackageMinus className="size-3.5" />
+                      <span>Remove Plan</span>
                     </button>
-                  </div>
-                )}
+                  ) : (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium text-slate-400 bg-slate-50 border border-slate-200/60">
+                      No Active Plan
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
             {clients.length === 0 && (
@@ -483,15 +489,20 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
                       )}
                     </td>
                     <td className="py-3.5 px-5 text-right">
-                      {c.account_status !== "suspended" && (
+                      {c.plan_name && c.plan_name !== "No Plan" && (c.subscription_status === 'active' || c.subscription_status === 'trialing') ? (
                         <button
                           type="button"
-                          onClick={() => handleSuspendUser(c.client_id)}
-                          className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
+                          onClick={() => handleRemovePlan(c.client_id, c.company_name || c.email)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
+                          title="Cancel active subscription and reset quotas (e.g. for refund or accidental payment)"
                         >
-                          <UserX className="size-3.5" />
-                          <span>Suspend</span>
+                          <PackageMinus className="size-3.5" />
+                          <span>Remove Plan</span>
                         </button>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 font-medium italic">
+                          No Active Plan
+                        </span>
                       )}
                     </td>
                   </tr>
