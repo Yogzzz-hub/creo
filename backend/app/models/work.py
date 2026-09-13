@@ -27,6 +27,7 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from app.models.enums import DeliverableStatus, DeliverableType, TaskStatus, pg_enum
 
 if TYPE_CHECKING:
+    from app.models.calendar import ClientCycle, ShootDay
     from app.models.user import User
 
 
@@ -170,9 +171,26 @@ class ContentCalendar(Base, UUIDPrimaryKeyMixin):
     concept_status: Mapped[str] = mapped_column(String(30), default="approved", nullable=False)
     blueprint: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True, default=None)
     selected_hook: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True, default=None)
+    cycle_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("client_cycles.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    shoot_day_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("shoot_days.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    publish_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    daypart: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    phase: Mapped[str] = mapped_column(String(10), default="B", nullable=False)
+    locked_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+    cycle: Mapped[ClientCycle | None] = relationship("ClientCycle", back_populates="slots")
+    shoot_day: Mapped[ShootDay | None] = relationship("ShootDay", back_populates="slots")
 
 
 class ClientAssignment(Base, UUIDPrimaryKeyMixin):

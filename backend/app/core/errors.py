@@ -27,6 +27,18 @@ class AppError(Exception):
         self.status_code = status_code
 
 
+class ValidationError(AppError):
+    """Input or operation validation error."""
+
+    def __init__(
+        self,
+        message: str = "Validation error",
+        code: str = "VALIDATION_ERROR",
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(message=message, code=code, details=details, status_code=400)
+
+
 class NotFound(AppError):
     """Resource was not found."""
 

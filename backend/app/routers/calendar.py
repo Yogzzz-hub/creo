@@ -53,8 +53,8 @@ async def get_calendar_entries(
     res = await db.execute(stmt)
     cal_rows = res.all()
 
-    calendar_list = []
-    seen_deliverable_ids = set()
+    calendar_list: list[dict[str, Any]] = []
+    seen_deliverable_ids: set[uuid.UUID] = set()
 
     for cal, d, d_type in cal_rows:
         if d:
@@ -342,3 +342,405 @@ async def propose_flex_fill_endpoint(
         "slot_strategy": slot.slot_strategy,
         "blueprint": slot.blueprint,
     }
+
+
+# ==============================================================================
+# §9: OPS ROUTER & PORTAL ROUTER (Creo Content Calendar Engine)
+# ==============================================================================
+
+from datetime import date, datetime
+from pydantic import BaseModel
+from sqlalchemy.orm import selectinload
+from app.models.calendar import ClientCycle, ShootDay
+from app.services.calendar_engine import (
+    approve_cycle,
+    complete_shoot_day,
+    decide_shoot_reschedule,
+    generate_client_cycle,
+    get_or_create_calendar_policy,
+    request_shoot_reschedule,
+    resolve_publish_at,
+)
+
+ops_router = APIRouter(prefix="/ops", tags=["Calendar Ops"])
+portal_router = APIRouter(prefix="/portal", tags=["Calendar Portal"])
+
+
+# --- Request Schemas ---
+
+class GenerateCycleRequest(BaseModel):
+    cycle_number: int = 1
+    start_date: date | None = None
+    plan_id: uuid.UUID | None = None
+    carryover_credits: dict[str, int] | None = None
+
+
+class MoveSlotRequest(BaseModel):
+    publish_date: date
+    time_str: str | None = None
+    daypart: str | None = None
+
+
+class RescheduleDecisionRequest(BaseModel):
+    accept: bool
+    note: str | None = None
+    counter_proposal: datetime | None = None
+
+
+class ShootCompleteRequest(BaseModel):
+    footage_received_at: datetime | None = None
+
+
+class RequestRescheduleRequest(BaseModel):
+    requested_for: datetime
+    reason: str
+
+
+class CycleCommentRequest(BaseModel):
+    slot_id: uuid.UUID | None = None
+    body: str
+
+
+# --- Ops Endpoints ---
+
+@ops_router.post("/clients/{client_id}/cycles/generate", response_model=dict[str, Any])
+async def ops_generate_cycle(
+    client_id: uuid.UUID,
+    payload: GenerateCycleRequest | None = None,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Generate draft cycle, shoot days, and slots under deterministic rules."""
+    req = payload or GenerateCycleRequest()
+    cycle, shoot_days, slots = await generate_client_cycle(
+        db,
+        client_id=client_id,
+        cycle_number=req.cycle_number,
+        start_date=req.start_date,
+        plan_id=req.plan_id,
+        carryover_credits=req.carryover_credits,
+        created_by=actor.user_id,
+    )
+    return {
+        "status": "draft_generated",
+        "cycle_id": str(cycle.id),
+        "cycle_number": cycle.cycle_number,
+        "start_date": cycle.start_date.isoformat(),
+        "end_date": cycle.end_date.isoformat(),
+        "runway_start": cycle.runway_start.isoformat() if cycle.runway_start else None,
+        "shoot_days": [
+            {
+                "id": str(s.id),
+                "sequence": s.sequence,
+                "scheduled_at": s.scheduled_at.isoformat(),
+                "status": s.status,
+            }
+            for s in shoot_days
+        ],
+        "total_slots": len(slots),
+        "reels": sum(1 for s in slots if s.slot_kind == "reel"),
+        "posters": sum(1 for s in slots if s.slot_kind == "poster"),
+        "stories": sum(1 for s in slots if s.slot_kind == "story"),
+        "quota_snapshot": cycle.quota_snapshot,
+    }
+
+
+@ops_router.get("/cycles/{cycle_id}", response_model=dict[str, Any])
+async def ops_get_cycle(
+    cycle_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Fetch full cycle draft with all slots and shoot days for AM editing."""
+    stmt = (
+        select(ClientCycle)
+        .options(
+            selectinload(ClientCycle.slots),
+            selectinload(ClientCycle.shoot_days),
+        )
+        .where(ClientCycle.id == cycle_id)
+    )
+    cycle = (await db.execute(stmt)).scalar_one_or_none()
+    if not cycle:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Cycle not found")
+
+    return {
+        "id": str(cycle.id),
+        "client_id": str(cycle.client_id),
+        "cycle_number": cycle.cycle_number,
+        "start_date": cycle.start_date.isoformat(),
+        "end_date": cycle.end_date.isoformat(),
+        "runway_start": cycle.runway_start.isoformat() if cycle.runway_start else None,
+        "status": cycle.status,
+        "quota_snapshot": cycle.quota_snapshot,
+        "shoot_days": [
+            {
+                "id": str(s.id),
+                "sequence": s.sequence,
+                "scheduled_at": s.scheduled_at.isoformat(),
+                "status": s.status,
+                "duration_min": s.duration_min,
+                "location": s.location,
+            }
+            for s in cycle.shoot_days
+        ],
+        "slots": [
+            {
+                "id": str(s.id),
+                "slot_kind": s.slot_kind,
+                "publish_date": s.publish_date.isoformat(),
+                "publish_at": s.publish_at.isoformat() if s.publish_at else None,
+                "daypart": s.daypart,
+                "phase": s.phase,
+                "slot_strategy": s.slot_strategy,
+                "caption": s.caption,
+                "status": s.status,
+                "is_locked": s.is_locked,
+            }
+            for s in sorted(cycle.slots, key=lambda x: (x.publish_date, x.publish_at or x.scheduled_time))
+        ],
+    }
+
+
+@ops_router.patch("/cycles/{cycle_id}/slots/{slot_id}", response_model=dict[str, Any])
+async def ops_move_slot(
+    cycle_id: uuid.UUID,
+    slot_id: uuid.UUID,
+    payload: MoveSlotRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """AM moves or updates a single draft slot."""
+    from fastapi import HTTPException
+
+    slot = await db.get(ContentCalendar, slot_id)
+    if not slot or slot.cycle_id != cycle_id:
+        raise HTTPException(status_code=404, detail="Slot not found in cycle")
+
+    cycle = await db.get(ClientCycle, cycle_id)
+    if not cycle or cycle.status != "draft":
+        raise HTTPException(status_code=400, detail="Only draft cycle slots can be modified.")
+
+    policy_row = await get_or_create_calendar_policy(db, slot.client_id)
+    tz_name = policy_row.timezone or "Asia/Kolkata"
+
+    slot.publish_date = payload.publish_date
+    if payload.daypart:
+        slot.daypart = payload.daypart
+    time_val = payload.time_str or "19:30"
+    pub_at = resolve_publish_at(payload.publish_date, time_val, tz_name)
+    slot.publish_at = pub_at
+    slot.scheduled_time = pub_at
+
+    await db.commit()
+    await db.refresh(slot)
+    return {
+        "status": "slot_updated",
+        "slot_id": str(slot.id),
+        "publish_date": slot.publish_date.isoformat(),
+        "publish_at": slot.publish_at.isoformat() if slot.publish_at else None,
+    }
+
+
+@ops_router.post("/cycles/{cycle_id}/publish-draft", response_model=dict[str, Any])
+async def ops_publish_draft(
+    cycle_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Send draft cycle to the client (transitions to 'client_review')."""
+    from fastapi import HTTPException
+
+    cycle = await db.get(ClientCycle, cycle_id)
+    if not cycle:
+        raise HTTPException(status_code=404, detail="Cycle not found")
+
+    cycle.status = "client_review"
+    await db.commit()
+    return {"status": "client_review", "cycle_id": str(cycle.id)}
+
+
+@ops_router.post("/shoots/{shoot_id}/decide", response_model=dict[str, Any])
+async def ops_decide_shoot(
+    shoot_id: uuid.UUID,
+    payload: RescheduleDecisionRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Team decides on reschedule request with cascade and 48h guardrail."""
+    shoot = await decide_shoot_reschedule(
+        db,
+        shoot_id=shoot_id,
+        actor=actor,
+        accept=payload.accept,
+        note=payload.note,
+        counter_proposal=payload.counter_proposal,
+    )
+    return {
+        "status": shoot.status,
+        "shoot_id": str(shoot.id),
+        "scheduled_at": shoot.scheduled_at.isoformat(),
+        "decision_note": shoot.decision_note,
+    }
+
+
+@ops_router.post("/shoots/{shoot_id}/complete", response_model=dict[str, Any])
+async def ops_complete_shoot(
+    shoot_id: uuid.UUID,
+    payload: ShootCompleteRequest | None = None,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Mark shoot completed and record footage intake timestamp."""
+    shoot = await complete_shoot_day(
+        db,
+        shoot_id=shoot_id,
+        footage_received_at=payload.footage_received_at if payload else None,
+    )
+    return {
+        "status": "completed",
+        "shoot_id": str(shoot.id),
+        "footage_received_at": shoot.footage_received_at.isoformat() if shoot.footage_received_at else None,
+    }
+
+
+# --- Portal Endpoints ---
+
+@portal_router.get("/calendar", response_model=dict[str, Any])
+async def portal_get_calendar(
+    month: str | None = Query(None),
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Client portal view of current content calendar, shoot days, and carried credits."""
+    target_id = actor.client_id or actor.user_id
+
+    # 1. Fetch active, client_review, or latest cycle
+    cycle_stmt = (
+        select(ClientCycle)
+        .options(
+            selectinload(ClientCycle.slots),
+            selectinload(ClientCycle.shoot_days),
+        )
+        .where(ClientCycle.client_id == target_id)
+        .order_by(
+            ClientCycle.status == "active",
+            ClientCycle.status == "client_review",
+            ClientCycle.created_at.desc(),
+        )
+        .limit(1)
+    )
+    cycle = (await db.execute(cycle_stmt)).scalar_one_or_none()
+
+    carryover_msg: str | None = None
+    if cycle and cycle.quota_snapshot:
+        quotas = cycle.quota_snapshot.get("quotas", {})
+        reel_cred = quotas.get("reel", {}).get("credited", 0)
+        if reel_cred > 0:
+            carryover_msg = (
+                f"{reel_cred} reels carried into next cycle — your first month includes a production ramp."
+            )
+
+    slots_data: list[dict[str, Any]] = []
+    shoot_data: list[dict[str, Any]] = []
+    if cycle:
+        slots_data = [
+            {
+                "id": str(s.id),
+                "format": s.slot_kind,
+                "publish_date": s.publish_date.isoformat(),
+                "publish_at": s.publish_at.isoformat() if s.publish_at else None,
+                "scheduled_time": s.publish_at.strftime("%I:%M %p") if s.publish_at else None,
+                "daypart": s.daypart,
+                "phase": s.phase,
+                "strategy": s.slot_strategy,
+                "caption": s.caption,
+                "status": s.status,
+                "is_locked": s.is_locked,
+            }
+            for s in sorted(cycle.slots, key=lambda x: (x.publish_date, x.publish_at or x.scheduled_time))
+        ]
+        shoot_data = [
+            {
+                "id": str(s.id),
+                "sequence": s.sequence,
+                "scheduled_at": s.scheduled_at.isoformat(),
+                "status": s.status,
+                "duration_min": s.duration_min,
+                "location": s.location,
+            }
+            for s in cycle.shoot_days
+        ]
+
+    return {
+        "client_id": str(target_id),
+        "cycle": {
+            "id": str(cycle.id) if cycle else None,
+            "cycle_number": cycle.cycle_number if cycle else 1,
+            "status": cycle.status if cycle else "none",
+            "start_date": cycle.start_date.isoformat() if cycle else None,
+            "end_date": cycle.end_date.isoformat() if cycle else None,
+            "runway_start": cycle.runway_start.isoformat() if cycle and cycle.runway_start else None,
+            "quota_snapshot": cycle.quota_snapshot if cycle else None,
+        } if cycle else None,
+        "carryover_message": carryover_msg,
+        "shoot_days": shoot_data,
+        "slots": slots_data,
+    }
+
+
+@portal_router.post("/cycles/{cycle_id}/approve", response_model=dict[str, Any])
+async def portal_approve_cycle(
+    cycle_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Client approves calendar cycle, locking slots and generating production tasks."""
+    return await approve_cycle(db, cycle_id, actor)
+
+
+@portal_router.post("/cycles/{cycle_id}/comment", response_model=dict[str, Any])
+async def portal_comment_cycle(
+    cycle_id: uuid.UUID,
+    payload: CycleCommentRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Client leaves feedback or comment on cycle or individual slot."""
+    from app.models.ops import Notification
+
+    notif = Notification(
+        id=uuid.uuid4(),
+        user_id=actor.user_id,
+        title="Client Calendar Feedback",
+        message=f"Comment on cycle {cycle_id}: {payload.body}",
+    )
+    db.add(notif)
+    await db.commit()
+    return {"status": "comment_received", "cycle_id": str(cycle_id), "slot_id": str(payload.slot_id) if payload.slot_id else None}
+
+
+@portal_router.post("/shoots/{shoot_id}/request-reschedule", response_model=dict[str, Any])
+async def portal_request_reschedule(
+    shoot_id: uuid.UUID,
+    payload: RequestRescheduleRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = Depends(get_current_actor),
+) -> dict[str, Any]:
+    """Client requests a shoot day reschedule."""
+    target_id = actor.client_id or actor.user_id
+    shoot = await request_shoot_reschedule(
+        db,
+        shoot_id=shoot_id,
+        client_id=target_id,
+        requested_for=payload.requested_for,
+        reason=payload.reason,
+    )
+    return {
+        "status": shoot.status,
+        "shoot_id": str(shoot.id),
+        "requested_for": shoot.requested_for.isoformat() if shoot.requested_for else None,
+        "reason": shoot.request_reason,
+    }
+

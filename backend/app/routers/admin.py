@@ -69,6 +69,10 @@ class PlanUpdateRequest(BaseModel):
     monthly_price: Decimal | None = None
     scarcity_slots: int | None = None
     is_active: bool | None = None
+    posters: int | None = None
+    reels: int | None = None
+    stories: int | None = None
+    revision_rounds: int | None = None
 
 
 # --- Routes ---
@@ -475,6 +479,18 @@ async def update_plan(
     if payload.is_active is not None:
         changes["is_active"] = {"from": plan.is_active, "to": payload.is_active}
         plan.is_active = payload.is_active
+    if payload.posters is not None:
+        changes["posters"] = {"from": plan.poster_quota, "to": payload.posters}
+        plan.poster_quota = payload.posters
+    if payload.reels is not None:
+        changes["reels"] = {"from": plan.reel_quota, "to": payload.reels}
+        plan.reel_quota = payload.reels
+    if payload.stories is not None:
+        changes["stories"] = {"from": plan.story_quota, "to": payload.stories}
+        plan.story_quota = payload.stories
+    if payload.revision_rounds is not None:
+        changes["revision_rounds"] = {"from": plan.revision_rounds, "to": payload.revision_rounds}
+        plan.revision_rounds = payload.revision_rounds
 
     audit = AuditLog(
         actor_id=actor.user_id,
@@ -601,6 +617,109 @@ async def remove_client_plan(
         "client_id": str(client_id),
         "cancelled_subscriptions": len(cancelled_ids),
         "message": f"Client plan removed successfully ({len(cancelled_ids)} subscription(s) canceled, quotas reset).",
+    }
+
+
+# ==============================================================================
+# §8: CALENDAR ENGINE ADMIN CONTROLS
+# ==============================================================================
+
+class AdminClientPlanChangeRequest(BaseModel):
+    plan_id: uuid.UUID
+    effective: str = "next_cycle"
+
+
+class AdminPolicyOverrideRequest(BaseModel):
+    policy: dict[str, Any]
+
+
+class AdminReelLagRequest(BaseModel):
+    days: int
+
+
+class AdminBlackoutRequest(BaseModel):
+    date: date
+    reason: str
+    client_id: uuid.UUID | None = None
+
+
+@router.patch("/clients/{client_id}/plan")
+async def admin_patch_client_plan(
+    client_id: uuid.UUID,
+    payload: AdminClientPlanChangeRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Change client plan: 'next_cycle' (safe default) or 'immediate' (rejects with 409 if cycle active)."""
+    from app.services.calendar_engine import admin_change_client_plan
+
+    return await admin_change_client_plan(db, client_id, payload.plan_id, payload.effective, actor)
+
+
+@router.patch("/clients/{client_id}/calendar-policy")
+async def admin_patch_calendar_policy(
+    client_id: uuid.UUID,
+    payload: AdminPolicyOverrideRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Full L2 calendar policy override."""
+    from app.services.calendar_engine import admin_set_calendar_policy
+
+    policy = await admin_set_calendar_policy(db, client_id, payload.policy, actor)
+    return {"status": "policy_updated", "client_id": str(client_id), "source": policy.source}
+
+
+@router.patch("/clients/{client_id}/reel-lag")
+async def admin_patch_reel_lag(
+    client_id: uuid.UUID,
+    payload: AdminReelLagRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Update reel lag days (3..21) per client, affecting future cycles and shoots."""
+    from app.services.calendar_engine import admin_set_reel_lag
+
+    policy = await admin_set_reel_lag(db, client_id, payload.days, actor)
+    return {"status": "reel_lag_updated", "client_id": str(client_id), "reel_lag_days": payload.days}
+
+
+@router.post("/clients/{client_id}/cycles/{cycle_number}/regenerate")
+async def admin_post_regenerate_cycle(
+    client_id: uuid.UUID,
+    cycle_number: int,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Regenerate draft cycle slots with fresh placement math."""
+    from app.services.calendar_engine import admin_regenerate_cycle
+
+    cycle, shoot_days, slots = await admin_regenerate_cycle(db, client_id, cycle_number, actor)
+    return {
+        "status": "cycle_regenerated",
+        "client_id": str(client_id),
+        "cycle_number": cycle.cycle_number,
+        "total_slots": len(slots),
+        "quota_snapshot": cycle.quota_snapshot,
+    }
+
+
+@router.post("/blackouts")
+async def admin_post_blackout(
+    payload: AdminBlackoutRequest,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Add a calendar blackout date (client-specific or global)."""
+    from app.services.calendar_engine import admin_add_blackout
+
+    b = await admin_add_blackout(db, payload.date, payload.reason, payload.client_id, actor)
+    return {
+        "status": "blackout_created",
+        "id": str(b.id),
+        "date": b.blackout_on.isoformat(),
+        "reason": b.reason,
+        "client_id": str(b.client_id) if b.client_id else None,
     }
 
 

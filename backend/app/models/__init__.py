@@ -13,6 +13,12 @@ from app.models.enums import (
     TicketStatus,
     UserRole,
 )
+from app.models.calendar import (
+    CalendarBlackout,
+    CalendarPolicy,
+    ClientCycle,
+    ShootDay,
+)
 from app.models.ops import Announcement, AuditLog, LeaveRequest, Notification
 from app.models.questionnaire import Questionnaire
 from app.models.support import Ticket, TicketMessage
@@ -44,6 +50,11 @@ __all__ = [
     "Deliverable",
     "ContentCalendar",
     "ClientAssignment",
+    # Calendar Engine
+    "ClientCycle",
+    "ShootDay",
+    "CalendarPolicy",
+    "CalendarBlackout",
     # Support
     "Ticket",
     "TicketMessage",
