@@ -24,6 +24,7 @@ def create_access_token(
     role: str,
     email: str | None = None,
     client_id: str | uuid.UUID | None = None,
+    agency_id: str | uuid.UUID | None = None,
     expires_delta: timedelta | None = None,
     extra_claims: dict[str, Any] | None = None,
 ) -> str:
@@ -46,6 +47,8 @@ def create_access_token(
         payload["email"] = email
     if client_id:
         payload["client_id"] = str(client_id)
+    if agency_id:
+        payload["agency_id"] = str(agency_id)
     if extra_claims:
         payload.update(extra_claims)
 

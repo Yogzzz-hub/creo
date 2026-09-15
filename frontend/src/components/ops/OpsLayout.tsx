@@ -41,8 +41,6 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard, roles: ["admin", "super_admin"] },
   { label: "Clients Roster", href: "/admin/clients", icon: Users, roles: ["admin", "super_admin"] },
 
-  // Team Lead & Member Primary Home
-  { label: "Kanban Board", href: "/dashboard", icon: LayoutDashboard, roles: ["team_member", "team_lead", "editor", "designer"] },
 
   // Operations & Production (Shared)
   { label: "Task Queue", href: "/admin/tasks", icon: CheckSquare, roles: ["admin", "super_admin", "team_lead", "team_member", "editor", "designer"] },
@@ -59,7 +57,6 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { label: "Add-ons Catalog", href: "/admin/addons", icon: Puzzle, roles: ["admin", "super_admin"] },
   { label: "SLA Escalations", href: "/admin/escalations", icon: AlertTriangle, roles: ["admin", "super_admin"] },
   { label: "Settings", href: "/admin/settings", icon: Settings, roles: ["admin", "super_admin"] },
-  { label: "Kanban Board", href: "/kanban", icon: LayoutDashboard, roles: ["admin", "super_admin"] },
 ];
 
 export function OpsLayout() {
@@ -75,14 +72,9 @@ export function OpsLayout() {
   const isTeamStaff = userRole === "team_lead" || userRole === "team_member" || userRole === "editor" || userRole === "designer";
   const isAdmin = userRole === "admin" || userRole === "super_admin";
 
-  const isKanban =
-    location.pathname === "/dashboard" || location.pathname === "/kanban";
-
   const isMainOpsPage = [
     "/admin",
     "/admin/",
-    "/dashboard",
-    "/kanban",
     "/admin/clients",
     "/admin/queue",
     "/admin/tasks",
@@ -212,20 +204,7 @@ export function OpsLayout() {
             );
           })}
 
-          {/* For Admins, provide direct link to Creative Kanban */}
-          {isAdmin && (
-            <Link
-              to="/dashboard"
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-colors mt-2 ${
-                isKanban
-                  ? "bg-[#2B7BC4] text-white font-semibold shadow-xs"
-                  : "text-[#6BAED6] hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              <CheckSquare className="size-4 shrink-0" />
-              Kanban Board
-            </Link>
-          )}
+
 
         </nav>
 
@@ -416,15 +395,6 @@ export function OpsLayout() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Quick Kanban Shortcut */}
-            <Link
-              to="/dashboard"
-              className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors ${
-                isKanban ? "bg-[#2B7BC4] text-white" : "text-slate-600 bg-slate-100 hover:bg-slate-200"
-              }`}
-            >
-              Kanban
-            </Link>
 
             {/* Notification Bell (Mobile) */}
             <button
@@ -503,20 +473,7 @@ export function OpsLayout() {
                   );
                 })}
 
-                {isAdmin && (
-                  <Link
-                    to="/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-medium transition-colors mt-2 ${
-                      isKanban
-                        ? "bg-[#2B7BC4] text-white font-semibold shadow-xs"
-                        : "text-[#6BAED6] hover:bg-white/10 hover:text-white"
-                    }`}
-                  >
-                    <CheckSquare className="size-4 shrink-0" />
-                    Kanban Board
-                  </Link>
-                )}
+
 
               </nav>
 
@@ -555,13 +512,9 @@ export function OpsLayout() {
 
         {/* Content Pane — only this scrolls */}
         <main
-          className={`flex-1 min-h-0 ${
-            isKanban
-              ? "flex flex-col overflow-hidden p-3 sm:p-5 lg:p-6"
-              : "overflow-y-auto scrollbar-thin p-4 sm:p-6 lg:p-8 animate-page-in"
-          }`}
+          className="flex-1 min-h-0 overflow-y-auto scrollbar-thin p-4 sm:p-6 lg:p-8 animate-page-in"
         >
-          <div className={isKanban ? "w-full h-full flex flex-col flex-1 min-h-0" : "max-w-[1600px] w-full mx-auto"}>
+          <div className="max-w-[1600px] w-full mx-auto">
             <AnnouncementToast bellRef={bellRef} />
             <Outlet />
           </div>

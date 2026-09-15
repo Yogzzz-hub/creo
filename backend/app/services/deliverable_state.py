@@ -243,7 +243,7 @@ async def transition(
         elif reason and to_str == DeliverableStatus.REVISION_REQUESTED:
             deliverable.rejection_comment = reason
 
-    # 6. Automate Kanban Task Status synchronization
+    # 6. Automate Task Pipeline Status synchronization
     try:
         await sync_task_with_deliverable(db, deliverable, to_status)
     except Exception as err:
@@ -281,7 +281,7 @@ async def sync_task_with_deliverable(
     deliverable: Deliverable,
     to_status: DeliverableStatus,
 ) -> Task | None:
-    """Automate Kanban task progression based on deliverable lifecycle events."""
+    """Automate task pipeline progression based on deliverable lifecycle events."""
     task = None
     if deliverable.task_id:
         task = await db.get(Task, deliverable.task_id)

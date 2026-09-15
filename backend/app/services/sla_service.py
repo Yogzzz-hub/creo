@@ -116,7 +116,7 @@ async def breach_sweep(db: AsyncSession) -> list[Task]:
                     f"Task {task.id} ({task.deliverable_type.value}) has breached "
                     "its turnaround SLA."
                 ),
-                link=f"/kanban?task={task.id}",
+                link=f"/admin/tasks?task={task.id}",
             )
             db.add(notif_assignee)
 
@@ -129,7 +129,7 @@ async def breach_sweep(db: AsyncSession) -> list[Task]:
                     f"Task {task.id} ({task.deliverable_type.value}) breached SLA "
                     f"(due: {task.sla_due_at})."
                 ),
-                link=f"/kanban?task={task.id}",
+                link=f"/admin/tasks?task={task.id}",
             )
             db.add(notif_lead)
 

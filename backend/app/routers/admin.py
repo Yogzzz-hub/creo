@@ -2639,7 +2639,7 @@ async def get_admin_calendar(
     return events
 
 
-# --- Admin Deliverables Management & Automated Kanban Sync ---
+# --- Admin Deliverables Management & Automated Task Pipeline Sync ---
 
 class AdminDeliverableCreateRequest(BaseModel):
     client_id: uuid.UUID
@@ -2743,7 +2743,7 @@ async def create_admin_deliverable(
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> dict[str, Any]:
-    """Staff uploads/creates a new deliverable. Automates Kanban task progression into Internal QA."""
+    """Staff uploads/creates a new deliverable. Automates task pipeline progression into Internal QA."""
     # Validate target status
     target_status = DeliverableStatus.PENDING_QA
     try:
@@ -2773,7 +2773,7 @@ async def create_admin_deliverable(
     db.add(deliverable)
     await db.flush()
 
-    # Automate Kanban task progression: upload by team moves task to Internal QA
+    # Automate task pipeline progression: upload by team moves task to Internal QA
     await deliverable_state.sync_task_with_deliverable(db, deliverable, target_status)
 
     await db.commit()
@@ -2794,7 +2794,7 @@ async def update_admin_deliverable_status(
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> dict[str, Any]:
-    """Update deliverable status. Automatically syncs and moves the corresponding Kanban task."""
+    """Update deliverable status. Automatically syncs and moves the corresponding task in the pipeline."""
     deliverable = await db.get(Deliverable, deliverable_id)
     if not deliverable:
         raise HTTPException(status_code=404, detail="Deliverable not found")
@@ -2808,7 +2808,7 @@ async def update_admin_deliverable_status(
     if new_status == DeliverableStatus.APPROVED:
         deliverable.approved_at = datetime.now(timezone.utc)
 
-    # Sync corresponding Task on the Kanban board
+    # Sync corresponding Task in the pipeline
     await deliverable_state.sync_task_with_deliverable(db, deliverable, new_status)
 
     await db.commit()

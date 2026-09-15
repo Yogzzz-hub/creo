@@ -2,37 +2,6 @@
  * Ops & Team domain TypeScript type definitions (Phase 5).
  */
 
-export interface KanbanTask {
-  id: string;
-  client_id: string;
-  assigned_to: string | null;
-  deliverable_type: "reel" | "carousel" | "story" | "static_post" | "shoot_day";
-  status:
-    | "backlog"
-    | "in_production"
-    | "internal_qa"
-    | "client_review"
-    | "ready_to_publish"
-    | "completed";
-  due_date: string | null;
-  sla_due_at: string | null;
-  last_sla_notified_at: string | null;
-  created_at: string;
-  updated_at: string;
-  assignee_email?: string | null;
-  assignee_name?: string | null;
-  client_email?: string | null;
-  client_company?: string | null;
-}
-
-export interface KanbanBoardData {
-  backlog: KanbanTask[];
-  in_production: KanbanTask[];
-  internal_qa: KanbanTask[];
-  client_review: KanbanTask[];
-  ready_to_publish: KanbanTask[];
-}
-
 export interface AdminKPIs {
   refreshed_at: string;
   mrr_minor: number;

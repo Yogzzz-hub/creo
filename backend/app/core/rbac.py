@@ -24,6 +24,7 @@ class Actor:
     role: UserRole
     client_id: uuid.UUID | None = None
     email: str | None = None
+    agency_id: uuid.UUID | None = None
 
 
 async def get_current_actor(
@@ -71,11 +72,18 @@ async def get_current_actor(
             elif role == UserRole.CLIENT:
                 client_uuid = actor_id
 
+            agency_uuid = None
+            if payload.get("agency_id"):
+                try:
+                    agency_uuid = uuid.UUID(payload["agency_id"])
+                except ValueError:
+                    pass
             return Actor(
                 user_id=actor_id,
                 role=role,
                 client_id=client_uuid,
                 email=payload.get("email"),
+                agency_id=agency_uuid,
             )
 
     # Allow automated test fixtures ONLY when running in test environment / pytest

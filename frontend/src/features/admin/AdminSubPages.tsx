@@ -1627,12 +1627,6 @@ export function AdminTasksPage() {
             Workload distribution, creative pod assignments, and SLA production deadlines
           </p>
         </div>
-        <Link
-          to="/dashboard"
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#2B7BC4] text-white text-xs font-semibold hover:bg-[#1A5EA8] transition-colors shadow-xs"
-        >
-          Open Creative Kanban →
-        </Link>
       </div>
 
       {/* Staff Capacity Grid */}

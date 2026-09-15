@@ -36,9 +36,7 @@ import { OpsLayout } from "../components/ops/OpsLayout";
 const AdminDashboard = lazy(() =>
   import("../features/admin/AdminDashboard").then((m) => ({ default: m.AdminDashboard }))
 );
-const KanbanBoard = lazy(() =>
-  import("../features/kanban/KanbanBoard").then((m) => ({ default: m.KanbanBoard }))
-);
+
 const OnboardingView = lazy(() =>
   import("../features/onboarding/OnboardingView").then((m) => ({ default: m.OnboardingView }))
 );
@@ -432,9 +430,9 @@ export function App() {
                   }
                 />
 
-                {/* Creative Team Kanban Workspace */}
-                <Route path="/dashboard" element={<KanbanBoard actorRole="team_lead" />} />
-                <Route path="/kanban" element={<KanbanBoard actorRole="team_lead" />} />
+                {/* Redirect legacy Kanban routes to Task Queue */}
+                <Route path="/dashboard" element={<Navigate to="/admin/tasks" replace />} />
+                <Route path="/kanban" element={<Navigate to="/admin/tasks" replace />} />
               </Route>
 
               {/* 6. System Smoke Test & Fallbacks */}

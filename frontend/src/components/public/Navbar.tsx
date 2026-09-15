@@ -27,7 +27,7 @@ export function Navbar() {
     user?.role === "admin" || user?.role === "super_admin"
       ? "Admin Console"
       : user?.role === "team_member" || user?.role === "team_lead" || user?.role === "editor" || user?.role === "designer"
-      ? "Team Kanban"
+      ? "Team Dashboard"
       : "Client Portal";
 
   useEffect(() => {

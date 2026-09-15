@@ -1,11 +1,11 @@
-"""Tasks and Kanban API router.
+"""Tasks and Task Pipeline API router.
 
 Provides:
 - GET /tasks/kanban: Grouped by status in ONE query using json_agg per column.
 - POST /tasks: Create task with automated SLA calculation.
 - POST /tasks/{id}/assign: Auto-dispatch or assign to specific creative.
 - POST /tasks/{id}/reassign: Reassign with audit log.
-- PATCH /tasks/{id}/move: Drag-and-drop kanban state mutation with role check and audit log.
+- PATCH /tasks/{id}/move: Task pipeline state mutation with role check and audit log.
 - POST /tasks/bulk-assign: Bulk task assignment.
 - POST /tasks/sweep-slas: Trigger SLA breach sweep.
 """
@@ -40,7 +40,7 @@ from app.services.sla_service import breach_sweep, compute_sla_due_at
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/tasks", tags=["Tasks & Kanban"])
+router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
 
 # --- Schemas ---
@@ -88,7 +88,7 @@ class TaskResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class KanbanBoardResponse(BaseModel):
+class TaskPipelineResponse(BaseModel):
     backlog: list[dict[str, Any]]
     in_production: list[dict[str, Any]]
     internal_qa: list[dict[str, Any]]
@@ -99,12 +99,12 @@ class KanbanBoardResponse(BaseModel):
 # --- Routes ---
 
 
-@router.get("/kanban", response_model=KanbanBoardResponse)
+@router.get("/kanban", response_model=TaskPipelineResponse)
 async def get_kanban_board(
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
-) -> KanbanBoardResponse:
-    """Return kanban columns in ONE database query using json_agg per column."""
+) -> TaskPipelineResponse:
+    """Return task pipeline columns in ONE database query using json_agg per column."""
     where_conditions: list[str] = []
     params: dict[str, Any] = {}
 
@@ -181,7 +181,7 @@ async def get_kanban_board(
         return list(val)
 
     if not row:
-        return KanbanBoardResponse(
+        return TaskPipelineResponse(
             backlog=[],
             in_production=[],
             internal_qa=[],
@@ -335,7 +335,7 @@ async def move_task(
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> TaskResponse:
-    """Move task across kanban stages with role verification and audit log."""
+    """Move task across pipeline stages with role verification and audit log."""
     task = await db.get(Task, task_id)
     if not task:
         raise NotFound(f"Task {task_id} not found", code="TASK_NOT_FOUND")

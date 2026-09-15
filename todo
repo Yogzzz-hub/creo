@@ -1,0 +1,500 @@
+# Paste everything below this line as one prompt
+
+---
+
+Convert Creo from a single-agency application into a multi-tenant platform. The platform
+owner (super admin) sells Creo to marketing agencies; each agency manages its own teams,
+staff and clients and can never see another agency's data.
+
+This is the largest change in the project. Read all of it before writing code, and
+complete Stage 0 before touching a file.
+
+---
+
+# 1. Corrections to the org model as drafted
+
+Three errors in the source architecture. Fix them before building.
+
+### 1.1 "One team handles one client" — drop it
+
+The source diagrams contradict each other: one shows Team 1 → Clients A, B, C, D; the
+other shows Team 1 → one client. The rule also collapses the moment members serve other
+clients, which the same document requires.
+
+**The fix is to separate two relations that were conflated:**
+
+- **Ownership** — a client belongs to exactly one team. Accountability, reporting,
+  escalation. One team can own many clients.
+- **Assignment** — a client has one named person per required role. Those people
+  usually come from the owning team, but may come from any team in the agency when the
+  owning team lacks capacity.
+
+Once separated, "Team 1 owns Clients A–D" and "each client has a named editor" are both
+true and no longer conflict.
+
+### 1.2 Capacity is measured in points, never in clients
+
+"Video Editor capacity = 3 clients" cannot work, because clients are not equal:
+
+```
+Monthly effort points per client, by role
+
+role                 Starter   Accelerator   Enterprise
+video_editor              20            40           80
+designer                  26            50          100
+videographer               8             8           16
+content_creator           11            22           43
+social_manager            11            22           43
+
+An editor with a 100-point monthly budget carries:
+  5.00 Starter clients  |  2.50 Accelerator  |  1.25 Enterprise
+```
+
+Same person, same "capacity", 4× difference. Store `monthly_points` per member and
+consume points per client per plan.
+
+```python
+EFFORT = {"reel": 5, "poster": 2, "story": 1, "shoot_day": 8, "item_overhead": 0.5}
+
+def client_load(plan) -> dict[str, int]:
+    items = plan.posters + plan.reels + plan.stories
+    return {
+      "video_editor":    plan.reels   * EFFORT["reel"],
+      "graphic_designer":plan.posters * EFFORT["poster"] + plan.stories * EFFORT["story"],
+      "videographer":    plan.shoot_days * EFFORT["shoot_day"],
+      "content_creator": round(items * EFFORT["item_overhead"]),
+      "social_manager":  round(items * EFFORT["item_overhead"]),
+    }
+```
+
+> Note for staffing: under these weights the **graphic designer is the bottleneck in
+> every tier**, not the video editor. Posters plus stories outnumber reels heavily.
+> Surface this in the admin capacity view.
+
+### 1.3 Bottleneck is computed over required roles only
+
+```python
+def team_capacity(team, plan, required_roles: set[str]) -> tuple[float, str]:
+    load = client_load(plan)
+    ratios = {
+        role: team.available_points(role) / load[role]
+        for role in required_roles if load[role] > 0
+    }
+    bottleneck = min(ratios, key=ratios.get)
+    return ratios[bottleneck], bottleneck
+```
+
+A client needing only editing and design must not be blocked by videographer capacity.
+
+---
+
+# 2. The tenancy decision
+
+**Shared database, shared schema, `agency_id` on every tenant-owned table, PostgreSQL
+Row-Level Security as the safety net.** This is the right default for a B2B SaaS at
+100–10,000 tenants; Notion runs the same pattern keyed on workspace_id. Schema-per-tenant
+and database-per-tenant are migration and cost burdens you do not need yet.
+
+**Application filtering alone is not a security boundary.** One forgotten predicate, one
+over-broad repository method, one background job, one ad-hoc query crosses the boundary —
+and isolation bugs do not announce themselves; they leak quietly for weeks until a
+pen test or a curious user finds them. So build both layers:
+
+| Layer | Mechanism | Catches |
+|---|---|---|
+| 1 | Repository requires `scope: TenantScope` — cannot be called without it | Developer forgetting a filter |
+| 2 | Postgres RLS policy on every tenant table | Everything layer 1 misses |
+
+### 2.1 The PgBouncer trap — read this twice
+
+You run Supabase's pooler in **transaction mode**. Session variables are reset between
+transactions, so `SET app.agency_id` at connection time silently stops working under
+load, and RLS then sees an empty tenant and returns nothing — or, if your policy is
+written permissively, everything.
+
+**Set the tenant context with `SET LOCAL`, inside the same transaction as the query:**
+
+```python
+@asynccontextmanager
+async def tenant_session(agency_id: UUID, role: str):
+    async with async_session() as db:
+        async with db.begin():                       # one transaction
+            await db.execute(
+                text("SELECT set_config('app.agency_id', :aid, true)"),  # true = LOCAL
+                {"aid": str(agency_id)},
+            )
+            await db.execute(
+                text("SELECT set_config('app.user_role', :r, true)"),
+                {"r": role},
+            )
+            yield db
+```
+
+Every request and every Celery task opens its session this way. A task that does not
+carry tenant context must not be able to run — see §6.
+
+### 2.2 Connect as a non-superuser
+
+RLS is bypassed by table owners and superusers. Supabase's service key connects as a
+role that bypasses it. Create a dedicated application role:
+
+```sql
+CREATE ROLE creo_app NOLOGIN;
+GRANT USAGE ON SCHEMA public TO creo_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO creo_app;
+ALTER ROLE creo_app SET row_security = on;
+-- the app connects as creo_app. NOT as postgres, NOT via the service key.
+```
+
+If the app still connects as a bypassing role, **RLS is decoration**. Verify it: connect
+as the app role, unset `app.agency_id`, and confirm `SELECT * FROM clients` returns zero
+rows.
+
+---
+
+# 3. Schema
+
+```sql
+-- ── the tenant ───────────────────────────────────────────────────────────
+CREATE TABLE agencies (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name           TEXT NOT NULL,
+  slug           TEXT UNIQUE NOT NULL,            -- ryzeworks.creo.app
+  custom_domain  TEXT UNIQUE,
+  status         TEXT NOT NULL DEFAULT 'trial'
+    CHECK (status IN ('trial','active','past_due','suspended','cancelled')),
+  plan_tier      TEXT NOT NULL DEFAULT 'starter', -- what the AGENCY pays YOU
+  max_clients    INT NOT NULL DEFAULT 10,
+  max_staff      INT NOT NULL DEFAULT 15,
+  branding       JSONB NOT NULL DEFAULT '{}'::jsonb,  -- logo, colours, from-name
+  timezone       TEXT NOT NULL DEFAULT 'Asia/Kolkata',
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE teams (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agency_id   UUID NOT NULL REFERENCES agencies(id) ON DELETE CASCADE,
+  name        TEXT NOT NULL,
+  lead_id     UUID REFERENCES users(id) ON DELETE SET NULL,
+  is_active   BOOLEAN NOT NULL DEFAULT true,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT uq_team_name UNIQUE (agency_id, name)
+);
+
+-- membership is a relation, not a column: a person belongs to one home team
+-- but can serve clients owned by any team in the agency
+CREATE TABLE team_members (
+  team_id     UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+  user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  is_home     BOOLEAN NOT NULL DEFAULT true,
+  joined_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (team_id, user_id)
+);
+CREATE UNIQUE INDEX uq_one_home_team ON team_members(user_id) WHERE is_home;
+
+-- capacity in POINTS, per role, per person
+ALTER TABLE staff_profiles
+  ADD COLUMN agency_id      UUID REFERENCES agencies(id) ON DELETE CASCADE,
+  ADD COLUMN craft_role     TEXT NOT NULL DEFAULT 'graphic_designer'
+    CHECK (craft_role IN ('video_editor','graphic_designer','content_creator',
+                          'social_manager','videographer')),
+  ADD COLUMN monthly_points INT NOT NULL DEFAULT 100,
+  ADD COLUMN sub_skills     TEXT[] NOT NULL DEFAULT '{}';
+
+-- OWNERSHIP: client belongs to one team
+ALTER TABLE users
+  ADD COLUMN agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE,
+  ADD COLUMN owning_team_id UUID REFERENCES teams(id) ON DELETE SET NULL;
+
+-- ASSIGNMENT: one named person per required role (extends client_assignments)
+ALTER TABLE client_assignments
+  ADD COLUMN agency_id     UUID REFERENCES agencies(id) ON DELETE CASCADE,
+  ADD COLUMN craft_role    TEXT NOT NULL DEFAULT 'graphic_designer',
+  ADD COLUMN points_committed INT NOT NULL DEFAULT 0,
+  ADD COLUMN from_team_id  UUID REFERENCES teams(id);   -- may differ from owning team
+CREATE UNIQUE INDEX uq_one_person_per_craft ON client_assignments(client_id, craft_role)
+  WHERE unassigned_at IS NULL;
+
+-- which roles does this client actually need?
+CREATE TABLE client_role_requirements (
+  client_id   UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  craft_role  TEXT NOT NULL,
+  PRIMARY KEY (client_id, craft_role)
+);
+```
+
+**`agency_id` goes on every tenant-owned table.** Composite index `(agency_id, ...)` on
+every high-volume table from day one — retrofitting that at 10M rows is painful.
+
+```sql
+CREATE INDEX idx_deliv_tenant ON deliverables(agency_id, client_id, status, created_at DESC);
+CREATE INDEX idx_tasks_tenant ON tasks(agency_id, status, assigned_to);
+CREATE INDEX idx_cal_tenant   ON content_calendar(agency_id, client_id, slot_date);
+```
+
+---
+
+# 4. Row-Level Security
+
+```sql
+CREATE OR REPLACE FUNCTION current_agency() RETURNS UUID AS $$
+  SELECT NULLIF(current_setting('app.agency_id', true), '')::uuid;
+$$ LANGUAGE sql STABLE;
+
+CREATE OR REPLACE FUNCTION is_platform_admin() RETURNS BOOLEAN AS $$
+  SELECT current_setting('app.user_role', true) = 'super_admin';
+$$ LANGUAGE sql STABLE;
+
+-- apply to EVERY tenant-owned table
+ALTER TABLE deliverables ENABLE ROW LEVEL SECURITY;
+ALTER TABLE deliverables FORCE ROW LEVEL SECURITY;   -- applies to the owner too
+
+CREATE POLICY tenant_isolation ON deliverables
+  USING       (agency_id = current_agency() OR is_platform_admin())
+  WITH CHECK  (agency_id = current_agency() OR is_platform_admin());
+```
+
+`FORCE ROW LEVEL SECURITY` matters — without it the table owner skips the policy.
+
+`USING` filters reads; `WITH CHECK` blocks writes that would place a row in another
+tenant. **Both are required.** A policy with only `USING` lets an attacker insert rows
+into someone else's agency.
+
+Write a migration that loops every table with an `agency_id` column and applies the
+policy, so a new table cannot be added without one:
+
+```sql
+DO $$ DECLARE t text; BEGIN
+  FOR t IN SELECT table_name FROM information_schema.columns
+            WHERE column_name='agency_id' AND table_schema='public'
+  LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
+    EXECUTE format($f$CREATE POLICY tenant_isolation ON %I
+      USING (agency_id = current_agency() OR is_platform_admin())
+      WITH CHECK (agency_id = current_agency() OR is_platform_admin())$f$, t);
+  END LOOP;
+END $$;
+```
+
+Add a CI test that fails if any table has `agency_id` and no policy.
+
+**`audit_log` stays outside RLS**, owned by a separate role the app can INSERT to but
+not UPDATE or DELETE. When an agency disputes what happened, you need evidence they
+could not have touched.
+
+---
+
+# 5. Allocation algorithm
+
+```
+NEW CLIENT (agency A, plan P)
+   │
+   ├─ 1. required_roles = client_role_requirements
+   ├─ 2. load = client_load(P)                       # points per role
+   │
+   ├─ 3. Try the OWNING TEAM first (continuity)
+   │        for each required role: does a member have >= load[role] free points?
+   │        all roles satisfied → assign, done
+   │
+   ├─ 4. PARTIAL: keep the roles the owning team can cover.
+   │        For each uncovered role, search ALL teams in agency A,
+   │        ranked by free points desc, then longest-since-last-assignment.
+   │        Record from_team_id so the borrow is visible.
+   │
+   ├─ 5. Still uncovered → recommend a new team or a new hire.
+   │        Create the client in 'awaiting_staffing', notify the agency admin
+   │        with the exact shortfall: "Needs 40 editor points; most free is 25."
+   │        NEVER over-assign. NEVER leave it silently unstaffed.
+   │
+   └─ 6. Check agency limits: clients < max_clients, staff < max_staff.
+            Over limit → block and prompt the agency to upgrade THEIR plan.
+```
+
+Commit each assignment with the row locked and re-verified inside the transaction:
+
+```python
+async with db.begin():
+    member = await db.scalar(
+        select(StaffProfile).where(StaffProfile.user_id == candidate)
+                            .with_for_update(skip_locked=True))
+    if member is None:                       # another allocation holds it
+        continue
+    free = member.monthly_points - await committed_points(db, member.user_id)
+    if free < load[role]:                    # filled since we ranked
+        continue
+    db.add(ClientAssignment(client_id=client.id, staff_id=member.user_id,
+                            craft_role=role, points_committed=load[role],
+                            from_team_id=member.home_team_id,
+                            agency_id=client.agency_id))
+```
+
+`points_committed` is stored on the assignment, not recomputed — so a mid-cycle plan
+change does not retroactively rewrite last month's capacity maths.
+
+**Rebalancing** (nightly): a member over 100% committed gets their most recently assigned
+client moved to the next eligible person. Never move a client whose current cycle is
+already `active` unless the member has left or is on long leave — churning account
+ownership costs more than the imbalance.
+
+---
+
+# 6. Tenant context in background jobs
+
+The most common multi-tenant leak is a Celery task that runs without tenant context and
+happily queries every row.
+
+```python
+# every task signature carries agency_id, no exceptions
+@celery.task(bind=True)
+def publish_deliverable(self, agency_id: str, deliverable_id: str):
+    async with tenant_session(UUID(agency_id), role="system") as db:
+        ...
+
+# enforce it
+def assert_tenant_arg(task_fn):
+    sig = inspect.signature(task_fn)
+    assert "agency_id" in sig.parameters, f"{task_fn.__name__} has no agency_id"
+```
+
+Run that assertion over every registered task at import time. A task without
+`agency_id` should crash the worker at boot, not leak at 3am.
+
+Same for cache keys: `f"user:{agency_id}:{user_id}"`. An unscoped Redis key is a
+cross-tenant leak that RLS cannot see.
+
+---
+
+# 7. Super admin — what you get as platform owner
+
+Platform-level routes live under `/platform`, require `super_admin`, and are the only
+place `is_platform_admin()` returns true.
+
+```
+GET   /api/v1/platform/agencies                 all tenants, health, usage
+POST  /api/v1/platform/agencies                 provision a new agency
+PATCH /api/v1/platform/agencies/{id}            limits, plan tier, branding
+POST  /api/v1/platform/agencies/{id}/suspend    non-payment → read-only
+POST  /api/v1/platform/agencies/{id}/impersonate time-boxed, read-only, audited
+GET   /api/v1/platform/metrics                  MRR across agencies, churn, usage
+GET   /api/v1/platform/audit                    cross-tenant audit trail
+```
+
+**Impersonation rules, unchanged from the security spec:** super_admin only, 30 minutes,
+**read-only** (no approve, no payment, no deletion), every request audited with the real
+admin in `actor_id`, a permanent non-dismissible banner, and visible to the agency in
+their own activity log. Do not hide it.
+
+Provisioning an agency creates: the agency row, the first admin user, a default team,
+the three client-facing plans seeded from your templates, and a default calendar policy.
+It must be one transaction — a half-provisioned tenant is worse than none.
+
+---
+
+# 8. White-labelling
+
+```json
+// agencies.branding
+{
+  "logo_url": "...", "logo_dark_url": "...",
+  "primary": "#2B4ACB", "accent": "#0F7A4F",
+  "email_from_name": "RyzeWorks", "email_reply_to": "hello@ryzeworks.in",
+  "portal_title": "RyzeWorks Client Portal",
+  "hide_creo_branding": true
+}
+```
+
+Resolve the tenant from, in order: custom domain → subdomain slug → JWT claim. Cache the
+resolution in Redis for 5 minutes keyed by host. Inject the branding as CSS custom
+properties at the layout root so **no component reads the agency object** — they read
+tokens, exactly as in the UI system spec.
+
+Client-facing emails send from the agency's name and reply-to. A client of RyzeWorks
+should never see the word Creo unless the agency wants them to.
+
+---
+
+# 9. Two billing layers — do not merge them
+
+```
+YOU  ──charges──▶  AGENCY     platform subscription (per seat / per client tier)
+AGENCY ──charges──▶ CLIENT    the ₹25k / ₹50k / ₹95k retainers
+```
+
+Separate tables, separate gateways, separate webhooks. The existing `subscriptions` and
+`payment_events` handle agency→client. Add `platform_subscriptions` and
+`platform_payment_events` for you→agency.
+
+An agency going `past_due` on **your** invoice must not stop **their** clients' content
+from publishing — that punishes someone who paid their bill. Degrade instead: block new
+client creation, block new cycle generation, keep existing cycles publishing, show a
+banner to agency staff only. Suspend fully only after a stated grace period.
+
+---
+
+# 10. Stage 0 — audit before you touch anything
+
+Report before writing code:
+
+1. Every table in `models/`. Which already have a natural tenant path, which need
+   `agency_id` added.
+2. Every query in `repositories/` and `routers/` that does not filter by tenant. List
+   file and line.
+3. Every Celery task and whether it can currently run without tenant context.
+4. Every Redis cache key and whether it is tenant-scoped.
+5. How the app currently connects to Postgres — which role, and does that role bypass RLS?
+6. Existing data: how many rows in each table, and what agency should they be
+   backfilled to?
+
+Then produce a migration plan with the backfill order. **Stop and wait for my go-ahead.**
+
+---
+
+# 11. Acceptance
+
+**Isolation — the tests that matter most**
+1. Two agencies seeded with 5 clients each. Agency A's admin calls every list endpoint;
+   zero Agency B rows appear. Automate across **every** list route, not a sample.
+2. Agency A requests a known Agency B deliverable UUID directly → **404, never 403.**
+3. Connect as `creo_app` with `app.agency_id` unset → `SELECT * FROM deliverables`
+   returns **0 rows**. Paste the psql output. If it returns rows, RLS is not active and
+   nothing else in this list matters.
+4. Attempt `INSERT` with another agency's `agency_id` → rejected by `WITH CHECK`.
+5. CI test: every table with an `agency_id` column has a `tenant_isolation` policy and
+   `FORCE ROW LEVEL SECURITY`. Add a table without one and watch CI fail.
+6. Every Celery task signature has `agency_id`. Boot the worker with one removed and
+   confirm it crashes at import.
+7. Every Redis key includes the agency id. Grep and assert.
+8. Under 50 concurrent requests across 2 agencies through the transaction-mode pooler,
+   zero cross-tenant rows. **This is the test that catches the `SET LOCAL` mistake** —
+   session-level `SET` passes single-request tests and fails here.
+
+**Org model**
+9. A team owns 4 clients and each client has one named person per required role.
+   Both are true simultaneously with no constraint violation.
+10. A client needing only `video_editor` + `graphic_designer` allocates successfully in
+    a team with no videographer.
+11. Borrowing across teams records `from_team_id` and is visible in the admin view.
+12. Nobody can be assigned past `monthly_points`. 20 concurrent allocations against
+    100 free points → total committed never exceeds 100. Run it 10 times.
+13. No capacity anywhere → client lands in `awaiting_staffing`, agency admin notified
+    with the exact point shortfall, nothing over-assigned.
+
+**Capacity arithmetic**
+14. An editor with 100 points carries 5 Starter, 2 Accelerator (2.5 floored), or
+    1 Enterprise client. Assert all three.
+15. Bottleneck is computed over required roles only — adding an unneeded videographer
+    requirement does not change a 2-role client's capacity.
+
+**Platform**
+16. Agency at `max_clients` → new client blocked with an upgrade prompt, not a 500.
+17. Agency `past_due` on the platform invoice → existing cycles still publish; new
+    cycle generation blocked; banner shown to agency staff only, never to their clients.
+18. Impersonation: read-only enforced, 30-minute expiry, audit names the real admin,
+    the agency sees it in their own log.
+19. `audit_log` is not readable or writable by `creo_app` beyond INSERT. Try UPDATE and
+    DELETE as that role and confirm both fail.
+
+Report every file changed, the Stage 0 audit, and every acceptance output. If a
+constraint here blocks you, stop and ask rather than working around it.

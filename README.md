@@ -49,7 +49,7 @@ creo/
 │   ├── public/               # Static assets & Cloudflare Pages _redirects
 │   ├── src/
 │   │   ├── components/       # Reusable UI, Portal Header/Sidebar, Public Navbar/Footer
-│   │   ├── features/         # Admin Dashboard, Kanban Pipeline, Deliverables Review, Onboarding
+│   │   ├── features/         # Admin Dashboard, Deliverables Review, Onboarding
 │   │   ├── pages/            # Public marketing pages, Client portal suite, Auth pages
 │   │   └── lib/              # API clients, Razorpay integration, Auth context
 │   └── package.json
@@ -77,10 +77,9 @@ creo/
 - **Real-Time Client Roster**: Comprehensive directory of client subscription tiers, onboarding milestones, and dedicated manager assignments.
 - **SLA Breach & Escalation Watch**: Automated detection of delayed review cycles and imminent delivery deadlines.
 
-### 2. Creative Production Pipeline (Kanban)
-- **5-Stage Drag-and-Drop Board**: Seamless task progression through `Backlog`, `In Production`, `Internal QA`, `Client Review`, and `Ready to Publish`.
+### 2. Creative Production Pipeline
+- **5-Stage Task Pipeline**: Task progression through `Backlog`, `In Production`, `Internal QA`, `Client Review`, and `Ready to Publish`.
 - **Dynamic Workload Balancing**: Intelligent task auto-dispatch based on editor and designer active bandwidth.
-- **Optimistic State Updates**: Instant visual UI updates with rollback handling on network latency.
 
 ### 3. Client Portal Suite
 - **Deliverables Review & Approval Dock**: Full-screen 9:16 vertical reels and high-res poster inspection with 1-click approvals and feedback markup.

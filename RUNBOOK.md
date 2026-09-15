@@ -118,7 +118,7 @@ JWTs use stateless HMAC-SHA256 signatures with client-side module storage (`auth
 
 ### 5.1 SLA Breach Alert (`sla_breached`)
 - **Condition**: Deliverable or task has passed `sla_due_at` and is not terminal.
-- **Action**: Check `GET /api/v1/admin/sla` or `tasks` table. The lead editor is alerted via in-app/email. Use the Ops Kanban board (`/kanban`) to reassign task to an editor with available daily capacity.
+- **Action**: Check `GET /api/v1/admin/sla` or `tasks` table. The lead editor is alerted via in-app/email. Use the Task Queue (`/admin/tasks`) to reassign task to an editor with available daily capacity.
 
 ### 5.2 Celery Publish Queue Backlog
 - **Condition**: Unprocessed tasks in `publish` queue exceed 50 items.

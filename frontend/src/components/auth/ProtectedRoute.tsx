@@ -4,10 +4,10 @@ import { useAuth } from "../../lib/auth-context";
 
 export const ROLE_HOMES: Record<string, string> = {
   client: "/portal",
-  team_member: "/dashboard",
-  team_lead: "/dashboard",
-  editor: "/dashboard",
-  designer: "/dashboard",
+  team_member: "/admin/tasks",
+  team_lead: "/admin/tasks",
+  editor: "/admin/tasks",
+  designer: "/admin/tasks",
   sales: "/admin/sales",
   admin: "/admin",
   super_admin: "/admin",

@@ -104,7 +104,7 @@ async def create_ticket(
     )
     db.add(ticket)
 
-    # Automate Kanban task progression based on client request
+    # Automate task pipeline progression based on client request
     if payload.deliverable_id:
         deliv = await db.get(Deliverable, payload.deliverable_id)
         if deliv and deliv.task_id:

@@ -22,6 +22,7 @@ from app.models.calendar import (
 from app.models.ops import Announcement, AuditLog, LeaveRequest, Notification
 from app.models.questionnaire import Questionnaire
 from app.models.support import Ticket, TicketMessage
+from app.models.tenant import Agency, Team, TeamMember
 from app.models.user import ClientProfile, StaffProfile, User
 from app.models.work import ClientAssignment, ContentCalendar, Deliverable, Task
 
@@ -66,6 +67,9 @@ __all__ = [
     # Auth
     "RefreshToken",
     "IdempotencyKey",
+    "Agency",
+    "Team",
+    "TeamMember",
     # Questionnaire
     "Questionnaire",
 ]

@@ -144,7 +144,7 @@ async def confirm_upload(
     db.add(deliverable)
     await db.flush()
 
-    # Automate Kanban progression: upload by team moves task to Internal QA
+    # Automate task pipeline progression: upload by team moves task to Internal QA
     await deliverable_state.sync_task_with_deliverable(db, deliverable, DeliverableStatus.PENDING_QA)
 
     await db.commit()
