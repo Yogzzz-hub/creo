@@ -599,6 +599,8 @@ async def test_audit_log_replay(db_session: AsyncSession) -> None:
         ]
 
         for log_entry, (exp_from, exp_to, exp_actor) in zip(logs, expected_sequence, strict=True):
+            assert log_entry.from_value is not None
+            assert log_entry.to_value is not None
             assert log_entry.from_value["status"] == exp_from
             assert log_entry.to_value["status"] == exp_to
             assert log_entry.actor_id == exp_actor

@@ -1023,7 +1023,7 @@ async def create_announcement(
             for i in range(0, len(notifs), 100):
                 db.add_all(notifs[i : i + 100])
     except Exception as exc:
-        logger.warning("announcement_notification_fanout_failed", error=str(exc))
+        logger.warning("announcement_notification_fanout_failed: %s", exc)
 
     # Audit log
     db.add(
@@ -1535,7 +1535,8 @@ async def get_admin_sales(
 ) -> dict[str, Any]:
     """Return distinct subscription tiers, active counts, slot availability, and custom enterprise deals."""
     sub_counts_q = select(Subscription.plan_id, func.count(Subscription.id)).where(Subscription.status == "active").group_by(Subscription.plan_id)
-    sub_counts = dict((await db.execute(sub_counts_q)).all())
+    sub_rows = (await db.execute(sub_counts_q)).all()
+    sub_counts = {r[0]: r[1] for r in sub_rows}
 
     # Curate distinct active tiers for clean presentation
     plans_list = [
@@ -2292,7 +2293,7 @@ async def create_leave_request(
         if notifs:
             db.add_all(notifs)
     except Exception as exc:
-        logger.warning("leave_notification_failed", error=str(exc))
+        logger.warning("leave_notification_failed: %s", exc)
 
     # Audit log
     db.add(
@@ -2370,7 +2371,7 @@ async def approve_leave_request(
             )
         )
     except Exception as exc:
-        logger.warning("leave_approval_notification_failed", error=str(exc))
+        logger.warning("leave_approval_notification_failed: %s", exc)
 
     # Audit log
     db.add(
@@ -2438,7 +2439,7 @@ async def reject_leave_request(
             )
         )
     except Exception as exc:
-        logger.warning("leave_rejection_notification_failed", error=str(exc))
+        logger.warning("leave_rejection_notification_failed: %s", exc)
 
     # Audit log
     db.add(

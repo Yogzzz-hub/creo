@@ -17,7 +17,7 @@ import socket
 logger = get_logger(__name__)
 
 
-def _create_ipv4_connection(address: tuple[str, int], timeout: float = 12.0, source_address: tuple[str, int] | None = None) -> socket.socket:
+def _create_ipv4_connection(address: tuple[str, int], timeout: float = 12.0, source_address: Any = None) -> socket.socket:
     """Force IPv4 (AF_INET) socket connection to prevent [Errno 101] Network is unreachable on cloud container networks."""
     host, port = address
     err = None
@@ -49,7 +49,8 @@ class IPv4SMTP(smtplib.SMTP):
 class IPv4SMTP_SSL(smtplib.SMTP_SSL):
     def _get_socket(self, host: str, port: int, timeout: float) -> socket.socket:
         new_socket = _create_ipv4_connection((host, port), timeout, self.source_address)
-        return self.context.wrap_socket(new_socket, server_hostname=self._host)
+        server_hostname = getattr(self, "_host", host) or host
+        return self.context.wrap_socket(new_socket, server_hostname=server_hostname)
 
 
 def _send_smtp_sync(
