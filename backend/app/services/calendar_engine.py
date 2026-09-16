@@ -753,6 +753,16 @@ async def generate_client_cycle(
     """Generate a draft client cycle with deterministic slots, frozen snapshots, and shoot days."""
     carryover = carryover_credits or {}
 
+    # 0. Check agency status
+    from app.models.tenant import Agency
+    from app.models.user import User
+    client = await db.get(User, client_id)
+    if client and client.agency_id:
+        agency = await db.get(Agency, client.agency_id)
+        if agency and agency.status == "past_due":
+            from fastapi import HTTPException
+            raise HTTPException(403, "Agency account is past due. New cycle generation is blocked.")
+
     # 1. Fetch Plan
     plan_row: Plan | None = None
     if plan_id:

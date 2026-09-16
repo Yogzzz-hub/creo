@@ -34,6 +34,12 @@ if TYPE_CHECKING:
 class Task(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "tasks"
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     client_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -80,6 +86,12 @@ class Task(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 class Deliverable(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "deliverables"
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     root_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     client_id: Mapped[uuid.UUID] = mapped_column(
@@ -149,6 +161,12 @@ class Deliverable(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 class ContentCalendar(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "content_calendar"
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     client_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -227,6 +245,12 @@ class ContentCalendar(Base, UUIDPrimaryKeyMixin):
 class ClientAssignment(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "client_assignments"
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     client_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -238,6 +262,15 @@ class ClientAssignment(Base, UUIDPrimaryKeyMixin):
         nullable=False,
     )
     role: Mapped[str] = mapped_column(String(50), nullable=False)
+    craft_role: Mapped[str] = mapped_column(
+        String(30), default="graphic_designer", nullable=False,
+    )
+    points_committed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    from_team_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("teams.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -253,5 +286,10 @@ class ClientAssignment(Base, UUIDPrimaryKeyMixin):
             "client_id",
             unique=True,
             postgresql_where=(role == "account_manager" and is_primary.is_(True)),
+        ),
+        Index(
+            "uq_one_person_per_craft",
+            "client_id", "craft_role",
+            unique=True,
         ),
     )

@@ -44,7 +44,8 @@ async def get_current_actor(
 
             payload = decode_token(token, expected_type="access")
             actor_id = uuid.UUID(payload["sub"])
-            if await is_user_suspended_in_cache(actor_id):
+            agency_id = payload.get("agency_id")
+            if await is_user_suspended_in_cache(actor_id, agency_id=agency_id):
                 raise Unauthorized("User account has been suspended", code="ACCOUNT_SUSPENDED")
 
             # Enforce mandatory password reset isolation

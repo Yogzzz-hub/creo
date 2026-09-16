@@ -35,7 +35,13 @@ if TYPE_CHECKING:
 class Plan(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "plans"
 
-    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
     display_name: Mapped[str] = mapped_column(String(100), nullable=False)
     price_minor: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)
     currency: Mapped[str] = mapped_column(String(3), default="INR", nullable=False)
@@ -56,6 +62,12 @@ class Plan(Base, UUIDPrimaryKeyMixin):
 class Subscription(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "subscriptions"
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     client_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -127,6 +139,12 @@ class PaymentEvent(Base, UUIDPrimaryKeyMixin):
 class UsageCounter(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "usage_counters"
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     client_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -146,4 +164,59 @@ class UsageCounter(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __table_args__ = (
         UniqueConstraint("client_id", "period_start", "kind", name="uq_usage"),
         CheckConstraint("used >= 0 AND used <= quota", name="ck_usage_bounds"),
+    )
+
+
+class PlatformSubscription(Base, UUIDPrimaryKeyMixin):
+    __tablename__ = "platform_subscriptions"
+
+    agency_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    status: Mapped[SubscriptionStatus] = mapped_column(
+        pg_enum(SubscriptionStatus, "subscription_status"),
+        default=SubscriptionStatus.INCOMPLETE,
+        nullable=False,
+    )
+    gateway: Mapped[PaymentProvider] = mapped_column(
+        pg_enum(PaymentProvider, "payment_provider"),
+        nullable=False,
+    )
+    gateway_subscription_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    gateway_customer_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    current_period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    current_period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class PlatformPaymentEvent(Base, UUIDPrimaryKeyMixin):
+    __tablename__ = "platform_payment_events"
+
+    provider: Mapped[PaymentProvider] = mapped_column(
+        pg_enum(PaymentProvider, "payment_provider"),
+        nullable=False,
+    )
+    provider_event_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    signature_valid: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    processing_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    received_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint("provider", "provider_event_id", name="uq_platform_payment_event"),
+        Index(
+            "idx_platform_payment_events_unprocessed",
+            "received_at",
+            postgresql_where=(processed_at.is_(None)),
+        ),
     )

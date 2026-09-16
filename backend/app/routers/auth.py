@@ -196,6 +196,17 @@ async def verify_registration(
     # Public registration is strictly CLIENT; staff/admin must be invited or provisioned
     assigned_role = UserRole.CLIENT
 
+    # Check agency limits and status
+    from app.models.tenant import Agency
+    from sqlalchemy import text
+    agency_id_str = await db.scalar(text("SELECT current_setting('app.agency_id', true)"))
+    if agency_id_str:
+        agency = await db.get(Agency, uuid.UUID(agency_id_str))
+        if agency:
+            if agency.status == "past_due":
+                raise HTTPException(403, "Agency account is past due. New client registration is blocked.")
+            # Could also enforce client limits here, but we have capacity_service
+            
     hashed_pw = hash_password(payload.password)
     user = User(
         auth_id=f"auth-pwd-{uuid.uuid4().hex[:12]}",
@@ -205,6 +216,7 @@ async def verify_registration(
         role=assigned_role,
         account_status=AccountStatus.ACTIVE,
         must_reset_password=False,
+        agency_id=uuid.UUID(agency_id_str) if agency_id_str else None,
     )
     db.add(user)
     await db.flush()

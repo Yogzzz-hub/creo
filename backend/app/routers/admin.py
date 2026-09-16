@@ -530,7 +530,7 @@ async def suspend_user(
     user.token_version += 1
 
     # Invalidate session in cache
-    await invalidate_user_session(user_id)
+    await invalidate_user_session(user_id, agency_id=user.agency_id)
 
     audit = AuditLog(
         actor_id=actor.user_id,

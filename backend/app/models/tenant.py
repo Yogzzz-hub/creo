@@ -39,6 +39,12 @@ class Team(Base, UUIDPrimaryKeyMixin):
 class TeamMember(Base):
     __tablename__ = "team_members"
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     team_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("teams.id", ondelete="CASCADE"), primary_key=True)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     is_home: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

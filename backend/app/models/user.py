@@ -20,7 +20,22 @@ if TYPE_CHECKING:
 
 class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "users"
-    __table_args__ = (Index("idx_users_role_created_at", "role", "created_at"),)
+    __table_args__ = (
+        Index("idx_users_role_created_at", "role", "created_at"),
+        Index("idx_users_agency", "agency_id", "role", "created_at"),
+    )
+
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    owning_team_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("teams.id", ondelete="SET NULL"),
+        nullable=True,
+    )
 
     auth_id: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
@@ -115,12 +130,22 @@ class StaffProfile(Base, TimestampMixin):
         ForeignKey("users.id", ondelete="CASCADE"),
         primary_key=True,
     )
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     team_lead_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
     department: Mapped[str] = mapped_column(String(50), default="creative", nullable=False)
+    craft_role: Mapped[str] = mapped_column(
+        String(30), default="graphic_designer", nullable=False,
+    )
+    monthly_points: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
     daily_capacity: Mapped[int] = mapped_column(Integer, default=4, nullable=False)
     daily_points: Mapped[int] = mapped_column(Integer, default=8, nullable=False)
     last_assigned_at: Mapped[datetime | None] = mapped_column(
@@ -132,4 +157,24 @@ class StaffProfile(Base, TimestampMixin):
 
     user: Mapped[User] = relationship("User", foreign_keys=[user_id], back_populates="staff_profile")
     team_lead: Mapped[User | None] = relationship("User", foreign_keys=[team_lead_id])
+
+
+class ClientRoleRequirement(Base):
+    __tablename__ = "client_role_requirements"
+
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    client_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    craft_role: Mapped[str] = mapped_column(String(30), primary_key=True)
+
+    client: Mapped[User] = relationship("User", foreign_keys=[client_id])
+
 

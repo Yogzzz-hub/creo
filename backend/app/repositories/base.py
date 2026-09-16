@@ -25,6 +25,7 @@ T = TypeVar("T", bound=Base)
 class TenantScope:
     """Explicit tenant and actor authorization context."""
 
+    agency_id: uuid.UUID | None
     client_id: uuid.UUID | None
     user_id: uuid.UUID
     role: UserRole

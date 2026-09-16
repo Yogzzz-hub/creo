@@ -43,6 +43,7 @@ portal_router = APIRouter(prefix="/portal", tags=["Portal"])
 
 def _scope_from_actor(actor: Actor) -> TenantScope:
     return TenantScope(
+        agency_id=actor.agency_id,
         client_id=actor.client_id,
         user_id=actor.user_id,
         role=actor.role,
@@ -178,7 +179,7 @@ async def submit_qa(
     if actor.role not in deliverable_state._STAFF_ROLES:
         raise Forbidden("Only staff may submit to QA", code="FORBIDDEN")
     # For staff, allow cross-client lookup by temporarily widening scope
-    wide_scope = TenantScope(client_id=None, user_id=actor.user_id, role=actor.role)
+    wide_scope = TenantScope(agency_id=actor.agency_id, client_id=None, user_id=actor.user_id, role=actor.role)
     d = await _get_deliverable_or_404(deliverable_id, wide_scope, db)
     d = await deliverable_state.transition(
         db,
@@ -198,7 +199,7 @@ async def qa_approve(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """Team lead approves QA. pending_qa → pending_approval."""
-    wide_scope = TenantScope(client_id=None, user_id=actor.user_id, role=actor.role)
+    wide_scope = TenantScope(agency_id=actor.agency_id, client_id=None, user_id=actor.user_id, role=actor.role)
     d = await _get_deliverable_or_404(deliverable_id, wide_scope, db)
     d = await deliverable_state.transition(
         db,
@@ -241,7 +242,7 @@ async def qa_reject(
     """Team lead rejects in QA. pending_qa → qa_rejected. qa_notes required."""
     if not qa_notes.strip():
         raise Conflict("qa_notes is required for QA rejection", code="MISSING_QA_NOTES")
-    wide_scope = TenantScope(client_id=None, user_id=actor.user_id, role=actor.role)
+    wide_scope = TenantScope(agency_id=actor.agency_id, client_id=None, user_id=actor.user_id, role=actor.role)
     d = await _get_deliverable_or_404(deliverable_id, wide_scope, db)
     d = await deliverable_state.transition(
         db,
@@ -260,7 +261,7 @@ async def approve_deliverable(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
     idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
-    _sub_guard: dict = Depends(require_active_subscription),
+    _sub_guard: dict[str, Any] = Depends(require_active_subscription),
 ) -> dict[str, str]:
     """Client approves deliverable. pending_approval → approved. Idempotency-Key honoured."""
     scope = _scope_from_actor(actor)
@@ -319,7 +320,7 @@ async def request_changes(
     rejection_comment: str,
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
-    _sub_guard: dict = Depends(require_active_subscription),
+    _sub_guard: dict[str, Any] = Depends(require_active_subscription),
 ) -> dict[str, object]:
     """Client requests changes. pending_approval → revision_requested. Comment required.
 
@@ -383,7 +384,7 @@ async def schedule_deliverable(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """Staff schedules an approved deliverable. approved → scheduled."""
-    wide_scope = TenantScope(client_id=None, user_id=actor.user_id, role=actor.role)
+    wide_scope = TenantScope(agency_id=actor.agency_id, client_id=None, user_id=actor.user_id, role=actor.role)
     d = await _get_deliverable_or_404(deliverable_id, wide_scope, db)
     d = await deliverable_state.transition(
         db,
@@ -423,7 +424,7 @@ async def get_versions(
 ) -> list[dict[str, object]]:
     """Return the full root_id revision chain, newest version first."""
     # First get the deliverable to find root_id
-    wide_scope = TenantScope(client_id=actor.client_id, user_id=actor.user_id, role=actor.role)
+    wide_scope = TenantScope(agency_id=actor.agency_id, client_id=actor.client_id, user_id=actor.user_id, role=actor.role)
     d = await _get_deliverable_or_404(deliverable_id, wide_scope, db)
 
     stmt = (

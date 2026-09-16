@@ -32,8 +32,10 @@ from app.routers import (
     onboarding,
     payments,
     plans,
+    platform,
     portal_dashboard,
     tasks,
+    tenant,
     tickets,
     webhooks,
 )
@@ -271,6 +273,8 @@ app.include_router(tasks.router, prefix="/api/v1")
 app.include_router(tasks.router)
 app.include_router(admin.router, prefix="/api/v1")
 app.include_router(admin.router)
+app.include_router(platform.router, prefix="/api/v1")
+app.include_router(tenant.router, prefix="/api/v1")
 app.include_router(notifications.router, prefix="/api/v1")
 
 

@@ -16,6 +16,12 @@ from app.db.base import Base, UUIDPrimaryKeyMixin
 class Questionnaire(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "questionnaires"
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),

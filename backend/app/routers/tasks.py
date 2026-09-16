@@ -189,7 +189,7 @@ async def get_kanban_board(
             ready_to_publish=[],
         )
 
-    return KanbanBoardResponse(
+    return TaskPipelineResponse(
         backlog=parse_col(row[0]),
         in_production=parse_col(row[1]),
         internal_qa=parse_col(row[2]),

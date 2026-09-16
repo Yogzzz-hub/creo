@@ -54,214 +54,217 @@ def run_async_safe(coro: Any) -> Any:
 async def execute_publish_deliverable_async(
     deliverable_id: uuid.UUID,
     *,
+    agency_id: uuid.UUID | None = None,
     max_poll_seconds: float = 300.0,
     poll_interval: float = 0.05,  # Faster in tests, 5s in live worker
     _simulate_crash_after_container: bool = False,
 ) -> dict[str, Any]:
     """Execute the 3-phase Instagram publishing workflow with transactional row locks."""
     ig_client = get_instagram_client()
+    from app.db.session import tenant_session
 
     async with async_session_factory() as db:
-        # 1. SELECT ... FOR UPDATE on Deliverable
-        stmt = select(Deliverable).where(Deliverable.id == deliverable_id).with_for_update()
-        res = await db.execute(stmt)
-        deliverable = res.scalar_one_or_none()
-        if not deliverable:
-            return {"error": "Deliverable not found", "deliverable_id": str(deliverable_id)}
+        async with tenant_session(db, agency_id=agency_id):
+            # 1. SELECT ... FOR UPDATE on Deliverable
+            stmt = select(Deliverable).where(Deliverable.id == deliverable_id).with_for_update()
+            res = await db.execute(stmt)
+            deliverable = res.scalar_one_or_none()
+            if not deliverable:
+                return {"error": "Deliverable not found", "deliverable_id": str(deliverable_id)}
 
-        # Invariant: Early return if already published — no duplicate API calls
-        if deliverable.status == DeliverableStatus.PUBLISHED:
-            logger.info("Deliverable %s is already published. Skipping.", deliverable_id)
-            return {"status": "skipped", "reason": "already_published"}
+            # Invariant: Early return if already published — no duplicate API calls
+            if deliverable.status == DeliverableStatus.PUBLISHED:
+                logger.info("Deliverable %s is already published. Skipping.", deliverable_id)
+                return {"status": "skipped", "reason": "already_published"}
 
-        # Only scheduled, publishing, approved, or failed deliverables may be published
-        allowed_initial_states = {
-            DeliverableStatus.SCHEDULED,
-            DeliverableStatus.PUBLISHING,
-            DeliverableStatus.APPROVED,
-            DeliverableStatus.PUBLISH_FAILED,
-        }
-        if deliverable.status not in allowed_initial_states:
-            logger.warning(
-                "Deliverable %s has invalid status %s for publishing.",
-                deliverable_id,
-                deliverable.status,
-            )
-            return {"status": "skipped", "reason": f"invalid_status_{deliverable.status}"}
-
-        # 2. Fetch Client Profile for Instagram credentials and token expiry
-        profile_stmt = select(ClientProfile).where(ClientProfile.user_id == deliverable.client_id)
-        profile_res = await db.execute(profile_stmt)
-        profile = profile_res.scalar_one_or_none()
-
-        ig_user_id = (
-            profile.instagram_user_id
-            if profile and profile.instagram_user_id
-            else "mock_ig_user_123"
-        )
-
-        # Check token expiration: refresh if within 3 days
-        now = datetime.now(UTC)
-        if profile and profile.ig_token_expires_at:
-            if profile.ig_token_expires_at - now < timedelta(days=3):
-                logger.info(
-                    "Instagram token for user %s expires within 3 days. Refreshing.",
-                    deliverable.client_id,
-                )
-                refresh_data = await ig_client.refresh_access_token("existing_token")
-                new_expires_in = refresh_data.get("expires_in", 5184000)
-                profile.ig_token_expires_at = now + timedelta(seconds=new_expires_in)
-                await db.commit()
-
-        # 3. Check Publishing Quota Limit (Meta 25-posts-per-24h ceiling)
-        limits = await ig_client.get_content_publishing_limit(ig_user_id)
-        quota_usage = limits.get("quota_usage", 0)
-        if quota_usage >= 25:
-            logger.warning(
-                "IG limit reached (quota_usage=%s >= 25). Backing off 1 hour.",
-                quota_usage,
-            )
-            return {
-                "status": "rate_limited",
-                "quota_usage": quota_usage,
-                "retry_in_seconds": 3600,
-            }
-
-        # 4. Transition to PUBLISHING if not already in that state
-        if deliverable.status != DeliverableStatus.PUBLISHING:
-            await transition(
-                db,
-                deliverable,
+            # Only scheduled, publishing, approved, or failed deliverables may be published
+            allowed_initial_states = {
+                DeliverableStatus.SCHEDULED,
                 DeliverableStatus.PUBLISHING,
-                actor_id=SYSTEM_ACTOR_ID,
-                actor_role=UserRole.SUPER_ADMIN,
-                request_id=f"publish-{deliverable_id}",
-            )
-            deliverable.publish_attempts = (deliverable.publish_attempts or 0) + 1
-            await db.commit()
-
-        # ── PHASE 1: Media Container Creation ──────────────────────────────
-        if not deliverable.ig_creation_id:
-            logger.info(
-                "Phase 1: Creating Instagram media container for deliverable %s", deliverable_id
-            )
-            media_type = (
-                "REELS"
-                if deliverable.file_type.lower() in ("video/mp4", "mp4", "reel")
-                else "IMAGE"
-            )
-            from app.services import storage_service
-            public_file_url = deliverable.file_url
-            if public_file_url and not (public_file_url.startswith("http://") or public_file_url.startswith("https://")):
-                public_file_url = storage_service.signed_get(public_file_url, ttl=3600)
-
-            creation_id = await ig_client.create_media_container(
-                ig_user_id=ig_user_id,
-                media_type=media_type,
-                file_url=public_file_url,
-                caption=f"Release {deliverable.id}",
-                thumb_offset=0,
-            )
-
-            # COMMIT ig_creation_id BEFORE going further so that if the worker process
-            # crashes or is killed (kill -9), a resumed worker picks up from the persisted
-            # container ID instead of re-creating another container and double-posting.
-            deliverable.ig_creation_id = creation_id
-            await db.commit()
-            logger.info("Persisted ig_creation_id=%s before polling/publishing", creation_id)
-
-            if _simulate_crash_after_container:
+                DeliverableStatus.APPROVED,
+                DeliverableStatus.PUBLISH_FAILED,
+            }
+            if deliverable.status not in allowed_initial_states:
                 logger.warning(
-                    "Simulating worker process kill -9 immediately after container commit"
+                    "Deliverable %s has invalid status %s for publishing.",
+                    deliverable_id,
+                    deliverable.status,
                 )
-                raise RuntimeError("Simulated worker kill -9 immediately after container commit")
-        else:
-            logger.info(
-                "Resuming publish from previously persisted ig_creation_id=%s",
-                deliverable.ig_creation_id,
+                return {"status": "skipped", "reason": f"invalid_status_{deliverable.status}"}
+
+            # 2. Fetch Client Profile for Instagram credentials and token expiry
+            profile_stmt = select(ClientProfile).where(ClientProfile.user_id == deliverable.client_id)
+            profile_res = await db.execute(profile_stmt)
+            profile = profile_res.scalar_one_or_none()
+
+            ig_user_id = (
+                profile.instagram_user_id
+                if profile and profile.instagram_user_id
+                else "mock_ig_user_123"
             )
 
-        # ── PHASE 2: Transcoding Polling Loop ─────────────────────────────
-        if not deliverable.ig_creation_id:
-            raise TransientIGError("Missing Instagram creation_id on deliverable")
-        active_creation_id: str = deliverable.ig_creation_id
+            # Check token expiration: refresh if within 3 days
+            now = datetime.now(UTC)
+            if profile and profile.ig_token_expires_at:
+                if profile.ig_token_expires_at - now < timedelta(days=3):
+                    logger.info(
+                        "Instagram token for user %s expires within 3 days. Refreshing.",
+                        deliverable.client_id,
+                    )
+                    refresh_data = await ig_client.refresh_access_token("existing_token")
+                    new_expires_in = refresh_data.get("expires_in", 5184000)
+                    profile.ig_token_expires_at = now + timedelta(seconds=new_expires_in)
+                    await db.commit()
 
-        logger.info("Phase 2: Polling container %s status", active_creation_id)
-        deadline = time.monotonic() + max_poll_seconds
-        is_finished = False
-
-        while time.monotonic() < deadline:
-            status_code = await ig_client.get_container_status(active_creation_id)
-            if status_code == "FINISHED":
-                is_finished = True
-                break
-            if status_code == "ERROR":
-                logger.error(
-                    "Container %s encountered ERROR in transcoding.", deliverable.ig_creation_id
+            # 3. Check Publishing Quota Limit (Meta 25-posts-per-24h ceiling)
+            limits = await ig_client.get_content_publishing_limit(ig_user_id)
+            quota_usage = limits.get("quota_usage", 0)
+            if quota_usage >= 25:
+                logger.warning(
+                    "IG limit reached (quota_usage=%s >= 25). Backing off 1 hour.",
+                    quota_usage,
                 )
-                deliverable.publish_error = "Instagram container transcoding error"
-                # Clear ig_creation_id so future retry rebuilds a fresh container
-                deliverable.ig_creation_id = None
+                return {
+                    "status": "rate_limited",
+                    "quota_usage": quota_usage,
+                    "retry_in_seconds": 3600,
+                }
+
+            # 4. Transition to PUBLISHING if not already in that state
+            if deliverable.status != DeliverableStatus.PUBLISHING:
                 await transition(
                     db,
                     deliverable,
-                    DeliverableStatus.PUBLISH_FAILED,
+                    DeliverableStatus.PUBLISHING,
                     actor_id=SYSTEM_ACTOR_ID,
                     actor_role=UserRole.SUPER_ADMIN,
                     request_id=f"publish-{deliverable_id}",
                 )
+                deliverable.publish_attempts = (deliverable.publish_attempts or 0) + 1
                 await db.commit()
-                return {
-                    "status": "failed",
-                    "reason": "container_error",
-                    "deliverable_id": str(deliverable_id),
-                }
 
-            if poll_interval > 0:
-                await asyncio.sleep(poll_interval)
+            # ── PHASE 1: Media Container Creation ──────────────────────────────
+            if not deliverable.ig_creation_id:
+                logger.info(
+                    "Phase 1: Creating Instagram media container for deliverable %s", deliverable_id
+                )
+                media_type = (
+                    "REELS"
+                    if deliverable.file_type.lower() in ("video/mp4", "mp4", "reel")
+                    else "IMAGE"
+                )
+                from app.services import storage_service
+                public_file_url = deliverable.file_url
+                if public_file_url and not (public_file_url.startswith("http://") or public_file_url.startswith("https://")):
+                    public_file_url = storage_service.signed_get(public_file_url, ttl=3600)
 
-        if not is_finished:
-            raise TransientIGError("Instagram container transcoding timed out (>300s)")
+                creation_id = await ig_client.create_media_container(
+                    ig_user_id=ig_user_id,
+                    media_type=media_type,
+                    file_url=public_file_url,
+                    caption=f"Release {deliverable.id}",
+                    thumb_offset=0,
+                )
 
-        # ── PHASE 3: Media Publish ─────────────────────────────────────────
-        logger.info("Phase 3: Publishing media container %s", active_creation_id)
-        pub_result = await ig_client.publish_container(
-            ig_user_id=ig_user_id,
-            creation_id=active_creation_id,
-        )
+                # COMMIT ig_creation_id BEFORE going further so that if the worker process
+                # crashes or is killed (kill -9), a resumed worker picks up from the persisted
+                # container ID instead of re-creating another container and double-posting.
+                deliverable.ig_creation_id = creation_id
+                await db.commit()
+                logger.info("Persisted ig_creation_id=%s before polling/publishing", creation_id)
 
-        deliverable.ig_media_id = pub_result["media_id"]
-        deliverable.ig_permalink = pub_result["permalink"]
-        deliverable.publish_error = None
+                if _simulate_crash_after_container:
+                    logger.warning(
+                        "Simulating worker process kill -9 immediately after container commit"
+                    )
+                    raise RuntimeError("Simulated worker kill -9 immediately after container commit")
+            else:
+                logger.info(
+                    "Resuming publish from previously persisted ig_creation_id=%s",
+                    deliverable.ig_creation_id,
+                )
 
-        await transition(
-            db,
-            deliverable,
-            DeliverableStatus.PUBLISHED,
-            actor_id=SYSTEM_ACTOR_ID,
-            actor_role=UserRole.SUPER_ADMIN,
-            request_id=f"publish-{deliverable_id}",
-        )
-        await db.commit()
+            # ── PHASE 2: Transcoding Polling Loop ─────────────────────────────
+            if not deliverable.ig_creation_id:
+                raise TransientIGError("Missing Instagram creation_id on deliverable")
+            active_creation_id: str = deliverable.ig_creation_id
 
-        # Send in-app / email notification to client
-        try:
-            msg = f"Your deliverable has been published to Instagram: {deliverable.ig_permalink}"
-            await send_notification_async(
-                user_id=deliverable.client_id,
-                title="Deliverable Published",
-                message=msg,
-                channel="in_app",
-                link=deliverable.ig_permalink,
+            logger.info("Phase 2: Polling container %s status", active_creation_id)
+            deadline = time.monotonic() + max_poll_seconds
+            is_finished = False
+
+            while time.monotonic() < deadline:
+                status_code = await ig_client.get_container_status(active_creation_id)
+                if status_code == "FINISHED":
+                    is_finished = True
+                    break
+                if status_code == "ERROR":
+                    logger.error(
+                        "Container %s encountered ERROR in transcoding.", deliverable.ig_creation_id
+                    )
+                    deliverable.publish_error = "Instagram container transcoding error"
+                    # Clear ig_creation_id so future retry rebuilds a fresh container
+                    deliverable.ig_creation_id = None
+                    await transition(
+                        db,
+                        deliverable,
+                        DeliverableStatus.PUBLISH_FAILED,
+                        actor_id=SYSTEM_ACTOR_ID,
+                        actor_role=UserRole.SUPER_ADMIN,
+                        request_id=f"publish-{deliverable_id}",
+                    )
+                    await db.commit()
+                    return {
+                        "status": "failed",
+                        "reason": "container_error",
+                        "deliverable_id": str(deliverable_id),
+                    }
+
+                if poll_interval > 0:
+                    await asyncio.sleep(poll_interval)
+
+            if not is_finished:
+                raise TransientIGError("Instagram container transcoding timed out (>300s)")
+
+            # ── PHASE 3: Media Publish ─────────────────────────────────────────
+            logger.info("Phase 3: Publishing media container %s", active_creation_id)
+            pub_result = await ig_client.publish_container(
+                ig_user_id=ig_user_id,
+                creation_id=active_creation_id,
             )
-        except Exception as e:
-            logger.warning("Failed to dispatch publish notification for %s: %s", deliverable_id, e)
 
-        return {
-            "status": "published",
-            "deliverable_id": str(deliverable_id),
-            "media_id": deliverable.ig_media_id,
-            "permalink": deliverable.ig_permalink,
+            deliverable.ig_media_id = pub_result["media_id"]
+            deliverable.ig_permalink = pub_result["permalink"]
+            deliverable.publish_error = None
+
+            await transition(
+                db,
+                deliverable,
+                DeliverableStatus.PUBLISHED,
+                actor_id=SYSTEM_ACTOR_ID,
+                actor_role=UserRole.SUPER_ADMIN,
+                request_id=f"publish-{deliverable_id}",
+            )
+            await db.commit()
+
+            # Send in-app / email notification to client
+            try:
+                msg = f"Your deliverable has been published to Instagram: {deliverable.ig_permalink}"
+                await send_notification_async(
+                    user_id=deliverable.client_id,
+                    title="Deliverable Published",
+                    message=msg,
+                    channel="in_app",
+                    link=deliverable.ig_permalink,
+                )
+            except Exception as e:
+                logger.warning("Failed to dispatch publish notification for %s: %s", deliverable_id, e)
+
+            return {
+                "status": "published",
+                "deliverable_id": str(deliverable_id),
+                "media_id": deliverable.ig_media_id,
+                "permalink": deliverable.ig_permalink,
         }
 
 
@@ -272,11 +275,16 @@ async def execute_publish_deliverable_async(
     acks_late=True,
     queue="publish",
 )
-def publish_deliverable_task(self: Any, deliverable_id_str: str) -> dict[str, Any]:
+def publish_deliverable_task(
+    self: Any, deliverable_id_str: str, agency_id_str: str | None = None
+) -> dict[str, Any]:
     """Celery task entrypoint for Instagram publishing."""
     uid = uuid.UUID(deliverable_id_str)
+    agency_id = uuid.UUID(agency_id_str) if agency_id_str else None
     try:
-        result = run_async_safe(execute_publish_deliverable_async(uid, poll_interval=2.0))
+        result = run_async_safe(
+            execute_publish_deliverable_async(uid, agency_id=agency_id, poll_interval=2.0)
+        )
         if result.get("status") == "rate_limited":
             # Retry in 1 hour per BUILD-PROMPTS.md Phase 6
             countdown = result.get("retry_in_seconds", 3600)

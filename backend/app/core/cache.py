@@ -40,37 +40,43 @@ async def get_redis() -> Any:
     return _redis_client
 
 
-async def invalidate_user_session(user_id: uuid.UUID | str) -> None:
+async def invalidate_user_session(user_id: uuid.UUID | str, agency_id: uuid.UUID | str | None = None) -> None:
     """Invalidate all live sessions for a user upon suspension or password/token reset."""
     global _redis_last_failure
     uid = str(user_id)
-    _in_memory_suspended.add(uid)
+    ag_prefix = f"{agency_id}:" if agency_id else "global:"
+    key = f"user:suspended:{ag_prefix}{uid}"
+    
+    _in_memory_suspended.add(key)
     import time
     if time.time() - _redis_last_failure < 30.0:
         return
     try:
         r = await get_redis()
-        await r.setex(f"user:suspended:{uid}", 86400 * 30, "1")
-        await r.delete(f"user:session:{uid}")
+        await r.setex(key, 86400 * 30, "1")
+        await r.delete(f"user:session:{ag_prefix}{uid}")
     except Exception as e:
         _redis_last_failure = time.time()
         logger.debug("Redis not available for session invalidation: %s", e)
 
 
-async def is_user_suspended_in_cache(user_id: uuid.UUID | str) -> bool:
+async def is_user_suspended_in_cache(user_id: uuid.UUID | str, agency_id: uuid.UUID | str | None = None) -> bool:
     """Check if the user has been revoked/suspended in cache."""
     global _redis_last_failure
     uid = str(user_id)
-    if uid in _in_memory_suspended:
+    ag_prefix = f"{agency_id}:" if agency_id else "global:"
+    key = f"user:suspended:{ag_prefix}{uid}"
+    
+    if key in _in_memory_suspended:
         return True
     import time
     if time.time() - _redis_last_failure < 30.0:
         return False
     try:
         r = await get_redis()
-        val = await r.get(f"user:suspended:{uid}")
+        val = await r.get(key)
         if val == "1":
-            _in_memory_suspended.add(uid)
+            _in_memory_suspended.add(key)
             return True
     except Exception as e:
         _redis_last_failure = time.time()

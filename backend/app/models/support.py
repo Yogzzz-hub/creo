@@ -21,6 +21,12 @@ if TYPE_CHECKING:
 class Ticket(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "tickets"
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     client_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -63,6 +69,12 @@ class Ticket(Base, UUIDPrimaryKeyMixin):
 class TicketMessage(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "ticket_messages"
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     ticket_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("tickets.id", ondelete="CASCADE"),

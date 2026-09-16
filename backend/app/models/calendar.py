@@ -31,6 +31,12 @@ if TYPE_CHECKING:
 class ClientCycle(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "client_cycles"
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     client_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -74,6 +80,12 @@ class ClientCycle(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 class ShootDay(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "shoot_days"
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     cycle_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("client_cycles.id", ondelete="CASCADE"),
@@ -122,6 +134,12 @@ class ShootDay(Base, UUIDPrimaryKeyMixin, TimestampMixin):
 class CalendarPolicy(Base, TimestampMixin):
     __tablename__ = "calendar_policies"
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     client_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -141,6 +159,12 @@ class CalendarPolicy(Base, TimestampMixin):
 class CalendarBlackout(Base, UUIDPrimaryKeyMixin):
     __tablename__ = "calendar_blackouts"
 
+    agency_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("agencies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     client_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
