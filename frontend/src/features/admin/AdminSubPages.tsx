@@ -1592,6 +1592,7 @@ export function AdminTasksPage() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedTask, setSelectedTask] = useState<any | null>(null);
 
   useEffect(() => {
     fetchAdminQueue(undefined, "admin")
@@ -1624,7 +1625,7 @@ export function AdminTasksPage() {
             <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">Task Dispatch Queue</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Workload distribution, creative pod assignments, and SLA production deadlines
+            Workload distribution, creative pod assignments, Gemini Brand DNA briefs, and SLA deadlines
           </p>
         </div>
       </div>
@@ -1722,7 +1723,11 @@ export function AdminTasksPage() {
             </div>
           ) : (
             filteredTasks.slice(0, 25).map((task) => (
-              <div key={task.id} className="p-4 space-y-2">
+              <div
+                key={task.id}
+                onClick={() => setSelectedTask(task)}
+                className="p-4 space-y-2 hover:bg-slate-50/70 transition-colors cursor-pointer"
+              >
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-sm text-[#0D2137]">{task.client_company || task.client_email || "Agency Client"}</span>
                   <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono ${
@@ -1735,6 +1740,12 @@ export function AdminTasksPage() {
                     {task.deliverable_type}
                   </span>
                 </div>
+                {task.brand_summary && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-[#2B7BC4] font-medium bg-blue-50/80 px-2 py-1 rounded-md border border-blue-100">
+                    <Sparkles className="size-3 shrink-0" />
+                    <span className="truncate">{task.brand_summary}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between text-xs text-slate-500">
                   <span className="font-medium text-slate-700">
                     👤 {task.assignee_name || "Unassigned"} {task.assignee_role ? `(${task.assignee_role})` : ""}
@@ -1758,34 +1769,46 @@ export function AdminTasksPage() {
             <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200">
               <tr>
                 <th className="px-5 py-3">Task ID</th>
-                <th className="px-5 py-3">Client</th>
+                <th className="px-5 py-3">Client & Brand</th>
                 <th className="px-5 py-3">Deliverable</th>
                 <th className="px-5 py-3">Assigned Member</th>
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">SLA Due</th>
+                <th className="px-5 py-3 text-right">Brand Brief</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
+                  <td colSpan={7} className="px-5 py-8 text-center text-slate-400">
                     <Loader2 className="size-5 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
                     Loading task queue...
                   </td>
                 </tr>
               ) : filteredTasks.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
+                  <td colSpan={7} className="px-5 py-8 text-center text-slate-400">
                     No tasks match the active filter.
                   </td>
                 </tr>
               ) : (
                 filteredTasks.slice(0, 35).map((task) => (
-                  <tr key={task.id} className="hover:bg-slate-50/70 transition-colors">
+                  <tr
+                    key={task.id}
+                    onClick={() => setSelectedTask(task)}
+                    className="hover:bg-slate-50/70 transition-colors cursor-pointer"
+                  >
                     <td className="px-5 py-3 font-mono text-xs text-[#0D2137]">#{task.id.slice(0, 8)}</td>
                     <td className="px-5 py-3 font-semibold text-[#0D2137]">
                       <div>{task.client_company || "Agency Client"}</div>
-                      {task.client_email && <div className="text-[10px] text-slate-400 font-normal">{task.client_email}</div>}
+                      {task.brand_summary ? (
+                        <div className="flex items-center gap-1 text-[10px] text-[#2B7BC4] font-medium truncate max-w-[240px] mt-0.5" title={task.brand_summary}>
+                          <Sparkles className="size-3 shrink-0 text-[#2B7BC4]" />
+                          <span className="truncate">{task.brand_summary}</span>
+                        </div>
+                      ) : task.client_email ? (
+                        <div className="text-[10px] text-slate-400 font-normal">{task.client_email}</div>
+                      ) : null}
                     </td>
                     <td className="px-5 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono border ${
@@ -1816,6 +1839,19 @@ export function AdminTasksPage() {
                     <td className="px-5 py-3 font-mono text-slate-600">
                       {task.sla_due_at ? new Date(task.sla_due_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "Immediate"}
                     </td>
+                    <td className="px-5 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTask(task);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-[#2B7BC4] bg-[#E8F4FD] hover:bg-[#D5EBFA] border border-[#C9DFF0] transition-colors cursor-pointer shadow-2xs"
+                      >
+                        <Sparkles className="size-3.5 text-[#2B7BC4]" />
+                        <span>Brief</span>
+                      </button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -1823,6 +1859,188 @@ export function AdminTasksPage() {
           </table>
         </div>
       </div>
+
+      {/* Task Creative Brief & Gemini Brand DNA Modal */}
+      {selectedTask && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
+          onClick={() => setSelectedTask(null)}
+        >
+          <div
+            className="max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono border ${
+                    selectedTask.deliverable_type === "reel"
+                      ? "bg-purple-50 text-purple-700 border-purple-200"
+                      : "bg-blue-50 text-blue-700 border-blue-200"
+                  }`}>
+                    {selectedTask.deliverable_type}
+                  </span>
+                  <span className="text-xs font-bold text-slate-400 font-mono">
+                    #{selectedTask.id.slice(0, 8)}
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold text-[#0D2137]">
+                  {selectedTask.client_company || "Agency Client"}
+                </h3>
+                {selectedTask.instagram_username && (
+                  <p className="text-xs text-[#2B7BC4] font-medium">
+                    @{selectedTask.instagram_username}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedTask(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {/* 1. Gemini Brand Summary & Strategic Positioning */}
+            <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50/70 to-slate-50 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="size-4 text-[#2B7BC4]" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#2B7BC4]">
+                  Gemini Brand DNA & Strategic Summary
+                </h4>
+              </div>
+
+              {selectedTask.brand_summary && (
+                <div className="rounded-lg bg-white p-3 border border-blue-100 shadow-2xs">
+                  <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
+                    AI Strategic Summary
+                  </span>
+                  <p className="text-xs text-[#0D2137] font-semibold leading-relaxed">
+                    &ldquo;{selectedTask.brand_summary}&rdquo;
+                  </p>
+                </div>
+              )}
+
+              {selectedTask.brand_dna?.positioning && (
+                <div className="rounded-lg bg-white p-3 border border-blue-100 shadow-2xs">
+                  <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
+                    Core Positioning
+                  </span>
+                  <p className="text-xs text-slate-700 leading-relaxed">
+                    {selectedTask.brand_dna.positioning}
+                  </p>
+                </div>
+              )}
+
+              {/* Tone voice words */}
+              {selectedTask.brand_dna?.tone?.voice_words && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[10px] font-bold uppercase text-slate-400 mr-1">Voice:</span>
+                  {(selectedTask.brand_dna.tone.voice_words as string[]).map((w: string, i: number) => (
+                    <span key={i} className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-[#1E3A8A]">
+                      {w}
+                    </span>
+                  ))}
+                  {(selectedTask.brand_dna.tone.anti_voice_words as string[] || []).map((w: string, i: number) => (
+                    <span key={i} className="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-100 text-rose-700">
+                      Avoid {w}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 2. Slot Creative Blueprint (if available) */}
+            {selectedTask.blueprint ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Production Creative Blueprint
+                  </h4>
+                  {selectedTask.blueprint.funnel_stage && (
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      {selectedTask.blueprint.funnel_stage} Funnel
+                    </span>
+                  )}
+                </div>
+
+                {selectedTask.blueprint.premise && (
+                  <div className="p-3 rounded-lg bg-white border border-slate-200/80">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Core Premise</span>
+                    <p className="text-xs text-slate-800 font-medium">{selectedTask.blueprint.premise}</p>
+                  </div>
+                )}
+
+                {/* Hooks A/B/C */}
+                {Array.isArray(selectedTask.blueprint.hooks) && selectedTask.blueprint.hooks.length > 0 && (
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Psychological Hook Angles</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {selectedTask.blueprint.hooks.map((h: any, idx: number) => (
+                        <div key={idx} className="p-2.5 rounded-lg bg-white border border-slate-200 text-xs space-y-1">
+                          <span className="text-[9px] font-bold uppercase font-mono px-1.5 py-0.5 rounded bg-blue-50 text-[#2B7BC4]">
+                            Angle {idx + 1}: {h.angle}
+                          </span>
+                          <p className="text-[11px] font-semibold text-[#0D2137] leading-tight pt-1">&ldquo;{h.hook_copy}&rdquo;</p>
+                          {h.rationale && <p className="text-[10px] text-slate-500 italic">{h.rationale}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Shot beats / storyboard */}
+                {Array.isArray(selectedTask.blueprint.beats) && selectedTask.blueprint.beats.length > 0 && (
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Shot Sequence / Beats</span>
+                    <div className="space-y-1">
+                      {selectedTask.blueprint.beats.map((b: any, bIdx: number) => (
+                        <div key={bIdx} className="p-2 rounded bg-white border border-slate-200 text-xs flex gap-2">
+                          <span className="font-mono text-[#2B7BC4] font-bold text-[10px]">#{bIdx + 1}</span>
+                          <div className="space-y-0.5 text-[11px]">
+                            {b.visual_cue && <p className="text-slate-800 font-medium"><strong>Visual:</strong> {b.visual_cue}</p>}
+                            {b.narration_script && <p className="text-slate-600"><strong>Script:</strong> &ldquo;{b.narration_script}&rdquo;</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {/* 3. SLA & Assigned Specialist */}
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">Assigned Specialist</span>
+                <span className="font-semibold text-[#0D2137]">
+                  {selectedTask.assignee_name || "Unassigned"}
+                </span>
+                <span className="text-[10px] text-slate-500 block capitalize">{selectedTask.assignee_role || "Creative Pod"}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-slate-400 block text-[10px] uppercase font-bold">SLA Production Due</span>
+                <span className="font-semibold text-rose-600 font-mono">
+                  {selectedTask.sla_due_at ? new Date(selectedTask.sla_due_at).toLocaleString() : "Immediate"}
+                </span>
+                <span className="text-[10px] text-slate-500 block capitalize">Status: {selectedTask.status?.replace("_", " ")}</span>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedTask(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+              >
+                Close Brief
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2210,8 +2428,36 @@ export function AdminCalendarPage() {
 
             {selectedEvent.caption && (
               <div className="text-xs p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-600">
-                <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1">Caption</span>
+                <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1">Scheduled Concept / Caption</span>
                 {selectedEvent.caption}
+              </div>
+            )}
+
+            {/* Gemini Brand Summary Preview */}
+            {selectedEvent.brand_summary && (
+              <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/80 space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#2B7BC4]">
+                  <Sparkles className="size-3.5 text-[#2B7BC4]" />
+                  <span>Gemini Brand Summary</span>
+                </div>
+                <p className="text-xs text-[#0D2137] italic font-medium leading-relaxed">
+                  &ldquo;{selectedEvent.brand_summary}&rdquo;
+                </p>
+              </div>
+            )}
+
+            {/* Blueprint Hook Angle if present */}
+            {selectedEvent.selected_hook && (
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1 text-xs">
+                <span className="text-[10px] font-bold uppercase font-mono px-1.5 py-0.5 rounded bg-blue-100 text-[#1E3A8A]">
+                  Hook Angle: {selectedEvent.selected_hook.angle}
+                </span>
+                <p className="font-semibold text-[#0D2137] pt-1">
+                  &ldquo;{selectedEvent.selected_hook.hook_copy}&rdquo;
+                </p>
+                {selectedEvent.selected_hook.rationale && (
+                  <p className="text-[11px] text-slate-500 italic">{selectedEvent.selected_hook.rationale}</p>
+                )}
               </div>
             )}
 

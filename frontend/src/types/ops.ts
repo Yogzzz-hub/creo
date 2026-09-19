@@ -65,6 +65,12 @@ export interface AdminQueueData {
     assignee_name?: string | null;
     assignee_email?: string | null;
     assignee_role?: string | null;
+    brand_summary?: string | null;
+    brand_dna?: any | null;
+    blueprint?: any | null;
+    concept_status?: string | null;
+    effort_points?: number | null;
+    instagram_username?: string | null;
   }>;
   staff: StaffQueueItem[];
 }

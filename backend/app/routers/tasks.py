@@ -159,7 +159,11 @@ async def get_kanban_board(
                 u.email AS assignee_email,
                 u.full_name AS assignee_name,
                 c.email AS client_email,
-                cp.company_name AS client_company
+                cp.company_name AS client_company,
+                cp.brand_summary,
+                t.blueprint,
+                t.concept_status,
+                t.effort_points
             FROM tasks t
             LEFT JOIN users u ON u.id = t.assigned_to
             LEFT JOIN users c ON c.id = t.client_id

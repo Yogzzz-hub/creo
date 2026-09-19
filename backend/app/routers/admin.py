@@ -323,7 +323,7 @@ async def get_client_roster(
 @router.get("/queue")
 async def get_dispatch_queue(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = StaffActor,
 ) -> dict[str, Any]:
     """Global dispatch queue and staff capacity breakdown."""
     # 1. Backlog and active pipeline tasks awaiting dispatch or in production
@@ -334,7 +334,13 @@ async def get_dispatch_queue(
                c.email AS client_email,
                u.full_name AS assignee_name,
                u.email AS assignee_email,
-               u.role AS assignee_role
+               u.role AS assignee_role,
+               cp.brand_summary,
+               cp.brand_dna,
+               t.blueprint,
+               t.concept_status,
+               t.effort_points,
+               cp.instagram_username
         FROM tasks t
         LEFT JOIN client_profiles cp ON cp.user_id = t.client_id
         LEFT JOIN users c ON c.id = t.client_id
@@ -358,6 +364,12 @@ async def get_dispatch_queue(
             "assignee_name": r[9] or (r[10].split("@")[0].capitalize() if r[10] else "Unassigned"),
             "assignee_email": r[10],
             "assignee_role": r[11],
+            "brand_summary": r[12],
+            "brand_dna": r[13] if isinstance(r[13], dict) else (json.loads(r[13]) if isinstance(r[13], str) else None),
+            "blueprint": r[14] if isinstance(r[14], dict) else (json.loads(r[14]) if isinstance(r[14], str) else None),
+            "concept_status": r[15],
+            "effort_points": r[16],
+            "instagram_username": r[17],
         }
         for r in active_rows
     ]
@@ -2503,6 +2515,7 @@ async def get_admin_calendar(
             ClientProfile.company_name,
             Deliverable,
             Task.deliverable_type,
+            ClientProfile.brand_summary,
         )
         .join(User, User.id == ContentCalendar.client_id)
         .outerjoin(ClientProfile, ClientProfile.user_id == ContentCalendar.client_id)
@@ -2514,7 +2527,7 @@ async def get_admin_calendar(
     cal_res = await db.execute(cal_stmt)
     cal_rows = cal_res.fetchall()
 
-    for cal, email, company_name, d, deliv_type in cal_rows:
+    for cal, email, company_name, d, deliv_type, brand_summary in cal_rows:
         if d:
             seen_deliverable_ids.add(d.id)
 
@@ -2571,6 +2584,9 @@ async def get_admin_calendar(
             "time": event_dt.strftime("%I:%M %p") if event_dt else "11:00 AM",
             "caption": cal.caption or "",
             "file_url": file_url,
+            "brand_summary": brand_summary,
+            "blueprint": cal.blueprint,
+            "selected_hook": cal.selected_hook,
         })
 
     # 2. Query standalone deliverables not yet attached to a ContentCalendar row
