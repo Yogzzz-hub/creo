@@ -45,7 +45,7 @@ from app.models.enums import (
 from app.models.ops import Announcement, AuditLog, LeaveRequest, Notification
 from app.models.support import Ticket, TicketMessage
 from app.models.user import ClientProfile, StaffProfile, User
-from app.models.work import ContentCalendar, Deliverable, Task
+from app.models.work import ClientAssignment, ContentCalendar, Deliverable, Task
 from app.services import deliverable_state, storage_service
 
 logger = logging.getLogger(__name__)
@@ -318,6 +318,156 @@ async def get_client_roster(
             }
         )
     return clients
+
+
+@router.get("/clients/{client_id}")
+async def get_client_brand_profile(
+    client_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = StaffActor,
+) -> dict[str, Any]:
+    """Full client detail with brand DNA, subscription, team roster, and task stats.
+
+    Access: Admin/Super Admin can view any client.
+    Team members can only view clients assigned to them via ClientAssignment.
+    """
+    # 1. Access control for non-admin staff
+    is_admin_role = actor.role in ("admin", "super_admin")
+    if not is_admin_role:
+        # Check that the calling user is assigned to this client
+        ca_check = await db.execute(
+            select(ClientAssignment.id).where(
+                ClientAssignment.client_id == client_id,
+                ClientAssignment.user_id == actor.user_id,
+            )
+        )
+        if not ca_check.scalar_one_or_none():
+            raise Forbidden(
+                "You are not assigned to this client",
+                code="NOT_ASSIGNED_TO_CLIENT",
+            )
+
+    # 2. Fetch client user
+    client_user = await db.get(User, client_id)
+    if not client_user or client_user.role != "client":
+        raise NotFound(f"Client {client_id} not found", code="CLIENT_NOT_FOUND")
+
+    # 3. Fetch client profile with brand DNA
+    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
+
+    # 4. Fetch subscription
+    sub_stmt = select(Subscription, Plan).join(
+        Plan, Plan.id == Subscription.plan_id, isouter=True
+    ).where(
+        Subscription.client_id == client_id,
+        Subscription.status.in_(["active", "trialing"]),
+    ).order_by(Subscription.created_at.desc()).limit(1)
+    sub_row = (await db.execute(sub_stmt)).first()
+
+    subscription_data = None
+    if sub_row:
+        sub, plan = sub_row
+        subscription_data = {
+            "plan_name": plan.name if plan else None,
+            "plan_display_name": plan.display_name if plan else None,
+            "status": sub.status,
+            "monthly_price": float(plan.monthly_price) if plan and plan.monthly_price else None,
+            "started_at": sub.created_at.isoformat() if sub.created_at else None,
+        }
+
+    # 5. Fetch assigned team roster
+    ca_stmt = (
+        select(ClientAssignment, User)
+        .join(User, User.id == ClientAssignment.user_id)
+        .where(ClientAssignment.client_id == client_id)
+    )
+    ca_rows = (await db.execute(ca_stmt)).all()
+
+    assigned_team = []
+    for ca, member in ca_rows:
+        role_label = "Pod Specialist"
+        if ca.role == "team_lead":
+            role_label = "Team Lead & Account Director"
+        elif ca.role == "video_editor":
+            role_label = "Lead Video Editor (Reels & Motion)"
+        elif ca.role == "graphic_designer":
+            role_label = "Lead Graphic Designer (Posters & Carousels)"
+        assigned_team.append({
+            "id": str(member.id),
+            "name": member.full_name or member.email,
+            "email": member.email,
+            "role_key": ca.role,
+            "role_label": role_label,
+            "is_primary": ca.is_primary,
+        })
+
+    # 6. Task stats
+    task_stats_sql = text("""
+        SELECT
+            COUNT(*)::INT AS total,
+            COUNT(*) FILTER (WHERE status IN ('pending', 'in_progress'))::INT AS pending,
+            COUNT(*) FILTER (WHERE status = 'completed')::INT AS completed,
+            COUNT(*) FILTER (WHERE status = 'review')::INT AS in_review
+        FROM tasks
+        WHERE client_id = :cid
+    """)
+    task_row = (await db.execute(task_stats_sql, {"cid": client_id})).first()
+    task_stats = {
+        "total": task_row[0] if task_row else 0,
+        "pending": task_row[1] if task_row else 0,
+        "completed": task_row[2] if task_row else 0,
+        "in_review": task_row[3] if task_row else 0,
+    }
+
+    # 7. Quota usage
+    usage_stmt = select(UsageCounter).where(UsageCounter.client_id == client_id)
+    usage_rows = (await db.execute(usage_stmt)).scalars().all()
+    quota_usage = [
+        {"kind": uc.kind, "quota": uc.quota, "used": uc.used}
+        for uc in usage_rows
+    ]
+
+    # 8. Build response
+    brand_dna = profile.brand_dna if profile and profile.brand_dna else {}
+
+    # Derive onboarding stage
+    has_sub = subscription_data is not None
+    has_terms = bool(profile and profile.terms_accepted_at)
+    onboarding_completed = bool(profile and profile.onboarding_completed_at)
+    if onboarding_completed and has_sub:
+        onboarding_stage = 5
+    elif has_sub and has_terms:
+        onboarding_stage = 4 if onboarding_completed else 3
+    elif has_terms:
+        onboarding_stage = 2
+    else:
+        onboarding_stage = 1
+
+    return {
+        "client_id": str(client_id),
+        "full_name": client_user.full_name,
+        "email": client_user.email,
+        "account_status": client_user.account_status,
+        "company_name": profile.company_name if profile else None,
+        "instagram_username": profile.instagram_username if profile else None,
+        "onboarding_stage": onboarding_stage,
+        "onboarding_completed_at": (
+            profile.onboarding_completed_at.isoformat()
+            if profile and profile.onboarding_completed_at
+            else None
+        ),
+        "brand_summary": profile.brand_summary if profile else None,
+        "brand_dna": brand_dna,
+        "brand_dna_source": profile.brand_dna_source if profile else "template",
+        "brand_dna_version": profile.brand_dna_version if profile else 1,
+        "subscription": subscription_data,
+        "assigned_team": assigned_team,
+        "task_stats": task_stats,
+        "quota_usage": quota_usage,
+        "timezone": profile.timezone if profile else "Asia/Kolkata",
+        "created_at": client_user.created_at.isoformat() if client_user.created_at else None,
+    }
 
 
 @router.get("/queue")

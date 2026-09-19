@@ -5,6 +5,8 @@ import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
 import { setAuthToken } from "../../lib/auth-token";
 import type { AuthUser } from "../../lib/auth-context";
+import { getRoleHome } from "../../components/auth/ProtectedRoute";
+import { getPostLoginRedirect } from "../../lib/useRouteMemory";
 
 export function GoogleCallbackPage() {
   const [searchParams] = useSearchParams();
@@ -37,12 +39,14 @@ export function GoogleCallbackPage() {
       refresh().then(() => {
         setStatus("success");
         setTimeout(() => {
-          navigate("/dashboard");
+          // Smart redirect to last known route
+          const destination = getPostLoginRedirect("client", null, "/portal");
+          navigate(destination);
         }, 600);
       }).catch(() => {
         setStatus("success");
         setTimeout(() => {
-          navigate("/dashboard");
+          navigate("/portal");
         }, 600);
       });
       return;
@@ -75,18 +79,9 @@ export function GoogleCallbackPage() {
           await refresh();
           setStatus("success");
           setTimeout(() => {
-            if (res.user.role === "admin" || res.user.role === "super_admin") {
-              navigate("/admin");
-            } else if (
-              res.user.role === "team_member" ||
-              res.user.role === "team_lead" ||
-              res.user.role === "editor" ||
-              res.user.role === "designer"
-            ) {
-              navigate("/dashboard");
-            } else {
-              navigate("/portal");
-            }
+            const defaultHome = getRoleHome(res.user.role);
+            const destination = getPostLoginRedirect(res.user.role, null, defaultHome);
+            navigate(destination);
           }, 900);
         }
       } catch (err: unknown) {

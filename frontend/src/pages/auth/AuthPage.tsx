@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { OtpPinInput } from "../../components/ui/OtpPinInput";
+import { getRoleHome } from "../../components/auth/ProtectedRoute";
+import { getPostLoginRedirect } from "../../lib/useRouteMemory";
 
 type AuthView = "login" | "signup" | "otp" | "forgot" | "forgot_otp";
 
@@ -70,6 +72,7 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
   const redirectedFrom = searchParams.get("redirectedFrom");
 
   const routeByRole = (role: string) => {
+    // For team members, block access to admin-only pages from redirectedFrom
     if (redirectedFrom) {
       const decoded = decodeURIComponent(redirectedFrom);
       const isTeam = role === "team_member" || role === "team_lead" || role === "editor" || role === "designer";
@@ -89,22 +92,22 @@ export function AuthPage({ defaultView = "login" }: { defaultView?: "login" | "s
         navigate("/dashboard");
         return;
       }
+    }
 
-      navigate(decoded);
+    // For clients with a selected plan, go to onboarding
+    if (role === "client" && selectedPlan) {
+      navigate(`/onboarding/terms?plan=${selectedPlan}`);
       return;
     }
 
-    if (role === "admin" || role === "super_admin") {
-      navigate("/admin");
-    } else if (role === "team_member" || role === "team_lead" || role === "editor" || role === "designer") {
-      navigate("/dashboard");
-    } else {
-      if (selectedPlan) {
-        navigate(`/onboarding/terms?plan=${selectedPlan}`);
-      } else {
-        navigate("/portal");
-      }
-    }
+    // Use smart redirect: redirectedFrom > sessionStorage saved route > role home
+    const defaultHome = getRoleHome(role);
+    const destination = getPostLoginRedirect(
+      role,
+      redirectedFrom ? decodeURIComponent(redirectedFrom) : null,
+      defaultHome,
+    );
+    navigate(destination);
   };
 
   const handleLogin = async (e: React.FormEvent) => {

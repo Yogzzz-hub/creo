@@ -28,6 +28,7 @@ import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { AnnouncementToast } from "./AnnouncementToast";
 import { useConfirm } from "../ui/ConfirmDialog";
+import { useRouteMemory } from "../../lib/useRouteMemory";
 
 interface NavItem {
   label: string;
@@ -62,6 +63,9 @@ const ALL_NAV_ITEMS: NavItem[] = [
 export function OpsLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Passively save current route to sessionStorage on every navigation
+  useRouteMemory();
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
   const [notificationOpen, setNotificationOpen] = useState(false);

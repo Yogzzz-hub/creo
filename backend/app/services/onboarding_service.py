@@ -584,7 +584,7 @@ async def notify_team_of_new_client_summary(
     reel_style = prod_data.get("default_reel_style") or "talking_head"
 
     frontend_base = (getattr(settings, "FRONTEND_URL", "https://creo.yogalakshmibaskar20.workers.dev") or "https://creo.yogalakshmibaskar20.workers.dev").rstrip("/")
-    portal_link = f"{frontend_base}/portal/calendar"
+    portal_link = f"{frontend_base}/admin/clients/{client_id}"
 
     notified_count = 0
     emails_sent_count = 0

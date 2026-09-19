@@ -1,8 +1,12 @@
 import { Outlet } from "react-router";
 import { PortalSidebar, MobileBottomTabBar } from "./PortalSidebar";
 import { PortalHeader } from "./PortalHeader";
+import { useRouteMemory } from "../../lib/useRouteMemory";
 
 export function PortalLayout() {
+  // Passively save current route to sessionStorage on every navigation
+  useRouteMemory();
+
   return (
     <div className="h-screen overflow-hidden bg-[#E8F4FD] text-[#0D2137]">
       <a

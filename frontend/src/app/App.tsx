@@ -79,6 +79,9 @@ const AdminSettingsPage = lazy(() =>
 const AdminLeavePage = lazy(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminLeavePage }))
 );
+const AdminClientBrandPage = lazy(() =>
+  import("../features/admin/AdminClientBrandPage").then((m) => ({ default: m.AdminClientBrandPage }))
+);
 
 function RouteLoading() {
   return (
@@ -366,6 +369,10 @@ export function App() {
                       <AdminClientsPage />
                     </ProtectedRoute>
                   }
+                />
+                <Route
+                  path="/admin/clients/:clientId"
+                  element={<AdminClientBrandPage />}
                 />
                 <Route path="/admin/calendar" element={<AdminCalendarPage />} />
                 <Route path="/admin/deliverables" element={<AdminDeliverablesPage />} />

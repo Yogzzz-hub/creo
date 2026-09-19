@@ -140,4 +140,47 @@ export async function refreshKPIs(
   });
 }
 
+export interface ClientBrandProfile {
+  client_id: string;
+  full_name: string;
+  email: string;
+  account_status: string;
+  company_name: string | null;
+  instagram_username: string | null;
+  onboarding_stage: number;
+  onboarding_completed_at: string | null;
+  brand_summary: string | null;
+  brand_dna: Record<string, any>;
+  brand_dna_source: string;
+  brand_dna_version: number;
+  subscription: {
+    plan_name: string | null;
+    plan_display_name: string | null;
+    status: string;
+    monthly_price: number | null;
+    started_at: string | null;
+  } | null;
+  assigned_team: {
+    id: string;
+    name: string;
+    email: string;
+    role_key: string;
+    role_label: string;
+    is_primary: boolean;
+  }[];
+  task_stats: {
+    total: number;
+    pending: number;
+    completed: number;
+    in_review: number;
+  };
+  quota_usage: { kind: string; quota: number; used: number }[];
+  timezone: string;
+  created_at: string | null;
+}
 
+export async function fetchClientBrandProfile(
+  clientId: string,
+): Promise<ClientBrandProfile> {
+  return request<ClientBrandProfile>(`/api/v1/admin/clients/${clientId}`);
+}

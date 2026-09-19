@@ -2,6 +2,7 @@ import React from "react";
 import { Navigate } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 import { getRoleHome } from "./ProtectedRoute";
+import { getPostLoginRedirect } from "../../lib/useRouteMemory";
 
 interface PublicOnlyRouteProps {
   children: React.ReactNode;
@@ -21,11 +22,13 @@ export function PublicOnlyRoute({ children }: PublicOnlyRouteProps) {
     );
   }
 
-  // Already authenticated -> redirect to role home
+  // Already authenticated -> redirect to saved route or role home
   if (user) {
-    const home = getRoleHome(user.role);
-    return <Navigate to={home} replace />;
+    const defaultHome = getRoleHome(user.role);
+    const destination = getPostLoginRedirect(user.role, null, defaultHome);
+    return <Navigate to={destination} replace />;
   }
 
   return <>{children}</>;
 }
+
