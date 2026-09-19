@@ -79,9 +79,20 @@ export async function removeClientPlan(
   );
 }
 
+export interface FixPlanCustomPayload {
+  plan_name?: string;
+  custom_notes?: string;
+  is_custom?: boolean;
+  custom_price?: number;
+  custom_reel_quota?: number;
+  custom_poster_quota?: number;
+  custom_story_quota?: number;
+  custom_display_name?: string;
+}
+
 export async function fixClientPlan(
   clientId: string,
-  planName: "starter" | "growth" | "pro",
+  payloadOrPlanName: string | FixPlanCustomPayload,
   customNotes?: string,
   _role = "admin",
 ): Promise<{
@@ -90,14 +101,29 @@ export async function fixClientPlan(
   plan_name: string;
   plan_display_name: string;
   monthly_price: number;
+  is_custom?: boolean;
   quotas: { reel: number; static_post: number; carousel: number };
   message: string;
 }> {
+  const body =
+    typeof payloadOrPlanName === "string"
+      ? { plan_name: payloadOrPlanName, custom_notes: customNotes }
+      : {
+          plan_name: payloadOrPlanName.plan_name || (payloadOrPlanName.is_custom ? "custom" : "growth"),
+          custom_notes: payloadOrPlanName.custom_notes || customNotes,
+          is_custom: payloadOrPlanName.is_custom,
+          custom_price: payloadOrPlanName.custom_price,
+          custom_reel_quota: payloadOrPlanName.custom_reel_quota,
+          custom_poster_quota: payloadOrPlanName.custom_poster_quota,
+          custom_story_quota: payloadOrPlanName.custom_story_quota,
+          custom_display_name: payloadOrPlanName.custom_display_name,
+        };
+
   return request(
     `/api/v1/admin/clients/${clientId}/fix-plan`,
     {
       method: "POST",
-      body: JSON.stringify({ plan_name: planName, custom_notes: customNotes }),
+      body: JSON.stringify(body),
       headers: {
         "Content-Type": "application/json",
       },

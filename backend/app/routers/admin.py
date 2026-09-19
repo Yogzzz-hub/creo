@@ -634,8 +634,14 @@ async def remove_client_plan(
 
 
 class FixClientPlanRequest(BaseModel):
-    plan_name: str  # "starter", "growth", "pro" (or "accelerator", "enterprise", or UUID)
+    plan_name: str = "custom"  # "starter", "growth", "pro", or "custom"
     custom_notes: str | None = None
+    is_custom: bool = False
+    custom_price: Decimal | None = None  # in INR (e.g. 42000.00)
+    custom_reel_quota: int | None = None
+    custom_poster_quota: int | None = None
+    custom_story_quota: int | None = None
+    custom_display_name: str | None = None
 
 
 @router.post("/clients/{client_id}/fix-plan")
@@ -645,57 +651,133 @@ async def fix_client_plan(
     db: AsyncSession = Depends(get_db),
     actor: Actor = AdminActor,
 ) -> dict[str, Any]:
-    """Admin sets or fixes one of the 3 agency retainer plans for a client.
+    """Admin sets or fixes one of the standard agency retainer plans or a custom negotiated package for a client.
 
-    1. Activates subscription for the selected plan (Starter Growth, Brand Accelerator, Enterprise Domination).
-    2. Configures and aligns deliverable monthly quotas (Reels, Static Posters, Carousels/Stories).
-    3. Completes onboarding status (stage 4) and activates account workflow.
-    4. Notifies the client and registers an audit trail.
+    1. Enforces tenant isolation and admin authorization.
+    2. Validates custom price and quotas for negotiated packages.
+    3. Activates/updates subscription with the exact negotiated price and plan.
+    4. Configures and aligns deliverable monthly quotas (Reels, Static Posters, Carousels/Stories).
+    5. Completes onboarding status (stage 4) and activates account workflow.
+    6. Notifies the client and registers a secure audit trail.
     """
     user = await db.get(User, client_id)
     if not user:
         raise NotFound(f"Client {client_id} not found", code="CLIENT_NOT_FOUND")
 
-    # Normalize plan identifier
-    raw_name = payload.plan_name.strip().lower()
-    if raw_name in ("accelerator", "brand accelerator", "growth"):
-        plan_key = "growth"
-    elif raw_name in ("enterprise", "enterprise domination", "pro"):
-        plan_key = "pro"
-    elif raw_name in ("starter", "starter growth"):
-        plan_key = "starter"
-    else:
-        plan_key = raw_name
+    # Multi-tenant security: agency admins cannot modify clients belonging to other agencies
+    if actor.role != "super_admin" and actor.agency_id and user.agency_id:
+        if user.agency_id != actor.agency_id:
+            raise Forbidden("You do not have permission to manage clients outside your agency.")
 
-    # Look up Plan entity
+    # Determine if this is a custom negotiated package
+    is_custom = (
+        payload.is_custom
+        or payload.custom_price is not None
+        or payload.custom_reel_quota is not None
+        or payload.plan_name.strip().lower() in ("custom", "customized", "negotiated")
+    )
+
     plan = None
-    try:
-        plan_uuid = uuid.UUID(payload.plan_name)
-        plan = await db.get(Plan, plan_uuid)
-    except (ValueError, TypeError):
-        pass
+    if is_custom:
+        # Input validation for custom bargain/pricing
+        if payload.custom_price is not None and payload.custom_price <= 0:
+            raise HTTPException(status_code=400, detail="Custom price must be greater than 0.")
+        if payload.custom_price is not None and payload.custom_price > Decimal("10000000"):
+            raise HTTPException(status_code=400, detail="Custom price exceeds allowed platform maximum.")
+        if payload.custom_reel_quota is not None and (payload.custom_reel_quota < 0 or payload.custom_reel_quota > 500):
+            raise HTTPException(status_code=400, detail="Custom reel quota must be between 0 and 500.")
+        if payload.custom_poster_quota is not None and (payload.custom_poster_quota < 0 or payload.custom_poster_quota > 500):
+            raise HTTPException(status_code=400, detail="Custom poster quota must be between 0 and 500.")
+        if payload.custom_story_quota is not None and (payload.custom_story_quota < 0 or payload.custom_story_quota > 500):
+            raise HTTPException(status_code=400, detail="Custom story quota must be between 0 and 500.")
 
-    if not plan:
-        plan_stmt = select(Plan).where(func.lower(Plan.name) == plan_key)
+        plan_price = payload.custom_price if payload.custom_price is not None else Decimal("35000.00")
+        reel_q = int(payload.custom_reel_quota if payload.custom_reel_quota is not None else 8)
+        poster_q = int(payload.custom_poster_quota if payload.custom_poster_quota is not None else 12)
+        story_q = int(payload.custom_story_quota if payload.custom_story_quota is not None else 15)
+        display_name = payload.custom_display_name or f"Custom Retainer ({user.company_name or 'Bargained Package'})"
+
+        plan_key = f"custom_{client_id.hex[:8]}"
+        plan_stmt = select(Plan).where(Plan.name == plan_key)
         plan = (await db.execute(plan_stmt)).scalar_one_or_none()
 
-    if not plan:
-        plan_stmt = select(Plan).where(Plan.display_name.ilike(f"%{raw_name}%"))
-        plan = (await db.execute(plan_stmt)).scalar_one_or_none()
+        if plan:
+            plan.display_name = display_name
+            plan.monthly_price = plan_price
+            plan.price_minor = int(plan_price * 100)
+            plan.reel_quota = reel_q
+            plan.poster_quota = poster_q
+            plan.story_quota = story_q
+            plan.is_active = True
+            plan.highlights = [
+                f"{reel_q} Custom Reels",
+                f"{poster_q} Static Posters",
+                f"{story_q} Stories / Carousels",
+                "Negotiated Strategy Agreement",
+            ]
+        else:
+            plan = Plan(
+                id=uuid.uuid4(),
+                agency_id=user.agency_id,
+                name=plan_key,
+                display_name=display_name,
+                monthly_price=plan_price,
+                price_minor=int(plan_price * 100),
+                currency="INR",
+                reel_quota=reel_q,
+                poster_quota=poster_q,
+                story_quota=story_q,
+                revision_rounds=2,
+                has_dedicated_manager=True,
+                highlights=[
+                    f"{reel_q} Custom Reels",
+                    f"{poster_q} Static Posters",
+                    f"{story_q} Stories / Carousels",
+                    "Negotiated Strategy Agreement",
+                ],
+                is_active=True,
+            )
+            db.add(plan)
+            await db.flush()
+    else:
+        # Normalize standard plan identifier
+        raw_name = payload.plan_name.strip().lower()
+        if raw_name in ("accelerator", "brand accelerator", "growth"):
+            plan_key = "growth"
+        elif raw_name in ("enterprise", "enterprise domination", "pro"):
+            plan_key = "pro"
+        elif raw_name in ("starter", "starter growth"):
+            plan_key = "starter"
+        else:
+            plan_key = raw_name
 
-    if not plan:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Plan '{payload.plan_name}' not recognized. Valid plans: 'starter' (Starter Growth), 'growth' (Brand Accelerator), 'pro' (Enterprise Domination).",
-        )
+        try:
+            plan_uuid = uuid.UUID(payload.plan_name)
+            plan = await db.get(Plan, plan_uuid)
+        except (ValueError, TypeError):
+            pass
+
+        if not plan:
+            plan_stmt = select(Plan).where(func.lower(Plan.name) == plan_key)
+            plan = (await db.execute(plan_stmt)).scalar_one_or_none()
+
+        if not plan:
+            plan_stmt = select(Plan).where(Plan.display_name.ilike(f"%{raw_name}%"))
+            plan = (await db.execute(plan_stmt)).scalar_one_or_none()
+
+        if not plan:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Plan '{payload.plan_name}' not recognized. Valid plans: 'starter', 'growth', 'pro', or specify custom parameters.",
+            )
 
     now = datetime.now(UTC)
     period_end = now + timedelta(days=30)
 
-    # 1. Update existing active subscription or create new one
+    # 1. Update existing active subscription or create new one with the exact custom/negotiated price
     sub_stmt = select(Subscription).where(
         Subscription.client_id == client_id,
-        Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
+        Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING, SubscriptionStatus.INCOMPLETE]),
     )
     existing_sub = (await db.execute(sub_stmt)).scalar_one_or_none()
 
@@ -727,7 +809,7 @@ async def fix_client_plan(
     else:
         db.add(ClientProfile(user_id=client_id, onboarding_completed_at=now))
 
-    # 3. Synchronize monthly deliverable usage counters
+    # 3. Synchronize monthly deliverable usage counters to the exact negotiated quotas
     period_start_date = now.date().replace(day=1)
     if period_start_date.month == 12:
         period_end_date = date(period_start_date.year + 1, 1, 1) - timedelta(days=1)
@@ -762,17 +844,17 @@ async def fix_client_plan(
                 )
             )
 
-    # 4. Notify client in-app
+    # 4. Notify client in-app with custom price details
     db.add(
         Notification(
             user_id=client_id,
             title=f"🎉 Retainer Plan Fixed: {plan.display_name}",
-            message=f"Your subscription plan has been fixed to {plan.display_name} ({plan.reel_quota} Reels, {plan.poster_quota} Posters, {plan.story_quota} Stories). Deliverables and calendar workflows are now active.",
+            message=f"Your subscription plan has been fixed to {plan.display_name} at ₹{float(plan.monthly_price):,.2f}/mo ({plan.reel_quota} Reels, {plan.poster_quota} Posters, {plan.story_quota} Stories). Deliverables and calendar workflows are now active.",
             link="/portal",
         )
     )
 
-    # 5. Audit Log
+    # 5. Audit Log with security details
     actor_user = await db.get(User, actor.user_id) if actor.user_id else None
     db.add(
         AuditLog(
@@ -780,13 +862,18 @@ async def fix_client_plan(
             actor_role=actor.role,
             entity="client_subscription",
             entity_id=client_id,
-            action="admin_fix_client_plan",
+            action="admin_fix_custom_plan" if is_custom else "admin_fix_client_plan",
             to_value={
                 "client_id": str(client_id),
+                "plan_id": str(plan.id),
                 "plan_name": plan.name,
                 "plan_display_name": plan.display_name,
                 "monthly_price": float(plan.monthly_price),
-                "notes": payload.custom_notes or "Admin fixed plan",
+                "is_custom": is_custom,
+                "reels": plan.reel_quota,
+                "posters": plan.poster_quota,
+                "stories": plan.story_quota,
+                "notes": payload.custom_notes or ("Custom negotiated retainer" if is_custom else "Admin fixed plan"),
             },
         )
     )
@@ -794,17 +881,18 @@ async def fix_client_plan(
     await db.commit()
 
     return {
-        "status": "plan_fixed",
+        "status": "success",
         "client_id": str(client_id),
         "plan_name": plan.name,
         "plan_display_name": plan.display_name,
         "monthly_price": float(plan.monthly_price),
+        "is_custom": is_custom,
         "quotas": {
             "reel": plan.reel_quota,
             "static_post": plan.poster_quota,
             "carousel": plan.story_quota,
         },
-        "message": f"Successfully fixed plan to {plan.display_name} for {user.full_name or user.email}.",
+        "message": f"Successfully fixed plan '{plan.display_name}' for client at ₹{float(plan.monthly_price):,.2f}/mo ({plan.reel_quota} Reels, {plan.poster_quota} Posters, {plan.story_quota} Stories).",
     }
 
 

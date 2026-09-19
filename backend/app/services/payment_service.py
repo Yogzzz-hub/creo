@@ -21,7 +21,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.core.errors import Conflict, NotFound
+from app.core.errors import Conflict, Forbidden, NotFound
 from app.core.logging import get_logger
 from app.models.billing import PaymentEvent, Plan, Subscription, UsageCounter
 from app.models.enums import AccountStatus, DeliverableType, PaymentProvider, SubscriptionStatus, UserRole
@@ -48,6 +48,19 @@ async def create_order(
     existing_user = (await db.execute(user_stmt)).scalar_one_or_none()
     if not existing_user:
         raise NotFound(f"Client account {client_id} not found", code="CLIENT_NOT_FOUND")
+
+    # Security: If the client has a customized negotiated plan assigned by the agency admin,
+    # enforce that customized plan and its authoritative server-side pricing.
+    custom_plan_stmt = (
+        select(Plan)
+        .where(
+            Plan.name == f"custom_{client_id.hex[:8]}",
+            Plan.is_active.is_(True),
+        )
+    )
+    custom_plan = (await db.execute(custom_plan_stmt)).scalar_one_or_none()
+    if custom_plan:
+        plan = custom_plan
 
     now = datetime.now(UTC)
     from app.services.subscription_guard import expire_stale_subscriptions
@@ -179,6 +192,7 @@ async def confirm_order(
     gateway: PaymentProvider,
     payment_id: str,
     signature: str,
+    actor: Any | None = None,
 ) -> ConfirmPaymentResponse:
     """Verify payment and activate subscription or poll internal database."""
     sub_stmt = select(Subscription).where(
@@ -188,6 +202,14 @@ async def confirm_order(
     sub = (await db.execute(sub_stmt)).scalar_one_or_none()
     if not sub:
         raise NotFound("Subscription order not found", code="ORDER_NOT_FOUND")
+
+    # Ownership security: caller must own this subscription or be an agency/platform admin
+    if actor:
+        caller_role = getattr(actor, "role", "")
+        if caller_role not in ("admin", "super_admin", UserRole.ADMIN, UserRole.SUPER_ADMIN):
+            caller_id = getattr(actor, "client_id", None) or getattr(actor, "user_id", None)
+            if caller_id and sub.client_id != caller_id:
+                raise Forbidden("Unauthorized: you cannot confirm a payment order belonging to another client.")
 
     if sub.status in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING):
         return ConfirmPaymentResponse(status="active", subscription_id=sub.id)

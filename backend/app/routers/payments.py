@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -61,6 +61,7 @@ async def create_order(
 @router.post("/confirm", response_model=ConfirmPaymentResponse)
 async def confirm_payment(
     body: ConfirmPaymentRequest,
+    actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> ConfirmPaymentResponse:
     """Verify client signature and poll internal database for webhook-activated status."""
@@ -70,6 +71,7 @@ async def confirm_payment(
         gateway=body.gateway,
         payment_id=body.payment_id,
         signature=body.signature,
+        actor=actor,
     )
 
 
@@ -78,7 +80,7 @@ async def create_addon_order(
     body: dict,
     actor: Actor = Depends(get_current_actor),
 ) -> dict:
-    """Create a Razorpay order for a one-time add-on pack purchase (no subscription created)."""
+    """Create a Razorpay order for a one-time add-on pack purchase (server-authoritative pricing)."""
     import uuid as _uuid
     import httpx
     from app.config import settings as _s
@@ -95,7 +97,13 @@ async def create_addon_order(
         "addon_shoot_full": 2800000,
     }
     addon_id = body.get("addon_id", "")
-    amount_minor = ADDON_PRICING.get(addon_id, int(body.get("amount_minor", 350000)))
+    if addon_id not in ADDON_PRICING:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid or unauthorized addon package ID: '{addon_id}'. Allowed add-ons: {list(ADDON_PRICING.keys())}",
+        )
+    # Server-enforced pricing: never allow client-supplied amount
+    amount_minor = ADDON_PRICING[addon_id]
     currency = "INR"
 
     key_id = _s.RAZORPAY_KEY_ID or "rzp_test_TO2r0YMjDZSpuC"
