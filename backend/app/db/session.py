@@ -67,7 +67,7 @@ async def tenant_session(db: AsyncSession, agency_id: str | uuid.UUID | None, is
         is_platform_admin_ctx.reset(t_admin)
 
 
-async def get_db(request: Request | None = None) -> AsyncGenerator[AsyncSession, None]:
+async def get_db(request: Request = None) -> AsyncGenerator[AsyncSession, None]:
     """Dependency that yields a database session and guarantees closure.
     Also extracts JWT token to set tenant contextvars for RLS.
     """

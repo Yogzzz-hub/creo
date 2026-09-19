@@ -575,15 +575,15 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
     # Clear old client assignments for idempotency
     await db.execute(delete(ClientAssignment).where(ClientAssignment.client_id == client_id))
 
-    db.add(ClientAssignment(client_id=client_id, user_id=best_tl_id, role="team_lead", is_primary=True))
+    db.add(ClientAssignment(client_id=client_id, user_id=best_tl_id, role="team_lead", craft_role="team_lead", is_primary=True))
 
     editor_id = best_editor[0] if best_editor else best_tl_id
     designer_id = best_designer[0] if best_designer else best_tl_id
 
     if best_editor:
-        db.add(ClientAssignment(client_id=client_id, user_id=best_editor[0], role="video_editor", is_primary=False))
+        db.add(ClientAssignment(client_id=client_id, user_id=best_editor[0], role="video_editor", craft_role="video_editor", is_primary=False))
     if best_designer and (not best_editor or best_designer[0] != best_editor[0]):
-        db.add(ClientAssignment(client_id=client_id, user_id=best_designer[0], role="graphic_designer", is_primary=False))
+        db.add(ClientAssignment(client_id=client_id, user_id=best_designer[0], role="graphic_designer", craft_role="graphic_designer", is_primary=False))
 
     await db.commit()
     logger.info("Assigned pod for client %s: TL=%s, Editor=%s, Designer=%s", client_id, best_tl_id, editor_id, designer_id)

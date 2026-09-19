@@ -43,6 +43,7 @@ venv.bak/
 htmlcov/
 .mypy_cache/
 .ruff_cache/
+backend/scripts/verify_workflow_*.py
 
 # Node
 node_modules/

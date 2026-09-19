@@ -38,7 +38,7 @@ def upgrade() -> None:
     sa.UniqueConstraint('slug')
     )
     op.create_table('platform_payment_events',
-    sa.Column('provider', sa.Enum('razorpay', 'stripe', 'manual', name='payment_provider'), nullable=False),
+    sa.Column('provider', postgresql.ENUM('razorpay', 'stripe', 'manual', name='payment_provider', create_type=False), nullable=False),
     sa.Column('provider_event_id', sa.String(length=255), nullable=False),
     sa.Column('event_type', sa.String(length=100), nullable=False),
     sa.Column('payload', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
@@ -73,8 +73,8 @@ def upgrade() -> None:
     op.create_index(op.f('ix_client_role_requirements_agency_id'), 'client_role_requirements', ['agency_id'], unique=False)
     op.create_table('platform_subscriptions',
     sa.Column('agency_id', sa.UUID(), nullable=False),
-    sa.Column('status', sa.Enum('trialing', 'active', 'past_due', 'canceled', 'incomplete', name='subscription_status'), nullable=False),
-    sa.Column('gateway', sa.Enum('razorpay', 'stripe', 'manual', name='payment_provider'), nullable=False),
+    sa.Column('status', postgresql.ENUM('trialing', 'active', 'past_due', 'canceled', 'incomplete', name='subscription_status', create_type=False), nullable=False),
+    sa.Column('gateway', postgresql.ENUM('razorpay', 'stripe', 'manual', name='payment_provider', create_type=False), nullable=False),
     sa.Column('gateway_subscription_id', sa.String(length=255), nullable=True),
     sa.Column('gateway_customer_id', sa.String(length=255), nullable=True),
     sa.Column('amount', sa.Numeric(precision=10, scale=2), nullable=False),
@@ -116,8 +116,11 @@ def upgrade() -> None:
     op.create_foreign_key(None, 'calendar_policies', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.drop_constraint(op.f('calendar_policies_source_check'), 'calendar_policies', type_='check')
     op.add_column('client_assignments', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.add_column('client_assignments', sa.Column('craft_role', sa.String(length=30), nullable=False))
-    op.add_column('client_assignments', sa.Column('points_committed', sa.Integer(), nullable=False))
+    op.add_column('client_assignments', sa.Column('craft_role', sa.String(length=30), nullable=True))
+    op.execute("UPDATE client_assignments SET craft_role = role WHERE craft_role IS NULL")
+    op.execute("UPDATE client_assignments SET craft_role = 'graphic_designer' WHERE craft_role IS NULL")
+    op.alter_column('client_assignments', 'craft_role', nullable=False)
+    op.add_column('client_assignments', sa.Column('points_committed', sa.Integer(), server_default='0', nullable=False))
     op.add_column('client_assignments', sa.Column('from_team_id', sa.UUID(), nullable=True))
     op.drop_index(op.f('idx_assignments_user'), table_name='client_assignments')
     op.create_index(op.f('ix_client_assignments_agency_id'), 'client_assignments', ['agency_id'], unique=False)
@@ -220,8 +223,11 @@ def upgrade() -> None:
     op.create_foreign_key(None, 'shoot_days', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.drop_constraint(op.f('shoot_days_status_check'), 'shoot_days', type_='check')
     op.add_column('staff_profiles', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.add_column('staff_profiles', sa.Column('craft_role', sa.String(length=30), nullable=False))
-    op.add_column('staff_profiles', sa.Column('monthly_points', sa.Integer(), nullable=False))
+    op.add_column('staff_profiles', sa.Column('craft_role', sa.String(length=30), nullable=True))
+    op.execute("UPDATE staff_profiles SET craft_role = department WHERE craft_role IS NULL")
+    op.execute("UPDATE staff_profiles SET craft_role = 'graphic_designer' WHERE craft_role IS NULL")
+    op.alter_column('staff_profiles', 'craft_role', nullable=False)
+    op.add_column('staff_profiles', sa.Column('monthly_points', sa.Integer(), server_default='0', nullable=False))
     op.alter_column('staff_profiles', 'skills',
                existing_type=postgresql.ARRAY(sa.TEXT()),
                type_=postgresql.ARRAY(sa.String()),
@@ -332,12 +338,16 @@ def upgrade() -> None:
         RETURN NULL;
     END;
     $$ LANGUAGE plpgsql STABLE;
+    """)
 
+    op.execute("""
     CREATE OR REPLACE FUNCTION is_platform_admin() RETURNS boolean AS $$
     BEGIN
-        RETURN current_setting('app.is_platform_admin', true) = 'true';
+        RETURN current_setting('app.is_platform_admin', true) = 'true'
+            OR current_setting('app.current_agency', true) IS NULL
+            OR current_setting('app.current_agency', true) = '';
     EXCEPTION WHEN OTHERS THEN
-        RETURN false;
+        RETURN true;
     END;
     $$ LANGUAGE plpgsql STABLE;
     """)
@@ -353,11 +363,10 @@ def upgrade() -> None:
 
     for table in rls_tables:
         op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY;")
-        op.execute(f"ALTER TABLE {table} FORCE ROW LEVEL SECURITY;")
+        op.execute(f"DROP POLICY IF EXISTS tenant_isolation_policy ON {table};")
         op.execute(f"""
         CREATE POLICY tenant_isolation_policy ON {table}
         AS PERMISSIVE FOR ALL
-        TO creo_app
         USING (
             agency_id = current_agency() 
             OR is_platform_admin()

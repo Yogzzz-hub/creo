@@ -2500,6 +2500,9 @@ async def cancel_leave_request(
 
 @router.get("/calendar")
 async def get_admin_calendar(
+    client_id: uuid.UUID | None = None,
+    month: int | None = None,
+    year: int | None = None,
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> list[dict[str, Any]]:
@@ -2521,7 +2524,17 @@ async def get_admin_calendar(
         .outerjoin(ClientProfile, ClientProfile.user_id == ContentCalendar.client_id)
         .outerjoin(Deliverable, Deliverable.id == ContentCalendar.deliverable_id)
         .outerjoin(Task, Task.id == Deliverable.task_id)
-        .order_by(ContentCalendar.publish_date.asc(), ContentCalendar.scheduled_time.asc().nulls_last())
+    )
+    if client_id:
+        cal_stmt = cal_stmt.where(ContentCalendar.client_id == client_id)
+    if month and year:
+        start_d = date(year, month, 1)
+        end_d = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
+        cal_stmt = cal_stmt.where(ContentCalendar.publish_date >= start_d, ContentCalendar.publish_date < end_d)
+
+    cal_stmt = (
+        cal_stmt
+        .order_by(ContentCalendar.publish_date.desc(), ContentCalendar.scheduled_time.desc().nulls_last())
         .limit(500)
     )
     cal_res = await db.execute(cal_stmt)
@@ -2603,9 +2616,11 @@ async def get_admin_calendar(
     )
     if seen_deliverable_ids:
         deliv_stmt = deliv_stmt.where(Deliverable.id.not_in(seen_deliverable_ids))
+    if client_id:
+        deliv_stmt = deliv_stmt.where(Deliverable.client_id == client_id)
     deliv_stmt = (
         deliv_stmt
-        .order_by(Deliverable.scheduled_at.asc().nulls_last(), Deliverable.created_at.asc())
+        .order_by(Deliverable.scheduled_at.desc().nulls_last(), Deliverable.created_at.desc())
         .limit(200)
     )
     deliv_res = await db.execute(deliv_stmt)
