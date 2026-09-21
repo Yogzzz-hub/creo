@@ -65,6 +65,7 @@ async def list_notifications(
     }
 
 
+@router.delete("/{notification_id}", response_model=dict[str, Any])
 @router.patch("/{notification_id}/read", response_model=dict[str, Any])
 async def mark_notification_read(
     notification_id: uuid.UUID,

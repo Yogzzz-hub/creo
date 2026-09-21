@@ -1,8 +1,8 @@
 """multi_tenant_schema
 
-Revision ID: c8ce88e1af6e
+Revision ID: c71a2fc5b835
 Revises: 0008_calendar_sequencing
-Create Date: 2026-09-16 04:08:54.806535
+Create Date: 2026-09-20 12:26:38.554468
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'c8ce88e1af6e'
+revision: str = 'c71a2fc5b835'
 down_revision: Union[str, None] = '0008_calendar_sequencing'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -114,20 +114,15 @@ def upgrade() -> None:
                existing_server_default=sa.text("'niche_template'::text"))
     op.create_index(op.f('ix_calendar_policies_agency_id'), 'calendar_policies', ['agency_id'], unique=False)
     op.create_foreign_key(None, 'calendar_policies', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
-    op.drop_constraint(op.f('calendar_policies_source_check'), 'calendar_policies', type_='check')
     op.add_column('client_assignments', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.add_column('client_assignments', sa.Column('craft_role', sa.String(length=30), nullable=True))
-    op.execute("UPDATE client_assignments SET craft_role = role WHERE craft_role IS NULL")
-    op.execute("UPDATE client_assignments SET craft_role = 'graphic_designer' WHERE craft_role IS NULL")
-    op.alter_column('client_assignments', 'craft_role', nullable=False)
-    op.add_column('client_assignments', sa.Column('points_committed', sa.Integer(), server_default='0', nullable=False))
+    op.add_column('client_assignments', sa.Column('craft_role', sa.String(length=30), nullable=False))
+    op.add_column('client_assignments', sa.Column('points_committed', sa.Integer(), nullable=False))
     op.add_column('client_assignments', sa.Column('from_team_id', sa.UUID(), nullable=True))
     op.drop_index(op.f('idx_assignments_user'), table_name='client_assignments')
     op.create_index(op.f('ix_client_assignments_agency_id'), 'client_assignments', ['agency_id'], unique=False)
     op.create_index('uq_one_person_per_craft', 'client_assignments', ['client_id', 'craft_role'], unique=True)
-    op.create_foreign_key(None, 'client_assignments', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.create_foreign_key(None, 'client_assignments', 'teams', ['from_team_id'], ['id'], ondelete='SET NULL')
-    op.drop_column('client_assignments', 'unassigned_at')
+    op.create_foreign_key(None, 'client_assignments', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.add_column('client_cycles', sa.Column('agency_id', sa.UUID(), nullable=True))
     op.alter_column('client_cycles', 'status',
                existing_type=sa.TEXT(),
@@ -136,8 +131,6 @@ def upgrade() -> None:
                existing_server_default=sa.text("'draft'::text"))
     op.create_index(op.f('ix_client_cycles_agency_id'), 'client_cycles', ['agency_id'], unique=False)
     op.create_foreign_key(None, 'client_cycles', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
-    op.drop_constraint(op.f('client_cycles_status_check'), 'client_cycles', type_='check')
-    op.drop_column('client_profiles', 'ig_token_last_used_at')
     op.add_column('content_calendar', sa.Column('agency_id', sa.UUID(), nullable=True))
     op.alter_column('content_calendar', 'daypart',
                existing_type=sa.TEXT(),
@@ -164,26 +157,11 @@ def upgrade() -> None:
                existing_nullable=True)
     op.drop_index(op.f('idx_calendar_client'), table_name='content_calendar')
     op.drop_index(op.f('idx_calendar_date'), table_name='content_calendar')
-    op.drop_index(op.f('idx_content_calendar_month'), table_name='content_calendar')
     op.create_index(op.f('ix_content_calendar_agency_id'), 'content_calendar', ['agency_id'], unique=False)
     op.create_index(op.f('ix_content_calendar_client_id'), 'content_calendar', ['client_id'], unique=False)
     op.create_foreign_key(None, 'content_calendar', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
-    op.drop_constraint(op.f('content_calendar_funnel_stage_check'), 'content_calendar', type_='check')
-    op.drop_constraint(op.f('content_calendar_phase_check'), 'content_calendar', type_='check')
-    op.drop_constraint(op.f('content_calendar_slot_source_check'), 'content_calendar', type_='check')
-    op.drop_constraint(op.f('content_calendar_story_role_check'), 'content_calendar', type_='check')
-    op.create_check_constraint('ck_content_calendar_funnel', 'content_calendar', "funnel_stage IN ('reach', 'authority', 'conversion')")
-    op.create_check_constraint('ck_content_calendar_source', 'content_calendar', "slot_source IN ('original', 'repurpose')")
-    op.create_check_constraint('ck_content_calendar_story_role', 'content_calendar', "story_role IS NULL OR story_role IN ('teaser', 'echo', 'standalone', 'coverage')")
-    op.drop_column('content_calendar', 'rejected')
-    op.drop_column('content_calendar', 'month')
-    op.drop_column('content_calendar', 'rejection_notes')
-    op.drop_column('content_calendar', 'lead_time_days')
-    op.drop_column('content_calendar', 'kind')
     op.add_column('deliverables', sa.Column('agency_id', sa.UUID(), nullable=True))
     op.drop_index(op.f('idx_deliv_client'), table_name='deliverables')
-    op.drop_index(op.f('idx_deliv_client_created_id'), table_name='deliverables')
-    op.drop_index(op.f('idx_deliv_client_status'), table_name='deliverables')
     op.drop_index(op.f('idx_deliverables_approved_turnaround'), table_name='deliverables', postgresql_where="((status = ANY (ARRAY['approved'::deliverable_status, 'published'::deliverable_status])) AND (approved_at IS NOT NULL))")
     op.create_index(op.f('ix_deliverables_agency_id'), 'deliverables', ['agency_id'], unique=False)
     op.create_index(op.f('ix_deliverables_client_id'), 'deliverables', ['client_id'], unique=False)
@@ -221,13 +199,9 @@ def upgrade() -> None:
                existing_server_default=sa.text("'proposed'::text"))
     op.create_index(op.f('ix_shoot_days_agency_id'), 'shoot_days', ['agency_id'], unique=False)
     op.create_foreign_key(None, 'shoot_days', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
-    op.drop_constraint(op.f('shoot_days_status_check'), 'shoot_days', type_='check')
     op.add_column('staff_profiles', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.add_column('staff_profiles', sa.Column('craft_role', sa.String(length=30), nullable=True))
-    op.execute("UPDATE staff_profiles SET craft_role = department WHERE craft_role IS NULL")
-    op.execute("UPDATE staff_profiles SET craft_role = 'graphic_designer' WHERE craft_role IS NULL")
-    op.alter_column('staff_profiles', 'craft_role', nullable=False)
-    op.add_column('staff_profiles', sa.Column('monthly_points', sa.Integer(), server_default='0', nullable=False))
+    op.add_column('staff_profiles', sa.Column('craft_role', sa.String(length=30), nullable=False))
+    op.add_column('staff_profiles', sa.Column('monthly_points', sa.Integer(), nullable=False))
     op.alter_column('staff_profiles', 'skills',
                existing_type=postgresql.ARRAY(sa.TEXT()),
                type_=postgresql.ARRAY(sa.String()),
@@ -250,7 +224,6 @@ def upgrade() -> None:
     op.drop_index(op.f('idx_tasks_kanban'), table_name='tasks')
     op.drop_index(op.f('idx_tasks_sla'), table_name='tasks', postgresql_where="(status <> ALL (ARRAY['ready_to_publish'::task_status, 'completed'::task_status]))")
     op.drop_index(op.f('idx_tasks_status'), table_name='tasks')
-    op.drop_index(op.f('idx_tasks_status_assigned'), table_name='tasks')
     op.drop_index(op.f('idx_tasks_window'), table_name='tasks', postgresql_where="(status = ANY (ARRAY['in_production'::task_status, 'internal_qa'::task_status]))")
     op.create_index(op.f('ix_tasks_agency_id'), 'tasks', ['agency_id'], unique=False)
     op.create_index(op.f('ix_tasks_assigned_to'), 'tasks', ['assigned_to'], unique=False)
@@ -264,22 +237,19 @@ def upgrade() -> None:
     op.create_index(op.f('ix_ticket_messages_ticket_id'), 'ticket_messages', ['ticket_id'], unique=False)
     op.create_foreign_key(None, 'ticket_messages', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.add_column('tickets', sa.Column('agency_id', sa.UUID(), nullable=True))
+    op.add_column('tickets', sa.Column('deliverable_id', sa.UUID(), nullable=True))
     op.drop_index(op.f('idx_tickets_client'), table_name='tickets')
     op.drop_index(op.f('idx_tickets_status'), table_name='tickets')
     op.create_index(op.f('ix_tickets_agency_id'), 'tickets', ['agency_id'], unique=False)
     op.create_index(op.f('ix_tickets_client_id'), 'tickets', ['client_id'], unique=False)
+    op.create_foreign_key(None, 'tickets', 'deliverables', ['deliverable_id'], ['id'], ondelete='SET NULL')
     op.create_foreign_key(None, 'tickets', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.add_column('usage_counters', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.drop_index(op.f('idx_usage_counters_client_period'), table_name='usage_counters')
     op.create_index(op.f('ix_usage_counters_agency_id'), 'usage_counters', ['agency_id'], unique=False)
     op.create_foreign_key(None, 'usage_counters', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
-    op.drop_column('usage_counters', 'reserved')
     op.add_column('users', sa.Column('agency_id', sa.UUID(), nullable=True))
     op.add_column('users', sa.Column('owning_team_id', sa.UUID(), nullable=True))
-    op.alter_column('users', 'must_reset_password',
-               existing_type=sa.BOOLEAN(),
-               nullable=False,
-               existing_server_default=sa.text('false'))
+    op.add_column('users', sa.Column('must_reset_password', sa.Boolean(), nullable=False))
     op.drop_index(op.f('idx_users_email'), table_name='users')
     op.drop_index(op.f('idx_users_role'), table_name='users')
     op.drop_constraint(op.f('users_auth_id_key'), 'users', type_='unique')
@@ -291,113 +261,18 @@ def upgrade() -> None:
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
     op.create_foreign_key(None, 'users', 'teams', ['owning_team_id'], ['id'], ondelete='SET NULL')
     op.create_foreign_key(None, 'users', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
-    op.drop_column('users', 'deleted_at')
-    
-    # === CUSTOM MULTI-TENANT BACKFILL AND RLS ===
-    # 1. Create creo_app role
-    op.execute("""
-    DO $$
-    BEGIN
-        IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'creo_app') THEN
-            CREATE ROLE creo_app WITH NOLOGIN;
-        END IF;
-    END
-    $$;
-    """)
-
-    # 2. Grant usage
-    op.execute("GRANT USAGE ON SCHEMA public TO creo_app;")
-    op.execute("GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO creo_app;")
-    op.execute("GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO creo_app;")
-
-    # 3. Insert default agency
-    default_agency_id = "00000000-0000-0000-0000-000000000001"
-    op.execute(f"""
-    INSERT INTO agencies (id, name, slug, status, plan_tier, max_clients, max_staff, branding, timezone, created_at, updated_at)
-    VALUES ('{default_agency_id}', 'Default Agency', 'default', 'active', 'enterprise', 9999, 9999, '{{}}'::jsonb, 'UTC', now(), now())
-    ON CONFLICT DO NOTHING;
-    """)
-
-    # 4. Backfill agency_id
-    tenant_tables = [
-        "users", "staff_profiles", "plans", "subscriptions",
-        "usage_counters", "tasks", "deliverables", "content_calendar", "client_assignments",
-        "client_cycles", "shoot_days", "calendar_policies", "calendar_blackouts",
-        "tickets", "ticket_messages", "leave_requests", "announcements", "audit_log",
-        "notifications", "questionnaires"
-    ]
-    for table in tenant_tables:
-        op.execute(f"UPDATE {table} SET agency_id = '{default_agency_id}' WHERE agency_id IS NULL;")
-
-    # 5. Create RLS functions
-    op.execute("""
-    CREATE OR REPLACE FUNCTION current_agency() RETURNS uuid AS $$
-    BEGIN
-        RETURN current_setting('app.current_agency', true)::uuid;
-    EXCEPTION WHEN OTHERS THEN
-        RETURN NULL;
-    END;
-    $$ LANGUAGE plpgsql STABLE;
-    """)
-
-    op.execute("""
-    CREATE OR REPLACE FUNCTION is_platform_admin() RETURNS boolean AS $$
-    BEGIN
-        RETURN current_setting('app.is_platform_admin', true) = 'true'
-            OR current_setting('app.current_agency', true) IS NULL
-            OR current_setting('app.current_agency', true) = '';
-    EXCEPTION WHEN OTHERS THEN
-        RETURN true;
-    END;
-    $$ LANGUAGE plpgsql STABLE;
-    """)
-
-    # 6. Enable RLS and policies
-    rls_tables = [
-        "users", "staff_profiles", "teams", "team_members", "plans", "subscriptions",
-        "usage_counters", "tasks", "deliverables", "content_calendar", "client_assignments",
-        "client_cycles", "shoot_days", "calendar_policies", "calendar_blackouts",
-        "tickets", "ticket_messages", "leave_requests", "announcements",
-        "notifications", "questionnaires", "client_role_requirements"
-    ]
-
-    for table in rls_tables:
-        op.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY;")
-        op.execute(f"DROP POLICY IF EXISTS tenant_isolation_policy ON {table};")
-        op.execute(f"""
-        CREATE POLICY tenant_isolation_policy ON {table}
-        AS PERMISSIVE FOR ALL
-        USING (
-            agency_id = current_agency() 
-            OR is_platform_admin()
-        )
-        WITH CHECK (
-            agency_id = current_agency() 
-            OR is_platform_admin()
-        );
-        """)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
-    # === CUSTOM MULTI-TENANT BACKFILL AND RLS DOWNGRADE ===
-    rls_tables = [
-        "users", "staff_profiles", "teams", "team_members", "plans", "subscriptions",
-        "usage_counters", "tasks", "deliverables", "content_calendar", "client_assignments",
-        "client_cycles", "shoot_days", "calendar_policies", "calendar_blackouts",
-        "tickets", "ticket_messages", "leave_requests", "announcements",
-        "notifications", "questionnaires", "client_role_requirements"
-    ]
-    for table in rls_tables:
-        op.execute(f"DROP POLICY IF EXISTS tenant_isolation_policy ON {table};")
-        op.execute(f"ALTER TABLE {table} DISABLE ROW LEVEL SECURITY;")
-    
-    op.execute("DROP FUNCTION IF EXISTS current_agency();")
-    op.execute("DROP FUNCTION IF EXISTS is_platform_admin();")
-
     # ### commands auto generated by Alembic - please adjust! ###
-    op.add_column('users', sa.Column('deleted_at', postgresql.TIMESTAMP(timezone=True), autoincrement=False, nullable=True))
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'users', type_='foreignkey')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'users', type_='foreignkey')
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_index(op.f('ix_users_auth_id'), table_name='users')
@@ -408,28 +283,40 @@ def downgrade() -> None:
     op.create_unique_constraint(op.f('users_auth_id_key'), 'users', ['auth_id'], postgresql_nulls_not_distinct=False)
     op.create_index(op.f('idx_users_role'), 'users', ['role'], unique=False)
     op.create_index(op.f('idx_users_email'), 'users', ['email'], unique=False)
-    op.alter_column('users', 'must_reset_password',
-               existing_type=sa.BOOLEAN(),
-               nullable=True,
-               existing_server_default=sa.text('false'))
+    op.drop_column('users', 'must_reset_password')
     op.drop_column('users', 'owning_team_id')
     op.drop_column('users', 'agency_id')
-    op.add_column('usage_counters', sa.Column('reserved', sa.INTEGER(), server_default=sa.text('0'), autoincrement=False, nullable=False))
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'usage_counters', type_='foreignkey')
     op.drop_index(op.f('ix_usage_counters_agency_id'), table_name='usage_counters')
-    op.create_index(op.f('idx_usage_counters_client_period'), 'usage_counters', ['client_id', 'period_start', 'period_end'], unique=False)
     op.drop_column('usage_counters', 'agency_id')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
+    op.drop_constraint(None, 'tickets', type_='foreignkey')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'tickets', type_='foreignkey')
     op.drop_index(op.f('ix_tickets_client_id'), table_name='tickets')
     op.drop_index(op.f('ix_tickets_agency_id'), table_name='tickets')
     op.create_index(op.f('idx_tickets_status'), 'tickets', ['status'], unique=False)
     op.create_index(op.f('idx_tickets_client'), 'tickets', ['client_id'], unique=False)
+    op.drop_column('tickets', 'deliverable_id')
     op.drop_column('tickets', 'agency_id')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'ticket_messages', type_='foreignkey')
     op.drop_index(op.f('ix_ticket_messages_ticket_id'), table_name='ticket_messages')
     op.drop_index(op.f('ix_ticket_messages_agency_id'), table_name='ticket_messages')
     op.create_index(op.f('idx_ticket_messages_ticket'), 'ticket_messages', ['ticket_id'], unique=False)
     op.drop_column('ticket_messages', 'agency_id')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'tasks', type_='foreignkey')
     op.drop_index(op.f('ix_tasks_status'), table_name='tasks')
     op.drop_index(op.f('ix_tasks_sla_due_at'), table_name='tasks')
@@ -437,17 +324,22 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_tasks_assigned_to'), table_name='tasks')
     op.drop_index(op.f('ix_tasks_agency_id'), table_name='tasks')
     op.create_index(op.f('idx_tasks_window'), 'tasks', ['assigned_to', 'due_date'], unique=False, postgresql_where="(status = ANY (ARRAY['in_production'::task_status, 'internal_qa'::task_status]))")
-    op.create_index(op.f('idx_tasks_status_assigned'), 'tasks', ['status', 'assigned_to'], unique=False)
     op.create_index(op.f('idx_tasks_status'), 'tasks', ['status'], unique=False)
     op.create_index(op.f('idx_tasks_sla'), 'tasks', ['status', 'sla_due_at'], unique=False, postgresql_where="(status <> ALL (ARRAY['ready_to_publish'::task_status, 'completed'::task_status]))")
     op.create_index(op.f('idx_tasks_kanban'), 'tasks', ['status', sa.literal_column('created_at DESC')], unique=False)
     op.create_index(op.f('idx_tasks_client'), 'tasks', ['client_id'], unique=False)
     op.create_index(op.f('idx_tasks_assigned'), 'tasks', ['assigned_to'], unique=False)
     op.drop_column('tasks', 'agency_id')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'subscriptions', type_='foreignkey')
     op.drop_index(op.f('ix_subscriptions_agency_id'), table_name='subscriptions')
     op.create_index(op.f('idx_subscriptions_plan'), 'subscriptions', ['plan_id'], unique=False)
     op.drop_column('subscriptions', 'agency_id')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'staff_profiles', type_='foreignkey')
     op.drop_index(op.f('ix_staff_profiles_agency_id'), table_name='staff_profiles')
     op.alter_column('staff_profiles', 'sub_skills',
@@ -463,7 +355,9 @@ def downgrade() -> None:
     op.drop_column('staff_profiles', 'monthly_points')
     op.drop_column('staff_profiles', 'craft_role')
     op.drop_column('staff_profiles', 'agency_id')
-    op.create_check_constraint(op.f('shoot_days_status_check'), 'shoot_days', "status = ANY (ARRAY['proposed'::text, 'confirmed'::text, 'reschedule_requested'::text, 'rescheduled'::text, 'completed'::text, 'no_show'::text, 'cancelled'::text])")
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'shoot_days', type_='foreignkey')
     op.drop_index(op.f('ix_shoot_days_agency_id'), table_name='shoot_days')
     op.alter_column('shoot_days', 'status',
@@ -472,11 +366,17 @@ def downgrade() -> None:
                existing_nullable=False,
                existing_server_default=sa.text("'proposed'::text"))
     op.drop_column('shoot_days', 'agency_id')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'questionnaires', type_='foreignkey')
     op.drop_index(op.f('ix_questionnaires_user_id'), table_name='questionnaires')
     op.drop_index(op.f('ix_questionnaires_agency_id'), table_name='questionnaires')
     op.create_index(op.f('idx_questionnaires_user'), 'questionnaires', ['user_id'], unique=False)
     op.drop_column('questionnaires', 'agency_id')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'plans', type_='foreignkey')
     op.drop_index(op.f('ix_plans_agency_id'), table_name='plans')
     op.create_unique_constraint(op.f('plans_name_key'), 'plans', ['name'], postgresql_nulls_not_distinct=False)
@@ -486,41 +386,38 @@ def downgrade() -> None:
                existing_nullable=False,
                existing_server_default=sa.text("'INR'::bpchar"))
     op.drop_column('plans', 'agency_id')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'notifications', type_='foreignkey')
     op.drop_index(op.f('ix_notifications_agency_id'), table_name='notifications')
     op.drop_column('notifications', 'agency_id')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'leave_requests', type_='foreignkey')
     op.drop_index(op.f('ix_leave_requests_agency_id'), table_name='leave_requests')
     op.create_index(op.f('idx_leave_user'), 'leave_requests', ['user_id'], unique=False)
     op.create_index(op.f('idx_leave_dates'), 'leave_requests', ['start_date', 'end_date'], unique=False)
     op.drop_column('leave_requests', 'agency_id')
     op.create_index(op.f('idx_idempotency_expires'), 'idempotency_keys', ['expires_at'], unique=False)
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'deliverables', type_='foreignkey')
     op.drop_index(op.f('ix_deliverables_status'), table_name='deliverables')
     op.drop_index(op.f('ix_deliverables_root_id'), table_name='deliverables')
     op.drop_index(op.f('ix_deliverables_client_id'), table_name='deliverables')
     op.drop_index(op.f('ix_deliverables_agency_id'), table_name='deliverables')
     op.create_index(op.f('idx_deliverables_approved_turnaround'), 'deliverables', ['status', 'approved_at', 'created_at'], unique=False, postgresql_where="((status = ANY (ARRAY['approved'::deliverable_status, 'published'::deliverable_status])) AND (approved_at IS NOT NULL))")
-    op.create_index(op.f('idx_deliv_client_status'), 'deliverables', ['client_id', 'status'], unique=False)
-    op.create_index(op.f('idx_deliv_client_created_id'), 'deliverables', ['client_id', sa.literal_column('created_at DESC'), sa.literal_column('id DESC')], unique=False)
     op.create_index(op.f('idx_deliv_client'), 'deliverables', ['client_id'], unique=False)
     op.drop_column('deliverables', 'agency_id')
-    op.add_column('content_calendar', sa.Column('kind', postgresql.ENUM('reel', 'carousel', 'story', 'static_post', 'shoot_day', name='deliverable_type'), server_default=sa.text("'reel'::deliverable_type"), autoincrement=False, nullable=False))
-    op.add_column('content_calendar', sa.Column('lead_time_days', sa.INTEGER(), server_default=sa.text('3'), autoincrement=False, nullable=False))
-    op.add_column('content_calendar', sa.Column('rejection_notes', sa.TEXT(), autoincrement=False, nullable=True))
-    op.add_column('content_calendar', sa.Column('month', sa.VARCHAR(length=7), server_default=sa.text('NULL::character varying'), autoincrement=False, nullable=True))
-    op.add_column('content_calendar', sa.Column('rejected', sa.BOOLEAN(), server_default=sa.text('false'), autoincrement=False, nullable=False))
-    op.drop_constraint('ck_content_calendar_story_role', 'content_calendar', type_='check')
-    op.drop_constraint('ck_content_calendar_source', 'content_calendar', type_='check')
-    op.drop_constraint('ck_content_calendar_funnel', 'content_calendar', type_='check')
-    op.create_check_constraint(op.f('content_calendar_story_role_check'), 'content_calendar', "story_role IS NULL OR (story_role = ANY (ARRAY['teaser'::text, 'echo'::text, 'standalone'::text, 'coverage'::text]))")
-    op.create_check_constraint(op.f('content_calendar_slot_source_check'), 'content_calendar', "slot_source = ANY (ARRAY['original'::text, 'repurpose'::text])")
-    op.create_check_constraint(op.f('content_calendar_phase_check'), 'content_calendar', "phase = ANY (ARRAY['A'::text, 'B'::text])")
-    op.create_check_constraint(op.f('content_calendar_funnel_stage_check'), 'content_calendar', "funnel_stage = ANY (ARRAY['reach'::text, 'authority'::text, 'conversion'::text])")
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'content_calendar', type_='foreignkey')
     op.drop_index(op.f('ix_content_calendar_client_id'), table_name='content_calendar')
     op.drop_index(op.f('ix_content_calendar_agency_id'), table_name='content_calendar')
-    op.create_index(op.f('idx_content_calendar_month'), 'content_calendar', ['client_id', 'month'], unique=False)
     op.create_index(op.f('idx_calendar_date'), 'content_calendar', ['publish_date'], unique=False)
     op.create_index(op.f('idx_calendar_client'), 'content_calendar', ['client_id'], unique=False)
     op.alter_column('content_calendar', 'story_role',
@@ -547,8 +444,9 @@ def downgrade() -> None:
                type_=sa.TEXT(),
                existing_nullable=True)
     op.drop_column('content_calendar', 'agency_id')
-    op.add_column('client_profiles', sa.Column('ig_token_last_used_at', postgresql.TIMESTAMP(timezone=True), autoincrement=False, nullable=True))
-    op.create_check_constraint(op.f('client_cycles_status_check'), 'client_cycles', "status = ANY (ARRAY['draft'::text, 'client_review'::text, 'active'::text, 'completed'::text, 'cancelled'::text])")
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'client_cycles', type_='foreignkey')
     op.drop_index(op.f('ix_client_cycles_agency_id'), table_name='client_cycles')
     op.alter_column('client_cycles', 'status',
@@ -557,8 +455,13 @@ def downgrade() -> None:
                existing_nullable=False,
                existing_server_default=sa.text("'draft'::text"))
     op.drop_column('client_cycles', 'agency_id')
-    op.add_column('client_assignments', sa.Column('unassigned_at', postgresql.TIMESTAMP(timezone=True), autoincrement=False, nullable=True))
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'client_assignments', type_='foreignkey')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'client_assignments', type_='foreignkey')
     op.drop_index('uq_one_person_per_craft', table_name='client_assignments')
     op.drop_index(op.f('ix_client_assignments_agency_id'), table_name='client_assignments')
@@ -567,7 +470,9 @@ def downgrade() -> None:
     op.drop_column('client_assignments', 'points_committed')
     op.drop_column('client_assignments', 'craft_role')
     op.drop_column('client_assignments', 'agency_id')
-    op.create_check_constraint(op.f('calendar_policies_source_check'), 'calendar_policies', "source = ANY (ARRAY['niche_template'::text, 'admin_override'::text, 'insights_tuned'::text])")
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'calendar_policies', type_='foreignkey')
     op.drop_index(op.f('ix_calendar_policies_agency_id'), table_name='calendar_policies')
     op.alter_column('calendar_policies', 'source',
@@ -576,12 +481,21 @@ def downgrade() -> None:
                existing_nullable=False,
                existing_server_default=sa.text("'niche_template'::text"))
     op.drop_column('calendar_policies', 'agency_id')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'calendar_blackouts', type_='foreignkey')
     op.drop_index(op.f('ix_calendar_blackouts_agency_id'), table_name='calendar_blackouts')
     op.drop_column('calendar_blackouts', 'agency_id')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'audit_log', type_='foreignkey')
     op.drop_index(op.f('ix_audit_log_agency_id'), table_name='audit_log')
     op.drop_column('audit_log', 'agency_id')
+    # WARNING: constraint name is None; this directive will fail as
+    # rendered.  Add a name, or use a naming convention; see
+    # https://alembic.sqlalchemy.org/en/latest/naming.html
     op.drop_constraint(None, 'announcements', type_='foreignkey')
     op.drop_index(op.f('ix_announcements_agency_id'), table_name='announcements')
     op.drop_column('announcements', 'agency_id')

@@ -52,17 +52,27 @@ const AdminTasksPage = lazy(() =>
 const AdminCalendarPage = lazy(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminCalendarPage }))
 );
-const AdminSupportPage = lazy(() =>
-  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminSupportPage }))
+const AdminSupportTicketsPage = lazy(() =>
+  import("../features/admin/AdminSupportTicketsPage").then((m) => ({ default: m.AdminSupportTicketsPage }))
 );
-const AdminTeamsPage = lazy(() =>
-  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminTeamsPage }))
+const AdminTicketDetailPage = lazy(() =>
+  import("../features/admin/AdminTicketDetailPage").then((m) => ({ default: m.AdminTicketDetailPage }))
 );
+const AdminSLAPerformancePage = lazy(() =>
+  import("../features/admin/AdminSLAPerformancePage").then((m) => ({ default: m.AdminSLAPerformancePage }))
+);
+
 const AdminAnnouncementsPage = lazy(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminAnnouncementsPage }))
 );
 const AdminReportsPage = lazy(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminReportsPage }))
+);
+const AdminRevenuePage = lazy(() =>
+  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminRevenuePage }))
+);
+const AdminPlansPage = lazy(() =>
+  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminPlansPage }))
 );
 const AdminSalesPage = lazy(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminSalesPage }))
@@ -76,8 +86,12 @@ const AdminEscalationsPage = lazy(() =>
 const AdminSettingsPage = lazy(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminSettingsPage }))
 );
-const AdminLeavePage = lazy(() =>
-  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminLeavePage }))
+
+const AdminTeamManagementPage = lazy(() =>
+  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminTeamManagementPage }))
+);
+const AdminLeaveApprovalsPage = lazy(() =>
+  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminLeaveApprovalsPage }))
 );
 const AdminClientBrandPage = lazy(() =>
   import("../features/admin/AdminClientBrandPage").then((m) => ({ default: m.AdminClientBrandPage }))
@@ -377,16 +391,29 @@ export function App() {
                 <Route path="/admin/calendar" element={<AdminCalendarPage />} />
                 <Route path="/admin/deliverables" element={<AdminDeliverablesPage />} />
                 <Route path="/admin/tasks" element={<AdminTasksPage />} />
-                <Route path="/admin/support" element={<AdminSupportPage />} />
+                <Route path="/admin/support" element={<AdminSupportTicketsPage />} />
+                <Route path="/admin/support/tickets" element={<AdminSupportTicketsPage />} />
+                <Route path="/admin/support/tickets/:ticketId" element={<AdminTicketDetailPage />} />
+                <Route path="/admin/support/sla" element={<AdminSLAPerformancePage />} />
+                <Route path="/admin/sla" element={<AdminSLAPerformancePage />} />
                 <Route
                   path="/admin/teams"
                   element={
                     <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <AdminTeamsPage />
+                      <AdminTeamManagementPage />
                     </ProtectedRoute>
                   }
                 />
-                <Route path="/admin/leave" element={<AdminLeavePage />} />
+                <Route
+                  path="/admin/team"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
+                      <AdminTeamManagementPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/admin/leave" element={<AdminLeaveApprovalsPage />} />
+                <Route path="/admin/leaves" element={<AdminLeaveApprovalsPage />} />
                 <Route path="/admin/announcements" element={<AdminAnnouncementsPage />} />
                 <Route
                   path="/admin/reports"
@@ -401,6 +428,22 @@ export function App() {
                   element={
                     <ProtectedRoute allowedRoles={["admin", "super_admin", "investor_relations"]}>
                       <AdminReportsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/revenue"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "investor_relations", "sales"]}>
+                      <AdminRevenuePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/plans"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <AdminPlansPage />
                     </ProtectedRoute>
                   }
                 />

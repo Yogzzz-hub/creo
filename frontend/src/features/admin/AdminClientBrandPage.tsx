@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { fetchClientBrandProfile } from "../../lib/ops-api";
 import type { ClientBrandProfile } from "../../lib/ops-api";
+import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
@@ -202,15 +203,17 @@ export function AdminClientBrandPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-5 animate-page-in pb-8">
-      {/* ── Back Navigation ────────────────────────────────── */}
-      <div className="flex items-center gap-2 text-xs">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Client Details" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-5 animate-page-in">
+        {/* ── Back Navigation ────────────────────────────────── */}
+        <div className="flex items-center gap-2 text-xs">
         <Link
-          to="/admin/tasks"
+          to="/admin/clients"
           className="inline-flex items-center gap-1.5 text-slate-500 hover:text-[#2B7BC4] font-semibold transition-colors"
         >
           <ArrowLeft className="size-3.5" />
-          Back to Tasks
+          Back to Client Directory
         </Link>
         <span className="text-slate-300">/</span>
         <span className="text-slate-400">Client Brand Brief</span>
@@ -670,6 +673,7 @@ export function AdminClientBrandPage() {
           Client ID: {client.client_id.slice(0, 8)}
         </span>
       </div>
+      </main>
     </div>
   );
 }

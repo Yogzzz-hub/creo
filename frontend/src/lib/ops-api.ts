@@ -10,6 +10,7 @@ import type {
   SLABreachItem,
 } from "../types/ops";
 import { request } from "./http";
+export { request };
 
 export async function autoAssignTask(
   taskId: string,
@@ -23,15 +24,57 @@ export async function autoAssignTask(
 }
 
 
-export async function fetchAdminKPIs(_userId?: string, _role = "admin"): Promise<AdminKPIs> {
-  return request<AdminKPIs>("/api/v1/admin/kpis");
+export async function fetchAdminKPIs(_userId?: string, _role = "admin", timeframe?: string): Promise<AdminKPIs> {
+  const params = timeframe ? `?timeframe=${timeframe}` : "";
+  return request<AdminKPIs>(`/api/v1/admin/kpis${params}`);
+}
+
+export interface RevenueTrendPoint {
+  label: string;
+  value: number;
+}
+
+export interface RevenueTrendData {
+  timeframe: string;
+  points: RevenueTrendPoint[];
+  total_revenue: number;
+  total_revenue_formatted: string;
+  total_clients: number;
+}
+
+export async function fetchRevenueTrend(timeframe = "30d"): Promise<RevenueTrendData> {
+  return request<RevenueTrendData>(`/api/v1/admin/revenue-trend?timeframe=${timeframe}`);
+}
+
+export interface PlanSummaryItem {
+  id: string;
+  name: string;
+  display_name: string;
+  price_minor: number;
+  monthly_price: number;
+  is_recommended: boolean;
+  subscriber_count: number;
+  revenue_contribution: number;
+  revenue_formatted: string;
+  share_pct: number;
+}
+
+export interface PlansSummaryData {
+  plans: PlanSummaryItem[];
+  total_subscribers: number;
+}
+
+export async function fetchPlansSummary(): Promise<PlansSummaryData> {
+  return request<PlansSummaryData>("/api/v1/admin/plans-summary");
 }
 
 export async function fetchAdminDashboard(
   _userId?: string,
   _role = "admin",
+  timeframe?: string
 ): Promise<AdminDashboardData> {
-  return request<AdminDashboardData>("/api/v1/admin/dashboard");
+  const params = timeframe ? `?timeframe=${timeframe}` : "";
+  return request<AdminDashboardData>(`/api/v1/admin/dashboard${params}`);
 }
 
 export async function fetchClientRoster(
@@ -61,6 +104,55 @@ export async function suspendUser(
     },
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LEAVE MANAGEMENT
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface LeaveRequestItem {
+  id: string;
+  user_id: string;
+  user_name: string;
+  user_role: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+  approved_by_name: string | null;
+}
+
+export async function fetchLeaveRequests(): Promise<LeaveRequestItem[]> {
+  return request<LeaveRequestItem[]>("/api/v1/admin/leave");
+}
+
+export async function approveLeaveRequest(leaveId: string): Promise<any> {
+  return request(`/api/v1/admin/leave/${leaveId}/approve`, { method: "POST" });
+}
+
+export async function rejectLeaveRequest(leaveId: string): Promise<any> {
+  return request(`/api/v1/admin/leave/${leaveId}/reject`, { method: "POST" });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TASKS & TICKETS (QUICK ACTIONS)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function resolveTaskSla(taskId: string): Promise<any> {
+  // Assuming a generic resolution endpoint or status patch
+  return request(`/api/v1/admin/deliverables/${taskId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "completed" })
+  });
+}
+
+export async function createQuickTask(payload: any): Promise<any> {
+  return request(`/api/v1/admin/deliverables`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
 
 export async function removeClientPlan(
   clientId: string,

@@ -546,3 +546,19 @@ aside .scrollbar-thin,
   will-change: transform, opacity;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   KPI CARDS OUTLINE: Dark Blue default (#1E3A8A), Light Blue on hover (#60A5FA)
+───────────────────────────────────────────────────────────────────────────── */
+.kpi-card,
+[data-kpi-card="true"] {
+  border-width: 2px !important;
+  border-color: #1E3A8A !important;
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, transform 0.2s ease !important;
+}
+
+.kpi-card:hover,
+[data-kpi-card="true"]:hover {
+  border-color: #60A5FA !important;
+  box-shadow: 0 4px 20px rgba(96, 165, 250, 0.18) !important;
+}
+
