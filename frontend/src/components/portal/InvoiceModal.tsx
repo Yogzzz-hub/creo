@@ -43,9 +43,9 @@ export function InvoiceModal({
     >
       <div className="bg-white rounded-3xl shadow-2xl border border-slate-100/90 w-full max-w-2xl overflow-hidden relative my-auto transition-all animate-[zoomIn_0.2s_cubic-bezier(0.16,1,0.3,1)]">
         {/* Modal Top Bar Actions */}
-        <div className="bg-[#0D2137] px-6 py-4 text-white flex items-center justify-between border-b border-slate-800">
+        <div className="bg-[#0F172A] px-6 py-4 text-white flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="size-8 rounded-xl bg-blue-500/20 text-[#2B7BC4] border border-blue-400/30 flex items-center justify-center">
+            <div className="size-8 rounded-xl bg-blue-500/20 text-[#0052FF] border border-blue-400/30 flex items-center justify-center">
               <FileText className="size-4 text-blue-400" />
             </div>
             <div>
@@ -72,7 +72,7 @@ export function InvoiceModal({
             <button
               type="button"
               onClick={() => generateInvoicePDF(invoice)}
-              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/25 transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#0052FF] to-[#0045D8] hover:brightness-110 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/25 transition-all cursor-pointer"
             >
               <Download className="size-3.5" />
               <span>Download PDF</span>
@@ -93,7 +93,7 @@ export function InvoiceModal({
           {/* Supplier & Client Meta */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-slate-100">
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1 text-xs">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#2B7BC4] block mb-1">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0052FF] block mb-1">
                 Billed By (Supplier)
               </span>
               <p className="font-bold text-slate-900 text-sm">Creo Creative Technologies Pvt. Ltd.</p>
@@ -103,7 +103,7 @@ export function InvoiceModal({
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1 text-xs">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#2B7BC4] block mb-1">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#0052FF] block mb-1">
                 Billed To (Client)
               </span>
               <p className="font-bold text-slate-900 text-sm">{invoice.companyName || invoice.clientName || "Valued Client Partner"}</p>
@@ -118,7 +118,7 @@ export function InvoiceModal({
           {/* Line Items Table */}
           <div className="overflow-hidden rounded-2xl border border-slate-200">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#0D2137] text-white font-bold uppercase text-[10px] tracking-wider">
+              <thead className="bg-[#0F172A] text-white font-bold uppercase text-[10px] tracking-wider">
                 <tr>
                   <th className="py-3 px-4">Item & Description</th>
                   <th className="py-3 px-4">SAC Code</th>
@@ -174,7 +174,7 @@ export function InvoiceModal({
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-slate-200 text-slate-900 font-extrabold text-sm">
                 <span>Total Paid:</span>
-                <span className="text-base text-[#2B7BC4]">
+                <span className="text-base text-[#0052FF]">
                   ₹{numericAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                 </span>
               </div>
@@ -199,7 +199,7 @@ export function InvoiceModal({
             <button
               type="button"
               onClick={() => generateInvoicePDF(invoice)}
-              className="w-full sm:w-auto px-5 py-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 text-white font-bold flex items-center justify-center gap-2 shadow-sm shadow-blue-500/20 cursor-pointer"
+              className="w-full sm:w-auto px-5 py-2 rounded-xl bg-gradient-to-r from-[#0052FF] to-[#0045D8] hover:brightness-110 text-white font-bold flex items-center justify-center gap-2 shadow-sm shadow-blue-500/20 cursor-pointer"
             >
               <Download className="size-3.5" />
               <span>Download PDF File</span>

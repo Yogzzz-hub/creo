@@ -133,7 +133,7 @@ export function PortalHeader() {
   ].includes(location.pathname);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-white px-4 sm:px-8">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200/80 bg-white/95 backdrop-blur-sm px-4 sm:px-8 shadow-sm">
       {/* Dynamic Page Title & Back Button */}
       <div className="flex items-center gap-2.5">
         {!isMainPortalPage && (
@@ -146,13 +146,13 @@ export function PortalHeader() {
                 navigate("/portal");
               }
             }}
-            className="flex size-8 items-center justify-center rounded-xl border border-[#C9DFF0] bg-[#E8F4FD]/60 text-[#2B7BC4] hover:bg-[#D5EBFA] hover:border-[#2B7BC4]/40 transition-all cursor-pointer shadow-2xs group"
+            className="flex size-8 items-center justify-center rounded-xl border border-[#E2E8F0] bg-[#EEF4FF]/60 text-[#0052FF] hover:bg-[#D5EBFA] hover:border-[#0052FF]/40 transition-all cursor-pointer shadow-2xs group"
             title="Go Back"
           >
             <ChevronLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
           </button>
         )}
-        <h1 className="text-sm font-bold tracking-wider text-[#0D2137]">
+        <h1 className="text-sm font-bold tracking-wider text-[#0F172A]">
           {getPageTitle()}
         </h1>
       </div>
@@ -180,7 +180,7 @@ export function PortalHeader() {
               setNotificationOpen(!notificationOpen);
               setDropdownOpen(false);
             }}
-            className="relative flex size-9 items-center justify-center rounded-lg text-[#0D2137]/70 hover:bg-slate-100 hover:text-[#0D2137] transition-colors cursor-pointer"
+            className="relative flex size-9 items-center justify-center rounded-lg text-[#0F172A]/70 hover:bg-slate-100 hover:text-[#0F172A] transition-colors cursor-pointer"
             aria-label="Notifications"
           >
             <Bell className="size-5" />
@@ -192,14 +192,14 @@ export function PortalHeader() {
           </button>
 
           {notificationOpen && (
-            <div className="absolute right-0 mt-2 w-84 rounded-2xl border border-border bg-white p-4 shadow-xl z-50 text-[#0D2137] space-y-3 animate-[zoomIn_0.1s_ease-out]">
+            <div className="absolute right-0 mt-2 w-84 rounded-2xl border border-border bg-white p-4 shadow-xl z-50 text-[#0F172A] space-y-3 animate-[zoomIn_0.1s_ease-out]">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#2B7BC4]">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#0052FF]">
                     Notifications
                   </span>
                   {unreadCount > 0 && (
-                    <span className="rounded-full bg-blue-100 px-1.5 py-0.2 text-[10px] font-bold text-[#2B7BC4]">
+                    <span className="rounded-full bg-blue-100 px-1.5 py-0.2 text-[10px] font-bold text-[#0052FF]">
                       {unreadCount} New
                     </span>
                   )}
@@ -208,7 +208,7 @@ export function PortalHeader() {
                   <button
                     type="button"
                     onClick={handleMarkAllRead}
-                    className="text-[11px] font-semibold text-slate-500 hover:text-[#2B7BC4] cursor-pointer"
+                    className="text-[11px] font-semibold text-slate-500 hover:text-[#0052FF] cursor-pointer"
                   >
                     Mark all read
                   </button>
@@ -227,23 +227,23 @@ export function PortalHeader() {
                       onClick={() => handleItemClick(n)}
                       className={`rounded-xl p-3 text-xs space-y-1 cursor-pointer transition-all border ${
                         !n.is_read
-                          ? "bg-[#E8F4FD]/70 border-[#C9DFF0] hover:bg-[#E8F4FD]"
+                          ? "bg-[#EEF4FF]/70 border-[#E2E8F0] hover:bg-[#EEF4FF]"
                           : "bg-slate-50/70 border-slate-100 hover:bg-slate-100 text-slate-600"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <p className={`font-bold truncate ${!n.is_read ? "text-[#0D2137]" : "text-slate-700"}`}>
+                        <p className={`font-bold truncate ${!n.is_read ? "text-[#0F172A]" : "text-slate-700"}`}>
                           {n.title}
                         </p>
                         {!n.is_read && (
-                          <span className="size-2 rounded-full bg-[#2B7BC4] shrink-0" />
+                          <span className="size-2 rounded-full bg-[#0052FF] shrink-0" />
                         )}
                       </div>
                       <p className="text-slate-600 text-[11px] leading-relaxed line-clamp-2">
                         {n.message}
                       </p>
                       {n.link && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#2B7BC4]">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#0052FF]">
                           View details <ExternalLink className="size-2.5" />
                         </span>
                       )}
@@ -263,20 +263,20 @@ export function PortalHeader() {
               setDropdownOpen(!dropdownOpen);
               setNotificationOpen(false);
             }}
-            className="flex size-9 items-center justify-center rounded-full bg-[#2B7BC4] text-white text-sm font-semibold outline-hidden focus-visible:ring-2 focus-visible:ring-[#2B7BC4] focus-visible:ring-offset-2 cursor-pointer shadow-xs"
+            className="flex size-9 items-center justify-center rounded-full bg-[#0052FF] text-white text-sm font-semibold outline-hidden focus-visible:ring-2 focus-visible:ring-[#0052FF] focus-visible:ring-offset-2 cursor-pointer shadow-xs"
           >
             {initial}
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-64 rounded-xl border border-border bg-white p-2 shadow-lg z-50 text-[#0D2137]">
+            <div className="absolute right-0 mt-2 w-64 rounded-xl border border-border bg-white p-2 shadow-lg z-50 text-[#0F172A]">
               <div className="px-3 py-2 border-b border-border mb-1">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-[#2B7BC4] text-white text-xs font-semibold">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-[#0052FF] text-white text-xs font-semibold">
                     {initial}
                   </div>
                   <div className="truncate">
-                    <p className="text-sm font-semibold text-[#0D2137] truncate">{displayName}</p>
+                    <p className="text-sm font-semibold text-[#0F172A] truncate">{displayName}</p>
                     <p className="text-xs text-slate-500 truncate">{user?.email ?? ""}</p>
                   </div>
                 </div>
@@ -295,7 +295,7 @@ export function PortalHeader() {
                     setDropdownOpen(false);
                     navigate("/portal/account");
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-[#E8F4FD] hover:text-[#2B7BC4] rounded-lg transition-colors text-left cursor-pointer"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-[#EEF4FF] hover:text-[#0052FF] rounded-lg transition-colors text-left cursor-pointer"
                 >
                   <Settings className="size-4" />
                   Account Settings
@@ -306,7 +306,7 @@ export function PortalHeader() {
                     setDropdownOpen(false);
                     navigate("/portal/support");
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-[#E8F4FD] hover:text-[#2B7BC4] rounded-lg transition-colors text-left cursor-pointer"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-[#EEF4FF] hover:text-[#0052FF] rounded-lg transition-colors text-left cursor-pointer"
                 >
                   <LifeBuoy className="size-4" />
                   Help & Support

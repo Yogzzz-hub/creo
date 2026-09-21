@@ -30,6 +30,7 @@ import { PortalCalendarPage } from "../pages/portal/PortalCalendarPage";
 import { PortalPaymentsPage } from "../pages/portal/PortalPaymentsPage";
 import { PortalSupportPage } from "../pages/portal/PortalSupportPage";
 import { PortalAccountPage } from "../pages/portal/PortalAccountPage";
+import { PortalCreativePodPage } from "../pages/portal/PortalCreativePodPage";
 
 // Ops Layout & Features
 import { OpsLayout } from "../components/ops/OpsLayout";
@@ -330,6 +331,7 @@ export function App() {
                 <Route index element={<PortalDashboardPage />} />
                 <Route path="deliverables" element={<PortalDeliverablesPage />} />
                 <Route path="calendar" element={<PortalCalendarPage />} />
+                <Route path="creative-pod" element={<PortalCreativePodPage />} />
                 <Route path="payments" element={<PortalPaymentsPage />} />
                 <Route path="support" element={<PortalSupportPage />} />
                 <Route path="account" element={<PortalAccountPage />} />

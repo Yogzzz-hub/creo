@@ -130,7 +130,7 @@ export function ContactSheet({ clientId }: ContactSheetProps) {
         <div className="text-left sm:text-right">
           <span
             className={`font-display text-xl sm:text-2xl font-bold tabular-nums ${
-              waitingCount > 0 ? "text-[#2B7BC4]" : "text-emerald-600"
+              waitingCount > 0 ? "text-[#0052FF]" : "text-emerald-600"
             }`}
           >
             {waitingCount} waiting on you
