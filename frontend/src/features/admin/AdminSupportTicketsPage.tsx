@@ -27,102 +27,45 @@ interface TicketItem {
   secondaryAction: string;
 }
 
+const INITIAL_TICKETS: TicketItem[] = [];
+
 export function AdminSupportTicketsPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [lifecycleFilter, setLifecycleFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [tickets, setTickets] = useState<TicketItem[]>(INITIAL_TICKETS);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const sampleTickets: TicketItem[] = [
-    {
-      id: "1042",
-      client: "Northwind Labs",
-      tier: "ENTERPRISE",
-      email: "ops@northwindlabs.co",
-      avatarBg: "bg-[#2563EB]",
-      issueTitle: "API Webhook Timeout on Deliverables Sync",
-      issueDesc: "Payload dropped after 4 retries via US-East Gateway...",
-      priority: "Urgent",
-      timeLog: "18m remaining",
-      agent: "Maya Lin",
-      pod: "Pod A • Core Infra",
-      agentInitials: "ML",
-      status: "Open",
-      primaryAction: "Resolve",
-      secondaryAction: "Reply",
-    },
-    {
-      id: "1039",
-      client: "Bloom Studio",
-      tier: "GROWTH",
-      email: "hello@bloomstudio.co",
-      avatarBg: "bg-[#2563EB]",
-      issueTitle: "Asset Upload Sync Error in Reels Batch 34",
-      issueDesc: "Batch 34 video chunks failing checksum validation...",
-      priority: "Medium",
-      timeLog: "Logged 28m ago",
-      agent: "Omar V.",
-      pod: "Pod B • Creative Sync",
-      agentInitials: "OV",
-      status: "In Progress",
-      primaryAction: "Resolve",
-      secondaryAction: "Assign",
-    },
-    {
-      id: "1035",
-      client: "Atlas Commerce",
-      tier: "ENTERPRISE",
-      email: "groot@commerce.co",
-      avatarBg: "bg-[#2563EB]",
-      issueTitle: "Billing Invoice Inquiry & Add-on Pricing",
-      issueDesc: "Clarification requested on tiered bandwidth scaling...",
-      priority: "Low Priority",
-      timeLog: "Logged 1h ago",
-      agent: "Lena Ortiz",
-      pod: "Pod C • Finance & SLA",
-      agentInitials: "LO",
-      status: "Pending Client",
-      primaryAction: "Resolve",
-      secondaryAction: "Thread",
-    },
-    {
-      id: "1032",
-      client: "Vanguard Mobility",
-      tier: "ENTERPRISE",
-      email: "team@vanguard.co",
-      avatarBg: "bg-[#10B981]",
-      issueTitle: "Video Format Encoding Artifacts in 4K",
-      issueDesc: "HEVC transcoder dropping audio metadata frames...",
-      priority: "High",
-      timeLog: "Logged 2h ago",
-      agent: "Theo Clark",
-      pod: "Pod D • Rendering",
-      agentInitials: "TC",
-      status: "Open",
-      primaryAction: "Resolve",
-      secondaryAction: "Escalate",
-    },
-    {
-      id: "1028",
-      client: "Lumina Health",
-      tier: "PREMIUM",
-      email: "ops@lumina.io",
-      avatarBg: "bg-[#8B5CF6]",
-      issueTitle: "Font Licensing Verification for Q4 Campaign",
-      issueDesc: "Typography audit requested for global release...",
-      priority: "Medium",
-      timeLog: "Resolved 3h ago",
-      agent: "Sarah J.",
-      pod: "Pod E • Compliance",
-      agentInitials: "SJ",
-      status: "Resolved",
-      primaryAction: "Reopen",
-      secondaryAction: "View Log",
-    },
-  ];
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((curr) => (curr === msg ? null : curr));
+    }, 3000);
+  };
 
-  const filteredTickets = sampleTickets.filter((t) => {
+  const handleToggleResolve = (ticketId: string) => {
+    setTickets((prev) =>
+      prev.map((t) => {
+        if (t.id === ticketId) {
+          const isResolved = t.status === "Resolved";
+          const nextStatus = isResolved ? "Open" : "Resolved";
+          const nextAction = isResolved ? "Resolve" : "Reopen";
+          showToast(`Ticket #${t.id} marked as ${nextStatus.toLowerCase()}!`);
+          return {
+            ...t,
+            status: nextStatus,
+            primaryAction: nextAction,
+            timeLog: isResolved ? "Reopened just now" : "Resolved just now",
+          };
+        }
+        return t;
+      })
+    );
+  };
+
+  const filteredTickets = tickets.filter((t) => {
     const matchesSearch =
       t.id.includes(search) ||
       t.client.toLowerCase().includes(search.toLowerCase()) ||
@@ -431,8 +374,12 @@ export function AdminSupportTicketsPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
-                            onClick={() => alert(`Ticket #${t.id} marked as resolved!`)}
-                            className="px-3 py-1 rounded-xl bg-blue-600 text-white text-[11px] font-bold hover:bg-blue-700 transition-colors shadow-2xs"
+                            onClick={() => handleToggleResolve(t.id)}
+                            className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all shadow-2xs ${
+                              t.status === "Resolved"
+                                ? "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+                                : "bg-blue-600 text-white hover:bg-blue-700"
+                            }`}
                           >
                             {t.primaryAction}
                           </button>
@@ -459,6 +406,21 @@ export function AdminSupportTicketsPage() {
           </div>
         </div>
       </main>
+
+      {/* ── Toast Notification ── */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-800 animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
+          <span className="text-xs font-semibold">{toastMessage}</span>
+          <button
+            type="button"
+            className="text-slate-400 hover:text-white text-xs ml-2 cursor-pointer"
+            onClick={() => setToastMessage(null)}
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -30,6 +30,14 @@ export function AdminTicketDetailPage() {
   const [tags, setTags] = useState(["webhook", "deliverables-sync", "api-timeout", "high-priority"]);
   const [newTag, setNewTag] = useState("");
   const [showAddTag, setShowAddTag] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((curr) => (curr === msg ? null : curr));
+    }, 3000);
+  };
 
   const handleAddMacro = (macroText: string) => {
     setReplyText((prev) => (prev ? `${prev}\n\n${macroText}` : macroText));
@@ -123,7 +131,11 @@ export function AdminTicketDetailPage() {
             </button>
             <button
               type="button"
-              onClick={() => setIsResolved(!isResolved)}
+              onClick={() => {
+                const next = !isResolved;
+                setIsResolved(next);
+                showToast(next ? "Ticket marked as resolved!" : "Ticket reopened!");
+              }}
               className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-sm transition-all ${
                 isResolved
                   ? "bg-emerald-600 hover:bg-emerald-700"
@@ -347,7 +359,7 @@ export function AdminTicketDetailPage() {
                     type="button"
                     onClick={() => {
                       if (!replyText.trim()) return;
-                      alert("Reply sent successfully!");
+                      showToast("Reply sent successfully!");
                       setReplyText("");
                     }}
                     className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-all"
@@ -513,6 +525,21 @@ export function AdminTicketDetailPage() {
           </div>
         </div>
       </main>
+
+      {/* ── Toast Notification ── */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-800 animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
+          <span className="text-xs font-semibold">{toastMessage}</span>
+          <button
+            type="button"
+            className="text-slate-400 hover:text-white text-xs ml-2 cursor-pointer"
+            onClick={() => setToastMessage(null)}
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -123,14 +123,13 @@ ON CONFLICT (name) DO UPDATE SET
     is_recommended = EXCLUDED.is_recommended;
 
 -- -----------------------------------------------------------------------------
--- 2. CORE AGENCY STAFF USERS
--- All accounts require mandatory password setup upon first sign in (must_reset_password = TRUE)
+-- 2. CORE SUPER ADMIN USER
+-- The primary executive agency administrator (Real account: admin@creo.agency)
+-- Real staff and client accounts will be registered and invited directly.
 -- -----------------------------------------------------------------------------
 INSERT INTO users (
     id, agency_id, auth_id, email, full_name, hashed_password, role, account_status, email_verified_at, must_reset_password
-) VALUES
--- 2.1 Super Admin (Full Agency Access)
-(
+) VALUES (
     '00000000-0000-0000-0000-000000000001',
     '00000000-0000-0000-0000-000000000001',
     'auth-super-admin-001',
@@ -140,46 +139,7 @@ INSERT INTO users (
     'super_admin',
     'active',
     NOW(),
-    TRUE
-),
--- 2.2 Team Lead (Pod Controller)
-(
-    '00000000-0000-0000-0000-000000000002',
-    '00000000-0000-0000-0000-000000000001',
-    'auth-team-lead-002',
-    'lead@creo.agency',
-    'Vikram Malhotra (Lead)',
-    '$2b$12$e8Yp89/i61t6ZkPfxmQOqukgl9m61Q0K7jF08b2G9x89M0o/q4l2O',
-    'team_lead',
-    'active',
-    NOW(),
-    TRUE
-),
--- 2.3 Staff Video Editor
-(
-    '00000000-0000-0000-0000-000000000003',
-    '00000000-0000-0000-0000-000000000001',
-    'auth-staff-editor-003',
-    'editor@creo.agency',
-    'Karthik Raja (Senior Video)',
-    '$2b$12$e8Yp89/i61t6ZkPfxmQOqukgl9m61Q0K7jF08b2G9x89M0o/q4l2O',
-    'editor',
-    'active',
-    NOW(),
-    TRUE
-),
--- 2.4 Staff Brand Designer
-(
-    '00000000-0000-0000-0000-000000000004',
-    '00000000-0000-0000-0000-000000000001',
-    'auth-staff-designer-004',
-    'designer@creo.agency',
-    'Ananya Deshmukh (Motion & UI)',
-    '$2b$12$e8Yp89/i61t6ZkPfxmQOqukgl9m61Q0K7jF08b2G9x89M0o/q4l2O',
-    'designer',
-    'active',
-    NOW(),
-    TRUE
+    FALSE
 )
 ON CONFLICT (email) DO UPDATE SET
     full_name = EXCLUDED.full_name,
@@ -188,49 +148,8 @@ ON CONFLICT (email) DO UPDATE SET
     must_reset_password = EXCLUDED.must_reset_password;
 
 -- -----------------------------------------------------------------------------
--- 3. STAFF PROFILES
+-- 3. STAFF PROFILES (0 MOCK USERS - REAL STAFF CONFIGURED DYNAMICALLY)
 -- -----------------------------------------------------------------------------
-INSERT INTO staff_profiles (
-    user_id, agency_id, craft_role, monthly_points, team_lead_id, department, daily_capacity, skills, is_accepting_work
-)
-VALUES
-(
-    '00000000-0000-0000-0000-000000000002',
-    '00000000-0000-0000-0000-000000000001',
-    'creative_director',
-    100,
-    NULL,
-    'creative',
-    6,
-    ARRAY['Direction', 'QA Review', 'Storyboarding', 'Client SLA'],
-    true
-),
-(
-    '00000000-0000-0000-0000-000000000003',
-    '00000000-0000-0000-0000-000000000001',
-    'video_editor',
-    100,
-    '00000000-0000-0000-0000-000000000002',
-    'video',
-    5,
-    ARRAY['Premiere Pro', 'After Effects', '9:16 Reels', 'Sound Design'],
-    true
-),
-(
-    '00000000-0000-0000-0000-000000000004',
-    '00000000-0000-0000-0000-000000000001',
-    'graphic_designer',
-    100,
-    '00000000-0000-0000-0000-000000000002',
-    'design',
-    5,
-    ARRAY['Figma', 'Photoshop', 'Brand Carousels', 'Typography'],
-    true
-)
-ON CONFLICT (user_id) DO UPDATE SET
-    daily_capacity = EXCLUDED.daily_capacity,
-    skills = EXCLUDED.skills,
-    is_accepting_work = EXCLUDED.is_accepting_work;
 
 -- -----------------------------------------------------------------------------
 -- 4. REFRESH MATERIALIZED VIEW

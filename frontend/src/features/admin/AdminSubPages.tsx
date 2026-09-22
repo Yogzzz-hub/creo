@@ -5950,7 +5950,7 @@ export function AdminPlansPage() {
       display_name: "Starter Launch",
       price_monthly: 4500,
       currency: "USD",
-      subscribers: 4,
+      subscribers: 0,
       features: [
         "10 Static Posters / Month",
         "4 Short Video Reels / Month",
@@ -5964,7 +5964,7 @@ export function AdminPlansPage() {
       display_name: "Brand Accelerator",
       price_monthly: 6400,
       currency: "USD",
-      subscribers: 8,
+      subscribers: 0,
       features: [
         "20 Static Posters / Month",
         "10 Short Video Reels / Month",
@@ -5979,7 +5979,7 @@ export function AdminPlansPage() {
       display_name: "Scale Enterprise Suite",
       price_monthly: 9500,
       currency: "USD",
-      subscribers: 12,
+      subscribers: 0,
       features: [
         "40 Static Posters / Month",
         "20 High-Production Video Reels",
@@ -6011,114 +6011,24 @@ export function AdminPlansPage() {
   const [newPropProposedRate, setNewPropProposedRate] = useState("6400");
   const [newPropNotes, setNewPropNotes] = useState("");
 
-  // Client Plan Negotiations List
-  const [negotiations, setNegotiations] = useState<PlanNegotiationItem[]>([
-    {
-      id: "neg-101",
-      clientName: "Apex Media",
-      clientLogo: "AM",
-      currentPlan: "Growth & Scale Retainer ($5,800/mo)",
-      proposedPlan: "Enterprise Suite Custom Scope",
-      originalPrice: 7200,
-      proposedPrice: 6200,
-      discountPct: 14,
-      notes: "Requesting 15 Reels + 40 Static Posts with a 12-month lock-in commitment. Require dedicated Pod Lead.",
-      requestedAt: "Today, 11:20 AM",
-      status: "Pending Review",
-    },
-    {
-      id: "neg-102",
-      clientName: "Atlas Commerce",
-      clientLogo: "AC",
-      currentPlan: "Starter / Launch Package ($4,500/mo)",
-      proposedPlan: "Growth & Scale Tier Upgrade",
-      originalPrice: 6400,
-      proposedPrice: 5600,
-      discountPct: 12.5,
-      notes: "Scaling up Q4 video output. Requesting $5,600/mo retainer rate for 6-month contract.",
-      requestedAt: "Yesterday, 3:45 PM",
-      status: "Pending Review",
-    },
-    {
-      id: "neg-103",
-      clientName: "Vortex Brand Suite",
-      clientLogo: "VB",
-      currentPlan: "No Active Retainer (Custom Quote)",
-      proposedPlan: "Starter / Launch Custom Pack",
-      originalPrice: 4500,
-      proposedPrice: 3900,
-      discountPct: 13.3,
-      notes: "Early stage startup seeking launch pack discount with bi-weekly payment terms.",
-      requestedAt: "Nov 15, 2024",
-      status: "Counter Offered",
-      counterPrice: 4200,
-    },
-    {
-      id: "neg-104",
-      clientName: "Luminary AI Labs",
-      clientLogo: "LA",
-      currentPlan: "Growth Retainer ($6,400/mo)",
-      proposedPlan: "Multi-Pod Enterprise Custom Retainer",
-      originalPrice: 11500,
-      proposedPrice: 9800,
-      discountPct: 14.8,
-      notes: "Requires dedicated 3D Motion Squad + daily standup syncs for fast product release cadence.",
-      requestedAt: "Nov 12, 2024",
-      status: "Accepted",
-    },
-  ]);
+  // Client Plan Negotiations List (0 Mock Data - Real client contract proposals appear here)
+  const [negotiations, setNegotiations] = useState<PlanNegotiationItem[]>([]);
 
-  // Active Deals Pipeline
-  const [deals, _setDeals] = useState([
-    {
-      id: "deal-1",
-      client: "Northwind Labs",
-      clientLogo: "NL",
-      scope: "Annual Enterprise Tier 2 Retainer",
-      value: 96000,
-      stage: "Closing / Contract",
-      stageBadge: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      probability: "95%",
-      owner: "Sarah Vance",
-      expectedClose: "Nov 30, 2024",
-    },
-    {
-      id: "deal-2",
-      client: "Bloom Studio",
-      clientLogo: "BS",
-      scope: "UGC Scale & Paid Ads Pack (12-mo)",
-      value: 76800,
-      stage: "In Negotiation",
-      stageBadge: "bg-amber-50 text-amber-700 border-amber-200",
-      probability: "75%",
-      owner: "Elena Rostova",
-      expectedClose: "Dec 05, 2024",
-    },
-    {
-      id: "deal-3",
-      client: "Apex Media",
-      clientLogo: "AM",
-      scope: "Full-Funnel Brand Redesign & Motion",
-      value: 84000,
-      stage: "Proposal Sent",
-      stageBadge: "bg-blue-50 text-blue-700 border-blue-200",
-      probability: "60%",
-      owner: "Marcus Brody",
-      expectedClose: "Dec 12, 2024",
-    },
-    {
-      id: "deal-4",
-      client: "Vortex Brand Suite",
-      clientLogo: "VB",
-      scope: "Starter Launch & Social Sprint",
-      value: 50400,
-      stage: "Discovery / Demo",
-      stageBadge: "bg-purple-50 text-purple-700 border-purple-200",
-      probability: "40%",
-      owner: "Maya Lin",
-      expectedClose: "Dec 20, 2024",
-    },
-  ]);
+  // Active Deals Pipeline (0 Mock Data - Real commercial pipeline deals appear here)
+  const [deals, _setDeals] = useState<
+    Array<{
+      id: string;
+      client: string;
+      clientLogo: string;
+      scope: string;
+      value: number;
+      stage: string;
+      stageBadge: string;
+      probability: string;
+      owner: string;
+      expectedClose: string;
+    }>
+  >([]);
 
   // Actions: ACCEPT Client Plan Negotiation
   const handleAcceptNegotiation = (item: PlanNegotiationItem) => {
@@ -6568,39 +6478,48 @@ export function AdminPlansPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {deals.map((d) => (
-                  <tr key={d.id} className="hover:bg-gray-50/70 transition-colors">
-                    <td className="py-4 pl-2 font-bold text-gray-900">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center">
-                          {d.clientLogo}
-                        </div>
-                        <span>{d.client}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 text-gray-600 font-medium">{d.scope}</td>
-                    <td className="py-4 font-black text-gray-900">${d.value.toLocaleString()} / yr</td>
-                    <td className="py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${d.stageBadge}`}>
-                        {d.stage}
-                      </span>
-                    </td>
-                    <td className="py-4 font-bold text-emerald-600">{d.probability}</td>
-                    <td className="py-4 text-gray-600 font-medium">{d.owner}</td>
-                    <td className="py-4 text-right pr-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setToast(`Deal details updated for ${d.client}.`);
-                          setTimeout(() => setToast(null), 2500);
-                        }}
-                        className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs cursor-pointer"
-                      >
-                        Manage
-                      </button>
+                {deals.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-10 text-center text-gray-400">
+                      <p className="text-xs font-bold text-gray-600">No active pipeline deals</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">Real sales prospect deals will appear here once initiated.</p>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  deals.map((d) => (
+                    <tr key={d.id} className="hover:bg-gray-50/70 transition-colors">
+                      <td className="py-4 pl-2 font-bold text-gray-900">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center">
+                            {d.clientLogo}
+                          </div>
+                          <span>{d.client}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 text-gray-600 font-medium">{d.scope}</td>
+                      <td className="py-4 font-black text-gray-900">${d.value.toLocaleString()} / yr</td>
+                      <td className="py-4">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${d.stageBadge}`}>
+                          {d.stage}
+                        </span>
+                      </td>
+                      <td className="py-4 font-bold text-emerald-600">{d.probability}</td>
+                      <td className="py-4 text-gray-600 font-medium">{d.owner}</td>
+                      <td className="py-4 text-right pr-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setToast(`Deal details updated for ${d.client}.`);
+                            setTimeout(() => setToast(null), 2500);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs cursor-pointer"
+                        >
+                          Manage
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
