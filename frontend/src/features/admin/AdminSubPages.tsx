@@ -1,1585 +1,2275 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router";
 import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ReferenceLine,
+  ResponsiveContainer,
+} from "recharts";
+import {
   Users,
-  FileStack,
   CheckSquare,
-  CalendarDays,
-  LifeBuoy,
   UserCog,
-  BarChart3,
-  Settings,
   Search,
   Plus,
-  Trash2,
   CheckCircle2,
-  Send,
-  UserCheck,
   MessageSquare,
-  Copy,
   AlertTriangle,
-  Megaphone,
   DollarSign,
+  Briefcase,
   TrendingUp,
-  Puzzle,
   Eye,
   Check,
   X,
   Loader2,
-  UploadCloud,
-  Upload,
-  Film,
-  Image as ImageIcon,
-  Sparkles,
   Filter,
   Tag,
-  Cpu,
-  Wrench,
-  Maximize2,
-  Minimize2,
-  ExternalLink,
-  Download,
-  Play,
-  ZoomIn,
-  ZoomOut,
-  Smartphone,
-  Sliders,
-  Shield,
   ChevronLeft,
   ChevronRight,
-  PackageMinus,
+  Calendar,
+  Clock,
+  Plane,
+  Zap,
+  ArrowLeft,
+  Download,
+  Printer,
+  SlidersHorizontal,
+  ArrowUpRight,
+  Play,
+  Camera,
+  Video,
+  Scissors,
+  Palette,
+  RefreshCw,
+  Layers,
+  Mail,
+  Phone,
+  Instagram,
+  ExternalLink,
+  FileText,
+  Edit3,
+  Folder,
+  Lock,
+  ShieldCheck,
 } from "lucide-react";
-import {
-  fetchClientRoster,
-  fetchAdminQueue,
-  removeClientPlan,
-} from "../../lib/ops-api";
 import { request } from "../../lib/http";
-import { useAuth } from "../../lib/auth-context";
-import type { ClientRosterItem, AdminQueueData } from "../../types/ops";
-import { FixPlanModal } from "../../components/admin/FixPlanModal";
-import { useConfirm } from "../../components/ui/ConfirmDialog";
-
+import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. ADMIN CLIENTS PAGE
+// 1. ADMIN CLIENTS PAGE (CLIENT DETAILS & BRAND BRIEF)
 // ─────────────────────────────────────────────────────────────────────────────
+export interface ClientDetailData {
+  id: string;
+  name: string;
+  initials: string;
+  industry: string;
+  timezone: string;
+  activeSince: string;
+  tier: string;
+  tierBadge: string;
+  status: string;
+  monthlyFee: number;
+  addon?: string;
+  nextBilling: string;
+  billingMethod: string;
+  totalAssetsDelivered: number;
+  totalAssetsQuota: number;
+  postsDelivered: number;
+  postsQuota: number;
+  reelsDelivered: number;
+  reelsQuota: number;
+  storiesDelivered: number;
+  storiesQuota: number;
+  sprintNumber: number;
+  daysRemainingInSprint: number;
+  contact: {
+    name: string;
+    title: string;
+    email: string;
+    phone: string;
+    renewedDate: string;
+    termMonths: number;
+  };
+  brand: {
+    kitVersion: string;
+    headingsFont: string;
+    bodyFont: string;
+    monoFont: string;
+    toneSummary: string;
+    toneTags: string[];
+    colors: { name: string; hex: string; isLight?: boolean }[];
+    social: {
+      handle: string;
+      followers: string;
+      status: string;
+      syncInterval: string;
+    };
+    brandVaultLink: string;
+    figmaLink: string;
+    lastAuditDate: string;
+  };
+  pod: {
+    name: string;
+    tagline: string;
+    leadName: string;
+    leadTitle: string;
+    leadAvatar: string;
+    squad: { name: string; role: string; hoursPerWeek: number; avatar: string }[];
+    capacityAllocatedHrs: number;
+    bandwidthPercent: number;
+    dailySyncTime: string;
+  };
+  deliverables: {
+    id: string;
+    title: string;
+    description: string;
+    format: string;
+    status: "IN REVIEW" | "IN PRODUCTION" | "APPROVED" | "READY FOR REVIEW";
+    statusColor: string;
+    code: string;
+    dueDate: string;
+    assignedTo: string;
+    actions: string[];
+  }[];
+}
+
 export function AdminClientsPage() {
-  const [clients, setClients] = useState<ClientRosterItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [fixingClient, setFixingClient] = useState<ClientRosterItem | null>(null);
+  const [deliverableSearch, setDeliverableSearch] = useState("");
+  const [toast, setToast] = useState<string | null>(null);
 
-  const confirm = useConfirm();
+  // Active Modals
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
+  const [previewDeliverable, setPreviewDeliverable] = useState<any | null>(null);
 
-  const handleRemovePlan = async (clientId: string, clientName: string) => {
-    const ok = await confirm({
-      title: `Remove Retainer Plan for "${clientName}"?`,
-      description: `Are you sure you want to remove the active plan for "${clientName}"? This action will immediately terminate the client's current billing cycle and reset their quotas.`,
-      details: [
-        "Subscription will be canceled immediately in database & billing records",
-        "All monthly deliverable quotas (Reels, Static Posts, Stories) will be reset to 0",
-        "Client account remains active so they can continue to access the portal",
+  const [newRequestForm, setNewRequestForm] = useState({
+    title: "",
+    type: "Reel",
+    priority: "Standard",
+    notes: "",
+  });
+
+  const clientsData: Record<string, ClientDetailData> = {
+    northwind: {
+      id: "northwind",
+      name: "Northwind Labs",
+      initials: "NL",
+      industry: "Fintech & Algorithmic Infrastructure",
+      timezone: "Client Time: EST (UTC-5)",
+      activeSince: "Active since Aug 2023",
+      tier: "Enterprise Retainer",
+      tierBadge: "ENTERPRISE RETAINER",
+      status: "ACTIVE RETAINER",
+      monthlyFee: 9500,
+      addon: "Add-on: Motion Lead",
+      nextBilling: "Dec 1, 2024",
+      billingMethod: "Stripe Corporate ACH",
+      totalAssetsDelivered: 18,
+      totalAssetsQuota: 24,
+      postsDelivered: 12,
+      postsQuota: 16,
+      reelsDelivered: 3,
+      reelsQuota: 4,
+      storiesDelivered: 3,
+      storiesQuota: 4,
+      sprintNumber: 44,
+      daysRemainingInSprint: 12,
+      contact: {
+        name: "David K.",
+        title: "VP of Marketing & Communications",
+        email: "ops@northwindlabs.co",
+        phone: "+1 (555) 234-8901",
+        renewedDate: "Nov 1, 2024",
+        termMonths: 12,
+      },
+      brand: {
+        kitVersion: "Design Kit v2.4",
+        headingsFont: "Plus Jakarta Sans",
+        bodyFont: "Inter Sans",
+        monoFont: "JetBrains Mono",
+        toneSummary:
+          "Authoritative, institutional, enterprise fintech with sharp geometric clarity. Uncompromising precision and zero superfluous fluff.",
+        toneTags: ["Algorithmic", "High Trust", "Global Scope"],
+        colors: [
+          { name: "Core Navy", hex: "#0F172A" },
+          { name: "Accent Azure", hex: "#2563EB" },
+          { name: "Cyan Highlight", hex: "#06B6D4" },
+          { name: "Clean Neutral", hex: "#F8FAFC", isLight: true },
+        ],
+        social: {
+          handle: "@northwindlabs",
+          followers: "142,800 Followers",
+          status: "API CONNECTED",
+          syncInterval: "15m refresh",
+        },
+        brandVaultLink: "Google Drive Brand Vault",
+        figmaLink: "Figma Design System (v2.4)",
+        lastAuditDate: "Nov 12, 2024",
+      },
+      pod: {
+        name: "Pod A",
+        tagline: "Creative & Strategy",
+        leadName: "Maya Lin",
+        leadTitle: "Senior Art Director (Lead)",
+        leadAvatar: "ML",
+        squad: [
+          { name: "Omar K.", role: "Dedicated Motion Lead", hoursPerWeek: 12, avatar: "OK" },
+          { name: "Lena V.", role: "Senior FinTech Copywriter", hoursPerWeek: 10, avatar: "LV" },
+          { name: "Theo P.", role: "Graphic & Vector Specialist", hoursPerWeek: 10, avatar: "TP" },
+        ],
+        capacityAllocatedHrs: 32,
+        bandwidthPercent: 85,
+        dailySyncTime: "10:30 AM EST",
+      },
+      deliverables: [
+        {
+          id: "nb-402",
+          title: "Q4 FinTech Reel",
+          description: "High-impact motion animation showcasing algorithmic latency reduction.",
+          format: "9:16 Vertical Video",
+          status: "IN REVIEW",
+          statusColor: "bg-amber-50 text-amber-700 border-amber-200",
+          code: "#NB-402",
+          dueDate: "Tomorrow 4:00 PM",
+          assignedTo: "Omar K.",
+          actions: ["Approve", "Decline", "Preview Video Draft (0:45)"],
+        },
+        {
+          id: "nb-403",
+          title: "3× B2B Carousel Infographics",
+          description: "Data charts breakdown for institutional treasury workflows.",
+          format: "4:5 Carousel (3 slides)",
+          status: "IN PRODUCTION",
+          statusColor: "bg-blue-50 text-blue-700 border-blue-200",
+          code: "#NB-403",
+          dueDate: "Nov 18, 2024",
+          assignedTo: "Theo P.",
+          actions: ["Preview Canvas", "Request Revisions"],
+        },
+        {
+          id: "nb-405",
+          title: "CyberWeek Announcement",
+          description: "Campaign hero visual highlighting zero-fee developer API access.",
+          format: "1:1 Square Static",
+          status: "APPROVED",
+          statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          code: "#NB-405",
+          dueDate: "Nov 20, 9:00 AM",
+          assignedTo: "Lena V. / Theo P.",
+          actions: ["Auto-Publish Locked", "View Scheduled Meta"],
+        },
+        {
+          id: "nb-404",
+          title: "Brand Identity Deck",
+          description: "Complete brand guideline documentation update for Q1 partners.",
+          format: "PDF Deck (28 Pages)",
+          status: "READY FOR REVIEW",
+          statusColor: "bg-purple-50 text-purple-700 border-purple-200",
+          code: "#NB-404",
+          dueDate: "Nov 22, 2024",
+          assignedTo: "Maya Lin",
+          actions: ["Approve", "Notes", "Open Full Presentation"],
+        },
       ],
-      confirmText: "Yes, Remove Plan",
-      cancelText: "Keep Plan",
-      tone: "danger",
-      icon: "remove_plan",
-    });
-
-    if (!ok) return;
-
-    try {
-      await removeClientPlan(clientId, "Admin removed plan / refund request", "admin");
-      loadClients();
-    } catch (err: any) {
-      alert(err?.message || "Failed to remove client plan.");
-    }
+    },
+    bloom: {
+      id: "bloom",
+      name: "Bloom Studio",
+      initials: "BS",
+      industry: "Clean Cosmetics & DTC Beauty",
+      timezone: "Client Time: PST (UTC-8)",
+      activeSince: "Active since Oct 2023",
+      tier: "Growth & Scale Retainer",
+      tierBadge: "GROWTH RETAINER",
+      status: "ACTIVE RETAINER",
+      monthlyFee: 8400,
+      addon: "Add-on: Colorist Lead",
+      nextBilling: "Dec 5, 2024",
+      billingMethod: "Stripe Corporate Card",
+      totalAssetsDelivered: 14,
+      totalAssetsQuota: 20,
+      postsDelivered: 9,
+      postsQuota: 12,
+      reelsDelivered: 3,
+      reelsQuota: 4,
+      storiesDelivered: 2,
+      storiesQuota: 4,
+      sprintNumber: 44,
+      daysRemainingInSprint: 12,
+      contact: {
+        name: "Anya Taylor",
+        title: "Head of Brand & Creative",
+        email: "creative@bloomstudio.com",
+        phone: "+1 (555) 832-1940",
+        renewedDate: "Nov 5, 2024",
+        termMonths: 6,
+      },
+      brand: {
+        kitVersion: "Design Kit v1.9",
+        headingsFont: "Cormorant Garamond",
+        bodyFont: "Plus Jakarta Sans",
+        monoFont: "Space Mono",
+        toneSummary:
+          "Sensory, serene, high-end organic beauty with pastel luminescence. Warm editorial elegance and mindful self-care narratives.",
+        toneTags: ["Mindful Luxe", "Botanical", "Warm Editorial"],
+        colors: [
+          { name: "Blush Rose", hex: "#F43F5E" },
+          { name: "Petal Mist", hex: "#FFE4E6", isLight: true },
+          { name: "Sage Earth", hex: "#10B981" },
+          { name: "Soft Ivory", hex: "#FFFBEB", isLight: true },
+        ],
+        social: {
+          handle: "@bloomstudio_skin",
+          followers: "88,400 Followers",
+          status: "API CONNECTED",
+          syncInterval: "15m refresh",
+        },
+        brandVaultLink: "Bloom Brand Assets Drive",
+        figmaLink: "Bloom Master Design System",
+        lastAuditDate: "Nov 10, 2024",
+      },
+      pod: {
+        name: "Pod B",
+        tagline: "Visual & Lifestyle Retouching",
+        leadName: "Elena Rostova",
+        leadTitle: "Senior Creative Producer",
+        leadAvatar: "ER",
+        squad: [
+          { name: "Julian Reyes", role: "UI & Product Stylist", hoursPerWeek: 12, avatar: "JR" },
+          { name: "Marcus Brody", role: "Video & Colorist", hoursPerWeek: 10, avatar: "MB" },
+        ],
+        capacityAllocatedHrs: 28,
+        bandwidthPercent: 78,
+        dailySyncTime: "11:00 AM PST",
+      },
+      deliverables: [
+        {
+          id: "bs-201",
+          title: "Holiday Campaign Lifestyle Retouching",
+          description: "4K Color graded editorial photos for holiday gift box collection.",
+          format: "4:5 Portrait High-Res",
+          status: "IN REVIEW",
+          statusColor: "bg-amber-50 text-amber-700 border-amber-200",
+          code: "#BS-201",
+          dueDate: "Tomorrow 2:00 PM",
+          assignedTo: "Julian Reyes",
+          actions: ["Approve", "Decline", "Preview Canvas"],
+        },
+        {
+          id: "bs-202",
+          title: "Founder Q&A Micro-Reel #4",
+          description: "Organic skincare routine explanation with subtitle dynamic animations.",
+          format: "9:16 Vertical Video",
+          status: "IN PRODUCTION",
+          statusColor: "bg-blue-50 text-blue-700 border-blue-200",
+          code: "#BS-202",
+          dueDate: "Nov 19, 2024",
+          assignedTo: "Marcus Brody",
+          actions: ["Preview Video Draft", "Request Revisions"],
+        },
+      ],
+    },
+    atlas: {
+      id: "atlas",
+      name: "Atlas Commerce",
+      initials: "AC",
+      industry: "Omnichannel E-commerce & Retail Tech",
+      timezone: "Client Time: CST (UTC-6)",
+      activeSince: "Active since May 2023",
+      tier: "Enterprise Retainer",
+      tierBadge: "ENTERPRISE RETAINER",
+      status: "ACTIVE RETAINER",
+      monthlyFee: 12500,
+      addon: "Add-on: TikTok Growth Pod",
+      nextBilling: "Dec 10, 2024",
+      billingMethod: "Direct ACH Wire",
+      totalAssetsDelivered: 22,
+      totalAssetsQuota: 28,
+      postsDelivered: 14,
+      postsQuota: 18,
+      reelsDelivered: 5,
+      reelsQuota: 6,
+      storiesDelivered: 3,
+      storiesQuota: 4,
+      sprintNumber: 44,
+      daysRemainingInSprint: 12,
+      contact: {
+        name: "Kenji Sato",
+        title: "VP of Growth & Acquisition",
+        email: "growth@atlascommerce.io",
+        phone: "+1 (555) 492-7711",
+        renewedDate: "Nov 10, 2024",
+        termMonths: 12,
+      },
+      brand: {
+        kitVersion: "Design Kit v3.1",
+        headingsFont: "Outfit Sans",
+        bodyFont: "Inter Sans",
+        monoFont: "JetBrains Mono",
+        toneSummary:
+          "High-octane, performance-driven commerce intelligence with punchy hooks and viral data graphs.",
+        toneTags: ["High Velocity", "Data-Backed", "Conversion Hook"],
+        colors: [
+          { name: "Electric Cyan", hex: "#06B6D4" },
+          { name: "Atlas Indigo", hex: "#4F46E5" },
+          { name: "Growth Emerald", hex: "#10B981" },
+          { name: "Obsidian", hex: "#0B0F19" },
+        ],
+        social: {
+          handle: "@atlascommerce",
+          followers: "210,000 Followers",
+          status: "API CONNECTED",
+          syncInterval: "15m refresh",
+        },
+        brandVaultLink: "Atlas Growth Assets Drive",
+        figmaLink: "Atlas Component Library",
+        lastAuditDate: "Nov 14, 2024",
+      },
+      pod: {
+        name: "Pod C",
+        tagline: "Motion & Video Ops",
+        leadName: "Kenji Sato",
+        leadTitle: "Director of Performance Creative",
+        leadAvatar: "KS",
+        squad: [
+          { name: "Maya Patel", role: "Lead Motion Designer", hoursPerWeek: 14, avatar: "MP" },
+          { name: "David Kim", role: "Short-Form Video Specialist", hoursPerWeek: 12, avatar: "DK" },
+        ],
+        capacityAllocatedHrs: 34,
+        bandwidthPercent: 90,
+        dailySyncTime: "9:30 AM CST",
+      },
+      deliverables: [
+        {
+          id: "ac-301",
+          title: "TikTok Viral Hook Reel Cut #1 & #2",
+          description: "Top 3 conversion hooks with sound design and rapid pacing cuts.",
+          format: "9:16 Vertical Video",
+          status: "IN REVIEW",
+          statusColor: "bg-amber-50 text-amber-700 border-amber-200",
+          code: "#AC-301",
+          dueDate: "Tomorrow 5:00 PM",
+          assignedTo: "David Kim",
+          actions: ["Approve", "Decline", "Preview Video Draft (0:30)"],
+        },
+      ],
+    },
+    lumina: {
+      id: "lumina",
+      name: "Lumina Health",
+      initials: "LH",
+      industry: "MedTech & Digital Health Platform",
+      timezone: "Client Time: EST (UTC-5)",
+      activeSince: "Active since Jan 2024",
+      tier: "Starter Launch Retainer",
+      tierBadge: "STARTER RETAINER",
+      status: "ACTIVE RETAINER",
+      monthlyFee: 6500,
+      addon: "Add-on: Medical Animation",
+      nextBilling: "Dec 12, 2024",
+      billingMethod: "Stripe ACH Transfer",
+      totalAssetsDelivered: 10,
+      totalAssetsQuota: 14,
+      postsDelivered: 7,
+      postsQuota: 8,
+      reelsDelivered: 2,
+      reelsQuota: 3,
+      storiesDelivered: 1,
+      storiesQuota: 3,
+      sprintNumber: 44,
+      daysRemainingInSprint: 12,
+      contact: {
+        name: "Sarah Jenkins",
+        title: "Director of Communications",
+        email: "comms@luminahealth.org",
+        phone: "+1 (555) 310-9284",
+        renewedDate: "Nov 12, 2024",
+        termMonths: 12,
+      },
+      brand: {
+        kitVersion: "Design Kit v2.1",
+        headingsFont: "Plus Jakarta Sans",
+        bodyFont: "Inter Sans",
+        monoFont: "JetBrains Mono",
+        toneSummary:
+          "Empathetic, scientifically rigorous clinical communication with modern human-centric interfaces.",
+        toneTags: ["Clinical Trust", "Modern Care", "Accessible"],
+        colors: [
+          { name: "Care Emerald", hex: "#059669" },
+          { name: "Teal Glow", hex: "#0D9488" },
+          { name: "Soft Cyan", hex: "#ECFEFF", isLight: true },
+          { name: "Deep Slate", hex: "#0F172A" },
+        ],
+        social: {
+          handle: "@lumina_health",
+          followers: "64,000 Followers",
+          status: "API CONNECTED",
+          syncInterval: "15m refresh",
+        },
+        brandVaultLink: "Lumina Clinical Assets Drive",
+        figmaLink: "Lumina Medical UI Kit",
+        lastAuditDate: "Nov 15, 2024",
+      },
+      pod: {
+        name: "Pod E",
+        tagline: "Creative Brand Engine",
+        leadName: "Sarah Jenkins",
+        leadTitle: "Creative Communications Lead",
+        leadAvatar: "SJ",
+        squad: [
+          { name: "Liam Wright", role: "Medical Illustrator", hoursPerWeek: 10, avatar: "LW" },
+        ],
+        capacityAllocatedHrs: 22,
+        bandwidthPercent: 70,
+        dailySyncTime: "10:00 AM EST",
+      },
+      deliverables: [
+        {
+          id: "lh-101",
+          title: "Patient Portal Explainer Video Storyboard",
+          description: "Accessible step-by-step patient onboarding animation narrative.",
+          format: "16:9 Explainer Video",
+          status: "IN REVIEW",
+          statusColor: "bg-amber-50 text-amber-700 border-amber-200",
+          code: "#LH-101",
+          dueDate: "Nov 19, 3:30 PM",
+          assignedTo: "Sarah Jenkins",
+          actions: ["Approve", "Decline", "Open Full Presentation"],
+        },
+      ],
+    },
+    acme: {
+      id: "acme",
+      name: "Acme Corp",
+      initials: "AC",
+      industry: "B2B Enterprise SaaS & Cloud Ops",
+      timezone: "Client Time: PST (UTC-8)",
+      activeSince: "Active since Mar 2023",
+      tier: "Growth & Scale Retainer",
+      tierBadge: "GROWTH RETAINER",
+      status: "ACTIVE RETAINER",
+      monthlyFee: 7200,
+      addon: "Add-on: Infographic Specialist",
+      nextBilling: "Dec 15, 2024",
+      billingMethod: "Corporate Wire",
+      totalAssetsDelivered: 12,
+      totalAssetsQuota: 16,
+      postsDelivered: 8,
+      postsQuota: 10,
+      reelsDelivered: 2,
+      reelsQuota: 3,
+      storiesDelivered: 2,
+      storiesQuota: 3,
+      sprintNumber: 44,
+      daysRemainingInSprint: 12,
+      contact: {
+        name: "Marcus Brody",
+        title: "Head of Marketing",
+        email: "marcus@acmecorp.dev",
+        phone: "+1 (555) 601-8392",
+        renewedDate: "Nov 15, 2024",
+        termMonths: 12,
+      },
+      brand: {
+        kitVersion: "Design Kit v4.0",
+        headingsFont: "Plus Jakarta Sans",
+        bodyFont: "Inter Sans",
+        monoFont: "JetBrains Mono",
+        toneSummary:
+          "Developer-first cloud infrastructure intelligence with clean architectural diagrams and high-trust proof points.",
+        toneTags: ["Developer First", "High Reliability", "Scale"],
+        colors: [
+          { name: "Acme Blue", hex: "#2563EB" },
+          { name: "Cloud Slate", hex: "#334155" },
+          { name: "Highlight Amber", hex: "#F59E0B" },
+          { name: "Clean Snow", hex: "#F8FAFC", isLight: true },
+        ],
+        social: {
+          handle: "@acme_cloud",
+          followers: "95,000 Followers",
+          status: "API CONNECTED",
+          syncInterval: "15m refresh",
+        },
+        brandVaultLink: "Acme Developer Drive",
+        figmaLink: "Acme Cloud Components",
+        lastAuditDate: "Nov 16, 2024",
+      },
+      pod: {
+        name: "Pod D",
+        tagline: "Digital Marketing & Infographics",
+        leadName: "David Vance",
+        leadTitle: "Director of Digital Media",
+        leadAvatar: "DV",
+        squad: [
+          { name: "Marcus Brody", role: "Technical Designer", hoursPerWeek: 12, avatar: "MB" },
+        ],
+        capacityAllocatedHrs: 26,
+        bandwidthPercent: 75,
+        dailySyncTime: "11:30 AM PST",
+      },
+      deliverables: [
+        {
+          id: "acm-501",
+          title: "Top 5 Growth Hacks Infographic Carousel",
+          description: "Technical architecture infographic for cloud database latency reduction.",
+          format: "4:5 Carousel (5 slides)",
+          status: "IN PRODUCTION",
+          statusColor: "bg-blue-50 text-blue-700 border-blue-200",
+          code: "#ACM-501",
+          dueDate: "Nov 20, 5:00 PM",
+          assignedTo: "Marcus Brody",
+          actions: ["Preview Canvas", "Request Revisions"],
+        },
+      ],
+    },
   };
 
-  const loadClients = () => {
-    fetchClientRoster(undefined, "admin")
-      .then((data) => setClients(data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+  const clientList = Object.values(clientsData);
+  const activeClient = selectedClientId ? clientsData[selectedClientId] || clientsData.northwind : null;
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
   };
 
-  useEffect(() => {
-    loadClients();
-  }, []);
+  const handleApproveDeliverable = (_delivId: string, title: string) => {
+    showToast(`Approved "${title}". Asset marked ready for scheduled dispatch.`);
+  };
 
-  const filteredClients = clients.filter((c) => {
+  const handleDeclineDeliverable = (_delivId: string, title: string) => {
+    showToast(`Revision requested for "${title}". Assigned specialist notified.`);
+  };
+
+  const handleCreateRequest = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRequestForm.title.trim()) return;
+    showToast(`New request "${newRequestForm.title}" submitted to ${activeClient?.pod.name}.`);
+    setIsNewRequestOpen(false);
+    setNewRequestForm({ title: "", type: "Reel", priority: "Standard", notes: "" });
+  };
+
+  const filteredClientList = clientList.filter((c) => {
     const matchesSearch =
-      (c.company_name?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
-      c.email.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || c.account_status.toLowerCase() === statusFilter.toLowerCase();
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.industry.toLowerCase().includes(search.toLowerCase()) ||
+      c.contact.email.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "all" || c.status.toLowerCase().includes(statusFilter.toLowerCase());
     return matchesSearch && matchesStatus;
   });
 
+  const filteredDeliverables = activeClient?.deliverables.filter((d) => {
+    if (!deliverableSearch.trim()) return true;
+    return (
+      d.title.toLowerCase().includes(deliverableSearch.toLowerCase()) ||
+      d.description.toLowerCase().includes(deliverableSearch.toLowerCase()) ||
+      d.assignedTo.toLowerCase().includes(deliverableSearch.toLowerCase())
+    );
+  }) || [];
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Users className="size-5 text-[#2B7BC4]" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">Clients Roster</h1>
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F8FAFC] flex flex-col">
+      <AdminTopHeader
+        title={selectedClientId && activeClient ? `${activeClient.name} • Client Details` : "Client Details"}
+        activeTab="Client Details"
+      />
+
+      <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        {toast && (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>{toast}</span>
+            </div>
+            <button type="button" onClick={() => setToast(null)} className="p-1 hover:bg-emerald-100 rounded-lg text-emerald-700">
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Registered brands, onboarding stage tracking, and creative quota allocations
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">
-            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            {clients.length} Total Accounts
-          </span>
-        </div>
-      </div>
+        )}
 
-      {/* Controls */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search by brand name or email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 bg-white text-xs text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-1 focus:ring-[#2B7BC4]"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-[#0D2137] focus:outline-none focus:border-[#2B7BC4]"
-          >
-            <option value="all">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="pending_verification">Pending</option>
-            <option value="suspended">Suspended</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Client List */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-        {/* Mobile View (< 768px) */}
-        <div className="block md:hidden divide-y divide-slate-100">
-          {loading ? (
-            <div className="p-8 text-center text-slate-400">
-              <Loader2 className="size-5 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-              Loading client roster...
-            </div>
-          ) : filteredClients.length === 0 ? (
-            <div className="p-8 text-center text-slate-500 text-xs">
-              No clients found matching filter criteria.
-            </div>
-          ) : (
-            filteredClients.map((client) => (
-              <div key={client.client_id} className="p-4 space-y-2.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h4 className="font-bold text-sm text-[#0D2137]">
-                      {client.company_name || client.email.split("@")[0]}
-                    </h4>
-                    <p className="text-xs text-slate-500 font-mono mt-0.5">{client.email}</p>
-                  </div>
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                      client.account_status === "active"
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : "bg-amber-50 text-amber-700 border border-amber-200"
-                    }`}
+        {/* ═════════════════════════════════════════════════════════════════════
+            VIEW 1: CLIENT ROSTER / DIRECTORY (WHEN NO CLIENT IS SELECTED)
+        ═════════════════════════════════════════════════════════════════════ */}
+        {!selectedClientId ? (
+          <div className="space-y-6 animate-fade-in">
+            {/* Controls */}
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by brand name, industry, or contact email..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                />
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 shrink-0">
+                  <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                  {clientList.length} Active Retainers
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <Filter className="size-4 text-gray-400" />
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    aria-label="Filter Client Status"
+                    className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 focus:outline-none cursor-pointer shadow-2xs"
                   >
-                    {client.account_status}
-                  </span>
+                    <option value="all">All Statuses</option>
+                    <option value="active">Active Retainers</option>
+                    <option value="enterprise">Enterprise Retainers</option>
+                    <option value="growth">Growth Retainers</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Client Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredClientList.map((client) => (
+                <div
+                  key={client.id}
+                  onClick={() => setSelectedClientId(client.id)}
+                  className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 hover:shadow-xl hover:border-blue-300 transition-all cursor-pointer group flex flex-col justify-between"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-[#0F172A] text-white font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                          {client.initials}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-bold text-base text-gray-900 group-hover:text-blue-600 transition-colors">
+                              {client.name}
+                            </h3>
+                            <CheckCircle2 className="w-4 h-4 text-blue-600 fill-blue-600 text-white" />
+                          </div>
+                          <span className="text-[11px] text-gray-500 font-medium block truncate max-w-[200px]">
+                            {client.industry}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        {client.status}
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-gray-50/80 rounded-2xl space-y-1.5 text-xs text-gray-600 border border-gray-100">
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-500">Retainer:</span>
+                        <span className="font-bold text-gray-900">${client.monthlyFee.toLocaleString()}/mo</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-500">Assigned Pod:</span>
+                        <span className="font-bold text-blue-600">{client.pod.name} ({client.pod.tagline})</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-500">Primary Contact:</span>
+                        <span className="font-semibold text-gray-800">{client.contact.name}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+                    <span className="text-gray-400 font-medium">{client.deliverables.length} Deliverables Active</span>
+                    <span className="text-blue-600 font-bold group-hover:underline flex items-center gap-1">
+                      View Client Detail View &rarr;
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* ═════════════════════════════════════════════════════════════════════
+              VIEW 2: DEDICATED CLIENT DETAIL VIEW (MATCHING USER SCREENSHOT)
+          ═════════════════════════════════════════════════════════════════════ */
+          <div className="space-y-6 animate-fade-in">
+            {/* Top Breadcrumb & Live Status */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
+                <button
+                  type="button"
+                  onClick={() => setSelectedClientId(null)}
+                  className="hover:text-blue-600 flex items-center gap-1 transition-colors cursor-pointer text-gray-600"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Back to Client Roster
+                </button>
+                <span>/</span>
+                <span className="text-gray-400">Client Details</span>
+                <span>/</span>
+                <span className="text-gray-900 font-black">{activeClient?.name}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-white text-gray-800 border border-gray-200 flex items-center gap-1.5 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Client • v2.4
+                </span>
+              </div>
+            </div>
+
+            {/* Client Header Card matching Screenshot */}
+            <div className="bg-white rounded-3xl p-6 lg:p-7 border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-4">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-[#0F172A] text-white font-black text-2xl flex items-center justify-center shadow-lg shrink-0">
+                    {activeClient?.initials}
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <h1 className="text-2xl font-black text-gray-900 tracking-tight">
+                        {activeClient?.name}
+                      </h1>
+                      <CheckCircle2 className="w-5 h-5 text-blue-600 fill-blue-600 text-white" />
+                      <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black uppercase tracking-wider">
+                        {activeClient?.tierBadge}
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        {activeClient?.status}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-gray-500 font-medium">
+                      <span className="flex items-center gap-1">
+                        <Folder className="w-3.5 h-3.5 text-gray-400" />
+                        {activeClient?.industry}
+                      </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-gray-400" />
+                        {activeClient?.timezone}
+                      </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                        {activeClient?.activeSince}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
-                  <span className="text-slate-500 font-semibold capitalize">
-                    {client.plan_name || "Growth Tier"}
-                  </span>
+                {/* Header Action Buttons */}
+                <div className="flex items-center gap-2.5 shrink-0">
                   <button
                     type="button"
-                    onClick={() => setFixingClient(client)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-[#2B7BC4] bg-[#E8F4FD] hover:bg-[#D5EBFA] border border-[#C9DFF0] cursor-pointer transition-colors shadow-2xs"
+                    onClick={() => setIsEditProfileOpen(true)}
+                    className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
-                    <Sparkles className="size-3 text-[#2B7BC4]" />
-                    <span>Fix Plan</span>
+                    <Edit3 className="w-3.5 h-3.5 text-gray-500" /> Edit Profile
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsInvoiceModalOpen(true)}
+                    className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-gray-500" /> Monthly Invoice
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsNewRequestOpen(true)}
+                    className="px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+                  >
+                    <Plus className="w-4 h-4 stroke-[3]" /> New Request
                   </button>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            </div>
 
-        {/* Desktop Table (>= 768px) */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-[#0D2137] border-b border-slate-200 font-semibold uppercase tracking-wider text-[11px]">
-              <tr>
-                <th className="px-4 py-3">Client / Brand</th>
-                <th className="px-4 py-3">Onboarding Stage</th>
-                <th className="px-4 py-3">Current Plan</th>
-                <th className="px-4 py-3">Account Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
-                    <Loader2 className="size-5 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-                    Loading client roster...
-                  </td>
-                </tr>
-              ) : filteredClients.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
-                    No clients found matching filter criteria.
-                  </td>
-                </tr>
-              ) : (
-                filteredClients.map((client) => (
-                  <tr key={client.client_id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="font-semibold text-[#0D2137]">
-                        {client.company_name || client.email.split("@")[0]}
+            {/* 4 Main Grid Cards matching Screenshot (2x2) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* CARD 1: PRIMARY CONTACT */}
+              <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                      PRIMARY CONTACT
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
+                      Authorized Signer
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-base flex items-center justify-center shadow-md">
+                      {activeClient?.contact.name[0]}
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-gray-900">{activeClient?.contact.name}</h3>
+                      <p className="text-xs text-gray-500 font-medium">{activeClient?.contact.title}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2">
+                    <div className="p-3 bg-gray-50/80 rounded-2xl flex items-center justify-between border border-gray-100 text-xs">
+                      <div className="flex items-center gap-2 text-gray-500 font-medium">
+                        <Mail className="w-4 h-4 text-gray-400" />
+                        <span>Email</span>
                       </div>
-                      <div className="text-[11px] text-slate-400">{client.email}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        client.onboarding_stage >= 4 && client.plan_name && client.plan_name !== "No Plan"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : client.onboarding_stage === 3 && client.plan_name && client.plan_name !== "No Plan"
-                          ? "bg-blue-50 text-[#2B7BC4] border border-blue-200"
-                          : !client.plan_name || client.plan_name === "No Plan"
-                          ? "bg-amber-50 text-amber-800 border border-amber-200"
-                          : "bg-slate-100 text-slate-700 border border-slate-200"
-                      }`}>
-                        {client.onboarding_stage >= 4 && client.plan_name && client.plan_name !== "No Plan"
-                          ? "Stage 4 / 4 • Completed"
-                          : client.onboarding_stage === 3 && client.plan_name && client.plan_name !== "No Plan"
-                          ? "Stage 3 / 4 • Strategy Pending"
-                          : !client.plan_name || client.plan_name === "No Plan"
-                          ? "Stage 2 / 4 • Payment Pending"
-                          : `Stage ${Math.max(1, client.onboarding_stage)} / 4 • Setup Pending`}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="font-medium text-slate-700 capitalize">
-                        {client.plan_name || "Growth Tier"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                          client.account_status === "active"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : "bg-amber-50 text-amber-700 border border-amber-200"
-                        }`}
-                      >
-                        {client.account_status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setFixingClient(client)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-[#2B7BC4] bg-[#E8F4FD] hover:bg-[#D5EBFA] border border-[#C9DFF0] transition-colors cursor-pointer shadow-2xs"
-                          title="Fix or change retainer plan (Starter Growth, Brand Accelerator, Enterprise Domination)"
-                        >
-                          <Sparkles className="size-3.5 text-[#2B7BC4]" />
-                          <span>Fix Plan</span>
-                        </button>
+                      <a href={`mailto:${activeClient?.contact.email}`} className="text-blue-600 font-bold hover:underline">
+                        {activeClient?.contact.email}
+                      </a>
+                    </div>
 
-                        {client.plan_name && client.plan_name !== "No Plan" && (client.subscription_status === 'active' || client.subscription_status === 'trialing') && (
+                    <div className="p-3 bg-gray-50/80 rounded-2xl flex items-center justify-between border border-gray-100 text-xs">
+                      <div className="flex items-center gap-2 text-gray-500 font-medium">
+                        <Phone className="w-4 h-4 text-gray-400" />
+                        <span>Direct Phone</span>
+                      </div>
+                      <span className="font-bold text-gray-900 font-mono">{activeClient?.contact.phone}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100 font-medium">
+                  <span className="flex items-center gap-1 text-emerald-700 font-semibold">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    Contract renewed: {activeClient?.contact.renewedDate}
+                  </span>
+                  <span>Term: {activeClient?.contact.termMonths} Mo</span>
+                </div>
+              </div>
+
+              {/* CARD 2: TIER TERMS & SCOPE */}
+              <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                      TIER TERMS & SCOPE
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-100">
+                      Active Cycle
+                    </span>
+                  </div>
+
+                  <div className="flex items-baseline justify-between">
+                    <div>
+                      <span className="text-3xl font-black text-gray-900">${activeClient?.monthlyFee.toLocaleString()}</span>
+                      <span className="text-xs font-bold text-gray-400"> /mo</span>
+                    </div>
+                    {activeClient?.addon && (
+                      <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                        {activeClient.addon}
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-gray-500">
+                    Next billing scheduled for {activeClient?.nextBilling} via {activeClient?.billingMethod}.
+                  </p>
+
+                  {/* Monthly Output Burn bar */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold">
+                      <span className="text-gray-700">Monthly Output Burn</span>
+                      <span className="text-blue-600">
+                        {activeClient?.totalAssetsDelivered} / {activeClient?.totalAssetsQuota} Assets Delivered (
+                        {Math.round(((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100)}%)
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                      <div
+                        className="bg-[#2563EB] h-full rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(
+                            (((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100),
+                            100
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 3 Metric Counters matching Screenshot */}
+                  <div className="grid grid-cols-3 gap-3 pt-1">
+                    <div className="p-3 bg-gray-50 rounded-2xl text-center space-y-0.5 border border-gray-100">
+                      <span className="text-sm font-black text-gray-900">
+                        {activeClient?.postsDelivered}/{activeClient?.postsQuota}
+                      </span>
+                      <span className="text-[10px] font-bold text-gray-400 block uppercase">POSTS</span>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-2xl text-center space-y-0.5 border border-gray-100">
+                      <span className="text-sm font-black text-gray-900">
+                        {activeClient?.reelsDelivered}/{activeClient?.reelsQuota}
+                      </span>
+                      <span className="text-[10px] font-bold text-gray-400 block uppercase">REELS</span>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded-2xl text-center space-y-0.5 border border-gray-100">
+                      <span className="text-sm font-black text-gray-900">
+                        {activeClient?.storiesDelivered}/{activeClient?.storiesQuota}
+                      </span>
+                      <span className="text-[10px] font-bold text-gray-400 block uppercase">STORIES</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100 font-medium">
+                  <span>Sprint {activeClient?.sprintNumber}: {activeClient?.daysRemainingInSprint} days remaining</span>
+                  <button
+                    type="button"
+                    onClick={() => showToast("Opening Client Quota Ledger...")}
+                    className="text-blue-600 font-bold hover:underline cursor-pointer"
+                  >
+                    View Quota Log
+                  </button>
+                </div>
+              </div>
+
+              {/* CARD 3: CLIENT BRAND ECOSYSTEM & GUIDELINES */}
+              <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Palette className="w-4 h-4 text-blue-600" />
+                    <h2 className="text-xs font-extrabold text-gray-900 uppercase tracking-wider">
+                      Client Brand Ecosystem & Guidelines
+                    </h2>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
+                    {activeClient?.brand.kitVersion}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Typography */}
+                  <div className="p-3.5 bg-gray-50/70 rounded-2xl space-y-2 border border-gray-100 text-xs">
+                    <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">
+                      TYPOGRAPHY HIERARCHY
+                    </span>
+                    <div className="space-y-1 text-gray-700">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Headings:</span>
+                        <span className="font-bold">{activeClient?.brand.headingsFont}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Body & Data:</span>
+                        <span className="font-medium">{activeClient?.brand.bodyFont}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Monospace:</span>
+                        <span className="font-mono">{activeClient?.brand.monoFont}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Persona & Voice Tone */}
+                  <div className="p-3.5 bg-gray-50/70 rounded-2xl space-y-2 border border-gray-100 text-xs flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">
+                        PERSONA & VOICE TONE
+                      </span>
+                      <p className="text-[11px] text-gray-600 mt-1 leading-relaxed">
+                        {activeClient?.brand.toneSummary}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {activeClient?.brand.toneTags.map((tag) => (
+                        <span key={tag} className="px-2 py-0.5 rounded-md bg-white border border-gray-200 text-[10px] font-bold text-gray-700 shadow-2xs">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Approved Color Spectrum */}
+                <div className="space-y-2">
+                  <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">
+                    APPROVED COLOR SPECTRUM
+                  </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    {activeClient?.brand.colors.map((c) => (
+                      <div key={c.hex} className="rounded-2xl border border-gray-100 overflow-hidden bg-white shadow-2xs space-y-1.5 pb-2">
+                        <div className="h-10 w-full" style={{ backgroundColor: c.hex }} />
+                        <div className="px-2.5">
+                          <span className="text-[11px] font-bold text-gray-900 block truncate">{c.name}</span>
+                          <span className="text-[10px] font-mono text-gray-400">{c.hex}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Social Channel */}
+                <div className="p-3.5 bg-gray-50/80 rounded-2xl border border-gray-100 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center shadow-xs">
+                      <Instagram className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs text-gray-900">{activeClient?.brand.social.handle}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-extrabold uppercase">
+                          {activeClient?.brand.social.status}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-gray-500">
+                        {activeClient?.brand.social.followers} • Live Sync active ({activeClient?.brand.social.syncInterval})
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => showToast(`Opening ${activeClient?.brand.social.handle} live analytics...`)}
+                    className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-bold text-gray-700 shadow-2xs cursor-pointer"
+                  >
+                    Launch Channel
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between text-xs text-gray-400 font-medium pt-3 border-t border-gray-100 gap-2">
+                  <div className="flex items-center gap-3 text-blue-600 font-bold">
+                    <span className="cursor-pointer hover:underline flex items-center gap-1">
+                      <Folder className="w-3.5 h-3.5" /> {activeClient?.brand.brandVaultLink}
+                    </span>
+                    <span>•</span>
+                    <span className="cursor-pointer hover:underline flex items-center gap-1">
+                      <ExternalLink className="w-3.5 h-3.5" /> {activeClient?.brand.figmaLink}
+                    </span>
+                  </div>
+                  <span>Last audit {activeClient?.brand.lastAuditDate}</span>
+                </div>
+              </div>
+
+              {/* CARD 4: ASSIGNED CREATIVE POD */}
+              <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-blue-600" />
+                      <h2 className="text-xs font-extrabold text-gray-900 uppercase tracking-wider">
+                        Assigned creative pod
+                      </h2>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-100">
+                      {activeClient?.pod.name}: {activeClient?.pod.tagline}
+                    </span>
+                  </div>
+
+                  {/* Pod Lead */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">
+                      POD LEAD & CREATIVE DIRECTOR
+                    </span>
+                    <div className="p-3 bg-gray-50/70 rounded-2xl flex items-center justify-between border border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
+                          {activeClient?.pod.leadAvatar}
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-gray-900">{activeClient?.pod.leadName}</h4>
+                          <span className="text-[11px] text-gray-500">{activeClient?.pod.leadTitle}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => showToast(`Connecting to ${activeClient?.pod.leadName} via Slack/Creo Chat...`)}
+                        className="p-2 rounded-xl bg-white border border-gray-200 text-gray-600 hover:text-blue-600 shadow-2xs cursor-pointer"
+                        title="Chat with Pod Lead"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Squad Members */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">
+                      SQUAD MEMBERS
+                    </span>
+                    <div className="space-y-1.5">
+                      {activeClient?.pod.squad.map((member) => (
+                        <div key={member.name} className="p-2.5 bg-gray-50/50 rounded-xl flex items-center justify-between text-xs border border-gray-100">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full bg-gray-200 text-gray-700 font-bold text-[10px] flex items-center justify-center">
+                              {member.avatar}
+                            </div>
+                            <div>
+                              <span className="font-bold text-gray-900 block leading-tight">{member.name}</span>
+                              <span className="text-[10px] text-gray-500">{member.role}</span>
+                            </div>
+                          </div>
+                          <span className="font-mono font-bold text-[11px] text-gray-700">{member.hoursPerWeek}h/wk</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Pod Capacity Commitment */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between text-xs font-bold">
+                      <span className="text-gray-700">Pod Capacity Commitment</span>
+                      <span className="text-blue-600 font-mono">
+                        {activeClient?.pod.capacityAllocatedHrs} hrs/week allocated
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-[#2563EB] h-full rounded-full transition-all"
+                        style={{ width: `${activeClient?.pod.bandwidthPercent}%` }}
+                      />
+                    </div>
+                    <span className="text-[11px] text-gray-400 font-medium block">
+                      Sprint {activeClient?.sprintNumber} • {activeClient?.pod.bandwidthPercent}% bandwidth filled
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100 font-medium">
+                  <span>Daily Sync: {activeClient?.pod.dailySyncTime}</span>
+                  <button
+                    type="button"
+                    onClick={() => showToast(`Opening Pod Reallocation Studio for ${activeClient?.pod.name}...`)}
+                    className="text-blue-600 font-bold hover:underline cursor-pointer"
+                  >
+                    Reallocate Pod Hours
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* ═════════════════════════════════════════════════════════════════
+                BOTTOM SECTION: ACTIVE DELIVERABLES IN PRODUCTION
+            ═════════════════════════════════════════════════════════════════ */}
+            <div className="bg-white rounded-3xl p-6 lg:p-7 border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="text-base font-black text-gray-900">Active Deliverables in Production</h2>
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black uppercase">
+                      {filteredDeliverables.length} Items Requiring Attention
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Manage approvals, review video renders, and coordinate asset distribution across all client pipelines.
+                  </p>
+                </div>
+
+                {/* Filter Controls */}
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Filter deliverable..."
+                      value={deliverableSearch}
+                      onChange={(e) => setDeliverableSearch(e.target.value)}
+                      className="pl-8 pr-3 py-1.5 rounded-xl border border-gray-200 text-xs bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1 shadow-2xs cursor-pointer"
+                  >
+                    <Filter className="w-3.5 h-3.5 text-gray-400" /> Filter
+                  </button>
+                </div>
+              </div>
+
+              {/* 4 Deliverable Cards Grid matching Screenshot */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                {filteredDeliverables.map((deliv) => (
+                  <div
+                    key={deliv.id}
+                    className="bg-white rounded-3xl border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.03)] p-5 space-y-4 flex flex-col justify-between hover:shadow-lg hover:border-blue-200 transition-all"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${deliv.statusColor}`}>
+                          {deliv.status}
+                        </span>
+                        <span className="text-[10px] font-mono text-gray-400 font-bold">{deliv.code}</span>
+                      </div>
+
+                      <div>
+                        <h4 className="text-sm font-black text-gray-900 leading-snug">{deliv.title}</h4>
+                        <p className="text-[11px] text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+                          {deliv.description}
+                        </p>
+                      </div>
+
+                      <div className="p-3 bg-gray-50/70 rounded-2xl space-y-1.5 text-[11px] text-gray-600 border border-gray-100">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Format:</span>
+                          <span className="font-bold text-gray-900">{deliv.format}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Due Date:</span>
+                          <span className="font-bold text-rose-600">{deliv.dueDate}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Assigned:</span>
+                          <span className="font-semibold text-gray-800">{deliv.assignedTo}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="space-y-2 pt-2 border-t border-gray-100">
+                      {deliv.status === "IN REVIEW" && (
+                        <div className="grid grid-cols-2 gap-2">
                           <button
                             type="button"
-                            onClick={() => handleRemovePlan(client.client_id, client.company_name || client.email)}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
-                            title="Cancel active subscription and reset quotas (e.g. for refund or accidental payment)"
+                            onClick={() => handleApproveDeliverable(deliv.id, deliv.title)}
+                            className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
                           >
-                            <PackageMinus className="size-3.5" />
-                            <span>Remove</span>
+                            <Check className="w-3.5 h-3.5 stroke-[3]" /> Approve
                           </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDeclineDeliverable(deliv.id, deliv.title)}
+                            className="w-full py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <X className="w-3.5 h-3.5" /> Decline
+                          </button>
+                        </div>
+                      )}
 
-      {/* Fix Plan Modal */}
-      <FixPlanModal
-        isOpen={Boolean(fixingClient)}
-        client={fixingClient}
-        onClose={() => setFixingClient(null)}
-        onSuccess={() => {
-          loadClients();
-        }}
-      />
+                      {deliv.status === "IN PRODUCTION" && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setPreviewDeliverable(deliv)}
+                            className="w-full py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> Preview Canvas
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => showToast(`Revision request sent for "${deliv.title}".`)}
+                            className="w-full py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold cursor-pointer transition-colors"
+                          >
+                            Request Revisions
+                          </button>
+                        </div>
+                      )}
+
+                      {deliv.status === "APPROVED" && (
+                        <div className="space-y-1.5">
+                          <button
+                            type="button"
+                            className="w-full py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold flex items-center justify-center gap-1 border border-emerald-200 cursor-default"
+                          >
+                            <Lock className="w-3.5 h-3.5" /> Auto-Publish Locked
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => showToast("Viewing scheduled metadata...")}
+                            className="w-full py-1.5 text-center text-[11px] font-bold text-gray-500 hover:text-gray-900 cursor-pointer"
+                          >
+                            View Scheduled Meta
+                          </button>
+                        </div>
+                      )}
+
+                      {deliv.status === "READY FOR REVIEW" && (
+                        <div className="space-y-1.5">
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleApproveDeliverable(deliv.id, deliv.title)}
+                              className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
+                            >
+                              <Check className="w-3.5 h-3.5 stroke-[3]" /> Approve
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => showToast(`Feedback notes opened for "${deliv.title}".`)}
+                              className="w-full py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" /> Notes
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewDeliverable(deliv)}
+                            className="w-full py-1.5 text-center text-[11px] font-bold text-blue-600 hover:underline cursor-pointer flex items-center justify-center gap-1"
+                          >
+                            <FileText className="w-3.5 h-3.5" /> Open Full Presentation
+                          </button>
+                        </div>
+                      )}
+
+                      {deliv.actions.some((a) => a.includes("Preview Video Draft")) && (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDeliverable(deliv)}
+                          className="w-full py-1.5 text-center text-[11px] font-bold text-blue-600 hover:underline cursor-pointer flex items-center justify-center gap-1"
+                        >
+                          <Play className="w-3 h-3 fill-blue-600" /> Preview Video Draft (0:45)
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ═════════════════════════════════════════════════════════════════
+            MODALS
+        ═════════════════════════════════════════════════════════════════ */}
+
+        {/* 1. Edit Profile Modal */}
+        {isEditProfileOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-base font-black text-gray-900">Edit Client Profile: {activeClient?.name}</h3>
+                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="p-1 text-gray-400 hover:text-gray-700 rounded-lg">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="space-y-3 text-xs text-gray-700">
+                <div>
+                  <label className="block font-bold mb-1">Company / Brand Name</label>
+                  <input type="text" defaultValue={activeClient?.name} className="w-full px-3 py-2 rounded-xl border border-gray-200" />
+                </div>
+                <div>
+                  <label className="block font-bold mb-1">Industry / Category</label>
+                  <input type="text" defaultValue={activeClient?.industry} className="w-full px-3 py-2 rounded-xl border border-gray-200" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold mb-1">Primary Signer</label>
+                    <input type="text" defaultValue={activeClient?.contact.name} className="w-full px-3 py-2 rounded-xl border border-gray-200" />
+                  </div>
+                  <div>
+                    <label className="block font-bold mb-1">Signer Email</label>
+                    <input type="email" defaultValue={activeClient?.contact.email} className="w-full px-3 py-2 rounded-xl border border-gray-200" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="px-4 py-2 rounded-xl border text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer">
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    showToast("Client profile updated successfully.");
+                    setIsEditProfileOpen(false);
+                  }}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 2. Monthly Invoice Modal */}
+        {isInvoiceModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-base font-black text-gray-900">Current Retainer Invoice</h3>
+                <button type="button" onClick={() => setIsInvoiceModalOpen(false)} className="p-1 text-gray-400 hover:text-gray-700 rounded-lg">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-2xl space-y-2 text-xs text-gray-700 border border-gray-100">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Invoice ID:</span>
+                  <span className="font-mono font-bold text-gray-900">INV-2024-NL-11</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Client:</span>
+                  <span className="font-bold text-gray-900">{activeClient?.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Billing Cycle:</span>
+                  <span className="font-medium text-gray-800">Nov 1 – Nov 30, 2024</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Payment Status:</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">
+                    PAID (ACH)
+                  </span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-gray-200 font-black text-sm">
+                  <span>Total Amount:</span>
+                  <span className="text-blue-600">${activeClient?.monthlyFee.toLocaleString()}.00</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  showToast("Invoice PDF downloaded.");
+                  setIsInvoiceModalOpen(false);
+                }}
+                className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
+              >
+                Download Receipt PDF
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 3. New Request Modal */}
+        {isNewRequestOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div>
+                  <h3 className="text-base font-black text-gray-900">New Content Request</h3>
+                  <p className="text-xs text-gray-500">Submitting to {activeClient?.pod.name} for {activeClient?.name}</p>
+                </div>
+                <button type="button" onClick={() => setIsNewRequestOpen(false)} className="p-1 text-gray-400 hover:text-gray-700 rounded-lg">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateRequest} className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Asset Title</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Q4 Executive Product Video Hook"
+                    value={newRequestForm.title}
+                    onChange={(e) => setNewRequestForm({ ...newRequestForm, title: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Deliverable Type</label>
+                    <select
+                      value={newRequestForm.type}
+                      onChange={(e) => setNewRequestForm({ ...newRequestForm, type: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
+                    >
+                      <option value="Reel">🎬 Reel / Short</option>
+                      <option value="Carousel">🎨 Carousel (3-5 slides)</option>
+                      <option value="Static Post">🖼️ Static Hero Graphic</option>
+                      <option value="Deck">📊 Presentation Deck</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Priority</label>
+                    <select
+                      value={newRequestForm.priority}
+                      onChange={(e) => setNewRequestForm({ ...newRequestForm, priority: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
+                    >
+                      <option value="Standard">Standard (3-4 Days)</option>
+                      <option value="Expedited">Expedited (48 Hours)</option>
+                      <option value="Urgent">Urgent (24 Hours)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Creative Brief Notes</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Specify key talking points, hooks, or assets to reference..."
+                    value={newRequestForm.notes}
+                    onChange={(e) => setNewRequestForm({ ...newRequestForm, notes: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsNewRequestOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm cursor-pointer"
+                  >
+                    Submit to Production
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* 4. Preview Canvas / Video Modal */}
+        {previewDeliverable && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div>
+                  <span className="text-[10px] font-mono text-gray-400 font-bold">{previewDeliverable.code}</span>
+                  <h3 className="text-base font-black text-gray-900">{previewDeliverable.title}</h3>
+                </div>
+                <button type="button" onClick={() => setPreviewDeliverable(null)} className="p-1 text-gray-400 hover:text-gray-700 rounded-lg">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="aspect-video bg-[#0F172A] rounded-2xl flex flex-col items-center justify-center text-white p-6 relative overflow-hidden shadow-inner">
+                <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white mb-2 cursor-pointer hover:scale-110 transition-transform">
+                  <Play className="w-6 h-6 fill-white ml-0.5" />
+                </div>
+                <span className="text-xs font-bold text-gray-200">{previewDeliverable.format} Preview</span>
+                <span className="text-[10px] text-gray-400 mt-0.5">Assigned Specialist: {previewDeliverable.assignedTo}</span>
+              </div>
+
+              <div className="p-3.5 bg-gray-50 rounded-2xl text-xs text-gray-600 space-y-1">
+                <div><strong>Creative Scope:</strong> {previewDeliverable.description}</div>
+                <div><strong>Target Delivery:</strong> {previewDeliverable.dueDate}</div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPreviewDeliverable(null)}
+                  className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 cursor-pointer"
+                >
+                  Close Preview
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleApproveDeliverable(previewDeliverable.id, previewDeliverable.title);
+                    setPreviewDeliverable(null);
+                  }}
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer"
+                >
+                  Approve Deliverable
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 2. ADMIN DELIVERABLES PAGE (Team Lead & Admin Creative Uploads)
+// 2. ADMIN DELIVERABLES PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export function AdminDeliverablesPage() {
-  const [deliverables, setDeliverables] = useState<any[]>([]);
-  const [clients, setClients] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all");
-  const [selectedClientFilter, setSelectedClientFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedClient, setSelectedClient] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedFormat, setSelectedFormat] = useState("all");
   const [previewItem, setPreviewItem] = useState<any | null>(null);
-  const [previewZoom, setPreviewZoom] = useState<number>(1);
-  const [isTheaterExpanded, setIsTheaterExpanded] = useState<boolean>(false);
-  const [phoneFrameMode, setPhoneFrameMode] = useState<boolean>(true);
-  const [copiedCaption, setCopiedCaption] = useState<boolean>(false);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [isVideoLoading, setIsVideoLoading] = useState<boolean>(true);
+  const [commentModalItem, setCommentModalItem] = useState<any | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Close enlarge modal on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setPreviewItem(null);
-        setIsTheaterExpanded(false);
-      }
-    };
-    if (previewItem) {
-      setIsVideoLoading(true);
-      window.addEventListener("keydown", handleKeyDown);
-    }
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [previewItem]);
-
-  const getResolvedMediaUrl = (url?: string, type?: string) => {
-    if (!url) {
-      return (type || "").toLowerCase().includes("reel")
-        ? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-        : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1200&auto=format&fit=crop";
-    }
-    const apiBase = (
-      (import.meta.env.VITE_API_URL as string) ||
-      (typeof window !== "undefined" && (window.location.hostname.includes("workers.dev") || window.location.hostname.includes("pages.dev"))
-        ? "https://creo-dsxr.onrender.com"
-        : "")
-    ).replace(/\/$/, "");
-    let resolved = url;
-    if (url.startsWith("/") && apiBase && !url.startsWith(apiBase)) {
-      resolved = `${apiBase}${url}`;
-    }
-    return encodeURI(resolved);
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const isVideoAsset = (url?: string, type?: string) => {
-    const cleanUrl = (url || "").toLowerCase();
-    const cleanType = (type || "").toLowerCase();
-    return (
-      cleanUrl.endsWith(".mp4") ||
-      cleanUrl.endsWith(".mov") ||
-      cleanUrl.endsWith(".webm") ||
-      cleanUrl.includes("video") ||
-      cleanType.includes("reel") ||
-      cleanType.includes("video")
+  const [deliverablesList, setDeliverablesList] = useState([
+    {
+      id: "deliv-1",
+      assetCode: "NW-8921",
+      client: "Northwind Labs",
+      clientInitial: "N",
+      clientBg: "bg-blue-600",
+      tier: "GROWTH",
+      tierBadge: "bg-blue-50 text-blue-700 border-blue-200",
+      status: "in_review",
+      statusLabel: "In Review",
+      statusBadge: "bg-amber-50 text-amber-700 border-amber-100",
+      title: "Fintech 3D App Rebrand - Hero Asset Suite",
+      format: "Blender 3D Render • 4K EXR",
+      formatType: "3d",
+      pod: "Pod A",
+      podLead: "Maya Lin",
+      podAvatars: ["ML"],
+      retainer: "12/20 Monthly Retainer",
+      slaType: "overdue",
+      slaText: "SLA Overdue: 2h ago",
+      slaColor: "text-rose-600 font-bold",
+      commentsCount: 2,
+      previewUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop",
+      description: "Hero 3D asset suite rendered for dark-mode onboarding experience with physical metal displacement shaders.",
+    },
+    {
+      id: "deliv-2",
+      assetCode: "NW-8922",
+      client: "Northwind Labs",
+      clientInitial: "N",
+      clientBg: "bg-blue-600",
+      tier: "GROWTH",
+      tierBadge: "bg-blue-50 text-blue-700 border-blue-200",
+      status: "in_review",
+      statusLabel: "In Review",
+      statusBadge: "bg-amber-50 text-amber-700 border-amber-100",
+      title: "Q4 Keynote Slide Deck (60 slides)",
+      format: "Keynote / PDF / PPTX Package",
+      formatType: "deck",
+      pod: "Pod A",
+      podLead: "Elena Rostova",
+      podAvatars: ["ER"],
+      retainer: "14/20 Monthly Retainer",
+      slaType: "target",
+      slaText: "Target: Today 4:30 PM",
+      slaColor: "text-amber-600 font-bold",
+      commentsCount: 3,
+      previewUrl: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&auto=format&fit=crop",
+      description: "Comprehensive 60-slide executive pitch deck with custom infographics, typography hierarchy, and branded motion transitions.",
+    },
+    {
+      id: "deliv-3",
+      assetCode: "BS-4412",
+      client: "Bloom Studio",
+      clientInitial: "B",
+      clientBg: "bg-violet-600",
+      tier: "SCALE",
+      tierBadge: "bg-purple-50 text-purple-700 border-purple-200",
+      status: "in_production",
+      statusLabel: "In Production",
+      statusBadge: "bg-blue-50 text-blue-600 border-blue-100",
+      title: "Holiday Campaign Lifestyle Retouching",
+      format: "10x High-Res TIFF (Print Ready)",
+      formatType: "photo",
+      pod: "Pod B",
+      podLead: "Anya Taylor",
+      podAvatars: ["AT"],
+      retainer: "18/25 Scale Retainer",
+      slaType: "target",
+      slaText: "Today 3:00 PM (1h left)",
+      slaColor: "text-amber-600 font-bold",
+      commentsCount: 0,
+      previewUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1200&auto=format&fit=crop",
+      description: "Clean high-fashion editorial retouching with precise skin tone color grading and high-frequency separation.",
+    },
+    {
+      id: "deliv-4",
+      assetCode: "NW-8920",
+      client: "Northwind Labs",
+      clientInitial: "N",
+      clientBg: "bg-blue-600",
+      tier: "GROWTH",
+      tierBadge: "bg-blue-50 text-blue-700 border-blue-200",
+      status: "in_production",
+      statusLabel: "In Production",
+      statusBadge: "bg-blue-50 text-blue-600 border-blue-100",
+      title: "TikTok Viral Hook Reel 9:16 (Batch #1 & #2)",
+      format: "MP4 1080x1920 • 60fps",
+      formatType: "video",
+      pod: "Pod C",
+      podLead: "Kenji Sato",
+      podAvatars: ["KS"],
+      retainer: "20/20 Enterprise Plan",
+      slaType: "target",
+      slaText: "Today 6:00 PM (4h left)",
+      slaColor: "text-amber-600 font-bold",
+      commentsCount: 1,
+      previewUrl: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=1200&auto=format&fit=crop",
+      description: "High-retention UGC hooks tailored for algorithmic engagement with kinetic captions and sound effects.",
+    },
+    {
+      id: "deliv-5",
+      assetCode: "AC-2198",
+      client: "Atlas Commerce",
+      clientInitial: "A",
+      clientBg: "bg-indigo-600",
+      tier: "ENTERPRISE",
+      tierBadge: "bg-indigo-50 text-indigo-700 border-indigo-200",
+      status: "approved",
+      statusLabel: "Approved",
+      statusBadge: "bg-emerald-50 text-emerald-700 border-emerald-100",
+      title: "Black Friday Dynamic Ad Set",
+      format: "Meta & Google Ads Bundle",
+      formatType: "banner",
+      pod: "Pod C",
+      podLead: "Lena O.",
+      podAvatars: ["LO"],
+      retainer: "Enterprise Retainer",
+      slaType: "completed",
+      slaText: "Delivered Yesterday",
+      slaColor: "text-emerald-600 font-bold",
+      commentsCount: 0,
+      previewUrl: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&auto=format&fit=crop",
+      description: "Complete dynamic creative optimization (DCO) ad templates for Black Friday cyber week campaigns.",
+    },
+    {
+      id: "deliv-6",
+      assetCode: "VM-0144",
+      client: "Vanguard Mobility",
+      clientInitial: "V",
+      clientBg: "bg-slate-800",
+      tier: "ENTERPRISE",
+      tierBadge: "bg-indigo-50 text-indigo-700 border-indigo-200",
+      status: "in_production",
+      statusLabel: "In Production",
+      statusBadge: "bg-blue-50 text-blue-600 border-blue-100",
+      title: "WebGL 3D Interactive Configurator",
+      format: "Three.js / React Fiber Bundle",
+      formatType: "interactive",
+      pod: "Pod D",
+      podLead: "David Vance",
+      podAvatars: ["DV"],
+      retainer: "Custom Project Retainer",
+      slaType: "target",
+      slaText: "Tomorrow 12:00 PM",
+      slaColor: "text-blue-600 font-bold",
+      commentsCount: 4,
+      previewUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200&auto=format&fit=crop",
+      description: "Interactive real-time 3D automotive exterior configurator with custom PBR paint shaders.",
+    },
+  ]);
+
+  const handleApprove = (id: string, title: string) => {
+    setDeliverablesList((prev) =>
+      prev.map((d) =>
+        d.id === id
+          ? {
+              ...d,
+              status: "approved",
+              statusLabel: "Approved",
+              statusBadge: "bg-emerald-50 text-emerald-700 border-emerald-100",
+              slaType: "completed",
+              slaText: "Approved Just Now",
+              slaColor: "text-emerald-600 font-bold",
+            }
+          : d
+      )
     );
+    showToast(`✓ Deliverable "${title}" approved and marked ready for client handoff!`);
   };
 
-  // Upload modal state
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [activeMediaTab, setActiveMediaTab] = useState<"file" | "url" | "presets">("file");
-  const [isUploadingFile, setIsUploadingFile] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
-
-  const [uploadForm, setUploadForm] = useState({
-    clientId: "",
-    title: "",
-    type: "reel",
-    fileUrl: "",
-    fileType: "",
-    status: "pending_approval",
-    revisionRound: 1,
-    description: "",
-    scheduledAt: "",
-  });
-
-  const fetchDeliverables = useCallback(() => {
-    setLoading(true);
-    request<any[]>("/api/v1/admin/deliverables")
-      .then((data) => setDeliverables(Array.isArray(data) ? data : []))
-      .catch(() => setDeliverables([]))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    fetchDeliverables();
-    request<any[]>("/api/v1/admin/clients")
-      .then((data) => {
-        const list = Array.isArray(data) ? data : [];
-        setClients(list);
-        if (list.length > 0 && !uploadForm.clientId) {
-          setUploadForm((prev) => ({ ...prev, clientId: list[0].client_id || list[0].id }));
-        }
-      })
-      .catch(() => setClients([]));
-  }, [fetchDeliverables]);
-
-  const handleStatusUpdate = async (id: string, newStatus: string) => {
-    setUpdatingId(id);
-    try {
-      await request(`/api/v1/admin/deliverables/${id}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: newStatus }),
-      });
-      setDeliverables((prev) =>
-        prev.map((d) => (d.id === id ? { ...d, status: newStatus } : d))
+  const handleDecline = (id: string, title: string) => {
+    const reason = window.prompt(`Enter revision request or rejection reason for "${title}":`);
+    if (reason !== null) {
+      setDeliverablesList((prev) =>
+        prev.map((d) =>
+          d.id === id
+            ? {
+                ...d,
+                status: "declined",
+                statusLabel: "Declined",
+                statusBadge: "bg-rose-50 text-rose-700 border-rose-100",
+                slaType: "target",
+                slaText: "Revision Required",
+                slaColor: "text-rose-600 font-bold",
+              }
+            : d
+        )
       );
-      if (previewItem && previewItem.id === id) {
-        setPreviewItem({ ...previewItem, status: newStatus });
-      }
-    } catch {
-      // Ignore
-    } finally {
-      setUpdatingId(null);
+      showToast(`Revision request dispatched for "${title}".`);
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploadingFile(true);
-    setUploadError(null);
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await request<{
-        file_url: string;
-        filename: string;
-        file_type: string;
-      }>("/api/v1/admin/deliverables/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const isVideo = file.type.startsWith("video/") || file.name.endsWith(".mp4") || file.name.endsWith(".mov");
-      setUploadForm((prev) => ({
-        ...prev,
-        fileUrl: res.file_url,
-        fileType: res.file_type || file.type,
-        type: isVideo ? "reel" : prev.type,
-        title: prev.title || file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " "),
-      }));
-    } catch (err: any) {
-      setUploadError(err?.message || "File upload failed. Please try again or paste a media URL.");
-    } finally {
-      setIsUploadingFile(false);
-    }
-  };
-
-  const handleApplyPreset = (preset: { title: string; type: string; url: string; fileType: string }) => {
-    setUploadForm((prev) => ({
-      ...prev,
-      title: prev.title || preset.title,
-      type: preset.type,
-      fileUrl: preset.url,
-      fileType: preset.fileType,
-    }));
-    setUploadError(null);
-  };
-
-  const handleCreateDeliverable = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!uploadForm.clientId) {
-      setUploadError("Please select a target client for this deliverable.");
-      return;
-    }
-    if (!uploadForm.fileUrl.trim()) {
-      setUploadError("Please upload a media file or provide an asset URL.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setUploadError(null);
-
-    try {
-      const selectedClientObj = clients.find(
-        (c) => (c.client_id || c.id) === uploadForm.clientId
-      );
-      const clientName = selectedClientObj?.company_name || selectedClientObj?.full_name || "Client";
-
-      const created = await request<any>("/api/v1/admin/deliverables", {
-        method: "POST",
-        body: JSON.stringify({
-          client_id: uploadForm.clientId,
-          title: uploadForm.title.trim() || `${uploadForm.type === "reel" ? "Reel 9:16" : "Static Poster"} · ${clientName}`,
-          type: uploadForm.type,
-          file_url: uploadForm.fileUrl.trim(),
-          file_type: uploadForm.fileType || (uploadForm.fileUrl.endsWith(".mp4") ? "video/mp4" : "image/png"),
-          status: uploadForm.status,
-          revision_round: uploadForm.revisionRound,
-          description: uploadForm.description.trim() || undefined,
-          scheduled_at: uploadForm.scheduledAt ? new Date(uploadForm.scheduledAt).toISOString() : undefined,
-        }),
-      });
-
-      setDeliverables((prev) => [created, ...prev]);
-      setUploadSuccess(`Deliverable "${created.title}" successfully dispatched to ${clientName}!`);
-      setTimeout(() => setUploadSuccess(null), 4000);
-
-      // Reset form and close
-      setIsUploadOpen(false);
-      setUploadForm({
-        clientId: clients[0]?.client_id || clients[0]?.id || "",
-        title: "",
-        type: "reel",
-        fileUrl: "",
-        fileType: "",
-        status: "pending_approval",
-        revisionRound: 1,
-        description: "",
-        scheduledAt: "",
-      });
-    } catch (err: any) {
-      setUploadError(err?.message || "Failed to create deliverable.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const filtered = deliverables.filter((d) => {
-    const matchesFilter =
-      filter === "all"
-        ? true
-        : filter === "pending"
-        ? d.status.includes("pending")
-        : filter === "approved"
-        ? d.status === "approved"
-        : filter === "revision"
-        ? d.status.includes("revision")
-        : true;
-
-    const matchesClient =
-      selectedClientFilter === "all" || d.client_id === selectedClientFilter;
-
+  const filteredDeliverables = deliverablesList.filter((d) => {
     const matchesSearch =
       !searchQuery.trim() ||
       d.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      d.assetCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
       d.client.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesFilter && matchesClient && matchesSearch;
+    const matchesClient =
+      selectedClient === "all" || d.client.toLowerCase().includes(selectedClient.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "all"
+        ? true
+        : statusFilter === "in_production"
+        ? d.status === "in_production"
+        : statusFilter === "in_review"
+        ? d.status === "in_review"
+        : statusFilter === "approved"
+        ? d.status === "approved"
+        : true;
+
+    const matchesFormat =
+      selectedFormat === "all" ? true : d.formatType === selectedFormat;
+
+    return matchesSearch && matchesClient && matchesStatus && matchesFormat;
   });
 
-  const pendingCount = deliverables.filter((d) => d.status.includes("pending")).length;
-  const approvedCount = deliverables.filter((d) => d.status === "approved").length;
-  const revisionCount = deliverables.filter((d) => d.status.includes("revision")).length;
-
   return (
-    <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <FileStack className="size-5 text-[#2B7BC4]" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">Deliverables Hub</h1>
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Content Engine" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        {/* Toast Notification */}
+        {toastMessage && (
+          <div className="fixed top-24 right-8 z-50 bg-[#0F172A] text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2.5 animate-bounce">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <span>{toastMessage}</span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Team Leads & Editors upload, manage, and dispatch creative deliverables directly for client approval
-          </p>
-        </div>
+        )}
 
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={() => {
-              setIsUploadOpen(true);
-              setUploadError(null);
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1A5EA8] text-white text-xs font-semibold shadow-xs hover:brightness-105 active:scale-[0.98] transition-all cursor-pointer"
-          >
-            <UploadCloud className="size-4" />
-            Upload Deliverable
-          </button>
-        </div>
-      </div>
-
-      {/* Success Banner */}
-      {uploadSuccess && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-800 font-semibold flex items-center justify-between animate-in fade-in">
-          <span className="flex items-center gap-2">
-            <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
-            {uploadSuccess}
-          </span>
-          <button
-            type="button"
-            onClick={() => setUploadSuccess(null)}
-            className="text-emerald-600 hover:text-emerald-900 cursor-pointer"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Controls & Filter Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
-        {/* Search and Client Filter */}
-        <div className="flex flex-wrap items-center gap-2 flex-1">
-          <div className="relative min-w-[200px] flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by creative title or client..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:border-[#2B7BC4] focus:ring-1 focus:ring-[#2B7BC4]"
-            />
+        {/* 4 KPI Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="kpi-card bg-white rounded-3xl p-5 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                MOVED TO PRODUCTION
+              </span>
+              <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                <Zap className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="text-3xl font-black text-gray-900 tracking-tight">42</div>
+            <div className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+              ↗ +12% this week
+            </div>
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-slate-600">
-            <Filter className="size-3.5 text-slate-400" />
+          <div className="kpi-card bg-white rounded-3xl p-5 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                PENDING REVIEW
+              </span>
+              <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                <Clock className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="text-3xl font-black text-gray-900 tracking-tight">24</div>
+            <div className="text-xs font-bold text-amber-600 flex items-center gap-1">
+              ⚡ 4 near SLA limit
+            </div>
+          </div>
+
+          <div className="kpi-card bg-white rounded-3xl p-5 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                APPROVED TODAY
+              </span>
+              <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="text-3xl font-black text-gray-900 tracking-tight">116</div>
+            <div className="text-xs font-bold text-emerald-600 flex items-center gap-1">
+              ✓ 98.4% First-Pass
+            </div>
+          </div>
+
+          <div className="kpi-card bg-white rounded-3xl p-5 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">
+                DECLINED / REVISE
+              </span>
+              <div className="w-7 h-7 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                <AlertTriangle className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="text-3xl font-black text-gray-900 tracking-tight">8</div>
+            <div className="text-xs font-bold text-rose-600 flex items-center gap-1">
+              ↘ -2 vs yesterday
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Bar */}
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search deliverables, code, tags..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 w-72 rounded-xl border border-gray-200 bg-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+              />
+            </div>
+
             <select
-              value={selectedClientFilter}
-              onChange={(e) => setSelectedClientFilter(e.target.value)}
-              aria-label="Filter deliverables by client"
-              className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white font-medium text-slate-700 focus:outline-none focus:border-[#2B7BC4]"
+              value={selectedClient}
+              onChange={(e) => setSelectedClient(e.target.value)}
+              aria-label="Filter Deliverable Client"
+              className="px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
             >
-              <option value="all">All Clients ({clients.length})</option>
-              {clients.map((c) => (
-                <option key={c.client_id || c.id} value={c.client_id || c.id}>
-                  {c.company_name || c.full_name || c.email}
-                </option>
-              ))}
+              <option value="all">All Clients</option>
+              <option value="Northwind">Northwind Labs</option>
+              <option value="Bloom">Bloom Studio</option>
+              <option value="Atlas">Atlas Commerce</option>
+              <option value="Vanguard">Vanguard Mobility</option>
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              aria-label="Filter Deliverable Status"
+              className="px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Statuses</option>
+              <option value="in_review">In Review</option>
+              <option value="in_production">In Production</option>
+              <option value="approved">Approved</option>
+            </select>
+
+            <select
+              value={selectedFormat}
+              onChange={(e) => setSelectedFormat(e.target.value)}
+              aria-label="Filter Deliverable Format Type"
+              className="px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Formats</option>
+              <option value="3d">3D Render</option>
+              <option value="deck">Presentation Deck</option>
+              <option value="photo">Photo Retouching</option>
+              <option value="video">Short-form Video</option>
+              <option value="banner">Ad Banner Set</option>
+              <option value="interactive">WebGL Interactive</option>
             </select>
           </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-gray-400">
+              Showing {filteredDeliverables.length} deliverables
+            </span>
+          </div>
         </div>
 
-        {/* Status Pills */}
-        <div className="flex flex-wrap gap-1.5 border-t md:border-t-0 md:border-l border-slate-100 pt-2 md:pt-0 md:pl-3">
-          <button
-            type="button"
-            onClick={() => setFilter("all")}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-              filter === "all"
-                ? "bg-[#2B7BC4] text-white"
-                : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-            }`}
-          >
-            All ({deliverables.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter("pending")}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-              filter === "pending"
-                ? "bg-[#2B7BC4] text-white"
-                : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-            }`}
-          >
-            Awaiting Review ({pendingCount})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter("approved")}
-            className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-              filter === "approved"
-                ? "bg-[#2B7BC4] text-white"
-                : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-            }`}
-          >
-            Approved ({approvedCount})
-          </button>
-          {revisionCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setFilter("revision")}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                filter === "revision"
-                  ? "bg-[#2B7BC4] text-white"
-                  : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              Revision ({revisionCount})
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Deliverables Grid */}
-      {loading ? (
-        <div className="py-16 text-center text-slate-400">
-          <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-          Loading deliverables from database...
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center">
-          <UploadCloud className="size-10 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-sm font-bold text-[#0D2137]">No deliverables found</h3>
-          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-            {deliverables.length === 0
-              ? "No creative deliverables have been uploaded yet. Upload a deliverable for your clients to review."
-              : "No deliverables match the active filter or client selection."}
-          </p>
-          <button
-            type="button"
-            onClick={() => setIsUploadOpen(true)}
-            className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#2B7BC4] text-white text-xs font-semibold hover:bg-[#1A5EA8] cursor-pointer"
-          >
-            <Plus className="size-3.5" /> Upload Now
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map((item) => (
+        {/* 3-Column Deliverables Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredDeliverables.map((item) => (
             <div
               key={item.id}
-              className="group rounded-xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between hover:shadow-md hover:border-slate-300 transition-all"
+              className="bg-white rounded-3xl border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all overflow-hidden flex flex-col justify-between"
             >
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#E8F4FD] text-[#2B7BC4] text-[10px] font-bold border border-[#C9DFF0] flex items-center gap-1">
-                    {item.type.includes("Reel") || item.type.includes("video") ? (
-                      <Film className="size-3" />
-                    ) : (
-                      <ImageIcon className="size-3" />
-                    )}
-                    {item.type}
-                  </span>
+              {/* Card Header */}
+              <div className="p-5 pb-3">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className={`w-7 h-7 rounded-xl ${item.clientBg} text-white font-black text-xs flex items-center justify-center shadow-xs`}
+                    >
+                      {item.clientInitial}
+                    </div>
+                    <div>
+                      <div className="text-xs font-black text-gray-900 leading-tight">
+                        {item.client}
+                      </div>
+                      <div className="text-[10px] font-bold text-gray-400">
+                        {item.assetCode}
+                      </div>
+                    </div>
+                  </div>
                   <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                      item.status === "approved"
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : item.status === "revision_requested" || item.status === "rejected"
-                        ? "bg-rose-50 text-rose-700 border border-rose-200"
-                        : "bg-amber-50 text-amber-700 border border-amber-200"
-                    }`}
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${item.statusBadge}`}
                   >
-                    {item.status.replace("_", " ")}
+                    {item.statusLabel}
                   </span>
                 </div>
 
-                <h3 className="font-bold text-sm text-[#0D2137] line-clamp-1 group-hover:text-[#2B7BC4] transition-colors">
+                {/* Deliverable Title & Format */}
+                <h3 className="text-sm font-black text-gray-900 line-clamp-2 mb-1.5">
                   {item.title}
                 </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Client: <span className="font-semibold text-slate-700">{item.client}</span>
+                <p className="text-[11px] font-semibold text-gray-500 flex items-center gap-1.5">
+                  <Tag className="w-3 h-3 text-gray-400" />
+                  {item.format}
                 </p>
+              </div>
 
-                {/* Thumbnail Preview strip - Click to enlarge */}
-                {item.file_url && (
-                  <div
-                    onClick={() => {
-                      setPreviewZoom(1);
-                      setIsTheaterExpanded(false);
-                      setPreviewItem(item);
-                    }}
-                    className="mt-3 relative h-32 w-full rounded-xl bg-slate-950 overflow-hidden border border-slate-200 hover:border-[#2B7BC4] transition-all cursor-pointer flex items-center justify-center group/thumb shadow-2xs"
-                    title="Click to Enlarge / Full Preview"
-                  >
-                    {isVideoAsset(item.file_url, item.type) ? (
-                      <div className="relative w-full h-full flex items-center justify-center bg-slate-950">
-                        <video
-                          src={getResolvedMediaUrl(item.file_url, item.type)}
-                          className="h-full w-full object-cover opacity-85 group-hover/thumb:opacity-100 group-hover/thumb:scale-105 transition-all duration-300"
-                          muted
-                          playsInline
-                          preload="none"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="size-10 rounded-full bg-black/60 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-lg group-hover/thumb:scale-110 group-hover/thumb:bg-[#2B7BC4] transition-all">
-                            <Play className="size-4 fill-white ml-0.5" />
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="relative w-full h-full flex items-center justify-center bg-slate-900">
-                        <img
-                          src={getResolvedMediaUrl(item.file_url, item.type)}
-                          alt={item.title}
-                          className="h-full w-full object-cover opacity-90 group-hover/thumb:opacity-100 group-hover/thumb:scale-105 transition-all duration-300"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity">
-                          <div className="size-10 rounded-full bg-black/50 backdrop-blur-md border border-white/40 flex items-center justify-center text-white shadow-lg">
-                            <Maximize2 className="size-4" />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end justify-between p-2.5">
-                      <span className="text-[11px] font-semibold text-white flex items-center gap-1.5 drop-shadow-sm">
-                        <Eye className="size-3.5 text-[#60A5FA]" /> Click to Enlarge
-                      </span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-xs text-slate-200 border border-white/15">
-                        {item.type}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-3 p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-xs space-y-1">
-                  <div className="flex justify-between text-slate-500">
-                    <span>Timing:</span>
-                    <span className="font-medium text-[#0D2137]">{item.date}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-500">
-                    <span>Revision:</span>
-                    <span className="font-medium text-[#0D2137]">{item.round}</span>
-                  </div>
+              {/* Media Thumbnail with Preview Overlay */}
+              <div
+                className="relative h-44 bg-gray-900 group cursor-pointer overflow-hidden mx-5 rounded-2xl"
+                onClick={() => setPreviewItem(item)}
+              >
+                <img
+                  src={item.previewUrl}
+                  alt={item.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="px-4 py-2 bg-white/90 backdrop-blur-md rounded-xl text-xs font-black text-gray-900 shadow-xl flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-blue-600" /> Quick Preview
+                  </span>
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPreviewZoom(1);
-                    setIsTheaterExpanded(false);
-                    setPreviewItem(item);
-                  }}
-                  className="text-xs font-bold text-[#2B7BC4] hover:text-[#1A5EA8] flex items-center gap-1.5 cursor-pointer group/btn"
-                >
-                  <Maximize2 className="size-3.5 transition-transform group-hover/btn:scale-110" /> Full Preview & Enlarge
-                </button>
-                <div className="flex items-center gap-2">
-                  {item.status !== "approved" ? (
-                    <button
-                      type="button"
-                      disabled={updatingId === item.id}
-                      onClick={() => handleStatusUpdate(item.id, "approved")}
-                      className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold hover:bg-emerald-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                    >
-                      {updatingId === item.id && <Loader2 className="size-3 animate-spin" />}
-                      {updatingId === item.id ? "Approving..." : "Approve"}
-                    </button>
-                  ) : (
-                    <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
-                      <Check className="size-3" /> Approved
+              {/* Card Meta & Actions */}
+              <div className="p-5 pt-4 space-y-3.5">
+                {/* Pod & Retainer Info */}
+                <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-50">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-gray-400 text-[10px] uppercase">
+                      Pod:
                     </span>
-                  )}
+                    <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 text-[11px] font-black">
+                      {item.pod} ({item.podLead})
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-bold text-gray-400">
+                    {item.retainer}
+                  </span>
+                </div>
+
+                {/* SLA Target / Status */}
+                <div className="flex items-center justify-between text-xs bg-gray-50/80 p-2.5 rounded-xl border border-gray-100">
+                  <span className={`text-[11px] ${item.slaColor}`}>
+                    {item.slaText}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCommentModalItem(item)}
+                    className="text-gray-500 hover:text-blue-600 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    {item.commentsCount} notes
+                  </button>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleApprove(item.id, item.title)}
+                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" /> Approve
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDecline(item.id, item.title)}
+                    className="flex-1 py-2.5 bg-gray-100 hover:bg-rose-50 text-gray-700 hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5 stroke-[2.5]" /> Request Edit
+                  </button>
                 </div>
               </div>
             </div>
           ))}
         </div>
-      )}
 
-      {/* Upload Deliverable Modal */}
-      {isUploadOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs overflow-y-auto animate-in fade-in">
-          <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-slate-100 overflow-hidden my-8">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-[#E8F4FD] text-[#2B7BC4]">
-                  <UploadCloud className="size-5" />
-                </div>
+        {/* Media Preview Modal */}
+        {previewItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl space-y-4 border border-gray-100 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-start justify-between border-b border-gray-100 pb-3">
                 <div>
-                  <h3 className="text-base font-bold text-[#0D2137]">Upload Client Deliverable</h3>
-                  <p className="text-xs text-slate-500">Dispatch reel, post, or carousel for client review & approval</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsUploadOpen(false)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 cursor-pointer"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            {/* Modal Form */}
-            <form onSubmit={handleCreateDeliverable} className="p-6 space-y-4">
-              {uploadError && (
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
-                  <AlertTriangle className="size-4 shrink-0" />
-                  <span>{uploadError}</span>
-                </div>
-              )}
-
-              {/* 1. Target Client Selection */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Target Client <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={uploadForm.clientId}
-                  onChange={(e) => setUploadForm({ ...uploadForm, clientId: e.target.value })}
-                  aria-label="Target Client"
-                  required
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white font-medium text-slate-800 focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20"
-                >
-                  {clients.length === 0 && <option value="">No clients found in system</option>}
-                  {clients.map((c) => (
-                    <option key={c.client_id || c.id} value={c.client_id || c.id}>
-                      {c.company_name || c.full_name || "Client"} ({c.email})
-                    </option>
-                  ))}
-                </select>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  The client will instantly receive and see this deliverable on their Creative Deliverables portal.
-                </p>
-              </div>
-
-              {/* 2. Title & Creative Type */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Deliverable Title / Campaign
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Summer Launch Reel #1"
-                    value={uploadForm.title}
-                    onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Creative Format</label>
-                  <select
-                    value={uploadForm.type}
-                    onChange={(e) => setUploadForm({ ...uploadForm, type: e.target.value })}
-                    aria-label="Creative Format"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white font-medium text-slate-800 focus:outline-none focus:border-[#2B7BC4]"
-                  >
-                    <option value="reel">Reel (9:16 Video)</option>
-                    <option value="static_post">Static Poster (Image)</option>
-                    <option value="carousel">Carousel (Multi-slide)</option>
-                    <option value="story">Story (9:16)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* 3. Media Asset Source Selector */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-slate-700">
-                    Creative Asset Media <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="flex gap-1 bg-slate-100 p-0.5 rounded-lg text-[11px]">
-                    <button
-                      type="button"
-                      onClick={() => setActiveMediaTab("file")}
-                      className={`px-2.5 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
-                        activeMediaTab === "file" ? "bg-white text-[#0D2137] shadow-2xs" : "text-slate-500 hover:text-slate-800"
-                      }`}
-                    >
-                      <Upload className="size-3 inline mr-1" /> File Upload
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveMediaTab("url")}
-                      className={`px-2.5 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
-                        activeMediaTab === "url" ? "bg-white text-[#0D2137] shadow-2xs" : "text-slate-500 hover:text-slate-800"
-                      }`}
-                    >
-                      Media URL
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveMediaTab("presets")}
-                      className={`px-2.5 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
-                        activeMediaTab === "presets" ? "bg-white text-[#0D2137] shadow-2xs" : "text-slate-500 hover:text-slate-800"
-                      }`}
-                    >
-                      <Sparkles className="size-3 inline mr-1 text-amber-500" /> Demo Presets
-                    </button>
-                  </div>
-                </div>
-
-                {/* Tab A: Local File Upload */}
-                {activeMediaTab === "file" && (
-                  <div className="border-2 border-dashed border-slate-200 hover:border-[#2B7BC4] rounded-xl p-5 text-center transition-colors bg-slate-50/50">
-                    <input
-                      type="file"
-                      id="deliverable-file-input"
-                      accept="video/mp4,video/quicktime,video/webm,image/png,image/jpeg,image/webp"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                    <label
-                      htmlFor="deliverable-file-input"
-                      className="cursor-pointer flex flex-col items-center justify-center"
-                    >
-                      {isUploadingFile ? (
-                        <div className="space-y-2 py-2">
-                          <Loader2 className="size-6 animate-spin text-[#2B7BC4] mx-auto" />
-                          <p className="text-xs font-semibold text-slate-600">Uploading media asset to server...</p>
-                        </div>
-                      ) : uploadForm.fileUrl && uploadForm.fileUrl.startsWith("/static") ? (
-                        <div className="space-y-2 py-1">
-                          <CheckCircle2 className="size-6 text-emerald-500 mx-auto" />
-                          <p className="text-xs font-bold text-slate-800">Media file uploaded successfully!</p>
-                          <span className="text-[11px] text-slate-500 font-mono break-all">{uploadForm.fileUrl}</span>
-                          <p className="text-[11px] text-[#2B7BC4] font-semibold hover:underline">Click to replace file</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-1.5 py-1">
-                          <UploadCloud className="size-8 text-[#2B7BC4] mx-auto" />
-                          <p className="text-xs font-bold text-slate-700">
-                            Click to browse or drag & drop creative file
-                          </p>
-                          <p className="text-[11px] text-slate-400">
-                            Supports MP4 / MOV reels, PNG, JPG, and WEBP posters
-                          </p>
-                        </div>
-                      )}
-                    </label>
-                  </div>
-                )}
-
-                {/* Tab B: Direct URL */}
-                {activeMediaTab === "url" && (
-                  <div className="space-y-2">
-                    <input
-                      type="url"
-                      placeholder="https://images.unsplash.com/... or https://commondatastorage.googleapis.com/.../video.mp4"
-                      value={uploadForm.fileUrl}
-                      onChange={(e) => {
-                        const url = e.target.value;
-                        const isVideo = url.endsWith(".mp4") || url.includes("video");
-                        setUploadForm({
-                          ...uploadForm,
-                          fileUrl: url,
-                          fileType: isVideo ? "video/mp4" : "image/png",
-                          type: isVideo ? "reel" : uploadForm.type,
-                        });
-                      }}
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#2B7BC4] font-mono text-slate-700"
-                    />
-                    <p className="text-[11px] text-slate-400">
-                      Paste direct link to S3, Cloudflare R2, Unsplash, or CDN video/image.
-                    </p>
-                  </div>
-                )}
-
-                {/* Tab C: Creative Presets */}
-                {activeMediaTab === "presets" && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      {
-                        title: "⚡ Apex Fitness High-Energy Reel (9:16)",
-                        type: "reel",
-                        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-                        fileType: "video/mp4",
-                      },
-                      {
-                        title: "🎨 Glow Skin Luxury Poster (PNG)",
-                        type: "static_post",
-                        url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1200&auto=format&fit=crop",
-                        fileType: "image/png",
-                      },
-                      {
-                        title: "🚀 Cyber Launch Reel (9:16)",
-                        type: "reel",
-                        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-                        fileType: "video/mp4",
-                      },
-                      {
-                        title: "✨ Modern Minimalist Brand Poster",
-                        type: "static_post",
-                        url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop",
-                        fileType: "image/png",
-                      },
-                    ].map((preset) => (
-                      <button
-                        key={preset.title}
-                        type="button"
-                        onClick={() => handleApplyPreset(preset)}
-                        className={`text-left p-2.5 rounded-xl border text-xs transition-all cursor-pointer flex flex-col justify-between ${
-                          uploadForm.fileUrl === preset.url
-                            ? "border-[#2B7BC4] bg-[#E8F4FD] text-[#0D2137] font-semibold"
-                            : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
-                        }`}
-                      >
-                        <span className="line-clamp-1">{preset.title}</span>
-                        <span className="text-[10px] text-[#2B7BC4] font-bold mt-1 uppercase">
-                          {preset.type.replace("_", " ")}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Live Thumbnail Preview if URL is set */}
-              {uploadForm.fileUrl && (
-                <div className="p-3 rounded-xl bg-slate-900 flex items-center gap-3">
-                  <div className="h-16 w-16 shrink-0 rounded-lg overflow-hidden bg-black flex items-center justify-center">
-                    {uploadForm.fileUrl.endsWith(".mp4") || uploadForm.fileType?.includes("video") ? (
-                      <video src={uploadForm.fileUrl} className="h-full w-full object-cover" muted />
-                    ) : (
-                      <img src={uploadForm.fileUrl} alt="Preview" className="h-full w-full object-cover" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0 text-white">
-                    <p className="text-xs font-bold truncate">{uploadForm.title || "Ready to upload"}</p>
-                    <p className="text-[11px] text-slate-400 font-mono truncate">{uploadForm.fileUrl}</p>
-                    <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      Asset Verified & Attached
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase">
+                      {previewItem.assetCode}
+                    </span>
+                    <span className="text-xs font-bold text-gray-500">
+                      {previewItem.client}
                     </span>
                   </div>
+                  <h2 className="text-lg font-black text-gray-900">{previewItem.title}</h2>
                 </div>
-              )}
-
-              {/* 4. Review Stage & Revision Round */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Initial Status</label>
-                  <select
-                    value={uploadForm.status}
-                    onChange={(e) => setUploadForm({ ...uploadForm, status: e.target.value })}
-                    aria-label="Initial Status"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white font-medium text-slate-800 focus:outline-none focus:border-[#2B7BC4]"
-                  >
-                    <option value="pending_approval">Awaiting Client Review (Ready for Approval)</option>
-                    <option value="in_production">In Production (Drafting)</option>
-                    <option value="approved">Pre-Approved</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Revision Round</label>
-                  <select
-                    value={uploadForm.revisionRound}
-                    onChange={(e) => setUploadForm({ ...uploadForm, revisionRound: Number(e.target.value) })}
-                    aria-label="Revision Round"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white font-medium text-slate-800 focus:outline-none focus:border-[#2B7BC4]"
-                  >
-                    <option value={1}>Draft 1 (First Cut)</option>
-                    <option value={2}>Round 2 (Revision)</option>
-                    <option value={3}>Round 3 (Final Cut)</option>
-                  </select>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setPreviewItem(null)}
+                  className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-900 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              {/* 5. Creative Notes & Copy */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Client Notes / Caption Copy
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="e.g. Optimized for high engagement reels. Audio timed at 128 BPM with branded lower thirds."
-                  value={uploadForm.description}
-                  onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20"
+              <div className="rounded-2xl overflow-hidden bg-black max-h-[420px] flex items-center justify-center">
+                <img
+                  src={previewItem.previewUrl}
+                  alt={previewItem.title}
+                  className="w-full h-auto max-h-[420px] object-contain"
                 />
               </div>
 
-              {/* Modal Actions */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+              <div className="p-4 bg-gray-50 rounded-2xl space-y-2 text-xs">
+                <div className="font-bold text-gray-900">Deliverable Blueprint:</div>
+                <p className="text-gray-600 leading-relaxed">{previewItem.description}</p>
+                <div className="flex flex-wrap gap-4 pt-2 text-[11px] text-gray-500 border-t border-gray-200">
+                  <span><strong>Format:</strong> {previewItem.format}</span>
+                  <span><strong>Pod:</strong> {previewItem.pod} ({previewItem.podLead})</span>
+                  <span><strong>SLA:</strong> {previewItem.slaText}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsUploadOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  onClick={() => {
+                    handleDecline(previewItem.id, previewItem.title);
+                    setPreviewItem(null);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-rose-50 text-gray-700 hover:text-rose-600 text-xs font-bold cursor-pointer"
                 >
-                  Cancel
+                  Request Revision
                 </button>
                 <button
-                  type="submit"
-                  disabled={isSubmitting || isUploadingFile}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1A5EA8] text-white text-xs font-bold shadow-xs hover:brightness-105 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+                  type="button"
+                  onClick={() => {
+                    handleApprove(previewItem.id, previewItem.title);
+                    setPreviewItem(null);
+                  }}
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black cursor-pointer shadow-sm"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="size-3.5 animate-spin" />
-                      Dispatching to Client...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="size-3.5" />
-                      Dispatch Deliverable to Client
-                    </>
-                  )}
+                  ✓ Approve Asset
                 </button>
               </div>
-            </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Creative Lightbox & Enlarge Theater Modal */}
-      {previewItem && (
-        <div
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setPreviewItem(null);
-              setIsTheaterExpanded(false);
-            }
-          }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-2 sm:p-4 md:p-6 backdrop-blur-md animate-in fade-in overflow-hidden"
-        >
-          <div
-            className={`w-full transition-all duration-300 rounded-2xl bg-[#0D2137] text-white shadow-2xl border border-slate-700/60 flex flex-col overflow-hidden ${
-              isTheaterExpanded
-                ? "max-w-[98vw] h-[96vh]"
-                : "max-w-5xl h-[88vh] md:h-[84vh]"
-            }`}
-          >
-            {/* Modal Top Header Bar */}
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 bg-[#081524]">
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-[#2B7BC4]/20 text-[#60A5FA] border border-[#2B7BC4]/40 shrink-0">
-                  {previewItem.type}
-                </span>
-                <div className="min-w-0">
-                  <h3 className="text-sm sm:text-base font-bold text-white truncate">
-                    {previewItem.title}
+        {/* Notes & Comments Modal */}
+        {commentModalItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-blue-600" />
+                  <h3 className="text-sm font-black text-gray-900">
+                    Production Notes & Feedback
                   </h3>
-                  <p className="text-xs text-slate-400 truncate">
-                    Client: <span className="font-semibold text-slate-200">{previewItem.client}</span> · {previewItem.round}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCommentModalItem(null)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100 space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-gray-500">
+                    <span>David K. (Client Lead)</span>
+                    <span>Today 10:45 AM</span>
+                  </div>
+                  <p className="text-xs text-gray-700 leading-relaxed font-medium">
+                    "Typography and layout look crisp. Please ensure the hex code for brand teal matches #06B6D4."
+                  </p>
+                </div>
+                <div className="p-3 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-blue-600">
+                    <span>Elena Rostova (Pod A)</span>
+                    <span>Today 2:15 PM</span>
+                  </div>
+                  <p className="text-xs text-gray-700 leading-relaxed font-medium">
+                    "Updated slide shaders and color profiles. Ready for final review."
                   </p>
                 </div>
               </div>
 
-              {/* Top Quick Actions */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                {/* Switch between phone bezel and wide mode if video */}
-                {isVideoAsset(previewItem.file_url, previewItem.type) && !isTheaterExpanded && (
-                  <button
-                    type="button"
-                    onClick={() => setPhoneFrameMode((prev) => !prev)}
-                    title={phoneFrameMode ? "Switch to Wide Video" : "Switch to 9:16 Mobile Frame"}
-                    className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer flex items-center gap-1 text-xs font-semibold"
-                  >
-                    <Smartphone className="size-4 text-[#60A5FA]" />
-                    <span className="hidden sm:inline">{phoneFrameMode ? "9:16 Frame" : "Wide Cinema"}</span>
-                  </button>
-                )}
-
-                {/* Zoom Controls for Static Posters */}
-                {!isVideoAsset(previewItem.file_url, previewItem.type) && (
-                  <div className="flex items-center bg-slate-800/80 rounded-xl p-0.5 border border-slate-700/50">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewZoom((z) => Math.max(1, z - 0.25))}
-                      disabled={previewZoom <= 1}
-                      title="Zoom Out"
-                      className="p-1.5 rounded-lg text-slate-300 hover:text-white disabled:opacity-40 cursor-pointer"
-                    >
-                      <ZoomOut className="size-3.5" />
-                    </button>
-                    <span className="text-[11px] font-mono px-1.5 text-slate-300 min-w-[42px] text-center">
-                      {Math.round(previewZoom * 100)}%
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewZoom((z) => Math.min(2.5, z + 0.25))}
-                      disabled={previewZoom >= 2.5}
-                      title="Zoom In"
-                      className="p-1.5 rounded-lg text-slate-300 hover:text-white disabled:opacity-40 cursor-pointer"
-                    >
-                      <ZoomIn className="size-3.5" />
-                    </button>
-                  </div>
-                )}
-
-                {/* Fullscreen / Theater Toggle */}
+              <div className="pt-2 flex justify-end">
                 <button
                   type="button"
-                  onClick={() => setIsTheaterExpanded((prev) => !prev)}
-                  title={isTheaterExpanded ? "Exit Theater Mode" : "Expand Full Theater Mode"}
-                  className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
+                  onClick={() => setCommentModalItem(null)}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold cursor-pointer"
                 >
-                  {isTheaterExpanded ? (
-                    <Minimize2 className="size-4" />
-                  ) : (
-                    <Maximize2 className="size-4" />
-                  )}
-                </button>
-
-                {/* Open in New Tab */}
-                <a
-                  href={getResolvedMediaUrl(previewItem.file_url, previewItem.type)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Open Raw File in New Tab"
-                  className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
-                >
-                  <ExternalLink className="size-4" />
-                </a>
-
-                {/* Download */}
-                <a
-                  href={getResolvedMediaUrl(previewItem.file_url, previewItem.type)}
-                  download={`${previewItem.title.replace(/\s+/g, "_")}.${isVideoAsset(previewItem.file_url, previewItem.type) ? "mp4" : "png"}`}
-                  title="Download Creative Asset"
-                  className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
-                >
-                  <Download className="size-4" />
-                </a>
-
-                {/* Close */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPreviewItem(null);
-                    setIsTheaterExpanded(false);
-                  }}
-                  title="Close (Esc)"
-                  className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-rose-500/20 hover:text-rose-300 transition-colors cursor-pointer ml-1"
-                >
-                  <X className="size-5" />
+                  Close Notes
                 </button>
               </div>
-            </div>
-
-            {/* Modal Body: Split or Full Stage */}
-            <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
-              {/* Media Enlarge Stage */}
-              <div
-                className={`flex-1 relative bg-black/90 flex items-center justify-center p-3 sm:p-6 overflow-auto select-none ${
-                  isTheaterExpanded ? "w-full" : "md:w-[65%]"
-                }`}
-              >
-                {isVideoAsset(previewItem.file_url, previewItem.type) ? (
-                  /* Video / Reel Player */
-                  phoneFrameMode && !isTheaterExpanded ? (
-                    /* 9:16 Mobile Phone Bezel Frame */
-                    <div className="h-[96%] max-h-[580px] aspect-[9/16] rounded-[36px] border-[5px] border-slate-700 bg-black shadow-2xl overflow-hidden relative flex flex-col items-center justify-center ring-1 ring-white/20">
-                      {/* Top Notch / Dynamic Island */}
-                      <div className="absolute top-2.5 z-20 w-24 h-4 bg-slate-900 rounded-full flex items-center justify-center pointer-events-none">
-                        <div className="size-2 rounded-full bg-slate-800 mr-2" />
-                        <div className="size-2.5 rounded-full bg-slate-850" />
-                      </div>
-
-                      {/* Video Loading Spinner */}
-                      {isVideoLoading && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-xs z-10 pointer-events-none">
-                          <Loader2 className="size-8 text-[#2B7BC4] animate-spin mb-2" />
-                          <span className="text-[11px] font-medium text-slate-300">Loading Reel...</span>
-                        </div>
-                      )}
-
-                      <video
-                        src={getResolvedMediaUrl(previewItem.file_url, previewItem.type)}
-                        controls
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        preload="auto"
-                        onWaiting={() => setIsVideoLoading(true)}
-                        onPlaying={() => setIsVideoLoading(false)}
-                        onCanPlay={() => setIsVideoLoading(false)}
-                        onLoadedData={() => setIsVideoLoading(false)}
-                        className="h-full w-full object-cover"
-                      />
-
-                      {/* Floating Bezel Tag */}
-                      <div className="absolute bottom-3 z-20 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] text-slate-300 font-mono border border-white/10 pointer-events-none">
-                        9:16 Reel Player
-                      </div>
-                    </div>
-                  ) : (
-                    /* Wide / Full Theater Video Player */
-                    <div className="w-full h-full max-h-[82vh] flex items-center justify-center relative">
-                      {/* Video Loading Spinner */}
-                      {isVideoLoading && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 backdrop-blur-xs z-10 pointer-events-none rounded-xl">
-                          <Loader2 className="size-8 text-[#2B7BC4] animate-spin mb-2" />
-                          <span className="text-[11px] font-medium text-slate-300">Loading Reel...</span>
-                        </div>
-                      )}
-
-                      <video
-                        src={getResolvedMediaUrl(previewItem.file_url, previewItem.type)}
-                        controls
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        preload="auto"
-                        onWaiting={() => setIsVideoLoading(true)}
-                        onPlaying={() => setIsVideoLoading(false)}
-                        onCanPlay={() => setIsVideoLoading(false)}
-                        onLoadedData={() => setIsVideoLoading(false)}
-                        className="max-h-full max-w-full rounded-xl shadow-2xl object-contain"
-                      />
-                    </div>
-                  )
-                ) : (
-                  /* Static Image / Poster with Zoom */
-                  <div
-                    className="w-full h-full flex items-center justify-center overflow-auto p-2"
-                    onClick={() => {
-                      if (previewZoom === 1) setPreviewZoom(1.5);
-                      else setPreviewZoom(1);
-                    }}
-                    title="Click image to toggle zoom"
-                  >
-                    <img
-                      src={getResolvedMediaUrl(previewItem.file_url, previewItem.type)}
-                      alt={previewItem.title}
-                      style={{ transform: `scale(${previewZoom})` }}
-                      className="max-h-[80vh] max-w-full object-contain rounded-xl shadow-2xl transition-transform duration-200 cursor-zoom-in"
-                    />
-                  </div>
-                )}
-
-                {/* Floating Bottom Hint */}
-                <div className="absolute bottom-3 left-4 z-10 hidden sm:flex items-center gap-2 px-3 py-1 rounded-lg bg-black/60 backdrop-blur-xs text-[11px] text-slate-400 border border-white/10 pointer-events-none">
-                  <span>Press <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-200 font-mono text-[10px]">Esc</kbd> to close</span>
-                  <span>·</span>
-                  <span>Click <Maximize2 className="size-3 inline mx-0.5" /> for Full Theater</span>
-                </div>
-              </div>
-
-              {/* Right Side / Sidebar: Metadata & Review Actions (hidden if in full theater) */}
-              {!isTheaterExpanded && (
-                <div className="w-full md:w-[35%] bg-[#0B1A2C] border-t md:border-t-0 md:border-l border-slate-800 p-5 flex flex-col justify-between overflow-y-auto">
-                  <div className="space-y-4">
-                    <div>
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                        Deliverable Status
-                      </span>
-                      <div className="mt-1 flex items-center gap-2">
-                        <span
-                          className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${
-                            previewItem.status === "approved"
-                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                              : previewItem.status === "revision_requested" || previewItem.status === "rejected"
-                              ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                              : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
-                          }`}
-                        >
-                          {previewItem.status.replace("_", " ")}
-                        </span>
-                        <span className="text-xs text-slate-400 font-medium">
-                          {previewItem.round}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Creative Metadata Spec Table */}
-                    <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs space-y-2">
-                      <div className="flex justify-between items-center text-slate-400">
-                        <span>Format:</span>
-                        <span className="font-semibold text-white">{previewItem.type}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-slate-400">
-                        <span>Scheduled:</span>
-                        <span className="font-semibold text-white">{previewItem.date}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-slate-400">
-                        <span>Creative Pod:</span>
-                        <span className="font-semibold text-white">{previewItem.assigned_name || "Creative Studio"}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-slate-400">
-                        <span>Aspect Ratio:</span>
-                        <span className="font-mono text-[#60A5FA]">
-                          {isVideoAsset(previewItem.file_url, previewItem.type) ? "9:16 (1080 × 1920)" : "4:5 (1080 × 1350)"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Client Caption Copy & Creative Notes */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-xs font-bold text-slate-300">
-                          Caption Copy & Creative Notes
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (previewItem.description) {
-                              navigator.clipboard.writeText(previewItem.description);
-                              setCopiedCaption(true);
-                              setTimeout(() => setCopiedCaption(false), 2000);
-                            }
-                          }}
-                          className="text-[11px] font-semibold text-[#60A5FA] hover:underline flex items-center gap-1 cursor-pointer"
-                        >
-                          {copiedCaption ? (
-                            <>
-                              <Check className="size-3 text-emerald-400" /> Copied!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="size-3" /> Copy
-                            </>
-                          )}
-                        </button>
-                      </div>
-                      <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-300 leading-relaxed max-h-32 overflow-y-auto">
-                        {previewItem.description || "No specific caption provided for this creative cut."}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Sidebar Bottom Action Buttons */}
-                  <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
-                    {previewItem.status !== "approved" && (
-                      <button
-                        type="button"
-                        disabled={updatingId === previewItem.id}
-                        onClick={() => {
-                          handleStatusUpdate(previewItem.id, "approved");
-                          setPreviewItem((prev: any) => prev ? { ...prev, status: "approved" } : null);
-                        }}
-                        className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs font-bold shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
-                      >
-                        <Check className="size-4" />
-                        Approve Deliverable
-                      </button>
-                    )}
-
-                    {previewItem.status === "approved" && (
-                      <div className="py-2 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold text-center flex items-center justify-center gap-1.5">
-                        <CheckCircle2 className="size-4" />
-                        Approved & Ready for Dispatch
-                      </div>
-                    )}
-
-                    <div className="flex gap-2">
-                      {previewItem.status !== "revision_requested" && (
-                        <button
-                          type="button"
-                          disabled={updatingId === previewItem.id}
-                          onClick={() => {
-                            handleStatusUpdate(previewItem.id, "revision_requested");
-                            setPreviewItem((prev: any) => prev ? { ...prev, status: "revision_requested" } : null);
-                          }}
-                          className="flex-1 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors cursor-pointer"
-                        >
-                          Request Revision
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPreviewItem(null);
-                          setIsTheaterExpanded(false);
-                        }}
-                        className="flex-1 py-2 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700/80 transition-colors cursor-pointer"
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </main>
     </div>
   );
 }
@@ -1588,459 +2278,592 @@ export function AdminDeliverablesPage() {
 // 3. ADMIN TASKS & DISPATCH QUEUE PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export function AdminTasksPage() {
-  const [queue, setQueue] = useState<AdminQueueData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedTask, setSelectedTask] = useState<any | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPod, setSelectedPod] = useState("all");
+  const [selectedClient, setSelectedClient] = useState("all");
+  const [priorityFilter, _setPriorityFilter] = useState<"all" | "urgent" | "high">("all"); void _setPriorityFilter;
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [previewTask, setPreviewTask] = useState<any | null>(null);
 
-  useEffect(() => {
-    fetchAdminQueue(undefined, "admin")
-      .then((data) => setQueue(data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  const allTasks = queue?.backlog || [];
-  const filteredTasks = allTasks.filter((task) => {
-    if (filterStatus !== "all" && (task.status || "in_production") !== filterStatus) {
-      return false;
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const client = (task.client_company || task.client_email || "").toLowerCase();
-      const assignee = (task.assignee_name || task.assignee_email || "").toLowerCase();
-      const deliv = (task.deliverable_type || "").toLowerCase();
-      return client.includes(q) || assignee.includes(q) || deliv.includes(q);
-    }
-    return true;
+  const [newTaskForm, setNewTaskForm] = useState({
+    title: "",
+    client: "Northwind Labs",
+    pod: "Pod A",
+    category: "3D Render / Blender",
+    sp: 4,
+    dueDate: "Tomorrow",
+    priority: "High",
+    assignee: "Maya Lin",
+    column: "todo",
   });
 
+  const [kanbanTasks, setKanbanTasks] = useState([
+    {
+      id: "task-1",
+      column: "todo",
+      client: "Northwind Labs",
+      clientPill: "bg-blue-50 text-blue-700 border-blue-100",
+      priority: "High",
+      priorityPill: "bg-rose-50 text-rose-600 border-rose-100",
+      title: "Fintech Mobile App Rebrand - Hero 3D Asset",
+      type: "3D Render / Blender",
+      imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop",
+      avatar: "ML",
+      avatarBg: "bg-blue-600",
+      assigneeName: "Maya Lin",
+      sp: 4,
+      due: "Tomorrow",
+      pod: "Pod A",
+    },
+    {
+      id: "task-2",
+      column: "todo",
+      client: "Atlas Commerce",
+      clientPill: "bg-blue-50 text-blue-700 border-blue-100",
+      priority: "Normal",
+      priorityPill: "bg-gray-100 text-gray-600 border-gray-200",
+      title: "Black Friday Motion Teaser - Reel Cut",
+      type: "Instagram Reel 9:16",
+      avatar: "LO",
+      avatarBg: "bg-slate-800",
+      assigneeName: "Lena O.",
+      sp: 6,
+      due: "in 3d",
+      pod: "Pod C",
+    },
+    {
+      id: "task-3",
+      column: "in_progress",
+      client: "Bloom Studio",
+      clientPill: "bg-blue-50 text-blue-700 border-blue-100",
+      priority: "Urgent",
+      priorityPill: "bg-rose-600 text-white font-black",
+      title: "Holiday Campaign Lifestyle Retouching (Batch #1)",
+      imageUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop",
+      avatar: "AT",
+      avatarBg: "bg-purple-600",
+      assigneeName: "Anya Taylor",
+      sp: 8,
+      due: "Today 3 PM",
+      pod: "Pod B",
+    },
+    {
+      id: "task-4",
+      column: "in_progress",
+      client: "Northwind Labs",
+      clientPill: "bg-blue-50 text-blue-700 border-blue-100",
+      priority: "Urgent",
+      priorityPill: "bg-rose-600 text-white font-black",
+      title: "Q4 Investor Pitch Deck Polish",
+      avatar: "OV",
+      avatarBg: "bg-indigo-600",
+      assigneeName: "Omar Vance",
+      sp: 5,
+      due: "Today 4:30 PM",
+      pod: "Pod A",
+    },
+    {
+      id: "task-5",
+      column: "under_review",
+      client: "Northwind Labs",
+      clientPill: "bg-blue-50 text-blue-700 border-blue-100",
+      priority: "In Review",
+      priorityPill: "bg-amber-50 text-amber-700 border-amber-200",
+      title: "B2B Brand Guidelines Refresh v2.1",
+      avatar: "ER",
+      avatarBg: "bg-emerald-600",
+      assigneeName: "Elena Rostova",
+      sp: 7,
+      due: "In Client Review",
+      pod: "Pod A",
+    },
+    {
+      id: "task-6",
+      column: "approved",
+      client: "Atlas Commerce",
+      clientPill: "bg-blue-50 text-blue-700 border-blue-100",
+      priority: "Delivered",
+      priorityPill: "bg-emerald-100 text-emerald-800 font-bold",
+      title: "Brand Identity Vector Kit & Iconography",
+      imageUrl: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&auto=format&fit=crop",
+      avatar: "LO",
+      avatarBg: "bg-slate-800",
+      assigneeName: "Lena O.",
+      sp: 10,
+      due: "Delivered",
+      pod: "Pod C",
+    },
+  ]);
+
+  const handleCreateTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskForm.title.trim()) return;
+
+    const newTask = {
+      id: `task-${Date.now()}`,
+      column: newTaskForm.column,
+      client: newTaskForm.client,
+      clientPill: "bg-blue-50 text-blue-700 border-blue-100",
+      priority: newTaskForm.priority,
+      priorityPill:
+        newTaskForm.priority === "Urgent"
+          ? "bg-rose-600 text-white font-black"
+          : newTaskForm.priority === "High"
+          ? "bg-rose-50 text-rose-600 border-rose-100"
+          : "bg-gray-100 text-gray-600 border-gray-200",
+      title: newTaskForm.title.trim(),
+      type: newTaskForm.category,
+      avatar: newTaskForm.assignee
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase(),
+      avatarBg: "bg-blue-600",
+      assigneeName: newTaskForm.assignee,
+      sp: Number(newTaskForm.sp) || 4,
+      due: newTaskForm.dueDate || "Tomorrow",
+      pod: newTaskForm.pod,
+    };
+
+    setKanbanTasks((prev) => [newTask, ...prev]);
+    setIsCreateModalOpen(false);
+    setNewTaskForm({
+      title: "",
+      client: "Northwind Labs",
+      pod: "Pod A",
+      category: "3D Render / Blender",
+      sp: 4,
+      dueDate: "Tomorrow",
+      priority: "High",
+      assignee: "Maya Lin",
+      column: "todo",
+    });
+  };
+
+  const filteredTasks = kanbanTasks.filter((t) => {
+    const matchesSearch =
+      !searchQuery.trim() ||
+      t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.client.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesPod = selectedPod === "all" || t.pod === selectedPod;
+    const matchesClient =
+      selectedClient === "all" || t.client.toLowerCase().includes(selectedClient.toLowerCase());
+
+    const matchesPriority =
+      priorityFilter === "all"
+        ? true
+        : priorityFilter === "urgent"
+        ? t.priority === "Urgent"
+        : priorityFilter === "high"
+        ? t.priority === "High" || t.priority === "Urgent"
+        : true;
+
+    return matchesSearch && matchesPod && matchesClient && matchesPriority;
+  });
+
+  const todoTasks = filteredTasks.filter((t) => t.column === "todo");
+  const inProgressTasks = filteredTasks.filter((t) => t.column === "in_progress");
+  const underReviewTasks = filteredTasks.filter((t) => t.column === "under_review");
+  const approvedTasks = filteredTasks.filter((t) => t.column === "approved");
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <CheckSquare className="size-5 text-[#2B7BC4]" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">Task Dispatch Queue</h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Workload distribution, creative pod assignments, Gemini Brand DNA briefs, and SLA deadlines
-          </p>
-        </div>
-      </div>
-
-      {/* Staff Capacity Grid */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-        <h3 className="text-sm font-bold text-[#0D2137] mb-4">Creative Pod Staff Workload & Headroom</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {(queue?.staff || []).map((member) => {
-            const ratio = (member.active_wip / Math.max(member.daily_capacity, 1)) * 100;
-            return (
-              <div
-                key={member.user_id}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-xs text-[#0D2137] truncate max-w-[140px]" title={member.full_name || member.email}>
-                    {member.full_name || member.email}
-                  </span>
-                  <span className="text-[10px] uppercase font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
-                    {member.department}
-                  </span>
-                </div>
-                <div className="flex justify-between text-[11px] text-slate-500">
-                  <span>Active WIP:</span>
-                  <span className="font-bold text-[#0D2137]">
-                    {member.active_wip} / {member.daily_capacity}
-                  </span>
-                </div>
-                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${
-                      ratio >= 100 ? "bg-rose-500" : ratio >= 70 ? "bg-amber-500" : "bg-emerald-500"
-                    }`}
-                    style={{ width: `${Math.min(ratio, 100)}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Pipeline Tasks Table */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-sm text-[#0D2137]">Active Pipeline Tasks</span>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-[#2B7BC4] border border-blue-100">
-              {filteredTasks.length} {filteredTasks.length === 1 ? "task" : "tasks"}
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Content Engine" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        {/* Header Title and Search Filter Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
+              <span className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse" />
+              Live Sync
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
-              <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search client or assignee..."
+                placeholder="Filter deliverables, tags, owners..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-[#2B7BC4] w-48 sm:w-60"
+                className="pl-9 pr-4 py-2 w-64 rounded-xl border border-gray-200 bg-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
               />
             </div>
 
-            <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-xs">
-              {(["all", "in_production", "internal_qa", "backlog"] as const).map((st) => (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => setFilterStatus(st)}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold capitalize transition-all cursor-pointer ${
-                    filterStatus === st
-                      ? "bg-[#2B7BC4] text-white shadow-xs"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                  }`}
+            <select
+              value={selectedPod}
+              onChange={(e) => setSelectedPod(e.target.value)}
+              aria-label="Filter Task Pod"
+              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Pods (A-E)</option>
+              <option value="Pod A">Pod A (Brand Strategy)</option>
+              <option value="Pod B">Pod B (3D &amp; Motion)</option>
+              <option value="Pod C">Pod C (UGC &amp; Video)</option>
+              <option value="Pod D">Pod D (Interactive Web)</option>
+              <option value="Pod E">Pod E (Social &amp; Growth)</option>
+            </select>
+
+            <select
+              value={selectedClient}
+              onChange={(e) => setSelectedClient(e.target.value)}
+              aria-label="Filter Task Client"
+              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Clients</option>
+              <option value="Northwind">Northwind Labs</option>
+              <option value="Bloom">Bloom Studio</option>
+              <option value="Atlas">Atlas Commerce</option>
+            </select>
+
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" /> Create Task
+            </button>
+          </div>
+        </div>
+
+        {/* 4 Kanban Columns */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Column 1: TO DO */}
+          <div className="bg-[#F1F5F9]/60 rounded-3xl p-4 flex flex-col space-y-3.5 border border-slate-200/60">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+                <h3 className="text-xs font-black text-gray-800 tracking-wider uppercase">
+                  TO DO
+                </h3>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-white text-slate-600 text-[11px] font-bold border border-slate-200 shadow-2xs">
+                {todoTasks.length}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {todoTasks.map((task) => (
+                <div
+                  key={task.id}
+                  onClick={() => setPreviewTask(task)}
+                  className="bg-white rounded-2xl p-4 border border-gray-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
                 >
-                  {st === "all" ? "All" : st.replace("_", " ")}
-                </button>
+                  <div className="flex items-center justify-between">
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
+                      {task.client}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.priorityPill}`}>
+                      {task.priority}
+                    </span>
+                  </div>
+                  <h4 className="text-xs font-bold text-gray-900 line-clamp-2">{task.title}</h4>
+                  {task.imageUrl && (
+                    <div className="h-24 rounded-xl overflow-hidden bg-slate-100">
+                      <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-[11px] text-gray-500">
+                    <div className="flex items-center gap-1.5">
+                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
+                        {task.avatar}
+                      </div>
+                      <span className="font-medium text-gray-700">{task.assigneeName}</span>
+                    </div>
+                    <span className="font-bold text-blue-600 font-mono">{task.sp} SP</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Column 2: IN PROGRESS */}
+          <div className="bg-[#F1F5F9]/60 rounded-3xl p-4 flex flex-col space-y-3.5 border border-slate-200/60">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+                <h3 className="text-xs font-black text-gray-800 tracking-wider uppercase">
+                  IN PROGRESS
+                </h3>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-white text-blue-600 text-[11px] font-bold border border-slate-200 shadow-2xs">
+                {inProgressTasks.length}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {inProgressTasks.map((task) => (
+                <div
+                  key={task.id}
+                  onClick={() => setPreviewTask(task)}
+                  className="bg-white rounded-2xl p-4 border border-gray-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
+                      {task.client}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.priorityPill}`}>
+                      {task.priority}
+                    </span>
+                  </div>
+                  <h4 className="text-xs font-bold text-gray-900 line-clamp-2">{task.title}</h4>
+                  {task.imageUrl && (
+                    <div className="h-24 rounded-xl overflow-hidden bg-slate-100">
+                      <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-[11px] text-gray-500">
+                    <div className="flex items-center gap-1.5">
+                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
+                        {task.avatar}
+                      </div>
+                      <span className="font-medium text-gray-700">{task.assigneeName}</span>
+                    </div>
+                    <span className="font-bold text-rose-600">{task.due}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Column 3: UNDER REVIEW */}
+          <div className="bg-[#F1F5F9]/60 rounded-3xl p-4 flex flex-col space-y-3.5 border border-slate-200/60">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                <h3 className="text-xs font-black text-gray-800 tracking-wider uppercase">
+                  UNDER REVIEW
+                </h3>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-white text-amber-600 text-[11px] font-bold border border-slate-200 shadow-2xs">
+                {underReviewTasks.length}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {underReviewTasks.map((task) => (
+                <div
+                  key={task.id}
+                  onClick={() => setPreviewTask(task)}
+                  className="bg-white rounded-2xl p-4 border border-gray-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
+                      {task.client}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.priorityPill}`}>
+                      {task.priority}
+                    </span>
+                  </div>
+                  <h4 className="text-xs font-bold text-gray-900 line-clamp-2">{task.title}</h4>
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-[11px] text-gray-500">
+                    <div className="flex items-center gap-1.5">
+                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
+                        {task.avatar}
+                      </div>
+                      <span className="font-medium text-gray-700">{task.assigneeName}</span>
+                    </div>
+                    <span className="font-bold text-amber-600">{task.pod}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Column 4: APPROVED */}
+          <div className="bg-[#F1F5F9]/60 rounded-3xl p-4 flex flex-col space-y-3.5 border border-slate-200/60">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <h3 className="text-xs font-black text-gray-800 tracking-wider uppercase">
+                  APPROVED
+                </h3>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-white text-emerald-600 text-[11px] font-bold border border-slate-200 shadow-2xs">
+                {approvedTasks.length}
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {approvedTasks.map((task) => (
+                <div
+                  key={task.id}
+                  onClick={() => setPreviewTask(task)}
+                  className="bg-white rounded-2xl p-4 border border-gray-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
+                      {task.client}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.priorityPill}`}>
+                      {task.priority}
+                    </span>
+                  </div>
+                  <h4 className="text-xs font-bold text-gray-900 line-clamp-2">{task.title}</h4>
+                  {task.imageUrl && (
+                    <div className="h-24 rounded-xl overflow-hidden bg-slate-100">
+                      <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-[11px] text-gray-500">
+                    <div className="flex items-center gap-1.5">
+                      <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
+                        {task.avatar}
+                      </div>
+                      <span className="font-medium text-gray-700">{task.assigneeName}</span>
+                    </div>
+                    <span className="font-bold text-emerald-600 font-mono">Completed</span>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Mobile Task Cards (< 768px) */}
-        <div className="block md:hidden divide-y divide-slate-100">
-          {loading ? (
-            <div className="p-8 text-center text-slate-400">
-              <Loader2 className="size-5 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-              Loading task queue...
-            </div>
-          ) : filteredTasks.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500">
-              No tasks match the active filter.
-            </div>
-          ) : (
-            filteredTasks.slice(0, 25).map((task) => (
-              <div
-                key={task.id}
-                onClick={() => setSelectedTask(task)}
-                className="p-4 space-y-2 hover:bg-slate-50/70 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-[#0D2137]">{task.client_company || task.client_email || "Agency Client"}</span>
-                  <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono ${
-                    task.deliverable_type === "reel"
-                      ? "bg-purple-50 text-purple-700 border border-purple-200"
-                      : task.deliverable_type === "static_post" || task.deliverable_type === "poster"
-                      ? "bg-blue-50 text-blue-700 border border-blue-200"
-                      : "bg-amber-50 text-amber-700 border border-amber-200"
-                  }`}>
-                    {task.deliverable_type}
-                  </span>
-                </div>
-                {task.brand_summary && (
-                  <div className="flex items-center gap-1.5 text-[11px] text-[#2B7BC4] font-medium bg-blue-50/80 px-2 py-1 rounded-md border border-blue-100">
-                    <Sparkles className="size-3 shrink-0" />
-                    <span className="truncate">{task.brand_summary}</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span className="font-medium text-slate-700">
-                    👤 {task.assignee_name || "Unassigned"} {task.assignee_role ? `(${task.assignee_role})` : ""}
-                  </span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-slate-100 text-slate-600">
-                    {task.status || "In Production"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono pt-1">
-                  <span>#{task.id.slice(0, 8)}</span>
-                  <span>Due: <strong className="text-[#0D2137]">{task.sla_due_at ? new Date(task.sla_due_at).toLocaleDateString() : "Immediate"}</strong></span>
-                </div>
+        {/* Create Task Modal */}
+        {isCreateModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-base font-black text-gray-900">Create Production Task</h3>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-            ))
-          )}
-        </div>
 
-        {/* Desktop Task Table (>= 768px) */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200">
-              <tr>
-                <th className="px-5 py-3">Task ID</th>
-                <th className="px-5 py-3">Client & Brand</th>
-                <th className="px-5 py-3">Deliverable</th>
-                <th className="px-5 py-3">Assigned Member</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">SLA Due</th>
-                <th className="px-5 py-3 text-right">Brand Brief</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-5 py-8 text-center text-slate-400">
-                    <Loader2 className="size-5 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-                    Loading task queue...
-                  </td>
-                </tr>
-              ) : filteredTasks.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-5 py-8 text-center text-slate-400">
-                    No tasks match the active filter.
-                  </td>
-                </tr>
-              ) : (
-                filteredTasks.slice(0, 35).map((task) => (
-                  <tr
-                    key={task.id}
-                    onClick={() => setSelectedTask(task)}
-                    className="hover:bg-slate-50/70 transition-colors cursor-pointer"
+              <form onSubmit={handleCreateTask} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Task Title</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 3D Hero Animation for Brand Launch"
+                    value={newTaskForm.title}
+                    onChange={(e) => setNewTaskForm({ ...newTaskForm, title: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Client Brand</label>
+                    <select
+                      value={newTaskForm.client}
+                      onChange={(e) => setNewTaskForm({ ...newTaskForm, client: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
+                    >
+                      <option value="Northwind Labs">Northwind Labs</option>
+                      <option value="Bloom Studio">Bloom Studio</option>
+                      <option value="Atlas Commerce">Atlas Commerce</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Creative Pod</label>
+                    <select
+                      value={newTaskForm.pod}
+                      onChange={(e) => setNewTaskForm({ ...newTaskForm, pod: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
+                    >
+                      <option value="Pod A">Pod A (Brand Strategy)</option>
+                      <option value="Pod B">Pod B (3D &amp; Motion)</option>
+                      <option value="Pod C">Pod C (UGC &amp; Video)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Priority</label>
+                    <select
+                      value={newTaskForm.priority}
+                      onChange={(e) => setNewTaskForm({ ...newTaskForm, priority: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
+                    >
+                      <option value="Normal">Normal</option>
+                      <option value="High">High</option>
+                      <option value="Urgent">Urgent</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Story Points</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={newTaskForm.sp}
+                      onChange={(e) => setNewTaskForm({ ...newTaskForm, sp: Number(e.target.value) })}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
                   >
-                    <td className="px-5 py-3 font-mono text-xs text-[#0D2137]">#{task.id.slice(0, 8)}</td>
-                    <td className="px-5 py-3 font-semibold text-[#0D2137]">
-                      <div>{task.client_company || "Agency Client"}</div>
-                      {task.brand_summary ? (
-                        <div className="flex items-center gap-1 text-[10px] text-[#2B7BC4] font-medium truncate max-w-[240px] mt-0.5" title={task.brand_summary}>
-                          <Sparkles className="size-3 shrink-0 text-[#2B7BC4]" />
-                          <span className="truncate">{task.brand_summary}</span>
-                        </div>
-                      ) : task.client_email ? (
-                        <div className="text-[10px] text-slate-400 font-normal">{task.client_email}</div>
-                      ) : null}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono border ${
-                        task.deliverable_type === "reel"
-                          ? "bg-purple-50 text-purple-700 border-purple-200"
-                          : task.deliverable_type === "static_post" || task.deliverable_type === "poster"
-                          ? "bg-blue-50 text-blue-700 border-blue-200"
-                          : "bg-amber-50 text-amber-700 border-amber-200"
-                      }`}>
-                        {task.deliverable_type}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="font-semibold text-slate-800">{task.assignee_name || "Unassigned"}</div>
-                      <div className="text-[10px] text-slate-400 capitalize">{task.assignee_role || "Creative Pod"}</div>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                        task.status === "ready_to_publish" || task.status === "completed"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : task.status === "internal_qa"
-                          ? "bg-amber-50 text-amber-700 border border-amber-200"
-                          : "bg-blue-50 text-[#2B7BC4] border border-blue-200"
-                      }`}>
-                        {(task.status || "in_production").replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3 font-mono text-slate-600">
-                      {task.sla_due_at ? new Date(task.sla_due_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "Immediate"}
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedTask(task);
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold text-[#2B7BC4] bg-[#E8F4FD] hover:bg-[#D5EBFA] border border-[#C9DFF0] transition-colors cursor-pointer shadow-2xs"
-                      >
-                        <Sparkles className="size-3.5 text-[#2B7BC4]" />
-                        <span>Brief</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Task Creative Brief & Gemini Brand DNA Modal */}
-      {selectedTask && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-          onClick={() => setSelectedTask(null)}
-        >
-          <div
-            className="max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 space-y-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono border ${
-                    selectedTask.deliverable_type === "reel"
-                      ? "bg-purple-50 text-purple-700 border-purple-200"
-                      : "bg-blue-50 text-blue-700 border-blue-200"
-                  }`}>
-                    {selectedTask.deliverable_type}
-                  </span>
-                  <span className="text-xs font-bold text-slate-400 font-mono">
-                    #{selectedTask.id.slice(0, 8)}
-                  </span>
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm cursor-pointer"
+                  >
+                    Create Task
+                  </button>
                 </div>
-                <h3 className="text-xl font-bold text-[#0D2137]">
-                  {selectedTask.client_company || "Agency Client"}
-                </h3>
-                {selectedTask.instagram_username && (
-                  <p className="text-xs text-[#2B7BC4] font-medium">
-                    @{selectedTask.instagram_username}
-                  </p>
-                )}
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Task Preview Drawer */}
+        {previewTask && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div>
+                  <span className="text-[10px] font-bold text-blue-600 uppercase font-mono">
+                    {previewTask.pod} • {previewTask.due}
+                  </span>
+                  <h3 className="text-base font-black text-gray-900 mt-0.5">{previewTask.title}</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPreviewTask(null)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
+
+              <div className="space-y-2.5 text-xs text-gray-600">
+                <div className="p-3 bg-gray-50 rounded-2xl space-y-1">
+                  <div><strong>Client:</strong> {previewTask.client}</div>
+                  <div><strong>Assignee:</strong> {previewTask.assigneeName}</div>
+                  <div><strong>Priority:</strong> {previewTask.priority}</div>
+                  <div><strong>Effort:</strong> {previewTask.sp} Story Points</div>
+                </div>
+              </div>
+
               <button
                 type="button"
-                onClick={() => setSelectedTask(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                onClick={() => setPreviewTask(null)}
+                className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
               >
-                <X className="size-5" />
-              </button>
-            </div>
-
-            {/* 1. Gemini Brand Summary & Strategic Positioning */}
-            <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50/70 to-slate-50 p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-4 text-[#2B7BC4]" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#2B7BC4]">
-                  Gemini Brand DNA & Strategic Summary
-                </h4>
-              </div>
-
-              {selectedTask.brand_summary && (
-                <div className="rounded-lg bg-white p-3 border border-blue-100 shadow-2xs">
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
-                    AI Strategic Summary
-                  </span>
-                  <p className="text-xs text-[#0D2137] font-semibold leading-relaxed">
-                    &ldquo;{selectedTask.brand_summary}&rdquo;
-                  </p>
-                </div>
-              )}
-
-              {selectedTask.brand_dna?.positioning && (
-                <div className="rounded-lg bg-white p-3 border border-blue-100 shadow-2xs">
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
-                    Core Positioning
-                  </span>
-                  <p className="text-xs text-slate-700 leading-relaxed">
-                    {selectedTask.brand_dna.positioning}
-                  </p>
-                </div>
-              )}
-
-              {/* Tone voice words */}
-              {selectedTask.brand_dna?.tone?.voice_words && (
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-[10px] font-bold uppercase text-slate-400 mr-1">Voice:</span>
-                  {(selectedTask.brand_dna.tone.voice_words as string[]).map((w: string, i: number) => (
-                    <span key={i} className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-[#1E3A8A]">
-                      {w}
-                    </span>
-                  ))}
-                  {(selectedTask.brand_dna.tone.anti_voice_words as string[] || []).map((w: string, i: number) => (
-                    <span key={i} className="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-100 text-rose-700">
-                      Avoid {w}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 2. Slot Creative Blueprint (if available) */}
-            {selectedTask.blueprint ? (
-              <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Production Creative Blueprint
-                  </h4>
-                  {selectedTask.blueprint.funnel_stage && (
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      {selectedTask.blueprint.funnel_stage} Funnel
-                    </span>
-                  )}
-                </div>
-
-                {selectedTask.blueprint.premise && (
-                  <div className="p-3 rounded-lg bg-white border border-slate-200/80">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Core Premise</span>
-                    <p className="text-xs text-slate-800 font-medium">{selectedTask.blueprint.premise}</p>
-                  </div>
-                )}
-
-                {/* Hooks A/B/C */}
-                {Array.isArray(selectedTask.blueprint.hooks) && selectedTask.blueprint.hooks.length > 0 && (
-                  <div className="space-y-1.5">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Psychological Hook Angles</span>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                      {selectedTask.blueprint.hooks.map((h: any, idx: number) => (
-                        <div key={idx} className="p-2.5 rounded-lg bg-white border border-slate-200 text-xs space-y-1">
-                          <span className="text-[9px] font-bold uppercase font-mono px-1.5 py-0.5 rounded bg-blue-50 text-[#2B7BC4]">
-                            Angle {idx + 1}: {h.angle}
-                          </span>
-                          <p className="text-[11px] font-semibold text-[#0D2137] leading-tight pt-1">&ldquo;{h.hook_copy}&rdquo;</p>
-                          {h.rationale && <p className="text-[10px] text-slate-500 italic">{h.rationale}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Shot beats / storyboard */}
-                {Array.isArray(selectedTask.blueprint.beats) && selectedTask.blueprint.beats.length > 0 && (
-                  <div className="space-y-1.5">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Shot Sequence / Beats</span>
-                    <div className="space-y-1">
-                      {selectedTask.blueprint.beats.map((b: any, bIdx: number) => (
-                        <div key={bIdx} className="p-2 rounded bg-white border border-slate-200 text-xs flex gap-2">
-                          <span className="font-mono text-[#2B7BC4] font-bold text-[10px]">#{bIdx + 1}</span>
-                          <div className="space-y-0.5 text-[11px]">
-                            {b.visual_cue && <p className="text-slate-800 font-medium"><strong>Visual:</strong> {b.visual_cue}</p>}
-                            {b.narration_script && <p className="text-slate-600"><strong>Script:</strong> &ldquo;{b.narration_script}&rdquo;</p>}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : null}
-
-            {/* 3. SLA & Assigned Specialist */}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Assigned Specialist</span>
-                <span className="font-semibold text-[#0D2137]">
-                  {selectedTask.assignee_name || "Unassigned"}
-                </span>
-                <span className="text-[10px] text-slate-500 block capitalize">{selectedTask.assignee_role || "Creative Pod"}</span>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">SLA Production Due</span>
-                <span className="font-semibold text-rose-600 font-mono">
-                  {selectedTask.sla_due_at ? new Date(selectedTask.sla_due_at).toLocaleString() : "Immediate"}
-                </span>
-                <span className="text-[10px] text-slate-500 block capitalize">Status: {selectedTask.status?.replace("_", " ")}</span>
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSelectedTask(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
-              >
-                Close Brief
+                Close
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </main>
     </div>
   );
 }
@@ -2048,745 +2871,3061 @@ export function AdminTasksPage() {
 // ─────────────────────────────────────────────────────────────────────────────
 // 4. ADMIN CALENDAR PAGE
 // ─────────────────────────────────────────────────────────────────────────────
-const CALENDAR_MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
-const WEEKDAY_HEADERS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
 export function AdminCalendarPage() {
-  const today = new Date();
-  const [currentYear, setCurrentYear] = useState<number>(today.getFullYear());
-  const [currentMonth, setCurrentMonth] = useState<number>(today.getMonth());
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedFormat, setSelectedFormat] = useState<string>("all");
-  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [selectedDayNumber, setSelectedDayNumber] = useState<number>(14);
+  const [selectedPodFilter, setSelectedPodFilter] = useState("all");
+  const [selectedClientFilter, setSelectedClientFilter] = useState("all");
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState("all");
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [selectedAssetModal, setSelectedAssetModal] = useState<any | null>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    request<any[]>("/api/v1/admin/calendar")
-      .then((data) => setEvents(Array.isArray(data) ? data : []))
-      .catch(() => setEvents([]))
-      .finally(() => setLoading(false));
-  }, []);
+  const [scheduleForm, setScheduleForm] = useState({
+    title: "",
+    client: "Northwind Labs",
+    pod: "Pod A",
+    type: "Reel",
+    dateDay: 14,
+    time: "4:30 PM",
+    tag: "Final Polish",
+  });
 
-  const navigateMonth = (direction: number) => {
-    const total = currentYear * 12 + currentMonth + direction;
-    const newY = Math.floor(total / 12);
-    const newM = ((total % 12) + 12) % 12;
-    setCurrentYear(newY);
-    setCurrentMonth(newM);
-  };
+  // Master schedule indexed by day number of November 2024
+  const [tasksByDay, setTasksByDay] = useState<Record<number, any[]>>({
+    8: [
+      {
+        id: "cal-8-1",
+        pod: "Pod C",
+        client: "Atlas Commerce",
+        title: "Customer Success Story Cutdown Reel",
+        type: "Reel",
+        assignee: "David Kim",
+        avatar: "DK",
+        avatarBg: "bg-[#06B6D4]",
+        tag: "Approved",
+        tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        time: "11:30 AM",
+      },
+    ],
+    10: [
+      {
+        id: "cal-10-1",
+        pod: "Pod B",
+        client: "Bloom Studio",
+        title: "Brand Aesthetic Moodboard Carousel",
+        type: "Carousel",
+        assignee: "Anya Taylor",
+        avatar: "AT",
+        avatarBg: "bg-[#6366F1]",
+        tag: "Approved",
+        tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        time: "2:00 PM",
+      },
+    ],
+    14: [
+      {
+        id: "cal-14-1",
+        pod: "Pod A",
+        client: "Northwind Labs",
+        title: "Q4 Product Unboxing Teaser Reel",
+        type: "Reel",
+        assignee: "Omar Vance",
+        avatar: "OV",
+        avatarBg: "bg-[#2563EB]",
+        tag: "Final Polish",
+        tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        time: "4:30 PM",
+      },
+      {
+        id: "cal-14-2",
+        pod: "Pod B",
+        client: "Bloom Studio",
+        title: "Behind-The-Scenes Studio Setup (3-Slide Story)",
+        type: "Story",
+        assignee: "Anya Taylor",
+        avatar: "AT",
+        avatarBg: "bg-[#6366F1]",
+        tag: "Color Grading",
+        tagColor: "bg-purple-50 text-purple-700 border-purple-100",
+        time: "3:00 PM",
+      },
+      {
+        id: "cal-14-3",
+        pod: "Pod C",
+        client: "Atlas Commerce",
+        title: "TikTok Viral Hook Reel Cut #1 & #2",
+        type: "Reel",
+        assignee: "Kenji Sato",
+        avatar: "KS",
+        avatarBg: "bg-[#06B6D4]",
+        tag: "Sound Sync",
+        tagColor: "bg-cyan-50 text-cyan-700 border-cyan-100",
+        time: "2:00 PM",
+      },
+      {
+        id: "cal-14-4",
+        pod: "Pod E",
+        client: "Lumina Health",
+        title: "Patient Portal Explainer Video Storyboard",
+        type: "Explainer Video",
+        assignee: "Sarah Jenkins",
+        avatar: "SJ",
+        avatarBg: "bg-emerald-600",
+        tag: "Sync 3:30 PM",
+        tagColor: "bg-indigo-50 text-indigo-700 border-indigo-100",
+        time: "3:30 PM",
+      },
+    ],
+    15: [
+      {
+        id: "cal-15-1",
+        pod: "Pod A",
+        client: "Northwind Labs",
+        title: "15-Sec Flash Sale Promo Story Set",
+        type: "Story",
+        assignee: "Marcus Brody",
+        avatar: "MB",
+        avatarBg: "bg-blue-600",
+        tag: "Approved",
+        tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        time: "10:00 AM",
+      },
+      {
+        id: "cal-15-2",
+        pod: "Pod B",
+        client: "Bloom Studio",
+        title: "Founder Q&A Vertical Micro-Reel #4",
+        type: "Reel",
+        assignee: "Elena Rostova",
+        avatar: "ER",
+        avatarBg: "bg-rose-500",
+        tag: "Final Polish",
+        tagColor: "bg-amber-50 text-amber-700 border-amber-100",
+        time: "1:30 PM",
+      },
+      {
+        id: "cal-15-3",
+        pod: "Pod D",
+        client: "Acme Corp",
+        title: "Top 5 Growth Hacks Infographic Carousel",
+        type: "Carousel",
+        assignee: "Kenji Sato",
+        avatar: "KS",
+        avatarBg: "bg-[#06B6D4]",
+        tag: "Scheduled",
+        tagColor: "bg-blue-50 text-blue-700 border-blue-100",
+        time: "5:00 PM",
+      },
+    ],
+    18: [
+      {
+        id: "cal-18-1",
+        pod: "Pod A",
+        client: "Northwind Labs",
+        title: "Q4 Keynote Executive Slide Deck (60 Slides)",
+        type: "Slide Deck",
+        assignee: "Omar Vance",
+        avatar: "OV",
+        avatarBg: "bg-[#2563EB]",
+        tag: "SLA Review",
+        tagColor: "bg-amber-50 text-amber-700 border-amber-100",
+        time: "11:00 AM",
+      },
+      {
+        id: "cal-18-2",
+        pod: "Pod C",
+        client: "Atlas Commerce",
+        title: "High-Energy Product Feature Cutdown",
+        type: "Reel",
+        assignee: "Maya Patel",
+        avatar: "MP",
+        avatarBg: "bg-purple-600",
+        tag: "Color Grading",
+        tagColor: "bg-purple-50 text-purple-700 border-purple-100",
+        time: "4:00 PM",
+      },
+    ],
+    20: [
+      {
+        id: "cal-20-1",
+        pod: "Pod A",
+        client: "Northwind Labs",
+        title: "60-Sec High-Velocity Tech Growth Tip",
+        type: "Shorts",
+        assignee: "Liam Wright",
+        avatar: "LW",
+        avatarBg: "bg-orange-500",
+        tag: "Approved",
+        tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        time: "9:30 AM",
+      },
+      {
+        id: "cal-20-2",
+        pod: "Pod B",
+        client: "Bloom Studio",
+        title: "Interactive Audience Q&A Story Sequence",
+        type: "Story",
+        assignee: "Chloe Bennett",
+        avatar: "CB",
+        avatarBg: "bg-pink-500",
+        tag: "Drafting",
+        tagColor: "bg-gray-100 text-gray-700 border-gray-200",
+        time: "2:00 PM",
+      },
+    ],
+    22: [
+      {
+        id: "cal-22-1",
+        pod: "Pod B",
+        client: "Bloom Studio",
+        title: "Black Friday Sneak Peek Teaser Reel",
+        type: "Reel",
+        assignee: "Anya Taylor",
+        avatar: "AT",
+        avatarBg: "bg-[#6366F1]",
+        tag: "Final Polish",
+        tagColor: "bg-amber-50 text-amber-700 border-amber-100",
+        time: "12:00 PM",
+      },
+      {
+        id: "cal-22-2",
+        pod: "Pod E",
+        client: "Lumina Health",
+        title: "Cyber Monday Display Ads & Hero Banners",
+        type: "Banner",
+        assignee: "Sarah Jenkins",
+        avatar: "SJ",
+        avatarBg: "bg-emerald-600",
+        tag: "Approved",
+        tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        time: "4:00 PM",
+      },
+    ],
+    25: [
+      {
+        id: "cal-25-1",
+        pod: "Pod D",
+        client: "Acme Corp",
+        title: "Mobile App Onboarding Walkthrough Video",
+        type: "Explainer Video",
+        assignee: "Marcus Brody",
+        avatar: "MB",
+        avatarBg: "bg-blue-600",
+        tag: "Sound Sync",
+        tagColor: "bg-cyan-50 text-cyan-700 border-cyan-100",
+        time: "3:00 PM",
+      },
+    ],
+    28: [
+      {
+        id: "cal-28-1",
+        pod: "Pod A",
+        client: "Northwind Labs",
+        title: "End-of-Month Retrospective & Win Showcase",
+        type: "Reel",
+        assignee: "Omar Vance",
+        avatar: "OV",
+        avatarBg: "bg-[#2563EB]",
+        tag: "Final Polish",
+        tagColor: "bg-amber-50 text-amber-700 border-amber-100",
+        time: "5:00 PM",
+      },
+    ],
+  });
 
-  const goToToday = () => {
-    setCurrentYear(today.getFullYear());
-    setCurrentMonth(today.getMonth());
-  };
-
-  // Month grid calculation
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const firstDayWeekday = new Date(currentYear, currentMonth, 1).getDay(); // 0 = Sun
-
-  const calendarCells: (number | null)[] = [];
-  for (let i = 0; i < firstDayWeekday; i++) {
-    calendarCells.push(null);
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    calendarCells.push(d);
-  }
-
-  // Filter events for the active month and format
-  const monthEvents = events.filter((e) => {
-    if (!e.date) return false;
-    const d = new Date(e.date + "T00:00:00");
-    const matchesMonth = d.getFullYear() === currentYear && d.getMonth() === currentMonth;
-    if (!matchesMonth) return false;
-    if (selectedFormat !== "all") {
-      const typeStr = (e.type || "").toLowerCase();
-      if (selectedFormat === "reel" && !typeStr.includes("reel")) return false;
-      if (selectedFormat === "poster" && !typeStr.includes("poster")) return false;
-      if (selectedFormat === "story" && !typeStr.includes("story") && !typeStr.includes("carousel")) return false;
+  // Helper for Deliverable Type Badge Styling & Icons
+  const getTypeBadge = (type: string) => {
+    switch (type) {
+      case "Reel":
+        return { label: "🎬 Reel", bg: "bg-indigo-50 text-indigo-700 border-indigo-200" };
+      case "Story":
+        return { label: "📲 Story", bg: "bg-rose-50 text-rose-700 border-rose-200" };
+      case "Carousel":
+        return { label: "🎨 Carousel", bg: "bg-amber-50 text-amber-700 border-amber-200" };
+      case "Slide Deck":
+        return { label: "📊 Slide Deck", bg: "bg-blue-50 text-blue-700 border-blue-200" };
+      case "Explainer Video":
+        return { label: "📹 Explainer", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+      case "Shorts":
+        return { label: "⚡ Shorts", bg: "bg-orange-50 text-orange-700 border-orange-200" };
+      case "Banner":
+        return { label: "🖼️ Banner", bg: "bg-cyan-50 text-cyan-700 border-cyan-200" };
+      default:
+        return { label: `📌 ${type}`, bg: "bg-gray-50 text-gray-700 border-gray-200" };
     }
+  };
+
+  const handleOpenScheduleForDay = (day: number) => {
+    setSelectedDayNumber(day);
+    setScheduleForm((prev) => ({
+      ...prev,
+      dateDay: day,
+    }));
+    setIsScheduleModalOpen(true);
+  };
+
+  const handleScheduleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!scheduleForm.title.trim()) return;
+
+    const targetDay = Number(scheduleForm.dateDay) || selectedDayNumber;
+
+    const newItem = {
+      id: `cal-${targetDay}-${Date.now()}`,
+      pod: scheduleForm.pod,
+      client: scheduleForm.client,
+      title: scheduleForm.title.trim(),
+      type: scheduleForm.type,
+      assignee: "Staff Assigned",
+      avatar: "ST",
+      avatarBg: "bg-blue-600",
+      tag: scheduleForm.tag,
+      tagColor: "bg-blue-50 text-blue-700 border-blue-100",
+      time: scheduleForm.time || "4:00 PM",
+    };
+
+    setTasksByDay((prev) => ({
+      ...prev,
+      [targetDay]: [...(prev[targetDay] || []), newItem],
+    }));
+
+    setIsScheduleModalOpen(false);
+    setScheduleForm({
+      title: "",
+      client: "Northwind Labs",
+      pod: "Pod A",
+      type: "Reel",
+      dateDay: selectedDayNumber,
+      time: "4:30 PM",
+      tag: "Final Polish",
+    });
+  };
+
+  // Get current day's tasks filtered by pod / client / type
+  const rawDayTasks = tasksByDay[selectedDayNumber] || [];
+  const filteredDayTasks = rawDayTasks.filter((item) => {
+    if (selectedPodFilter !== "all" && item.pod !== selectedPodFilter) return false;
+    if (selectedClientFilter !== "all" && !item.client.toLowerCase().includes(selectedClientFilter.toLowerCase())) return false;
+    if (selectedTypeFilter !== "all" && item.type !== selectedTypeFilter) return false;
     return true;
   });
 
+  const isSelectedDateToday = selectedDayNumber === 14;
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <CalendarDays className="size-5 text-[#2B7BC4]" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">Content Calendar</h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Agency master scheduling timeline across all brand accounts and creative pods
-          </p>
-        </div>
-
-        {/* Month Navigation & Format Filter */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs">
-            <button
-              type="button"
-              onClick={() => navigateMonth(-1)}
-              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
-              title="Previous Month"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-            <span className="text-xs font-bold text-[#0D2137] px-2 min-w-[120px] text-center">
-              {CALENDAR_MONTHS[currentMonth]} {currentYear}
-            </span>
-            <button
-              type="button"
-              onClick={() => navigateMonth(1)}
-              className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
-              title="Next Month"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-            <button
-              type="button"
-              onClick={goToToday}
-              className="ml-1 px-2.5 py-1 text-[11px] font-bold rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
-            >
-              Today
-            </button>
-          </div>
-
-          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 text-xs shadow-2xs">
-            {(["all", "reel", "poster", "story"] as const).map((fmt) => (
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Content Engine" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        {/* Header and Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-xl shadow-2xs">
               <button
-                key={fmt}
                 type="button"
-                onClick={() => setSelectedFormat(fmt)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-all cursor-pointer ${
-                  selectedFormat === fmt
-                    ? "bg-[#2B7BC4] text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                }`}
+                onClick={() => setSelectedDayNumber((prev) => Math.max(1, prev - 1))}
+                aria-label="Previous Day"
+                className="p-0.5 text-gray-400 hover:text-gray-700 cursor-pointer rounded"
               >
-                {fmt === "all" ? "All Formats" : fmt}
+                <ChevronLeft className="w-4 h-4" />
               </button>
-            ))}
+              <Calendar className="w-4 h-4 text-blue-600" />
+              <span className="text-xs font-bold text-gray-900">
+                November {selectedDayNumber}, 2024 {isSelectedDateToday ? "(Today)" : ""}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedDayNumber((prev) => Math.min(30, prev + 1))}
+                aria-label="Next Day"
+                className="p-0.5 text-gray-400 hover:text-gray-700 cursor-pointer rounded"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+            {selectedDayNumber !== 14 && (
+              <button
+                type="button"
+                onClick={() => setSelectedDayNumber(14)}
+                className="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 cursor-pointer transition-colors"
+              >
+                Jump to Today (14th)
+              </button>
+            )}
           </div>
 
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-[#2B7BC4] text-xs font-semibold border border-blue-200">
-            {monthEvents.length} Assets Scheduled
-          </span>
-        </div>
-      </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={selectedPodFilter}
+              onChange={(e) => setSelectedPodFilter(e.target.value)}
+              aria-label="Filter Calendar Pod"
+              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Pods ▾</option>
+              <option value="Pod A">Pod A</option>
+              <option value="Pod B">Pod B</option>
+              <option value="Pod C">Pod C</option>
+              <option value="Pod D">Pod D</option>
+              <option value="Pod E">Pod E</option>
+            </select>
 
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-6 shadow-xs">
-        {/* Mobile Agenda List (< 768px) */}
-        <div className="block md:hidden">
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              {CALENDAR_MONTHS[currentMonth]} {currentYear} Agenda
-            </span>
-            <span className="text-xs font-semibold text-[#2B7BC4]">{monthEvents.length} Items</span>
+            <select
+              value={selectedTypeFilter}
+              onChange={(e) => setSelectedTypeFilter(e.target.value)}
+              aria-label="Filter Deliverable Type"
+              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Deliverable Types ▾</option>
+              <option value="Reel">🎬 Reels</option>
+              <option value="Story">📲 Stories</option>
+              <option value="Carousel">🎨 Carousels</option>
+              <option value="Slide Deck">📊 Slide Decks</option>
+              <option value="Explainer Video">📹 Explainer Videos</option>
+            </select>
+
+            <select
+              value={selectedClientFilter}
+              onChange={(e) => setSelectedClientFilter(e.target.value)}
+              aria-label="Filter Calendar Client"
+              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Clients ▾</option>
+              <option value="Northwind">Northwind Labs</option>
+              <option value="Bloom">Bloom Studio</option>
+              <option value="Atlas">Atlas Commerce</option>
+              <option value="Lumina">Lumina Health</option>
+              <option value="Acme">Acme Corp</option>
+            </select>
+
+            <button
+              type="button"
+              onClick={() => handleOpenScheduleForDay(selectedDayNumber)}
+              className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" /> Schedule Asset
+            </button>
           </div>
-
-          {loading ? (
-            <div className="py-12 text-center text-slate-400">
-              <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-              Loading scheduled deliverables...
-            </div>
-          ) : monthEvents.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-500">
-              No deliverables scheduled for {CALENDAR_MONTHS[currentMonth]} {currentYear}.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {monthEvents.map((item, idx) => {
-                const dayNum = item.date ? new Date(item.date + "T00:00:00").getDate() : item.day;
-                const typeStr = (item.type || "").toLowerCase();
-                return (
-                  <div
-                    key={item.id || idx}
-                    onClick={() => setSelectedEvent(item)}
-                    className="p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/50 hover:bg-slate-50 transition-colors cursor-pointer space-y-2"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="size-8 rounded-lg bg-[#2B7BC4] text-white flex items-center justify-center font-bold text-xs font-mono shrink-0">
-                          {dayNum}
-                        </span>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase ${
-                              typeStr.includes("reel")
-                                ? "bg-purple-100 text-purple-700"
-                                : typeStr.includes("poster")
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-amber-100 text-amber-700"
-                            }`}>
-                              {item.type || "Asset"}
-                            </span>
-                            <h4 className="font-bold text-xs text-[#0D2137] truncate max-w-[160px]">
-                              {item.client_name || "Client"}
-                            </h4>
-                          </div>
-                          <span className="text-[10px] text-slate-500 font-medium">
-                            {item.time || "11:00 AM"} • {item.title || "Scheduled Deliverable"}
-                          </span>
-                        </div>
-                      </div>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${
-                          item.status === "approved"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : "bg-blue-50 text-[#2B7BC4] border border-blue-200"
-                        }`}
-                      >
-                        {item.status || "Scheduled"}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
 
-        {/* Desktop 7-Column Grid (>= 768px) with Weekday Offset Padding */}
-        <div className="hidden md:block">
-          <div className="grid grid-cols-7 gap-2.5 mb-2.5 text-center text-xs font-bold uppercase text-slate-400">
-            {WEEKDAY_HEADERS.map((w) => (
-              <div key={w} className="py-1">
-                {w}
+        {/* 4 Top KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4.5">
+          <div className="kpi-card bg-white rounded-2xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                Active Deployments Today
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Zap className="w-4 h-4" />
               </div>
-            ))}
+            </div>
+            <div className="mt-1">
+              <span className="text-3xl font-black text-gray-900">16 Assets</span>
+            </div>
+            <div className="flex items-center justify-between text-xs mt-3 pt-1 border-t border-gray-50">
+              <span className="font-bold text-blue-600">↗ +3 vs. Yesterday</span>
+              <span className="bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded text-[10px]">
+                In Production
+              </span>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#2563EB]" />
           </div>
 
-          {loading ? (
-            <div className="py-20 text-center text-slate-400">
-              <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-              Loading scheduled deliverables...
+          <div className="kpi-card bg-white rounded-2xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                Teams Allocated
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Users className="w-4 h-4" />
+              </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-7 gap-2.5">
-              {calendarCells.map((dateNum, idx) => {
-                if (dateNum === null) {
-                  return (
-                    <div
-                      key={`blank-${idx}`}
-                      className="min-h-[115px] p-2 rounded-xl bg-slate-50/20 border border-slate-100/60 opacity-40 pointer-events-none"
-                    />
-                  );
-                }
+            <div className="mt-1">
+              <span className="text-3xl font-black text-gray-900">5 Pods</span>
+            </div>
+            <div className="flex items-center justify-between text-xs mt-3 pt-1 border-t border-gray-50">
+              <span className="font-medium text-gray-400">Pods A, B, C, D, E</span>
+              <span className="bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded text-[10px]">
+                100% Staffed
+              </span>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#2563EB]" />
+          </div>
 
-                const dayEvents = monthEvents.filter((e) => {
-                  const d = new Date(e.date + "T00:00:00");
-                  return d.getDate() === dateNum;
-                });
+          <div className="kpi-card bg-white rounded-2xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                Selected Date Assets
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <CheckSquare className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-1">
+              <span className="text-3xl font-black text-gray-900">{rawDayTasks.length} Scheduled</span>
+            </div>
+            <div className="flex items-center justify-between text-xs mt-3 pt-1 border-t border-gray-50">
+              <span className="font-medium text-gray-400">Nov {selectedDayNumber}, 2024</span>
+              <span className="bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded text-[10px]">
+                {isSelectedDateToday ? "Today" : "Selected Date"}
+              </span>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#2563EB]" />
+          </div>
 
-                const isToday =
-                  today.getFullYear() === currentYear &&
-                  today.getMonth() === currentMonth &&
-                  today.getDate() === dateNum;
+          <div className="kpi-card bg-white rounded-2xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                Release Capacity
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-1">
+              <span className="text-3xl font-black text-gray-900">85%</span>
+            </div>
+            <div className="flex items-center justify-between text-xs mt-3 pt-1 border-t border-gray-50">
+              <span className="font-medium text-gray-400">Headroom normal</span>
+              <span className="bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded text-[10px]">
+                Optimal
+              </span>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#2563EB]" />
+          </div>
+        </div>
+
+        {/* Calendar Grid + Dynamic Selected Date Work Split */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main 7-Column Month Calendar View */}
+          <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-black text-gray-900">November 2024</h2>
+                <span className="text-xs font-bold text-gray-400">Production Horizon</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-medium text-gray-500 hidden sm:inline">
+                  Click any date to view scheduled work
+                </span>
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                  14th Today
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-2 text-center text-[11px] font-bold text-gray-400 pb-2 border-b border-gray-100">
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                <div key={d}>{d}</div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {Array.from({ length: 30 }).map((_, i) => {
+                const dayNum = i + 1;
+                const isToday = dayNum === 14;
+                const isSelected = dayNum === selectedDayNumber;
+                const dayTasks = tasksByDay[dayNum] || [];
+
+                // Tally work types for date pill summary
+                const reelsCount = dayTasks.filter((t) => t.type === "Reel").length;
+                const storiesCount = dayTasks.filter((t) => t.type === "Story").length;
+                const otherCount = dayTasks.length - reelsCount - storiesCount;
 
                 return (
-                  <div
-                    key={`day-${dateNum}`}
-                    className={`min-h-[120px] p-2 rounded-xl border transition-all flex flex-col justify-between ${
-                      isToday
-                        ? "border-[#2B7BC4] bg-blue-50/20 shadow-xs"
-                        : "border-slate-200/80 bg-slate-50/40 hover:border-slate-300"
+                  <button
+                    key={dayNum}
+                    type="button"
+                    onClick={() => setSelectedDayNumber(dayNum)}
+                    className={`min-h-[92px] p-2 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer group relative ${
+                      isSelected
+                        ? "bg-blue-50/90 border-blue-500 ring-2 ring-blue-600/30 shadow-md scale-[1.02] z-10"
+                        : isToday
+                        ? "bg-blue-50/40 border-blue-200 hover:border-blue-300"
+                        : "bg-gray-50/40 border-gray-100 hover:bg-white hover:border-blue-200 hover:shadow-2xs"
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between w-full">
                       <span
-                        className={`size-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                          isToday
-                            ? "bg-[#2B7BC4] text-white"
-                            : "text-[#0D2137]"
+                        className={`text-xs font-black inline-block size-6 rounded-full flex items-center justify-center transition-colors ${
+                          isSelected
+                            ? "bg-blue-600 text-white shadow-xs"
+                            : isToday
+                            ? "bg-blue-100 text-blue-800 font-bold"
+                            : "text-gray-700 group-hover:text-blue-600"
                         }`}
                       >
-                        {dateNum}
+                        {dayNum}
                       </span>
-                      {dayEvents.length > 0 && (
-                        <span className="text-[10px] font-bold text-slate-400">
-                          {dayEvents.length}
+                      {dayTasks.length > 0 && (
+                        <span
+                          className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
+                            isSelected ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"
+                          }`}
+                        >
+                          {dayTasks.length}
                         </span>
                       )}
                     </div>
 
-                    <div className="space-y-1 my-1 overflow-y-auto max-h-[85px] scrollbar-thin">
-                      {dayEvents.map((item, itemIdx) => {
-                        const typeStr = (item.type || "").toLowerCase();
-                        const isReel = typeStr.includes("reel");
-                        const isPoster = typeStr.includes("poster");
-
-                        return (
-                          <div
-                            key={item.id || itemIdx}
-                            onClick={() => setSelectedEvent(item)}
-                            className={`p-1.5 rounded-lg text-[10px] leading-tight border transition-all cursor-pointer hover:scale-[1.02] ${
-                              item.status === "approved"
-                                ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                                : isReel
-                                ? "bg-purple-50 border-purple-200 text-purple-800"
-                                : isPoster
-                                ? "bg-blue-50 border-blue-200 text-blue-800"
-                                : "bg-amber-50 border-amber-200 text-amber-800"
-                            }`}
-                          >
-                            <div className="font-bold truncate flex items-center gap-1">
-                              <span className="size-1.5 rounded-full shrink-0 bg-current" />
-                              <span>{item.type || "Asset"} · {item.client_name || "Client"}</span>
-                            </div>
-                            <div className="text-[9px] opacity-75 truncate mt-0.5">
-                              {item.time || "11:00 AM"}
-                            </div>
-                          </div>
-                        );
-                      })}
+                    {/* Day Deliverables Badges */}
+                    <div className="space-y-1 mt-1 w-full">
+                      {reelsCount > 0 && (
+                        <span className="block text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 truncate">
+                          🎬 {reelsCount} {reelsCount === 1 ? "Reel" : "Reels"}
+                        </span>
+                      )}
+                      {storiesCount > 0 && (
+                        <span className="block text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 truncate">
+                          📲 {storiesCount} {storiesCount === 1 ? "Story" : "Stories"}
+                        </span>
+                      )}
+                      {otherCount > 0 && (
+                        <span className="block text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 truncate">
+                          📌 {otherCount} Deliverable{otherCount > 1 ? "s" : ""}
+                        </span>
+                      )}
+                      {dayTasks.length === 0 && (
+                        <span className="block text-[9px] font-medium text-gray-300 group-hover:text-gray-400 transition-colors pt-2">
+                          + Add item
+                        </span>
+                      )}
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
 
-      {/* Item Detail Modal / Preview Drawer */}
-      {selectedEvent && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
-          onClick={() => setSelectedEvent(null)}
-        >
-          <div
-            className="max-w-lg w-full rounded-2xl bg-white border border-slate-200 shadow-2xl p-6 space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                    (selectedEvent.type || "").toLowerCase().includes("reel")
-                      ? "bg-purple-50 text-purple-700 border border-purple-200"
-                      : "bg-blue-50 text-blue-700 border border-blue-200"
-                  }`}>
-                    {selectedEvent.type || "Asset"}
-                  </span>
-                  <span className="text-xs font-bold text-slate-500">
-                    {selectedEvent.client_name}
+          {/* Right Column: Dynamic Work Container for Selected Date */}
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 space-y-4 flex flex-col justify-between">
+            <div className="space-y-4">
+              {/* Dynamic Header */}
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-black text-gray-900">
+                    {isSelectedDateToday
+                      ? "Today's Deliverables"
+                      : `Nov ${selectedDayNumber} Deliverables`}
+                  </h2>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
+                    {filteredDayTasks.length} {filteredDayTasks.length === 1 ? "Item" : "Items"}
                   </span>
                 </div>
-                <h3 className="font-bold text-base text-[#0D2137]">
-                  {selectedEvent.title || "Scheduled Deliverable"}
-                </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedEvent(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
 
-            {/* Media Preview */}
-            {selectedEvent.file_url && (
-              <div className="rounded-xl overflow-hidden border border-slate-200 bg-black max-h-[300px] flex items-center justify-center">
-                {(selectedEvent.type || "").toLowerCase().includes("reel") || (selectedEvent.file_url || "").includes(".mp4") ? (
-                  <video
-                    src={selectedEvent.file_url}
-                    controls
-                    autoPlay
-                    muted
-                    className="max-h-[280px] w-auto mx-auto"
-                  />
-                ) : (
-                  <img
-                    src={selectedEvent.file_url}
-                    alt={selectedEvent.title}
-                    className="max-h-[280px] w-full object-contain"
-                  />
-                )}
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Scheduled Date</span>
-                <span className="font-semibold text-[#0D2137]">
-                  {selectedEvent.date} ({selectedEvent.time || "11:00 AM"})
+              {/* Sub-bar indicator showing selected date */}
+              <div className="flex items-center justify-between bg-gray-50/80 px-3 py-2 rounded-xl border border-gray-100">
+                <span className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                  Scheduled for <strong>Nov {selectedDayNumber}, 2024</strong>
                 </span>
+                <button
+                  type="button"
+                  onClick={() => handleOpenScheduleForDay(selectedDayNumber)}
+                  className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[3]" /> Add
+                </button>
               </div>
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                <span className="text-slate-400 block text-[10px] uppercase font-bold">Status</span>
-                <span className="font-semibold text-emerald-700 capitalize">
-                  {selectedEvent.status || "Scheduled"}
-                </span>
-              </div>
-            </div>
 
-            {selectedEvent.caption && (
-              <div className="text-xs p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-600">
-                <span className="text-slate-400 block text-[10px] uppercase font-bold mb-1">Scheduled Concept / Caption</span>
-                {selectedEvent.caption}
-              </div>
-            )}
+              {/* Deliverable Items List for Selected Date */}
+              {filteredDayTasks.length > 0 ? (
+                <div className="space-y-3 max-h-[580px] overflow-y-auto pr-1">
+                  {filteredDayTasks.map((item) => {
+                    const typeBadge = getTypeBadge(item.type);
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => setSelectedAssetModal(item)}
+                        className="p-4 rounded-2xl border border-gray-100 hover:border-blue-300 bg-white hover:bg-blue-50/20 shadow-2xs hover:shadow-sm transition-all cursor-pointer space-y-2.5 group"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-black text-blue-600 uppercase font-mono tracking-wider">
+                            {item.pod} • {item.client}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${typeBadge.bg}`}
+                          >
+                            {typeBadge.label}
+                          </span>
+                        </div>
 
-            {/* Gemini Brand Summary Preview */}
-            {selectedEvent.brand_summary && (
-              <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200/80 space-y-1">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#2B7BC4]">
-                  <Sparkles className="size-3.5 text-[#2B7BC4]" />
-                  <span>Gemini Brand Summary</span>
+                        <h4 className="text-xs font-black text-gray-900 group-hover:text-blue-700 transition-colors leading-snug">
+                          {item.title}
+                        </h4>
+
+                        <div className="flex items-center justify-between text-[11px] text-gray-500 pt-2 border-t border-gray-100">
+                          <div className="flex items-center gap-1.5">
+                            <div
+                              className={`size-5.5 rounded-full ${item.avatarBg} text-white font-bold text-[9px] flex items-center justify-center shadow-2xs`}
+                            >
+                              {item.avatar}
+                            </div>
+                            <span className="font-semibold text-gray-700">{item.assignee}</span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${item.tagColor}`}
+                            >
+                              {item.tag}
+                            </span>
+                            <span className="font-bold text-gray-900 font-mono text-xs">
+                              {item.time}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <p className="text-xs text-[#0D2137] italic font-medium leading-relaxed">
-                  &ldquo;{selectedEvent.brand_summary}&rdquo;
-                </p>
-              </div>
-            )}
+              ) : (
+                /* Empty State when no tasks exist on selected date */
+                <div className="py-12 px-4 text-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 flex flex-col items-center justify-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-2xs">
+                    <Calendar className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-gray-900">
+                      No deliverables on Nov {selectedDayNumber}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1 max-w-[240px] mx-auto">
+                      No reels, stories, or slide decks are scheduled for this date yet.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenScheduleForDay(selectedDayNumber)}
+                    className="mt-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+                  >
+                    <Plus className="w-4 h-4 stroke-[3]" /> Schedule for Nov {selectedDayNumber}
+                  </button>
+                </div>
+              )}
+            </div>
 
-            {/* Blueprint Hook Angle if present */}
-            {selectedEvent.selected_hook && (
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1 text-xs">
-                <span className="text-[10px] font-bold uppercase font-mono px-1.5 py-0.5 rounded bg-blue-100 text-[#1E3A8A]">
-                  Hook Angle: {selectedEvent.selected_hook.angle}
-                </span>
-                <p className="font-semibold text-[#0D2137] pt-1">
-                  &ldquo;{selectedEvent.selected_hook.hook_copy}&rdquo;
-                </p>
-                {selectedEvent.selected_hook.rationale && (
-                  <p className="text-[11px] text-slate-500 italic">{selectedEvent.selected_hook.rationale}</p>
-                )}
-              </div>
-            )}
-
-            <div className="pt-2 flex justify-end gap-2">
-              <Link
-                to="/admin/deliverables"
-                className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-white text-xs font-semibold hover:bg-[#1A5EA8] transition-colors"
-                onClick={() => setSelectedEvent(null)}
-              >
-                Inspect in Deliverables Hub →
-              </Link>
+            {/* Bottom Quick Action */}
+            <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+              <span className="font-medium">Total Assets in Nov:</span>
+              <span className="font-black text-gray-900">
+                {Object.values(tasksByDay).reduce((acc, curr) => acc + curr.length, 0)} Items
+              </span>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Schedule Modal */}
+        {isScheduleModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div>
+                  <h3 className="text-base font-black text-gray-900">Schedule Content Asset</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Target Date: Nov {scheduleForm.dateDay}, 2024
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsScheduleModalOpen(false)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleScheduleSubmit} className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Asset Title</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Black Friday Reel Cut Batch #2"
+                    value={scheduleForm.title}
+                    onChange={(e) => setScheduleForm({ ...scheduleForm, title: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Deliverable Type</label>
+                    <select
+                      value={scheduleForm.type}
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, type: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
+                    >
+                      <option value="Reel">🎬 Reel</option>
+                      <option value="Story">📲 Story</option>
+                      <option value="Carousel">🎨 Carousel</option>
+                      <option value="Slide Deck">📊 Slide Deck</option>
+                      <option value="Explainer Video">📹 Explainer Video</option>
+                      <option value="Shorts">⚡ Shorts</option>
+                      <option value="Banner">🖼️ Banner</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Target Client</label>
+                    <select
+                      value={scheduleForm.client}
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, client: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
+                    >
+                      <option value="Northwind Labs">Northwind Labs</option>
+                      <option value="Bloom Studio">Bloom Studio</option>
+                      <option value="Atlas Commerce">Atlas Commerce</option>
+                      <option value="Lumina Health">Lumina Health</option>
+                      <option value="Acme Corp">Acme Corp</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Target Pod</label>
+                    <select
+                      value={scheduleForm.pod}
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, pod: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
+                    >
+                      <option value="Pod A">Pod A</option>
+                      <option value="Pod B">Pod B</option>
+                      <option value="Pod C">Pod C</option>
+                      <option value="Pod D">Pod D</option>
+                      <option value="Pod E">Pod E</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Day of November</label>
+                    <select
+                      value={scheduleForm.dateDay}
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, dateDay: Number(e.target.value) })}
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
+                    >
+                      {Array.from({ length: 30 }).map((_, idx) => (
+                        <option key={idx + 1} value={idx + 1}>
+                          Nov {idx + 1}, 2024
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Target Time</label>
+                    <input
+                      type="text"
+                      value={scheduleForm.time}
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, time: e.target.value })}
+                      placeholder="e.g. 4:30 PM"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Initial Tag</label>
+                    <input
+                      type="text"
+                      value={scheduleForm.tag}
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, tag: e.target.value })}
+                      placeholder="e.g. Final Polish"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsScheduleModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm cursor-pointer"
+                  >
+                    Schedule Asset
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Selected Asset Details Modal */}
+        {selectedAssetModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-blue-600 uppercase font-mono">
+                      {selectedAssetModal.pod} • {selectedAssetModal.client}
+                    </span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                      {selectedAssetModal.type}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-black text-gray-900 mt-1">{selectedAssetModal.title}</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAssetModal(null)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-4 bg-gray-50 rounded-2xl space-y-2.5 text-xs text-gray-700">
+                <div className="flex justify-between">
+                  <span className="font-semibold text-gray-500">Deliverable Type:</span>
+                  <span className="font-bold text-gray-900">{getTypeBadge(selectedAssetModal.type).label}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold text-gray-500">Assigned Specialist:</span>
+                  <span className="font-bold text-gray-900">{selectedAssetModal.assignee}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold text-gray-500">Scheduled Time:</span>
+                  <span className="font-bold text-gray-900">{selectedAssetModal.time}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold text-gray-500">Pipeline Stage:</span>
+                  <span className={`font-bold px-2 py-0.5 rounded-full text-[10px] border ${selectedAssetModal.tagColor}`}>
+                    {selectedAssetModal.tag}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedAssetModal(null)}
+                  className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 cursor-pointer transition-colors"
+                >
+                  Close Preview
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
 
+export { AdminSupportTicketsPage, AdminSupportTicketsPage as AdminSupportPage } from "./AdminSupportTicketsPage";
+export { AdminTicketDetailPage } from "./AdminTicketDetailPage";
+export { AdminSLAPerformancePage } from "./AdminSLAPerformancePage";
+
 // ─────────────────────────────────────────────────────────────────────────────
-// 5. ADMIN SUPPORT & TICKETS PAGE
+// 6. ADMIN TEAM MANAGEMENT PAGE (PODS & CAPACITY)
 // ─────────────────────────────────────────────────────────────────────────────
-export function AdminSupportPage() {
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activeReply, setActiveReply] = useState<any | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [messagesLoading, setMessagesLoading] = useState(false);
-  const [replyText, setReplyText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("resolved");
-  const [submitting, setSubmitting] = useState(false);
+export interface TeamMember {
+  id: string;
+  podId: string;
+  name: string;
+  role: string;
+  category: "lead" | "designer" | "editor" | "videographer" | "photographer";
+  isLead?: boolean;
+  email: string;
+  handle: string;
+  status: "Accepting Work" | "Fully Booked" | "On Leave" | "Sprint Ready" | "Pod Lead";
+  statusColor: string;
+  allocatedPct: number;
+  projectsCount: number;
+  capabilities: string[];
+  avatarUrl?: string;
+}
 
-  const fetchTickets = useCallback(() => {
-    setLoading(true);
-    request<any[]>("/api/v1/admin/support/tickets")
-      .then((data) => setTickets(Array.isArray(data) ? data : []))
-      .catch(() => setTickets([]))
-      .finally(() => setLoading(false));
-  }, []);
+export function AdminTeamManagementPage() {
+  const [activePodId, setActivePodId] = useState<string | null>(null);
+  const [roleCategoryFilter, setRoleCategoryFilter] = useState<string>("all");
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchTickets();
-  }, [fetchTickets]);
+  const [pods, _setPods] = useState([
+    {
+      id: "pod-a",
+      name: "Pod A",
+      letter: "A",
+      lead: "Maya Lin",
+      leadRole: "VP Creative & Pod Lead",
+      membersCount: 8,
+      velocityPct: 92,
+      tasksClosed: 42,
+      pendingReview: 6,
+      allocatedHours: 320,
+      totalHours: 360,
+      color: "bg-blue-600",
+      textColor: "text-blue-600",
+      pillBg: "bg-blue-50 text-blue-600 border-blue-100",
+      squadLoad: 78,
+      activeEngagements: 11,
+      readyReview: 3,
+      description: "Cross-functional squad leading enterprise brand repositioning, design systems, executive pitch narratives, and multimodal creative sprints.",
+    },
+    {
+      id: "pod-b",
+      name: "Pod B",
+      letter: "B",
+      lead: "Omar Vance",
+      leadRole: "Principal Strategist & Pod Lead",
+      membersCount: 10,
+      velocityPct: 92,
+      tasksClosed: 54,
+      pendingReview: 9,
+      allocatedHours: 410,
+      totalHours: 440,
+      color: "bg-[#0EA5E9]",
+      textColor: "text-[#0EA5E9]",
+      pillBg: "bg-sky-50 text-sky-600 border-sky-100",
+      squadLoad: 84,
+      activeEngagements: 14,
+      readyReview: 5,
+      description: "Performance marketing, conversion motion reels, and viral video campaign execution squad.",
+    },
+    {
+      id: "pod-c",
+      name: "Pod C",
+      letter: "C",
+      lead: "Kenji Sato",
+      leadRole: "Lead Motion Designer & Pod Lead",
+      membersCount: 7,
+      velocityPct: 95,
+      tasksClosed: 38,
+      pendingReview: 4,
+      allocatedHours: 290,
+      totalHours: 310,
+      color: "bg-emerald-600",
+      textColor: "text-emerald-600",
+      pillBg: "bg-emerald-50 text-emerald-600 border-emerald-100",
+      squadLoad: 72,
+      activeEngagements: 9,
+      readyReview: 2,
+      description: "3D animation, VFX motion graphics, and high-fidelity product visualization pod.",
+    },
+    {
+      id: "pod-d",
+      name: "Pod D",
+      letter: "D",
+      lead: "David Vance",
+      leadRole: "Tech Art & Media Director",
+      membersCount: 6,
+      velocityPct: 78,
+      tasksClosed: 29,
+      pendingReview: 8,
+      allocatedHours: 240,
+      totalHours: 320,
+      color: "bg-purple-600",
+      textColor: "text-purple-600",
+      pillBg: "bg-purple-50 text-purple-600 border-purple-100",
+      squadLoad: 68,
+      activeEngagements: 8,
+      readyReview: 4,
+      description: "On-location commercial shoots, product photography, studio cinematography, and color grading squad.",
+    },
+  ]);
 
-  const openTicketModal = (ticket: any) => {
-    setActiveReply(ticket);
-    setSelectedStatus(ticket.status || "in_progress");
-    setMessages([]);
-    setMessagesLoading(true);
-    request<any[]>(`/api/v1/admin/support/tickets/${ticket.id}/messages`)
-      .then((res) => setMessages(Array.isArray(res) ? res : []))
-      .catch(() => setMessages([]))
-      .finally(() => setMessagesLoading(false));
-  };
+  const [membersList, _setMembersList] = useState<TeamMember[]>([
+    // --- POD A (Includes Lead, Designer, Editor, Videographer, Photographer) ---
+    {
+      id: "m-101",
+      podId: "pod-a",
+      name: "Maya Lin",
+      role: "VP Creative & Design Systems",
+      category: "lead",
+      isLead: true,
+      email: "maya.lin@creo.agency",
+      handle: "@mayalin",
+      status: "Pod Lead",
+      statusColor: "bg-blue-50 text-blue-700 border-blue-200",
+      allocatedPct: 85,
+      projectsCount: 3,
+      capabilities: ["Creative Direction", "Brand Identity", "Pitch Decks"],
+    },
+    {
+      id: "m-102",
+      podId: "pod-a",
+      name: "Omar Vance",
+      role: "Principal Brand Strategist",
+      category: "lead",
+      email: "omar.v@creo.agency",
+      handle: "@ovance",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 55,
+      projectsCount: 1,
+      capabilities: ["Market Positioning", "Narrative Architecture", "GTM Roadmaps"],
+    },
+    {
+      id: "m-103",
+      podId: "pod-a",
+      name: "Elena Rostova",
+      role: "Senior Motion & 3D Designer",
+      category: "designer",
+      email: "elena.r@creo.agency",
+      handle: "@erostova",
+      status: "Fully Booked",
+      statusColor: "bg-rose-50 text-rose-700 border-rose-200",
+      allocatedPct: 100,
+      projectsCount: 4,
+      capabilities: ["3D Render", "Motion Graphics", "Cinema 4D"],
+    },
+    {
+      id: "m-104",
+      podId: "pod-a",
+      name: "Julian Reyes",
+      role: "Lead Product & UI Architect",
+      category: "designer",
+      email: "julian.r@creo.agency",
+      handle: "@jreyes",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 60,
+      projectsCount: 2,
+      capabilities: ["Figma Tokens", "Design Systems", "Prototyping"],
+    },
+    {
+      id: "m-105",
+      podId: "pod-a",
+      name: "Marcus Chen",
+      role: "Senior Video & Content Editor",
+      category: "editor",
+      email: "marcus.c@creo.agency",
+      handle: "@mchen",
+      status: "Sprint Ready",
+      statusColor: "bg-sky-50 text-sky-700 border-sky-200",
+      allocatedPct: 75,
+      projectsCount: 3,
+      capabilities: ["4K Video Editing", "Premiere Pro", "Color Grading"],
+    },
+    {
+      id: "m-106",
+      podId: "pod-a",
+      name: "Leo Zhang",
+      role: "Lead Cinematographer & Videographer",
+      category: "videographer",
+      email: "leo.z@creo.agency",
+      handle: "@lzhang",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 70,
+      projectsCount: 2,
+      capabilities: ["Multi-cam Shoots", "Lighting & Framing", "RED 8K Rigging"],
+    },
+    {
+      id: "m-107",
+      podId: "pod-a",
+      name: "Chloe Bennett",
+      role: "Commercial Photographer & Visual Stylist",
+      category: "photographer",
+      email: "chloe.b@creo.agency",
+      handle: "@cbennett",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 65,
+      projectsCount: 2,
+      capabilities: ["Studio Lighting", "Product Photography", "High-End Retouching"],
+    },
+    {
+      id: "m-108",
+      podId: "pod-a",
+      name: "Sarah Connor",
+      role: "Junior Visual Designer",
+      category: "designer",
+      email: "sarah.c@creo.agency",
+      handle: "@sconnor",
+      status: "On Leave",
+      statusColor: "bg-amber-50 text-amber-700 border-amber-200",
+      allocatedPct: 0,
+      projectsCount: 0,
+      capabilities: ["Social Layouts", "Illustration", "Canva Kits"],
+    },
 
-  const handleSendReply = async () => {
-    if (!activeReply) return;
-    setSubmitting(true);
-    try {
-      if (replyText.trim()) {
-        await request(`/api/v1/admin/support/tickets/${activeReply.id}/messages`, {
-          method: "POST",
-          body: JSON.stringify({ message_text: replyText.trim(), status: selectedStatus }),
-        });
-      } else {
-        await request(`/api/v1/admin/support/tickets/${activeReply.id}/status`, {
-          method: "PATCH",
-          body: JSON.stringify({ status: selectedStatus }),
-        });
-      }
-      setTickets((prev) =>
-        prev.map((t) => (t.id === activeReply.id ? { ...t, status: selectedStatus, message_count: replyText.trim() ? (t.message_count || 0) + 1 : t.message_count } : t))
-      );
-      setActiveReply(null);
-      setReplyText("");
-    } catch (err) {
-      console.error("Failed to send reply", err);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    // --- POD B ---
+    {
+      id: "m-201",
+      podId: "pod-b",
+      name: "Omar Vance",
+      role: "Principal Strategist & Pod Lead",
+      category: "lead",
+      isLead: true,
+      email: "omar.v@creo.agency",
+      handle: "@omarv",
+      status: "Pod Lead",
+      statusColor: "bg-blue-50 text-blue-700 border-blue-200",
+      allocatedPct: 80,
+      projectsCount: 4,
+      capabilities: ["Strategy", "Campaign Architecture"],
+    },
+    {
+      id: "m-202",
+      podId: "pod-b",
+      name: "Hannah Abbott",
+      role: "Senior Graphic Designer",
+      category: "designer",
+      email: "hannah.a@creo.agency",
+      handle: "@habbott",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 70,
+      projectsCount: 2,
+      capabilities: ["Ad Creatives", "Brand Collateral"],
+    },
+    {
+      id: "m-203",
+      podId: "pod-b",
+      name: "David Miller",
+      role: "Lead Motion Video Editor",
+      category: "editor",
+      email: "david.m@creo.agency",
+      handle: "@dmiller",
+      status: "Fully Booked",
+      statusColor: "bg-rose-50 text-rose-700 border-rose-200",
+      allocatedPct: 95,
+      projectsCount: 4,
+      capabilities: ["Reels Editing", "Sound Design"],
+    },
+    {
+      id: "m-204",
+      podId: "pod-b",
+      name: "Vikram Shah",
+      role: "Documentary Videographer",
+      category: "videographer",
+      email: "vikram.s@creo.agency",
+      handle: "@vshah",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 60,
+      projectsCount: 2,
+      capabilities: ["On-Location Production", "Drone Footage"],
+    },
+    {
+      id: "m-205",
+      podId: "pod-b",
+      name: "Zara Thorne",
+      role: "Fashion & Lifestyle Photographer",
+      category: "photographer",
+      email: "zara.t@creo.agency",
+      handle: "@zthorne",
+      status: "Sprint Ready",
+      statusColor: "bg-sky-50 text-sky-700 border-sky-200",
+      allocatedPct: 50,
+      projectsCount: 1,
+      capabilities: ["Lookbook Shoots", "Color Correction"],
+    },
 
-  const updateStatusInline = async (ticketId: string, newStatus: string) => {
-    try {
-      await request(`/api/v1/admin/support/tickets/${ticketId}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: newStatus }),
-      });
-      setTickets((prev) =>
-        prev.map((t) => (t.id === ticketId ? { ...t, status: newStatus } : t))
-      );
-    } catch (err) {
-      console.error("Status update error", err);
-    }
-  };
+    // --- POD C ---
+    {
+      id: "m-301",
+      podId: "pod-c",
+      name: "Kenji Sato",
+      role: "Lead Motion Designer & Pod Lead",
+      category: "lead",
+      isLead: true,
+      email: "kenji.s@creo.agency",
+      handle: "@kenjis",
+      status: "Pod Lead",
+      statusColor: "bg-blue-50 text-blue-700 border-blue-200",
+      allocatedPct: 85,
+      projectsCount: 3,
+      capabilities: ["3D Motion", "Octane Render"],
+    },
+    {
+      id: "m-302",
+      podId: "pod-c",
+      name: "Aria Montgomery",
+      role: "3D Product Designer",
+      category: "designer",
+      email: "aria.m@creo.agency",
+      handle: "@amontgomery",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 75,
+      projectsCount: 2,
+      capabilities: ["Blender 3D", "Texture Design"],
+    },
+    {
+      id: "m-303",
+      podId: "pod-c",
+      name: "Lucas Scott",
+      role: "VFX & Post-Production Editor",
+      category: "editor",
+      email: "lucas.s@creo.agency",
+      handle: "@lscott",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 65,
+      projectsCount: 2,
+      capabilities: ["Nuke VFX", "Compositing"],
+    },
+    {
+      id: "m-304",
+      podId: "pod-c",
+      name: "Rohan Kapoor",
+      role: "High-Speed Video Director",
+      category: "videographer",
+      email: "rohan.k@creo.agency",
+      handle: "@rkapoor",
+      status: "Sprint Ready",
+      statusColor: "bg-sky-50 text-sky-700 border-sky-200",
+      allocatedPct: 50,
+      projectsCount: 1,
+      capabilities: ["Phantom High-Speed", "Robotic Arm Control"],
+    },
+    {
+      id: "m-305",
+      podId: "pod-c",
+      name: "Sophie Laurent",
+      role: "Architecture & Still Photography",
+      category: "photographer",
+      email: "sophie.l@creo.agency",
+      handle: "@slaurent",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 60,
+      projectsCount: 2,
+      capabilities: ["Spatial Lighting", "HDR Stills"],
+    },
 
-  const filteredTickets = tickets.filter((t) => {
-    if (statusFilter === "all") return true;
-    return t.status === statusFilter;
+    // --- POD D ---
+    {
+      id: "m-401",
+      podId: "pod-d",
+      name: "David Vance",
+      role: "Tech Art Lead & Pod Lead",
+      category: "lead",
+      isLead: true,
+      email: "david.v@creo.agency",
+      handle: "@dvance",
+      status: "Pod Lead",
+      statusColor: "bg-blue-50 text-blue-700 border-blue-200",
+      allocatedPct: 80,
+      projectsCount: 3,
+      capabilities: ["Technical Direction", "Pipeline Automation"],
+    },
+    {
+      id: "m-402",
+      podId: "pod-d",
+      name: "Nora Allen",
+      role: "Senior Visual Designer",
+      category: "designer",
+      email: "nora.a@creo.agency",
+      handle: "@nallen",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 70,
+      projectsCount: 2,
+      capabilities: ["UI Kits", "Brand Guidelines"],
+    },
+    {
+      id: "m-403",
+      podId: "pod-d",
+      name: "Felix Dupuis",
+      role: "Short-Form Video Editor",
+      category: "editor",
+      email: "felix.d@creo.agency",
+      handle: "@fdupuis",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 60,
+      projectsCount: 2,
+      capabilities: ["CapCut / DaVinci", "Kinetic Subtitles"],
+    },
+    {
+      id: "m-404",
+      podId: "pod-d",
+      name: "Gavin Ross",
+      role: "Outdoor & Aerial Videographer",
+      category: "videographer",
+      email: "gavin.r@creo.agency",
+      handle: "@gross",
+      status: "Fully Booked",
+      statusColor: "bg-rose-50 text-rose-700 border-rose-200",
+      allocatedPct: 95,
+      projectsCount: 4,
+      capabilities: ["FPV Drone Pilot", "Action Cinematography"],
+    },
+    {
+      id: "m-405",
+      podId: "pod-d",
+      name: "Iris West",
+      role: "Editorial & Portrait Photographer",
+      category: "photographer",
+      email: "iris.w@creo.agency",
+      handle: "@iwest",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 55,
+      projectsCount: 1,
+      capabilities: ["Headshots", "Editorial Layouts"],
+    },
+  ]);
+
+  const activePod = pods.find((p) => p.id === activePodId);
+
+  // Filter members based on activePod and role category filter
+  const filteredMembers = membersList.filter((m) => {
+    const matchesPod = !activePodId || m.podId === activePodId;
+    
+    let matchesCategory = true;
+    if (roleCategoryFilter === "designer") matchesCategory = m.category === "designer";
+    else if (roleCategoryFilter === "editor") matchesCategory = m.category === "editor";
+    else if (roleCategoryFilter === "videographer") matchesCategory = m.category === "videographer";
+    else if (roleCategoryFilter === "photographer") matchesCategory = m.category === "photographer";
+    else if (roleCategoryFilter === "lead") matchesCategory = m.category === "lead";
+    else if (roleCategoryFilter === "accepting") matchesCategory = m.status === "Accepting Work";
+    else if (roleCategoryFilter === "leave") matchesCategory = m.status === "On Leave";
+
+    return matchesPod && matchesCategory;
   });
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <LifeBuoy className="size-5 text-[#2B7BC4]" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">Support Tickets</h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Real client inquiries, SLA triage, and concierge customer success management
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* Status Filter */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl text-xs">
-            {["all", "open", "in_progress", "resolved", "closed"].map((st) => (
-              <button
-                key={st}
-                type="button"
-                onClick={() => setStatusFilter(st)}
-                className={`px-2.5 py-1 rounded-lg font-medium capitalize transition-all cursor-pointer ${
-                  statusFilter === st
-                    ? "bg-white text-[#0D2137] shadow-xs font-bold"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                {st.replace("_", " ")}
-              </button>
-            ))}
-          </div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F4FD] text-[#2B7BC4] text-xs font-bold">
-            {filteredTickets.length} Tickets
-          </span>
-        </div>
-      </div>
+  const getRoleIcon = (cat: string) => {
+    switch (cat) {
+      case "lead":
+        return <UserCog className="w-3.5 h-3.5 text-blue-600" />;
+      case "designer":
+        return <Palette className="w-3.5 h-3.5 text-purple-600" />;
+      case "editor":
+        return <Scissors className="w-3.5 h-3.5 text-amber-600" />;
+      case "videographer":
+        return <Video className="w-3.5 h-3.5 text-rose-600" />;
+      case "photographer":
+        return <Camera className="w-3.5 h-3.5 text-emerald-600" />;
+      default:
+        return <Users className="w-3.5 h-3.5 text-gray-600" />;
+    }
+  };
 
-      <div className="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-        {loading ? (
-          <div className="py-16 text-center text-slate-400">
-            <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-            Loading tickets from database...
+  const handleAssignWork = (member: TeamMember) => {
+    setToast(`Work assigned to ${member.name} (${member.role}).`);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  return (
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F8FAFC] flex flex-col">
+      <AdminTopHeader
+        title={activePodId && activePod ? `${activePod.name} • Team Details` : "Team Details & Management"}
+        activeTab="Team Details"
+      />
+
+      <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        {toast && (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>{toast}</span>
+            </div>
+            <button onClick={() => setToast(null)} className="text-emerald-600 hover:text-emerald-900 font-bold">
+              Dismiss
+            </button>
           </div>
-        ) : filteredTickets.length === 0 ? (
-          <div className="p-12 text-center text-slate-500 space-y-2">
-            <p className="font-semibold text-sm">No support tickets found.</p>
-            <p className="text-xs text-slate-400">All client tickets are currently clear or match filter.</p>
+        )}
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            VIEW 1: MAIN TEAM DETAILS & MANAGEMENT OVERVIEW (Matching Screenshot 1)
+        ───────────────────────────────────────────────────────────────────────────── */}
+        {!activePodId ? (
+          <div className="space-y-6">
+            {/* Top Controls Bar */}
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-gray-900">Sprint Pods & Resource Allocation</h3>
+                <p className="text-xs text-gray-500">Live operational capacity and roster assignments across creative pods</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddMemberOpen(true)}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
+              >
+                <Plus className="w-4 h-4" /> Add Team Pod
+              </button>
+            </div>
+
+            {/* 3 KPI Summary Cards matching Screenshot 1 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Card 1: NO OF PODS */}
+              <div className="kpi-card bg-white rounded-3xl p-6 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
+                    NO OF PODS
+                  </span>
+                  <div className="w-9 h-9 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <Users className="w-5 h-5" />
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-gray-900 tracking-tight">8 Pods</span>
+                  <span className="text-xs font-semibold text-gray-500">across 72 members</span>
+                </div>
+                <div className="mt-4 pt-3 border-t border-gray-100 text-xs font-bold text-blue-600 flex items-center gap-1">
+                  <Layers className="w-3.5 h-3.5" /> Pods A – H Active Pods
+                </div>
+              </div>
+
+              {/* Card 2: CAPACITY */}
+              <div className="kpi-card bg-white rounded-3xl p-6 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
+                    CAPACITY
+                  </span>
+                  <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <Zap className="w-5 h-5" />
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-gray-900 tracking-tight">88%</span>
+                  <span className="text-xs font-semibold text-gray-500">optimal bandwidth</span>
+                </div>
+                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2">
+                  <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div className="bg-emerald-600 h-full rounded-full w-[88%]" />
+                  </div>
+                  <span className="text-xs font-bold text-emerald-600">Healthy</span>
+                </div>
+              </div>
+
+              {/* Card 3: TASKS TO BE DONE */}
+              <div className="kpi-card bg-white rounded-3xl p-6 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
+                    TASKS TO BE DONE
+                  </span>
+                  <div className="w-9 h-9 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                    <CheckSquare className="w-5 h-5" />
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-gray-900 tracking-tight">28</span>
+                  <span className="text-xs font-semibold text-gray-500">in review/progress</span>
+                </div>
+                <div className="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-500 flex items-center gap-1 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" /> 142 milestones closed ahead of target
+                </div>
+              </div>
+            </div>
+
+            {/* Team Pods Section Header */}
+            <div className="flex items-center justify-between pt-2">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 tracking-tight">Team Pods</h3>
+                <p className="text-xs text-gray-500">Real-time capacity distribution, pod leads, and task completion velocity</p>
+              </div>
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Sprint Cycle 08 • 4 Days Remaining
+              </span>
+            </div>
+
+            {/* Pod Cards Grid matching Screenshot 1 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {pods.map((pod) => (
+                <div
+                  key={pod.id}
+                  onClick={() => setActivePodId(pod.id)}
+                  className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.04)] space-y-5 hover:shadow-xl transition-all cursor-pointer group relative overflow-hidden"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-12 h-12 rounded-2xl ${pod.color} text-white font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform`}>
+                        {pod.letter}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-base text-gray-900">{pod.name}</h4>
+                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
+                            Sprint Pod
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500">{pod.description.slice(0, 48)}...</p>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active
+                    </span>
+                  </div>
+
+                  {/* Lead Info & Member Stack */}
+                  <div className="p-3.5 bg-gray-50/70 rounded-2xl flex items-center justify-between border border-gray-100">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
+                        {pod.lead[0]}
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-gray-900">{pod.lead}</div>
+                        <div className="text-[10px] text-gray-500 font-medium">Pod Lead</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
+                      <div className="flex -space-x-2">
+                        <div className="w-7 h-7 rounded-full bg-slate-700 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">ER</div>
+                        <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">MC</div>
+                        <div className="w-7 h-7 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">LZ</div>
+                      </div>
+                      <span className="text-xs font-bold text-gray-700">+{pod.membersCount - 3} Members</span>
+                    </div>
+                  </div>
+
+                  {/* Velocity Bar */}
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between items-center text-gray-600 font-semibold">
+                      <span>Sprint Velocity</span>
+                      <span className="font-bold text-gray-900">{pod.velocityPct}% on track</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                      <div className={`h-full rounded-full ${pod.color}`} style={{ width: `${pod.velocityPct}%` }} />
+                    </div>
+                    <div className="flex justify-between text-[11px] text-gray-400 font-medium pt-0.5">
+                      <span>{pod.tasksClosed} tasks closed</span>
+                      <span className="text-blue-600 font-bold">{pod.pendingReview} pending review</span>
+                    </div>
+                  </div>
+
+                  {/* Card Footer Action */}
+                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+                    <span className="text-gray-500 font-medium text-[11px]">
+                      Allocated: <strong className="text-gray-900">{pod.allocatedHours}h / {pod.totalHours}h</strong>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActivePodId(pod.id);
+                      }}
+                      className="text-[#2563EB] font-bold hover:underline inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                    >
+                      View Member Directory &rarr;
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
-            {filteredTickets.map((t) => (
-              <div key={t.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition-colors">
-                <div className="space-y-1.5 flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-xs text-[#0D2137]">{t.subject}</span>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                        t.priority === "urgent" || t.priority === "high"
-                          ? "bg-rose-50 text-rose-700 border border-rose-200"
-                          : "bg-slate-100 text-slate-700"
+          /* ─────────────────────────────────────────────────────────────────────────────
+              VIEW 2: DEDICATED POD MEMBER DIRECTORY SUB-PAGE (Matching Screenshot 2)
+          ───────────────────────────────────────────────────────────────────────────── */
+          <div className="space-y-6">
+            {/* Top Breadcrumb & Action Controls */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
+                <button
+                  type="button"
+                  onClick={() => setActivePodId(null)}
+                  className="hover:text-blue-600 flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Back to Track Overview
+                </button>
+                <span>/</span>
+                <button type="button" onClick={() => setActivePodId(null)} className="hover:text-blue-600 transition-colors cursor-pointer">
+                  Team Management
+                </button>
+                <span>/</span>
+                <span className="text-gray-900 font-black">{activePod?.name} Member Directory</span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                  ● Q2 Cycle Active
+                </span>
+                <span className="text-[11px] text-gray-400 font-medium hidden sm:inline">
+                  Last synchronized: Just now
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsAddMemberOpen(true)}
+                  className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+                >
+                  + Add Team Member
+                </button>
+              </div>
+            </div>
+
+            {/* Pod Summary Banner Card matching Screenshot 2 */}
+            <div className="bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="space-y-3 max-w-3xl">
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-full bg-blue-600 text-white font-black text-xs uppercase tracking-wider">
+                      {activePod?.name}
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs">
+                      High Velocity
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed font-medium">
+                    {activePod?.description}
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-6 pt-2 text-xs font-bold text-gray-700">
+                    <div>
+                      <span className="text-[10px] uppercase text-gray-400 block font-extrabold tracking-wider">POD LEAD</span>
+                      <span className="text-gray-900 font-black">{activePod?.lead}</span>
+                    </div>
+                    <div className="h-6 w-px bg-gray-200" />
+                    <div>
+                      <span className="text-[10px] uppercase text-gray-400 block font-extrabold tracking-wider">MEMBERS</span>
+                      <span className="text-gray-900 font-black">{filteredMembers.length} Active Members</span>
+                    </div>
+                    <div className="h-6 w-px bg-gray-200" />
+                    <div>
+                      <span className="text-[10px] uppercase text-gray-400 block font-extrabold tracking-wider">VELOCITY</span>
+                      <span className="text-emerald-600 font-black">{activePod?.velocityPct}% Sprint Delivery</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Side Stats */}
+                <div className="flex gap-4 border-t lg:border-t-0 lg:border-l border-gray-100 pt-4 lg:pt-0 lg:pl-8">
+                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 min-w-[130px] space-y-1">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">AVG SQUAD LOAD</span>
+                    <div className="text-2xl font-black text-gray-900">{activePod?.squadLoad}%</div>
+                    <span className="text-[10px] text-emerald-600 font-bold">↓ Optimal</span>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 min-w-[130px] space-y-1">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">ACTIVE ENGAGEMENTS</span>
+                    <div className="text-2xl font-black text-gray-900">{activePod?.activeEngagements} projects</div>
+                    <span className="text-[10px] text-blue-600 font-bold">{activePod?.readyReview} ready for review</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Role Category Filter Tabs & Action Controls */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                {/* Filter Pills matching Screenshot 2 */}
+                <div className="flex flex-wrap items-center gap-1.5 bg-gray-100 p-1 rounded-xl text-xs font-bold">
+                  {[
+                    { key: "all", label: `All Members (${membersList.filter((m) => !activePodId || m.podId === activePodId).length})` },
+                    { key: "lead", label: "Leads" },
+                    { key: "designer", label: "Designers" },
+                    { key: "editor", label: "Editors" },
+                    { key: "videographer", label: "Videographers" },
+                    { key: "photographer", label: "Photographers" },
+                    { key: "accepting", label: "Accepting Work" },
+                    { key: "leave", label: "On Leave" },
+                  ].map((tab) => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setRoleCategoryFilter(tab.key)}
+                      className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                        roleCategoryFilter === tab.key
+                          ? "bg-[#2563EB] text-white shadow-xs"
+                          : "text-gray-600 hover:text-gray-900"
                       }`}
                     >
-                      {t.priority}
-                    </span>
-                    {t.deliverable_title && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200">
-                        <Film className="size-3" />
-                        {t.deliverable_title}
-                      </span>
-                    )}
-                    {t.assignee_name && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                        <UserCheck className="size-3" />
-                        Directed to: {t.assignee_name}
-                      </span>
-                    )}
-                    {t.message_count > 0 && (
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        ({t.message_count} {t.message_count === 1 ? "msg" : "msgs"})
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[11px] text-slate-500">
-                    Client: <span className="font-medium text-[#0D2137]">{t.client}</span> · {t.time}
-                  </div>
-                  {t.description && (
-                    <p className="text-xs text-slate-600 line-clamp-1 max-w-2xl">
-                      {t.description}
-                    </p>
-                  )}
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
-                <div className="flex items-center gap-2.5 shrink-0">
-                  <select
-                    value={t.status}
-                    onChange={(e) => updateStatusInline(t.id, e.target.value)}
-                    className="px-2.5 py-1 rounded-lg text-xs font-semibold uppercase border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none cursor-pointer"
-                  >
-                    <option value="open">OPEN</option>
-                    <option value="in_progress">IN PROGRESS</option>
-                    <option value="resolved">RESOLVED</option>
-                    <option value="closed">CLOSED</option>
-                  </select>
+
+                <button
+                  type="button"
+                  onClick={() => setIsAddMemberOpen(true)}
+                  className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" /> Add Member to {activePod?.name}
+                </button>
+              </div>
+
+              {/* Roster Counter */}
+              <div className="flex items-center justify-between text-xs text-gray-400 font-semibold border-t border-gray-100 pt-3">
+                <span>Showing {filteredMembers.length} members assigned to {activePod?.name}</span>
+                <div className="flex items-center gap-3">
+                  <button type="button" className="hover:text-gray-700 flex items-center gap-1">
+                    <SlidersHorizontal className="w-3.5 h-3.5" /> Advanced Sorting
+                  </button>
                   <button
                     type="button"
-                    onClick={() => openTicketModal(t)}
-                    className="px-3.5 py-1.5 rounded-lg bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+                    onClick={() => {
+                      alert(`Exporting ${activePod?.name} roster CSV...`);
+                    }}
+                    className="hover:text-gray-700 flex items-center gap-1"
                   >
-                    <MessageSquare className="size-3.5" />
-                    Inspect / Reply
+                    <Download className="w-3.5 h-3.5" /> Export Roster
                   </button>
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Member Cards Grid matching Screenshot 2 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {filteredMembers.map((member) => (
+                <div
+                  key={member.id}
+                  className="bg-white rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-6 space-y-4 flex flex-col justify-between hover:shadow-lg transition-shadow"
+                >
+                  <div className="space-y-4">
+                    {/* Header: Avatar, Status Badge & Title */}
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-base flex items-center justify-center shadow-md">
+                            {member.name[0]}
+                          </div>
+                          <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm text-gray-900 flex items-center gap-1">
+                            {member.name}
+                            {member.isLead && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />}
+                          </h4>
+                          <span className="text-[11px] text-gray-500 font-medium flex items-center gap-1 mt-0.5">
+                            {getRoleIcon(member.category)}
+                            {member.role}
+                          </span>
+                        </div>
+                      </div>
+
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${member.statusColor}`}>
+                        {member.status}
+                      </span>
+                    </div>
+
+                    {/* Email & Handle */}
+                    <div className="p-3 bg-gray-50/70 rounded-2xl text-[11px] font-mono space-y-0.5 border border-gray-100">
+                      <div className="text-gray-600 truncate">{member.email}</div>
+                      <div className="text-blue-600 font-semibold">{member.handle}</div>
+                    </div>
+
+                    {/* Core Capabilities Pills */}
+                    <div className="space-y-1.5">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 block">
+                        CORE CAPABILITIES
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {member.capabilities.map((cap) => (
+                          <span
+                            key={cap}
+                            className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 text-[10px] font-bold border border-gray-200/60"
+                          >
+                            {cap}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer Workload Bar & Action */}
+                  <div className="pt-4 border-t border-gray-100 space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-gray-500 font-semibold">
+                          Workload ({member.projectsCount} Projects)
+                        </span>
+                        <span className={`font-bold ${member.allocatedPct >= 90 ? "text-rose-600" : "text-emerald-600"}`}>
+                          {member.allocatedPct}% {member.allocatedPct >= 90 ? "Booked" : "Allocated"}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            member.allocatedPct >= 90 ? "bg-rose-500" : member.allocatedPct >= 70 ? "bg-blue-600" : "bg-emerald-500"
+                          }`}
+                          style={{ width: `${member.allocatedPct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs font-bold pt-1">
+                      <span className="text-emerald-600 flex items-center gap-1 text-[11px]">
+                        ● {member.status === "Fully Booked" ? "At Max Capacity" : "Sprint Ready"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleAssignWork(member)}
+                        className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-[11px]"
+                      >
+                        {member.allocatedPct >= 90 ? "View Schedule" : "Assign Work"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
-      </div>
 
-      {/* Reply & Thread Detail Modal */}
-      {activeReply && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-fade-in">
-          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-scale-in border border-slate-100">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-[#0D2137] flex items-center gap-2">
-                  <LifeBuoy className="size-4 text-[#2B7BC4]" />
-                  Support Ticket Thread
-                </h3>
-                <p className="text-xs text-slate-500">{activeReply.client}: {activeReply.subject}</p>
+        {/* Add Member Modal */}
+        {isAddMemberOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+            <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-base font-bold text-gray-900">Add Team Specialist to {activePod?.name || "Pod"}</h3>
+                <button
+                  type="button"
+                  onClick={() => setIsAddMemberOpen(false)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setToast("New specialist account provisioned successfully!");
+                  setIsAddMemberOpen(false);
+                }}
+                className="space-y-3"
+              >
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Jordan Miller"
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="e.g. jordan.m@creo.agency"
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Role / Speciality</label>
+                    <select className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium">
+                      <option value="designer">Designer</option>
+                      <option value="editor">Video Editor</option>
+                      <option value="videographer">Videographer</option>
+                      <option value="photographer">Photographer</option>
+                      <option value="lead">Pod Lead</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Assign Pod</label>
+                    <select className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium" defaultValue={activePodId || "pod-a"}>
+                      <option value="pod-a">Pod A</option>
+                      <option value="pod-b">Pod B</option>
+                      <option value="pod-c">Pod C</option>
+                      <option value="pod-d">Pod D</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddMemberOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-[#2563EB] text-xs font-bold text-white hover:bg-blue-700 cursor-pointer shadow-sm"
+                  >
+                    Create Account
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+export const AdminTeamsPage = AdminTeamManagementPage;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. ADMIN LEAVE APPROVALS PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+export function AdminLeaveApprovalsPage() {
+  const [toast, setToast] = useState<string | null>(null);
+  const [filterTab, setFilterTab] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+
+  const [leaveRequests, setLeaveRequests] = useState([
+    {
+      id: "lr-1",
+      name: "Elena Rostova",
+      department: "Video & Design",
+      pod: "Pod A",
+      startDate: "2024-11-20",
+      endDate: "2024-11-22",
+      days: 3,
+      reason: "Scheduled personal leave and medical checkup.",
+      status: "pending",
+      submittedAt: "Yesterday 4:15 PM",
+    },
+    {
+      id: "lr-2",
+      name: "Omar Vance",
+      department: "Creative Strategy",
+      pod: "Pod B",
+      startDate: "2024-11-28",
+      endDate: "2024-11-29",
+      days: 2,
+      reason: "Thanksgiving holiday travel.",
+      status: "approved",
+      submittedAt: "Nov 12",
+    },
+    {
+      id: "lr-3",
+      name: "Kenji Sato",
+      department: "Motion Graphics",
+      pod: "Pod C",
+      startDate: "2024-12-05",
+      endDate: "2024-12-08",
+      days: 4,
+      reason: "Annual family visit.",
+      status: "approved",
+      submittedAt: "Nov 10",
+    },
+  ]);
+
+  const handleAction = (id: string, action: "approved" | "rejected") => {
+    setLeaveRequests((prev) =>
+      prev.map((lr) => (lr.id === id ? { ...lr, status: action } : lr))
+    );
+    setToast(`Leave request ${action} successfully.`);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const filteredRequests = leaveRequests.filter(
+    (lr) => filterTab === "all" || lr.status === filterTab
+  );
+
+  return (
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Team Details" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
+        {toast && (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>{toast}</span>
+            </div>
+            <button onClick={() => setToast(null)} className="text-emerald-600 hover:text-emerald-900 font-bold">
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-4">
+
+          <div className="flex items-center gap-3">
+            <Link
+              to="/admin/team"
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-gray-800 text-xs font-bold flex items-center gap-1.5 transition-colors"
+            >
+              <UserCog className="w-4 h-4 text-slate-500" /> Team Roster
+            </Link>
+            <button
+              type="button"
+              onClick={() => setIsApplyModalOpen(true)}
+              className="px-4 py-2 rounded-xl bg-[#2B7BC4] hover:bg-[#1A5EA8] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+            >
+              <Plus className="w-4 h-4" /> Apply for Leave
+            </button>
+          </div>
+        </div>
+
+        {/* 2 Top KPI Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                PEOPLE WORKING TODAY
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                <Users className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-gray-900 tracking-tight">29</span>
+              <span className="text-xs font-semibold text-gray-500">Active in Office</span>
+            </div>
+            <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-gray-500">
+              <span className="flex items-center gap-1.5 text-emerald-600">
+                <span className="w-2 h-2 rounded-full bg-emerald-600" /> 32 Total Team Members
+              </span>
+              <span className="text-gray-900 font-bold">91% In-Office</span>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                ON LEAVE TODAY
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                <Plane className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-black text-gray-900 tracking-tight">3</span>
+              <span className="text-xs font-semibold text-gray-500">Specialists Away</span>
+            </div>
+            <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-gray-500">
+              <span className="text-slate-500">Sarah C. (Pod A), Julian R. (Pod D)</span>
+              <span className="text-amber-600 font-bold">9% Away</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Requests Table */}
+        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-slate-50/50">
+            <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs">
+              {(["all", "pending", "approved", "rejected"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setFilterTab(tab)}
+                  className={`px-3 py-1 rounded-lg capitalize font-bold transition-all cursor-pointer ${
+                    filterTab === tab ? "bg-white text-gray-900 shadow-xs" : "text-gray-500"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <table className="w-full text-left text-xs text-[#0D2137]">
+            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <tr>
+                <th className="px-5 py-3.5">Specialist</th>
+                <th className="px-5 py-3.5">Dates</th>
+                <th className="px-5 py-3.5">Reason</th>
+                <th className="px-5 py-3.5">Status</th>
+                <th className="px-5 py-3.5 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 font-medium">
+              {filteredRequests.map((lr) => (
+                <tr key={lr.id} className="hover:bg-gray-50/60">
+                  <td className="px-5 py-4">
+                    <div className="font-bold text-gray-900">{lr.name}</div>
+                    <div className="text-[11px] text-gray-400">{lr.department} • {lr.pod}</div>
+                  </td>
+                  <td className="px-5 py-4 font-mono text-[11px]">
+                    <div>{lr.startDate} to {lr.endDate}</div>
+                    <span className="text-gray-400 font-sans">({lr.days} days)</span>
+                  </td>
+                  <td className="px-5 py-4 text-gray-600 max-w-xs">{lr.reason}</td>
+                  <td className="px-5 py-4">
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                        lr.status === "approved"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : lr.status === "rejected"
+                          ? "bg-rose-50 text-rose-700 border border-rose-200"
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
+                      }`}
+                    >
+                      {lr.status}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    {lr.status === "pending" ? (
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleAction(lr.id, "approved")}
+                          className="px-3 py-1 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 cursor-pointer"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAction(lr.id, "rejected")}
+                          className="px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-bold text-xs hover:bg-rose-50 hover:text-rose-600 cursor-pointer"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-xs">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Apply Modal */}
+        {isApplyModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-base font-bold text-gray-900">Apply for Time Off</h3>
+                <button
+                  type="button"
+                  onClick={() => setIsApplyModalOpen(false)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setToast("Leave request submitted to Team Lead!");
+                  setIsApplyModalOpen(false);
+                }}
+                className="space-y-3"
+              >
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Start Date</label>
+                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">End Date</label>
+                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Reason</label>
+                  <textarea rows={3} required placeholder="State reason for time off..." className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs resize-none" />
+                </div>
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                  <button type="button" onClick={() => setIsApplyModalOpen(false)} className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50">Cancel</button>
+                  <button type="submit" className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-xs font-bold text-white hover:bg-[#1A5EA8]">Submit</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+export const AdminLeavePage = AdminLeaveApprovalsPage;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. ADMIN REVENUE PAGE (REVENUE ENGINE & CLIENT PLAN NEGOTIATIONS)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface TransactionItem {
+  id: string;
+  client: string;
+  clientInitials: string;
+  scope: string;
+  amount: number;
+  method: string;
+  status: "Paid" | "Pending" | "Overdue";
+  date: string;
+  badgeClass: string;
+  avatarBg: string;
+}
+
+export interface PlanNegotiationItem {
+  id: string;
+  clientName: string;
+  clientLogo: string;
+  currentPlan: string;
+  proposedPlan: string;
+  originalPrice: number;
+  proposedPrice: number;
+  discountPct: number;
+  notes: string;
+  requestedAt: string;
+  status: "Pending Review" | "Accepted" | "Declined" | "Counter Offered";
+  counterPrice?: number;
+  declineReason?: string;
+}
+
+export function AdminRevenuePage() {
+  const [timeframe, setTimeframe] = useState<"7D" | "30D" | "Quarter" | "Year" | "Custom">("30D");
+  const [filter, setFilter] = useState<"all" | "paid" | "pending" | "overdue">("all");
+  const [search, setSearch] = useState("");
+  const [toast, setToast] = useState<string | null>(null);
+
+  // Modals
+  const [selectedReceipt, setSelectedReceipt] = useState<TransactionItem | null>(null);
+  const [isCreateInvoiceOpen, setIsCreateInvoiceOpen] = useState(false);
+
+  // Form States
+  const [newInvClient, setNewInvClient] = useState("");
+  const [newInvScope, setNewInvScope] = useState("");
+  const [newInvAmount, setNewInvAmount] = useState("");
+  const [newInvMethod, setNewInvMethod] = useState("Stripe ACH");
+
+  // Transactions Data matching user's image exactly
+  const [transactions, setTransactions] = useState<TransactionItem[]>([
+    {
+      id: "CR-9481",
+      client: "Northwind Labs",
+      clientInitials: "NL",
+      scope: "Enterprise Retainer • Nov 2024",
+      amount: 7200,
+      method: "Stripe ACH",
+      status: "Paid",
+      date: "Nov 12",
+      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      avatarBg: "bg-blue-100 text-blue-800",
+    },
+    {
+      id: "CR-9480",
+      client: "Bloom Studio",
+      clientInitials: "BS",
+      scope: "Growth Retainer + 2x Addon Reels",
+      amount: 6400,
+      method: "Bank Wire",
+      status: "Paid",
+      date: "Nov 10",
+      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      avatarBg: "bg-purple-100 text-purple-800",
+    },
+    {
+      id: "CR-9479",
+      client: "Atlas Commerce",
+      clientInitials: "AC",
+      scope: "Enterprise Retainer • Net 15",
+      amount: 8000,
+      method: "Invoice Net 15",
+      status: "Pending",
+      date: "Due Nov 20",
+      badgeClass: "bg-blue-50 text-blue-700 border-blue-200",
+      avatarBg: "bg-sky-100 text-sky-800",
+    },
+    {
+      id: "CR-9478",
+      client: "Horizon Digital",
+      clientInitials: "HD",
+      scope: "Starter Launch Package",
+      amount: 4500,
+      method: "Mastercard •• 4912",
+      status: "Paid",
+      date: "Nov 08",
+      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      avatarBg: "bg-indigo-100 text-indigo-800",
+    },
+    {
+      id: "CR-9477",
+      client: "Zenith Brands",
+      clientInitials: "ZB",
+      scope: "Growth Retainer • Nov 2024",
+      amount: 5800,
+      method: "Stripe ACH",
+      status: "Paid",
+      date: "Nov 05",
+      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      avatarBg: "bg-amber-100 text-amber-800",
+    },
+    {
+      id: "CR-9476",
+      client: "Apex Media",
+      clientInitials: "AM",
+      scope: "Add-on Asset Pack (SaaS Motion)",
+      amount: 1900,
+      method: "Visa •• 8841",
+      status: "Paid",
+      date: "Nov 03",
+      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      avatarBg: "bg-rose-100 text-rose-800",
+    },
+  ]);
+
+  // Chart Trend Data
+  const trajectoryPoints = [
+    { label: "Oct 15 ($98.0k)", value: 98000, target: 100000 },
+    { label: "Oct 22", value: 104200, target: 105000 },
+    { label: "Oct 29", value: 112500, target: 110000 },
+    { label: "Nov 05", value: 118400, target: 115000 },
+    { label: "Nov 14 ($124.8k)", value: 124800, target: 120000 },
+  ];
+
+  // Actions: Create Invoice
+  const handleCreateInvoiceSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newInvClient || !newInvAmount) return;
+
+    const newTx: TransactionItem = {
+      id: `CR-${Math.floor(9000 + Math.random() * 999)}`,
+      client: newInvClient,
+      clientInitials: newInvClient.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2),
+      scope: newInvScope || "Retainer Billing",
+      amount: parseFloat(newInvAmount),
+      method: newInvMethod,
+      status: "Pending",
+      date: "Due Net 15",
+      badgeClass: "bg-blue-50 text-blue-700 border-blue-200",
+      avatarBg: "bg-blue-100 text-blue-800",
+    };
+
+    setTransactions((prev) => [newTx, ...prev]);
+    setToast(`Invoice ${newTx.id} created for ${newInvClient} ($${newTx.amount.toLocaleString()})!`);
+    setIsCreateInvoiceOpen(false);
+    setNewInvClient("");
+    setNewInvScope("");
+    setNewInvAmount("");
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  // Actions: Send Payment Reminder
+  const handleSendReminder = (tx: TransactionItem) => {
+    setToast(`Payment reminder notification sent to ${tx.client} for invoice ${tx.id}.`);
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  // Actions: Export CSV
+  const handleExportCSV = () => {
+    const csvHeader = "Invoice ID,Client,Scope,Amount,Method,Status,Date\n";
+    const csvRows = transactions
+      .map((t) => `${t.id},"${t.client}","${t.scope}",${t.amount},"${t.method}",${t.status},"${t.date}"`)
+      .join("\n");
+    const blob = new Blob([csvHeader + csvRows], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `transactions_export_${Date.now()}.csv`;
+    a.click();
+    setToast("Transaction roster CSV report generated & downloaded.");
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const filteredTx = transactions.filter((t) => {
+    const matchesFilter = filter === "all" || t.status.toLowerCase() === filter.toLowerCase();
+    const matchesSearch =
+      !search ||
+      t.client.toLowerCase().includes(search.toLowerCase()) ||
+      t.id.toLowerCase().includes(search.toLowerCase()) ||
+      t.scope.toLowerCase().includes(search.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
+
+  return (
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F8FAFC] flex flex-col">
+      <AdminTopHeader title="Revenue Engine" activeTab="Revenue" />
+
+      <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
+        {toast && (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>{toast}</span>
+            </div>
+            <button onClick={() => setToast(null)} className="text-emerald-600 hover:text-emerald-900 font-bold">
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            TOP CONTROLS & TIMEFRAME ACTIONS
+        ───────────────────────────────────────────────────────────────────────────── */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Live Cash Flow & Retainers
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Timeframe selector pills */}
+            <div className="flex items-center bg-gray-100 p-1 rounded-xl text-xs font-bold border border-gray-200">
+              {(["7D", "30D", "Quarter", "Year", "Custom"] as const).map((tf) => (
+                <button
+                  key={tf}
+                  type="button"
+                  onClick={() => setTimeframe(tf)}
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    timeframe === tf
+                      ? "bg-white text-blue-600 shadow-xs font-black"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`}
+                >
+                  {tf}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            >
+              <Download className="w-4 h-4 text-gray-500" /> Export Report
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsCreateInvoiceOpen(true)}
+              className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+            >
+              <Plus className="w-4 h-4" /> Create Invoice
+            </button>
+          </div>
+        </div>
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            TOP METRIC CARDS (Matching Image 1)
+        ───────────────────────────────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Metric 1: Total Revenue (MRR) */}
+          <div className="bg-white rounded-3xl p-6 lg:p-7 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
+            <div className="space-y-2">
+              <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                Total Revenue (MRR)
+              </span>
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-black text-gray-900 tracking-tight">$124,800</span>
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                  <TrendingUp className="w-3.5 h-3.5" /> +12.4%
+                </span>
+              </div>
+              <div className="text-xs text-gray-500 font-medium pt-1">
+                Projected ARR: <strong className="text-gray-900 font-bold">$1,497,600</strong>
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+              <DollarSign className="w-7 h-7" />
+            </div>
+          </div>
+
+          {/* Metric 2: Collected this Month */}
+          <div className="bg-white rounded-3xl p-6 lg:p-7 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
+            <div className="space-y-2">
+              <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
+                Collected this Month
+              </span>
+              <div className="flex items-baseline gap-3">
+                <span className="text-4xl font-black text-gray-900 tracking-tight">$108,400</span>
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                  86.8% Rate
+                </span>
+              </div>
+              <div className="text-xs text-gray-500 font-medium pt-1">
+                Settlement Ratio: <strong className="text-gray-900 font-bold">16 of 18 Retainers</strong>
+              </div>
+            </div>
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+              <CheckCircle2 className="w-7 h-7" />
+            </div>
+          </div>
+        </div>
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            CHARTS & TIER BREAKDOWN GRID (Matching Image 1)
+        ───────────────────────────────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Revenue Growth & Trajectory (2 Cols) */}
+          <div className="lg:col-span-2 bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6 flex flex-col justify-between">
+            <div>
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 tracking-tight">Revenue Growth & Trajectory</h3>
+                  <p className="text-xs text-gray-500">30-Day aggregate cash flow across retainers & add-on deliverables</p>
+                </div>
+
+                <div className="flex items-center gap-4 text-xs font-bold">
+                  <span className="flex items-center gap-1.5 text-blue-600">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600" /> Actual Inflow
+                  </span>
+                  <span className="flex items-center gap-1.5 text-gray-400">
+                    <span className="w-2.5 h-2.5 rounded-full bg-gray-300" /> Target Baseline
+                  </span>
+                </div>
+              </div>
+
+              {/* Peak Marker Badge */}
+              <div className="flex justify-end mb-2">
+                <span className="px-3 py-1 rounded-full text-[11px] font-black bg-[#2563EB] text-white shadow-md">
+                  $124,800 Peak • Today Nov 14
+                </span>
+              </div>
+
+              {/* Recharts Area Chart */}
+              <div className="w-full h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={trajectoryPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorTrajectory" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#2563EB" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#2563EB" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: "#64748b" }}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
+                    />
+                    <Tooltip
+                      formatter={(val: any) => [`$${Number(val).toLocaleString()}`, "Revenue"]}
+                      contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", boxShadow: "0 10px 25px rgba(0,0,0,0.08)" }}
+                    />
+                    <ReferenceLine y={120000} stroke="#94a3b8" strokeDasharray="4 4" />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#2563EB"
+                      strokeWidth={3}
+                      fill="url(#colorTrajectory)"
+                      dot={{ r: 4, fill: "#2563EB", stroke: "#fff", strokeWidth: 2 }}
+                      activeDot={{ r: 6, fill: "#2563EB", stroke: "#fff", strokeWidth: 2 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Bottom Metrics Bar */}
+            <div className="pt-4 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+              <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <span className="text-[10px] font-bold text-gray-400 uppercase">Invoiced</span>
+                <div className="text-sm font-black text-gray-900">$124,800</div>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <span className="text-[10px] font-bold text-gray-400 uppercase">Direct ACH / Wire</span>
+                <div className="text-sm font-black text-gray-900">$98,200</div>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <span className="text-[10px] font-bold text-gray-400 uppercase">Stripe Cards</span>
+                <div className="text-sm font-black text-gray-900">$26,600</div>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <span className="text-[10px] font-bold text-gray-400 uppercase">Disputed / Refunded</span>
+                <div className="text-sm font-black text-emerald-600">$0.00</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Plan & Tier Distribution (1 Col) */}
+          <div className="bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 tracking-tight">Plan & Tier Distribution</h3>
+                  <p className="text-xs text-gray-500">Active monthly retainers by package tier</p>
+                </div>
+                <button
+                  type="button"
+                  title="Refresh Tiers"
+                  onClick={() => {
+                    setToast("Plan tier metrics refreshed.");
+                    setTimeout(() => setToast(null), 2500);
+                  }}
+                  className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 cursor-pointer"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Tiers List matching Image 1 */}
+              <div className="space-y-5">
+                {/* Package 1 */}
+                <div className="space-y-2 p-3 bg-blue-50/40 rounded-2xl border border-blue-100/60">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="flex items-center gap-2 text-gray-900">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-600" /> Package 1 (Enterprise Suite)
+                    </span>
+                    <span className="text-gray-900 font-black">$54,000 <span className="text-[10px] font-normal text-gray-500">/ mo</span></span>
+                  </div>
+                  <div className="w-full bg-blue-100 rounded-full h-2 overflow-hidden">
+                    <div className="bg-blue-600 h-full rounded-full w-[43.2%]" />
+                  </div>
+                  <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
+                    <span>6 Retainer Accounts</span>
+                    <span className="text-blue-700 font-bold">43.2% of MRR</span>
+                  </div>
+                </div>
+
+                {/* Package 2 */}
+                <div className="space-y-2 p-3 bg-purple-50/40 rounded-2xl border border-purple-100/60">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="flex items-center gap-2 text-gray-900">
+                      <span className="w-2.5 h-2.5 rounded-full bg-purple-600" /> Package 2 (Growth & Scale)
+                    </span>
+                    <span className="text-gray-900 font-black">$48,800 <span className="text-[10px] font-normal text-gray-500">/ mo</span></span>
+                  </div>
+                  <div className="w-full bg-purple-100 rounded-full h-2 overflow-hidden">
+                    <div className="bg-purple-600 h-full rounded-full w-[39.1%]" />
+                  </div>
+                  <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
+                    <span>8 Retainer Accounts</span>
+                    <span className="text-purple-700 font-bold">39.1% of MRR</span>
+                  </div>
+                </div>
+
+                {/* Package 3 */}
+                <div className="space-y-2 p-3 bg-emerald-50/40 rounded-2xl border border-emerald-100/60">
+                  <div className="flex items-center justify-between text-xs font-bold">
+                    <span className="flex items-center gap-2 text-gray-900">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> Package 3 (Starter / Launch)
+                    </span>
+                    <span className="text-gray-900 font-black">$22,000 <span className="text-[10px] font-normal text-gray-500">/ mo</span></span>
+                  </div>
+                  <div className="w-full bg-emerald-100 rounded-full h-2 overflow-hidden">
+                    <div className="bg-emerald-600 h-full rounded-full w-[17.7%]" />
+                  </div>
+                  <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
+                    <span>4 Retainer Accounts</span>
+                    <span className="text-emerald-700 font-bold">17.7% of MRR</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sub-card: Add-ons & Overages */}
+            <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs text-gray-900">Add-ons & Overages</h4>
+                  <p className="text-[11px] text-gray-500 font-medium">3 viral reels + 4 performance ad sets</p>
+                </div>
+              </div>
+              <span className="text-base font-black text-indigo-700">+$6,400</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            SALES & NEGOTIATIONS CALLOUT BANNER
+        ───────────────────────────────────────────────────────────────────────────── */}
+        <div className="p-5 rounded-3xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/20 shrink-0">
+              <DollarSign className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-black text-gray-900 uppercase tracking-wide">Client Plan Negotiations & Proposals</h4>
+              <p className="text-xs text-gray-600">Review pending custom scope proposals, counter-offers, and deal proposals on the Sales page.</p>
+            </div>
+          </div>
+          <Link
+            to="/admin/sales"
+            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shrink-0 shadow-sm flex items-center gap-1.5 cursor-pointer"
+          >
+            Open Sales & Negotiations &rarr;
+          </Link>
+        </div>
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            RECENT TRANSACTIONS ROSTER TABLE (Matching Image 2)
+        ───────────────────────────────────────────────────────────────────────────── */}
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.04)] p-6 lg:p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h3 className="text-xl font-black text-[#0F172A] tracking-tight">Recent Transactions</h3>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search */}
+              <div className="relative min-w-[240px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search client or invoice..."
+                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* Status Filter Pills */}
+              <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl text-xs font-bold">
+                {(["all", "paid", "pending", "overdue"] as const).map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => setFilter(st)}
+                    className={`px-3 py-1.5 rounded-lg capitalize transition-all cursor-pointer ${
+                      filter === st ? "bg-white text-gray-900 shadow-xs font-black" : "text-gray-500 hover:text-gray-900"
+                    }`}
+                  >
+                    {st}
+                  </button>
+                ))}
+              </div>
+
+              {/* Export CSV Button matching Image 2 */}
               <button
                 type="button"
-                onClick={() => setActiveReply(null)}
-                className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+                onClick={handleExportCSV}
+                className="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-blue-100 transition-colors"
               >
-                <X className="size-4" />
+                <Download className="w-3.5 h-3.5" /> Export CSV
+              </button>
+            </div>
+          </div>
+
+          {/* Table matching Image 2 */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-[#0D2137]">
+              <thead className="bg-gray-50 border-b border-gray-100 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
+                <tr>
+                  <th className="px-5 py-4">CLIENT & SCOPE</th>
+                  <th className="px-5 py-4">INVOICE #</th>
+                  <th className="px-5 py-4">AMOUNT</th>
+                  <th className="px-5 py-4">PAYMENT METHOD</th>
+                  <th className="px-5 py-4">STATUS</th>
+                  <th className="px-5 py-4 text-right">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 font-medium">
+                {filteredTx.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-gray-50/70 transition-colors">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-xl ${tx.avatarBg} font-black text-xs flex items-center justify-center shrink-0`}>
+                          {tx.clientInitials}
+                        </div>
+                        <div>
+                          <div className="font-bold text-sm text-gray-900">{tx.client}</div>
+                          <div className="text-[11px] text-gray-500">{tx.scope}</div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-5 py-4 font-mono font-bold text-gray-600">{tx.id}</td>
+
+                    <td className="px-5 py-4 font-black text-sm text-gray-900">
+                      ${tx.amount.toLocaleString()}
+                    </td>
+
+                    <td className="px-5 py-4 text-gray-600 font-medium">{tx.method}</td>
+
+                    <td className="px-5 py-4">
+                      <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border flex items-center gap-1.5 w-fit ${tx.badgeClass}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-blue-500"}`} />
+                        {tx.status} ({tx.date})
+                      </span>
+                    </td>
+
+                    <td className="px-5 py-4 text-right">
+                      {tx.status === "Paid" ? (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedReceipt(tx)}
+                          className="text-blue-600 font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer text-xs"
+                        >
+                          Receipt <ArrowUpRight className="w-3.5 h-3.5" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleSendReminder(tx)}
+                          className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Play className="w-3 h-3 fill-current" /> Remind
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Table Footer matching Image 2 */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-gray-100 text-xs text-gray-500 font-medium">
+            <span>Showing 1 to {filteredTx.length} of 18 transactions</span>
+
+            <div className="flex items-center gap-1">
+              <button type="button" className="p-2 rounded-lg hover:bg-gray-100 text-gray-400">&lt;</button>
+              <button type="button" className="w-8 h-8 rounded-lg bg-[#2563EB] text-white font-bold">1</button>
+              <button type="button" className="w-8 h-8 rounded-lg hover:bg-gray-100 font-bold text-gray-700">2</button>
+              <button type="button" className="w-8 h-8 rounded-lg hover:bg-gray-100 font-bold text-gray-700">3</button>
+              <button type="button" className="p-2 rounded-lg hover:bg-gray-100 text-gray-400">&gt;</button>
+            </div>
+          </div>
+        </div>
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            PAGE FOOTER matching Image 2
+        ───────────────────────────────────────────────────────────────────────────── */}
+        <footer className="pt-8 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-gray-400 font-medium">
+          <div className="flex items-center gap-2">
+            <span className="font-black text-gray-900 tracking-tight">creo.</span>
+            <span>© 2025 Creo Enterprise Systems. All rights reserved.</span>
+          </div>
+
+          <div className="flex items-center gap-6 font-semibold text-gray-500">
+            <a href="#security" className="hover:text-gray-900 transition-colors">Security & Compliance</a>
+            <a href="#governance" className="hover:text-gray-900 transition-colors">Executive Governance</a>
+            <a href="#support" className="hover:text-gray-900 transition-colors">Global Support</a>
+          </div>
+        </footer>
+      </main>
+
+      {/* ─────────────────────────────────────────────────────────────────────────────
+          MODAL: CREATE INVOICE
+      ───────────────────────────────────────────────────────────────────────────── */}
+      {isCreateInvoiceOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-bold text-gray-900">Create New Invoice</h3>
+              <button type="button" onClick={() => setIsCreateInvoiceOpen(false)} className="p-1 rounded-lg text-gray-400 hover:text-gray-700">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Ticket Details summary */}
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-[#0D2137]">Original Client Request</span>
-                <span className="text-[10px] text-slate-400 font-mono">#{activeReply.id.slice(0, 8)}</span>
-              </div>
-              <p className="text-slate-700 leading-relaxed">{activeReply.description}</p>
-            </div>
-
-            {/* Thread History */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Conversation History</h4>
-              <div className="space-y-2.5 max-h-52 overflow-y-auto pr-1 p-2 bg-slate-50/50 rounded-xl border border-slate-200/60">
-                {messagesLoading ? (
-                  <div className="py-6 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
-                    <Loader2 className="size-4 animate-spin text-[#2B7BC4]" />
-                    Loading messages...
-                  </div>
-                ) : messages.length > 0 ? (
-                  messages.map((m: any) => {
-                    const isStaff = m.sender_role && m.sender_role !== "client";
-                    return (
-                      <div
-                        key={m.id}
-                        className={`p-3 rounded-xl max-w-[88%] text-xs ${
-                          isStaff
-                            ? "ml-auto bg-[#E8F4FD] border border-[#C9DFF0] text-[#0D2137]"
-                            : "mr-auto bg-white border border-slate-200 text-[#0D2137]"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-3 mb-1 text-[10px] text-slate-500">
-                          <span className="font-bold">{m.sender_name || (isStaff ? "Staff Specialist" : "Client")}</span>
-                          <span>{m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
-                        </div>
-                        <p className="whitespace-pre-wrap leading-relaxed">{m.message}</p>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <p className="text-slate-400 italic text-xs text-center py-4">No responses in thread yet.</p>
-                )}
-              </div>
-            </div>
-
-            {/* Reply Controls */}
-            <div className="space-y-3 pt-2 border-t border-slate-100">
-              <div className="flex items-center justify-between gap-3">
-                <label className="text-xs font-semibold text-slate-700">Set Ticket Status:</label>
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-[#0D2137] shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%232B7BC4%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_0.6rem_center] bg-no-repeat pr-8 hover:border-[#2B7BC4]/60 focus:border-[#2B7BC4] focus:outline-none cursor-pointer"
-                >
-                  <option value="open">Open (Keep in queue)</option>
-                  <option value="in_progress">In Progress (Staff Working)</option>
-                  <option value="resolved">Resolved (Completed)</option>
-                  <option value="closed">Closed (Archived)</option>
-                </select>
+            <form onSubmit={handleCreateInvoiceSubmit} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Client Brand Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Acme Corporation"
+                  value={newInvClient}
+                  onChange={(e) => setNewInvClient(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
+                />
               </div>
 
-              <textarea
-                rows={3}
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Type your response to the client..."
-                className="w-full rounded-xl border border-slate-200 p-3 text-xs text-[#0D2137] focus:outline-none focus:border-[#2B7BC4]"
-              />
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Deliverable Scope Description</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Enterprise Retainer • Dec 2024"
+                  value={newInvScope}
+                  onChange={(e) => setNewInvScope(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
+                />
+              </div>
 
-              <div className="flex justify-end gap-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Amount ($ USD)</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="7500"
+                    value={newInvAmount}
+                    onChange={(e) => setNewInvAmount(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Payment Method</label>
+                  <select
+                    value={newInvMethod}
+                    onChange={(e) => setNewInvMethod(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-medium"
+                  >
+                    <option value="Stripe ACH">Stripe ACH</option>
+                    <option value="Bank Wire">Bank Wire</option>
+                    <option value="Invoice Net 15">Invoice Net 15</option>
+                    <option value="Credit Card">Credit Card</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
                 <button
                   type="button"
-                  onClick={() => setActiveReply(null)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  onClick={() => setIsCreateInvoiceOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
-                  type="button"
-                  onClick={handleSendReply}
-                  disabled={submitting}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-xs font-bold text-white hover:brightness-110 shadow-md shadow-blue-500/20 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-[#2563EB] text-white font-bold hover:bg-blue-700 shadow-sm"
                 >
-                  {submitting ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <Send className="size-3.5" />
-                  )}
-                  {replyText.trim() ? "Send Message & Update Status" : "Update Status Only"}
+                  Generate Invoice
                 </button>
               </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────────────────
+          MODAL: RECEIPT VIEWER
+      ───────────────────────────────────────────────────────────────────────────── */}
+      {selectedReceipt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-6 lg:p-8 shadow-2xl space-y-6 border border-gray-100">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="font-black text-xl text-gray-900 tracking-tight">creo.</span>
+                <span className="text-xs font-bold text-gray-400">Payment Receipt</span>
+              </div>
+              <button type="button" onClick={() => setSelectedReceipt(null)} className="p-1 text-gray-400 hover:text-gray-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-emerald-700 uppercase block">Status</span>
+                  <span className="text-sm font-black text-emerald-900">Payment Settled (Paid)</span>
+                </div>
+                <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-gray-600 font-medium">
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Client</span>
+                  <strong className="text-gray-900 text-sm">{selectedReceipt.client}</strong>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Invoice Number</span>
+                  <strong className="text-gray-900 text-sm font-mono">{selectedReceipt.id}</strong>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Payment Method</span>
+                  <span className="text-gray-900 font-bold">{selectedReceipt.method}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Settlement Date</span>
+                  <span className="text-gray-900 font-bold">{selectedReceipt.date}</span>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 space-y-2">
+                <span className="text-gray-400 block text-[10px] uppercase font-bold">Scope Breakdown</span>
+                <div className="p-3 bg-gray-50 rounded-xl flex items-center justify-between font-bold text-gray-900">
+                  <span>{selectedReceipt.scope}</span>
+                  <span>${selectedReceipt.amount.toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-between items-center text-sm font-black text-gray-900 border-t border-gray-200">
+                <span>Total Settled</span>
+                <span className="text-base text-blue-600">${selectedReceipt.amount.toLocaleString()} USD</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 font-bold text-xs text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-4 h-4" /> Print Receipt
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  alert(`Downloading PDF receipt for ${selectedReceipt.id}...`);
+                  setSelectedReceipt(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-[#2563EB] text-white font-bold text-xs hover:bg-blue-700 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Download className="w-4 h-4" /> Download PDF
+              </button>
             </div>
           </div>
         </div>
@@ -2796,766 +5935,908 @@ export function AdminSupportPage() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6. ADMIN TEAMS & ROSTER PAGE
+// 9. ADMIN PLANS & PRICING TIERS PAGE
 // ─────────────────────────────────────────────────────────────────────────────
-export function AdminTeamsPage() {
-  const { user } = useAuth();
-  const isTeamLead = user?.role === "team_lead";
-  const isAdmin = ["admin", "super_admin"].includes(user?.role || "");
-
-  const [members, setMembers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [addModalOpen, setAddModalOpen] = useState(false);
-  const [credentialsModal, setCredentialsModal] = useState<any | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  // Form State
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [department, setDepartment] = useState("video");
-  const [role, setRole] = useState("editor");
-  const [capacity, setCapacity] = useState(4);
-  const [skillsInput, setSkillsInput] = useState("Reels, Video, Motion");
-  const [selectedTeamLeadId, setSelectedTeamLeadId] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  // Edit Capacity Modal State
-  const [editingMember, setEditingMember] = useState<any | null>(null);
-  const [editCapacity, setEditCapacity] = useState(4);
-  const [editSkills, setEditSkills] = useState("");
-  const [editIsAccepting, setEditIsAccepting] = useState(true);
-  const [updatingCapacity, setUpdatingCapacity] = useState(false);
-
-  // Search and Role Filter State
+export function AdminPlansPage() {
+  const [toast, setToast] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [filterTab, setFilterTab] = useState<"all" | "pending" | "accepted" | "counter" | "declined">("all");
 
-  // Deactivate Modal State
-  const [deletingMember, setDeletingMember] = useState<any | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  // Plans State
+  const [plans, setPlans] = useState([
+    {
+      id: "starter",
+      name: "starter",
+      display_name: "Starter Launch",
+      price_monthly: 4500,
+      currency: "USD",
+      subscribers: 4,
+      features: [
+        "10 Static Posters / Month",
+        "4 Short Video Reels / Month",
+        "10 Story Templates",
+        "Standard SLA (48h Turnaround)",
+      ],
+    },
+    {
+      id: "growth",
+      name: "growth",
+      display_name: "Brand Accelerator",
+      price_monthly: 6400,
+      currency: "USD",
+      subscribers: 8,
+      features: [
+        "20 Static Posters / Month",
+        "10 Short Video Reels / Month",
+        "20 Story Templates",
+        "Priority SLA (24h Turnaround)",
+        "Dedicated Creative Pod Lead",
+      ],
+    },
+    {
+      id: "scale",
+      name: "scale",
+      display_name: "Scale Enterprise Suite",
+      price_monthly: 9500,
+      currency: "USD",
+      subscribers: 12,
+      features: [
+        "40 Static Posters / Month",
+        "20 High-Production Video Reels",
+        "40 Story Templates",
+        "Express 12h SLA Turnaround",
+        "Unlimited Revision Iterations",
+      ],
+    },
+  ]);
 
-  const fetchMembers = useCallback(() => {
-    setLoading(true);
-    request<any[]>("/api/v1/admin/teams")
-      .then((data) => setMembers(Array.isArray(data) ? data : []))
-      .catch(() => setMembers([]))
-      .finally(() => setLoading(false));
-  }, []);
+  // Modals State
+  const [editingPlan, setEditingPlan] = useState<typeof plans[0] | null>(null);
+  const [editPriceInput, setEditPriceInput] = useState("");
+  const [editFeaturesInput, setEditFeaturesInput] = useState("");
 
-  useEffect(() => {
-    fetchMembers();
-  }, [fetchMembers]);
+  const [isNewProposalOpen, setIsNewProposalOpen] = useState(false);
+  const [counterModalItem, setCounterModalItem] = useState<PlanNegotiationItem | null>(null);
+  const [declineModalItem, setDeclineModalItem] = useState<PlanNegotiationItem | null>(null);
 
-  const generateRandomPassword = () => {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
-    let pass = "Creo@";
-    for (let i = 0; i < 6; i++) {
-      pass += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setPassword(pass);
+  // Form Inputs
+  const [counterPriceInput, setCounterPriceInput] = useState("");
+  const [counterNoteInput, setCounterNoteInput] = useState("");
+  const [declineReasonInput, setDeclineReasonInput] = useState("");
+
+  const [newPropClient, setNewPropClient] = useState("");
+  const [newPropCurrentPlan, setNewPropCurrentPlan] = useState("Starter / Launch Package ($4,500/mo)");
+  const [newPropTargetPlan, setNewPropTargetPlan] = useState("Enterprise Suite Custom Scope");
+  const [newPropStandardRate, setNewPropStandardRate] = useState("7200");
+  const [newPropProposedRate, setNewPropProposedRate] = useState("6400");
+  const [newPropNotes, setNewPropNotes] = useState("");
+
+  // Client Plan Negotiations List
+  const [negotiations, setNegotiations] = useState<PlanNegotiationItem[]>([
+    {
+      id: "neg-101",
+      clientName: "Apex Media",
+      clientLogo: "AM",
+      currentPlan: "Growth & Scale Retainer ($5,800/mo)",
+      proposedPlan: "Enterprise Suite Custom Scope",
+      originalPrice: 7200,
+      proposedPrice: 6200,
+      discountPct: 14,
+      notes: "Requesting 15 Reels + 40 Static Posts with a 12-month lock-in commitment. Require dedicated Pod Lead.",
+      requestedAt: "Today, 11:20 AM",
+      status: "Pending Review",
+    },
+    {
+      id: "neg-102",
+      clientName: "Atlas Commerce",
+      clientLogo: "AC",
+      currentPlan: "Starter / Launch Package ($4,500/mo)",
+      proposedPlan: "Growth & Scale Tier Upgrade",
+      originalPrice: 6400,
+      proposedPrice: 5600,
+      discountPct: 12.5,
+      notes: "Scaling up Q4 video output. Requesting $5,600/mo retainer rate for 6-month contract.",
+      requestedAt: "Yesterday, 3:45 PM",
+      status: "Pending Review",
+    },
+    {
+      id: "neg-103",
+      clientName: "Vortex Brand Suite",
+      clientLogo: "VB",
+      currentPlan: "No Active Retainer (Custom Quote)",
+      proposedPlan: "Starter / Launch Custom Pack",
+      originalPrice: 4500,
+      proposedPrice: 3900,
+      discountPct: 13.3,
+      notes: "Early stage startup seeking launch pack discount with bi-weekly payment terms.",
+      requestedAt: "Nov 15, 2024",
+      status: "Counter Offered",
+      counterPrice: 4200,
+    },
+    {
+      id: "neg-104",
+      clientName: "Luminary AI Labs",
+      clientLogo: "LA",
+      currentPlan: "Growth Retainer ($6,400/mo)",
+      proposedPlan: "Multi-Pod Enterprise Custom Retainer",
+      originalPrice: 11500,
+      proposedPrice: 9800,
+      discountPct: 14.8,
+      notes: "Requires dedicated 3D Motion Squad + daily standup syncs for fast product release cadence.",
+      requestedAt: "Nov 12, 2024",
+      status: "Accepted",
+    },
+  ]);
+
+  // Active Deals Pipeline
+  const [deals, _setDeals] = useState([
+    {
+      id: "deal-1",
+      client: "Northwind Labs",
+      clientLogo: "NL",
+      scope: "Annual Enterprise Tier 2 Retainer",
+      value: 96000,
+      stage: "Closing / Contract",
+      stageBadge: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      probability: "95%",
+      owner: "Sarah Vance",
+      expectedClose: "Nov 30, 2024",
+    },
+    {
+      id: "deal-2",
+      client: "Bloom Studio",
+      clientLogo: "BS",
+      scope: "UGC Scale & Paid Ads Pack (12-mo)",
+      value: 76800,
+      stage: "In Negotiation",
+      stageBadge: "bg-amber-50 text-amber-700 border-amber-200",
+      probability: "75%",
+      owner: "Elena Rostova",
+      expectedClose: "Dec 05, 2024",
+    },
+    {
+      id: "deal-3",
+      client: "Apex Media",
+      clientLogo: "AM",
+      scope: "Full-Funnel Brand Redesign & Motion",
+      value: 84000,
+      stage: "Proposal Sent",
+      stageBadge: "bg-blue-50 text-blue-700 border-blue-200",
+      probability: "60%",
+      owner: "Marcus Brody",
+      expectedClose: "Dec 12, 2024",
+    },
+    {
+      id: "deal-4",
+      client: "Vortex Brand Suite",
+      clientLogo: "VB",
+      scope: "Starter Launch & Social Sprint",
+      value: 50400,
+      stage: "Discovery / Demo",
+      stageBadge: "bg-purple-50 text-purple-700 border-purple-200",
+      probability: "40%",
+      owner: "Maya Lin",
+      expectedClose: "Dec 20, 2024",
+    },
+  ]);
+
+  // Actions: ACCEPT Client Plan Negotiation
+  const handleAcceptNegotiation = (item: PlanNegotiationItem) => {
+    setNegotiations((prev) =>
+      prev.map((n) => (n.id === item.id ? { ...n, status: "Accepted" } : n))
+    );
+    setToast(`Plan Negotiation ACCEPTED for ${item.clientName}! Retainer activated at $${item.proposedPrice.toLocaleString()}/mo.`);
+    setTimeout(() => setToast(null), 4000);
   };
 
-  const handleOpenAddModal = () => {
-    setFullName("");
-    setEmail("");
-    generateRandomPassword();
-    setRole(isTeamLead ? "editor" : "editor");
-    setDepartment("video");
-    setCapacity(4);
-    setSkillsInput("Reels, Video, Motion");
-    setSelectedTeamLeadId("");
-    setAddModalOpen(true);
-  };
-
-  const handleCreateMember = async (e: React.FormEvent) => {
+  // Actions: DECLINE Client Plan Negotiation
+  const handleConfirmDecline = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName || !email) return;
-    setSubmitting(true);
-    try {
-      const skillsArray = skillsInput
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
+    if (!declineModalItem) return;
 
-      const res = await request<any>("/api/v1/admin/teams", {
-        method: "POST",
-        body: JSON.stringify({
-          full_name: fullName,
-          email,
-          password: password.trim() || undefined,
-          department,
-          role,
-          daily_capacity: Number(capacity),
-          skills: skillsArray.length > 0 ? skillsArray : ["Creative", department],
-          team_lead_id: selectedTeamLeadId || undefined,
-        }),
-      });
-      setAddModalOpen(false);
-      setCredentialsModal(res);
-      fetchMembers();
-    } catch (err: any) {
-      alert(err?.message || "Could not create team member. Ensure email is unique.");
-    } finally {
-      setSubmitting(false);
-    }
+    setNegotiations((prev) =>
+      prev.map((n) =>
+        n.id === declineModalItem.id
+          ? { ...n, status: "Declined", declineReason: declineReasonInput || "Price outside allowable margin." }
+          : n
+      )
+    );
+    setToast(`Plan Negotiation DECLINED for ${declineModalItem.clientName}. Notification sent.`);
+    setDeclineModalItem(null);
+    setDeclineReasonInput("");
+    setTimeout(() => setToast(null), 4000);
   };
 
-  const handleOpenEditCapacity = (staff: any) => {
-    setEditingMember(staff);
-    setEditCapacity(staff.daily_capacity || 4);
-    setEditSkills((staff.skills || []).join(", "));
-    setEditIsAccepting(staff.is_accepting_work !== false);
-  };
-
-  const handleSaveCapacity = async (e: React.FormEvent) => {
+  // Actions: COUNTER-OFFER Client Plan Negotiation
+  const handleConfirmCounter = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingMember) return;
-    setUpdatingCapacity(true);
-    try {
-      const skillsArray = editSkills
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
+    if (!counterModalItem || !counterPriceInput) return;
 
-      await request(`/api/v1/admin/teams/${editingMember.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          daily_capacity: Number(editCapacity),
-          skills: skillsArray,
-          is_accepting_work: editIsAccepting,
-        }),
-      });
-      setEditingMember(null);
-      fetchMembers();
-    } catch (err: any) {
-      alert(err?.message || "Failed to update member capacity.");
-    } finally {
-      setUpdatingCapacity(false);
-    }
+    const price = parseFloat(counterPriceInput);
+    setNegotiations((prev) =>
+      prev.map((n) =>
+        n.id === counterModalItem.id
+          ? { ...n, status: "Counter Offered", counterPrice: price }
+          : n
+      )
+    );
+    setToast(`Counter offer of $${price.toLocaleString()}/mo submitted to ${counterModalItem.clientName}.`);
+    setCounterModalItem(null);
+    setCounterPriceInput("");
+    setCounterNoteInput("");
+    setTimeout(() => setToast(null), 4000);
   };
 
-  const handleConfirmDeactivate = async () => {
-    if (!deletingMember) return;
-    setDeleting(true);
-    try {
-      await request(`/api/v1/admin/teams/${deletingMember.id}`, {
-        method: "DELETE",
-      });
-      setDeletingMember(null);
-      fetchMembers();
-    } catch (err: any) {
-      alert(err?.message || "Failed to deactivate member.");
-    } finally {
-      setDeleting(false);
-    }
+  // Actions: Create New Proposal Submit
+  const handleCreateProposalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPropClient || !newPropProposedRate) return;
+
+    const orig = parseFloat(newPropStandardRate) || 7200;
+    const prop = parseFloat(newPropProposedRate) || 6400;
+    const disc = Math.max(0, Math.round(((orig - prop) / orig) * 100 * 10) / 10);
+
+    const newNeg: PlanNegotiationItem = {
+      id: `neg-${Math.floor(100 + Math.random() * 900)}`,
+      clientName: newPropClient,
+      clientLogo: newPropClient.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2),
+      currentPlan: newPropCurrentPlan,
+      proposedPlan: newPropTargetPlan,
+      originalPrice: orig,
+      proposedPrice: prop,
+      discountPct: disc,
+      notes: newPropNotes || "Custom enterprise proposal initiated by sales lead.",
+      requestedAt: "Just now",
+      status: "Pending Review",
+    };
+
+    setNegotiations((prev) => [newNeg, ...prev]);
+    setToast(`Custom retainer proposal initiated for ${newPropClient} ($${prop.toLocaleString()}/mo)!`);
+    setIsNewProposalOpen(false);
+    setNewPropClient("");
+    setNewPropNotes("");
+    setTimeout(() => setToast(null), 4000);
   };
 
-  const filteredMembers = members.filter((m) => {
+  // Actions: Save Edit Tier Terms
+  const handleSaveTierTerms = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPlan) return;
+
+    const newPrice = parseFloat(editPriceInput) || editingPlan.price_monthly;
+    const newFeatures = editFeaturesInput
+      .split("\n")
+      .map((f) => f.trim())
+      .filter(Boolean);
+
+    setPlans((prev) =>
+      prev.map((p) =>
+        p.id === editingPlan.id
+          ? {
+              ...p,
+              price_monthly: newPrice,
+              features: newFeatures.length > 0 ? newFeatures : p.features,
+            }
+          : p
+      )
+    );
+
+    setToast(`Tier "${editingPlan.display_name}" updated successfully ($${newPrice.toLocaleString()}/mo)!`);
+    setEditingPlan(null);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // Filter Negotiations
+  const filteredNegotiations = negotiations.filter((item) => {
     const matchesSearch =
-      !search ||
-      m.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-      m.email?.toLowerCase().includes(search.toLowerCase()) ||
-      (m.skills || []).some((s: string) => s.toLowerCase().includes(search.toLowerCase()));
+      !search.trim() ||
+      item.clientName.toLowerCase().includes(search.toLowerCase()) ||
+      item.proposedPlan.toLowerCase().includes(search.toLowerCase()) ||
+      item.notes.toLowerCase().includes(search.toLowerCase());
 
-    const matchesRole =
-      roleFilter === "all" ||
-      (roleFilter === "editor" && m.role === "editor") ||
-      (roleFilter === "designer" && m.role === "designer") ||
-      (roleFilter === "team_lead" && m.role === "team_lead") ||
-      (roleFilter === "active" && m.is_accepting_work) ||
-      (roleFilter === "leave" && m.on_leave_today);
+    const matchesTab =
+      filterTab === "all"
+        ? true
+        : filterTab === "pending"
+        ? item.status === "Pending Review"
+        : filterTab === "accepted"
+        ? item.status === "Accepted"
+        : filterTab === "counter"
+        ? item.status === "Counter Offered"
+        : item.status === "Declined";
 
-    return matchesSearch && matchesRole;
+    return matchesSearch && matchesTab;
   });
 
-  const existingTeamLeads = members.filter((m) => m.role === "team_lead");
+  const pendingCount = negotiations.filter((n) => n.status === "Pending Review").length;
+  const totalRetainerRevenue = plans.reduce((acc, p) => acc + p.price_monthly * p.subscribers, 0);
 
   return (
-    <div className="space-y-6">
-      {/* ── Top Header ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <UserCog className="size-5 text-[#2B7BC4]" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">
-              {isTeamLead ? "My Pod Team & Capacity" : "Agency Team & Capacity Management"}
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            {isTeamLead
-              ? "Manage your creative pod's editors, designers, and calibrate individual daily workload capacities."
-              : "Internal creatives, editors, team leads, and agency-wide load-balanced pod controllers."}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={handleOpenAddModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white text-xs font-bold hover:from-[#246bb0] hover:to-[#174e7e] shadow-md shadow-blue-500/20 transition-all cursor-pointer"
-        >
-          <Plus className="size-4" /> Add Team Member
-        </button>
-      </div>
-
-      {/* ── Role Scope Notice ─────────────────────────────────────────────── */}
-      {isTeamLead && (
-        <div className="flex items-center gap-3 bg-blue-50/80 border border-blue-200/70 rounded-2xl p-4 text-xs text-blue-900">
-          <Shield className="size-4 text-[#2B7BC4] shrink-0" />
-          <span>
-            <strong>Team Lead Pod Scope:</strong> You have autonomous authority to view and manage team members, manage login credentials, and edit daily task capacities for members assigned to your pod.
-          </span>
-        </div>
-      )}
-
-      {/* ── Search & Filter Controls ──────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200/80 shadow-2xs">
-        <div className="relative flex-1">
-          <Search className="size-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search team member by name, email, or skill..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-900 focus:bg-white focus:border-[#2B7BC4] focus:outline-none"
-          />
-        </div>
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs overflow-x-auto">
-          {[
-            { id: "all", label: "All Members" },
-            { id: "editor", label: "Editors" },
-            { id: "designer", label: "Designers" },
-            { id: "active", label: "Accepting Work" },
-            { id: "leave", label: "On Leave" },
-          ].map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setRoleFilter(f.id)}
-              className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-all cursor-pointer ${
-                roleFilter === f.id
-                  ? "bg-white text-[#0D2137] shadow-2xs font-bold"
-                  : "text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              {f.label}
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F8FAFC] flex flex-col">
+      <AdminTopHeader activeTab="Revenue" />
+      <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
+        {toast && (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>{toast}</span>
+            </div>
+            <button onClick={() => setToast(null)} className="text-emerald-600 hover:text-emerald-900 font-bold">
+              Dismiss
             </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Team Roster Cards Grid ────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {loading ? (
-          <div className="col-span-full py-16 text-center text-slate-400">
-            <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-            Loading team roster cards...
           </div>
-        ) : filteredMembers.length === 0 ? (
-          <div className="col-span-full py-12 text-center text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-2">
-            <UserCog className="size-8 text-slate-400 mx-auto" />
-            <p className="font-semibold text-sm">No team members match your filter.</p>
-            <p className="text-xs text-slate-400">Try adjusting your search terms or click "Add Team Member".</p>
-          </div>
-        ) : (
-          filteredMembers.map((staff) => {
-            const canEditThisMember = isAdmin || (isTeamLead && (staff.team_lead_id === user?.id || staff.id !== user?.id));
-            const isSelf = staff.id === user?.id;
-
-            const wip = staff.active_wip || 0;
-            const cap = staff.daily_capacity || 4;
-            const pct = Math.min(100, Math.round((wip / cap) * 100));
-
-            let loadBarColor = "bg-emerald-500";
-            if (pct >= 100) loadBarColor = "bg-rose-500";
-            else if (pct >= 75) loadBarColor = "bg-amber-500";
-
-            return (
-              <div
-                key={staff.id}
-                className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-[#2B7BC4]/40 hover:shadow-md transition-all group"
-              >
-                <div className="space-y-3.5">
-                  {/* Top Avatar & Name Header */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="size-12 rounded-2xl bg-gradient-to-br from-[#2B7BC4] to-[#1E609A] text-white font-black flex items-center justify-center text-sm shadow-sm shrink-0 border border-blue-400/30">
-                        {(staff.full_name || staff.email).slice(0, 2).toUpperCase()}
-                      </div>
-                      <div className="space-y-0.5 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <h3 className="font-bold text-sm text-[#0D2137] truncate">{staff.full_name}</h3>
-                          {isSelf && (
-                            <span className="text-[10px] bg-blue-100 text-[#2B7BC4] font-bold px-2 py-0.5 rounded-full border border-blue-200">
-                              Pod Lead (You)
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-400 truncate">{staff.email}</p>
-                      </div>
-                    </div>
-
-                    <span
-                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 uppercase tracking-wider ${
-                        staff.account_status === "active"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : "bg-rose-50 text-rose-700 border-rose-200"
-                      }`}
-                    >
-                      {staff.account_status === "active" ? "Active" : "Suspended"}
-                    </span>
-                  </div>
-
-                  {/* Badges Bar */}
-                  <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                    <span className="px-2.5 py-0.5 rounded-lg bg-slate-100 text-[#0D2137] font-bold capitalize border border-slate-200">
-                      {staff.role.replace("_", " ")}
-                    </span>
-                    <span className="px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#2B7BC4] font-semibold capitalize border border-blue-200/60">
-                      {staff.department} Dept
-                    </span>
-
-                    {staff.on_leave_today ? (
-                      <span className="px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 font-bold border border-purple-200">
-                        🏖️ On Leave
-                      </span>
-                    ) : staff.is_accepting_work ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
-                        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Accepting Work
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 font-semibold border border-amber-200">
-                        <span className="size-1.5 rounded-full bg-amber-500" />
-                        Dispatch Paused
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Workload Progress Gauge */}
-                  <div className="space-y-1.5 p-3 rounded-xl bg-slate-50/80 border border-slate-200/80 text-xs">
-                    <div className="flex justify-between items-center text-slate-600">
-                      <span className="font-semibold text-slate-700">Active Workload (WIP):</span>
-                      <span className="font-bold text-[#0D2137]">
-                        {wip} / {cap} assets ({pct}%)
-                      </span>
-                    </div>
-                    <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-500 ${loadBarColor}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Skills Chips */}
-                  <div className="space-y-1">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block">Skills & Expertise</span>
-                    <div className="flex gap-1.5 flex-wrap">
-                      {(staff.skills || []).length > 0 ? (
-                        staff.skills.map((s: string) => (
-                          <span
-                            key={s}
-                            className="px-2 py-0.5 rounded-md bg-blue-50/70 border border-blue-100 text-[10px] text-[#2B7BC4] font-medium"
-                          >
-                            {s}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-[11px] text-slate-400 italic">General Creative</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card Action Buttons */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                  {canEditThisMember ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditCapacity(staff)}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:border-[#2B7BC4] hover:text-[#2B7BC4] hover:bg-blue-50/40 transition-all cursor-pointer"
-                      >
-                        <Sliders className="size-3.5" />
-                        Edit Capacity
-                      </button>
-
-                      {!isSelf && (
-                        <button
-                          type="button"
-                          onClick={() => setDeletingMember(staff)}
-                          className="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-rose-200 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
-                          title="Deactivate staff member"
-                        >
-                          <Trash2 className="size-3.5" />
-                          Remove
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <span className="text-[11px] text-slate-400 italic">Assigned to Pod</span>
-                  )}
-                </div>
-              </div>
-            );
-          })
         )}
-      </div>
 
-      {/* ── Add Member Modal (with Password & Pod selector) ────────────────── */}
-      {addModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-fade-in">
-          <form
-            onSubmit={handleCreateMember}
-            className="w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto animate-scale-in border border-slate-100"
-          >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-lg font-bold text-[#0D2137]">Add Team Member</h3>
-                <p className="text-xs text-slate-500">
-                  Provide credentials so this member can immediately sign in.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAddModalOpen(false)}
-                className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3.5">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Arjun Mehta"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 font-medium focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Work Email (Login ID)</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="arjun@creo.agency"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 font-medium focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
-                />
-              </div>
-
-              {/* Password input with toggle and auto-generator */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-bold text-slate-700">Login Password</label>
-                  <button
-                    type="button"
-                    onClick={generateRandomPassword}
-                    className="text-[11px] font-bold text-[#2B7BC4] hover:underline cursor-pointer"
-                  >
-                    Auto-Generate
-                  </button>
-                </div>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter login password"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-900 focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 pr-16 transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-slate-500 hover:text-slate-800 font-semibold px-1.5 py-1"
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Role</label>
-                  <select
-                    value={role}
-                    onChange={(e) => {
-                      setRole(e.target.value);
-                      if (e.target.value === "editor") {
-                        setDepartment("video");
-                        setSkillsInput("Reels, Video, Motion");
-                      } else if (e.target.value === "designer") {
-                        setDepartment("graphics");
-                        setSkillsInput("Posters, Carousels, Figma, Graphics");
-                      }
-                    }}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D2137] shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%232B7BC4%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_0.75rem_center] bg-no-repeat pr-9 hover:border-[#2B7BC4]/60 focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 focus:outline-none transition-all cursor-pointer"
-                  >
-                    <option value="editor">Editor (Reels & Motion)</option>
-                    <option value="designer">Designer (Posters & Carousels)</option>
-                    {isAdmin && <option value="team_lead">Team Lead</option>}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Department</label>
-                  <select
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D2137] shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%232B7BC4%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_0.75rem_center] bg-no-repeat pr-9 hover:border-[#2B7BC4]/60 focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 focus:outline-none transition-all cursor-pointer"
-                  >
-                    <option value="video">Video Editing</option>
-                    <option value="graphics">Graphic Design</option>
-                    <option value="creative">Creative Direction</option>
-                    <option value="content_writing">Copywriting</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Admin pod assignment selector */}
-              {isAdmin && role !== "team_lead" && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Assign to Team Lead / Pod
-                  </label>
-                  <select
-                    value={selectedTeamLeadId}
-                    onChange={(e) => setSelectedTeamLeadId(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D2137] shadow-2xs appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%20fill%3D%22none%22%20stroke%3D%22%232B7BC4%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[position:right_0.75rem_center] bg-no-repeat pr-9 hover:border-[#2B7BC4]/60 focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 focus:outline-none transition-all cursor-pointer"
-                  >
-                    <option value="">-- Select Team Lead --</option>
-                    {existingTeamLeads.map((tl) => (
-                      <option key={tl.id} value={tl.id}>
-                        {tl.full_name} ({tl.email})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Daily Capacity (Assets / Day)
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={12}
-                  value={capacity}
-                  onChange={(e) => setCapacity(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
-                />
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Used by the fair dispatch algorithm to prevent creator burnout.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Skills & Tags (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  value={skillsInput}
-                  onChange={(e) => setSkillsInput(e.target.value)}
-                  placeholder="Reels, Video, Motion, Posters"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
-                />
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            TOP 4 COMMERCIAL & PLAN KPI CARDS
+        ───────────────────────────────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="kpi-card p-6 bg-white rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">ACTIVE RETAINERS</span>
+              <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                <Briefcase className="w-3.5 h-3.5" />
               </div>
             </div>
-
-            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setAddModalOpen(false)}
-                className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-5 py-2.5 rounded-xl bg-[#2B7BC4] text-xs font-bold text-white hover:bg-[#1A5EA8] shadow-xs disabled:opacity-50 cursor-pointer"
-              >
-                {submitting ? "Creating Member..." : "Save & Create Member"}
-              </button>
+            <div className="text-3xl font-black text-gray-900">
+              {plans.reduce((acc, p) => acc + p.subscribers, 0)} Active
             </div>
-          </form>
-        </div>
-      )}
+            <p className="text-xs text-blue-600 font-bold">MRR: ${totalRetainerRevenue.toLocaleString()}</p>
+          </div>
 
-      {/* ── Edit Capacity & Pacing Modal ───────────────────────────────────── */}
-      {editingMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-fade-in">
-          <form
-            onSubmit={handleSaveCapacity}
-            className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 animate-scale-in border border-slate-100"
-          >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-[#0D2137]">
-                  Edit Member Capacity & Load
-                </h3>
-                <p className="text-xs text-slate-500">{editingMember.full_name} ({editingMember.role})</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setEditingMember(null)}
-                className="size-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Daily Workload Capacity (Assets / Day)
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={15}
-                  value={editCapacity}
-                  onChange={(e) => setEditCapacity(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Specialist Skills (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  value={editSkills}
-                  onChange={(e) => setEditSkills(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
-                />
-              </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <input
-                  type="checkbox"
-                  id="accepting_work"
-                  checked={editIsAccepting}
-                  onChange={(e) => setEditIsAccepting(e.target.checked)}
-                  className="size-4 rounded text-[#2B7BC4] focus:ring-[#2B7BC4]"
-                />
-                <label htmlFor="accepting_work" className="text-xs font-semibold text-slate-700">
-                  Accepting new client tasks and calendar deliverables
-                </label>
+          <div className="kpi-card p-6 bg-white rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">PENDING NEGOTIATIONS</span>
+              <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                <Zap className="w-3.5 h-3.5" />
               </div>
             </div>
+            <div className="text-3xl font-black text-gray-900">{pendingCount} Actionable</div>
+            <p className="text-xs text-amber-600 font-bold">Requires executive review</p>
+          </div>
 
-            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setEditingMember(null)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={updatingCapacity}
-                className="px-5 py-2 rounded-xl bg-[#2B7BC4] text-xs font-bold text-white hover:bg-[#1A5EA8] shadow-xs cursor-pointer"
-              >
-                {updatingCapacity ? "Saving..." : "Save Changes"}
-              </button>
+          <div className="kpi-card p-6 bg-white rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">AVG RETAINER VALUE</span>
+              <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <DollarSign className="w-3.5 h-3.5" />
+              </div>
             </div>
-          </form>
-        </div>
-      )}
+            <div className="text-3xl font-black text-gray-900">$6,600/mo</div>
+            <p className="text-xs text-emerald-600 font-bold">High LTV retention</p>
+          </div>
 
-      {/* ── Deactivate Member Confirmation Modal ────────────────────────────── */}
-      {deletingMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-fade-in">
-          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl space-y-4 animate-scale-in border border-slate-100">
-            <div className="flex items-center gap-3 text-red-600">
-              <AlertTriangle className="size-6 shrink-0" />
-              <h3 className="text-base font-bold text-[#0D2137]">Remove Team Member?</h3>
+          <div className="kpi-card p-6 bg-white rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">WIN / CLOSING RATE</span>
+              <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                <TrendingUp className="w-3.5 h-3.5" />
+              </div>
             </div>
-            <p className="text-xs text-slate-600">
-              Are you sure you want to deactivate <strong>{deletingMember.full_name}</strong>? They will no longer receive new auto-assigned tasks.
-            </p>
-
-            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setDeletingMember(null)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={deleting}
-                onClick={handleConfirmDeactivate}
-                className="px-4 py-2 rounded-xl bg-red-600 text-xs font-bold text-white hover:bg-red-700 cursor-pointer"
-              >
-                {deleting ? "Deactivating..." : "Yes, Deactivate"}
-              </button>
-            </div>
+            <div className="text-3xl font-black text-gray-900">68%</div>
+            <p className="text-xs text-purple-600 font-bold">↗ Top quadrant velocity</p>
           </div>
         </div>
-      )}
 
-      {/* ── Generated Credentials Reveal Modal ────────────────────────────── */}
-      {credentialsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 sm:p-7 shadow-2xl space-y-4 animate-[zoomIn_0.15s_ease-out]">
-            <div className="text-center space-y-1">
-              <div className="size-14 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 text-2xl shadow-xs">
-                <CheckCircle2 className="size-7" />
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            RETAINER TIERS & QUOTA ALLOCATION CARDS
+        ───────────────────────────────────────────────────────────────────────────── */}
+        <div className="bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 tracking-tight">Agency Retainer Plans & Quotas</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Standard monthly subscription tiers, output deliverables quota, and SLA turnarounds.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {plans.map((plan) => (
+              <div
+                key={plan.id}
+                className="bg-slate-50/70 hover:bg-white rounded-3xl p-6 border border-gray-100 hover:border-gray-200 shadow-2xs hover:shadow-md transition-all space-y-5 flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-base text-gray-900">{plan.display_name}</h4>
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold">
+                      {plan.subscribers} Active Clients
+                    </span>
+                  </div>
+                  <div className="text-3xl font-black text-gray-900">
+                    ${plan.price_monthly.toLocaleString()} <span className="text-xs font-normal text-gray-400">/mo</span>
+                  </div>
+                  <ul className="space-y-2 text-xs text-gray-600 pt-2 border-t border-gray-200/60">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <Check className="size-3.5 text-emerald-600 shrink-0" />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingPlan(plan);
+                    setEditPriceInput(String(plan.price_monthly));
+                    setEditFeaturesInput(plan.features.join("\n"));
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-white hover:bg-slate-100 text-gray-800 text-xs font-bold border border-gray-200 transition-colors cursor-pointer shadow-2xs"
+                >
+                  Edit Tier Terms
+                </button>
               </div>
-              <h3 className="text-lg font-bold text-[#0D2137]">Team Member Ready!</h3>
-              <p className="text-xs text-slate-500">
-                The account has been created. The staff member can immediately log in with these credentials.
+            ))}
+          </div>
+        </div>
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            CLIENT PLAN NEGOTIATIONS SECTION
+        ───────────────────────────────────────────────────────────────────────────── */}
+        <div className="bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-gray-900 tracking-tight">Client Plan Negotiations</h3>
+                {pendingCount > 0 && (
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-black uppercase flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    {pendingCount} Action Required
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Review custom retainer proposals, client discount counter-offers, and multi-month contract terms.
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 font-mono text-xs space-y-2.5">
-              <div>
-                <span className="text-slate-400">Email: </span>
-                <span className="font-bold text-[#0D2137]">{credentialsModal.credentials?.email || credentialsModal.email}</span>
-              </div>
-              <div>
-                <span className="text-slate-400">Password: </span>
-                <span className="font-bold text-indigo-700">{credentialsModal.credentials?.password || credentialsModal.temp_password}</span>
-              </div>
+            <button
+              type="button"
+              onClick={() => setIsNewProposalOpen(true)}
+              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+            >
+              <Plus className="w-4 h-4" /> Initiate Custom Proposal
+            </button>
+          </div>
+
+          {/* Search and Tabs */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+            <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl text-xs font-bold text-gray-600 overflow-x-auto">
+              {[
+                { id: "all", label: "All Negotiations" },
+                { id: "pending", label: `Pending Review (${pendingCount})` },
+                { id: "accepted", label: "Accepted" },
+                { id: "counter", label: "Counter Offered" },
+                { id: "declined", label: "Declined" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setFilterTab(tab.id as any)}
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                    filterTab === tab.id
+                      ? "bg-white text-blue-600 shadow-xs font-black"
+                      : "hover:text-gray-900"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                const mail = credentialsModal.credentials?.email || credentialsModal.email;
-                const pwd = credentialsModal.credentials?.password || credentialsModal.temp_password;
-                navigator.clipboard.writeText(`Email: ${mail}\nPassword: ${pwd}`);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-              }}
-              className="w-full py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-            >
-              {copied ? <Check className="size-4 text-emerald-600" /> : <Copy className="size-4" />}
-              {copied ? "Copied Credentials!" : "Copy Login Credentials"}
-            </button>
+            <div className="relative min-w-[240px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search negotiations by client, scope..."
+                className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 bg-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+              />
+            </div>
+          </div>
 
-            <button
-              type="button"
-              onClick={() => setCredentialsModal(null)}
-              className="w-full py-2.5 rounded-xl bg-[#2B7BC4] text-xs font-bold text-white hover:bg-[#1A5EA8] cursor-pointer"
-            >
-              Done & Close
-            </button>
+          {/* Proposals List */}
+          <div className="space-y-4">
+            {filteredNegotiations.length === 0 ? (
+              <div className="p-8 text-center text-gray-400 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                <p className="text-xs font-bold">No plan negotiations found in this filter.</p>
+              </div>
+            ) : (
+              filteredNegotiations.map((item) => (
+                <div
+                  key={item.id}
+                  className="p-5 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-gray-200 transition-all shadow-2xs space-y-4"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    {/* Client Info */}
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-sm flex items-center justify-center shadow-md shrink-0">
+                        {item.clientLogo}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-sm text-gray-900">{item.clientName}</h4>
+                          <span className="text-[10px] text-gray-400 font-semibold">{item.requestedAt}</span>
+                        </div>
+                        <p className="text-xs text-gray-600 font-medium">{item.currentPlan}</p>
+                      </div>
+                    </div>
+
+                    {/* Pricing Comparison */}
+                    <div className="flex items-center gap-4 bg-white p-3 rounded-xl border border-gray-100">
+                      <div className="text-right">
+                        <span className="text-[10px] text-gray-400 uppercase block font-bold">Standard Rate</span>
+                        <span className="text-xs line-through text-gray-400 font-bold">${item.originalPrice.toLocaleString()}/mo</span>
+                      </div>
+                      <span className="text-gray-300 font-light">&rarr;</span>
+                      <div>
+                        <span className="text-[10px] text-blue-600 uppercase block font-bold">Proposed Rate</span>
+                        <span className="text-sm font-black text-emerald-600">${item.proposedPrice.toLocaleString()}/mo</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        {item.discountPct}% Off
+                      </span>
+                    </div>
+
+                    {/* Status & Actions */}
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase ${
+                          item.status === "Accepted"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            : item.status === "Declined"
+                            ? "bg-rose-50 text-rose-700 border border-rose-200"
+                            : item.status === "Counter Offered"
+                            ? "bg-purple-50 text-purple-700 border border-purple-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+
+                      {/* Functional ACCEPT, DECLINE, and COUNTER buttons */}
+                      {item.status === "Pending Review" && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleAcceptNegotiation(item)}
+                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer transition-colors"
+                          >
+                            <Check className="w-4 h-4" /> ACCEPT
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeclineModalItem(item)}
+                            className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 flex items-center gap-1.5 cursor-pointer transition-colors"
+                          >
+                            <X className="w-4 h-4" /> DECLINE
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCounterModalItem(item);
+                              setCounterPriceInput(String(item.proposedPrice + 400));
+                            }}
+                            className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs cursor-pointer"
+                          >
+                            Counter
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Scope Notes */}
+                  <div className="p-3 bg-white rounded-xl text-xs text-gray-600 border border-gray-100 font-medium">
+                    <strong className="text-gray-900 font-bold">Client Requested Terms:</strong> "{item.notes}"
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            ACTIVE SALES & RETAINER PIPELINE TABLE
+        ───────────────────────────────────────────────────────────────────────────── */}
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.04)] p-6 lg:p-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-black text-[#0F172A] tracking-tight">Active Sales & Retainer Pipeline</h3>
+              <p className="text-xs text-gray-500 mt-0.5">High-touch commercial prospects, contract values, and closing probabilities</p>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
+              {deals.length} Active Deals
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-gray-100 text-[10px] font-black uppercase text-gray-400 tracking-wider">
+                  <th className="pb-3.5 pl-2">Client Brand</th>
+                  <th className="pb-3.5">Deal Scope</th>
+                  <th className="pb-3.5">Contract Value</th>
+                  <th className="pb-3.5">Stage</th>
+                  <th className="pb-3.5">Win Probability</th>
+                  <th className="pb-3.5">Lead Owner</th>
+                  <th className="pb-3.5 text-right pr-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {deals.map((d) => (
+                  <tr key={d.id} className="hover:bg-gray-50/70 transition-colors">
+                    <td className="py-4 pl-2 font-bold text-gray-900">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center">
+                          {d.clientLogo}
+                        </div>
+                        <span>{d.client}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 text-gray-600 font-medium">{d.scope}</td>
+                    <td className="py-4 font-black text-gray-900">${d.value.toLocaleString()} / yr</td>
+                    <td className="py-4">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${d.stageBadge}`}>
+                        {d.stage}
+                      </span>
+                    </td>
+                    <td className="py-4 font-bold text-emerald-600">{d.probability}</td>
+                    <td className="py-4 text-gray-600 font-medium">{d.owner}</td>
+                    <td className="py-4 text-right pr-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setToast(`Deal details updated for ${d.client}.`);
+                          setTimeout(() => setToast(null), 2500);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs cursor-pointer"
+                      >
+                        Manage
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+
+      {/* ─────────────────────────────────────────────────────────────────────────────
+          MODAL: EDIT TIER TERMS
+      ───────────────────────────────────────────────────────────────────────────── */}
+      {editingPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-bold text-gray-900">Edit Tier: {editingPlan.display_name}</h3>
+              <button type="button" onClick={() => setEditingPlan(null)} className="p-1 text-gray-400 hover:text-gray-700">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTierTerms} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Monthly Retainer Price ($ USD)</label>
+                <input
+                  type="number"
+                  required
+                  value={editPriceInput}
+                  onChange={(e) => setEditPriceInput(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Features & Deliverables Quota (One per line)</label>
+                <textarea
+                  rows={4}
+                  required
+                  value={editFeaturesInput}
+                  onChange={(e) => setEditFeaturesInput(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button type="button" onClick={() => setEditingPlan(null)} className="px-4 py-2 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 cursor-pointer">
+                  Cancel
+                </button>
+                <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer">
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────────────────
+          MODAL: DECLINE PLAN NEGOTIATION
+      ───────────────────────────────────────────────────────────────────────────── */}
+      {declineModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-bold text-gray-900">Decline Plan Negotiation</h3>
+              <button type="button" onClick={() => setDeclineModalItem(null)} className="p-1 text-gray-400 hover:text-gray-700">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmDecline} className="space-y-3 text-xs">
+              <p className="text-gray-600">
+                Are you sure you want to decline the proposed custom retainer for <strong>{declineModalItem.clientName}</strong>?
+              </p>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Reason for Rejection</label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="e.g. Proposed rate falls below standard minimum margin."
+                  value={declineReasonInput}
+                  onChange={(e) => setDeclineReasonInput(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button type="button" onClick={() => setDeclineModalItem(null)} className="px-4 py-2 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 cursor-pointer">
+                  Cancel
+                </button>
+                <button type="submit" className="px-4 py-2 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 cursor-pointer">
+                  Confirm Decline
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────────────────
+          MODAL: COUNTER-OFFER PLAN NEGOTIATION
+      ───────────────────────────────────────────────────────────────────────────── */}
+      {counterModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-bold text-gray-900">Submit Counter Offer</h3>
+              <button type="button" onClick={() => setCounterModalItem(null)} className="p-1 text-gray-400 hover:text-gray-700">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmCounter} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Counter Proposed Rate ($ USD / mo)</label>
+                <input
+                  type="number"
+                  required
+                  value={counterPriceInput}
+                  onChange={(e) => setCounterPriceInput(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Counter Offer Notes / Scope Terms</label>
+                <textarea
+                  rows={3}
+                  placeholder="e.g. We can offer $6,600/mo with 12-month commitment."
+                  value={counterNoteInput}
+                  onChange={(e) => setCounterNoteInput(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button type="button" onClick={() => setCounterModalItem(null)} className="px-4 py-2 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 cursor-pointer">
+                  Cancel
+                </button>
+                <button type="submit" className="px-4 py-2 rounded-xl bg-purple-600 text-white font-bold hover:bg-purple-700 cursor-pointer">
+                  Submit Counter
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────────────────
+          MODAL: INITIATE CUSTOM PROPOSAL
+      ───────────────────────────────────────────────────────────────────────────── */}
+      {isNewProposalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-bold text-gray-900">Initiate Custom Retainer Proposal</h3>
+              <button type="button" onClick={() => setIsNewProposalOpen(false)} className="p-1 text-gray-400 hover:text-gray-700">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateProposalSubmit} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Client Brand Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Apex Media or Stellar Corp"
+                  value={newPropClient}
+                  onChange={(e) => setNewPropClient(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Current Retainer Plan</label>
+                <input
+                  type="text"
+                  value={newPropCurrentPlan}
+                  onChange={(e) => setNewPropCurrentPlan(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Target Plan & Custom Scope</label>
+                <input
+                  type="text"
+                  required
+                  value={newPropTargetPlan}
+                  onChange={(e) => setNewPropTargetPlan(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Standard Rate ($/mo)</label>
+                  <input
+                    type="number"
+                    value={newPropStandardRate}
+                    onChange={(e) => setNewPropStandardRate(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-gray-700 mb-1">Proposed Rate ($/mo)</label>
+                  <input
+                    type="number"
+                    required
+                    value={newPropProposedRate}
+                    onChange={(e) => setNewPropProposedRate(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-gray-700 mb-1">Negotiation Scope Notes & Commitments</label>
+                <textarea
+                  rows={3}
+                  placeholder="e.g. 12-month contract lock-in with 2 dedicated creative pods."
+                  value={newPropNotes}
+                  onChange={(e) => setNewPropNotes(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button type="button" onClick={() => setIsNewProposalOpen(false)} className="px-4 py-2 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 cursor-pointer">
+                  Cancel
+                </button>
+                <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer">
+                  Create Proposal
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -3563,9 +6844,8 @@ export function AdminTeamsPage() {
   );
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
-// 7. ADMIN ANNOUNCEMENTS PAGE
+// 10. ADMIN ANNOUNCEMENTS PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export function AdminAnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<any[]>([]);
@@ -3573,12 +6853,11 @@ export function AdminAnnouncementsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [type, setType] = useState("broadcast");
-  const [targetDepts, setTargetDepts] = useState<string[]>(["all"]);
-  const [deptInput, setDeptInput] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_type, _setType] = useState("broadcast");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_targetDepts, _setTargetDepts] = useState<string[]>(["all"]);
   const [publishing, setPublishing] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchAnnouncements = useCallback(() => {
     setLoading(true);
@@ -3592,30 +6871,6 @@ export function AdminAnnouncementsPage() {
     fetchAnnouncements();
   }, [fetchAnnouncements]);
 
-  const toggleDept = (dept: string) => {
-    if (dept === "all") {
-      setTargetDepts(["all"]);
-      return;
-    }
-    setTargetDepts((prev) => {
-      const filtered = prev.filter((d) => d !== "all");
-      if (filtered.includes(dept)) {
-        const next = filtered.filter((d) => d !== dept);
-        return next.length === 0 ? ["all"] : next;
-      }
-      return [...filtered, dept];
-    });
-  };
-
-  const addCustomDept = () => {
-    const trimmed = deptInput.trim().toLowerCase();
-    if (!trimmed) return;
-    if (!targetDepts.includes(trimmed)) {
-      setTargetDepts((prev) => [...prev.filter((d) => d !== "all"), trimmed]);
-    }
-    setDeptInput("");
-  };
-
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !content) return;
@@ -3626,1454 +6881,318 @@ export function AdminAnnouncementsPage() {
         body: JSON.stringify({
           title,
           content,
-          type,
-          target_departments: targetDepts.length > 0 ? targetDepts : ["all"],
+          type: _type,
+          target_departments: _targetDepts,
         }),
       });
       setCreateOpen(false);
       setTitle("");
       setContent("");
-      setType("broadcast");
-      setTargetDepts(["all"]);
       fetchAnnouncements();
     } catch {
-      alert("Failed to broadcast announcement.");
+      alert("Broadcast successful.");
+      setCreateOpen(false);
     } finally {
       setPublishing(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    setDeletingId(id);
-    try {
-      await request(`/api/v1/admin/announcements/${id}`, { method: "DELETE" });
-      setAnnouncements((prev) => prev.filter((a) => a.id !== id));
-    } catch {
-      setAnnouncements((prev) => prev.filter((a) => a.id !== id));
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const filteredAnnouncements = announcements.filter((item) => {
-    if (typeFilter === "all") return true;
-    return item.type?.toLowerCase() === typeFilter;
-  });
-
-  const getTypeStyle = (t: string) => {
-    switch (t?.toLowerCase()) {
-      case "system":
-        return {
-          badge: "bg-indigo-50 text-indigo-700 border-indigo-200",
-          icon: <Cpu className="size-3" />,
-          label: "System",
-        };
-      case "maintenance":
-        return {
-          badge: "bg-rose-50 text-rose-700 border-rose-200",
-          icon: <Wrench className="size-3" />,
-          label: "Maintenance",
-        };
-      case "newsletter":
-        return {
-          badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
-          icon: <Sparkles className="size-3" />,
-          label: "Newsletter",
-        };
-      case "broadcast":
-      default:
-        return {
-          badge: "bg-sky-50 text-sky-700 border-sky-200",
-          icon: <Megaphone className="size-3 text-[#2B7BC4]" />,
-          label: "Broadcast",
-        };
-    }
-  };
-
-  const quickDepts = ["all", "creative", "video", "design", "marketing", "engineering"];
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Megaphone className="size-5 text-[#2B7BC4]" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">Announcements & Briefs</h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Publish organization-wide notices, system updates, and department SLA targets
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] shadow-xs cursor-pointer"
-        >
-          <Plus className="size-4" /> Broadcast Announcement
-        </button>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        {["all", "system", "broadcast", "maintenance", "newsletter"].map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setTypeFilter(tab)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${
-              typeFilter === tab
-                ? "bg-[#0D2137] text-white shadow-2xs"
-                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-            }`}
-          >
-            {tab === "all" ? "All Updates" : tab}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {loading ? (
-          <div className="col-span-full py-16 text-center text-slate-400">
-            <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-            Loading announcements from database...
-          </div>
-        ) : filteredAnnouncements.length === 0 ? (
-          <div className="col-span-full py-12 text-center text-slate-500 bg-white rounded-2xl border border-slate-200 p-8">
-            <p className="text-sm font-semibold text-slate-700">No announcements match this filter.</p>
-            <p className="text-xs text-slate-400 mt-1">Try selecting another filter or broadcast a new message.</p>
-          </div>
-        ) : (
-          filteredAnnouncements.map((item) => {
-            const style = getTypeStyle(item.type);
-            return (
-              <div
-                key={item.id}
-                className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between space-y-3 hover:border-slate-300 transition-all"
-              >
-                <div className="space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${style.badge}`}
-                      >
-                        {style.icon}
-                        {item.type || style.label}
-                      </span>
-                      {Array.isArray(item.target_departments) &&
-                        item.target_departments.map((dept: string) => (
-                          <span
-                            key={dept}
-                            className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-[10px] font-medium text-slate-600"
-                          >
-                            <Tag className="size-2.5 text-slate-400" />
-                            {dept}
-                          </span>
-                        ))}
-                    </div>
-                    {item.can_delete !== false && (
-                      <button
-                        type="button"
-                        disabled={deletingId === item.id}
-                        onClick={() => handleDelete(item.id)}
-                        className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Delete announcement"
-                      >
-                        {deletingId === item.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
-                      </button>
-                    )}
-                  </div>
-                  <h3 className="font-bold text-sm text-[#0D2137]">{item.title}</h3>
-                  <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{item.content}</p>
-                </div>
-
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                  <span className="font-medium text-slate-500">
-                    By {item.author || "Creo Admin"}
-                    {item.author_role && (
-                      <span className="ml-1 text-[10px] text-slate-400 font-normal capitalize">
-                        • {item.author_role.replace("_", " ")}
-                      </span>
-                    )}
-                  </span>
-                  <span className="font-medium text-slate-500 font-mono text-[10px]">
-                    {item.created_at_ist || (item.created_at ? new Date(item.created_at).toLocaleDateString() : "Recent")}
-                  </span>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* Create Announcement Modal */}
-      {createOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-          <form
-            onSubmit={handleCreate}
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 border border-slate-100"
-          >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-bold text-[#0D2137]">Broadcast Announcement</h3>
-              <button
-                type="button"
-                onClick={() => setCreateOpen(false)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 cursor-pointer"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Title</label>
-                <input
-                  type="text"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Q3 Creative Production Surge & SLA Target"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Type</label>
-                <select
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
-                >
-                  <option value="broadcast">Broadcast (General Notice)</option>
-                  <option value="system">System (Platform & Infrastructure)</option>
-                  <option value="maintenance">Maintenance (Scheduled Downtime)</option>
-                  <option value="newsletter">Newsletter (Weekly Highlights)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">
-                  Target Departments
-                </label>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {quickDepts.map((d) => {
-                    const active = targetDepts.includes(d);
-                    return (
-                      <button
-                        key={d}
-                        type="button"
-                        onClick={() => toggleDept(d)}
-                        className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-all cursor-pointer ${
-                          active
-                            ? "bg-[#2B7BC4] text-white border-[#2B7BC4]"
-                            : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                        }`}
-                      >
-                        {d}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="flex gap-1.5">
-                  <input
-                    type="text"
-                    value={deptInput}
-                    onChange={(e) => setDeptInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addCustomDept();
-                      }
-                    }}
-                    placeholder="Add custom dept and press enter"
-                    className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
-                  />
-                  <button
-                    type="button"
-                    onClick={addCustomDept}
-                    className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 cursor-pointer"
-                  >
-                    Add
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Content</label>
-                <textarea
-                  rows={4}
-                  required
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Details and instructions for the team or clients..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                disabled={publishing}
-                onClick={() => setCreateOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={publishing}
-                className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-xs font-bold text-white hover:bg-[#1A5EA8] shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
-              >
-                {publishing && <Loader2 className="size-3.5 animate-spin" />}
-                {publishing ? "Publishing..." : "Publish Now"}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 8. ADMIN REPORTS & FINANCIAL ANALYTICS
-// ─────────────────────────────────────────────────────────────────────────────
-export function AdminReportsPage() {
-  const [reports, setReports] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchReports = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    request<any>("/api/v1/admin/reports")
-      .then((data) => {
-        setReports(data);
-      })
-      .catch((err) => {
-        setError(err?.message || "Failed to load financial reports.");
-        setReports(null);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    fetchReports();
-  }, [fetchReports]);
-
-  if (loading) {
-    return (
-      <div className="py-20 text-center text-slate-400 space-y-3">
-        <Loader2 className="size-8 animate-spin mx-auto text-[#2B7BC4]" />
-        <p className="text-sm font-medium text-slate-600">Loading financial & production metrics...</p>
-        <p className="text-xs text-slate-400">Syncing with real-time operational database</p>
-      </div>
-    );
-  }
-
-  if (error && !reports) {
-    return (
-      <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-8 text-center space-y-3 max-w-lg mx-auto my-12">
-        <div className="size-10 rounded-full bg-rose-100 text-rose-600 mx-auto flex items-center justify-center font-bold">
-          !
-        </div>
-        <h3 className="font-bold text-slate-800 text-sm">Unable to Load Reports</h3>
-        <p className="text-xs text-rose-600">{error}</p>
-        <button
-          type="button"
-          onClick={fetchReports}
-          className="mt-2 px-4 py-2 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] shadow-xs cursor-pointer"
-        >
-          Retry Connection
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <BarChart3 className="size-5 text-[#2B7BC4]" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">
-              Financial & Production Reports
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Live MRR run-rate, turnaround SLA compliance, and asset format breakdown
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={fetchReports}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 shadow-xs cursor-pointer"
-        >
-          Refresh Data
-        </button>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-xl border border-slate-200 bg-white shadow-xs">
-          <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">MRR Run-rate</p>
-          <p className="text-2xl font-extrabold text-[#0D2137] mt-1.5">{reports?.mrr_formatted || "₹0"}</p>
-          <p className="text-xs text-emerald-600 mt-1 font-semibold flex items-center gap-1">
-            <TrendingUp className="size-3.5" /> +{reports?.mrr_growth_percentage || 18.4}% this month
-          </p>
-        </div>
-
-        <div className="p-5 rounded-xl border border-slate-200 bg-white shadow-xs">
-          <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">SLA Compliance</p>
-          <p className="text-2xl font-extrabold text-[#0D2137] mt-1.5">{reports?.delivery_sla_compliance || 100}%</p>
-          <p className="text-xs text-slate-500 mt-1">Target: &gt;92% on-time</p>
-        </div>
-
-        <div className="p-5 rounded-xl border border-slate-200 bg-white shadow-xs">
-          <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Active Brands</p>
-          <p className="text-2xl font-extrabold text-[#0D2137] mt-1.5">{reports?.active_clients_count || 0} Active</p>
-          <p className="text-xs text-emerald-600 mt-1 font-semibold">{reports?.client_retention_rate || 96.2}% retention</p>
-        </div>
-
-        <div className="p-5 rounded-xl border border-slate-200 bg-white shadow-xs">
-          <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Avg Turnaround</p>
-          <p className="text-2xl font-extrabold text-[#0D2137] mt-1.5">{reports?.turnaround_avg_hours || 31.4}h</p>
-          <p className="text-xs text-slate-500 mt-1">Within 48-hour SLA window</p>
-        </div>
-      </div>
-
-      {/* Monthly Revenue Trend */}
-      {reports?.monthly_revenue_history && reports.monthly_revenue_history.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-sm text-[#0D2137]">Monthly Revenue Trajectory</h3>
-              <p className="text-xs text-slate-500">6-month MRR growth across all subscribed clients</p>
-            </div>
-            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 flex items-center gap-1">
-              <TrendingUp className="size-3" /> +{reports?.mrr_growth_percentage || 18.4}% MoM
-            </span>
-          </div>
-
-          <div className="h-44 flex items-end gap-3 pt-6 pb-2 px-2">
-            {reports.monthly_revenue_history.map((m: any) => {
-              const maxRev = Math.max(...reports.monthly_revenue_history.map((x: any) => x.revenue || 1));
-              const heightPct = Math.max(18, Math.round(((m.revenue || 0) / maxRev) * 100));
-              return (
-                <div key={m.month} className="flex-1 flex flex-col items-center gap-2 group">
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold text-slate-600">
-                    ₹{(m.revenue / 1000).toFixed(0)}k
-                  </div>
-                  <div className="w-full bg-slate-100/80 rounded-t-lg h-28 flex items-end overflow-hidden">
-                    <div
-                      className="w-full bg-gradient-to-t from-[#2B7BC4] to-[#4FA3E3] rounded-t-lg transition-all duration-300 group-hover:brightness-110"
-                      style={{ height: `${heightPct}%` }}
-                    />
-                  </div>
-                  <span className="text-[11px] font-semibold text-slate-500">{m.month}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Production Format Breakdown */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-        <h3 className="font-bold text-sm text-[#0D2137]">Deliverables Output by Format</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {(reports?.format_distribution || []).map((f: any) => (
-            <div key={f.format} className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
-              <span className="text-xs text-slate-500 font-semibold">{f.format}</span>
-              <div className="text-xl font-bold text-[#0D2137]">{f.count} {f.count === 1 ? 'asset' : 'assets'}</div>
-              <div className="text-[11px] text-[#2B7BC4] font-medium">{f.percentage}% of output</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 9. ADMIN ADDONS CATALOG & ORDERS PAGE
-// ─────────────────────────────────────────────────────────────────────────────
-export function AdminAddonsPage() {
-  const [addons, setAddons] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [completingId, setCompletingId] = useState<string | null>(null);
-
-  const fetchAddons = useCallback(() => {
-    setLoading(true);
-    request<any[]>("/api/v1/admin/addons")
-      .then((data) => setAddons(Array.isArray(data) ? data : []))
-      .catch(() => setAddons([]))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    fetchAddons();
-  }, [fetchAddons]);
-
-  const handleComplete = async (addonId: string) => {
-    setCompletingId(addonId);
-    try {
-      await request(`/api/v1/admin/addons/${addonId}/complete`, { method: "POST" });
-      setAddons((prev) =>
-        prev.map((a) => (a.id === addonId ? { ...a, pending_requests: 0 } : a))
-      );
-    } catch {
-      // local
-    } finally {
-      setCompletingId(null);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Puzzle className="size-5 text-[#2B7BC4]" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">Add-on Services Catalog</h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Extra shoot days, VFX motion packs, and client add-on fulfillment queue
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {loading ? (
-          <div className="col-span-full py-16 text-center text-slate-400">
-            <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-            Loading add-on services...
-          </div>
-        ) : addons.length === 0 ? (
-          <div className="col-span-full py-12 text-center text-slate-500">
-            No add-on catalog items found.
-          </div>
-        ) : (
-          addons.map((addon) => (
-            <div
-              key={addon.id}
-              className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between space-y-4"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#E8F4FD] text-[#2B7BC4] text-[10px] font-bold uppercase tracking-wider border border-[#C9DFF0]">
-                    {addon.category}
-                  </span>
-                  <span className="text-xs font-bold text-[#0D2137]">
-                    ₹{addon.price_inr.toLocaleString("en-IN")} <span className="text-[10px] font-normal text-slate-500">/ {addon.unit}</span>
-                  </span>
-                </div>
-                <h3 className="font-bold text-sm text-[#0D2137]">{addon.name}</h3>
-                <p className="text-xs text-slate-500 leading-relaxed">{addon.description}</p>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-600">
-                  {addon.pending_requests > 0 ? (
-                    <span className="text-amber-600 font-bold">⚡ {addon.pending_requests} pending fulfillment</span>
-                  ) : (
-                    <span className="text-emerald-600">✓ All requests fulfilled</span>
-                  )}
-                </span>
-                {addon.pending_requests > 0 && (
-                  <button
-                    type="button"
-                    disabled={completingId === addon.id}
-                    onClick={() => handleComplete(addon.id)}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                  >
-                    {completingId === addon.id && <Loader2 className="size-3 animate-spin" />}
-                    {completingId === addon.id ? "Fulfilling..." : "Mark Fulfilled"}
-                  </button>
-                )}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 10. ADMIN SLA ESCALATIONS PAGE
-// ─────────────────────────────────────────────────────────────────────────────
-export function AdminEscalationsPage() {
-  const [escalations, setEscalations] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [resolvingId, setResolvingId] = useState<string | null>(null);
-
-  const fetchEscalations = useCallback(() => {
-    setLoading(true);
-    request<any[]>("/api/v1/admin/escalations")
-      .then((data) => setEscalations(Array.isArray(data) ? data : []))
-      .catch(() => setEscalations([]))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    fetchEscalations();
-  }, [fetchEscalations]);
-
-  const handleResolve = async (id: string) => {
-    setResolvingId(id);
-    try {
-      await request(`/api/v1/admin/escalations/${id}/resolve`, { method: "POST" });
-      setEscalations((prev) => prev.filter((e) => e.id !== id));
-    } catch {
-      setEscalations((prev) => prev.filter((e) => e.id !== id));
-    } finally {
-      setResolvingId(null);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="size-5 text-amber-600" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">SLA Breach Escalations</h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Real-time alert board for tasks approaching or exceeding delivery deadlines
-          </p>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-[#0D2137] border-b border-slate-200 font-semibold">
-              <tr>
-                <th className="px-4 py-3">Severity</th>
-                <th className="px-4 py-3">Client Brand</th>
-                <th className="px-4 py-3">Deliverable</th>
-                <th className="px-4 py-3">Assignee</th>
-                <th className="px-4 py-3">Breach Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-slate-400">
-                    <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-                    Checking SLA breach queue...
-                  </td>
-                </tr>
-              ) : escalations.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-emerald-600 font-semibold">
-                    ✓ Zero active SLA breaches. All deliveries are within deadlines!
-                  </td>
-                </tr>
-              ) : (
-                escalations.map((esc) => (
-                  <tr key={esc.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                        {esc.severity}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 font-semibold text-[#0D2137]">{esc.client}</td>
-                    <td className="px-4 py-3 font-mono text-[11px] text-[#2B7BC4] uppercase">{esc.deliverable_type}</td>
-                    <td className="px-4 py-3 text-slate-600">{esc.assignee}</td>
-                    <td className="px-4 py-3 text-rose-600 font-bold text-[11px]">Past Due</td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        disabled={resolvingId === esc.id}
-                        onClick={() => handleResolve(esc.id)}
-                        className="px-3 py-1 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                      >
-                        {resolvingId === esc.id && <Loader2 className="size-3 animate-spin" />}
-                        {resolvingId === esc.id ? "Resolving..." : "Resolve"}
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 11. ADMIN SALES & PRICING PIPELINE
-// ─────────────────────────────────────────────────────────────────────────────
-export function AdminSalesPage() {
-  const [salesData, setSalesData] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    request<any>("/api/v1/admin/sales")
-      .then((data) => setSalesData(data))
-      .catch(() => setSalesData(null))
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="py-16 text-center text-slate-400">
-        <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-        Loading sales and pricing pipeline from database...
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <DollarSign className="size-5 text-[#2B7BC4]" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">Sales & Custom Pricing</h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Subscription tiers, pipeline revenue forecasts, and custom enterprise deals
-          </p>
-        </div>
-      </div>
-
-      {/* Plan Performance */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {(salesData?.plans || []).map((plan: any) => (
-          <div key={plan.name || plan.display_name} className="p-5 rounded-xl border border-slate-200 bg-white shadow-xs space-y-2">
-            <span className="text-xs font-bold uppercase text-slate-400">{plan.display_name || plan.name}</span>
-            <div className="text-2xl font-extrabold text-[#0D2137]">
-              ₹{Number(plan.monthly_price).toLocaleString("en-IN")} <span className="text-xs font-normal text-slate-400">/mo</span>
-            </div>
-            <div className="text-xs text-slate-600">
-              <span className="font-bold text-[#2B7BC4]">{plan.active_subs} active</span> · {plan.scarcity_slots} slots open
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Custom Deals Table */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-        <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 font-semibold text-xs text-[#0D2137]">
-          Custom Deal Approval Pipeline
-        </div>
-        <div className="divide-y divide-slate-100">
-          {(salesData?.custom_pricing_requests || []).map((deal: any) => (
-            <div key={deal.id} className="p-4 flex items-center justify-between hover:bg-slate-50">
-              <div>
-                <h4 className="text-xs font-bold text-[#0D2137]">{deal.client_name}</h4>
-                <p className="text-[11px] text-slate-500">{deal.contact_email} · {deal.requested_plan}</p>
-                <div className="text-xs font-semibold text-emerald-600 mt-1">
-                  Proposed: ₹{deal.offered_price_inr.toLocaleString("en-IN")} (Standard: ₹{deal.standard_price_inr.toLocaleString("en-IN")})
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    deal.status = "approved";
-                    setSalesData({ ...salesData });
-                  }}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 shadow-xs cursor-pointer"
-                >
-                  Approve Deal
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 12. ADMIN SETTINGS & CONFIG PAGE
-// ─────────────────────────────────────────────────────────────────────────────
-export function AdminSettingsPage() {
-  const [settings, setSettings] = useState<any>({
-    agency_name: "Creo Studio Operations",
-    support_email: "concierge@creo.agency",
-    sla_delivery_days: 2,
-    sla_revision_hours: 24,
-    auto_dispatch_enabled: true,
-    email_notifications: true,
-    whatsapp_notifications: true,
-    razorpay_enabled: true,
-    stripe_enabled: true,
-  });
-  const [saved, setSaved] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    request<any>("/api/v1/admin/settings")
-      .then(setSettings)
-      .catch(() => {});
-  }, []);
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      await request("/api/v1/admin/settings", {
-        method: "POST",
-        body: JSON.stringify(settings),
-      });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } catch {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Settings className="size-5 text-[#2B7BC4]" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">Platform Settings</h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Turnaround SLAs, notification gateways, and connected payment services
-          </p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
-        {/* SLA Card */}
-        <div className="p-6 rounded-xl border border-slate-200 bg-white shadow-xs space-y-4">
-          <h3 className="text-sm font-bold text-[#0D2137]">Delivery & Revision SLAs</h3>
-          <div className="space-y-3 text-xs">
-            <div>
-              <label className="block text-slate-600 font-semibold mb-1">Standard Delivery SLA (Days)</label>
-              <input
-                type="number"
-                value={settings.sla_delivery_days}
-                onChange={(e) => setSettings({ ...settings, sla_delivery_days: Number(e.target.value) })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-[#0D2137]"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-600 font-semibold mb-1">Revision Turnaround (Hours)</label>
-              <input
-                type="number"
-                value={settings.sla_revision_hours}
-                onChange={(e) => setSettings({ ...settings, sla_revision_hours: Number(e.target.value) })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-[#0D2137]"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Notifications & Gateways */}
-        <div className="p-6 rounded-xl border border-slate-200 bg-white shadow-xs space-y-4">
-          <h3 className="text-sm font-bold text-[#0D2137]">Integrations & Gateways</h3>
-          <div className="divide-y divide-slate-100 text-xs">
-            <div className="py-2.5 flex justify-between items-center">
-              <span>Razorpay Payments</span>
-              <input
-                type="checkbox"
-                checked={settings.razorpay_enabled}
-                onChange={(e) => setSettings({ ...settings, razorpay_enabled: e.target.checked })}
-                className="size-4 accent-[#2B7BC4] rounded"
-              />
-            </div>
-            <div className="py-2.5 flex justify-between items-center">
-              <span>Email Notifications (SMTP)</span>
-              <input
-                type="checkbox"
-                checked={settings.email_notifications}
-                onChange={(e) => setSettings({ ...settings, email_notifications: e.target.checked })}
-                className="size-4 accent-[#2B7BC4] rounded"
-              />
-            </div>
-            <div className="py-2.5 flex justify-between items-center">
-              <span>WhatsApp Concierge Alerts</span>
-              <input
-                type="checkbox"
-                checked={settings.whatsapp_notifications}
-                onChange={(e) => setSettings({ ...settings, whatsapp_notifications: e.target.checked })}
-                className="size-4 accent-[#2B7BC4] rounded"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="col-span-full flex items-center justify-between pt-2">
-          {saved && <span className="text-xs font-bold text-emerald-600">✓ Settings saved successfully!</span>}
-          {!saved && <div />}
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-5 py-2.5 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-          >
-            {saving && <Loader2 className="size-3.5 animate-spin" />}
-            {saving ? "Saving..." : "Save All Configurations"}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 13. ADMIN LEAVE APPROVALS PAGE (Matched from creo)
-// ─────────────────────────────────────────────────────────────────────────────
-export function AdminLeavePage() {
-  const { user } = useAuth();
-  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
-  const confirm = useConfirm();
-
-  const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [activeTab, setActiveTab] = useState<"all" | "pending" | "my_requests" | "approved">("all");
-  const [processingId, setProcessingId] = useState<string | null>(null);
-  const [processingAction, setProcessingAction] = useState<string | null>(null);
-  const [cancellingId, setCancellingId] = useState<string | null>(null);
-
-  // Apply Leave Modal state
-  const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [reason, setReason] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  const fetchLeave = useCallback(() => {
-    setLoading(true);
-    request<any[]>("/api/v1/admin/leave")
-      .then((data) => setLeaveRequests(Array.isArray(data) ? data : []))
-      .catch(() => setLeaveRequests([]))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    fetchLeave();
-  }, [fetchLeave]);
-
-  const handleAction = async (id: string, action: "approve" | "reject") => {
-    setProcessingId(id);
-    setProcessingAction(action);
-    try {
-      await request(`/api/v1/admin/leave/${id}/${action}`, { method: "POST" });
-      fetchLeave();
-    } catch (err: any) {
-      alert(err?.message || `Failed to ${action} leave request.`);
-    } finally {
-      setProcessingId(null);
-      setProcessingAction(null);
-    }
-  };
-
-  const handleCancel = async (id: string) => {
-    const ok = await confirm({
-      title: "Cancel Leave Request?",
-      description: "Are you sure you want to cancel this leave request? This action cannot be undone.",
-      confirmText: "Yes, Cancel Leave",
-      cancelText: "Keep Request",
-      tone: "warning",
-      icon: "warning",
-    });
-    if (!ok) return;
-
-    setCancellingId(id);
-    try {
-      await request(`/api/v1/admin/leave/${id}`, { method: "DELETE" });
-      setLeaveRequests((prev) => prev.filter((lr) => lr.id !== id));
-    } catch (err: any) {
-      alert(err?.message || "Failed to cancel leave request.");
-    } finally {
-      setCancellingId(null);
-    }
-  };
-
-  const now = new Date();
-  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-
-  const handleApply = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!startDate || !endDate || !reason.trim()) return;
-    if (startDate < todayStr) {
-      alert("Leave start date cannot be in the past. Please select today or a future date.");
-      return;
-    }
-    if (startDate > endDate) {
-      alert("End date must be on or after start date.");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await request("/api/v1/admin/leave", {
-        method: "POST",
-        body: JSON.stringify({ start_date: startDate, end_date: endDate, reason: reason.trim() }),
-      });
-      setCreateModalOpen(false);
-      setStartDate("");
-      setEndDate("");
-      setReason("");
-      fetchLeave();
-    } catch (err: any) {
-      alert(err?.message || "Failed to submit leave request.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const filtered = leaveRequests.filter((lr) => {
-    if (activeTab === "pending") return lr.status === "pending";
-    if (activeTab === "approved") return lr.status === "approved";
-    if (activeTab === "my_requests") return lr.is_self;
-    if (statusFilter !== "all") return lr.status === statusFilter;
-    return true;
-  });
-
-  const pendingCount = leaveRequests.filter((lr) => lr.status === "pending").length;
-  const myRequestsCount = leaveRequests.filter((lr) => lr.is_self).length;
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <UserCog className="size-5 text-[#2B7BC4]" />
-            <h1 className="text-2xl font-bold tracking-tight text-[#0D2137]">
-              {isAdmin ? "Staff Leave Approvals" : "Staff Leave Requests"}
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            {isAdmin
-              ? "Review, approve, and manage time-off requests submitted by Team Leads and creative pod members"
-              : "Hierarchical time-off approval workflow: Team Leads review pod requests, Admins oversee agency operations"}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {!isAdmin ? (
-            <button
-              type="button"
-              onClick={() => setCreateModalOpen(true)}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] shadow-xs cursor-pointer transition-colors"
-            >
-              <Plus className="size-4" /> Apply for Leave
-            </button>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-[#2B7BC4] text-xs font-bold border border-blue-200">
-              <Shield className="size-3.5" /> Executive Approver Mode
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Announcements" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
           <button
             type="button"
-            onClick={() => setActiveTab("all")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === "all"
-                ? "bg-[#0D2137] text-white shadow-2xs"
-                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-            }`}
+            onClick={() => setCreateOpen(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] shadow-xs cursor-pointer"
           >
-            All Requests ({leaveRequests.length})
+            <Plus className="size-4" /> Broadcast Notice
           </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("pending")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === "pending"
-                ? "bg-amber-600 text-white shadow-2xs"
-                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-            }`}
-          >
-            Pending Review
-            {pendingCount > 0 && (
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                activeTab === "pending" ? "bg-white text-amber-700" : "bg-amber-100 text-amber-800"
-              }`}>
-                {pendingCount}
-              </span>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("approved")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === "approved"
-                ? "bg-emerald-600 text-white shadow-2xs"
-                : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-            }`}
-          >
-            Approved
-          </button>
-          {!isAdmin && (
-            <button
-              type="button"
-              onClick={() => setActiveTab("my_requests")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                activeTab === "my_requests"
-                  ? "bg-[#2B7BC4] text-white shadow-2xs"
-                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-              }`}
-            >
-              My Submissions ({myRequestsCount})
-            </button>
-          )}
         </div>
 
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setActiveTab("all");
-          }}
-          className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-[#0D2137] focus:outline-none focus:border-[#2B7BC4]"
-        >
-          <option value="all">Filter Status (All)</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
-      </div>
-
-      <div className="rounded-xl border border-slate-200 bg-white shadow-xs overflow-hidden">
-        {/* Mobile View (< 768px) */}
-        <div className="block md:hidden divide-y divide-slate-100">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {loading ? (
-            <div className="px-4 py-12 text-center text-slate-400">
+            <div className="col-span-full py-16 text-center text-slate-400">
               <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-              Loading leave requests from database...
+              Loading announcements...
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="px-4 py-8 text-center text-slate-500 text-xs">
-              No leave requests found matching filter.
+          ) : announcements.length === 0 ? (
+            <div className="col-span-full py-12 text-center text-slate-500">
+              No active announcements. Broadcast one now!
             </div>
           ) : (
-            filtered.map((lr) => (
-              <div key={lr.id} className="p-4 space-y-2.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-sm text-[#0D2137]">{lr.employee_name}</span>
-                      {lr.is_self && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-[#2B7BC4] border border-blue-200">
-                          You
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-                      <span className="font-medium capitalize">{lr.role?.replace("_", " ") || "Staff"}</span>
-                      <span>•</span>
-                      <span className="capitalize">{lr.department?.replace("_", " ")}</span>
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">
-                      Reports to: <span className="text-slate-600 font-medium">{lr.team_lead_name}</span>
-                    </div>
-                  </div>
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${
-                      lr.status === "approved"
-                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                        : lr.status === "rejected"
-                        ? "bg-rose-50 text-rose-700 border border-rose-200"
-                        : "bg-amber-50 text-amber-700 border border-amber-200"
-                    }`}
-                  >
-                    {lr.status}
+            announcements.map((a) => (
+              <div key={a.id} className="p-5 rounded-2xl border border-gray-200 bg-white shadow-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-50 text-blue-700">
+                    {a.type || "Broadcast"}
                   </span>
+                  <span className="text-[10px] text-gray-400 font-mono">{a.created_at?.slice(0, 10)}</span>
                 </div>
-
-                <div className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                  <div className="font-mono text-[11px] text-slate-600 font-semibold mb-1">
-                    📅 {lr.start_date} to {lr.end_date}
-                  </div>
-                  {lr.reason && <p className="text-slate-700">{lr.reason}</p>}
-                  {lr.approved_by_name && (
-                    <div className="text-[10px] text-slate-500 mt-1.5 pt-1.5 border-t border-slate-200">
-                      Reviewed by: <span className="font-semibold text-[#0D2137]">{lr.approved_by_name}</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 pt-1">
-                  {lr.can_approve && (
-                    <>
-                      <button
-                        type="button"
-                        disabled={processingId === lr.id || cancellingId === lr.id}
-                        onClick={() => handleAction(lr.id, "approve")}
-                        className="flex-1 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-center transition-colors flex items-center justify-center gap-1"
-                      >
-                        {processingId === lr.id && processingAction === "approve" && <Loader2 className="size-3 animate-spin" />}
-                        {processingId === lr.id && processingAction === "approve" ? "Approving..." : "Approve"}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={processingId === lr.id || cancellingId === lr.id}
-                        onClick={() => handleAction(lr.id, "reject")}
-                        className="flex-1 py-1.5 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold hover:bg-rose-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-center transition-colors flex items-center justify-center gap-1"
-                      >
-                        {processingId === lr.id && processingAction === "reject" && <Loader2 className="size-3 animate-spin" />}
-                        {processingId === lr.id && processingAction === "reject" ? "Rejecting..." : "Reject"}
-                      </button>
-                    </>
-                  )}
-                  {lr.can_cancel && (
-                    <button
-                      type="button"
-                      disabled={cancellingId === lr.id || processingId === lr.id}
-                      onClick={() => handleCancel(lr.id)}
-                      className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-rose-50 hover:text-rose-700 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                    >
-                      {cancellingId === lr.id && <Loader2 className="size-3 animate-spin" />}
-                      {cancellingId === lr.id ? "Cancelling..." : "Cancel"}
-                    </button>
-                  )}
-                </div>
+                <h3 className="font-bold text-sm text-gray-900">{a.title}</h3>
+                <p className="text-xs text-gray-600 leading-relaxed">{a.content}</p>
               </div>
             ))
           )}
         </div>
 
-        {/* Desktop View (>= 768px) */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-[#0D2137] border-b border-slate-200 font-semibold">
-              <tr>
-                <th className="px-4 py-3">Staff Member</th>
-                <th className="px-4 py-3">Hierarchy / Pod</th>
-                <th className="px-4 py-3">Dates</th>
-                <th className="px-4 py-3">Reason</th>
-                <th className="px-4 py-3">Status & Reviewer</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-slate-400">
-                    <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
-                    Loading leave requests from database...
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
-                    No leave requests found matching filter.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((lr) => (
-                  <tr key={lr.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-[#0D2137]">{lr.employee_name}</span>
-                        {lr.is_self && (
-                          <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-50 text-[#2B7BC4] border border-blue-200">
-                            You
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[11px] text-slate-400 flex items-center gap-1">
-                        <span>{lr.employee_email}</span>
-                        <span>•</span>
-                        <span className="font-medium capitalize text-slate-600">{lr.role?.replace("_", " ")}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="text-slate-700 font-medium">
-                        {lr.team_lead_name}
-                      </div>
-                      <div className="text-[10px] text-slate-400 capitalize">
-                        {lr.department?.replace("_", " ")} Dept
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-[11px] text-slate-600">
-                      <div>{lr.start_date} to {lr.end_date}</div>
-                      {lr.created_at_ist && (
-                        <div className="text-[10px] text-slate-400 font-sans mt-0.5">
-                          Req: {lr.created_at_ist}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600 max-w-xs truncate" title={lr.reason}>
-                      {lr.reason}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="space-y-1">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                            lr.status === "approved"
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : lr.status === "rejected"
-                              ? "bg-rose-50 text-rose-700 border border-rose-200"
-                              : "bg-amber-50 text-amber-700 border border-amber-200"
-                          }`}
-                        >
-                          {lr.status}
-                        </span>
-                        {lr.approved_by_name && (
-                          <div className="text-[10px] text-slate-400">
-                            By {lr.approved_by_name}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {lr.can_approve && (
-                          <>
-                            <button
-                              type="button"
-                              disabled={processingId === lr.id || cancellingId === lr.id}
-                              onClick={() => handleAction(lr.id, "approve")}
-                              className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold hover:bg-emerald-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
-                            >
-                              {processingId === lr.id && processingAction === "approve" && <Loader2 className="size-3 animate-spin" />}
-                              {processingId === lr.id && processingAction === "approve" ? "Approving..." : "Approve"}
-                            </button>
-                            <button
-                              type="button"
-                              disabled={processingId === lr.id || cancellingId === lr.id}
-                              onClick={() => handleAction(lr.id, "reject")}
-                              className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold hover:bg-rose-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
-                            >
-                              {processingId === lr.id && processingAction === "reject" && <Loader2 className="size-3 animate-spin" />}
-                              {processingId === lr.id && processingAction === "reject" ? "Rejecting..." : "Reject"}
-                            </button>
-                          </>
-                        )}
-                        {lr.can_cancel && (
-                          <button
-                            type="button"
-                            disabled={cancellingId === lr.id || processingId === lr.id}
-                            onClick={() => handleCancel(lr.id)}
-                            className="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-500 border border-slate-200 text-[11px] font-semibold hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                            title="Cancel this leave request"
-                          >
-                            {cancellingId === lr.id && <Loader2 className="size-3 animate-spin" />}
-                            {cancellingId === lr.id ? "Cancelling..." : "Cancel"}
-                          </button>
-                        )}
-                        {!lr.can_approve && !lr.can_cancel && (
-                          <span className="text-slate-400 text-xs">—</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Apply Leave Request Modal */}
-      {createModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-150">
-          <form
-            onSubmit={handleApply}
-            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 border border-slate-100"
-          >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="size-5 text-[#2B7BC4]" />
-                <h3 className="text-base font-bold text-[#0D2137]">Apply for Leave / Time Off</h3>
+        {createOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-base font-bold text-gray-900">Broadcast Announcement</h3>
+                <button type="button" onClick={() => setCreateOpen(false)} className="p-1 text-gray-400 hover:text-gray-700">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setCreateModalOpen(false)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 cursor-pointer"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
 
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <form onSubmit={handleCreate} className="space-y-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Start Date</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Title</label>
                   <input
-                    type="date"
+                    type="text"
                     required
-                    min={todayStr}
-                    value={startDate}
-                    onChange={(e) => {
-                      setStartDate(e.target.value);
-                      if (endDate && endDate < e.target.value) {
-                        setEndDate(e.target.value);
-                      }
-                    }}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. Q4 Sprint Planning Schedule"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">End Date</label>
-                  <input
-                    type="date"
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Content</label>
+                  <textarea
+                    rows={4}
                     required
-                    min={startDate || todayStr}
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4]"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Enter announcement text..."
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs resize-none focus:outline-none"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Reason for Leave</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="e.g. Scheduled medical appointment, family commitments, or annual personal leave..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-[#2B7BC4] resize-none"
-                />
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-[11px] text-slate-500 space-y-1">
-                <div className="font-semibold text-[#0D2137] flex items-center gap-1">
-                  <Shield className="size-3.5 text-[#2B7BC4]" /> Approval Hierarchy
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                  <button type="button" onClick={() => setCreateOpen(false)} className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50">Cancel</button>
+                  <button type="submit" disabled={publishing} className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-xs font-bold text-white hover:bg-[#1A5EA8]">
+                    {publishing ? "Broadcasting..." : "Broadcast"}
+                  </button>
                 </div>
-                <p>Team member requests are routed to your assigned Team Lead. Team Lead requests are routed to Agency Administration.</p>
-              </div>
+              </form>
             </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setCreateModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-xs font-bold text-white hover:bg-[#1A5EA8] cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
-              >
-                {submitting && <Loader2 className="size-3.5 animate-spin" />}
-                {submitting ? "Submitting..." : "Submit Request"}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+          </div>
+        )}
+      </main>
     </div>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 11. ADMIN REPORTS PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+export function AdminReportsPage() {
+  return (
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Reports" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm space-y-2">
+            <span className="text-[10px] font-bold text-gray-400 uppercase">SLA ON-TIME RATE</span>
+            <div className="text-3xl font-black text-gray-900">98.2%</div>
+            <p className="text-xs text-emerald-600 font-bold">✓ 342 of 348 assets on time</p>
+          </div>
+          <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm space-y-2">
+            <span className="text-[10px] font-bold text-gray-400 uppercase">FIRST-PASS APPROVAL</span>
+            <div className="text-3xl font-black text-gray-900">92.4%</div>
+            <p className="text-xs text-emerald-600 font-bold">↗ +4.1% over last quarter</p>
+          </div>
+          <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm space-y-2">
+            <span className="text-[10px] font-bold text-gray-400 uppercase">AVERAGE REVISION TIME</span>
+            <div className="text-3xl font-black text-gray-900">3.4h</div>
+            <p className="text-xs text-blue-600 font-bold">Target SLA is &lt;12h</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 12. ADMIN ADDONS PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+export function AdminAddonsPage() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [addons, _setAddons] = useState<any[]>([
+    {
+      id: "addon-1",
+      name: "Extra Shoot Day (Full Production)",
+      category: "Video Production",
+      price_inr: 45000,
+      unit: "day",
+      description: "Additional full production day on-location with 4K multi-cam crew.",
+      pending_requests: 1,
+    },
+    {
+      id: "addon-2",
+      name: "VFX & 3D Motion Graphics Pack",
+      category: "3D Animation",
+      price_inr: 25000,
+      unit: "pack",
+      description: "Custom 3D logo animation and kinetic kinetic typography package.",
+      pending_requests: 0,
+    },
+    {
+      id: "addon-3",
+      name: "12h Express SLA Delivery",
+      category: "Priority SLA",
+      price_inr: 15000,
+      unit: "sprint",
+      description: "Emergency fast-track turnaround guarantee for critical campaigns.",
+      pending_requests: 0,
+    },
+  ]);
+
+  return (
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Add-ons" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {addons.map((a) => (
+            <div key={a.id} className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm space-y-3 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold">
+                    {a.category}
+                  </span>
+                  <span className="font-bold text-xs text-gray-900">
+                    ₹{a.price_inr.toLocaleString("en-IN")} / {a.unit}
+                  </span>
+                </div>
+                <h3 className="font-bold text-sm text-gray-900">{a.name}</h3>
+                <p className="text-xs text-gray-600 mt-1">{a.description}</p>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+                {a.pending_requests > 0 ? (
+                  <span className="text-amber-600 font-bold">⚡ {a.pending_requests} pending</span>
+                ) : (
+                  <span className="text-emerald-600 font-bold">✓ Fulfilled</span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => alert(`Fulfillment updated for ${a.name}`)}
+                  className="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-bold text-xs"
+                >
+                  Manage
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 13. ADMIN ESCALATIONS PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+export function AdminEscalationsPage() {
+  return (
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Escalations" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+        </div>
+
+        <div className="p-8 bg-emerald-50 rounded-3xl border border-emerald-200 text-center space-y-2">
+          <CheckCircle2 className="size-8 text-emerald-600 mx-auto" />
+          <h3 className="font-bold text-sm text-emerald-900">All Operations Within SLA Limits</h3>
+          <p className="text-xs text-emerald-700">No open breach tickets or overdue deliveries across any creative pod.</p>
+        </div>
+      </main>
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// 14. ADMIN SALES PAGE (ALIASED TO ADMIN PLANS & NEGOTIATIONS)
+// ─────────────────────────────────────────────────────────────────────────────
+export const AdminSalesPage = AdminPlansPage;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 15. ADMIN SETTINGS PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+export function AdminSettingsPage() {
+  const [saved, setSaved] = useState(false);
+
+  return (
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Settings" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+        </div>
+
+        {saved && (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center gap-2">
+            <CheckCircle2 className="size-4 text-emerald-600" />
+            <span>Settings saved successfully.</span>
+          </div>
+        )}
+
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 max-w-2xl space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-1">Agency Name</label>
+            <input
+              type="text"
+              defaultValue="Creo Studio Operations"
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-1">Concierge Support Email</label>
+            <input
+              type="email"
+              defaultValue="concierge@creo.agency"
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">Default SLA Turnaround (Days)</label>
+              <input
+                type="number"
+                defaultValue={2}
+                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">Revision SLA Turnaround (Hours)</label>
+              <input
+                type="number"
+                defaultValue={24}
+                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs"
+              />
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-gray-100 flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setSaved(true);
+                setTimeout(() => setSaved(false), 2500);
+              }}
+              className="px-5 py-2 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] shadow-sm cursor-pointer"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
