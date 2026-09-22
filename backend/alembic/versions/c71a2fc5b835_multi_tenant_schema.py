@@ -265,32 +265,58 @@ def upgrade() -> None:
     op.create_index(op.f('ix_ticket_messages_agency_id'), 'ticket_messages', ['agency_id'], unique=False)
     op.create_index(op.f('ix_ticket_messages_ticket_id'), 'ticket_messages', ['ticket_id'], unique=False)
     op.create_foreign_key(None, 'ticket_messages', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
-    op.add_column('tickets', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.add_column('tickets', sa.Column('deliverable_id', sa.UUID(), nullable=True))
+    op.execute("ALTER TABLE tickets ADD COLUMN IF NOT EXISTS agency_id UUID")
+    op.execute("ALTER TABLE tickets ADD COLUMN IF NOT EXISTS deliverable_id UUID")
     op.drop_index(op.f('idx_tickets_client'), table_name='tickets', if_exists=True)
     op.drop_index(op.f('idx_tickets_status'), table_name='tickets', if_exists=True)
-    op.create_index(op.f('ix_tickets_agency_id'), 'tickets', ['agency_id'], unique=False)
-    op.create_index(op.f('ix_tickets_client_id'), 'tickets', ['client_id'], unique=False)
-    op.create_foreign_key(None, 'tickets', 'deliverables', ['deliverable_id'], ['id'], ondelete='SET NULL')
-    op.create_foreign_key(None, 'tickets', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
-    op.add_column('usage_counters', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.create_index(op.f('ix_usage_counters_agency_id'), 'usage_counters', ['agency_id'], unique=False)
-    op.create_foreign_key(None, 'usage_counters', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
-    op.add_column('users', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.add_column('users', sa.Column('owning_team_id', sa.UUID(), nullable=True))
-    op.add_column('users', sa.Column('must_reset_password', sa.Boolean(), nullable=False, server_default=sa.text('false')))
-    op.alter_column('users', 'must_reset_password', server_default=None)
+    op.execute("CREATE INDEX IF NOT EXISTS ix_tickets_agency_id ON tickets (agency_id)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_tickets_client_id ON tickets (client_id)")
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tickets_deliverable_id_fkey') THEN
+                ALTER TABLE tickets ADD CONSTRAINT tickets_deliverable_id_fkey
+                FOREIGN KEY (deliverable_id) REFERENCES deliverables(id) ON DELETE SET NULL;
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tickets_agency_id_fkey') THEN
+                ALTER TABLE tickets ADD CONSTRAINT tickets_agency_id_fkey
+                FOREIGN KEY (agency_id) REFERENCES agencies(id) ON DELETE CASCADE;
+            END IF;
+        END $$;
+    """)
+    op.execute("ALTER TABLE usage_counters ADD COLUMN IF NOT EXISTS agency_id UUID")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_usage_counters_agency_id ON usage_counters (agency_id)")
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'usage_counters_agency_id_fkey') THEN
+                ALTER TABLE usage_counters ADD CONSTRAINT usage_counters_agency_id_fkey
+                FOREIGN KEY (agency_id) REFERENCES agencies(id) ON DELETE CASCADE;
+            END IF;
+        END $$;
+    """)
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS agency_id UUID")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS owning_team_id UUID")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS must_reset_password BOOLEAN DEFAULT FALSE NOT NULL")
     op.drop_index(op.f('idx_users_email'), table_name='users', if_exists=True)
     op.drop_index(op.f('idx_users_role'), table_name='users', if_exists=True)
     op.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_auth_id_key")
     op.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key")
-    op.create_index('idx_users_agency', 'users', ['agency_id', 'role', 'created_at'], unique=False)
-    op.create_index('idx_users_role_created_at', 'users', ['role', 'created_at'], unique=False)
-    op.create_index(op.f('ix_users_agency_id'), 'users', ['agency_id'], unique=False)
-    op.create_index(op.f('ix_users_auth_id'), 'users', ['auth_id'], unique=True)
-    op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
-    op.create_foreign_key(None, 'users', 'teams', ['owning_team_id'], ['id'], ondelete='SET NULL')
-    op.create_foreign_key(None, 'users', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
+    op.execute("CREATE INDEX IF NOT EXISTS idx_users_agency ON users (agency_id, role, created_at)")
+    op.execute("CREATE INDEX IF NOT EXISTS idx_users_role_created_at ON users (role, created_at)")
+    op.execute("CREATE INDEX IF NOT EXISTS ix_users_agency_id ON users (agency_id)")
+    op.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_auth_id ON users (auth_id)")
+    op.execute("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_email ON users (email)")
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_owning_team_id_fkey') THEN
+                ALTER TABLE users ADD CONSTRAINT users_owning_team_id_fkey
+                FOREIGN KEY (owning_team_id) REFERENCES teams(id) ON DELETE SET NULL;
+            END IF;
+            IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_agency_id_fkey') THEN
+                ALTER TABLE users ADD CONSTRAINT users_agency_id_fkey
+                FOREIGN KEY (agency_id) REFERENCES agencies(id) ON DELETE CASCADE;
+            END IF;
+        END $$;
+    """)
 
     # Ensure default primary agency exists and backfill agency_id for existing records
     op.execute("""
