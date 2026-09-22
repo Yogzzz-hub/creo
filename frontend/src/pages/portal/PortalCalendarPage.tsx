@@ -4,13 +4,10 @@ import { Link } from "react-router";
 import {
   ChevronLeft,
   ChevronRight,
-  Calendar as CalendarIcon,
   Clock,
   Loader2,
   Video,
   Image as ImageIcon,
-  Grid,
-  List,
   CheckCircle2,
   ExternalLink,
   X,
@@ -127,12 +124,8 @@ export function PortalCalendarPage() {
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
 
-  const [selectedFormat, setSelectedFormat] = useState<string>("all");
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
-  const [viewMode, setViewMode] = useState<"month" | "list">("month");
   const [previewEntry, setPreviewEntry] = useState<CalendarEntry | null>(null);
-  const [isApproving, setIsApproving] = useState(false);
-  const [approvalMessage, setApprovalMessage] = useState<string | null>(null);
   const [selectedHookIndex, setSelectedHookIndex] = useState<number>(0);
   const [isConceptSubmitting, setIsConceptSubmitting] = useState<boolean>(false);
   const [conceptFeedback, setConceptFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
@@ -229,22 +222,6 @@ export function PortalCalendarPage() {
     });
   }, [entries, currentYear, currentMonth]);
 
-  // Filtered by selected format (all / reel / poster / story)
-  const filteredEntries = useMemo(() => {
-    if (selectedFormat === "all") return monthEntries;
-    return monthEntries.filter((e) => (e.type || "").toLowerCase() === selectedFormat);
-  }, [monthEntries, selectedFormat]);
-
-  // Overall counts for month
-  const quota = useMemo(() => {
-    const counts = { total: monthEntries.length, reel: 0, poster: 0, story: 0 };
-    monthEntries.forEach((e) => {
-      const t = (e.type || "poster") as "reel" | "poster" | "story";
-      if (t in counts) counts[t]++;
-    });
-    return counts;
-  }, [monthEntries]);
-
   // Calendar cells for month grid
   const calendarCells = useMemo(() => {
     const cells: { day: number; isCurrentMonth: boolean; key: string }[] = [];
@@ -264,32 +241,10 @@ export function PortalCalendarPage() {
   }, [firstDay, daysInMonth, currentYear, currentMonth]);
 
   const getDayEntries = (day: number) => {
-    return filteredEntries.filter((e) => {
+    return monthEntries.filter((e) => {
       const d = new Date(e.date + "T00:00:00");
       return d.getDate() === day;
     });
-  };
-
-
-
-  const hasDraftSlots = useMemo(() => {
-    return entries.some((e) => e.calendar_status === "draft");
-  }, [entries]);
-
-  const handleApproveCalendar = async () => {
-    setIsApproving(true);
-    setApprovalMessage(null);
-    try {
-      const res = await request<any>("/api/v1/calendar/approve", {
-        method: "POST",
-      });
-      setApprovalMessage(`Campaign approved! Locked ${res.approved_slots ?? "all"} slots & dispatched rolling window.`);
-      queryClient.invalidateQueries({ queryKey: ["calendar-entries"] });
-    } catch (err: any) {
-      setApprovalMessage(err.message || "Failed to approve calendar plan.");
-    } finally {
-      setIsApproving(false);
-    }
   };
 
   const handleApproveConcept = async () => {
@@ -422,14 +377,23 @@ export function PortalCalendarPage() {
               <span className="text-sm font-semibold text-slate-400">Production Horizon</span>
             </div>
             
-            <div className="flex items-center bg-white border border-slate-100/60 rounded-full p-1 shadow-sm">
-              <button onClick={() => { setSelectedDate(null); navigateMonth(-1); }} className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-slate-50 rounded-full transition-all cursor-pointer">
-                <ChevronLeft className="size-4" strokeWidth={2.5} />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => { setSelectedDate(null); goToToday(); }}
+                className="px-3 py-1 text-xs font-bold text-slate-600 hover:text-[#0052FF] hover:bg-slate-50 rounded-full border border-slate-200/80 shadow-xs transition-all cursor-pointer"
+              >
+                Today
               </button>
-              <div className="w-[1px] h-4 bg-slate-100 mx-1"></div>
-              <button onClick={() => { setSelectedDate(null); navigateMonth(1); }} className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-slate-50 rounded-full transition-all cursor-pointer">
-                <ChevronRight className="size-4" strokeWidth={2.5} />
-              </button>
+              <div className="flex items-center bg-white border border-slate-100/60 rounded-full p-1 shadow-sm">
+                <button onClick={() => { setSelectedDate(null); navigateMonth(-1); }} className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-slate-50 rounded-full transition-all cursor-pointer">
+                  <ChevronLeft className="size-4" strokeWidth={2.5} />
+                </button>
+                <div className="w-[1px] h-4 bg-slate-100 mx-1"></div>
+                <button onClick={() => { setSelectedDate(null); navigateMonth(1); }} className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-slate-50 rounded-full transition-all cursor-pointer">
+                  <ChevronRight className="size-4" strokeWidth={2.5} />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -499,7 +463,7 @@ export function PortalCalendarPage() {
                           3 Scheduled
                         </div>
                       )}
-                      {dayEntries.length === 0 && day === 25 && (
+                      {dayEntries.length === 0 && isSlaReview && (
                          <div className="w-full rounded-lg bg-[#FFFBEB] text-[#D97706] px-2.5 py-1 text-[10px] font-bold truncate text-left">
                           SLA Review
                         </div>
@@ -562,7 +526,6 @@ export function PortalCalendarPage() {
               }
 
               return tasks.map((entry, idx) => {
-                const isApproved = entry.status === "approved" || entry.concept_status === "concept_approved";
                 
                 // Mocks for avatars and pod names based on index to make it look like the image
                 const pods = ["POD A • NORTHWIND LABS", "POD B • BLOOM STUDIO", "POD C • ATLAS COMMERCE", "POD E • LUMINA HEALTH"];

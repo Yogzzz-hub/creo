@@ -7,15 +7,37 @@
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
+-- 0. DEFAULT AGENCY & TEAMS
+-- -----------------------------------------------------------------------------
+INSERT INTO agencies (
+    id, name, slug, status, plan_tier, max_clients, max_staff, branding, timezone
+) VALUES (
+    '00000000-0000-0000-0000-000000000001',
+    'Creo Digital',
+    'creo',
+    'active',
+    'enterprise',
+    100,
+    100,
+    '{}'::jsonb,
+    'Asia/Kolkata'
+)
+ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    status = EXCLUDED.status,
+    plan_tier = EXCLUDED.plan_tier;
+
+-- -----------------------------------------------------------------------------
 -- 1. SUBSCRIPTION PLANS
 -- -----------------------------------------------------------------------------
 INSERT INTO plans (
-    id, name, display_name, price_minor, currency, monthly_price,
+    id, agency_id, name, display_name, price_minor, currency, monthly_price,
     poster_quota, reel_quota, story_quota, revision_rounds,
     has_dedicated_manager, scarcity_slots, highlights, is_recommended, is_active
 ) VALUES
 (
     '00000000-0000-0000-0000-000000000010',
+    '00000000-0000-0000-0000-000000000001',
     'starter',
     'Starter Growth',
     2500000,
@@ -40,6 +62,7 @@ INSERT INTO plans (
 ),
 (
     '00000000-0000-0000-0000-000000000020',
+    '00000000-0000-0000-0000-000000000001',
     'growth',
     'Brand Accelerator',
     5000000,
@@ -65,6 +88,7 @@ INSERT INTO plans (
 ),
 (
     '00000000-0000-0000-0000-000000000030',
+    '00000000-0000-0000-0000-000000000001',
     'pro',
     'Enterprise Domination',
     9500000,
@@ -103,10 +127,11 @@ ON CONFLICT (name) DO UPDATE SET
 -- All accounts require mandatory password setup upon first sign in (must_reset_password = TRUE)
 -- -----------------------------------------------------------------------------
 INSERT INTO users (
-    id, auth_id, email, full_name, hashed_password, role, account_status, email_verified_at, must_reset_password
+    id, agency_id, auth_id, email, full_name, hashed_password, role, account_status, email_verified_at, must_reset_password
 ) VALUES
 -- 2.1 Super Admin (Full Agency Access)
 (
+    '00000000-0000-0000-0000-000000000001',
     '00000000-0000-0000-0000-000000000001',
     'auth-super-admin-001',
     'admin@creo.agency',
@@ -120,6 +145,7 @@ INSERT INTO users (
 -- 2.2 Team Lead (Pod Controller)
 (
     '00000000-0000-0000-0000-000000000002',
+    '00000000-0000-0000-0000-000000000001',
     'auth-team-lead-002',
     'lead@creo.agency',
     'Vikram Malhotra (Lead)',
@@ -132,6 +158,7 @@ INSERT INTO users (
 -- 2.3 Staff Video Editor
 (
     '00000000-0000-0000-0000-000000000003',
+    '00000000-0000-0000-0000-000000000001',
     'auth-staff-editor-003',
     'editor@creo.agency',
     'Karthik Raja (Senior Video)',
@@ -144,6 +171,7 @@ INSERT INTO users (
 -- 2.4 Staff Brand Designer
 (
     '00000000-0000-0000-0000-000000000004',
+    '00000000-0000-0000-0000-000000000001',
     'auth-staff-designer-004',
     'designer@creo.agency',
     'Ananya Deshmukh (Motion & UI)',
@@ -162,10 +190,15 @@ ON CONFLICT (email) DO UPDATE SET
 -- -----------------------------------------------------------------------------
 -- 3. STAFF PROFILES
 -- -----------------------------------------------------------------------------
-INSERT INTO staff_profiles (user_id, team_lead_id, department, daily_capacity, skills, is_accepting_work)
+INSERT INTO staff_profiles (
+    user_id, agency_id, craft_role, monthly_points, team_lead_id, department, daily_capacity, skills, is_accepting_work
+)
 VALUES
 (
     '00000000-0000-0000-0000-000000000002',
+    '00000000-0000-0000-0000-000000000001',
+    'creative_director',
+    100,
     NULL,
     'creative',
     6,
@@ -174,6 +207,9 @@ VALUES
 ),
 (
     '00000000-0000-0000-0000-000000000003',
+    '00000000-0000-0000-0000-000000000001',
+    'video_editor',
+    100,
     '00000000-0000-0000-0000-000000000002',
     'video',
     5,
@@ -182,6 +218,9 @@ VALUES
 ),
 (
     '00000000-0000-0000-0000-000000000004',
+    '00000000-0000-0000-0000-000000000001',
+    'graphic_designer',
+    100,
     '00000000-0000-0000-0000-000000000002',
     'design',
     5,

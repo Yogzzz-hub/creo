@@ -115,10 +115,25 @@ def upgrade() -> None:
     op.create_index(op.f('ix_calendar_policies_agency_id'), 'calendar_policies', ['agency_id'], unique=False)
     op.create_foreign_key(None, 'calendar_policies', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.add_column('client_assignments', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.add_column('client_assignments', sa.Column('craft_role', sa.String(length=30), nullable=False))
-    op.add_column('client_assignments', sa.Column('points_committed', sa.Integer(), nullable=False))
+    op.add_column('client_assignments', sa.Column('craft_role', sa.String(length=30), nullable=True))
+    op.execute("UPDATE client_assignments SET craft_role = SUBSTRING(COALESCE(role, 'graphic_designer'), 1, 30) WHERE craft_role IS NULL")
+    op.execute("""
+        DELETE FROM client_assignments
+        WHERE id IN (
+            SELECT id FROM (
+                SELECT id, ROW_NUMBER() OVER (
+                    PARTITION BY client_id, craft_role 
+                    ORDER BY is_primary DESC, created_at DESC
+                ) as rn
+                FROM client_assignments
+            ) t WHERE t.rn > 1
+        )
+    """)
+    op.alter_column('client_assignments', 'craft_role', nullable=False)
+    op.add_column('client_assignments', sa.Column('points_committed', sa.Integer(), nullable=False, server_default=sa.text('0')))
+    op.alter_column('client_assignments', 'points_committed', server_default=None)
     op.add_column('client_assignments', sa.Column('from_team_id', sa.UUID(), nullable=True))
-    op.drop_index(op.f('idx_assignments_user'), table_name='client_assignments')
+    op.drop_index(op.f('idx_assignments_user'), table_name='client_assignments', if_exists=True)
     op.create_index(op.f('ix_client_assignments_agency_id'), 'client_assignments', ['agency_id'], unique=False)
     op.create_index('uq_one_person_per_craft', 'client_assignments', ['client_id', 'craft_role'], unique=True)
     op.create_foreign_key(None, 'client_assignments', 'teams', ['from_team_id'], ['id'], ondelete='SET NULL')
@@ -155,23 +170,23 @@ def upgrade() -> None:
                existing_type=sa.TEXT(),
                type_=sa.String(length=20),
                existing_nullable=True)
-    op.drop_index(op.f('idx_calendar_client'), table_name='content_calendar')
-    op.drop_index(op.f('idx_calendar_date'), table_name='content_calendar')
+    op.drop_index(op.f('idx_calendar_client'), table_name='content_calendar', if_exists=True)
+    op.drop_index(op.f('idx_calendar_date'), table_name='content_calendar', if_exists=True)
     op.create_index(op.f('ix_content_calendar_agency_id'), 'content_calendar', ['agency_id'], unique=False)
     op.create_index(op.f('ix_content_calendar_client_id'), 'content_calendar', ['client_id'], unique=False)
     op.create_foreign_key(None, 'content_calendar', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.add_column('deliverables', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.drop_index(op.f('idx_deliv_client'), table_name='deliverables')
-    op.drop_index(op.f('idx_deliverables_approved_turnaround'), table_name='deliverables', postgresql_where="((status = ANY (ARRAY['approved'::deliverable_status, 'published'::deliverable_status])) AND (approved_at IS NOT NULL))")
+    op.drop_index(op.f('idx_deliv_client'), table_name='deliverables', if_exists=True)
+    op.drop_index(op.f('idx_deliverables_approved_turnaround'), table_name='deliverables', postgresql_where="((status = ANY (ARRAY['approved'::deliverable_status, 'published'::deliverable_status])) AND (approved_at IS NOT NULL))", if_exists=True)
     op.create_index(op.f('ix_deliverables_agency_id'), 'deliverables', ['agency_id'], unique=False)
     op.create_index(op.f('ix_deliverables_client_id'), 'deliverables', ['client_id'], unique=False)
     op.create_index(op.f('ix_deliverables_root_id'), 'deliverables', ['root_id'], unique=False)
     op.create_index(op.f('ix_deliverables_status'), 'deliverables', ['status'], unique=False)
     op.create_foreign_key(None, 'deliverables', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
-    op.drop_index(op.f('idx_idempotency_expires'), table_name='idempotency_keys')
+    op.drop_index(op.f('idx_idempotency_expires'), table_name='idempotency_keys', if_exists=True)
     op.add_column('leave_requests', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.drop_index(op.f('idx_leave_dates'), table_name='leave_requests')
-    op.drop_index(op.f('idx_leave_user'), table_name='leave_requests')
+    op.drop_index(op.f('idx_leave_dates'), table_name='leave_requests', if_exists=True)
+    op.drop_index(op.f('idx_leave_user'), table_name='leave_requests', if_exists=True)
     op.create_index(op.f('ix_leave_requests_agency_id'), 'leave_requests', ['agency_id'], unique=False)
     op.create_foreign_key(None, 'leave_requests', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.add_column('notifications', sa.Column('agency_id', sa.UUID(), nullable=True))
@@ -183,11 +198,11 @@ def upgrade() -> None:
                type_=sa.String(length=3),
                existing_nullable=False,
                existing_server_default=sa.text("'INR'::bpchar"))
-    op.drop_constraint(op.f('plans_name_key'), 'plans', type_='unique')
+    op.execute("ALTER TABLE plans DROP CONSTRAINT IF EXISTS plans_name_key")
     op.create_index(op.f('ix_plans_agency_id'), 'plans', ['agency_id'], unique=False)
     op.create_foreign_key(None, 'plans', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.add_column('questionnaires', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.drop_index(op.f('idx_questionnaires_user'), table_name='questionnaires')
+    op.drop_index(op.f('idx_questionnaires_user'), table_name='questionnaires', if_exists=True)
     op.create_index(op.f('ix_questionnaires_agency_id'), 'questionnaires', ['agency_id'], unique=False)
     op.create_index(op.f('ix_questionnaires_user_id'), 'questionnaires', ['user_id'], unique=False)
     op.create_foreign_key(None, 'questionnaires', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
@@ -200,8 +215,22 @@ def upgrade() -> None:
     op.create_index(op.f('ix_shoot_days_agency_id'), 'shoot_days', ['agency_id'], unique=False)
     op.create_foreign_key(None, 'shoot_days', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.add_column('staff_profiles', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.add_column('staff_profiles', sa.Column('craft_role', sa.String(length=30), nullable=False))
-    op.add_column('staff_profiles', sa.Column('monthly_points', sa.Integer(), nullable=False))
+    op.add_column('staff_profiles', sa.Column('craft_role', sa.String(length=30), nullable=True))
+    op.execute("""
+        UPDATE staff_profiles sp
+        SET craft_role = CASE
+            WHEN u.role::text = 'video_editor' THEN 'video_editor'
+            WHEN u.role::text = 'team_lead' THEN 'team_lead'
+            WHEN u.role::text = 'copywriter' THEN 'copywriter'
+            ELSE 'graphic_designer'
+        END
+        FROM users u
+        WHERE sp.user_id = u.id AND sp.craft_role IS NULL
+    """)
+    op.execute("UPDATE staff_profiles SET craft_role = 'graphic_designer' WHERE craft_role IS NULL")
+    op.alter_column('staff_profiles', 'craft_role', nullable=False)
+    op.add_column('staff_profiles', sa.Column('monthly_points', sa.Integer(), nullable=False, server_default=sa.text('100')))
+    op.alter_column('staff_profiles', 'monthly_points', server_default=None)
     op.alter_column('staff_profiles', 'skills',
                existing_type=postgresql.ARRAY(sa.TEXT()),
                type_=postgresql.ARRAY(sa.String()),
@@ -215,16 +244,16 @@ def upgrade() -> None:
     op.create_index(op.f('ix_staff_profiles_agency_id'), 'staff_profiles', ['agency_id'], unique=False)
     op.create_foreign_key(None, 'staff_profiles', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.add_column('subscriptions', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.drop_index(op.f('idx_subscriptions_plan'), table_name='subscriptions')
+    op.drop_index(op.f('idx_subscriptions_plan'), table_name='subscriptions', if_exists=True)
     op.create_index(op.f('ix_subscriptions_agency_id'), 'subscriptions', ['agency_id'], unique=False)
     op.create_foreign_key(None, 'subscriptions', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.add_column('tasks', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.drop_index(op.f('idx_tasks_assigned'), table_name='tasks')
-    op.drop_index(op.f('idx_tasks_client'), table_name='tasks')
-    op.drop_index(op.f('idx_tasks_kanban'), table_name='tasks')
-    op.drop_index(op.f('idx_tasks_sla'), table_name='tasks', postgresql_where="(status <> ALL (ARRAY['ready_to_publish'::task_status, 'completed'::task_status]))")
-    op.drop_index(op.f('idx_tasks_status'), table_name='tasks')
-    op.drop_index(op.f('idx_tasks_window'), table_name='tasks', postgresql_where="(status = ANY (ARRAY['in_production'::task_status, 'internal_qa'::task_status]))")
+    op.drop_index(op.f('idx_tasks_assigned'), table_name='tasks', if_exists=True)
+    op.drop_index(op.f('idx_tasks_client'), table_name='tasks', if_exists=True)
+    op.drop_index(op.f('idx_tasks_kanban'), table_name='tasks', if_exists=True)
+    op.drop_index(op.f('idx_tasks_sla'), table_name='tasks', postgresql_where="(status <> ALL (ARRAY['ready_to_publish'::task_status, 'completed'::task_status]))", if_exists=True)
+    op.drop_index(op.f('idx_tasks_status'), table_name='tasks', if_exists=True)
+    op.drop_index(op.f('idx_tasks_window'), table_name='tasks', postgresql_where="(status = ANY (ARRAY['in_production'::task_status, 'internal_qa'::task_status]))", if_exists=True)
     op.create_index(op.f('ix_tasks_agency_id'), 'tasks', ['agency_id'], unique=False)
     op.create_index(op.f('ix_tasks_assigned_to'), 'tasks', ['assigned_to'], unique=False)
     op.create_index(op.f('ix_tasks_client_id'), 'tasks', ['client_id'], unique=False)
@@ -232,14 +261,14 @@ def upgrade() -> None:
     op.create_index(op.f('ix_tasks_status'), 'tasks', ['status'], unique=False)
     op.create_foreign_key(None, 'tasks', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.add_column('ticket_messages', sa.Column('agency_id', sa.UUID(), nullable=True))
-    op.drop_index(op.f('idx_ticket_messages_ticket'), table_name='ticket_messages')
+    op.drop_index(op.f('idx_ticket_messages_ticket'), table_name='ticket_messages', if_exists=True)
     op.create_index(op.f('ix_ticket_messages_agency_id'), 'ticket_messages', ['agency_id'], unique=False)
     op.create_index(op.f('ix_ticket_messages_ticket_id'), 'ticket_messages', ['ticket_id'], unique=False)
     op.create_foreign_key(None, 'ticket_messages', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.add_column('tickets', sa.Column('agency_id', sa.UUID(), nullable=True))
     op.add_column('tickets', sa.Column('deliverable_id', sa.UUID(), nullable=True))
-    op.drop_index(op.f('idx_tickets_client'), table_name='tickets')
-    op.drop_index(op.f('idx_tickets_status'), table_name='tickets')
+    op.drop_index(op.f('idx_tickets_client'), table_name='tickets', if_exists=True)
+    op.drop_index(op.f('idx_tickets_status'), table_name='tickets', if_exists=True)
     op.create_index(op.f('ix_tickets_agency_id'), 'tickets', ['agency_id'], unique=False)
     op.create_index(op.f('ix_tickets_client_id'), 'tickets', ['client_id'], unique=False)
     op.create_foreign_key(None, 'tickets', 'deliverables', ['deliverable_id'], ['id'], ondelete='SET NULL')
@@ -249,11 +278,12 @@ def upgrade() -> None:
     op.create_foreign_key(None, 'usage_counters', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
     op.add_column('users', sa.Column('agency_id', sa.UUID(), nullable=True))
     op.add_column('users', sa.Column('owning_team_id', sa.UUID(), nullable=True))
-    op.add_column('users', sa.Column('must_reset_password', sa.Boolean(), nullable=False))
-    op.drop_index(op.f('idx_users_email'), table_name='users')
-    op.drop_index(op.f('idx_users_role'), table_name='users')
-    op.drop_constraint(op.f('users_auth_id_key'), 'users', type_='unique')
-    op.drop_constraint(op.f('users_email_key'), 'users', type_='unique')
+    op.add_column('users', sa.Column('must_reset_password', sa.Boolean(), nullable=False, server_default=sa.text('false')))
+    op.alter_column('users', 'must_reset_password', server_default=None)
+    op.drop_index(op.f('idx_users_email'), table_name='users', if_exists=True)
+    op.drop_index(op.f('idx_users_role'), table_name='users', if_exists=True)
+    op.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_auth_id_key")
+    op.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_email_key")
     op.create_index('idx_users_agency', 'users', ['agency_id', 'role', 'created_at'], unique=False)
     op.create_index('idx_users_role_created_at', 'users', ['role', 'created_at'], unique=False)
     op.create_index(op.f('ix_users_agency_id'), 'users', ['agency_id'], unique=False)
@@ -261,6 +291,42 @@ def upgrade() -> None:
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
     op.create_foreign_key(None, 'users', 'teams', ['owning_team_id'], ['id'], ondelete='SET NULL')
     op.create_foreign_key(None, 'users', 'agencies', ['agency_id'], ['id'], ondelete='CASCADE')
+
+    # Ensure default primary agency exists and backfill agency_id for existing records
+    op.execute("""
+        DO $$
+        DECLARE
+            default_agency_id UUID;
+        BEGIN
+            INSERT INTO agencies (id, name, slug, status, plan_tier, max_clients, max_staff, branding, timezone)
+            VALUES ('00000000-0000-0000-0000-000000000001', 'Creo Digital', 'creo', 'active', 'enterprise', 100, 100, '{}'::jsonb, 'Asia/Kolkata')
+            ON CONFLICT (slug) DO NOTHING;
+
+            SELECT id INTO default_agency_id FROM agencies WHERE slug = 'creo' LIMIT 1;
+
+            IF default_agency_id IS NOT NULL THEN
+                UPDATE users SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE deliverables SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE tasks SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE content_calendar SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE subscriptions SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE plans SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE staff_profiles SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE client_assignments SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE tickets SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE ticket_messages SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE announcements SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE audit_log SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE questionnaires SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE usage_counters SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE client_cycles SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE calendar_policies SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE shoot_days SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE leave_requests SET agency_id = default_agency_id WHERE agency_id IS NULL;
+                UPDATE calendar_blackouts SET agency_id = default_agency_id WHERE agency_id IS NULL;
+            END IF;
+        END $$;
+    """)
     # ### end Alembic commands ###
 
 

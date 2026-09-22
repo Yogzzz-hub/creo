@@ -108,9 +108,36 @@ $$ LANGUAGE plpgsql;
 -- 4. CORE TABLES
 -- -----------------------------------------------------------------------------
 
+-- 4.0 TENANCY (AGENCIES & TEAMS)
+CREATE TABLE IF NOT EXISTS agencies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    custom_domain VARCHAR(255) UNIQUE,
+    status VARCHAR(20) DEFAULT 'trial' NOT NULL,
+    plan_tier VARCHAR(30) DEFAULT 'starter' NOT NULL,
+    max_clients INT DEFAULT 10 NOT NULL,
+    max_staff INT DEFAULT 15 NOT NULL,
+    branding JSONB DEFAULT '{}'::jsonb NOT NULL,
+    timezone VARCHAR(50) DEFAULT 'Asia/Kolkata' NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS teams (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    lead_id UUID,
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    CONSTRAINT uq_team_name UNIQUE (agency_id, name)
+);
+
 -- 4.1 USERS
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE,
+    owning_team_id UUID REFERENCES teams(id) ON DELETE SET NULL,
     auth_id VARCHAR(255) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     full_name VARCHAR(255),
@@ -557,3 +584,71 @@ FROM sub_stats
 CROSS JOIN deliv_stats;
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_mv_exec_kpis_snapshot ON mv_exec_kpis(refreshed_at);
+
+-- -----------------------------------------------------------------------------
+-- 6. MULTI-TENANCY COMPATIBILITY & BACKFILL
+-- Ensures any existing tables are upgraded to multi-tenancy seamlessly
+-- -----------------------------------------------------------------------------
+DO $$ BEGIN
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS owning_team_id UUID REFERENCES teams(id) ON DELETE SET NULL;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS must_reset_password BOOLEAN DEFAULT FALSE NOT NULL;
+    ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS craft_role VARCHAR(30) DEFAULT 'graphic_designer' NOT NULL;
+    ALTER TABLE staff_profiles ADD COLUMN IF NOT EXISTS monthly_points INT DEFAULT 100 NOT NULL;
+    ALTER TABLE client_assignments ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE client_assignments ADD COLUMN IF NOT EXISTS craft_role VARCHAR(30) DEFAULT 'graphic_designer' NOT NULL;
+    ALTER TABLE client_assignments ADD COLUMN IF NOT EXISTS points_committed INT DEFAULT 0 NOT NULL;
+    ALTER TABLE client_assignments ADD COLUMN IF NOT EXISTS from_team_id UUID REFERENCES teams(id) ON DELETE SET NULL;
+    ALTER TABLE deliverables ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE content_calendar ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE plans ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE tickets ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE tickets ADD COLUMN IF NOT EXISTS deliverable_id UUID REFERENCES deliverables(id) ON DELETE SET NULL;
+    ALTER TABLE ticket_messages ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE usage_counters ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE announcements ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE leave_requests ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE questionnaires ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE shoot_days ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE client_cycles ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE calendar_policies ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+    ALTER TABLE calendar_blackouts ADD COLUMN IF NOT EXISTS agency_id UUID REFERENCES agencies(id) ON DELETE CASCADE;
+END $$;
+
+DO $$
+DECLARE
+    default_agency_id UUID;
+BEGIN
+    INSERT INTO agencies (id, name, slug, status, plan_tier, max_clients, max_staff, branding, timezone)
+    VALUES ('00000000-0000-0000-0000-000000000001', 'Creo Digital', 'creo', 'active', 'enterprise', 100, 100, '{}'::jsonb, 'Asia/Kolkata')
+    ON CONFLICT (slug) DO NOTHING;
+
+    SELECT id INTO default_agency_id FROM agencies WHERE slug = 'creo' LIMIT 1;
+
+    IF default_agency_id IS NOT NULL THEN
+        UPDATE users SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE deliverables SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE tasks SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE content_calendar SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE subscriptions SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE plans SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE staff_profiles SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE client_assignments SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE tickets SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE ticket_messages SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE announcements SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE audit_log SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE questionnaires SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE usage_counters SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE client_cycles SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE calendar_policies SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE shoot_days SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE leave_requests SET agency_id = default_agency_id WHERE agency_id IS NULL;
+        UPDATE calendar_blackouts SET agency_id = default_agency_id WHERE agency_id IS NULL;
+    END IF;
+END $$;
+
