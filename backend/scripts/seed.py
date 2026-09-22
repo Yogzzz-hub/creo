@@ -25,6 +25,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
 from app.models.billing import Plan, Subscription, UsageCounter
+from app.core.security import hash_password
 from app.models.enums import (
     AccountStatus,
     DeliverableStatus,
@@ -205,6 +206,7 @@ async def seed() -> None:
                     role=s_def["role"],
                     account_status=AccountStatus.ACTIVE,
                     email_verified_at=now,
+                    hashed_password=hash_password("Password123!"),
                 )
                 db.add(user)
                 await db.flush()
@@ -285,6 +287,7 @@ async def seed() -> None:
                     role=UserRole.CLIENT,
                     account_status=AccountStatus.ACTIVE,
                     email_verified_at=now,
+                    hashed_password=hash_password("Password123!"),
                 )
                 db.add(user)
                 await db.flush()

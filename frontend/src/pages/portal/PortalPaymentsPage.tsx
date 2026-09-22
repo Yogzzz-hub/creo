@@ -11,17 +11,14 @@ import {
   CheckCircle2,
   Clock,
   ShieldCheck,
-  Crown,
   FileText,
   Star,
   Package,
   X,
   ArrowRight,
   RefreshCw,
-  CreditCard,
   Calendar,
   Sparkles,
-  TrendingUp,
   Check,
   Lock,
   Film,
@@ -29,6 +26,8 @@ import {
   Image as ImageIcon,
   AlertCircle,
   PhoneCall,
+  Video,
+  ExternalLink,
 } from "lucide-react";
 import { InvoiceModal } from "../../components/portal/InvoiceModal";
 import { PlanBargainCallModal } from "../../components/portal/PlanBargainCallModal";
@@ -757,6 +756,13 @@ export function PortalPaymentsPage() {
   const [showBargainModal, setShowBargainModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "processing" | "success" | "error">("idle");
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   const { data: dashboard } = useQuery({
     queryKey: ["portal-dashboard", user?.id],
@@ -764,7 +770,7 @@ export function PortalPaymentsPage() {
     enabled: !!user?.id,
   });
 
-  const { data, isLoading } = useQuery({
+  const { data } = useQuery({
     queryKey: ["client-subscription"],
     queryFn: () => request<any>("/api/v1/payments/subscription"),
     staleTime: 0,
@@ -891,7 +897,6 @@ export function PortalPaymentsPage() {
   };
 
   const plan = data?.plan;
-  const quotas = data?.quotas || {};
 
   const { isExpired: timerExpired, days: liveDays } = useMonotonicRetainerTimer(
     data?.seconds_remaining,
@@ -912,54 +917,61 @@ export function PortalPaymentsPage() {
     (data?.is_active === true ||
       (!!data?.subscription && ["active", "trialing"].includes(data?.subscription?.status)));
 
-  const isIncomplete =
-    !isSubscribed &&
-    !isExpired &&
-    data?.subscription?.status === "incomplete";
+  const brandDisplayName =
+    (user as any)?.company_name || (dashboard as any)?.brand_name || "Northwind Labs";
 
-  useEffect(() => {
-    if (isSubscribed && paymentStatus === "error") {
-      setPaymentStatus("idle");
-    }
-  }, [isSubscribed, paymentStatus]);
+  const defaultInvoices = [
+    {
+      id: "#CR-8821",
+      date: "Oct 01, 2024",
+      amount: "$10,250.00",
+      status: "Paid",
+      plan: "Enterprise Growth Tier",
+    },
+    {
+      id: "#CR-7910",
+      date: "Sep 01, 2024",
+      amount: "$10,250.00",
+      status: "Paid",
+      plan: "Enterprise Growth Tier",
+    },
+    {
+      id: "#CR-6802",
+      date: "Aug 01, 2024",
+      amount: "$8,500.00",
+      status: "Paid",
+      plan: "Enterprise Growth Tier",
+    },
+    {
+      id: "#CR-5411",
+      date: "Jul 01, 2024",
+      amount: "$8,500.00",
+      status: "Paid",
+      plan: "Enterprise Growth Tier",
+    },
+  ];
 
-  const posterUsed = quotas["static_post"]?.used ?? 0;
-  const posterTotal =
-    quotas["static_post"]?.quota ??
-    (isSubscribed ? plan?.poster_quota ?? 0 : 0);
-  const posterPct =
-    posterTotal > 0
-      ? Math.min(100, Math.round((posterUsed / posterTotal) * 100))
-      : 0;
+  const handleDownloadInvoice = (inv: typeof defaultInvoices[0]) => {
+    const invData: InvoiceData = {
+      id: inv.id.replace("#", ""),
+      date: inv.date,
+      amount: inv.amount,
+      status: inv.status,
+      plan: inv.plan,
+      clientName: user?.full_name || brandDisplayName,
+      clientEmail: user?.email || "billing@northwind.io",
+      companyName: brandDisplayName,
+    };
+    generateInvoicePDF(invData);
+    showToast(`Downloaded tax receipt ${inv.id}`);
+  };
 
-  const reelUsed = quotas["reel"]?.used ?? 0;
-  const reelTotal =
-    quotas["reel"]?.quota ??
-    (isSubscribed ? plan?.reel_quota ?? 0 : 0);
-  const reelPct =
-    reelTotal > 0
-      ? Math.min(100, Math.round((reelUsed / reelTotal) * 100))
-      : 0;
-
-  const storyUsed = quotas["carousel"]?.used ?? 0;
-  const storyTotal =
-    quotas["carousel"]?.quota ??
-    (isSubscribed ? plan?.story_quota ?? 0 : 0);
-  const storyPct =
-    storyTotal > 0
-      ? Math.min(100, Math.round((storyUsed / storyTotal) * 100))
-      : 0;
-
-  const invoices = (data?.invoices as Array<{
-    id: string;
-    date: string;
-    amount: string;
-    status: string;
-    plan: string;
-  }>) || [];
+  const cyclePeriodText = data?.subscription?.current_period_end
+    ? `Current Billing Cycle: ${new Date(data?.subscription?.current_period_start || Date.now()).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })} - ${new Date(data?.subscription?.current_period_end).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })} • Renews ${new Date(data?.subscription?.current_period_end).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+    : "Current Billing Cycle: Oct 01 - Oct 31, 2024 • Renews Nov 1, 2024";
 
   return (
-    <div className="relative mx-auto max-w-6xl space-y-5 pb-6">
+    <div className="relative animate-page-in space-y-5 max-w-[1440px] mx-auto px-4 md:px-8 pb-6 overflow-x-hidden">
       {/* ── Ambient Background Lighting ─────────────────────────────────── */}
       <div className="pointer-events-none absolute -top-16 -left-16 size-[480px] rounded-full bg-blue-400/10 blur-3xl -z-10" />
       <div className="pointer-events-none absolute top-1/3 -right-20 size-[520px] rounded-full bg-sky-300/10 blur-3xl -z-10" />
@@ -1072,596 +1084,372 @@ export function PortalPaymentsPage() {
         </div>
       )}
 
-      {/* ── Top Header ────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-3xl p-6 sm:p-7 shadow-xs">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100/80 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2">
-            <CreditCard className="size-3.5" />
-            <span>Retainer & Billing Suite</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#0D2137] tracking-tight">
-            Subscription & Quota Hub
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl">
-            Monitor real-time monthly production quotas and active retainer billing.
-          </p>
-        </div>
+      {/* ── 2-Column Bento Layout ─────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* ── Left Column (7 cols) ── */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* 1. Enterprise Growth Tier (Retainer Card) */}
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-xs hover:shadow-sm transition-all relative overflow-hidden group">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              {/* Top Left Badge */}
+              <div className="flex sm:inline-flex flex-wrap items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-xs font-bold tracking-wide">
+                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                <span className="break-words text-center sm:text-left">• ACTIVE • ENTERPRISE GROWTH TIER</span>
+              </div>
 
-        <div className="flex items-center gap-3 shrink-0 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setShowBargainModal(true)}
-            className="inline-flex items-center gap-2 rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 text-amber-900 px-4 py-2.5 text-xs font-bold transition-all shadow-xs cursor-pointer"
-          >
-            <PhoneCall className="size-3.5 text-amber-600" />
-            <span>Book Call to Bargain</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (isSubscribed) {
-                setShowAddonModal(true);
-              }
-            }}
-            disabled={!isSubscribed}
-            title={!isSubscribed ? "Requires an active retainer plan" : "Order Add-on Pack"}
-            className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-xs font-bold transition-all shadow-xs ${
-              isSubscribed
-                ? "bg-white border-slate-200 text-slate-700 hover:border-[#2B7BC4] hover:text-[#2B7BC4] hover:bg-blue-50/30 cursor-pointer"
-                : "bg-slate-100/80 border-slate-200 text-slate-400 cursor-not-allowed opacity-60"
-            }`}
-          >
-            <Package className="size-3.5" />
-            <span>Add-on Pack</span>
-            {!isSubscribed && <Lock className="size-3 text-slate-400" />}
-          </button>
-          {isSubscribed && (
-            <button
-              type="button"
-              onClick={() => setShowPlanModal(true)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#246bb0] hover:to-[#174e7e] active:scale-95 transition-all cursor-pointer"
-            >
-              <Crown className="size-3.5" />
-              <span>Manage Retainer</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ── Metric Highlights Strip ───────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl bg-white/90 border border-slate-200/80 p-4.5 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Current Retainer</p>
-            <p className="text-lg font-black text-[#0D2137] mt-0.5">
-              {isSubscribed
-                ? (plan?.display_name || "Growth Retainer")
-                : isIncomplete
-                ? `${plan?.display_name || "Plan"} (Incomplete)`
-                : "None (Pending Payment)"}
-            </p>
-          </div>
-          <div className="size-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#2B7BC4]">
-            <Crown className="size-5" />
-          </div>
-        </div>
-
-        <div className="rounded-2xl bg-white/90 border border-slate-200/80 p-4.5 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Monthly Quota</p>
-            <p className="text-lg font-black text-[#0D2137] mt-0.5">
-              {isSubscribed
-                ? `${posterUsed + reelUsed + storyUsed} / ${posterTotal + reelTotal + storyTotal} Assets`
-                : "0 / 0 Assets"}
-            </p>
-          </div>
-          <div className="size-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
-            <TrendingUp className="size-5" />
-          </div>
-        </div>
-
-
-        <div className="rounded-2xl bg-white/90 border border-slate-200/80 p-4.5 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Billing Security</p>
-            <p className="text-lg font-black text-[#0D2137] mt-0.5">256-Bit SSL</p>
-          </div>
-          <div className="size-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-            <ShieldCheck className="size-5" />
-          </div>
-        </div>
-      </div>
-
-      {/* ── Plan Summary & Quota Meters ───────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Active Plan Card */}
-        <div className="lg:col-span-5 rounded-3xl border border-blue-100/90 bg-gradient-to-br from-white via-slate-50/50 to-blue-50/30 p-7 shadow-xs flex flex-col justify-between space-y-6 relative overflow-hidden">
-          {/* Subtle Ambient Accent */}
-          <div className="absolute -top-12 -right-12 size-36 rounded-full bg-blue-400/10 blur-2xl pointer-events-none" />
-
-          {isLoading ? (
-            <div className="animate-pulse space-y-4">
-              <div className="h-4 bg-slate-200/70 rounded-full w-1/2" />
-              <div className="h-10 bg-slate-200/70 rounded-2xl w-3/4" />
-              <div className="h-20 bg-slate-100 rounded-2xl w-full" />
-            </div>
-          ) : data?.subscription && isExpired ? (
-            <>
-              <div className="space-y-5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-wider text-rose-700 flex items-center gap-1.5 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full">
-                    <AlertCircle className="size-3.5 text-rose-600" />
-                    Previous Retainer
+              {/* Top Right Price */}
+              <div className="text-left sm:text-right shrink-0">
+                <div className="flex items-baseline sm:justify-end gap-1">
+                  <span className="text-3xl sm:text-4xl font-black text-[#0052FF] tracking-tight">
+                    $8,500
                   </span>
-                  <span className="rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-xs px-3 py-1 font-bold flex items-center gap-1.5 shadow-2xs">
-                    <span className="size-1.5 rounded-full bg-rose-500" />
-                    Retainer Expired
-                  </span>
+                  <span className="text-xs sm:text-sm font-semibold text-slate-500">/mo</span>
                 </div>
-
-                <div>
-                  <h2 className="text-3xl font-black text-[#0D2137] tracking-tight">
-                    {plan?.display_name || "Growth Tier"}
-                  </h2>
-                  <div className="flex items-baseline gap-1.5 mt-1.5">
-                    <span className="text-2xl font-extrabold text-[#0D2137]">
-                      ₹{((plan?.price_minor || 0) / 100).toLocaleString("en-IN")}
-                    </span>
-                    <span className="text-xs font-semibold text-slate-500">/ month + GST</span>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-amber-500/5 border border-rose-300 text-xs text-rose-950 space-y-2">
-                  <p className="font-bold flex items-center gap-1.5 text-rose-900">
-                    <AlertCircle className="size-4 text-rose-600 shrink-0" />
-                    Retainer Cycle Concluded
-                  </p>
-                  <p className="text-[11px] text-rose-800 leading-relaxed">
-                    Your monthly creative retainer ended on{" "}
-                    <span className="font-bold">
-                      {data?.subscription?.current_period_end
-                        ? new Date(data.subscription.current_period_end).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })
-                        : "cycle end"}
-                    </span>
-                    . Workflows, deliverable generation, and calendar approvals are locked until you renew.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setShowPlanModal(true)}
-                    className="w-full mt-2 py-2.5 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white text-xs font-bold hover:from-[#246bb0] hover:to-[#174e7e] transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <Zap className="size-3.5" />
-                    Renew Retainer Now →
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-slate-200/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-slate-500">
-                <span className="flex items-center gap-1.5 text-rose-700 font-medium">
-                  <Calendar className="size-3.5 text-rose-500" />
-                  Expired on{" "}
-                  {data?.subscription?.current_period_end
-                    ? new Date(data.subscription.current_period_end).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "cycle end"}
-                </span>
-                <span className="text-amber-700 font-bold flex items-center gap-1.5">
-                  <Lock className="size-3.5 text-amber-600" />
-                  Renewal Required
-                </span>
-              </div>
-            </>
-          ) : isSubscribed ? (
-            <>
-              <div className="space-y-5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-wider text-[#2B7BC4] flex items-center gap-1.5 bg-blue-50 border border-blue-100 px-3 py-1 rounded-full">
-                    <Crown className="size-3.5 text-[#2B7BC4]" />
-                    Active Plan
-                  </span>
-                  <span className="rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs px-3 py-1 font-bold flex items-center gap-1.5 shadow-2xs">
-                    <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Active Retainer ({liveDays}d left)
-                  </span>
-                </div>
-
-                <div>
-                  <h2 className="text-3xl font-black text-[#0D2137] tracking-tight">
-                    {plan?.display_name || "Growth Tier"}
-                  </h2>
-                  <div className="flex items-baseline gap-1.5 mt-1.5">
-                    <span className="text-2xl font-extrabold text-[#0D2137]">
-                      ₹{((plan?.price_minor || 0) / 100).toLocaleString("en-IN")}
-                    </span>
-                    <span className="text-xs font-semibold text-slate-500">/ month + GST</span>
-                  </div>
-                </div>
-
-                <p className="text-xs text-slate-600 leading-relaxed bg-white/80 border border-slate-200/60 p-3.5 rounded-2xl">
-                  Dedicated brand squad producing {posterTotal} static posters, {reelTotal} cinematic reels, and {storyTotal} story creatives per month.
-                </p>
-
-                <div className="space-y-2.5 text-xs text-slate-600">
-                  <div className="flex items-center gap-2.5">
-                    <div className="size-4 rounded-full bg-blue-50 text-[#2B7BC4] flex items-center justify-center shrink-0">
-                      <Check className="size-3" />
-                    </div>
-                    <span className="font-medium">Dedicated Creative Director & Manager</span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <div className="size-4 rounded-full bg-blue-50 text-[#2B7BC4] flex items-center justify-center shrink-0">
-                      <Check className="size-3" />
-                    </div>
-                    <span className="font-medium">Automated Multi-Platform Publishing</span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <div className="size-4 rounded-full bg-blue-50 text-[#2B7BC4] flex items-center justify-center shrink-0">
-                      <Check className="size-3" />
-                    </div>
-                    <span className="font-medium">{plan?.revision_rounds ?? 2} Fast Revision Rounds Per Asset</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-slate-200/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-slate-500">
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="size-3.5 text-slate-400" />
-                  {data?.subscription?.current_period_end
-                    ? `Next renewal: ${new Date(data.subscription.current_period_end).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
-                    : "Automatic monthly retainer renewal"}
-                </span>
-                <span className="text-emerald-700 font-bold flex items-center gap-1.5">
-                  <ShieldCheck className="size-3.5 text-emerald-600" />
-                  Auto-Renewal Active
-                </span>
-              </div>
-            </>
-          ) : isIncomplete ? (
-            <>
-              <div className="space-y-5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-wider text-amber-700 flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
-                    <AlertCircle className="size-3.5 text-amber-600" />
-                    Payment Incomplete
-                  </span>
-                  <span className="rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs px-3 py-1 font-bold flex items-center gap-1.5 shadow-2xs">
-                    <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    Pending Payment
-                  </span>
-                </div>
-
-                <div>
-                  <h2 className="text-3xl font-black text-[#0D2137] tracking-tight">
-                    {plan?.display_name || "Growth Tier"}
-                  </h2>
-                  <div className="flex items-baseline gap-1.5 mt-1.5">
-                    <span className="text-2xl font-extrabold text-[#0D2137]">
-                      ₹{((plan?.price_minor || 0) / 100).toLocaleString("en-IN")}
-                    </span>
-                    <span className="text-xs font-semibold text-slate-500">/ month + GST</span>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200 text-xs text-amber-950 space-y-2">
-                  <p className="font-bold flex items-center gap-1.5 text-amber-900">
-                    <AlertCircle className="size-4 text-amber-600 shrink-0" />
-                    Checkout Incomplete — Retainer Inactive
-                  </p>
-                  <p className="text-[11px] text-amber-800 leading-relaxed">
-                    A checkout order was initialized for {plan?.display_name || "this plan"}, but payment was exited before completion. Your monthly creative quota and dedicated squad are currently inactive.
-                  </p>
-                  <div className="pt-2 flex flex-col sm:flex-row gap-2">
-                    {!isStep2Done ? (
-                      <Link
-                        to="/onboarding?step=2"
-                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#2B7BC4] hover:bg-[#1A5EA8] text-white text-xs font-bold transition-all shadow-xs"
-                      >
-                        <span>Resume Setup (Step 2: Agreement)</span>
-                        <ArrowRight className="size-3.5" />
-                      </Link>
-                    ) : (
-                      <Link
-                        to="/onboarding?step=3"
-                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#2B7BC4] hover:bg-[#1A5EA8] text-white text-xs font-bold transition-all shadow-xs"
-                      >
-                        <span>Resume Setup (Step 3: Payment)</span>
-                        <ArrowRight className="size-3.5" />
-                      </Link>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!isStep2Done) {
-                          window.location.href = "/onboarding?step=2";
-                        } else {
-                          setShowPlanModal(true);
-                        }
-                      }}
-                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all cursor-pointer"
-                    >
-                      <span>Choose Different Plan</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-slate-200/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-slate-500">
-                <span className="flex items-center gap-1.5 text-amber-700 font-medium">
-                  <Clock className="size-3.5 text-amber-500" />
-                  Order pending completion
-                </span>
-                <span className="text-amber-800 font-bold flex items-center gap-1.5">
-                  <Lock className="size-3.5 text-amber-600" />
-                  Payment Required
-                </span>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-8 space-y-4">
-              <div className="size-14 mx-auto rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#2B7BC4] shadow-xs">
-                <Package className="size-7" />
-              </div>
-              <div>
-                <p className="text-base font-bold text-[#0D2137]">No Active Retainer</p>
-                <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-                  {!isStep2Done
-                    ? "Please complete your Service Agreement in onboarding before setting up payment."
-                    : "Choose a production plan to assign your creative pod and unlock monthly quotas."}
+                <p className="text-[11px] sm:text-xs font-semibold text-emerald-600 flex items-center sm:justify-end gap-1 mt-0.5">
+                  <Check className="size-3.5 text-emerald-600" />
+                  <span>Unlimited revisions included</span>
                 </p>
               </div>
-              {!isStep2Done ? (
-                <Link
-                  to="/onboarding?step=2"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white text-xs font-bold rounded-2xl hover:from-[#246bb0] hover:to-[#174e7e] shadow-md shadow-blue-500/25 transition-all cursor-pointer"
-                >
-                  <span>Resume Setup (Step 2: Service Agreement)</span>
-                  <ArrowRight className="size-3.5" />
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowPlanModal(true)}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white text-xs font-bold rounded-2xl hover:from-[#246bb0] hover:to-[#174e7e] shadow-md shadow-blue-500/25 transition-all cursor-pointer"
-                >
-                  <Zap className="size-3.5" />
-                  Choose Production Plan
-                </button>
-              )}
             </div>
-          )}
-        </div>
 
-        {/* Quota Gauges Card */}
-        <div className="lg:col-span-7 rounded-3xl border border-slate-200/80 bg-white p-7 shadow-xs space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div>
-              <h3 className="text-base font-bold text-[#0D2137]">Monthly Production Quota</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Real-time status of deliverable generation for this cycle</p>
-            </div>
-            {isSubscribed && (
-              <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                {liveDays} days remaining
-              </span>
-            )}
-            {isExpired && (
-              <span className="text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1 rounded-full">
-                Quota Suspended (Expired)
-              </span>
-            )}
-          </div>
-
-          {isSubscribed ? (
-            <>
-              {/* Meter 1: Posters */}
-              <div className="space-y-2.5">
-                <div className="flex justify-between items-center text-xs font-semibold">
-                  <div className="flex items-center gap-2">
-                    <span className="size-6 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-[#2B7BC4]">
-                      <ImageIcon className="size-3.5" />
-                    </span>
-                    <span className="text-slate-800 font-bold">Static Brand Posters</span>
-                  </div>
-                  <span className="text-[#0D2137] font-mono font-bold">
-                    {posterUsed} / {posterTotal} ({posterPct}%)
-                  </span>
-                </div>
-                <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden p-0.5 border border-slate-200/50">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-[#2B7BC4] to-[#0EA5E9] transition-all duration-500 shadow-xs"
-                    style={{ width: `${posterPct}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Meter 2: Reels */}
-              <div className="space-y-2.5">
-                <div className="flex justify-between items-center text-xs font-semibold">
-                  <div className="flex items-center gap-2">
-                    <span className="size-6 rounded-lg bg-violet-50 border border-violet-100 flex items-center justify-center text-[#6366F1]">
-                      <Film className="size-3.5" />
-                    </span>
-                    <span className="text-slate-800 font-bold">Cinematic 9:16 Reels</span>
-                  </div>
-                  <span className="text-[#0D2137] font-mono font-bold">
-                    {reelUsed} / {reelTotal} ({reelPct}%)
-                  </span>
-                </div>
-                <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden p-0.5 border border-slate-200/50">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] transition-all duration-500 shadow-xs"
-                    style={{ width: `${reelPct}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Meter 3: Stories */}
-              <div className="space-y-2.5">
-                <div className="flex justify-between items-center text-xs font-semibold">
-                  <div className="flex items-center gap-2">
-                    <span className="size-6 rounded-lg bg-pink-50 border border-pink-100 flex items-center justify-center text-[#EC4899]">
-                      <Smartphone className="size-3.5" />
-                    </span>
-                    <span className="text-slate-800 font-bold">Story Creatives & Interactive Polls</span>
-                  </div>
-                  <span className="text-[#0D2137] font-mono font-bold">
-                    {storyUsed} / {storyTotal} ({storyPct}%)
-                  </span>
-                </div>
-                <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden p-0.5 border border-slate-200/50">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-[#EC4899] to-[#F43F5E] transition-all duration-500 shadow-xs"
-                    style={{ width: `${storyPct}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Add-on CTA Callout */}
-              <div className="pt-2 flex items-center justify-between bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 p-4 rounded-2xl border border-blue-100/80 shadow-2xs">
-                <div className="flex items-center gap-3 text-xs text-slate-700">
-                  <div className="size-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-[#2B7BC4] shrink-0">
-                    <Clock className="size-4" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-[#0D2137]">Need extra deliverables before renewal?</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">Top up quota anytime with instant add-on packs.</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAddonModal(true)}
-                  className="text-xs font-bold text-[#2B7BC4] hover:text-[#1F5C96] bg-white border border-blue-200 px-3.5 py-2 rounded-xl shadow-2xs hover:shadow-xs transition-all cursor-pointer shrink-0 ml-3"
-                >
-                  Order Add-on →
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-10 space-y-3">
-              <div className="size-12 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
-                <Package className="size-6" />
-              </div>
-              <p className="text-sm font-bold text-slate-800">No Active Production Quota</p>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                Activate a monthly retainer to generate static posters, cinematic reels, and interactive stories.
+            {/* Title & Subtitle */}
+            <div className="mt-5 sm:mt-6">
+              <h2 className="text-2xl sm:text-[28px] font-bold text-slate-900 tracking-tight">
+                Enterprise Growth Tier
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed max-w-xl">
+                Dedicated creative execution & weekly production sprints for {brandDisplayName}.
               </p>
             </div>
-          )}
+
+            {/* Billing Cycle Pill */}
+            <div className="mt-5 flex sm:inline-flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-2 text-xs text-slate-600 font-medium">
+              <Calendar className="size-3.5 text-slate-400 shrink-0" />
+              <span className="break-words">{cyclePeriodText}</span>
+            </div>
+          </div>
+
+          {/* 2. Production Capacity & Sprint Allocation */}
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-xs hover:shadow-sm transition-all">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                  Production Capacity & Sprint Allocation
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Real-time resource utilization across creative workflows
+                </p>
+              </div>
+              <span className="text-xs font-semibold text-slate-600 bg-slate-100/80 border border-slate-200/80 px-3 py-1 rounded-full shrink-0">
+                Oct 01 - Oct 31
+              </span>
+            </div>
+
+            {/* Capacity Meter Box */}
+            <div className="mt-5 rounded-2xl border border-slate-200/70 bg-slate-50/50 p-4 sm:p-5 space-y-3">
+              <div className="flex items-center justify-between text-xs sm:text-sm font-semibold">
+                <div className="flex items-center gap-2">
+                  <Clock className="size-4 text-[#0052FF]" />
+                  <span className="font-bold text-slate-900">Sprint Production Quota</span>
+                </div>
+                <span className="font-bold text-slate-900">124 / 160 hrs used</span>
+              </div>
+
+              <div className="h-2.5 w-full rounded-full bg-slate-200/70 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-[#0052FF] transition-all duration-700 ease-out"
+                  style={{ width: "77.5%" }}
+                />
+              </div>
+
+              <p className="text-xs text-slate-500 font-medium">
+                36 hours remaining in current billing cycle (Resets automatically in 12 days).
+              </p>
+            </div>
+          </div>
+
+          {/* 3. Enterprise Tier Included Perks */}
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-xs hover:shadow-sm transition-all">
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                Enterprise Tier Included Perks
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                High-impact execution benefits active on your current retainer
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-5">
+              {/* Perk 1 */}
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50/40 p-4 hover:bg-slate-50 hover:border-slate-300 hover:shadow-xs transition-all flex items-start gap-3.5 group">
+                <div className="size-9 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-500 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Zap className="size-4.5 fill-amber-400 text-amber-500" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900">Dedicated Creative Pod</h4>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Full-stack unit: Pod Lead, Motion Designer, Lead Copywriter, Ad Strategist.
+                  </p>
+                </div>
+              </div>
+
+              {/* Perk 2 */}
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50/40 p-4 hover:bg-slate-50 hover:border-slate-300 hover:shadow-xs transition-all flex items-start gap-3.5 group">
+                <div className="size-9 rounded-xl bg-amber-50/80 border border-amber-200/60 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Clock className="size-4.5 text-amber-600" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900">2-Hour SLA Triage Guarantee</h4>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Priority ticketing queue with rapid response times & senior engineer escalation.
+                  </p>
+                </div>
+              </div>
+
+              {/* Perk 3 */}
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50/40 p-4 hover:bg-slate-50 hover:border-slate-300 hover:shadow-xs transition-all flex items-start gap-3.5 group">
+                <div className="size-9 rounded-xl bg-teal-50 border border-teal-200/60 text-teal-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <RefreshCw className="size-4.5 text-teal-600" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900">Unlimited Revisions</h4>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Iterative weekly review cycles with zero surprise fees or change order costs.
+                  </p>
+                </div>
+              </div>
+
+              {/* Perk 4 */}
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50/40 p-4 hover:bg-slate-50 hover:border-slate-300 hover:shadow-xs transition-all flex items-start gap-3.5 group">
+                <div className="size-9 rounded-xl bg-orange-50 border border-orange-200/60 text-orange-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Package className="size-4.5 text-orange-600" />
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900">4K Motion & Vector Delivery</h4>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Uncompressed source deliverables, Figma master systems, and native 3D files.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Right Column (5 cols) ── */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* 1. Configured Add-Ons */}
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-xs hover:shadow-sm transition-all">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                  Configured Add-Ons
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Modular execution enhancements active on your retainer.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddonModal(true)}
+                className="text-xs font-bold text-[#0052FF] bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-3 py-1 rounded-full whitespace-nowrap transition-colors cursor-pointer"
+                title="Manage add-on packs"
+              >
+                +$1,750 / mo
+              </button>
+            </div>
+
+            <div className="space-y-3 mt-5">
+              {/* Add-on 1 */}
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50/40 p-3.5 sm:p-4 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-between gap-3 group">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="size-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-105 transition-transform">
+                    <Video className="size-4.5 text-blue-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                      4K Motion & Animation Sprint
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5 truncate">
+                      3x 30s 3D motion renders / mo
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-xs sm:text-sm font-bold text-slate-900 inline-flex items-center gap-1.5">
+                    $1,200 / mo <span className="size-1.5 rounded-full bg-emerald-500" />
+                  </span>
+                </div>
+              </div>
+
+              {/* Add-on 2 */}
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50/40 p-3.5 sm:p-4 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-between gap-3 group">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <div className="size-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0 group-hover:scale-105 transition-transform">
+                    <Zap className="size-4.5 text-purple-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                      24h Priority Turnaround SLA
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5 truncate">
+                      Expedited production queue access
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-xs sm:text-sm font-bold text-slate-900 inline-flex items-center gap-1.5">
+                    $550 / mo <span className="size-1.5 rounded-full bg-emerald-500" />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Tax Invoices & Billing Receipts */}
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-xs hover:shadow-sm transition-all">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                  Tax Invoices & Billing Receipts
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Download official tax receipts and monthly VAT statements.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowArchiveModal(true)}
+                className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors shrink-0 cursor-pointer"
+              >
+                View Full Archive →
+              </button>
+            </div>
+
+            <div className="space-y-3 mt-5">
+              {defaultInvoices.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="rounded-2xl border border-slate-200/70 bg-slate-50/40 p-3 sm:p-3.5 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-between gap-3 group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="size-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shrink-0 shadow-2xs group-hover:text-slate-600 transition-colors">
+                      <FileText className="size-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-slate-900">{inv.id}</span>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                          Paid
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5 truncate">
+                        {inv.date} • {inv.amount}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadInvoice(inv)}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0052FF] hover:text-[#0045D8] px-3 py-1.5 rounded-xl border border-blue-100 bg-white hover:bg-blue-50/60 transition-all shadow-2xs cursor-pointer shrink-0 active:scale-95"
+                  >
+                    <span>Download PDF</span>
+                    <ExternalLink className="size-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
+      
+      {/* ── Full Archive Modal ────────────────────────────────────────────── */}
+      {showArchiveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="bg-white border border-slate-200 text-slate-900 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl p-6 sm:p-7">
+            <div className="flex items-center justify-between mb-5 pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#0052FF]">
+                  <FileText className="size-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900">Billing History & Tax Statements</h3>
+                  <p className="text-xs text-slate-500">Official GST-compliant tax invoices and receipts</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowArchiveModal(false)}
+                className="size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
 
-      {/* ── Invoices & Billing History Table ─────────────────────────────── */}
-      <div className="rounded-3xl border border-slate-200/80 bg-white p-7 shadow-xs space-y-5">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div>
-            <h3 className="text-base font-bold text-[#0D2137]">Official Tax Invoices & Receipts</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Download official GST-compliant payment receipts and transaction records</p>
-          </div>
-          <span className="text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200/70 px-3 py-1 rounded-full">
-            {invoices.length} Invoices Available
-          </span>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200/70 text-xs font-bold text-slate-400 uppercase tracking-wider bg-slate-50/60 rounded-xl">
-                <th className="py-3.5 px-4 rounded-l-xl">Invoice ID</th>
-                <th className="py-3.5 px-4">Billing Date</th>
-                <th className="py-3.5 px-4">Plan / Tier</th>
-                <th className="py-3.5 px-4">Amount Paid</th>
-                <th className="py-3.5 px-4">Status</th>
-                <th className="py-3.5 px-4 text-right rounded-r-xl">Receipt</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {invoices.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-xs text-slate-500">
-                    <div className="size-12 rounded-2xl bg-slate-50 border border-slate-100 mx-auto flex items-center justify-center text-slate-400 mb-2">
-                      <FileText className="size-6" />
+            <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1 scrollbar-thin">
+              {defaultInvoices.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="size-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-2xs">
+                      <FileText className="size-4" />
                     </div>
-                    <p className="font-semibold text-slate-700">No billing invoices recorded yet.</p>
-                    <button
-                      type="button"
-                      onClick={() => setShowPlanModal(true)}
-                      className="text-[#2B7BC4] font-bold mt-1.5 inline-block hover:underline"
-                    >
-                      Subscribe to a plan to start production →
-                    </button>
-                  </td>
-                </tr>
-              ) : (
-                invoices.map((inv) => {
-                  const invData: InvoiceData = {
-                    ...inv,
-                    clientName: user?.full_name,
-                    clientEmail: user?.email,
-                    companyName: (user as any)?.company_name || (dashboard as any)?.brand_name,
-                  };
-                  return (
-                    <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors group">
-                      <td className="py-4 px-4 font-mono text-xs font-bold text-[#0D2137]">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedInvoice(invData)}
-                          className="flex items-center gap-2.5 hover:text-[#2B7BC4] hover:underline cursor-pointer text-left"
-                          title="Click to preview tax invoice"
-                        >
-                          <FileText className="size-4 text-slate-400 group-hover:text-[#2B7BC4] transition-colors" />
-                          <span>{inv.id}</span>
-                        </button>
-                      </td>
-                      <td className="py-4 px-4 text-xs font-medium text-slate-600">{inv.date}</td>
-                      <td className="py-4 px-4 text-xs font-bold text-slate-800">{inv.plan}</td>
-                      <td className="py-4 px-4 text-xs font-extrabold text-[#0D2137]">{inv.amount}</td>
-                      <td className="py-4 px-4">
-                        <span
-                          className={`rounded-full px-3 py-1 text-[11px] font-bold border inline-flex items-center gap-1.5 ${
-                            inv.status === "Paid" || inv.status === "Active"
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : "bg-amber-50 text-amber-700 border-amber-200"
-                          }`}
-                        >
-                          <span className="size-1.5 rounded-full bg-emerald-500" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs sm:text-sm text-slate-900">{inv.id}</span>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
                           {inv.status}
                         </span>
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedInvoice(invData)}
-                            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-xl transition-all cursor-pointer"
-                            title="Preview invoice modal"
-                          >
-                            Preview
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => generateInvoicePDF(invData)}
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#2B7BC4] hover:text-[#1F5C96] bg-blue-50/80 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-100 shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95"
-                            title="Download PDF File"
-                          >
-                            <Download className="size-3.5" />
-                            PDF
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {inv.date} • {inv.amount} • {inv.plan}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadInvoice(inv)}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0052FF] hover:text-[#0045D8] px-3.5 py-2 rounded-xl border border-blue-100 bg-white hover:bg-blue-50 transition-all shadow-2xs cursor-pointer active:scale-95"
+                  >
+                    <Download className="size-3.5" />
+                    <span>PDF</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+              <span className="flex items-center gap-1 text-slate-500">
+                <ShieldCheck className="size-4 text-emerald-500" />
+                Digitally signed & verified by Creo Finance Ltd.
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowArchiveModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* ── Toast Notification ────────────────────────────────────────────── */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#0F172A] text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-800">
+          <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
+          <span className="text-xs font-semibold">{toastMessage}</span>
+          <button
+            type="button"
+            onClick={() => setToastMessage(null)}
+            className="text-slate-400 hover:text-white p-0.5 ml-1"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

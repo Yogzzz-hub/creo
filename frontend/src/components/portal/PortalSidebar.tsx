@@ -102,7 +102,7 @@ export function PortalSidebar() {
 
   return (
     <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-[var(--sidebar-width)] lg:flex-col">
-      <div className="flex grow flex-col gap-y-6 bg-[#0D2137] px-4 pt-6 pb-4">
+      <div className="flex grow flex-col gap-y-6 bg-[#0F172A] px-4 pt-6 pb-4">
         <Link to="/portal" className="flex items-center gap-2 px-2">
           <span className="text-xl font-bold text-white tracking-tight">
             Creo
@@ -128,9 +128,9 @@ export function PortalSidebar() {
                     ? `Resume Setup (Step ${currentResumeStep})`
                     : undefined
                 }
-                className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0EA5E9]/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D2137] ${
+                className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0EA5E9]/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F172A] ${
                   active
-                    ? "bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white font-semibold shadow-md shadow-blue-500/20"
+                    ? "bg-gradient-to-r from-[#0052FF] to-[#0045D8] text-white font-semibold shadow-md shadow-blue-500/20"
                     : "text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1"
                 }`}
               >
@@ -178,7 +178,7 @@ export function PortalSidebar() {
                     </span>
                   </div>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-md bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 text-white font-bold uppercase tracking-wider transition-all shadow-xs">
+                <span className="text-[10px] px-2 py-0.5 rounded-md bg-gradient-to-r from-[#0052FF] to-[#0045D8] hover:brightness-110 text-white font-bold uppercase tracking-wider transition-all shadow-xs">
                   {isSetupIncomplete ? "Resume" : "Unlock"}
                 </span>
               </Link>
@@ -256,7 +256,7 @@ export function MobileBottomTabBar() {
             key={item.href}
             to={targetHref}
             className={`relative flex flex-1 flex-col items-center gap-0.5 py-1 text-[10px] font-medium transition-colors ${
-              active ? "text-[#2B7BC4]" : "text-gray-400"
+              active ? "text-[#0052FF]" : "text-gray-400"
             }`}
           >
             <div className="relative">

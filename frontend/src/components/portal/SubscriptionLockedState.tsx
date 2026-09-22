@@ -88,7 +88,7 @@ export function SubscriptionLockedState({
 
           {/* Title & Description */}
           <div className="space-y-2 max-w-lg">
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[#0D2137]">
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-[#0F172A]">
               {title}
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
@@ -99,8 +99,8 @@ export function SubscriptionLockedState({
           {/* Feature Highlights Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full text-left pt-2">
             <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-2xs">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#0D2137]">
-                <CheckCircle2 className="size-4 text-[#2B7BC4] shrink-0" />
+              <div className="flex items-center gap-2 text-xs font-bold text-[#0F172A]">
+                <CheckCircle2 className="size-4 text-[#0052FF] shrink-0" />
                 <span>Dedicated Squad</span>
               </div>
               <p className="text-[11px] text-slate-500 mt-1">
@@ -109,8 +109,8 @@ export function SubscriptionLockedState({
             </div>
 
             <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-2xs">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#0D2137]">
-                <CheckCircle2 className="size-4 text-[#2B7BC4] shrink-0" />
+              <div className="flex items-center gap-2 text-xs font-bold text-[#0F172A]">
+                <CheckCircle2 className="size-4 text-[#0052FF] shrink-0" />
                 <span>Monthly Quotas</span>
               </div>
               <p className="text-[11px] text-slate-500 mt-1">
@@ -119,8 +119,8 @@ export function SubscriptionLockedState({
             </div>
 
             <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-2xs">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#0D2137]">
-                <CheckCircle2 className="size-4 text-[#2B7BC4] shrink-0" />
+              <div className="flex items-center gap-2 text-xs font-bold text-[#0F172A]">
+                <CheckCircle2 className="size-4 text-[#0052FF] shrink-0" />
                 <span>Approval Workflow</span>
               </div>
               <p className="text-[11px] text-slate-500 mt-1">
@@ -133,7 +133,7 @@ export function SubscriptionLockedState({
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
             <Link
               to={isSetupIncomplete ? `/onboarding?step=${currentResumeStep}` : "/portal/payments"}
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] px-7 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#246bb0] hover:to-[#174e7e] transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#0052FF] to-[#0045D8] px-7 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#246bb0] hover:to-[#174e7e] transition-all cursor-pointer"
             >
               <Zap className="size-4" />
               {isSetupIncomplete ? `Resume Account Setup (Step ${currentResumeStep})` : "Choose Production Plan"}
@@ -147,7 +147,7 @@ export function SubscriptionLockedState({
               }}
               className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-2xs"
             >
-              <LifeBuoy className="size-4 text-[#2B7BC4]" />
+              <LifeBuoy className="size-4 text-[#0052FF]" />
               <span>Need assistance? Contact Support</span>
             </button>
           </div>
@@ -167,11 +167,11 @@ export function SubscriptionLockedState({
               </button>
 
               <div className="flex items-center gap-3 mb-4">
-                <div className="size-10 rounded-2xl bg-blue-50 border border-blue-100 text-[#2B7BC4] flex items-center justify-center shrink-0">
+                <div className="size-10 rounded-2xl bg-blue-50 border border-blue-100 text-[#0052FF] flex items-center justify-center shrink-0">
                   <LifeBuoy className="size-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-[#0D2137] tracking-tight">
+                  <h3 className="text-lg font-black text-[#0F172A] tracking-tight">
                     Contact Dedicated Support
                   </h3>
                   <p className="text-xs text-slate-500">
@@ -201,7 +201,7 @@ export function SubscriptionLockedState({
                   href="mailto:concierge@creo.agency?subject=Account%20Assistance%20Inquiry"
                   className="flex items-center gap-2.5 p-3 rounded-2xl bg-blue-50/80 border border-blue-200/80 text-blue-900 hover:bg-blue-100/80 transition-colors"
                 >
-                  <div className="size-8 rounded-xl bg-[#2B7BC4] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <div className="size-8 rounded-xl bg-[#0052FF] text-white flex items-center justify-center shrink-0 shadow-xs">
                     <Mail className="size-4" />
                   </div>
                   <div className="text-left min-w-0">
@@ -226,7 +226,7 @@ export function SubscriptionLockedState({
                     <Link
                       to="/portal/support"
                       onClick={() => setShowModal(false)}
-                      className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1E609A] transition-colors"
+                      className="px-4 py-2 rounded-xl bg-[#0052FF] text-white text-xs font-bold hover:bg-[#0045D8] transition-colors"
                     >
                       Go to Support Desk →
                     </Link>
@@ -242,13 +242,13 @@ export function SubscriptionLockedState({
               ) : (
                 <form onSubmit={handleSendInquiry} className="space-y-3 text-left">
                   <div className="border-t border-slate-100 pt-3">
-                    <p className="text-xs font-bold text-[#0D2137] mb-2">Send an Account Inquiry Ticket</p>
+                    <p className="text-xs font-bold text-[#0F172A] mb-2">Send an Account Inquiry Ticket</p>
                     <input
                       type="text"
                       placeholder="Subject (e.g. Question about payment or onboarding)"
                       value={inquirySubject}
                       onChange={(e) => setInquirySubject(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium focus:border-[#2B7BC4] focus:outline-none mb-2"
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium focus:border-[#0052FF] focus:outline-none mb-2"
                     />
                     <textarea
                       rows={3}
@@ -256,7 +256,7 @@ export function SubscriptionLockedState({
                       value={inquiryMsg}
                       onChange={(e) => setInquiryMsg(e.target.value)}
                       required
-                      className="w-full rounded-xl border border-slate-200 p-3 text-xs font-medium focus:border-[#2B7BC4] focus:outline-none resize-none"
+                      className="w-full rounded-xl border border-slate-200 p-3 text-xs font-medium focus:border-[#0052FF] focus:outline-none resize-none"
                     />
                   </div>
 
@@ -264,7 +264,7 @@ export function SubscriptionLockedState({
                     <Link
                       to="/portal/support"
                       onClick={() => setShowModal(false)}
-                      className="text-xs font-semibold text-[#2B7BC4] hover:underline"
+                      className="text-xs font-semibold text-[#0052FF] hover:underline"
                     >
                       Open Support Desk →
                     </Link>
@@ -272,7 +272,7 @@ export function SubscriptionLockedState({
                     <button
                       type="submit"
                       disabled={sending || !inquiryMsg.trim()}
-                      className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white text-xs font-bold hover:brightness-110 disabled:opacity-50 transition-all cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-gradient-to-r from-[#0052FF] to-[#0045D8] text-white text-xs font-bold hover:brightness-110 disabled:opacity-50 transition-all cursor-pointer"
                     >
                       <Send className="size-3.5" />
                       <span>{sending ? "Sending..." : "Submit Ticket"}</span>
