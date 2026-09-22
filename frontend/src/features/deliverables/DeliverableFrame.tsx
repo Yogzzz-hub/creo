@@ -48,6 +48,7 @@ export function DeliverableFrame({
     <motion.button
       type="button"
       layout={!shouldReduceMotion}
+      whileHover={{ scale: 1.02, y: -4, boxShadow: "0 10px 25px rgba(13, 33, 55, 0.1)" }}
       transition={
         shouldReduceMotion ? { duration: 0 } : { type: "spring", stiffness: 350, damping: 28 }
       }
