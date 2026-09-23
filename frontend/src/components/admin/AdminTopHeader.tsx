@@ -53,7 +53,7 @@ const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
   {
     id: "n-2",
     title: "Retainer Counter-Offer",
-    message: "Northwind Labs proposed $12,500/mo for Enterprise Tier.",
+    message: "Northwind Labs proposed ₹85,000/mo for Enterprise Tier.",
     link: "/admin/revenue",
     type: "revenue",
     created_at: "45 mins ago",

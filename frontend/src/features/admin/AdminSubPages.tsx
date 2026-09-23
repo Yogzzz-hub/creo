@@ -5169,8 +5169,8 @@ export function AdminRevenuePage() {
       client: "Northwind Labs",
       clientInitials: "NL",
       scope: "Enterprise Retainer • Nov 2024",
-      amount: 7200,
-      method: "Stripe ACH",
+      amount: 95000,
+      method: "Razorpay UPI",
       status: "Paid",
       date: "Nov 12",
       badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -5180,8 +5180,8 @@ export function AdminRevenuePage() {
       id: "CR-9480",
       client: "Bloom Studio",
       clientInitials: "BS",
-      scope: "Growth Retainer + 2x Addon Reels",
-      amount: 6400,
+      scope: "Growth Retainer + 1x Addon Reel",
+      amount: 60000,
       method: "Bank Wire",
       status: "Paid",
       date: "Nov 10",
@@ -5193,7 +5193,7 @@ export function AdminRevenuePage() {
       client: "Atlas Commerce",
       clientInitials: "AC",
       scope: "Enterprise Retainer • Net 15",
-      amount: 8000,
+      amount: 95000,
       method: "Invoice Net 15",
       status: "Pending",
       date: "Due Nov 20",
@@ -5205,7 +5205,7 @@ export function AdminRevenuePage() {
       client: "Horizon Digital",
       clientInitials: "HD",
       scope: "Starter Launch Package",
-      amount: 4500,
+      amount: 25000,
       method: "Mastercard •• 4912",
       status: "Paid",
       date: "Nov 08",
@@ -5217,8 +5217,8 @@ export function AdminRevenuePage() {
       client: "Zenith Brands",
       clientInitials: "ZB",
       scope: "Growth Retainer • Nov 2024",
-      amount: 5800,
-      method: "Stripe ACH",
+      amount: 50000,
+      method: "Razorpay UPI",
       status: "Paid",
       date: "Nov 05",
       badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -5229,7 +5229,7 @@ export function AdminRevenuePage() {
       client: "Apex Media",
       clientInitials: "AM",
       scope: "Add-on Asset Pack (SaaS Motion)",
-      amount: 1900,
+      amount: 15000,
       method: "Visa •• 8841",
       status: "Paid",
       date: "Nov 03",
@@ -5240,11 +5240,11 @@ export function AdminRevenuePage() {
 
   // Chart Trend Data
   const trajectoryPoints = [
-    { label: "Oct 15 ($98.0k)", value: 98000, target: 100000 },
-    { label: "Oct 22", value: 104200, target: 105000 },
-    { label: "Oct 29", value: 112500, target: 110000 },
-    { label: "Nov 05", value: 118400, target: 115000 },
-    { label: "Nov 14 ($124.8k)", value: 124800, target: 120000 },
+    { label: "Oct 15 (₹9.8L)", value: 980000, target: 1000000 },
+    { label: "Oct 22", value: 1042000, target: 1050000 },
+    { label: "Oct 29", value: 1125000, target: 1100000 },
+    { label: "Nov 05", value: 1184000, target: 1150000 },
+    { label: "Nov 14 (₹12.5L)", value: 1248000, target: 1200000 },
   ];
 
   // Actions: Create Invoice
@@ -5266,7 +5266,7 @@ export function AdminRevenuePage() {
     };
 
     setTransactions((prev) => [newTx, ...prev]);
-    setToast(`Invoice ${newTx.id} created for ${newInvClient} ($${newTx.amount.toLocaleString()})!`);
+    setToast(`Invoice ${newTx.id} created for ${newInvClient} (₹${newTx.amount.toLocaleString('en-IN')})!`);
     setIsCreateInvoiceOpen(false);
     setNewInvClient("");
     setNewInvScope("");
@@ -5382,17 +5382,17 @@ export function AdminRevenuePage() {
                 Total Revenue (MRR)
               </span>
               <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-black text-gray-900 tracking-tight">$124,800</span>
+                <span className="text-4xl font-black text-gray-900 tracking-tight">₹12,48,000</span>
                 <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
                   <TrendingUp className="w-3.5 h-3.5" /> +12.4%
                 </span>
               </div>
               <div className="text-xs text-gray-500 font-medium pt-1">
-                Projected ARR: <strong className="text-gray-900 font-bold">$1,497,600</strong>
+                Projected ARR: <strong className="text-gray-900 font-bold">₹1,49,76,000</strong>
               </div>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
-              <DollarSign className="w-7 h-7" />
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100 font-black text-2xl">
+              ₹
             </div>
           </div>
 
@@ -5403,7 +5403,7 @@ export function AdminRevenuePage() {
                 Collected this Month
               </span>
               <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-black text-gray-900 tracking-tight">$108,400</span>
+                <span className="text-4xl font-black text-gray-900 tracking-tight">₹10,84,000</span>
                 <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
                   86.8% Rate
                 </span>
@@ -5444,7 +5444,7 @@ export function AdminRevenuePage() {
               {/* Peak Marker Badge */}
               <div className="flex justify-end mb-2">
                 <span className="px-3 py-1 rounded-full text-[11px] font-black bg-[#2563EB] text-white shadow-md">
-                  $124,800 Peak • Today Nov 14
+                  ₹12,48,000 Peak • Today Nov 14
                 </span>
               </div>
 
@@ -5464,13 +5464,13 @@ export function AdminRevenuePage() {
                       tick={{ fontSize: 11, fill: "#64748b" }}
                       axisLine={false}
                       tickLine={false}
-                      tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
+                      tickFormatter={(v: number) => `₹${(v / 100000).toFixed(1)}L`}
                     />
                     <Tooltip
-                      formatter={(val: any) => [`$${Number(val).toLocaleString()}`, "Revenue"]}
+                      formatter={(val: any) => [`₹${Number(val).toLocaleString('en-IN')}`, "Revenue"]}
                       contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", boxShadow: "0 10px 25px rgba(0,0,0,0.08)" }}
                     />
-                    <ReferenceLine y={120000} stroke="#94a3b8" strokeDasharray="4 4" />
+                    <ReferenceLine y={1200000} stroke="#94a3b8" strokeDasharray="4 4" />
                     <Area
                       type="monotone"
                       dataKey="value"
@@ -5489,19 +5489,19 @@ export function AdminRevenuePage() {
             <div className="pt-4 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
               <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
                 <span className="text-[10px] font-bold text-gray-400 uppercase">Invoiced</span>
-                <div className="text-sm font-black text-gray-900">$124,800</div>
+                <div className="text-sm font-black text-gray-900">₹12,48,000</div>
               </div>
               <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
-                <span className="text-[10px] font-bold text-gray-400 uppercase">Direct ACH / Wire</span>
-                <div className="text-sm font-black text-gray-900">$98,200</div>
+                <span className="text-[10px] font-bold text-gray-400 uppercase">Direct UPI / Wire</span>
+                <div className="text-sm font-black text-gray-900">₹9,82,000</div>
               </div>
               <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
-                <span className="text-[10px] font-bold text-gray-400 uppercase">Stripe Cards</span>
-                <div className="text-sm font-black text-gray-900">$26,600</div>
+                <span className="text-[10px] font-bold text-gray-400 uppercase">Cards / Razorpay</span>
+                <div className="text-sm font-black text-gray-900">₹2,66,000</div>
               </div>
               <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
                 <span className="text-[10px] font-bold text-gray-400 uppercase">Disputed / Refunded</span>
-                <div className="text-sm font-black text-emerald-600">$0.00</div>
+                <div className="text-sm font-black text-emerald-600">₹0</div>
               </div>
             </div>
           </div>
@@ -5533,16 +5533,16 @@ export function AdminRevenuePage() {
                 <div className="space-y-2 p-3 bg-blue-50/40 rounded-2xl border border-blue-100/60">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="flex items-center gap-2 text-gray-900">
-                      <span className="w-2.5 h-2.5 rounded-full bg-blue-600" /> Package 1 (Enterprise Suite)
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-600" /> Package 1 (Enterprise Domination)
                     </span>
-                    <span className="text-gray-900 font-black">$54,000 <span className="text-[10px] font-normal text-gray-500">/ mo</span></span>
+                    <span className="text-gray-900 font-black">₹5,70,000 <span className="text-[10px] font-normal text-gray-500">/ mo</span></span>
                   </div>
                   <div className="w-full bg-blue-100 rounded-full h-2 overflow-hidden">
-                    <div className="bg-blue-600 h-full rounded-full w-[43.2%]" />
+                    <div className="bg-blue-600 h-full rounded-full w-[45.6%]" />
                   </div>
                   <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
                     <span>6 Retainer Accounts</span>
-                    <span className="text-blue-700 font-bold">43.2% of MRR</span>
+                    <span className="text-blue-700 font-bold">45.6% of MRR</span>
                   </div>
                 </div>
 
@@ -5550,16 +5550,16 @@ export function AdminRevenuePage() {
                 <div className="space-y-2 p-3 bg-purple-50/40 rounded-2xl border border-purple-100/60">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="flex items-center gap-2 text-gray-900">
-                      <span className="w-2.5 h-2.5 rounded-full bg-purple-600" /> Package 2 (Growth & Scale)
+                      <span className="w-2.5 h-2.5 rounded-full bg-purple-600" /> Package 2 (Brand Accelerator)
                     </span>
-                    <span className="text-gray-900 font-black">$48,800 <span className="text-[10px] font-normal text-gray-500">/ mo</span></span>
+                    <span className="text-gray-900 font-black">₹4,00,000 <span className="text-[10px] font-normal text-gray-500">/ mo</span></span>
                   </div>
                   <div className="w-full bg-purple-100 rounded-full h-2 overflow-hidden">
-                    <div className="bg-purple-600 h-full rounded-full w-[39.1%]" />
+                    <div className="bg-purple-600 h-full rounded-full w-[32.0%]" />
                   </div>
                   <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
                     <span>8 Retainer Accounts</span>
-                    <span className="text-purple-700 font-bold">39.1% of MRR</span>
+                    <span className="text-purple-700 font-bold">32.0% of MRR</span>
                   </div>
                 </div>
 
@@ -5567,16 +5567,16 @@ export function AdminRevenuePage() {
                 <div className="space-y-2 p-3 bg-emerald-50/40 rounded-2xl border border-emerald-100/60">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="flex items-center gap-2 text-gray-900">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> Package 3 (Starter / Launch)
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> Package 3 (Starter Growth)
                     </span>
-                    <span className="text-gray-900 font-black">$22,000 <span className="text-[10px] font-normal text-gray-500">/ mo</span></span>
+                    <span className="text-gray-900 font-black">₹1,00,000 <span className="text-[10px] font-normal text-gray-500">/ mo</span></span>
                   </div>
                   <div className="w-full bg-emerald-100 rounded-full h-2 overflow-hidden">
-                    <div className="bg-emerald-600 h-full rounded-full w-[17.7%]" />
+                    <div className="bg-emerald-600 h-full rounded-full w-[8.0%]" />
                   </div>
                   <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
                     <span>4 Retainer Accounts</span>
-                    <span className="text-emerald-700 font-bold">17.7% of MRR</span>
+                    <span className="text-emerald-700 font-bold">8.0% of MRR</span>
                   </div>
                 </div>
               </div>
@@ -5593,7 +5593,7 @@ export function AdminRevenuePage() {
                   <p className="text-[11px] text-gray-500 font-medium">3 viral reels + 4 performance ad sets</p>
                 </div>
               </div>
-              <span className="text-base font-black text-indigo-700">+$6,400</span>
+              <span className="text-base font-black text-indigo-700">+₹64,000</span>
             </div>
           </div>
         </div>
@@ -5697,7 +5697,7 @@ export function AdminRevenuePage() {
                     <td className="px-5 py-4 font-mono font-bold text-gray-600">{tx.id}</td>
 
                     <td className="px-5 py-4 font-black text-sm text-gray-900">
-                      ${tx.amount.toLocaleString()}
+                      ₹{tx.amount.toLocaleString('en-IN')}
                     </td>
 
                     <td className="px-5 py-4 text-gray-600 font-medium">{tx.method}</td>
@@ -5805,11 +5805,11 @@ export function AdminRevenuePage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Amount ($ USD)</label>
+                  <label className="block font-bold text-gray-700 mb-1">Amount (₹ INR)</label>
                   <input
                     type="number"
                     required
-                    placeholder="7500"
+                    placeholder="50000"
                     value={newInvAmount}
                     onChange={(e) => setNewInvAmount(e.target.value)}
                     className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
@@ -5822,10 +5822,10 @@ export function AdminRevenuePage() {
                     onChange={(e) => setNewInvMethod(e.target.value)}
                     className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-medium"
                   >
-                    <option value="Stripe ACH">Stripe ACH</option>
+                    <option value="Razorpay UPI">Razorpay UPI</option>
                     <option value="Bank Wire">Bank Wire</option>
                     <option value="Invoice Net 15">Invoice Net 15</option>
-                    <option value="Credit Card">Credit Card</option>
+                    <option value="Credit / Debit Card">Credit / Debit Card</option>
                   </select>
                 </div>
               </div>
@@ -5898,13 +5898,13 @@ export function AdminRevenuePage() {
                 <span className="text-gray-400 block text-[10px] uppercase font-bold">Scope Breakdown</span>
                 <div className="p-3 bg-gray-50 rounded-xl flex items-center justify-between font-bold text-gray-900">
                   <span>{selectedReceipt.scope}</span>
-                  <span>${selectedReceipt.amount.toLocaleString()}</span>
+                  <span>₹{selectedReceipt.amount.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
               <div className="pt-2 flex justify-between items-center text-sm font-black text-gray-900 border-t border-gray-200">
                 <span>Total Settled</span>
-                <span className="text-base text-blue-600">${selectedReceipt.amount.toLocaleString()} USD</span>
+                <span className="text-base text-blue-600">₹{selectedReceipt.amount.toLocaleString('en-IN')} INR</span>
               </div>
             </div>
 
@@ -5947,12 +5947,12 @@ export function AdminPlansPage() {
     {
       id: "starter",
       name: "starter",
-      display_name: "Starter Launch",
-      price_monthly: 4500,
-      currency: "USD",
+      display_name: "Starter Growth",
+      price_monthly: 25000,
+      currency: "INR",
       subscribers: 0,
       features: [
-        "10 Static Posters / Month",
+        "8 Static Posters / Month",
         "4 Short Video Reels / Month",
         "10 Story Templates",
         "Standard SLA (48h Turnaround)",
@@ -5962,12 +5962,12 @@ export function AdminPlansPage() {
       id: "growth",
       name: "growth",
       display_name: "Brand Accelerator",
-      price_monthly: 6400,
-      currency: "USD",
+      price_monthly: 50000,
+      currency: "INR",
       subscribers: 0,
       features: [
-        "20 Static Posters / Month",
-        "10 Short Video Reels / Month",
+        "15 Static Posters / Month",
+        "8 Short Video Reels / Month",
         "20 Story Templates",
         "Priority SLA (24h Turnaround)",
         "Dedicated Creative Pod Lead",
@@ -5976,13 +5976,13 @@ export function AdminPlansPage() {
     {
       id: "scale",
       name: "scale",
-      display_name: "Scale Enterprise Suite",
-      price_monthly: 9500,
-      currency: "USD",
+      display_name: "Enterprise Domination",
+      price_monthly: 95000,
+      currency: "INR",
       subscribers: 0,
       features: [
-        "40 Static Posters / Month",
-        "20 High-Production Video Reels",
+        "30 Static Posters / Month",
+        "16 High-Production Video Reels",
         "40 Story Templates",
         "Express 12h SLA Turnaround",
         "Unlimited Revision Iterations",
@@ -6005,10 +6005,10 @@ export function AdminPlansPage() {
   const [declineReasonInput, setDeclineReasonInput] = useState("");
 
   const [newPropClient, setNewPropClient] = useState("");
-  const [newPropCurrentPlan, setNewPropCurrentPlan] = useState("Starter / Launch Package ($4,500/mo)");
-  const [newPropTargetPlan, setNewPropTargetPlan] = useState("Enterprise Suite Custom Scope");
-  const [newPropStandardRate, setNewPropStandardRate] = useState("7200");
-  const [newPropProposedRate, setNewPropProposedRate] = useState("6400");
+  const [newPropCurrentPlan, setNewPropCurrentPlan] = useState("Starter Growth (₹25,000/mo)");
+  const [newPropTargetPlan, setNewPropTargetPlan] = useState("Enterprise Domination Custom Scope");
+  const [newPropStandardRate, setNewPropStandardRate] = useState("95000");
+  const [newPropProposedRate, setNewPropProposedRate] = useState("85000");
   const [newPropNotes, setNewPropNotes] = useState("");
 
   // Client Plan Negotiations List (0 Mock Data - Real client contract proposals appear here)
@@ -6035,7 +6035,7 @@ export function AdminPlansPage() {
     setNegotiations((prev) =>
       prev.map((n) => (n.id === item.id ? { ...n, status: "Accepted" } : n))
     );
-    setToast(`Plan Negotiation ACCEPTED for ${item.clientName}! Retainer activated at $${item.proposedPrice.toLocaleString()}/mo.`);
+    setToast(`Plan Negotiation ACCEPTED for ${item.clientName}! Retainer activated at ₹${item.proposedPrice.toLocaleString('en-IN')}/mo.`);
     setTimeout(() => setToast(null), 4000);
   };
 
@@ -6070,7 +6070,7 @@ export function AdminPlansPage() {
           : n
       )
     );
-    setToast(`Counter offer of $${price.toLocaleString()}/mo submitted to ${counterModalItem.clientName}.`);
+    setToast(`Counter offer of ₹${price.toLocaleString('en-IN')}/mo submitted to ${counterModalItem.clientName}.`);
     setCounterModalItem(null);
     setCounterPriceInput("");
     setCounterNoteInput("");
@@ -6082,8 +6082,8 @@ export function AdminPlansPage() {
     e.preventDefault();
     if (!newPropClient || !newPropProposedRate) return;
 
-    const orig = parseFloat(newPropStandardRate) || 7200;
-    const prop = parseFloat(newPropProposedRate) || 6400;
+    const orig = parseFloat(newPropStandardRate) || 95000;
+    const prop = parseFloat(newPropProposedRate) || 85000;
     const disc = Math.max(0, Math.round(((orig - prop) / orig) * 100 * 10) / 10);
 
     const newNeg: PlanNegotiationItem = {
@@ -6101,7 +6101,7 @@ export function AdminPlansPage() {
     };
 
     setNegotiations((prev) => [newNeg, ...prev]);
-    setToast(`Custom retainer proposal initiated for ${newPropClient} ($${prop.toLocaleString()}/mo)!`);
+    setToast(`Custom retainer proposal initiated for ${newPropClient} (₹${prop.toLocaleString('en-IN')}/mo)!`);
     setIsNewProposalOpen(false);
     setNewPropClient("");
     setNewPropNotes("");
@@ -6131,7 +6131,7 @@ export function AdminPlansPage() {
       )
     );
 
-    setToast(`Tier "${editingPlan.display_name}" updated successfully ($${newPrice.toLocaleString()}/mo)!`);
+    setToast(`Tier "${editingPlan.display_name}" updated successfully (₹${newPrice.toLocaleString('en-IN')}/mo)!`);
     setEditingPlan(null);
     setTimeout(() => setToast(null), 3000);
   };
@@ -6208,11 +6208,11 @@ export function AdminPlansPage() {
           <div className="kpi-card p-6 bg-white rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">AVG RETAINER VALUE</span>
-              <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                <DollarSign className="w-3.5 h-3.5" />
+              <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-sm">
+                ₹
               </div>
             </div>
-            <div className="text-3xl font-black text-gray-900">$6,600/mo</div>
+            <div className="text-3xl font-black text-gray-900">₹50,000/mo</div>
             <p className="text-xs text-emerald-600 font-bold">High LTV retention</p>
           </div>
 
@@ -6255,7 +6255,7 @@ export function AdminPlansPage() {
                     </span>
                   </div>
                   <div className="text-3xl font-black text-gray-900">
-                    ${plan.price_monthly.toLocaleString()} <span className="text-xs font-normal text-gray-400">/mo</span>
+                    ₹{plan.price_monthly.toLocaleString('en-IN')} <span className="text-xs font-normal text-gray-400">/mo</span>
                   </div>
                   <ul className="space-y-2 text-xs text-gray-600 pt-2 border-t border-gray-200/60">
                     {plan.features.map((f, i) => (
@@ -6380,12 +6380,12 @@ export function AdminPlansPage() {
                     <div className="flex items-center gap-4 bg-white p-3 rounded-xl border border-gray-100">
                       <div className="text-right">
                         <span className="text-[10px] text-gray-400 uppercase block font-bold">Standard Rate</span>
-                        <span className="text-xs line-through text-gray-400 font-bold">${item.originalPrice.toLocaleString()}/mo</span>
+                        <span className="text-xs line-through text-gray-400 font-bold">₹{item.originalPrice.toLocaleString('en-IN')}/mo</span>
                       </div>
                       <span className="text-gray-300 font-light">&rarr;</span>
                       <div>
                         <span className="text-[10px] text-blue-600 uppercase block font-bold">Proposed Rate</span>
-                        <span className="text-sm font-black text-emerald-600">${item.proposedPrice.toLocaleString()}/mo</span>
+                        <span className="text-sm font-black text-emerald-600">₹{item.proposedPrice.toLocaleString('en-IN')}/mo</span>
                       </div>
                       <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
                         {item.discountPct}% Off
@@ -6497,7 +6497,7 @@ export function AdminPlansPage() {
                         </div>
                       </td>
                       <td className="py-4 text-gray-600 font-medium">{d.scope}</td>
-                      <td className="py-4 font-black text-gray-900">${d.value.toLocaleString()} / yr</td>
+                      <td className="py-4 font-black text-gray-900">₹{d.value.toLocaleString('en-IN')} / yr</td>
                       <td className="py-4">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${d.stageBadge}`}>
                           {d.stage}
@@ -6541,7 +6541,7 @@ export function AdminPlansPage() {
 
             <form onSubmit={handleSaveTierTerms} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-gray-700 mb-1">Monthly Retainer Price ($ USD)</label>
+                <label className="block font-bold text-gray-700 mb-1">Monthly Retainer Price (₹ INR)</label>
                 <input
                   type="number"
                   required
@@ -6633,7 +6633,7 @@ export function AdminPlansPage() {
 
             <form onSubmit={handleConfirmCounter} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-gray-700 mb-1">Counter Proposed Rate ($ USD / mo)</label>
+                <label className="block font-bold text-gray-700 mb-1">Counter Proposed Rate (₹ INR / mo)</label>
                 <input
                   type="number"
                   required
@@ -6647,7 +6647,7 @@ export function AdminPlansPage() {
                 <label className="block font-bold text-gray-700 mb-1">Counter Offer Notes / Scope Terms</label>
                 <textarea
                   rows={3}
-                  placeholder="e.g. We can offer $6,600/mo with 12-month commitment."
+                  placeholder="e.g. We can offer ₹85,000/mo with 12-month commitment."
                   value={counterNoteInput}
                   onChange={(e) => setCounterNoteInput(e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20"
@@ -6716,7 +6716,7 @@ export function AdminPlansPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Standard Rate ($/mo)</label>
+                  <label className="block font-bold text-gray-700 mb-1">Standard Rate (₹/mo)</label>
                   <input
                     type="number"
                     value={newPropStandardRate}
@@ -6725,7 +6725,7 @@ export function AdminPlansPage() {
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-gray-700 mb-1">Proposed Rate ($/mo)</label>
+                  <label className="block font-bold text-gray-700 mb-1">Proposed Rate (₹/mo)</label>
                   <input
                     type="number"
                     required

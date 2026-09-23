@@ -34,91 +34,6 @@ interface SupportTicketData {
   messages?: Array<{ id: string; sender: string; text: string; time: string; isMe?: boolean }>;
 }
 
-const INITIAL_TICKETS: SupportTicketData[] = [
-  {
-    id: "#TKT-1042",
-    status: "in_progress",
-    priority: "urgent",
-    priorityLabel: "Urgent SLA",
-    timeAgo: "Opened 45m ago",
-    title: "API Webhook Timeout on Instagram Publisher",
-    description:
-      "Investigating connection timeouts between Creo scheduler and Northwind Labs Instagram Graph API tokens.",
-    meta: "Opened by David K. • Assigned to DevOps Tier 3",
-    category: "API & Webhooks",
-    messages: [
-      {
-        id: "m-1",
-        sender: "David K. (Northwind Labs)",
-        text: "We noticed Instagram auto-publish queue failed for the 2:00 PM drop with a 504 gateway timeout on webhook retry.",
-        time: "45m ago",
-        isMe: true,
-      },
-      {
-        id: "m-2",
-        sender: "Senior Duty Engineer (Tier 3)",
-        text: "Triaging now. We've refreshed the OAuth session token and are verifying rate limits on Meta Graph API v19.0.",
-        time: "20m ago",
-        isMe: false,
-      },
-    ],
-  },
-  {
-    id: "#TKT-1039",
-    status: "resolved",
-    priority: "medium",
-    priorityLabel: "Medium",
-    timeAgo: "Closed yesterday by Maya Lin",
-    title: "Rapid Queue Cleared — Asset Render Export SLA",
-    description: "Ticket #TKT-1039 completed in 1.4h (guaranteed 2h SLA).",
-    meta: "Opened by Strategy Lead • Assigned to Maya Lin",
-    category: "Deliverables & Revisions",
-    messages: [
-      {
-        id: "m-3",
-        sender: "Strategy Lead",
-        text: "Please regenerate the 4K render for slide 2 with high contrast typography.",
-        time: "Yesterday",
-        isMe: true,
-      },
-      {
-        id: "m-4",
-        sender: "Maya Lin (Pod Lead)",
-        text: "New master files uploaded to your Deliverables tab. Approved and ready for export.",
-        time: "Yesterday",
-        isMe: false,
-      },
-    ],
-  },
-  {
-    id: "#TKT-1012",
-    status: "resolved",
-    priority: "high",
-    priorityLabel: "High",
-    timeAgo: "Closed 3 days ago",
-    title: "Updated Brand Asset Color Token Mismatch",
-    description: "Token hex references normalized across design system master files.",
-    meta: "Opened by Brand Manager • Assigned to Lead Designer",
-    category: "Brand DNA & Strategy",
-    messages: [
-      {
-        id: "m-5",
-        sender: "Brand Manager",
-        text: "Hex color #0052FF was deviating in the story template exports.",
-        time: "3 days ago",
-        isMe: true,
-      },
-      {
-        id: "m-6",
-        sender: "Lead Designer",
-        text: "Color tokens resynced across all Figma master design libraries.",
-        time: "3 days ago",
-        isMe: false,
-      },
-    ],
-  },
-];
-
 export function PortalSupportPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -167,7 +82,7 @@ export function PortalSupportPage() {
   });
 
   // Local state
-  const [ticketsList, setTicketsList] = useState<SupportTicketData[]>(INITIAL_TICKETS);
+  const [ticketsList, setTicketsList] = useState<SupportTicketData[]>([]);
   const [ticketTab, setTicketTab] = useState<"all" | "in_progress" | "resolved">("all");
 
   // Form state
@@ -191,10 +106,10 @@ export function PortalSupportPage() {
   };
 
   const brandDisplayName =
-    (user as any)?.company_name || (dashData as any)?.brand_name || "Northwind Labs";
-  const slackChannelName = `creo-${brandDisplayName.toLowerCase().replace(/[^a-z0-9]/g, "") || "northwind"}`;
+    (user as any)?.company_name || (dashData as any)?.company_name || (dashData as any)?.brand_name || user?.full_name || "Your Brand";
+  const slackChannelName = `creo-${brandDisplayName.toLowerCase().replace(/[^a-z0-9]/g, "") || "client"}`;
 
-  // Merge real server tickets into ticket list
+  // Sync real server tickets into ticket list
   React.useEffect(() => {
     if (serverTickets && serverTickets.length > 0) {
       const mapped: SupportTicketData[] = serverTickets.map((t) => {
@@ -214,12 +129,9 @@ export function PortalSupportPage() {
           category: "General Support",
         };
       });
-
-      setTicketsList((prev) => {
-        const existingIds = new Set(prev.map((p) => p.id));
-        const newServerOnes = mapped.filter((m) => !existingIds.has(m.id));
-        return [...newServerOnes, ...prev];
-      });
+      setTicketsList(mapped);
+    } else {
+      setTicketsList([]);
     }
   }, [serverTickets, user]);
 
@@ -514,7 +426,7 @@ export function PortalSupportPage() {
                   99.4%
                 </div>
                 <p className="text-[11px] text-slate-500 font-medium mt-1 truncate">
-                  Across 38 tickets processed
+                  Across {ticketsList.length} {ticketsList.length === 1 ? "ticket" : "tickets"} processed
                 </p>
               </div>
             </div>
@@ -818,7 +730,7 @@ export function PortalSupportPage() {
 
           {/* Footer Bar */}
           <div className="pt-4 mt-6 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-            <span>Showing {filteredTickets.length} of 38 tickets</span>
+            <span>Showing {filteredTickets.length} of {ticketsList.length} tickets</span>
             <button
               type="button"
               onClick={() => {

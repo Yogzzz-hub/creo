@@ -135,7 +135,7 @@ export function PortalCreativePodPage() {
                       <Calendar className="size-3.5" />
                       Bi-Weekly Sync
                     </span>
-                    <span className="text-[11px] font-bold text-slate-700">Tomorrow 10:30 AM PST</span>
+                    <span className="text-[11px] font-bold text-slate-700">Tomorrow 10:30 AM IST</span>
                   </div>
                 </div>
               </div>
@@ -279,7 +279,11 @@ export function PortalCreativePodPage() {
                     {dashboard.active_plan.name || "Brand Accelerator"}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 font-medium">₹50,000 / month retainer</p>
+                <p className="text-[11px] text-slate-400 font-medium">
+                  {dashboard.active_plan.price_minor
+                    ? `₹${Number(dashboard.active_plan.price_minor / 100).toLocaleString("en-IN")} / month retainer`
+                    : "Monthly active retainer"}
+                </p>
               </div>
             </div>
           </div>

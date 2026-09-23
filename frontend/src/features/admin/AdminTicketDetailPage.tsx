@@ -395,7 +395,7 @@ export function AdminTicketDetailPage() {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">Northwind Labs</h4>
-                  <p className="text-xs text-blue-700 font-semibold">Enterprise Suite • $54,000/mo</p>
+                  <p className="text-xs text-blue-700 font-semibold">Enterprise Domination • ₹95,000/mo</p>
                 </div>
               </div>
 

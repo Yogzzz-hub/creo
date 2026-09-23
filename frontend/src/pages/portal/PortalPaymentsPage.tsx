@@ -918,40 +918,19 @@ export function PortalPaymentsPage() {
       (!!data?.subscription && ["active", "trialing"].includes(data?.subscription?.status)));
 
   const brandDisplayName =
-    (user as any)?.company_name || (dashboard as any)?.brand_name || "Northwind Labs";
+    (user as any)?.company_name || (dashboard as any)?.company_name || (dashboard as any)?.brand_name || user?.full_name || "Your Brand";
 
-  const defaultInvoices = [
-    {
-      id: "#CR-8821",
-      date: "Oct 01, 2024",
-      amount: "$10,250.00",
-      status: "Paid",
-      plan: "Enterprise Growth Tier",
-    },
-    {
-      id: "#CR-7910",
-      date: "Sep 01, 2024",
-      amount: "$10,250.00",
-      status: "Paid",
-      plan: "Enterprise Growth Tier",
-    },
-    {
-      id: "#CR-6802",
-      date: "Aug 01, 2024",
-      amount: "$8,500.00",
-      status: "Paid",
-      plan: "Enterprise Growth Tier",
-    },
-    {
-      id: "#CR-5411",
-      date: "Jul 01, 2024",
-      amount: "$8,500.00",
-      status: "Paid",
-      plan: "Enterprise Growth Tier",
-    },
-  ];
+  interface DisplayInvoice {
+    id: string;
+    date: string;
+    amount: string;
+    status: string;
+    plan: string;
+  }
 
-  const handleDownloadInvoice = (inv: typeof defaultInvoices[0]) => {
+  const invoices: DisplayInvoice[] = (data?.invoices && Array.isArray(data.invoices)) ? data.invoices : [];
+
+  const handleDownloadInvoice = (inv: DisplayInvoice) => {
     const invData: InvoiceData = {
       id: inv.id.replace("#", ""),
       date: inv.date,
@@ -959,7 +938,7 @@ export function PortalPaymentsPage() {
       status: inv.status,
       plan: inv.plan,
       clientName: user?.full_name || brandDisplayName,
-      clientEmail: user?.email || "billing@northwind.io",
+      clientEmail: user?.email || "billing@client.com",
       companyName: brandDisplayName,
     };
     generateInvoicePDF(invData);
@@ -968,7 +947,7 @@ export function PortalPaymentsPage() {
 
   const cyclePeriodText = data?.subscription?.current_period_end
     ? `Current Billing Cycle: ${new Date(data?.subscription?.current_period_start || Date.now()).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })} - ${new Date(data?.subscription?.current_period_end).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })} • Renews ${new Date(data?.subscription?.current_period_end).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
-    : "Current Billing Cycle: Oct 01 - Oct 31, 2024 • Renews Nov 1, 2024";
+    : "Billing cycle inactive • Retainer required";
 
   return (
     <div className="relative animate-page-in space-y-5 max-w-[1440px] mx-auto px-4 md:px-8 pb-6 overflow-x-hidden">
@@ -1088,44 +1067,75 @@ export function PortalPaymentsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* ── Left Column (7 cols) ── */}
         <div className="lg:col-span-7 space-y-6">
-          {/* 1. Enterprise Growth Tier (Retainer Card) */}
+          {/* 1. Retainer Plan Card */}
           <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-xs hover:shadow-sm transition-all relative overflow-hidden group">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               {/* Top Left Badge */}
-              <div className="flex sm:inline-flex flex-wrap items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-xs font-bold tracking-wide">
-                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                <span className="break-words text-center sm:text-left">• ACTIVE • ENTERPRISE GROWTH TIER</span>
-              </div>
+              {isSubscribed ? (
+                <div className="flex sm:inline-flex flex-wrap items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-xs font-bold tracking-wide">
+                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <span className="break-words text-center sm:text-left">• ACTIVE • {(plan?.display_name || data?.plan?.display_name || "GROWTH TIER").toUpperCase()}</span>
+                </div>
+              ) : (
+                <div className="flex sm:inline-flex flex-wrap items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold tracking-wide">
+                  <span className="size-1.5 rounded-full bg-slate-400 shrink-0" />
+                  <span className="break-words text-center sm:text-left">• INACTIVE • NO ACTIVE RETAINER</span>
+                </div>
+              )}
 
               {/* Top Right Price */}
               <div className="text-left sm:text-right shrink-0">
                 <div className="flex items-baseline sm:justify-end gap-1">
                   <span className="text-3xl sm:text-4xl font-black text-[#0052FF] tracking-tight">
-                    $8,500
+                    {isSubscribed
+                      ? (plan?.monthly_price ? "₹" + Number(plan.monthly_price).toLocaleString("en-IN") : data?.plan?.price_minor ? "₹" + (data.plan.price_minor / 100).toLocaleString("en-IN") : "₹0")
+                      : "₹0"}
                   </span>
                   <span className="text-xs sm:text-sm font-semibold text-slate-500">/mo</span>
                 </div>
-                <p className="text-[11px] sm:text-xs font-semibold text-emerald-600 flex items-center sm:justify-end gap-1 mt-0.5">
-                  <Check className="size-3.5 text-emerald-600" />
-                  <span>Unlimited revisions included</span>
-                </p>
+                {isSubscribed ? (
+                  <p className="text-[11px] sm:text-xs font-semibold text-emerald-600 flex items-center sm:justify-end gap-1 mt-0.5">
+                    <Check className="size-3.5 text-emerald-600" />
+                    <span>Unlimited revisions included</span>
+                  </p>
+                ) : (
+                  <p className="text-[11px] sm:text-xs font-semibold text-slate-400 flex items-center sm:justify-end gap-1 mt-0.5">
+                    <span>Retainer plan required</span>
+                  </p>
+                )}
               </div>
             </div>
 
             {/* Title & Subtitle */}
             <div className="mt-5 sm:mt-6">
               <h2 className="text-2xl sm:text-[28px] font-bold text-slate-900 tracking-tight">
-                Enterprise Growth Tier
+                {isSubscribed ? (plan?.display_name || data?.plan?.display_name || "Creative Retainer") : "No Active Retainer Plan"}
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed max-w-xl">
-                Dedicated creative execution & weekly production sprints for {brandDisplayName}.
+                {isSubscribed
+                  ? `Dedicated creative execution & weekly production sprints for ${brandDisplayName}.`
+                  : `You do not have an active production retainer. Select a plan to assign your dedicated creative squad and unlock production sprints.`}
               </p>
             </div>
 
-            {/* Billing Cycle Pill */}
-            <div className="mt-5 flex sm:inline-flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-2 text-xs text-slate-600 font-medium">
-              <Calendar className="size-3.5 text-slate-400 shrink-0" />
-              <span className="break-words">{cyclePeriodText}</span>
+            {/* Billing Cycle Pill or Select Plan CTA */}
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              {isSubscribed ? (
+                <div className="flex sm:inline-flex flex-wrap items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50/60 px-3.5 py-2 text-xs text-slate-600 font-medium">
+                  <Calendar className="size-3.5 text-slate-400 shrink-0" />
+                  <span className="break-words">{cyclePeriodText}</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowPlanModal(true)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0052FF] hover:bg-[#0045D8] text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer"
+                >
+                  <Sparkles className="size-3.5" />
+                  <span>Choose a Retainer Plan</span>
+                  <ArrowRight className="size-3.5 ml-0.5" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -1141,7 +1151,7 @@ export function PortalPaymentsPage() {
                 </p>
               </div>
               <span className="text-xs font-semibold text-slate-600 bg-slate-100/80 border border-slate-200/80 px-3 py-1 rounded-full shrink-0">
-                Oct 01 - Oct 31
+                {isSubscribed ? "Active Sprint" : "Inactive"}
               </span>
             </div>
 
@@ -1152,18 +1162,20 @@ export function PortalPaymentsPage() {
                   <Clock className="size-4 text-[#0052FF]" />
                   <span className="font-bold text-slate-900">Sprint Production Quota</span>
                 </div>
-                <span className="font-bold text-slate-900">124 / 160 hrs used</span>
+                <span className="font-bold text-slate-900">{isSubscribed ? "124 / 160 hrs used" : "0 / 0 hrs used"}</span>
               </div>
 
               <div className="h-2.5 w-full rounded-full bg-slate-200/70 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-[#0052FF] transition-all duration-700 ease-out"
-                  style={{ width: "77.5%" }}
+                  style={{ width: isSubscribed ? "77.5%" : "0%" }}
                 />
               </div>
 
               <p className="text-xs text-slate-500 font-medium">
-                36 hours remaining in current billing cycle (Resets automatically in 12 days).
+                {isSubscribed
+                  ? "36 hours remaining in current billing cycle (Resets automatically in 12 days)."
+                  : "Production capacity and sprint hours unlock upon activating your monthly retainer."}
               </p>
             </div>
           </div>
@@ -1248,60 +1260,76 @@ export function PortalPaymentsPage() {
                   Modular execution enhancements active on your retainer.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowAddonModal(true)}
-                className="text-xs font-bold text-[#0052FF] bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-3 py-1 rounded-full whitespace-nowrap transition-colors cursor-pointer"
-                title="Manage add-on packs"
-              >
-                +$1,750 / mo
-              </button>
+              {isSubscribed && (
+                <button
+                  type="button"
+                  onClick={() => setShowAddonModal(true)}
+                  className="text-xs font-bold text-[#0052FF] bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-3 py-1 rounded-full whitespace-nowrap transition-colors cursor-pointer"
+                  title="Manage add-on packs"
+                >
+                  Manage Add-ons
+                </button>
+              )}
             </div>
 
             <div className="space-y-3 mt-5">
-              {/* Add-on 1 */}
-              <div className="rounded-2xl border border-slate-200/70 bg-slate-50/40 p-3.5 sm:p-4 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-between gap-3 group">
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="size-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-105 transition-transform">
-                    <Video className="size-4.5 text-blue-600" />
+              {!isSubscribed ? (
+                <div className="rounded-2xl border border-slate-200/60 bg-slate-50/50 p-6 text-center">
+                  <div className="size-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 mx-auto mb-2.5">
+                    <Zap className="size-5" />
                   </div>
-                  <div className="min-w-0">
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                      4K Motion & Animation Sprint
-                    </h4>
-                    <p className="text-xs text-slate-500 mt-0.5 truncate">
-                      3x 30s 3D motion renders / mo
-                    </p>
+                  <h4 className="text-xs font-bold text-slate-700">No active add-ons</h4>
+                  <p className="text-[11px] text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">
+                    Modular 4K motion renders, emergency SLA queues, and extra credits can be added once your retainer plan is active.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Add-on 1 */}
+                  <div className="rounded-2xl border border-slate-200/70 bg-slate-50/40 p-3.5 sm:p-4 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-between gap-3 group">
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="size-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-105 transition-transform">
+                        <Video className="size-4.5 text-blue-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                          4K Motion &amp; Animation Sprint
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-0.5 truncate">
+                          3x 30s 3D motion renders / mo
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-xs sm:text-sm font-bold text-slate-900 inline-flex items-center gap-1.5">
+                        ₹10,000 / mo <span className="size-1.5 rounded-full bg-emerald-500" />
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="text-xs sm:text-sm font-bold text-slate-900 inline-flex items-center gap-1.5">
-                    $1,200 / mo <span className="size-1.5 rounded-full bg-emerald-500" />
-                  </span>
-                </div>
-              </div>
 
-              {/* Add-on 2 */}
-              <div className="rounded-2xl border border-slate-200/70 bg-slate-50/40 p-3.5 sm:p-4 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-between gap-3 group">
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="size-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0 group-hover:scale-105 transition-transform">
-                    <Zap className="size-4.5 text-purple-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                      24h Priority Turnaround SLA
-                    </h4>
-                    <p className="text-xs text-slate-500 mt-0.5 truncate">
-                      Expedited production queue access
-                    </p>
+                  {/* Add-on 2 */}
+                  <div className="rounded-2xl border border-slate-200/70 bg-slate-50/40 p-3.5 sm:p-4 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-between gap-3 group">
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="size-10 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0 group-hover:scale-105 transition-transform">
+                        <Zap className="size-4.5 text-purple-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                          24h Priority Turnaround SLA
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-0.5 truncate">
+                          Expedited production queue access
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-xs sm:text-sm font-bold text-slate-900 inline-flex items-center gap-1.5">
+                        ₹5,000 / mo <span className="size-1.5 rounded-full bg-emerald-500" />
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="text-right shrink-0">
-                  <span className="text-xs sm:text-sm font-bold text-slate-900 inline-flex items-center gap-1.5">
-                    $550 / mo <span className="size-1.5 rounded-full bg-emerald-500" />
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -1316,47 +1344,61 @@ export function PortalPaymentsPage() {
                   Download official tax receipts and monthly VAT statements.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowArchiveModal(true)}
-                className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors shrink-0 cursor-pointer"
-              >
-                View Full Archive →
-              </button>
+              {invoices.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowArchiveModal(true)}
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors shrink-0 cursor-pointer"
+                >
+                  View Full Archive →
+                </button>
+              )}
             </div>
 
             <div className="space-y-3 mt-5">
-              {defaultInvoices.map((inv) => (
-                <div
-                  key={inv.id}
-                  className="rounded-2xl border border-slate-200/70 bg-slate-50/40 p-3 sm:p-3.5 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-between gap-3 group"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="size-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shrink-0 shadow-2xs group-hover:text-slate-600 transition-colors">
-                      <FileText className="size-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs sm:text-sm font-bold text-slate-900">{inv.id}</span>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                          Paid
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">
-                        {inv.date} • {inv.amount}
-                      </p>
-                    </div>
+              {invoices.length === 0 ? (
+                <div className="rounded-2xl border border-slate-200/60 bg-slate-50/50 p-6 text-center">
+                  <div className="size-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 mx-auto mb-2.5">
+                    <FileText className="size-5" />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleDownloadInvoice(inv)}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#0052FF] hover:text-[#0045D8] px-3 py-1.5 rounded-xl border border-blue-100 bg-white hover:bg-blue-50/60 transition-all shadow-2xs cursor-pointer shrink-0 active:scale-95"
-                  >
-                    <span>Download PDF</span>
-                    <ExternalLink className="size-3" />
-                  </button>
+                  <h4 className="text-xs font-bold text-slate-700">No invoices yet</h4>
+                  <p className="text-[11px] text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">
+                    Official tax receipts, GST/VAT statements, and PDF invoices will appear here after your first billing cycle.
+                  </p>
                 </div>
-              ))}
+              ) : (
+                invoices.map((inv) => (
+                  <div
+                    key={inv.id}
+                    className="rounded-2xl border border-slate-200/70 bg-slate-50/40 p-3 sm:p-3.5 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center justify-between gap-3 group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="size-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shrink-0 shadow-2xs group-hover:text-slate-600 transition-colors">
+                        <FileText className="size-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs sm:text-sm font-bold text-slate-900">{inv.id}</span>
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                            {inv.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5 truncate">
+                          {inv.date} • {inv.amount}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadInvoice(inv)}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-[#0052FF] hover:text-[#0045D8] px-3 py-1.5 rounded-xl border border-blue-100 bg-white hover:bg-blue-50/60 transition-all shadow-2xs cursor-pointer shrink-0 active:scale-95"
+                    >
+                      <span>Download PDF</span>
+                      <ExternalLink className="size-3" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -1386,37 +1428,44 @@ export function PortalPaymentsPage() {
             </div>
 
             <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1 scrollbar-thin">
-              {defaultInvoices.map((inv) => (
-                <div
-                  key={inv.id}
-                  className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div className="size-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-2xs">
-                      <FileText className="size-4" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs sm:text-sm text-slate-900">{inv.id}</span>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                          {inv.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {inv.date} • {inv.amount} • {inv.plan}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleDownloadInvoice(inv)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0052FF] hover:text-[#0045D8] px-3.5 py-2 rounded-xl border border-blue-100 bg-white hover:bg-blue-50 transition-all shadow-2xs cursor-pointer active:scale-95"
-                  >
-                    <Download className="size-3.5" />
-                    <span>PDF</span>
-                  </button>
+              {invoices.length === 0 ? (
+                <div className="text-center py-10 text-slate-400">
+                  <FileText className="size-8 mx-auto mb-2 opacity-40 text-slate-300" />
+                  <p className="text-xs font-semibold">No tax receipts or invoices found.</p>
                 </div>
-              ))}
+              ) : (
+                invoices.map((inv) => (
+                  <div
+                    key={inv.id}
+                    className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <div className="size-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-2xs">
+                        <FileText className="size-4" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-xs sm:text-sm text-slate-900">{inv.id}</span>
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                            {inv.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {inv.date} • {inv.amount} • {inv.plan}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadInvoice(inv)}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0052FF] hover:text-[#0045D8] px-3.5 py-2 rounded-xl border border-blue-100 bg-white hover:bg-blue-50 transition-all shadow-2xs cursor-pointer active:scale-95"
+                    >
+                      <Download className="size-3.5" />
+                      <span>PDF</span>
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">

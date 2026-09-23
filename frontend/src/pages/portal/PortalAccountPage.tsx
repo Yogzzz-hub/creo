@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { request } from "../../lib/http";
 import {
   Instagram,
@@ -27,7 +27,8 @@ import {
   Phone,
   MapPin,
   ExternalLink,
-  RotateCcw
+  RotateCcw,
+  Lock
 } from "lucide-react";
 
 
@@ -123,7 +124,7 @@ const BRAND_TONE_KEYWORDS = [
 function extractAudienceSegments(dna: Record<string, any> = {}, answers: Record<string, any> = {}): string[] {
   const raw = dna?.audience_segments || answers?.audience_segments || dna?.target_audience || answers?.target_audience;
   if (!raw) {
-    return ["B2B Tech Leaders", "Enterprise Marketers", "SaaS Founders"];
+    return [];
   }
   if (Array.isArray(raw)) {
     const list = raw
@@ -135,13 +136,13 @@ function extractAudienceSegments(dna: Record<string, any> = {}, answers: Record<
         return String(item || "").trim();
       })
       .filter((s) => s.length > 0);
-    return list.length > 0 ? list : ["B2B Tech Leaders", "Enterprise Marketers", "SaaS Founders"];
+    return list;
   }
   if (typeof raw === "string") {
     const list = raw.split(",").map((s) => s.trim()).filter(Boolean);
-    return list.length > 0 ? list : ["B2B Tech Leaders", "Enterprise Marketers", "SaaS Founders"];
+    return list;
   }
-  return ["B2B Tech Leaders", "Enterprise Marketers", "SaaS Founders"];
+  return [];
 }
 
 function extractToneKeywords(dna: Record<string, any> = {}, answers: Record<string, any> = {}): string[] {
@@ -153,7 +154,7 @@ function extractToneKeywords(dna: Record<string, any> = {}, answers: Record<stri
     raw = dna.tone;
   }
   if (!raw) {
-    return ["Professional", "Innovative", "Direct", "Confident"];
+    return [];
   }
   if (Array.isArray(raw)) {
     const list = raw
@@ -162,7 +163,7 @@ function extractToneKeywords(dna: Record<string, any> = {}, answers: Record<stri
         return str.charAt(0).toUpperCase() + str.slice(1);
       })
       .filter(Boolean);
-    return list.length > 0 ? list : ["Professional", "Innovative", "Direct", "Confident"];
+    return list;
   }
   if (typeof raw === "string") {
     const list = raw
@@ -170,9 +171,9 @@ function extractToneKeywords(dna: Record<string, any> = {}, answers: Record<stri
       .map((s) => s.trim())
       .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
       .filter(Boolean);
-    return list.length > 0 ? list : ["Professional", "Innovative", "Direct", "Confident"];
+    return list;
   }
-  return ["Professional", "Innovative", "Direct", "Confident"];
+  return [];
 }
 
 function extractColorSwatches(dna: Record<string, any> = {}, answers: Record<string, any> = {}): Array<{ id: string; label: string; hex: string }> {
@@ -216,11 +217,7 @@ function extractColorSwatches(dna: Record<string, any> = {}, answers: Record<str
     });
   }
 
-  return [
-    { id: "1", label: "Primary Brand", hex: "#0551E5" },
-    { id: "2", label: "Secondary Accent", hex: "#D1FADF" },
-    { id: "3", label: "Dark Neutral", hex: "#101828" },
-  ];
+  return [];
 }
 
 export function PortalAccountPage() {
@@ -242,49 +239,33 @@ export function PortalAccountPage() {
   };
 
   // Tab 1: Business Profile Fields
-  const [fullName, setFullName] = useState("David K.");
-  const [roleTitle, setRoleTitle] = useState("VP of Marketing");
-  const [businessName, setBusinessName] = useState("Northwind Labs Inc.");
-  const [phone, setPhone] = useState("+1 415 890-2410");
-  const [location, setLocation] = useState("San Francisco, CA");
-  const [instagram, setInstagram] = useState("@northwindlabs");
-  const [website, setWebsite] = useState("https://www.northwindlabs.com");
-  const [taxId, setTaxId] = useState("US-94-3829104");
-  const [address, setAddress] = useState("440 Brannan St, Suite 300, San Francisco, CA 94107");
-  const [billingEmail, setBillingEmail] = useState("billing@northwindlabs.com");
+  const [fullName, setFullName] = useState(user?.full_name || "");
+  const [roleTitle, setRoleTitle] = useState("Brand Partner");
+  const [businessName, setBusinessName] = useState(user?.company_name || "");
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
+  const [instagram, setInstagram] = useState("");
+  const [website, setWebsite] = useState("");
+  const [taxId, setTaxId] = useState("");
+  const [address, setAddress] = useState("");
+  const [billingEmail, setBillingEmail] = useState(user?.email || "");
 
   // Tab 2: Brand Profile Fields
-  const [industry, setIndustry] = useState("Tech & SaaS");
-  const [primaryGoal, setPrimaryGoal] = useState("Brand Awareness");
+  const [industry, setIndustry] = useState("");
+  const [primaryGoal, setPrimaryGoal] = useState("");
   const [_brandDescription, setBrandDescription] = useState("");
-  const [brandVision, setBrandVision] = useState("To lead sustainable innovation in enterprise SaaS software and empower creative teams with automated agility.");
-  const [missionStatement, setMissionStatement] = useState("Describe what problem your company solves and why customers choose you over legacy alternatives. Deliver high-fidelity design execution at scale while eliminating operational friction.");
+  const [brandVision, setBrandVision] = useState("");
+  const [missionStatement, setMissionStatement] = useState("");
   const [_targetAudience, setTargetAudience] = useState("");
-  const [audienceSegments, setAudienceSegments] = useState<string[]>([
-    "B2B Tech Leaders",
-    "Enterprise Marketers",
-    "SaaS Founders"
-  ]);
+  const [audienceSegments, setAudienceSegments] = useState<string[]>([]);
   const [newAudienceInput, setNewAudienceInput] = useState("");
   const [showAddAudience, setShowAddAudience] = useState(false);
-  const [toneKeywords, setToneKeywords] = useState<string[]>([
-    "Professional",
-    "Innovative",
-    "Direct",
-    "Confident"
-  ]);
-  const [_brandColors, setBrandColors] = useState("#0D2137, #2B7BC4, #059669");
-  const [colorSwatches, setColorSwatches] = useState<{ id: string; label: string; hex: string }[]>([
-    { id: "1", label: "Primary Brand", hex: "#0551E5" },
-    { id: "2", label: "Secondary Accent", hex: "#D1FADF" },
-    { id: "3", label: "Dark Neutral", hex: "#101828" },
-  ]);
-  const [uploadedAssets, setUploadedAssets] = useState<{ id: string; name: string; size: string; type: "image" | "pdf"; status: string }[]>([
-    { id: "1", name: "Primary_Logo_Dark.svg", size: "24 KB", type: "image", status: "Uploaded" },
-    { id: "2", name: "Brand_Style_Guide_2026.pdf", size: "4.8 MB", type: "pdf", status: "Uploaded" },
-  ]);
+  const [toneKeywords, setToneKeywords] = useState<string[]>([]);
+  const [_brandColors, setBrandColors] = useState("");
+  const [colorSwatches, setColorSwatches] = useState<{ id: string; label: string; hex: string }[]>([]);
+  const [uploadedAssets, setUploadedAssets] = useState<{ id: string; name: string; size: string; type: "image" | "pdf"; status: string }[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [lastSavedTime, setLastSavedTime] = useState("Last saved 2 hours ago");
+  const [lastSavedTime, setLastSavedTime] = useState("");
   const [showExportToast, setShowExportToast] = useState(false);
   const [_styleReferences, _setStyleReferences] = useState("");
   const [topicsToAvoid, setTopicsToAvoid] = useState("");
@@ -316,25 +297,34 @@ export function PortalAccountPage() {
     queryFn: () => request<ProfileResponse>("/api/v1/portal/profile"),
   });
 
+  const { data: subData } = useQuery({
+    queryKey: ["client-subscription", user?.id],
+    queryFn: () => request<any>("/api/v1/payments/subscription"),
+  });
+
+  const isSubscribed =
+    subData?.is_active === true ||
+    (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status));
+
   useEffect(() => {
     if (profile) {
       const dna = profile.brand_dna || {};
-      setFullName(profile.full_name || "David K.");
-      setRoleTitle(dna.role_title || "VP of Marketing");
-      setBusinessName(profile.company_name || "Northwind Labs Inc.");
-      setPhone(profile.phone || "+1 415 890-2410");
-      setLocation(dna.location || "San Francisco, CA");
-      setInstagram(profile.instagram_username || "@northwindlabs");
-      setWebsite(dna.website || "https://www.northwindlabs.com");
-      setTaxId(dna.tax_id || "US-94-3829104");
-      setAddress(dna.address || "440 Brannan St, Suite 300, San Francisco, CA 94107");
-      setBillingEmail(dna.billing_email || profile.email || user?.email || "billing@northwindlabs.com");
+      setFullName(profile.full_name || user?.full_name || "");
+      setRoleTitle(dna.role_title || "Brand Partner");
+      setBusinessName(profile.company_name || user?.company_name || "");
+      setPhone(profile.phone || "");
+      setLocation(dna.location || "");
+      setInstagram(profile.instagram_username || "");
+      setWebsite(dna.website || "");
+      setTaxId(dna.tax_id || "");
+      setAddress(dna.address || "");
+      setBillingEmail(dna.billing_email || profile.email || user?.email || "");
 
       // Brand details
       const answers = profile.questionnaire_answers || {};
 
-      setIndustry(String(answers.industry || dna.industry || "Tech & SaaS"));
-      setPrimaryGoal(String(answers.primary_goal || dna.primary_goal || "Brand Awareness"));
+      setIndustry(String(answers.industry || dna.industry || ""));
+      setPrimaryGoal(String(answers.primary_goal || dna.primary_goal || ""));
       
       const initialVision = String(
         dna.brand_vision ||
@@ -343,7 +333,7 @@ export function PortalAccountPage() {
         dna.summary_line ||
         dna.positioning ||
         profile.brand_summary ||
-        "To lead sustainable innovation in enterprise SaaS software and empower creative teams with automated agility."
+        ""
       );
       setBrandVision(initialVision);
       setBrandDescription(initialVision);
@@ -351,7 +341,7 @@ export function PortalAccountPage() {
       const initialMission = String(
         dna.mission_statement ||
         dna.positioning ||
-        "Describe what problem your company solves and why customers choose you over legacy alternatives. Deliver high-fidelity design execution at scale while eliminating operational friction."
+        ""
       );
       setMissionStatement(initialMission);
 
@@ -505,16 +495,16 @@ export function PortalAccountPage() {
   const handleDiscardBusinessProfile = () => {
     if (profile) {
       const dna = profile.brand_dna || {};
-      setFullName(profile.full_name || "David K.");
-      setRoleTitle(dna.role_title || "VP of Marketing");
-      setBusinessName(profile.company_name || "Northwind Labs Inc.");
-      setPhone(profile.phone || "+1 415 890-2410");
-      setLocation(dna.location || "San Francisco, CA");
-      setInstagram(profile.instagram_username || "@northwindlabs");
-      setWebsite(dna.website || "https://www.northwindlabs.com");
-      setTaxId(dna.tax_id || "US-94-3829104");
-      setAddress(dna.address || "440 Brannan St, Suite 300, San Francisco, CA 94107");
-      setBillingEmail(dna.billing_email || profile.email || user?.email || "billing@northwindlabs.com");
+      setFullName(profile.full_name || user?.full_name || "");
+      setRoleTitle(dna.role_title || "Brand Partner");
+      setBusinessName(profile.company_name || user?.company_name || "");
+      setPhone(profile.phone || "");
+      setLocation(dna.location || "");
+      setInstagram(profile.instagram_username || "");
+      setWebsite(dna.website || "");
+      setTaxId(dna.tax_id || "");
+      setAddress(dna.address || "");
+      setBillingEmail(dna.billing_email || profile.email || user?.email || "");
       setIndustry(dna.industry || "AI & Creative Technology");
     }
   };
@@ -847,17 +837,17 @@ export function PortalAccountPage() {
                     {/* Avatar & User Info */}
                     <div className="flex items-center gap-4 mb-6">
                       <div className="size-14 rounded-full bg-[#0052FF] text-white flex items-center justify-center font-bold text-xl shadow-md shadow-blue-500/20 shrink-0">
-                        {fullName?.charAt(0)?.toUpperCase() || "D"}
+                        {fullName?.charAt(0)?.toUpperCase() || user?.full_name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || "C"}
                       </div>
                       <div className="min-w-0">
                         <h4 className="text-base font-bold text-[#0F172A] leading-tight truncate">
-                          {fullName || "David K."}
+                          {fullName || user?.full_name || "Client Account"}
                         </h4>
                         <p className="text-xs font-semibold text-slate-500 mt-0.5 truncate">
-                          {roleTitle || "VP of Marketing"}
+                          {roleTitle || "Account Owner"}
                         </p>
                         <p className="text-xs text-slate-400 truncate">
-                          {businessName || "Northwind Labs Inc."}
+                          {businessName || user?.company_name || "Brand Workspace"}
                         </p>
                       </div>
                     </div>
@@ -866,15 +856,15 @@ export function PortalAccountPage() {
                     <div className="space-y-3 mb-6 text-xs text-slate-600 font-medium">
                       <div className="flex items-center gap-3">
                         <Mail className="size-4 text-slate-400 shrink-0" />
-                        <span className="truncate">{user?.email || profile?.email || "david@northwindlabs.com"}</span>
+                        <span className="truncate">{user?.email || profile?.email || "No email configured"}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <Phone className="size-4 text-slate-400 shrink-0" />
-                        <span>{phone || "+1 415 890-2410"}</span>
+                        <span>{phone || "No phone configured"}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <MapPin className="size-4 text-slate-400 shrink-0" />
-                        <span>{location || "San Francisco, CA"}</span>
+                        <span>{location || "Global Workspace"}</span>
                       </div>
                     </div>
 
@@ -903,7 +893,7 @@ export function PortalAccountPage() {
                             type="text"
                             value={instagram}
                             onChange={(e) => setInstagram(e.target.value)}
-                            placeholder="@northwindlabs"
+                            placeholder="@yourbrand"
                             className="w-full pl-10 pr-3 py-2 text-xs bg-white border border-slate-200 rounded-lg text-[#0F172A] font-semibold focus:ring-2 focus:ring-[#0052FF]/20 focus:border-[#0052FF] outline-none transition-all placeholder:text-slate-400 placeholder:font-medium"
                           />
                         </div>
@@ -949,37 +939,56 @@ export function PortalAccountPage() {
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-bold text-[#0F172A]">Creative Pod</h4>
                       <span className="bg-blue-50 text-[#0052FF] font-bold text-[11px] px-2.5 py-0.5 rounded-md border border-blue-100">
-                        Pod Alpha
+                        {isSubscribed ? "Dedicated Pod" : "Unassigned"}
                       </span>
                     </div>
-                    <span className="text-[11px] font-mono text-slate-400">#creo-northwind-labs</span>
+                    <span className="text-[11px] font-mono text-slate-400">
+                      {isSubscribed ? `#creo-${(businessName || user?.company_name || "brand").toLowerCase().replace(/[^a-z0-9]/g, "-")}` : "No Active Pod"}
+                    </span>
                   </div>
 
-                  <div className="flex items-center justify-between bg-slate-50/70 rounded-xl p-3.5 border border-slate-100">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="relative shrink-0">
-                        <div className="size-9 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs border border-slate-300">
-                          ML
+                  {isSubscribed ? (
+                    <div className="flex items-center justify-between bg-slate-50/70 rounded-xl p-3.5 border border-slate-100">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="relative shrink-0">
+                          <div className="size-9 rounded-full bg-blue-100 text-[#0052FF] flex items-center justify-center font-bold text-xs border border-blue-200">
+                            CP
+                          </div>
+                          <span className="absolute bottom-0 right-0 size-2.5 bg-emerald-500 border-2 border-white rounded-full" />
                         </div>
-                        <span className="absolute bottom-0 right-0 size-2.5 bg-emerald-500 border-2 border-white rounded-full" />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold text-[#0F172A] truncate">Pod Creative Lead</span>
+                            <span className="bg-[#0052FF] text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                              POD LEAD
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                            Senior Art Director • Active Pod
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-[#0F172A] truncate">Maya Lin</span>
-                          <span className="bg-[#0052FF] text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                            POD LEAD
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                          Creative Director • Fast triage
-                        </p>
+                      <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-emerald-100 shrink-0">
+                        <span className="size-1.5 rounded-full bg-emerald-500" />
+                        Active
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-emerald-100 shrink-0">
-                      <span className="size-1.5 rounded-full bg-emerald-500" />
-                      Active in Slack
+                  ) : (
+                    <div className="bg-slate-50/70 rounded-xl p-4 border border-slate-100 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="size-9 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center font-bold text-xs border border-slate-200">
+                          <Lock className="size-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-700">Pod Provisioning On Hold</p>
+                          <p className="text-[11px] text-slate-400">Dedicated creative team assigns upon retainer activation.</p>
+                        </div>
+                      </div>
+                      <Link to="/portal/payments" className="text-[11px] font-bold text-[#0052FF] hover:underline whitespace-nowrap">
+                        Activate Plan →
+                      </Link>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
 
@@ -1005,7 +1014,7 @@ export function PortalAccountPage() {
                           type="text"
                           value={businessName}
                           onChange={(e) => setBusinessName(e.target.value)}
-                          placeholder="Northwind Labs Inc."
+                          placeholder="Your Business Name Inc."
                           className="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:border-[#0052FF] focus:ring-2 focus:ring-[#0052FF]/15 outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
                         />
                       </div>
@@ -1018,7 +1027,7 @@ export function PortalAccountPage() {
                             type="text"
                             value={website}
                             onChange={(e) => setWebsite(e.target.value)}
-                            placeholder="https://www.northwindlabs.com"
+                            placeholder="https://example.com"
                             className="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl pl-4 pr-9 py-2.5 focus:border-[#0052FF] focus:ring-2 focus:ring-[#0052FF]/15 outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
                           />
                           <a
@@ -1044,7 +1053,7 @@ export function PortalAccountPage() {
                           type="text"
                           value={taxId}
                           onChange={(e) => setTaxId(e.target.value)}
-                          placeholder="US-94-3829104"
+                          placeholder="US-12-3456789"
                           className="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:border-[#0052FF] focus:ring-2 focus:ring-[#0052FF]/15 outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
                         />
                       </div>
@@ -1071,7 +1080,7 @@ export function PortalAccountPage() {
                         type="text"
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
-                        placeholder="440 Brannan St, Suite 300, San Francisco, CA 94107"
+                        placeholder="123 Innovation Way, Suite 100, City, State"
                         className="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:border-[#0052FF] focus:ring-2 focus:ring-[#0052FF]/15 outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
                       />
                     </div>
@@ -1085,7 +1094,7 @@ export function PortalAccountPage() {
                         type="email"
                         value={billingEmail}
                         onChange={(e) => setBillingEmail(e.target.value)}
-                        placeholder="billing@northwindlabs.com"
+                        placeholder="billing@yourbrand.com"
                         className="w-full text-xs font-semibold text-[#0F172A] bg-white border border-slate-200 rounded-xl px-4 py-2.5 focus:border-[#0052FF] focus:ring-2 focus:ring-[#0052FF]/15 outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
                       />
                       <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
@@ -1098,22 +1107,33 @@ export function PortalAccountPage() {
                       <div className="border border-slate-200/80 bg-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
                         <div>
                           <div className="flex items-center gap-2 mb-1.5">
-                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-black rounded uppercase tracking-wider">
-                              ACTIVE RETAINER
+                            <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-wider ${
+                              isSubscribed
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                : "bg-amber-50 text-amber-700 border border-amber-100"
+                            }`}>
+                              {isSubscribed ? "ACTIVE RETAINER" : "NO ACTIVE RETAINER"}
                             </span>
-                            <span className="text-xs text-slate-500 font-medium">Renews Nov 1, 2024</span>
+                            <span className="text-xs text-slate-500 font-medium">
+                              {isSubscribed ? "Monthly billing cycle" : "Retainer required"}
+                            </span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-bold text-[#0F172A]">Enterprise Growth Tier</span>
-                            <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
+                            <span className="text-sm font-bold text-[#0F172A]">
+                              {isSubscribed ? (subData?.subscription?.plan_name || "Active Retainer") : "No Retainer Plan Selected"}
+                            </span>
+                            {isSubscribed && <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />}
                           </div>
                         </div>
                         <div className="sm:text-right">
                           <div className="text-xl font-extrabold text-[#0052FF] leading-none tracking-tight">
-                            $8,500 <span className="text-xs text-slate-400 font-medium">/mo</span>
+                            {isSubscribed && subData?.subscription?.price_minor
+                              ? "₹" + Number(subData.subscription.price_minor / 100).toLocaleString("en-IN")
+                              : "₹0"}{" "}
+                            <span className="text-xs text-slate-400 font-medium">/mo</span>
                           </div>
                           <p className="text-[11px] text-slate-400 mt-1 font-medium">
-                            Unlimited revisions included
+                            {isSubscribed ? "Unlimited revisions included" : "Pod assignment pending retainer"}
                           </p>
                         </div>
                       </div>
@@ -1799,44 +1819,14 @@ export function PortalAccountPage() {
                           <svg className="size-4.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                         </div>
                         <div>
-                          <h3 className="text-[13px] font-bold text-slate-900">MacBook Pro 16" • San Francisco, CA, USA</h3>
-                          <p className="text-[10px] text-slate-500 mt-0.5">Chrome v122 • Active Now • IP 172.56.21.89</p>
+                          <h3 className="text-[13px] font-bold text-slate-900">Current Web Session</h3>
+                          <p className="text-[10px] text-slate-500 mt-0.5">Authorized Browser • Active Session</p>
                         </div>
                       </div>
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
                         <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Current Session
                       </span>
-                    </div>
-
-                    <div className="p-5 sm:px-7 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
-                      <div className="flex items-center gap-3.5">
-                        <div className="size-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 shrink-0">
-                          <svg className="size-4.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                        </div>
-                        <div>
-                          <h3 className="text-[13px] font-bold text-slate-900">iPhone 15 Pro • San Francisco, CA, USA</h3>
-                          <p className="text-[10px] text-slate-500 mt-0.5">Creo Mobile App v2.4 • Last active 2 hours ago</p>
-                        </div>
-                      </div>
-                      <button className="text-[11px] font-bold text-rose-600 hover:text-rose-700 cursor-pointer">
-                        Log Out
-                      </button>
-                    </div>
-
-                    <div className="p-5 sm:px-7 flex items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
-                      <div className="flex items-center gap-3.5">
-                        <div className="size-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 shrink-0">
-                          <svg className="size-4.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                        </div>
-                        <div>
-                          <h3 className="text-[13px] font-bold text-slate-900">iPad Pro 12.9" • Austin, TX, USA</h3>
-                          <p className="text-[10px] text-slate-500 mt-0.5">Safari • Last active 3 days ago</p>
-                        </div>
-                      </div>
-                      <button className="text-[11px] font-bold text-rose-600 hover:text-rose-700 cursor-pointer">
-                        Log Out
-                      </button>
                     </div>
 
                   </div>
@@ -1906,7 +1896,7 @@ export function PortalAccountPage() {
                       <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3.5 flex items-center justify-between">
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-0.5">App Name / Business Page</p>
-                          <p className="text-[13px] font-black text-slate-900">{businessName || "Northwind Labs Official Page"}</p>
+                          <p className="text-[13px] font-black text-slate-900">{businessName || user?.company_name || "Official Brand Page"}</p>
                         </div>
                         <span className="text-[10px] font-bold text-[#0052FF] bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 flex items-center gap-1">
                           <CheckCircle2 className="size-3" /> Verified Entity
@@ -1985,18 +1975,18 @@ export function PortalAccountPage() {
                       <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-3.5">
                           <div className="size-10 rounded-full bg-[#E2E8F0] border border-slate-200 flex items-center justify-center font-black text-xs text-[#0F172A] shrink-0">
-                            {igUsername ? igUsername.charAt(0).toUpperCase() : "NL"}
+                            {igUsername ? igUsername.charAt(0).toUpperCase() : (businessName || user?.company_name || "B").charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <h3 className="text-sm font-black text-slate-900 flex items-center gap-1">
-                              @{igUsername || "northwindlabs"}
+                              @{igUsername || (businessName ? businessName.toLowerCase().replace(/[^a-z0-9]/g, "") : "brandhandle")}
                               <div className="size-3.5 rounded-full bg-[#0052FF] flex items-center justify-center text-white"><Check className="size-2.5" /></div>
                             </h3>
-                            <p className="text-[10px] text-slate-500 mt-0.5">42.5K followers • 184 posts • Connected to {businessName || "Northwind Labs Inc."}</p>
+                            <p className="text-[10px] text-slate-500 mt-0.5">{igConnected ? "Active Sync • Connected to " : "Pending Setup • "}{businessName || user?.company_name || "Brand Account"}</p>
                           </div>
                         </div>
                         <span className="px-2.5 py-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full whitespace-nowrap">
-                          Primary Sync
+                          {igConnected ? "Primary Sync" : "Sync Configured"}
                         </span>
                       </div>
 

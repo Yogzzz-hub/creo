@@ -6,9 +6,11 @@ export interface AuthUser {
   id: string;
   email: string;
   full_name: string;
+  company_name?: string;
   role: string;
   account_status: string;
   onboarding_stage: number;
+  onboarding_status?: string;
   terms_accepted?: boolean;
   must_reset_password?: boolean;
 }

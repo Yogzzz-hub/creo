@@ -498,25 +498,6 @@ export function PortalCalendarPage() {
               const activeDay = selectedDate || (isCurrentMonth ? today.getDate() : 1);
               let tasks = getDayEntries(activeDay);
               
-              if (tasks.length === 0 && !selectedDate) {
-                 // Mocking some tasks just for the visual layout if it's empty and we are looking at today, to match the image
-                 tasks = [
-                   {
-                     id: "mock1", date: today.toISOString(), status: "approved", type: "poster", topic: "Q4 Keynote Slide Deck (60 slides)", scheduled_time: "4:30 PM", 
-                     concept_status: "concept_approved"
-                   } as CalendarEntry,
-                   {
-                     id: "mock2", date: today.toISOString(), status: "pending", type: "reel", topic: "Holiday Campaign Lifestyle Retouching", scheduled_time: "3:00 PM"
-                   } as CalendarEntry,
-                   {
-                     id: "mock3", date: today.toISOString(), status: "pending", type: "reel", topic: "TikTok Viral Hook Reel Cut #1 & #2", scheduled_time: "2:00 PM"
-                   } as CalendarEntry,
-                   {
-                     id: "mock4", date: today.toISOString(), status: "pending", type: "poster", topic: "Patient Portal Explainer Video Storyboard", scheduled_time: "3:30 PM"
-                   } as CalendarEntry
-                 ];
-              }
-
               if (tasks.length === 0) {
                 return (
                   <div className="flex flex-col items-center justify-center h-48 text-slate-400 text-sm font-bold bg-[#F8F9FC] rounded-[1.5rem] border border-slate-100 border-dashed">
@@ -526,14 +507,10 @@ export function PortalCalendarPage() {
               }
 
               return tasks.map((entry, idx) => {
-                
-                // Mocks for avatars and pod names based on index to make it look like the image
-                const pods = ["POD A • NORTHWIND LABS", "POD B • BLOOM STUDIO", "POD C • ATLAS COMMERCE", "POD E • LUMINA HEALTH"];
-                const initials = ["OV", "AT", "KS", "SJ"];
-                const names = ["Omar Vance", "Anya Taylor", "Kenji Sato", "Sarah Jenkins"];
-                const statuses = ["Final Polish", "Color Grading", "Sound Sync", "Sync 3:30 PM"];
-                const statusColors = ["bg-[#E6F8F3] text-[#059669]", "bg-[#F4F8FF] text-[#0052FF]", "bg-[#E6F8F3] text-[#059669]", "bg-[#F3E8FF] text-[#7C3AED]"];
-                
+                const podLabel = user?.company_name ? `POD • ${user.company_name.toUpperCase()}` : "DEDICATED CREATIVE POD";
+                const statusLabel = entry.concept_status === "concept_approved" ? "Concept Approved" : entry.status === "approved" ? "Ready to Publish" : "In Production";
+                const isApproved = entry.concept_status === "concept_approved" || entry.status === "approved";
+
                 return (
                   <div 
                     key={entry.id} 
@@ -542,10 +519,10 @@ export function PortalCalendarPage() {
                   >
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-[10px] font-black text-[#8A9BB5] uppercase tracking-wider">
-                        {pods[idx % pods.length]}
+                        {podLabel}
                       </span>
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${statusColors[idx % statusColors.length]}`}>
-                         {statuses[idx % statuses.length]}
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${isApproved ? "bg-[#E6F8F3] text-[#059669]" : "bg-[#F4F8FF] text-[#0052FF]"}`}>
+                         {statusLabel}
                       </span>
                     </div>
                     
@@ -556,16 +533,16 @@ export function PortalCalendarPage() {
                     <div className="flex items-center justify-between mt-auto">
                       <div className="flex items-center gap-2.5">
                         <div className={`size-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${
-                           idx % 4 === 0 ? "bg-[#0052FF]" : idx % 4 === 1 ? "bg-[#7C3AED]" : idx % 4 === 2 ? "bg-[#059669]" : "bg-[#059669]"
+                           idx % 3 === 0 ? "bg-[#0052FF]" : idx % 3 === 1 ? "bg-[#7C3AED]" : "bg-[#059669]"
                         }`}>
-                          {initials[idx % initials.length]}
+                          CP
                         </div>
                         <span className="text-[12px] font-bold text-slate-600">
-                          {names[idx % names.length]}
+                          Creative Pod
                         </span>
                       </div>
                       <span className="text-[11px] font-black text-slate-800">
-                        {entry.scheduled_time || "4:30 PM"}
+                        {entry.scheduled_time || "Scheduled"}
                       </span>
                     </div>
                   </div>

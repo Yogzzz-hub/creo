@@ -48,63 +48,6 @@ interface DeliverableCardData {
   downloadUrl?: string;
 }
 
-const INITIAL_DELIVERABLES: DeliverableCardData[] = [
-  {
-    id: "del-1",
-    formatBadge: "Reel 9:16",
-    formatType: "reel",
-    status: "approved",
-    statusBadgeText: "Approved",
-    statusBadgeVariant: "approved",
-    previewType: "video",
-    previewMetaTopLeft: "ROUND 1",
-    previewMetaBottom: "Reel #df3f59\nv1 • video/mp4",
-    title: "Summer Drop Campaign Reel",
-    subtitle: "Scheduled for Instagram • Production SLA: Met",
-    detailStatus: "Round 1 of 2 (Approved without changes)",
-    detailStatusColor: "text-emerald-600",
-    version: "v1.0",
-    downloadUrl: "https://creo-ai-dev.s3.amazonaws.com/mock/summer_drop_reel.mp4",
-  },
-  {
-    id: "del-2",
-    formatBadge: "Static Carousel 4:5",
-    formatType: "static",
-    status: "pending_approval",
-    statusBadgeText: "Action Required",
-    statusBadgeVariant: "action_required",
-    previewType: "figma",
-    previewMetaTopLeft: "CAROUSEL 01/05",
-    previewMetaTopRight: "SLA: 18h remaining",
-    previewHeading: "Campaign Launch Slide",
-    previewSubheading: "High-Res Figma Asset",
-    title: "Weekly Feature Launch Poster · v1.0",
-    subtitle: "Submitted: Today, 10:15 AM via Figma Sync",
-    detailStatus: "Review feedback expected to unblock batch",
-    detailStatusColor: "text-amber-600",
-    version: "v1.0",
-  },
-  {
-    id: "del-3",
-    formatBadge: "Story Motion 9:16",
-    formatType: "story",
-    status: "in_production",
-    statusBadgeText: "In Production",
-    statusBadgeVariant: "in_production",
-    previewType: "motion",
-    previewMetaTopLeft: "Creative Pod: Alpha",
-    previewMetaTopRight: "In Rendering",
-    previewHeading: "Motion Graphics & Audio Sync",
-    previewSubheading: "Est. handoff: Tomorrow, 5:00 PM",
-    progressPercent: 65,
-    title: "Flash Sale 24h Story Asset",
-    subtitle: "Creative Pod: Alpha • Story batch pipeline",
-    detailStatus: "Brief finalized & script locked",
-    detailStatusColor: "text-slate-500",
-    version: "v0.9",
-  },
-];
-
 export function PortalDeliverablesPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -139,8 +82,8 @@ export function PortalDeliverablesPage() {
         (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status))));
 
   // Local state for deliverables cards & interactions
-  const [deliverables, setDeliverables] = useState<DeliverableCardData[]>(INITIAL_DELIVERABLES);
-  const [activeTab, setActiveTab] = useState<"all" | "review" | "revision" | "approved">("approved");
+  const [deliverables, setDeliverables] = useState<DeliverableCardData[]>([]);
+  const [activeTab, setActiveTab] = useState<"all" | "review" | "revision" | "approved">("all");
   const [formatFilter, setFormatFilter] = useState<"all" | "reel" | "static" | "story">("all");
   const [formatDropdownOpen, setFormatDropdownOpen] = useState(false);
 
@@ -222,12 +165,9 @@ export function PortalDeliverablesPage() {
         };
       });
 
-      // Merge avoiding duplicate IDs with mock demo items
-      setDeliverables((prev) => {
-        const customIds = new Set(mapped.map((m) => m.id));
-        const filteredPrev = prev.filter((p) => !customIds.has(p.id));
-        return [...filteredPrev, ...mapped];
-      });
+      setDeliverables(mapped);
+    } else if (deliverablesData?.items && deliverablesData.items.length === 0) {
+      setDeliverables([]);
     }
   }, [deliverablesData]);
 
@@ -506,7 +446,17 @@ export function PortalDeliverablesPage() {
       </div>
 
       {/* ── 3. Deliverables Cards Grid ── */}
-      {filteredDeliverables.length === 0 ? (
+      {deliverables.length === 0 ? (
+        <div className="card-surface p-12 text-center flex flex-col items-center justify-center rounded-2xl border border-slate-200">
+          <div className="size-14 rounded-2xl bg-blue-50 text-[#0052FF] flex items-center justify-center mb-3 shadow-xs">
+            <Layers className="size-6" />
+          </div>
+          <h4 className="text-base font-bold text-slate-900">No deliverables uploaded yet</h4>
+          <p className="text-xs text-slate-500 mt-1 max-w-md leading-relaxed">
+            Your dedicated creative pod is currently preparing your assets. As soon as reels, posters, or story motion graphics are produced, they will appear here for your review and approval.
+          </p>
+        </div>
+      ) : filteredDeliverables.length === 0 ? (
         <div className="card-surface p-12 text-center flex flex-col items-center justify-center rounded-2xl border border-slate-200">
           <div className="size-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
             <Search className="size-5" />
@@ -521,7 +471,7 @@ export function PortalDeliverablesPage() {
               setActiveTab("all");
               setFormatFilter("all");
             }}
-            className="mt-4 px-4 py-2 bg-[#0052FF] text-white text-xs font-bold rounded-xl hover:bg-[#0045D8] transition-colors"
+            className="mt-4 px-4 py-2 bg-[#0052FF] text-white text-xs font-bold rounded-xl hover:bg-[#0045D8] transition-colors cursor-pointer"
           >
             Reset Filters
           </button>
