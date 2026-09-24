@@ -1,111 +1,41 @@
-import { motion } from "motion/react";
-/**
- * Stage 2 — MSA (Master Service Agreement) acceptance.
- *
- * The Accept button is DISABLED until the user has scrolled to the bottom
- * of the agreement text. An IntersectionObserver on a sentinel element
- * (not a timer) detects this.
- */
-import { useCallback, useRef, useState } from "react";
+import os
 
-import { Clock, Check, FileText, ChevronRight, Lock } from "lucide-react";
-interface StageTermsProps {
-  userId: string;
-  onAccepted: () => void;
-  onBack?: () => void;
-  isSubmitting: boolean;
-}
+filepath = r'd:\intern\creo\frontend\src\features\onboarding\StageTerms.tsx'
+with open(filepath, 'r', encoding='utf-8') as f:
+    lines = f.readlines()
 
-const MSA_TEXT = `MASTER SERVICE AGREEMENT — CREO DIGITAL AGENCY
+def get_lines(start, end):
+    return "".join(lines[start:end])
 
-Last updated: January 2025
+# Let's find the start of the return statement
+return_start = -1
+for i, l in enumerate(lines):
+    if 'return (' in l:
+        return_start = i
+        break
 
-This Master Service Agreement ("Agreement") is entered into between Creo Digital
-Agency Pvt. Ltd. ("Agency") and the Client identified during registration.
+new_imports = '''import { Clock, Check, FileText, ChevronRight, Lock } from "lucide-react";\n'''
 
-1. SCOPE OF SERVICES
-   Agency will provide digital marketing services as described in the selected
-   subscription plan, including but not limited to social media content creation,
-   brand identity development, and creative campaign management.
+# Insert imports at line 10
+lines.insert(10, new_imports)
 
-2. PAYMENT TERMS
-   Client agrees to pay the subscription fee as selected during onboarding.
-   Payments are due on the first day of each billing cycle. A grace period of
-   7 days applies before service suspension.
+return_start = -1
+for i, l in enumerate(lines):
+    if 'return (' in l:
+        return_start = i
+        break
 
-3. INTELLECTUAL PROPERTY
-   Upon full payment, all original creative assets produced by Agency for Client
-   are assigned to Client. Agency retains the right to display the work in its
-   portfolio unless Client requests otherwise in writing.
-
-4. REVISION POLICY
-   The number of revision rounds per deliverable is determined by the selected
-   plan (1 round for Starter, 2 for Growth, 3 for Enterprise). Revisions must
-   be requested within 5 business days of delivery.
-
-5. CONFIDENTIALITY
-   Both parties agree to keep confidential any proprietary information shared
-   during the engagement. This obligation survives termination of this Agreement.
-
-6. TERMINATION
-   Either party may terminate this Agreement with 30 days written notice.
-   No refunds are issued for the current billing cycle upon termination.
-
-7. LIMITATION OF LIABILITY
-   Agency's total liability under this Agreement shall not exceed the total fees
-   paid by Client in the 3 months preceding the event giving rise to the claim.
-
-8. GOVERNING LAW
-   This Agreement shall be governed by the laws of the Republic of India,
-   and disputes shall be subject to the exclusive jurisdiction of courts in
-   Mumbai, Maharashtra.
-
-9. AMENDMENTS
-   Agency may update this Agreement with 30 days' notice. Continued use of
-   services after notice constitutes acceptance of the updated terms.
-
-10. ENTIRE AGREEMENT
-    This Agreement constitutes the entire agreement between the parties and
-    supersedes all prior discussions and agreements relating to its subject matter.
-
-By clicking "Accept & Continue", you acknowledge that you have read, understood,
-and agree to be bound by this Master Service Agreement.
-
-— End of Agreement —`;
-
-export function StageTerms({ onAccepted, onBack, isSubmitting }: StageTermsProps) {
-  const [hasScrolled, setHasScrolled] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
-  const scrollContainerRef = useCallback((node: HTMLDivElement | null) => {
-    if (!node) return;
-    // Create observer targeting the sentinel at the bottom of the scroll area
-    observerRef.current?.disconnect();
-    observerRef.current = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setHasScrolled(true);
-          observerRef.current?.disconnect();
-        }
-      },
-      { root: node, threshold: 0.9 },
-    );
-    if (sentinelRef.current) {
-      observerRef.current.observe(sentinelRef.current);
-    }
-  }, []);
-
-  return (
+# Rebuild the render block
+render_block = '''  return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       className="max-w-[1400px] w-full mx-auto space-y-4 pb-12"
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         {/* LEFT COLUMN */}
         <div className="lg:col-span-4 flex flex-col gap-4">
-          <div className="rounded-2xl border border-[#C9DFF0] bg-white p-6 sm:p-8 shadow-sm h-full flex flex-col">
+          <div className="rounded-2xl border border-[#C9DFF0] bg-white p-6 sm:p-8 shadow-sm">
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500 text-white text-[10px] font-bold uppercase tracking-wider mb-4 shadow-sm">
               Step 2 of 5
             </div>
@@ -146,7 +76,7 @@ export function StageTerms({ onAccepted, onBack, isSubmitting }: StageTermsProps
             </div>
 
             {!hasScrolled ? (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 mt-auto">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
                 <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs font-bold text-amber-800">Reading in progress...</p>
@@ -154,7 +84,7 @@ export function StageTerms({ onAccepted, onBack, isSubmitting }: StageTermsProps
                 </div>
               </div>
             ) : (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 mt-auto">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3">
                 <Check className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs font-bold text-emerald-800">Reading complete</p>
@@ -249,3 +179,11 @@ export function StageTerms({ onAccepted, onBack, isSubmitting }: StageTermsProps
     </motion.div>
   );
 }
+'''
+
+out = "".join(lines[:return_start]) + render_block
+
+with open(filepath, 'w', encoding='utf-8') as f:
+    f.write(out)
+
+print("Rebuilt StageTerms.tsx")

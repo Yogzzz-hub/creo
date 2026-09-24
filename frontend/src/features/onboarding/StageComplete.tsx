@@ -4,8 +4,6 @@ import { motion } from "motion/react";
 import { useNavigate } from "react-router";
 import {
   ArrowRight,
-  Sparkles,
-  CheckCircle2,
   Calendar,
   UserCheck,
   Target,
@@ -215,34 +213,42 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
-      className="max-w-4xl lg:max-w-5xl w-full mx-auto rounded-3xl border border-[#C9DFF0] bg-gradient-to-b from-white via-[#F8FAFC] to-[#F0F7FD] p-5 sm:p-8 lg:p-10 shadow-xl text-center relative overflow-hidden"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="max-w-[1400px] w-full mx-auto space-y-4 pb-12"
     >
-      {/* Onboarding Complete Header Badge */}
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-extrabold uppercase tracking-wider mb-4 shadow-2xs"
-      >
-        <CheckCircle2 className="size-4 text-emerald-600" />
-        <span>Stage 5 Active • Creative Pod Allocated & Brief Dispatched</span>
-      </motion.div>
+      {/* Header Container */}
+      <div className="rounded-2xl border border-[#C9DFF0] bg-white p-6 sm:p-8 shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-extrabold uppercase tracking-widest mb-4">
+            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            Stage 5 Active • Creative Pod Allocated & Brief Dispatched
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-black font-display text-[#0D2137] tracking-tight mb-2">
+            Your Dedicated Creative Pod is Live!
+          </h2>
+          <p className="text-sm text-[#64748B] max-w-2xl leading-relaxed">
+            Your retainer is active, your Brand Strategy DNA is synthesized, and your dedicated
+            production specialists have been briefed with your 30-day content calendar.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onLaunchPortal}
+          className="shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#2B7BC4] hover:bg-[#1A5EA8] text-white font-bold text-sm shadow-md transition-all cursor-pointer"
+        >
+          Go to Client Portal <ArrowRight className="size-4" />
+        </button>
+      </div>
 
-      <h2 className="text-2xl sm:text-4xl font-black font-display text-[#0D2137] tracking-tight">
-        Your Dedicated Creative Pod is Live!
-      </h2>
-
-      <p className="text-sm sm:text-base text-[#64748B] mt-2 mb-7 max-w-2xl mx-auto leading-relaxed">
-        Your retainer is active, your Brand Strategy DNA is synthesized, and your dedicated
-        production specialists have been briefed with your 30-day content calendar.
-      </p>
-
-      {/* ── Algorithm-Assigned Creative Pod Card ────────────────────────────── */}
-      <div className="rounded-2xl border border-[#C9DFF0] bg-white p-5 sm:p-6 mb-7 text-left shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-[#C9DFF0]/70">
+      {/* Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        
+        {/* Left Column (Span 4) */}
+        <div className="lg:col-span-4 flex flex-col gap-4">
+      <div className="rounded-2xl border border-[#C9DFF0] bg-white p-5 sm:p-6 text-left shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex flex-col gap-3 mb-4 pb-3 border-b border-[#C9DFF0]/70">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-wider text-[#2B7BC4] flex items-center gap-2">
               <UserCheck className="size-4 text-[#2B7BC4]" />
@@ -258,7 +264,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="flex flex-col gap-3">
           {effectiveTeam.map((member) => (
             <div
               key={member.id || member.name}
@@ -291,20 +297,10 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
         </div>
       </div>
 
-      {/* ── Gemini AI Brand Strategy DNA Blueprint ─────────────────────────── */}
-      <div className="rounded-2xl border border-[#C9DFF0] bg-white p-5 sm:p-7 mb-7 text-left shadow-sm space-y-6">
-        <div className="flex items-center justify-between pb-3 border-b border-[#C9DFF0]/70">
-          <p className="text-xs font-extrabold uppercase tracking-wider text-[#0D2137] flex items-center gap-2">
-            <Sparkles className="size-4 text-[#2B7BC4] animate-pulse" />
-            <span>Gemini AI Strategic Brand Blueprint</span>
-          </p>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#2B7BC4] bg-[#E8F4FD] border border-[#C9DFF0] px-2.5 py-0.5 rounded-full">
-            {dnaStatus?.brand_dna_source === "gemini" ? "Gemini 2.0 Flash Synthesis" : "Strategic Synthesis"}
-          </span>
-        </div>
 
-        {/* Strategic Positioning Line */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#F0F7FD] via-white to-[#F0F7FD] border border-[#C9DFF0]/80 shadow-2xs">
+          {/* Core Strategic Positioning & Audience */}
+          <div className="rounded-2xl border border-[#C9DFF0] bg-white p-5 sm:p-6 shadow-sm">
+                    <div className="">
           <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#2B7BC4] mb-1.5">
             <Compass className="size-3.5" />
             <span>Core Strategic Positioning Vector</span>
@@ -319,8 +315,84 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
           )}
         </div>
 
-        {/* ── Tone & Voice Architecture Matrix ──────────────────────────────── */}
-        <div className="rounded-xl bg-slate-50/70 border border-slate-200/80 p-4 sm:p-5">
+
+                    <div className="pt-4 mt-4 border-t border-slate-100">
+          <div className="flex items-center gap-2 mb-3 text-xs font-bold uppercase tracking-wider text-slate-700">
+            <Users className="size-3.5 text-[#2B7BC4]" />
+            <span>Target Audience Segments & Core Pain Points</span>
+          </div>
+
+          {audienceSegments ? (
+            <div className="flex flex-col gap-3">
+              {audienceSegments.map((seg, idx) => (
+                <div
+                  key={idx}
+                  className="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs flex flex-col justify-between"
+                >
+                  <div>
+                    <h4 className="font-bold text-xs text-[#0D2137] mb-1">{safeString(seg.name, `Segment ${idx + 1}`)}</h4>
+                    <p className="text-[11px] text-slate-600 leading-relaxed mb-2.5">
+                      {safeString(seg.description)}
+                    </p>
+                  </div>
+                  {seg.core_pain_point && (
+                    <div className="pt-2 border-t border-slate-100 flex items-start gap-1.5 text-[11px] text-rose-700 bg-rose-50/60 p-2 rounded-lg">
+                      <Target className="size-3 text-rose-600 mt-0.5 flex-shrink-0" />
+                      <span className="font-medium">
+                        <strong>Pain Point:</strong> {safeString(seg.core_pain_point)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-600 leading-relaxed">{fallbackAudience}</p>
+          )}
+        </div>
+
+
+          </div>
+          <div className="rounded-2xl border border-[#C9DFF0] bg-white p-5 sm:p-6 shadow-sm flex-1 flex flex-col justify-center space-y-3">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700">
+              <Palette className="size-3.5 text-[#2B7BC4]" />
+              <span>Visual Identity & Palette</span>
+            </div>
+
+            <div className="flex gap-2 items-center flex-wrap">
+              {palette.map((c) => (
+                <div key={c} className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                  <div
+                    className="size-4 rounded border border-black/10 shadow-xs"
+                    style={{ backgroundColor: c }}
+                  />
+                  <span className="font-mono text-[10px] font-bold text-slate-700">{c}</span>
+                </div>
+              ))}
+            </div>
+
+            {visualStyles.length > 0 && (
+              <div className="flex gap-1.5 flex-wrap pt-1">
+                {visualStyles.map((st) => (
+                  <span key={st} className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-semibold border border-slate-200">
+                    {st}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {visualAvoid.length > 0 && (
+              <div className="text-[10px] text-rose-700">
+                <strong>Visual Avoid:</strong> {visualAvoid.join(", ")}
+              </div>
+            )}
+          </div>
+
+        </div>
+
+        {/* Right Column (Span 8) */}
+        <div className="lg:col-span-8 flex flex-col gap-4">
+        <div className="rounded-2xl border border-[#C9DFF0] bg-white p-5 sm:p-6 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700">
               <Sliders className="size-3.5 text-[#2B7BC4]" />
@@ -408,44 +480,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
           </div>
         </div>
 
-        {/* ── Target Audience Segments ──────────────────────────────────────── */}
-        <div className="rounded-xl bg-slate-50/70 border border-slate-200/80 p-4 sm:p-5">
-          <div className="flex items-center gap-2 mb-3 text-xs font-bold uppercase tracking-wider text-slate-700">
-            <Users className="size-3.5 text-[#2B7BC4]" />
-            <span>Target Audience Segments & Core Pain Points</span>
-          </div>
-
-          {audienceSegments ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {audienceSegments.map((seg, idx) => (
-                <div
-                  key={idx}
-                  className="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs flex flex-col justify-between"
-                >
-                  <div>
-                    <h4 className="font-bold text-xs text-[#0D2137] mb-1">{safeString(seg.name, `Segment ${idx + 1}`)}</h4>
-                    <p className="text-[11px] text-slate-600 leading-relaxed mb-2.5">
-                      {safeString(seg.description)}
-                    </p>
-                  </div>
-                  {seg.core_pain_point && (
-                    <div className="pt-2 border-t border-slate-100 flex items-start gap-1.5 text-[11px] text-rose-700 bg-rose-50/60 p-2 rounded-lg">
-                      <Target className="size-3 text-rose-600 mt-0.5 flex-shrink-0" />
-                      <span className="font-medium">
-                        <strong>Pain Point:</strong> {safeString(seg.core_pain_point)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-slate-600 leading-relaxed">{fallbackAudience}</p>
-          )}
-        </div>
-
-        {/* ── 30-Day Content Pillars with Funnel Stages ──────────────────────── */}
-        <div className="rounded-xl bg-blue-50/30 border border-[#C9DFF0] p-4 sm:p-5">
+        <div className="rounded-2xl border border-[#C9DFF0] bg-white p-5 sm:p-6 shadow-sm">
           <div className="flex items-center justify-between mb-3.5">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#1E609A]">
               <Layers className="size-3.5 text-[#2B7BC4]" />
@@ -523,46 +558,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
           )}
         </div>
 
-        {/* ── Visual Identity & Production Guardrails ────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          {/* Visual Palette & Styles */}
-          <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-3">
-            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700">
-              <Palette className="size-3.5 text-[#2B7BC4]" />
-              <span>Visual Identity & Palette</span>
-            </div>
-
-            <div className="flex gap-2 items-center flex-wrap">
-              {palette.map((c) => (
-                <div key={c} className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-lg border border-slate-200 shadow-2xs">
-                  <div
-                    className="size-4 rounded border border-black/10 shadow-xs"
-                    style={{ backgroundColor: c }}
-                  />
-                  <span className="font-mono text-[10px] font-bold text-slate-700">{c}</span>
-                </div>
-              ))}
-            </div>
-
-            {visualStyles.length > 0 && (
-              <div className="flex gap-1.5 flex-wrap pt-1">
-                {visualStyles.map((st) => (
-                  <span key={st} className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-semibold border border-slate-200">
-                    {st}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {visualAvoid.length > 0 && (
-              <div className="text-[10px] text-rose-700">
-                <strong>Visual Avoid:</strong> {visualAvoid.join(", ")}
-              </div>
-            )}
-          </div>
-
-          {/* Production Boundaries & Formats */}
-          <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-3">
+          <div className="rounded-2xl border border-[#C9DFF0] bg-white p-5 sm:p-6 shadow-sm flex-1 flex flex-col justify-center space-y-3">
             <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700">
               <Film className="size-3.5 text-[#2B7BC4]" />
               <span>Production Directives & Formats</span>
@@ -603,8 +599,11 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
             )}
           </div>
         </div>
+      </div>
 
-        {/* ── Brief Dispatched Confirmation Callout ───────────────────────────── */}
+      {/* Footer Area */}
+
+      <div className="flex flex-col gap-3 mt-2">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-emerald-50/90 border border-emerald-200 text-xs text-emerald-900 font-medium">
           <div className="flex items-center gap-2.5">
             <Send className="size-4 text-emerald-600 flex-shrink-0" />
@@ -636,9 +635,9 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
       </div>
 
       {/* Calendar Ready Notification Badge */}
-      <div className="flex items-center justify-center gap-2.5 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs sm:text-sm font-bold text-emerald-800 mb-7 shadow-2xs">
+      <div className="flex items-center justify-center gap-2.5 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs sm:text-sm font-bold text-emerald-800  shadow-2xs">
         <Calendar className="size-4.5 text-emerald-600" />
-        <span>Initial 30-day production roadmap generated with +3 business-day due buffer. Ready for kickoff!</span>
+        <span>Initial 30-day production roadmap generated with +1 business-day due buffer. Ready for kickoff!</span>
       </div>
 
       {/* Launch Portal CTA Dock */}

@@ -499,7 +499,7 @@ export function PortalSupportPage() {
                       key={p}
                       type="button"
                       onClick={() => setPriority(p)}
-                      className={`py-2 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex-1 min-w-[70px] whitespace-nowrap ${
+                      className={`py-2 px-3 sm:px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex-auto min-w-[70px] whitespace-nowrap ${
                         isSelected
                           ? p === "urgent"
                             ? "bg-rose-50 border border-rose-300 text-rose-700 shadow-2xs"

@@ -443,7 +443,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
               key={sec.key}
               type="button"
               onClick={() => setActiveSection(sec.key)}
-              className={`flex flex-col items-start p-3 rounded-xl border text-left transition-all cursor-pointer ${
+              className={`flex flex-col items-start p-3 rounded-xl border text-left w-full overflow-hidden transition-all cursor-pointer ${
                 isActive
                   ? "bg-[#2B7BC4]/10 border-[#2B7BC4] text-[#0D2137] shadow-sm"
                   : "bg-white border-slate-200 hover:border-slate-300 text-slate-600"
@@ -454,14 +454,14 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                   {sec.badge}
                 </span>
                 {!sec.isCore && (
-                  <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1 py-0.2 rounded">
+                  <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1 py-0.2 rounded shrink-0">
                     Optional
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 mt-1">
-                <Icon className={`w-3.5 h-3.5 ${isActive ? "text-[#2B7BC4]" : "text-slate-400"}`} />
-                <span className="text-xs font-bold truncate">{sec.label}</span>
+              <div className="flex items-center gap-1.5 mt-1 w-full min-w-0">
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#2B7BC4]" : "text-slate-400"}`} />
+                <span className="text-[11px] sm:text-xs font-bold truncate">{sec.label}</span>
               </div>
               <span className="text-[10px] text-slate-400 mt-1">~{sec.estMinutes} min</span>
             </button>
