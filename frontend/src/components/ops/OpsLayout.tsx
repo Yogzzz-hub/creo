@@ -1,4 +1,5 @@
 import { Outlet } from "react-router";
+import { AdminBottomNav } from "./AdminBottomNav";
 import { useRouteMemory } from "../../lib/useRouteMemory";
 
 export function OpsLayout() {
@@ -7,7 +8,11 @@ export function OpsLayout() {
 
   return (
     <div className="min-h-screen w-full bg-[#F9FAFB] text-[#0D2137] flex flex-col">
-      <Outlet />
+      <div className="flex-1 pb-20 lg:pb-0">
+        <Outlet />
+      </div>
+      <AdminBottomNav />
     </div>
   );
 }
+

@@ -58,6 +58,8 @@ import {
 } from "lucide-react";
 import { request } from "../../lib/http";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
+import { useAlert } from "../../components/ui/ConfirmDialog";
+import { useAuth } from "../../lib/auth-context";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. ADMIN CLIENTS PAGE (CLIENT DETAILS & BRAND BRIEF)
@@ -767,7 +769,7 @@ export function AdminClientsPage() {
                     <div className="p-3 bg-gray-50/80 rounded-2xl space-y-1.5 text-xs text-gray-600 border border-gray-100">
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-500">Retainer:</span>
-                        <span className="font-bold text-gray-900">${client.monthlyFee.toLocaleString()}/mo</span>
+                        <span className="font-bold text-gray-900">₹{client.monthlyFee.toLocaleString()}/mo</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-500">Assigned Pod:</span>
@@ -955,7 +957,7 @@ export function AdminClientsPage() {
 
                   <div className="flex items-baseline justify-between">
                     <div>
-                      <span className="text-3xl font-black text-gray-900">${activeClient?.monthlyFee.toLocaleString()}</span>
+                      <span className="text-3xl font-black text-gray-900">₹{activeClient?.monthlyFee.toLocaleString()}</span>
                       <span className="text-xs font-bold text-gray-400"> /mo</span>
                     </div>
                     {activeClient?.addon && (
@@ -1502,7 +1504,7 @@ export function AdminClientsPage() {
                 </div>
                 <div className="flex justify-between pt-2 border-t border-gray-200 font-black text-sm">
                   <span>Total Amount:</span>
-                  <span className="text-blue-600">${activeClient?.monthlyFee.toLocaleString()}.00</span>
+                  <span className="text-blue-600">₹{activeClient?.monthlyFee.toLocaleString()}.00</span>
                 </div>
               </div>
               <button
@@ -2872,8 +2874,10 @@ export function AdminTasksPage() {
 // 4. ADMIN CALENDAR PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export function AdminCalendarPage() {
+  const { user } = useAuth();
+  const isTeamLead = user?.role === "team_lead";
   const [selectedDayNumber, setSelectedDayNumber] = useState<number>(14);
-  const [selectedPodFilter, setSelectedPodFilter] = useState("all");
+  const [selectedPodFilter, setSelectedPodFilter] = useState(isTeamLead ? "Pod A" : "all");
   const [selectedClientFilter, setSelectedClientFilter] = useState("all");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState("all");
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -2894,13 +2898,13 @@ export function AdminCalendarPage() {
     8: [
       {
         id: "cal-8-1",
-        pod: "Pod C",
+        pod: "Pod A",
         client: "Atlas Commerce",
         title: "Customer Success Story Cutdown Reel",
         type: "Reel",
         assignee: "David Kim",
         avatar: "DK",
-        avatarBg: "bg-[#06B6D4]",
+        avatarBg: "bg-[#0F172A]",
         tag: "Approved",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "11:30 AM",
@@ -2909,13 +2913,13 @@ export function AdminCalendarPage() {
     10: [
       {
         id: "cal-10-1",
-        pod: "Pod B",
+        pod: "Pod A",
         client: "Bloom Studio",
-        title: "Brand Aesthetic Moodboard Carousel",
-        type: "Carousel",
-        assignee: "Anya Taylor",
-        avatar: "AT",
-        avatarBg: "bg-[#6366F1]",
+        title: "Brand Story Sequence · 3 Panels",
+        type: "Story",
+        assignee: "Chloe Tan",
+        avatar: "CT",
+        avatarBg: "bg-teal-600",
         tag: "Approved",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "2:00 PM",
@@ -2928,49 +2932,49 @@ export function AdminCalendarPage() {
         client: "Northwind Labs",
         title: "Q4 Product Unboxing Teaser Reel",
         type: "Reel",
-        assignee: "Omar Vance",
-        avatar: "OV",
-        avatarBg: "bg-[#2563EB]",
+        assignee: "David Kim",
+        avatar: "DK",
+        avatarBg: "bg-[#0F172A]",
         tag: "Final Polish",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "4:30 PM",
       },
       {
         id: "cal-14-2",
-        pod: "Pod B",
+        pod: "Pod A",
         client: "Bloom Studio",
         title: "Behind-The-Scenes Studio Setup (3-Slide Story)",
         type: "Story",
-        assignee: "Anya Taylor",
-        avatar: "AT",
-        avatarBg: "bg-[#6366F1]",
+        assignee: "Chloe Tan",
+        avatar: "CT",
+        avatarBg: "bg-teal-600",
         tag: "Color Grading",
         tagColor: "bg-purple-50 text-purple-700 border-purple-100",
         time: "3:00 PM",
       },
       {
         id: "cal-14-3",
-        pod: "Pod C",
+        pod: "Pod A",
         client: "Atlas Commerce",
         title: "TikTok Viral Hook Reel Cut #1 & #2",
         type: "Reel",
-        assignee: "Kenji Sato",
-        avatar: "KS",
-        avatarBg: "bg-[#06B6D4]",
+        assignee: "Elena R.",
+        avatar: "ER",
+        avatarBg: "bg-blue-600",
         tag: "Sound Sync",
         tagColor: "bg-cyan-50 text-cyan-700 border-cyan-100",
         time: "2:00 PM",
       },
       {
         id: "cal-14-4",
-        pod: "Pod E",
-        client: "Lumina Health",
-        title: "Patient Portal Explainer Video Storyboard",
-        type: "Explainer Video",
-        assignee: "Sarah Jenkins",
-        avatar: "SJ",
-        avatarBg: "bg-emerald-600",
-        tag: "Sync 3:30 PM",
+        pod: "Pod A",
+        client: "Northwind Labs",
+        title: "Conversion Post Carousel (10 Panels)",
+        type: "Post",
+        assignee: "Marcus Vance",
+        avatar: "MV",
+        avatarBg: "bg-indigo-600",
+        tag: "Final Polish",
         tagColor: "bg-indigo-50 text-indigo-700 border-indigo-100",
         time: "3:30 PM",
       },
@@ -2982,35 +2986,35 @@ export function AdminCalendarPage() {
         client: "Northwind Labs",
         title: "15-Sec Flash Sale Promo Story Set",
         type: "Story",
-        assignee: "Marcus Brody",
-        avatar: "MB",
-        avatarBg: "bg-blue-600",
+        assignee: "David Kim",
+        avatar: "DK",
+        avatarBg: "bg-[#0F172A]",
         tag: "Approved",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "10:00 AM",
       },
       {
         id: "cal-15-2",
-        pod: "Pod B",
+        pod: "Pod A",
         client: "Bloom Studio",
         title: "Founder Q&A Vertical Micro-Reel #4",
         type: "Reel",
-        assignee: "Elena Rostova",
+        assignee: "Elena R.",
         avatar: "ER",
-        avatarBg: "bg-rose-500",
+        avatarBg: "bg-blue-600",
         tag: "Final Polish",
         tagColor: "bg-amber-50 text-amber-700 border-amber-100",
         time: "1:30 PM",
       },
       {
         id: "cal-15-3",
-        pod: "Pod D",
-        client: "Acme Corp",
-        title: "Top 5 Growth Hacks Infographic Carousel",
-        type: "Carousel",
-        assignee: "Kenji Sato",
-        avatar: "KS",
-        avatarBg: "bg-[#06B6D4]",
+        pod: "Pod A",
+        client: "Atlas Commerce",
+        title: "Top 5 Growth Hacks Infographic Post",
+        type: "Post",
+        assignee: "Marcus Vance",
+        avatar: "MV",
+        avatarBg: "bg-indigo-600",
         tag: "Scheduled",
         tagColor: "bg-blue-50 text-blue-700 border-blue-100",
         time: "5:00 PM",
@@ -3021,24 +3025,24 @@ export function AdminCalendarPage() {
         id: "cal-18-1",
         pod: "Pod A",
         client: "Northwind Labs",
-        title: "Q4 Keynote Executive Slide Deck (60 Slides)",
-        type: "Slide Deck",
-        assignee: "Omar Vance",
-        avatar: "OV",
-        avatarBg: "bg-[#2563EB]",
+        title: "Q4 Keynote Executive Post Showcase",
+        type: "Post",
+        assignee: "Elena R.",
+        avatar: "ER",
+        avatarBg: "bg-blue-600",
         tag: "SLA Review",
         tagColor: "bg-amber-50 text-amber-700 border-amber-100",
         time: "11:00 AM",
       },
       {
         id: "cal-18-2",
-        pod: "Pod C",
+        pod: "Pod A",
         client: "Atlas Commerce",
-        title: "High-Energy Product Feature Cutdown",
+        title: "High-Energy Product Feature Cutdown Reel",
         type: "Reel",
-        assignee: "Maya Patel",
-        avatar: "MP",
-        avatarBg: "bg-purple-600",
+        assignee: "David Kim",
+        avatar: "DK",
+        avatarBg: "bg-[#0F172A]",
         tag: "Color Grading",
         tagColor: "bg-purple-50 text-purple-700 border-purple-100",
         time: "4:00 PM",
@@ -3049,24 +3053,24 @@ export function AdminCalendarPage() {
         id: "cal-20-1",
         pod: "Pod A",
         client: "Northwind Labs",
-        title: "60-Sec High-Velocity Tech Growth Tip",
-        type: "Shorts",
-        assignee: "Liam Wright",
-        avatar: "LW",
-        avatarBg: "bg-orange-500",
+        title: "60-Sec High-Velocity Tech Growth Reel",
+        type: "Reel",
+        assignee: "Chloe Tan",
+        avatar: "CT",
+        avatarBg: "bg-teal-600",
         tag: "Approved",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "9:30 AM",
       },
       {
         id: "cal-20-2",
-        pod: "Pod B",
+        pod: "Pod A",
         client: "Bloom Studio",
         title: "Interactive Audience Q&A Story Sequence",
         type: "Story",
-        assignee: "Chloe Bennett",
-        avatar: "CB",
-        avatarBg: "bg-pink-500",
+        assignee: "Chloe Tan",
+        avatar: "CT",
+        avatarBg: "bg-teal-600",
         tag: "Drafting",
         tagColor: "bg-gray-100 text-gray-700 border-gray-200",
         time: "2:00 PM",
@@ -3075,26 +3079,26 @@ export function AdminCalendarPage() {
     22: [
       {
         id: "cal-22-1",
-        pod: "Pod B",
+        pod: "Pod A",
         client: "Bloom Studio",
         title: "Black Friday Sneak Peek Teaser Reel",
         type: "Reel",
-        assignee: "Anya Taylor",
-        avatar: "AT",
-        avatarBg: "bg-[#6366F1]",
+        assignee: "David Kim",
+        avatar: "DK",
+        avatarBg: "bg-[#0F172A]",
         tag: "Final Polish",
         tagColor: "bg-amber-50 text-amber-700 border-amber-100",
         time: "12:00 PM",
       },
       {
         id: "cal-22-2",
-        pod: "Pod E",
-        client: "Lumina Health",
-        title: "Cyber Monday Display Ads & Hero Banners",
-        type: "Banner",
-        assignee: "Sarah Jenkins",
-        avatar: "SJ",
-        avatarBg: "bg-emerald-600",
+        pod: "Pod A",
+        client: "Atlas Commerce",
+        title: "Cyber Monday Display Post Carousel",
+        type: "Post",
+        assignee: "Marcus Vance",
+        avatar: "MV",
+        avatarBg: "bg-indigo-600",
         tag: "Approved",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "4:00 PM",
@@ -3103,13 +3107,13 @@ export function AdminCalendarPage() {
     25: [
       {
         id: "cal-25-1",
-        pod: "Pod D",
-        client: "Acme Corp",
-        title: "Mobile App Onboarding Walkthrough Video",
-        type: "Explainer Video",
-        assignee: "Marcus Brody",
-        avatar: "MB",
-        avatarBg: "bg-blue-600",
+        pod: "Pod A",
+        client: "Northwind Labs",
+        title: "Mobile App Onboarding Story Series",
+        type: "Story",
+        assignee: "Chloe Tan",
+        avatar: "CT",
+        avatarBg: "bg-teal-600",
         tag: "Sound Sync",
         tagColor: "bg-cyan-50 text-cyan-700 border-cyan-100",
         time: "3:00 PM",
@@ -3120,11 +3124,11 @@ export function AdminCalendarPage() {
         id: "cal-28-1",
         pod: "Pod A",
         client: "Northwind Labs",
-        title: "End-of-Month Retrospective & Win Showcase",
+        title: "End-of-Month Retrospective Reel Showcase",
         type: "Reel",
-        assignee: "Omar Vance",
-        avatar: "OV",
-        avatarBg: "bg-[#2563EB]",
+        assignee: "David Kim",
+        avatar: "DK",
+        avatarBg: "bg-[#0F172A]",
         tag: "Final Polish",
         tagColor: "bg-amber-50 text-amber-700 border-amber-100",
         time: "5:00 PM",
@@ -3139,18 +3143,10 @@ export function AdminCalendarPage() {
         return { label: "🎬 Reel", bg: "bg-indigo-50 text-indigo-700 border-indigo-200" };
       case "Story":
         return { label: "📲 Story", bg: "bg-rose-50 text-rose-700 border-rose-200" };
-      case "Carousel":
-        return { label: "🎨 Carousel", bg: "bg-amber-50 text-amber-700 border-amber-200" };
-      case "Slide Deck":
-        return { label: "📊 Slide Deck", bg: "bg-blue-50 text-blue-700 border-blue-200" };
-      case "Explainer Video":
-        return { label: "📹 Explainer", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" };
-      case "Shorts":
-        return { label: "⚡ Shorts", bg: "bg-orange-50 text-orange-700 border-orange-200" };
-      case "Banner":
-        return { label: "🖼️ Banner", bg: "bg-cyan-50 text-cyan-700 border-cyan-200" };
+      case "Post":
+        return { label: "📄 Post", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" };
       default:
-        return { label: `📌 ${type}`, bg: "bg-gray-50 text-gray-700 border-gray-200" };
+        return { label: `📌 ${type}`, bg: "bg-blue-50 text-blue-700 border-blue-200" };
     }
   };
 
@@ -3171,7 +3167,7 @@ export function AdminCalendarPage() {
 
     const newItem = {
       id: `cal-${targetDay}-${Date.now()}`,
-      pod: scheduleForm.pod,
+      pod: isTeamLead ? "Pod A" : scheduleForm.pod,
       client: scheduleForm.client,
       title: scheduleForm.title.trim(),
       type: scheduleForm.type,
@@ -3201,9 +3197,10 @@ export function AdminCalendarPage() {
   };
 
   // Get current day's tasks filtered by pod / client / type
+  const activePodFilter = isTeamLead ? "Pod A" : selectedPodFilter;
   const rawDayTasks = tasksByDay[selectedDayNumber] || [];
   const filteredDayTasks = rawDayTasks.filter((item) => {
-    if (selectedPodFilter !== "all" && item.pod !== selectedPodFilter) return false;
+    if (activePodFilter !== "all" && item.pod !== activePodFilter) return false;
     if (selectedClientFilter !== "all" && !item.client.toLowerCase().includes(selectedClientFilter.toLowerCase())) return false;
     if (selectedTypeFilter !== "all" && item.type !== selectedTypeFilter) return false;
     return true;
@@ -3252,19 +3249,25 @@ export function AdminCalendarPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <select
-              value={selectedPodFilter}
-              onChange={(e) => setSelectedPodFilter(e.target.value)}
-              aria-label="Filter Calendar Pod"
-              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
-            >
-              <option value="all">All Pods ▾</option>
-              <option value="Pod A">Pod A</option>
-              <option value="Pod B">Pod B</option>
-              <option value="Pod C">Pod C</option>
-              <option value="Pod D">Pod D</option>
-              <option value="Pod E">Pod E</option>
-            </select>
+            {isTeamLead ? (
+              <div className="px-3 py-2 rounded-xl border border-blue-200 bg-blue-50/70 text-xs font-bold text-blue-700 shadow-2xs">
+                Pod A Schedule
+              </div>
+            ) : (
+              <select
+                value={selectedPodFilter}
+                onChange={(e) => setSelectedPodFilter(e.target.value)}
+                aria-label="Filter Calendar Pod"
+                className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+              >
+                <option value="all">All Pods ▾</option>
+                <option value="Pod A">Pod A</option>
+                <option value="Pod B">Pod B</option>
+                <option value="Pod C">Pod C</option>
+                <option value="Pod D">Pod D</option>
+                <option value="Pod E">Pod E</option>
+              </select>
+            )}
 
             <select
               value={selectedTypeFilter}
@@ -3272,12 +3275,10 @@ export function AdminCalendarPage() {
               aria-label="Filter Deliverable Type"
               className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
             >
-              <option value="all">All Deliverable Types ▾</option>
-              <option value="Reel">🎬 Reels</option>
-              <option value="Story">📲 Stories</option>
-              <option value="Carousel">🎨 Carousels</option>
-              <option value="Slide Deck">📊 Slide Decks</option>
-              <option value="Explainer Video">📹 Explainer Videos</option>
+              <option value="all">All Formats ▾</option>
+              <option value="Reel">🎬 Reel</option>
+              <option value="Story">📲 Story</option>
+              <option value="Post">📄 Post</option>
             </select>
 
             <select
@@ -3286,12 +3287,10 @@ export function AdminCalendarPage() {
               aria-label="Filter Calendar Client"
               className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
             >
-              <option value="all">All Clients ▾</option>
+              <option value="all">All Assigned Clients ▾</option>
               <option value="Northwind">Northwind Labs</option>
               <option value="Bloom">Bloom Studio</option>
               <option value="Atlas">Atlas Commerce</option>
-              <option value="Lumina">Lumina Health</option>
-              <option value="Acme">Acme Corp</option>
             </select>
 
             <button
@@ -3304,92 +3303,7 @@ export function AdminCalendarPage() {
           </div>
         </div>
 
-        {/* 4 Top KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4.5">
-          <div className="kpi-card bg-white rounded-2xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                Active Deployments Today
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                <Zap className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-1">
-              <span className="text-3xl font-black text-gray-900">16 Assets</span>
-            </div>
-            <div className="flex items-center justify-between text-xs mt-3 pt-1 border-t border-gray-50">
-              <span className="font-bold text-blue-600">↗ +3 vs. Yesterday</span>
-              <span className="bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded text-[10px]">
-                In Production
-              </span>
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#2563EB]" />
-          </div>
 
-          <div className="kpi-card bg-white rounded-2xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                Teams Allocated
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                <Users className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-1">
-              <span className="text-3xl font-black text-gray-900">5 Pods</span>
-            </div>
-            <div className="flex items-center justify-between text-xs mt-3 pt-1 border-t border-gray-50">
-              <span className="font-medium text-gray-400">Pods A, B, C, D, E</span>
-              <span className="bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded text-[10px]">
-                100% Staffed
-              </span>
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#2563EB]" />
-          </div>
-
-          <div className="kpi-card bg-white rounded-2xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                Selected Date Assets
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                <CheckSquare className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-1">
-              <span className="text-3xl font-black text-gray-900">{rawDayTasks.length} Scheduled</span>
-            </div>
-            <div className="flex items-center justify-between text-xs mt-3 pt-1 border-t border-gray-50">
-              <span className="font-medium text-gray-400">Nov {selectedDayNumber}, 2024</span>
-              <span className="bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded text-[10px]">
-                {isSelectedDateToday ? "Today" : "Selected Date"}
-              </span>
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#2563EB]" />
-          </div>
-
-          <div className="kpi-card bg-white rounded-2xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                Release Capacity
-              </span>
-              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                <TrendingUp className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-1">
-              <span className="text-3xl font-black text-gray-900">85%</span>
-            </div>
-            <div className="flex items-center justify-between text-xs mt-3 pt-1 border-t border-gray-50">
-              <span className="font-medium text-gray-400">Headroom normal</span>
-              <span className="bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded text-[10px]">
-                Optimal
-              </span>
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#2563EB]" />
-          </div>
-        </div>
 
         {/* Calendar Grid + Dynamic Selected Date Work Split */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -3615,7 +3529,7 @@ export function AdminCalendarPage() {
 
         {/* Schedule Modal */}
         {isScheduleModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="fixed inset-0 w-screen h-screen z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4 overflow-y-auto">
             <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
               <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <div>
@@ -3757,7 +3671,7 @@ export function AdminCalendarPage() {
 
         {/* Selected Asset Details Modal */}
         {selectedAssetModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="fixed inset-0 w-screen h-screen z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4 overflow-y-auto">
             <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
               <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <div>
@@ -3848,7 +3762,7 @@ export function AdminTeamManagementPage() {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  const [pods, _setPods] = useState([
+  const [pods, setPods] = useState([
     {
       id: "pod-a",
       name: "Pod A",
@@ -3931,7 +3845,7 @@ export function AdminTeamManagementPage() {
     },
   ]);
 
-  const [membersList, _setMembersList] = useState<TeamMember[]>([
+  const [membersList, setMembersList] = useState<TeamMember[]>([
     // --- POD A (Includes Lead, Designer, Editor, Videographer, Photographer) ---
     {
       id: "m-101",
@@ -4302,9 +4216,186 @@ export function AdminTeamManagementPage() {
     }
   };
 
-  const handleAssignWork = (member: TeamMember) => {
-    setToast(`Work assigned to ${member.name} (${member.role}).`);
-    setTimeout(() => setToast(null), 3000);
+  const [assignModalMember, setAssignModalMember] = useState<TeamMember | null>(null);
+  const [scheduleModalMember, setScheduleModalMember] = useState<TeamMember | null>(null);
+  const [assignForm, setAssignForm] = useState({
+    taskTitle: "Brand Repositioning Sprint Deliverable",
+    client: "Northwind Labs",
+    priority: "High",
+    allocationIncrease: 15,
+    deadline: "Friday (Sprint 08)",
+    brief: "Deliver key creative assets, revisions, and Figma handoff tokens according to brief specifications.",
+  });
+  const [newMemberForm, setNewMemberForm] = useState({
+    name: "",
+    email: "",
+    handle: "",
+    role: "Senior Visual Designer",
+    category: "designer" as TeamMember["category"],
+    podId: "pod-a",
+    capabilities: "Figma Tokens, Design Systems, Branding",
+  });
+  const [successPopup, setSuccessPopup] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type?: "success" | "info";
+  } | null>(null);
+
+  const handleCreateTeamMember = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMemberForm.name.trim()) return;
+
+    const roleTitle = newMemberForm.role.trim() || (
+      newMemberForm.category === "designer" ? "Senior Visual Designer" :
+      newMemberForm.category === "editor" ? "Lead Video Editor" :
+      newMemberForm.category === "videographer" ? "Lead Cinematographer & Videographer" :
+      newMemberForm.category === "photographer" ? "Commercial Photographer" :
+      "Squad Lead & Creative Strategist"
+    );
+
+    const capsArray = newMemberForm.capabilities.trim()
+      ? newMemberForm.capabilities.split(",").map((c) => c.trim()).filter(Boolean)
+      : ["Design Systems", "Client Deliverables", "Multimodal Sprint"];
+
+    const targetPodId = newMemberForm.podId || activePodId || "pod-a";
+
+    const newMember: TeamMember = {
+      id: `m-${Date.now()}`,
+      podId: targetPodId,
+      name: newMemberForm.name.trim(),
+      role: roleTitle,
+      category: newMemberForm.category,
+      email: newMemberForm.email.trim() || `${newMemberForm.name.toLowerCase().replace(/\s+/g, ".")}@creo.agency`,
+      handle: newMemberForm.handle.trim() || `@${newMemberForm.name.toLowerCase().replace(/\s+/g, "")}`,
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 40,
+      projectsCount: 1,
+      capabilities: capsArray,
+      isLead: newMemberForm.category === "lead",
+    };
+
+    setMembersList((prev) => [newMember, ...prev]);
+
+    // Update pod count in pods state
+    setPods((prev) =>
+      prev.map((p) =>
+        p.id === targetPodId
+          ? { ...p, membersCount: p.membersCount + 1 }
+          : p
+      )
+    );
+
+    const targetPodName = pods.find((p) => p.id === targetPodId)?.name || "Sprint Pod";
+    const memberName = newMember.name;
+
+    setIsAddMemberOpen(false);
+    setNewMemberForm({
+      name: "",
+      email: "",
+      handle: "",
+      role: "Senior Visual Designer",
+      category: "designer",
+      podId: activePodId || "pod-a",
+      capabilities: "Figma Tokens, Design Systems, Branding",
+    });
+
+    setSuccessPopup({
+      isOpen: true,
+      title: "Team Specialist Added!",
+      message: `${memberName} has been added to ${targetPodName} as ${roleTitle}. The specialist card is now live and ready for sprint task allocation!`,
+      type: "success",
+    });
+  };
+
+  const handleOpenAssignModal = (member: TeamMember) => {
+    setAssignModalMember(member);
+    setAssignForm({
+      taskTitle: `Sprint Deliverables for ${member.name.split(" ")[0]}`,
+      client: "Northwind Labs",
+      priority: "High",
+      allocationIncrease: member.allocatedPct >= 80 ? 10 : 15,
+      deadline: "Friday (Sprint 08)",
+      brief: `Execute sprint milestones and deliverables aligned with ${member.role} scope.`,
+    });
+  };
+
+  const handleOpenScheduleModal = (member: TeamMember) => {
+    setScheduleModalMember(member);
+  };
+
+  const handleConfirmAssignWork = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assignModalMember) return;
+    const loadInc = Number(assignForm.allocationIncrease) || 15;
+    const updatedPct = Math.min(100, assignModalMember.allocatedPct + loadInc);
+    const isFullyBooked = updatedPct >= 90;
+
+    setMembersList((prev) =>
+      prev.map((m) =>
+        m.id === assignModalMember.id
+          ? {
+              ...m,
+              allocatedPct: updatedPct,
+              projectsCount: m.projectsCount + 1,
+              status: isFullyBooked ? "Fully Booked" : "Sprint Ready",
+              statusColor: isFullyBooked
+                ? "bg-rose-50 text-rose-700 border-rose-200"
+                : "bg-sky-50 text-sky-700 border-sky-200",
+            }
+          : m
+      )
+    );
+
+    const assignedName = assignModalMember.name;
+    const taskName = assignForm.taskTitle;
+    const clientName = assignForm.client;
+    setAssignModalMember(null);
+
+    setSuccessPopup({
+      isOpen: true,
+      title: "Work Assigned Successfully!",
+      message: `"${taskName}" for ${clientName} has been assigned to ${assignedName}. Workload updated to ${updatedPct}%.`,
+      type: "success",
+    });
+  };
+
+  const handleRebalanceWorkload = (member: TeamMember) => {
+    const newPct = Math.max(40, member.allocatedPct - 20);
+    const newCount = Math.max(1, member.projectsCount - 1);
+    setMembersList((prev) =>
+      prev.map((m) =>
+        m.id === member.id
+          ? {
+              ...m,
+              allocatedPct: newPct,
+              projectsCount: newCount,
+              status: "Accepting Work",
+              statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+            }
+          : m
+      )
+    );
+    if (scheduleModalMember?.id === member.id) {
+      setScheduleModalMember((prev) =>
+        prev
+          ? {
+              ...prev,
+              allocatedPct: newPct,
+              projectsCount: newCount,
+              status: "Accepting Work",
+              statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+            }
+          : null
+      );
+    }
+    setSuccessPopup({
+      isOpen: true,
+      title: "Workload Rebalanced",
+      message: `Re-allocated 1 project from ${member.name}. Capacity restored to ${newPct}% (${newCount} projects).`,
+      type: "info",
+    });
   };
 
   return (
@@ -4645,9 +4736,19 @@ export function AdminTeamManagementPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      alert(`Exporting ${activePod?.name} roster CSV...`);
+                      const csvContent = "data:text/csv;charset=utf-8," + [
+                        ["ID", "Name", "Role", "Pod", "Workload", "Status"].join(","),
+                        ...filteredMembers.map((m) => [m.id, `"${m.name}"`, `"${m.role}"`, `"${activePod?.name || ""}"`, `${m.allocatedPct}%`, m.status].join(","))
+                      ].join("\n");
+                      const encodedUri = encodeURI(csvContent);
+                      const link = document.createElement("a");
+                      link.setAttribute("href", encodedUri);
+                      link.setAttribute("download", `${(activePod?.name || "pod").toLowerCase().replace(/\s+/g, "_")}_roster.csv`);
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
                     }}
-                    className="hover:text-gray-700 flex items-center gap-1"
+                    className="hover:text-gray-700 flex items-center gap-1 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" /> Export Roster
                   </button>
@@ -4740,8 +4841,14 @@ export function AdminTeamManagementPage() {
                       </span>
                       <button
                         type="button"
-                        onClick={() => handleAssignWork(member)}
-                        className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-[11px]"
+                        onClick={() => {
+                          if (member.allocatedPct >= 90) {
+                            handleOpenScheduleModal(member);
+                          } else {
+                            handleOpenAssignModal(member);
+                          }
+                        }}
+                        className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-[11px] font-bold"
                       >
                         {member.allocatedPct >= 90 ? "View Schedule" : "Assign Work"}
                       </button>
@@ -4753,82 +4860,541 @@ export function AdminTeamManagementPage() {
           </div>
         )}
 
-        {/* Add Member Modal */}
-        {isAddMemberOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-            <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
-              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                <h3 className="text-base font-bold text-gray-900">Add Team Specialist to {activePod?.name || "Pod"}</h3>
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            MODAL 1: ASSIGN WORK POPUP MODAL WITH BLURRED BACKDROP
+        ───────────────────────────────────────────────────────────────────────────── */}
+        {assignModalMember && (
+          <div
+            className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
+            onClick={() => setAssignModalMember(null)}
+          >
+            <div
+              className="relative w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl border border-slate-100 flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="size-9 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-sm">
+                    <Briefcase className="size-4.5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 tracking-tight">Assign Sprint Task</h3>
+                    <p className="text-[11px] text-slate-500 font-medium">Allocate project work & set turnaround targets</p>
+                  </div>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setIsAddMemberOpen(false)}
-                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
+                  onClick={() => setAssignModalMember(null)}
+                  className="size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="size-4" />
                 </button>
               </div>
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setToast("New specialist account provisioned successfully!");
-                  setIsAddMemberOpen(false);
-                }}
-                className="space-y-3"
-              >
+              {/* Specialist Profile Banner */}
+              <div className="bg-slate-50 border border-slate-100/90 rounded-2xl p-3.5 flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="size-11 rounded-2xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">
+                    {assignModalMember.name.split(" ").map((n) => n[0]).join("")}
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-black text-slate-900 truncate">{assignModalMember.name}</h4>
+                    <p className="text-[11px] text-slate-500 font-medium truncate">{assignModalMember.role}</p>
+                    <span className="text-[10px] text-blue-600 font-bold">{assignModalMember.email}</span>
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">CURRENT LOAD</span>
+                  <span className="text-sm font-black text-slate-900">{assignModalMember.allocatedPct}%</span>
+                  <span className="text-[10px] text-slate-500 block font-semibold">{assignModalMember.projectsCount} Projects</span>
+                </div>
+              </div>
+
+              {/* Assignment Form */}
+              <form onSubmit={handleConfirmAssignWork} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Full Name</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Task / Deliverable Title</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Jordan Miller"
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
+                    value={assignForm.taskTitle}
+                    onChange={(e) => setAssignForm({ ...assignForm, taskTitle: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    placeholder="e.g. Q4 Brand Identity Campaign Deliverables"
                   />
+                  {/* Preset Pills */}
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {[
+                      "3D Hero Product Animation",
+                      "Brand Guidelines Refresh",
+                      "TikTok High-Velocity Batch",
+                      "Design Token Architecture",
+                    ].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setAssignForm({ ...assignForm, taskTitle: preset })}
+                        className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                      >
+                        + {preset}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="e.g. jordan.m@creo.agency"
-                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Role / Speciality</label>
-                    <select className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium">
-                      <option value="designer">Designer</option>
-                      <option value="editor">Video Editor</option>
-                      <option value="videographer">Videographer</option>
-                      <option value="photographer">Photographer</option>
-                      <option value="lead">Pod Lead</option>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Client Account</label>
+                    <select
+                      value={assignForm.client}
+                      onChange={(e) => setAssignForm({ ...assignForm, client: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white"
+                    >
+                      <option value="Northwind Labs">Northwind Labs (Enterprise)</option>
+                      <option value="Atlas Commerce">Atlas Commerce (Growth)</option>
+                      <option value="Lumina Health">Lumina Health (Enterprise)</option>
+                      <option value="Bloom Studio">Bloom Studio (Standard)</option>
+                      <option value="Vanguard Mobility">Vanguard Mobility (Growth)</option>
                     </select>
                   </div>
+
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">Assign Pod</label>
-                    <select className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium" defaultValue={activePodId || "pod-a"}>
-                      <option value="pod-a">Pod A</option>
-                      <option value="pod-b">Pod B</option>
-                      <option value="pod-c">Pod C</option>
-                      <option value="pod-d">Pod D</option>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Priority Level</label>
+                    <select
+                      value={assignForm.priority}
+                      onChange={(e) => setAssignForm({ ...assignForm, priority: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white"
+                    >
+                      <option value="Urgent">🔥 Urgent (Within 24h)</option>
+                      <option value="High">⚡ High (Sprint Priority)</option>
+                      <option value="Medium">Standard Medium</option>
+                      <option value="Normal">Normal Priority</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Workload Allocation</label>
+                    <div className="grid grid-cols-4 gap-1">
+                      {[10, 15, 25, 35].map((pct) => (
+                        <button
+                          key={pct}
+                          type="button"
+                          onClick={() => setAssignForm({ ...assignForm, allocationIncrease: pct })}
+                          className={`py-1.5 text-center text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                            assignForm.allocationIncrease === pct
+                              ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
+                              : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                          }`}
+                        >
+                          +{pct}%
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Sprint Target Deadline</label>
+                    <input
+                      type="text"
+                      value={assignForm.deadline}
+                      onChange={(e) => setAssignForm({ ...assignForm, deadline: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-900"
+                      placeholder="e.g. Friday, Sprint 08"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Deliverable Scope & Brief</label>
+                  <textarea
+                    rows={2}
+                    value={assignForm.brief}
+                    onChange={(e) => setAssignForm({ ...assignForm, brief: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    placeholder="Brief instructions, deliverables checklist, links to Figma/Drive..."
+                  />
+                </div>
+
+                {/* Submit Row */}
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
                   <button
                     type="button"
-                    onClick={() => setIsAddMemberOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => setAssignModalMember(null)}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-xl bg-[#2563EB] text-xs font-bold text-white hover:bg-blue-700 cursor-pointer shadow-sm"
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
                   >
-                    Create Account
+                    Confirm & Assign Work
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            MODAL 2: VIEW SCHEDULE & WORKLOAD MODAL WITH BLURRED BACKDROP
+        ───────────────────────────────────────────────────────────────────────────── */}
+        {scheduleModalMember && (
+          <div
+            className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
+            onClick={() => setScheduleModalMember(null)}
+          >
+            <div
+              className="relative w-full max-w-2xl rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-100 flex flex-col space-y-5 max-h-[92vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="size-12 rounded-2xl bg-rose-500 text-white font-black text-base flex items-center justify-center shadow-md">
+                    {scheduleModalMember.name.split(" ").map((n) => n[0]).join("")}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-black text-slate-900 tracking-tight">{scheduleModalMember.name}</h3>
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                        ● {scheduleModalMember.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 font-medium">{scheduleModalMember.role} • {scheduleModalMember.email}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setScheduleModalMember(null)}
+                  className="size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              {/* Capacity Overview Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">ALLOCATED LOAD</span>
+                  <div className="text-xl font-black text-slate-900 mt-0.5">{scheduleModalMember.allocatedPct}%</div>
+                  <span className="text-[10px] text-rose-600 font-bold">Max Capacity</span>
+                </div>
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">ACTIVE ENGAGEMENTS</span>
+                  <div className="text-xl font-black text-slate-900 mt-0.5">{scheduleModalMember.projectsCount} Projects</div>
+                  <span className="text-[10px] text-blue-600 font-bold">2 in Final Review</span>
+                </div>
+                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">NEXT OPEN SLOT</span>
+                  <div className="text-xl font-black text-slate-900 mt-0.5">In 4 Days</div>
+                  <span className="text-[10px] text-emerald-600 font-bold">Sprint Cycle 09</span>
+                </div>
+              </div>
+
+              {/* Weekly Calendar Schedule Timeline */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+                  <span>Weekly Time Allocation (Mon – Fri)</span>
+                  <span className="text-blue-600 font-semibold">38.0h Total Booked</span>
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  {[
+                    { day: "Mon", hours: "8.0h", task: "Northwind 3D Renders", bg: "bg-blue-50 text-blue-700 border-blue-200" },
+                    { day: "Tue", hours: "7.5h", task: "Vanguard 4K Motion", bg: "bg-purple-50 text-purple-700 border-purple-200" },
+                    { day: "Wed", hours: "8.0h", task: "Bloom Studio Intro", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+                    { day: "Thu", hours: "8.0h", task: "Atlas Product Teaser", bg: "bg-amber-50 text-amber-700 border-amber-200" },
+                    { day: "Fri", hours: "6.5h", task: "Sprint Quality QA", bg: "bg-sky-50 text-sky-700 border-sky-200" },
+                  ].map((item) => (
+                    <div key={item.day} className="p-2.5 rounded-xl border border-slate-100 bg-slate-50 flex flex-col justify-between text-center gap-1.5">
+                      <span className="text-[11px] font-black text-slate-700">{item.day}</span>
+                      <span className="text-xs font-black text-slate-900">{item.hours}</span>
+                      <span className={`text-[9px] font-bold p-1 rounded-md border truncate ${item.bg}`}>
+                        {item.task}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Active Deliverables Breakdown */}
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-bold text-slate-800">Active Deliverables & Status</h4>
+                <div className="space-y-2">
+                  {[
+                    { client: "Northwind Labs", name: "3D Asset Render Batch #12", due: "Due in 2 days", progress: 90, color: "bg-blue-600" },
+                    { client: "Vanguard Mobility", name: "4K Motion Sequence & Audio Sync", due: "Due Friday", progress: 65, color: "bg-purple-600" },
+                    { client: "Bloom Studio", name: "Brand Intro Animation Loop", due: "Due Next Tue", progress: 35, color: "bg-emerald-600" },
+                    { client: "Atlas Commerce", name: "Product Showcase 9:16 Cut", due: "Due Next Fri", progress: 15, color: "bg-amber-600" },
+                  ].map((proj) => (
+                    <div key={proj.name} className="p-3 rounded-xl border border-slate-100 bg-white hover:border-slate-200 transition-colors flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-900 truncate">{proj.name}</span>
+                          <span className="text-[10px] font-bold text-slate-500">({proj.client})</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden">
+                          <div className={`h-full rounded-full ${proj.color}`} style={{ width: `${proj.progress}%` }} />
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-[10px] font-bold text-slate-400 block">{proj.due}</span>
+                        <span className="text-xs font-black text-slate-900">{proj.progress}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Modal Footer Controls */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => handleRebalanceWorkload(scheduleModalMember)}
+                  className="px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  ⚡ Rebalance Workload (-20%)
+                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setToast(`Notification dispatched to Pod Lead for ${scheduleModalMember.name}.`);
+                      setScheduleModalMember(null);
+                    }}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    Notify Lead
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setScheduleModalMember(null)}
+                    className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            MODAL 3: SUCCESS CONFIRMATION POPUP WITH BLURRED BACKDROP
+        ───────────────────────────────────────────────────────────────────────────── */}
+        {successPopup?.isOpen && (
+          <div
+            className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
+            onClick={() => setSuccessPopup(null)}
+          >
+            <div
+              className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              <button
+                type="button"
+                onClick={() => setSuccessPopup(null)}
+                className="absolute top-4 right-4 size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="Close modal"
+              >
+                <X className="size-4" />
+              </button>
+
+              <div className="size-16 rounded-3xl bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60 flex items-center justify-center mb-4 shadow-inner">
+                <CheckCircle2 className="size-8" />
+              </div>
+
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">{successPopup.title}</h3>
+              <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed max-w-sm">{successPopup.message}</p>
+
+              <div className="w-full mt-6">
+                <button
+                  type="button"
+                  onClick={() => setSuccessPopup(null)}
+                  autoFocus
+                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            MODAL 4: ADD MEMBER MODAL (FULLY FUNCTIONAL)
+        ───────────────────────────────────────────────────────────────────────────── */}
+        {isAddMemberOpen && (
+          <div
+            className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
+            onClick={() => setIsAddMemberOpen(false)}
+          >
+            <div
+              className="relative w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl border border-slate-100 flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="size-9 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-sm">
+                    <Users className="size-4.5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 tracking-tight">
+                      Add Team Specialist to {activePod?.name || "Sprint Pod"}
+                    </h3>
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      Provision creative talent, set role capabilities & sprint track
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAddMemberOpen(false)}
+                  className="size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+
+              {/* Add Member Form */}
+              <form onSubmit={handleCreateTeamMember} className="space-y-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newMemberForm.name}
+                      onChange={(e) => {
+                        const name = e.target.value;
+                        const autoEmail = name ? `${name.toLowerCase().replace(/\s+/g, ".")}@creo.agency` : "";
+                        const autoHandle = name ? `@${name.toLowerCase().replace(/\s+/g, "")}` : "";
+                        setNewMemberForm({
+                          ...newMemberForm,
+                          name,
+                          email: newMemberForm.email ? newMemberForm.email : autoEmail,
+                          handle: newMemberForm.handle ? newMemberForm.handle : autoHandle,
+                        });
+                      }}
+                      placeholder="e.g. Jordan Miller"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={newMemberForm.email}
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, email: e.target.value })}
+                      placeholder="e.g. jordan.m@creo.agency"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Role Title</label>
+                    <input
+                      type="text"
+                      required
+                      value={newMemberForm.role}
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, role: e.target.value })}
+                      placeholder="e.g. Senior Visual Designer"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Slack / Agency Handle</label>
+                    <input
+                      type="text"
+                      value={newMemberForm.handle}
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, handle: e.target.value })}
+                      placeholder="e.g. @jmiller"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Role Track Category</label>
+                    <select
+                      value={newMemberForm.category}
+                      onChange={(e) => {
+                        const cat = e.target.value as TeamMember["category"];
+                        let defaultRole = "Senior Visual Designer";
+                        if (cat === "editor") defaultRole = "Lead Video Editor";
+                        else if (cat === "videographer") defaultRole = "Lead Cinematographer & Videographer";
+                        else if (cat === "photographer") defaultRole = "Commercial Photographer";
+                        else if (cat === "lead") defaultRole = "Sprint Pod Lead";
+                        setNewMemberForm({ ...newMemberForm, category: cat, role: defaultRole });
+                      }}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white"
+                    >
+                      <option value="designer">🎨 Designer (UI, 3D, Brand)</option>
+                      <option value="editor">✂️ Video & Motion Editor</option>
+                      <option value="videographer">🎥 Cinematographer & Videographer</option>
+                      <option value="photographer">📷 Commercial Photographer</option>
+                      <option value="lead">👑 Pod Lead & Strategist</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Assign Sprint Pod</label>
+                    <select
+                      value={newMemberForm.podId}
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, podId: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white"
+                    >
+                      <option value="pod-a">Pod A • Enterprise Brand & Design</option>
+                      <option value="pod-b">Pod B • Performance & Video</option>
+                      <option value="pod-c">Pod C • 3D Motion & VFX</option>
+                      <option value="pod-d">Pod D • Commercial Photo & Cine</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Core Capabilities (comma separated)</label>
+                  <input
+                    type="text"
+                    value={newMemberForm.capabilities}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, capabilities: e.target.value })}
+                    placeholder="e.g. Figma Tokens, Cinema 4D, Color Grading, Kinetic Typography"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                  />
+                </div>
+
+                {/* Submit Row */}
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddMemberOpen(false)}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+                  >
+                    Create & Provision Specialist
                   </button>
                 </div>
               </form>
@@ -5919,7 +6485,7 @@ export function AdminRevenuePage() {
               <button
                 type="button"
                 onClick={() => {
-                  alert(`Downloading PDF receipt for ${selectedReceipt.id}...`);
+                  window.print();
                   setSelectedReceipt(null);
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-[#2563EB] text-white font-bold text-xs hover:bg-blue-700 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
@@ -6015,7 +6581,7 @@ export function AdminPlansPage() {
   const [negotiations, setNegotiations] = useState<PlanNegotiationItem[]>([]);
 
   // Active Deals Pipeline (0 Mock Data - Real commercial pipeline deals appear here)
-  const [deals, _setDeals] = useState<
+  const [deals, setDeals] = useState<
     Array<{
       id: string;
       client: string;
@@ -6108,6 +6674,166 @@ export function AdminPlansPage() {
     setTimeout(() => setToast(null), 4000);
   };
 
+  // Manage Deal Modal State & Handlers
+  const [manageDealModal, setManageDealModal] = useState<(typeof deals)[0] | null>(null);
+  const [dealForm, setDealForm] = useState({
+    scope: "",
+    value: 960000,
+    stage: "Closing / Contract",
+    probability: "95%",
+    owner: "Sarah Vance",
+    expectedClose: "Nov 30, 2024",
+    notes: "",
+  });
+  const [dealSuccessModal, setDealSuccessModal] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
+
+  // Manage Mode: normal edit, revoke confirm, or refund process
+  const [manageMode, setManageMode] = useState<"edit" | "revoke_confirm" | "refund">("edit");
+  const [refundAmountInput, setRefundAmountInput] = useState("");
+  const [refundReasonInput, setRefundReasonInput] = useState("Contract Cancellation / Retainer Revocation");
+  const [refundMethodInput, setRefundMethodInput] = useState("Original Payment Gateway (Stripe ACH / Card)");
+
+  const getStageBadgeStyle = (stage: string) => {
+    switch (stage) {
+      case "Won / Closed":
+      case "Closing / Contract":
+        return "bg-emerald-50 text-emerald-700 border-emerald-200";
+      case "In Negotiation":
+        return "bg-amber-50 text-amber-700 border-amber-200";
+      case "Proposal Sent":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      case "Subscription Revoked":
+        return "bg-rose-50 text-rose-700 border-rose-200 font-bold";
+      case "Refund Processed":
+        return "bg-orange-50 text-orange-700 border-orange-200 font-bold";
+      case "Discovery / Demo":
+      default:
+        return "bg-purple-50 text-purple-700 border-purple-200";
+    }
+  };
+
+  const handleOpenManageDeal = (deal: (typeof deals)[0]) => {
+    setManageDealModal(deal);
+    setManageMode("edit");
+    setRefundAmountInput(String(Math.round(deal.value / 12)));
+    setDealForm({
+      scope: deal.scope,
+      value: deal.value,
+      stage: deal.stage,
+      probability: deal.probability,
+      owner: deal.owner,
+      expectedClose: deal.expectedClose,
+      notes: "",
+    });
+  };
+
+  const handleSaveDeal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manageDealModal) return;
+
+    const val = Number(dealForm.value) || manageDealModal.value;
+    const badge = getStageBadgeStyle(dealForm.stage);
+
+    setDeals((prev) =>
+      prev.map((d) =>
+        d.id === manageDealModal.id
+          ? {
+              ...d,
+              scope: dealForm.scope,
+              value: val,
+              stage: dealForm.stage,
+              stageBadge: badge,
+              probability: dealForm.probability,
+              owner: dealForm.owner,
+              expectedClose: dealForm.expectedClose,
+            }
+          : d
+      )
+    );
+
+    const clientName = manageDealModal.client;
+    const updatedStage = dealForm.stage;
+    setManageDealModal(null);
+
+    setDealSuccessModal({
+      title: "Commercial Deal Updated!",
+      message: `Deal for ${clientName} updated to stage "${updatedStage}" with contract value ₹${val.toLocaleString("en-IN")} / yr.`,
+    });
+  };
+
+  const handleQuickCloseWon = (deal: (typeof deals)[0]) => {
+    setDeals((prev) =>
+      prev.map((d) =>
+        d.id === deal.id
+          ? {
+              ...d,
+              stage: "Won / Closed",
+              stageBadge: "bg-emerald-600 text-white border-emerald-600 shadow-2xs font-black",
+              probability: "100%",
+            }
+          : d
+      )
+    );
+    setManageDealModal(null);
+    setDealSuccessModal({
+      title: "🎉 Deal Marked as Closed Won!",
+      message: `${deal.client} (${deal.scope}) is now Won / Closed at ₹${deal.value.toLocaleString("en-IN")} / yr!`,
+    });
+  };
+
+  // Actions: Revoke Subscription
+  const handleConfirmRevokeSubscription = (deal: (typeof deals)[0]) => {
+    setDeals((prev) =>
+      prev.map((d) =>
+        d.id === deal.id
+          ? {
+              ...d,
+              stage: "Subscription Revoked",
+              stageBadge: "bg-rose-100 text-rose-800 border-rose-300 font-black",
+              probability: "0%",
+            }
+          : d
+      )
+    );
+    setManageDealModal(null);
+    setManageMode("edit");
+    setDealSuccessModal({
+      title: "⚠️ Subscription Revoked",
+      message: `The active subscription and retainer contract for ${deal.client} (${deal.scope}) has been revoked. Retainer access is deactivated and deliverables queue is paused.`,
+    });
+  };
+
+  // Actions: Process Refund
+  const handleConfirmProcessRefund = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manageDealModal) return;
+
+    const amt = Number(refundAmountInput) || Math.round(manageDealModal.value / 12);
+    const clientName = manageDealModal.client;
+
+    setDeals((prev) =>
+      prev.map((d) =>
+        d.id === manageDealModal.id
+          ? {
+              ...d,
+              stage: "Refund Processed",
+              stageBadge: "bg-amber-100 text-amber-800 border-amber-300 font-bold",
+            }
+          : d
+      )
+    );
+
+    setManageDealModal(null);
+    setManageMode("edit");
+    setDealSuccessModal({
+      title: "💸 Refund Issued Successfully",
+      message: `A refund of ₹${amt.toLocaleString("en-IN")} has been dispatched to ${clientName} via ${refundMethodInput}. Reason: ${refundReasonInput}. Reference: #REF-${Math.floor(10000 + Math.random() * 90000)}.`,
+    });
+  };
+
   // Actions: Save Edit Tier Terms
   const handleSaveTierTerms = (e: React.FormEvent) => {
     e.preventDefault();
@@ -6191,7 +6917,7 @@ export function AdminPlansPage() {
             <div className="text-3xl font-black text-gray-900">
               {plans.reduce((acc, p) => acc + p.subscribers, 0)} Active
             </div>
-            <p className="text-xs text-blue-600 font-bold">MRR: ${totalRetainerRevenue.toLocaleString()}</p>
+            <p className="text-xs text-blue-600 font-bold">MRR: ₹{totalRetainerRevenue.toLocaleString("en-IN")}</p>
           </div>
 
           <div className="kpi-card p-6 bg-white rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
@@ -6429,7 +7155,7 @@ export function AdminPlansPage() {
                             type="button"
                             onClick={() => {
                               setCounterModalItem(item);
-                              setCounterPriceInput(String(item.proposedPrice + 400));
+                              setCounterPriceInput(String(item.proposedPrice + 4000));
                             }}
                             className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs cursor-pointer"
                           >
@@ -6508,11 +7234,8 @@ export function AdminPlansPage() {
                       <td className="py-4 text-right pr-2">
                         <button
                           type="button"
-                          onClick={() => {
-                            setToast(`Deal details updated for ${d.client}.`);
-                            setTimeout(() => setToast(null), 2500);
-                          }}
-                          className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs cursor-pointer"
+                          onClick={() => handleOpenManageDeal(d)}
+                          className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-800 font-bold text-xs cursor-pointer shadow-2xs transition-all active:scale-95"
                         >
                           Manage
                         </button>
@@ -6759,6 +7482,394 @@ export function AdminPlansPage() {
           </div>
         </div>
       )}
+
+      {/* ─────────────────────────────────────────────────────────────────────────────
+          MODAL: MANAGE COMMERCIAL DEAL & PIPELINE (WITH REVOKE & REFUND)
+      ───────────────────────────────────────────────────────────────────────────── */}
+      {manageDealModal && (
+        <div
+          className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
+          onClick={() => {
+            setManageDealModal(null);
+            setManageMode("edit");
+          }}
+        >
+          <div
+            className="relative w-full max-w-xl rounded-3xl bg-white p-6 sm:p-7 shadow-2xl border border-slate-100 flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="size-11 rounded-2xl bg-slate-950 text-white font-black text-sm flex items-center justify-center shadow-xs">
+                  {manageDealModal.clientLogo}
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 tracking-tight">
+                    Manage Deal • {manageDealModal.client}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Contract negotiation, deal stage progression & subscription controls
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setManageDealModal(null);
+                  setManageMode("edit");
+                }}
+                className="size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* Quick Action Navigation Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 p-1.5 bg-slate-100/80 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => setManageMode("edit")}
+                className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
+                  manageMode === "edit"
+                    ? "bg-white text-slate-900 shadow-xs font-black"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                📝 Edit Contract
+              </button>
+              <button
+                type="button"
+                onClick={() => setManageMode("refund")}
+                className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
+                  manageMode === "refund"
+                    ? "bg-amber-500 text-white shadow-xs font-black"
+                    : "text-amber-700 hover:bg-amber-100/60"
+                }`}
+              >
+                💸 Process Refund
+              </button>
+              <button
+                type="button"
+                onClick={() => setManageMode("revoke_confirm")}
+                className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
+                  manageMode === "revoke_confirm"
+                    ? "bg-rose-600 text-white shadow-xs font-black"
+                    : "text-rose-700 hover:bg-rose-100/60"
+                }`}
+              >
+                ⚠️ Revoke Retainer
+              </button>
+            </div>
+
+            {/* MODE 1: REVOKE CONFIRMATION */}
+            {manageMode === "revoke_confirm" && (
+              <div className="space-y-4 py-2 animate-fade-in">
+                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3.5">
+                  <div className="size-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <X className="size-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-black text-rose-900">Revoke Active Subscription & Retainer?</h4>
+                    <p className="text-xs text-rose-700 leading-relaxed font-medium">
+                      This will immediately deactivate <strong>{manageDealModal.client}</strong>'s current retainer ({manageDealModal.scope}), halt all creative pod work queues, and update deal status to <strong>Subscription Revoked</strong>.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2 text-slate-600">
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-slate-500">Client:</span>
+                    <strong className="text-slate-900">{manageDealModal.client}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-slate-500">Contract Value:</span>
+                    <strong className="text-slate-900">₹{manageDealModal.value.toLocaleString("en-IN")} / yr</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-slate-500">Assigned Account Owner:</span>
+                    <strong className="text-slate-900">{manageDealModal.owner}</strong>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setManageMode("edit")}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Go Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleConfirmRevokeSubscription(manageDealModal)}
+                    className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/25 active:scale-95 transition-all cursor-pointer"
+                  >
+                    Confirm & Revoke Subscription
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* MODE 2: ISSUE REFUND */}
+            {manageMode === "refund" && (
+              <form onSubmit={handleConfirmProcessRefund} className="space-y-4 py-2 animate-fade-in">
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3.5">
+                  <div className="size-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm font-black text-sm">
+                    ₹
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-black text-amber-900">Process Client Refund</h4>
+                    <p className="text-xs text-amber-700 leading-relaxed font-medium">
+                      Issue a full or prorated refund back to <strong>{manageDealModal.client}</strong>. A settlement receipt will be automatically logged.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Refund Amount (₹ INR)</label>
+                    <input
+                      type="number"
+                      required
+                      value={refundAmountInput}
+                      onChange={(e) => setRefundAmountInput(e.target.value)}
+                      placeholder="e.g. 45000"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Refund Method</label>
+                    <select
+                      value={refundMethodInput}
+                      onChange={(e) => setRefundMethodInput(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white"
+                    >
+                      <option value="Original Payment Gateway (Stripe ACH / Card)">Original Payment Gateway (Stripe / ACH)</option>
+                      <option value="Direct Bank Wire / IMPS / RTGS">Direct Bank Transfer (IMPS / RTGS)</option>
+                      <option value="Internal Account Service Credit">Internal Account Service Credit</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Reason for Refund</label>
+                  <select
+                    value={refundReasonInput}
+                    onChange={(e) => setRefundReasonInput(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white"
+                  >
+                    <option value="Contract Cancellation / Retainer Revocation">Contract Cancellation / Retainer Revocation</option>
+                    <option value="SLA Non-Compliance / Delivery Disruption">SLA Non-Compliance / Delivery Disruption</option>
+                    <option value="Duplicate or Overcharge Billing Adjustment">Duplicate or Overcharge Billing Adjustment</option>
+                    <option value="Executive Discretionary Credit">Executive Discretionary Credit</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setManageMode("edit")}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  >
+                    Go Back
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md shadow-amber-600/25 active:scale-95 transition-all cursor-pointer"
+                  >
+                    Confirm & Issue ₹{Number(refundAmountInput || 0).toLocaleString("en-IN")} Refund
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* MODE 3: STANDARD EDIT */}
+            {manageMode === "edit" && (
+              <>
+                {/* Stage Selector Pills */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700">Deal Pipeline Stage</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                    {[
+                      { stage: "Discovery / Demo", prob: "40%" },
+                      { stage: "Proposal Sent", prob: "60%" },
+                      { stage: "In Negotiation", prob: "75%" },
+                      { stage: "Closing / Contract", prob: "95%" },
+                      { stage: "Won / Closed", prob: "100%" },
+                    ].map((s) => (
+                      <button
+                        key={s.stage}
+                        type="button"
+                        onClick={() => setDealForm({ ...dealForm, stage: s.stage, probability: s.prob })}
+                        className={`px-2 py-2 rounded-xl text-[10px] font-bold border transition-all text-center cursor-pointer ${
+                          dealForm.stage === s.stage
+                            ? "bg-blue-600 text-white border-blue-600 shadow-2xs scale-[1.02]"
+                            : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
+                        }`}
+                      >
+                        {s.stage}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Deal Form */}
+                <form onSubmit={handleSaveDeal} className="space-y-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Deal Scope & Retainer Package</label>
+                    <input
+                      type="text"
+                      required
+                      value={dealForm.scope}
+                      onChange={(e) => setDealForm({ ...dealForm, scope: e.target.value })}
+                      placeholder="e.g. Annual Enterprise Tier 2 Retainer"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Annual Contract Value (₹ INR / yr)</label>
+                      <input
+                        type="number"
+                        required
+                        value={dealForm.value}
+                        onChange={(e) => setDealForm({ ...dealForm, value: Number(e.target.value) })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      />
+                      <span className="text-[10px] text-slate-400 font-medium mt-0.5 block">
+                        ≈ ₹{(dealForm.value / 12).toLocaleString("en-IN", { maximumFractionDigits: 0 })} / mo
+                      </span>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Win Probability</label>
+                      <select
+                        value={dealForm.probability}
+                        onChange={(e) => setDealForm({ ...dealForm, probability: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-emerald-700 bg-white"
+                      >
+                        <option value="40%">40% (Early Interest)</option>
+                        <option value="60%">60% (Proposal Under Review)</option>
+                        <option value="75%">75% (In Negotiation)</option>
+                        <option value="90%">90% (Final Terms Sent)</option>
+                        <option value="95%">95% (Contract Out for Signature)</option>
+                        <option value="100%">100% (Closed / Signed)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Lead Account Owner</label>
+                      <select
+                        value={dealForm.owner}
+                        onChange={(e) => setDealForm({ ...dealForm, owner: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white"
+                      >
+                        <option value="Sarah Vance">Sarah Vance (VP Sales)</option>
+                        <option value="Elena Rostova">Elena Rostova (Account Dir)</option>
+                        <option value="Marcus Brody">Marcus Brody (Enterprise Lead)</option>
+                        <option value="Maya Lin">Maya Lin (Creative VP)</option>
+                        <option value="Omar Vance">Omar Vance (Principal Strategist)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Expected Closing Date</label>
+                      <input
+                        type="text"
+                        value={dealForm.expectedClose}
+                        onChange={(e) => setDealForm({ ...dealForm, expectedClose: e.target.value })}
+                        placeholder="e.g. Nov 30, 2024"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => handleQuickCloseWon(manageDealModal)}
+                      className="px-3.5 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      🏆 Mark as Closed Won
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setManageDealModal(null);
+                          setManageMode("edit");
+                        }}
+                        className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+                      >
+                        Save & Update Deal
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────────────────
+          MODAL: DEAL SUCCESS POPUP
+      ───────────────────────────────────────────────────────────────────────────── */}
+      {dealSuccessModal && (
+        <div
+          className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
+          onClick={() => setDealSuccessModal(null)}
+        >
+          <div
+            className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <button
+              type="button"
+              onClick={() => setDealSuccessModal(null)}
+              className="absolute top-4 right-4 size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+              aria-label="Close modal"
+            >
+              <X className="size-4" />
+            </button>
+
+            <div className="size-16 rounded-3xl bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60 flex items-center justify-center mb-4 shadow-inner">
+              <CheckCircle2 className="size-8" />
+            </div>
+
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">{dealSuccessModal.title}</h3>
+            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed max-w-sm">{dealSuccessModal.message}</p>
+
+            <div className="w-full mt-6">
+              <button
+                type="button"
+                onClick={() => setDealSuccessModal(null)}
+                autoFocus
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -6809,8 +7920,19 @@ export function AdminAnnouncementsPage() {
       setContent("");
       fetchAnnouncements();
     } catch {
-      alert("Broadcast successful.");
+      setAnnouncements((prev) => [
+        {
+          id: `ann-${Date.now()}`,
+          title,
+          content,
+          type: _type,
+          created_at: new Date().toISOString(),
+        },
+        ...prev,
+      ]);
       setCreateOpen(false);
+      setTitle("");
+      setContent("");
     } finally {
       setPublishing(false);
     }
@@ -6861,7 +7983,7 @@ export function AdminAnnouncementsPage() {
             <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
               <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <h3 className="text-base font-bold text-gray-900">Broadcast Announcement</h3>
-                <button type="button" onClick={() => setCreateOpen(false)} className="p-1 text-gray-400 hover:text-gray-700">
+                <button type="button" onClick={() => setCreateOpen(false)} className="p-1 text-gray-400 hover:text-gray-700 cursor-pointer">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -6890,8 +8012,8 @@ export function AdminAnnouncementsPage() {
                   />
                 </div>
                 <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-                  <button type="button" onClick={() => setCreateOpen(false)} className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50">Cancel</button>
-                  <button type="submit" disabled={publishing} className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-xs font-bold text-white hover:bg-[#1A5EA8]">
+                  <button type="button" onClick={() => setCreateOpen(false)} className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer">Cancel</button>
+                  <button type="submit" disabled={publishing} className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-xs font-bold text-white hover:bg-[#1A5EA8] cursor-pointer">
                     {publishing ? "Broadcasting..." : "Broadcast"}
                   </button>
                 </div>
@@ -6941,8 +8063,8 @@ export function AdminReportsPage() {
 // 12. ADMIN ADDONS PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export function AdminAddonsPage() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [addons, _setAddons] = useState<any[]>([
+  const alert = useAlert();
+  const [addons, setAddons] = useState<any[]>([
     {
       id: "addon-1",
       name: "Extra Shoot Day (Full Production)",
@@ -6971,6 +8093,21 @@ export function AdminAddonsPage() {
       pending_requests: 0,
     },
   ]);
+
+  const handleManageAddon = (a: any) => {
+    setAddons((prev) =>
+      prev.map((item) =>
+        item.id === a.id
+          ? { ...item, pending_requests: item.pending_requests > 0 ? 0 : 1 }
+          : item
+      )
+    );
+    alert({
+      title: "Add-on Managed",
+      description: `Fulfillment status updated for ${a.name}.`,
+      tone: "success",
+    });
+  };
 
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
@@ -7003,8 +8140,8 @@ export function AdminAddonsPage() {
                 )}
                 <button
                   type="button"
-                  onClick={() => alert(`Fulfillment updated for ${a.name}`)}
-                  className="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-bold text-xs"
+                  onClick={() => handleManageAddon(a)}
+                  className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors cursor-pointer"
                 >
                   Manage
                 </button>

@@ -2,6 +2,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { AlertCircle, ArrowUpRight, CheckCircle2, MessageSquare, X } from "lucide-react";
 import { useState } from "react";
 import type { DeliverableItem } from "../../types/api";
+import { useAlert } from "../../components/ui/ConfirmDialog";
 
 interface RevisionDialogProps {
   open: boolean;
@@ -20,6 +21,7 @@ export function RevisionDialog({
   onApproveAsIs,
   isSubmitting = false,
 }: RevisionDialogProps) {
+  const alert = useAlert();
   const [comment, setComment] = useState("");
   const [errorStatus, setErrorStatus] = useState<string | null>(null);
 
@@ -169,7 +171,11 @@ export function RevisionDialog({
                 <button
                   type="button"
                   onClick={() => {
-                    alert("Redirecting to plan upgrade checkout (Phase 3 Billing)...");
+                    alert({
+                      title: "Upgrade Plan Required",
+                      description: "You have reached your revision limits for this billing cycle. Redirecting to plan upgrade checkout...",
+                      tone: "info",
+                    });
                   }}
                   style={{
                     flex: 1,

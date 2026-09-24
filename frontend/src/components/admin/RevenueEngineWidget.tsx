@@ -104,12 +104,12 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
   return (
     <div
       onClick={() => navigate("/admin/revenue")}
-      className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.04)] hover:shadow-xl hover:border-blue-200/80 transition-all p-6 flex flex-col w-full h-full font-sans cursor-pointer group"
+      className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-blue-200/80 transition-all p-4 sm:p-5 flex flex-col w-full h-full font-sans cursor-pointer group"
     >
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors tracking-tight">Revenue Engine</h2>
-        <div className="flex bg-gray-50 p-1 rounded-lg text-xs font-medium border border-gray-100" onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-center justify-between mb-2.5">
+        <h2 className="text-base font-black text-gray-900 group-hover:text-blue-600 transition-colors tracking-tight">Revenue Engine</h2>
+        <div className="flex bg-slate-50 p-0.5 rounded-lg text-xs font-semibold border border-slate-100" onClick={(e) => e.stopPropagation()}>
           {(Object.entries(TIMEFRAME_LABELS) as [Timeframe, string][]).map(([key, label]) => (
             <button
               key={key}
@@ -118,10 +118,10 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
                 e.stopPropagation();
                 setActiveTimeframe(key);
               }}
-              className={`px-3 py-1 rounded-md cursor-pointer transition-all ${
+              className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold cursor-pointer transition-all ${
                 activeTimeframe === key
-                  ? "bg-white text-blue-600 shadow-sm"
-                  : "text-gray-500 hover:text-gray-900"
+                  ? "bg-white text-blue-600 shadow-xs"
+                  : "text-slate-500 hover:text-slate-900"
               }`}
             >
               {label}
@@ -130,44 +130,44 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
         </div>
       </div>
 
-      {/* Big Revenue Number */}
-      <div className="flex items-baseline gap-3 mb-4">
-        <span className="text-4xl font-black text-gray-900 tracking-tighter">
+      {/* Revenue Number */}
+      <div className="flex items-baseline gap-2 mb-2.5">
+        <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
           {displayRevenue}
         </span>
-        <span className="text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+        <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
           {displayClients} clients
         </span>
       </div>
 
       {/* Recharts Area Chart */}
       <div
-        className={`relative w-full mb-6 transition-opacity duration-300 ${trendLoading ? "opacity-40" : "opacity-100"}`}
-        style={{ height: 200 }}
+        className={`relative w-full mb-3 transition-opacity duration-300 ${trendLoading ? "opacity-40" : "opacity-100"}`}
+        style={{ height: 125 }}
       >
         {trendLoading && (
           <div className="absolute inset-0 flex items-center justify-center z-10">
-            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
             <defs>
               <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#4C6FFF" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#4C6FFF" stopOpacity={0.02} />
+                <stop offset="5%" stopColor="#2563EB" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#2563EB" stopOpacity={0.01} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
             <XAxis
               dataKey="name"
-              tick={{ fontSize: 10, fill: "#9ca3af" }}
+              tick={{ fontSize: 9, fill: "#94a3b8" }}
               axisLine={false}
               tickLine={false}
               interval="preserveStartEnd"
             />
             <YAxis
-              tick={{ fontSize: 10, fill: "#9ca3af" }}
+              tick={{ fontSize: 9, fill: "#94a3b8" }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v: number) =>
@@ -185,95 +185,80 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
               y={avgTicket * 2 > 0 ? avgTicket * 2 : 10000000}
               stroke="#94a3b8"
               strokeDasharray="4 4"
-              strokeWidth={1.5}
-              label={{
-                value: "Target",
-                position: "insideTopRight",
-                fill: "#64748b",
-                fontSize: 10,
-                fontWeight: 600,
-              }}
+              strokeWidth={1}
             />
             <Area
               type="monotone"
               dataKey="revenue"
-              stroke="#4C6FFF"
-              strokeWidth={2.5}
+              stroke="#2563EB"
+              strokeWidth={2}
               fill="url(#colorRevenue)"
               dot={false}
-              activeDot={{ r: 5, fill: "#4C6FFF", stroke: "#fff", strokeWidth: 2 }}
-              animationDuration={800}
-              animationEasing="ease-out"
+              activeDot={{ r: 4, fill: "#2563EB", stroke: "#fff", strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="kpi-card bg-gray-50 rounded-xl p-3 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all flex flex-col items-center justify-center text-center">
-          <span className="text-lg font-black text-gray-900">{displayRevenue}</span>
-          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Total Rev</span>
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-2.5">
+        <div className="bg-slate-50/90 rounded-xl p-1.5 sm:p-2 border border-slate-200/80 flex flex-col items-center justify-center text-center">
+          <span className="text-xs sm:text-sm font-black text-slate-900 leading-none">{displayRevenue}</span>
+          <span className="text-[8px] sm:text-[8.5px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">Total Rev</span>
         </div>
-        <div className="kpi-card bg-blue-50/50 rounded-xl p-3 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all flex flex-col items-center justify-center text-center">
-          <span className="text-lg font-black text-blue-600">{displayClients}</span>
-          <span className="text-[10px] text-blue-600 uppercase font-bold tracking-wider">Active Deals</span>
+        <div className="bg-blue-50/60 rounded-xl p-1.5 sm:p-2 border border-blue-200/80 flex flex-col items-center justify-center text-center">
+          <span className="text-xs sm:text-sm font-black text-blue-600 leading-none">{displayClients}</span>
+          <span className="text-[8px] sm:text-[8.5px] text-blue-600 uppercase font-bold tracking-wider mt-0.5">Active Deals</span>
         </div>
-        <div className="kpi-card bg-gray-50 rounded-xl p-3 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all flex flex-col items-center justify-center text-center">
-          <span className="text-lg font-black text-gray-900">{formatCurrency(avgTicket)}</span>
-          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Avg Ticket</span>
+        <div className="bg-slate-50/90 rounded-xl p-1.5 sm:p-2 border border-slate-200/80 flex flex-col items-center justify-center text-center">
+          <span className="text-xs sm:text-sm font-black text-slate-900 leading-none">{formatCurrency(avgTicket)}</span>
+          <span className="text-[8px] sm:text-[8.5px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">Avg Ticket</span>
         </div>
       </div>
 
       {/* Sales Details – All Plans */}
-      <h3 className="text-sm font-bold text-gray-900 mb-3 shrink-0">Sales Details</h3>
-      <div className="flex flex-col gap-3 flex-1 overflow-y-auto min-h-0 pr-1 custom-scrollbar">
+      <h3 className="text-xs font-black text-slate-900 mb-2 shrink-0">Sales Details</h3>
+      <div className="flex flex-col gap-2 flex-1 overflow-y-auto min-h-0 pr-0.5 custom-scrollbar">
         {plans.length > 0 ? (
-          plans.map((plan, idx) => {
+          plans.slice(0, 3).map((plan, idx) => {
             const color = PLAN_COLORS[idx % PLAN_COLORS.length]!;
             const isTopSeller = plan.subscriber_count > 0 && plan.subscriber_count === maxSubs;
             return (
               <div
                 key={plan.id}
-                className={`relative flex items-center justify-between p-4 rounded-xl border transition-colors ${color.ring} hover:brightness-95`}
+                className={`relative flex items-center justify-between p-2.5 rounded-xl border transition-colors ${color.ring} hover:brightness-95`}
               >
                 {/* Left: colour dot + plan info */}
-                <div className="flex items-center gap-3">
-                  <div className={`w-2.5 h-2.5 rounded-full ${color.bg} shrink-0`} />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className={`w-2 h-2 rounded-full ${color.bg} shrink-0`} />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5 truncate">
                       {plan.display_name}
                       {isTopSeller && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-400 text-amber-950 shadow-sm">
-                          Top Seller
-                        </span>
-                      )}
-                      {plan.subscriber_count === 0 && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold text-gray-400 bg-gray-100">
-                          No retainers
+                        <span className="px-1 py-0.2 rounded text-[8px] font-black uppercase tracking-wider bg-amber-400 text-amber-950">
+                          Top
                         </span>
                       )}
                     </span>
-                    <span className="text-[11px] text-gray-500">
-                      {plan.subscriber_count} Active {plan.subscriber_count === 1 ? "retainer" : "retainers"} · {formatCurrency(plan.price_minor)}/mo
+                    <span className="text-[10px] text-slate-500">
+                      {plan.subscriber_count} Active · {formatCurrency(plan.price_minor)}/mo
                     </span>
                   </div>
                 </div>
 
                 {/* Right: revenue + share */}
-                <div className="flex flex-col items-end">
-                  <span className="text-sm font-bold text-gray-900">
+                <div className="flex flex-col items-end shrink-0">
+                  <span className="text-xs font-bold text-slate-900">
                     {plan.revenue_formatted}
                   </span>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {/* Mini progress bar */}
-                    <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <div className="w-12 h-1 bg-slate-100 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${color.bg}`}
                         style={{ width: `${plan.share_pct}%` }}
                       />
                     </div>
-                    <span className="text-[10px] text-gray-500 font-semibold">
+                    <span className="text-[9px] text-slate-500 font-semibold">
                       {plan.share_pct}%
                     </span>
                   </div>
@@ -282,27 +267,27 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
             );
           })
         ) : (
-          <div className="p-4 rounded-xl border border-dashed border-gray-200 text-center text-xs text-gray-500">
+          <div className="p-3 rounded-xl border border-dashed border-slate-200 text-center text-xs text-slate-400">
             No plans found.
           </div>
         )}
       </div>
 
       {/* Action Buttons */}
-      <div className="mt-6 pt-4 border-t border-gray-100 flex gap-3" onClick={(e) => e.stopPropagation()}>
+      <div className="mt-3 pt-3 border-t border-slate-100 flex gap-2" onClick={(e) => e.stopPropagation()}>
         <Link
           to="/admin/revenue"
           onClick={(e) => e.stopPropagation()}
-          className="flex-1 text-center py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"
+          className="flex-1 text-center py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"
         >
-          View Revenue Details
+          Manage Revenues
         </Link>
         <Link
           to="/admin/plans"
           onClick={(e) => e.stopPropagation()}
-          className="flex-1 text-center py-2 bg-gray-50 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-100 border border-gray-200 transition-colors"
+          className="flex-1 text-center py-1.5 bg-slate-50 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 border border-slate-200 transition-colors"
         >
-          Manage Plans
+          Plans & Negotiations
         </Link>
       </div>
     </div>

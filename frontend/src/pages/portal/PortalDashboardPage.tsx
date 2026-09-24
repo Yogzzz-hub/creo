@@ -127,6 +127,7 @@ export function PortalDashboardPage() {
   const [bargainModalOpen, setBargainModalOpen] = useState(false);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
   const [activeCalendarFilter, setActiveCalendarFilter] = useState("All");
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
   const { data: notifData } = useQuery<NotificationPayload>({
     queryKey: ["notifications", user?.id],
@@ -235,9 +236,15 @@ export function PortalDashboardPage() {
   const ticketCount = dashboard?.open_ticket_count ?? ticketsData.filter(t => t.status === "open" || t.status === "in_progress").length;
 
   const rawNotifications = notifData?.items || [];
-  const unreadCount = notifData?.unread_count ?? (rawNotifications.filter(n => !n.is_read).length || (pendingCount + ticketCount));
+  const notifications = rawNotifications.map((n) => ({
+    ...n,
+    is_read: n.is_read || readIds.has(n.id),
+  }));
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   const handleMarkAllRead = async () => {
+    const allIds = notifications.map((n) => n.id);
+    setReadIds((prev) => new Set([...prev, ...allIds]));
     try {
       await request("/api/v1/notifications/mark-all-read", { method: "POST" });
       queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
@@ -247,6 +254,7 @@ export function PortalDashboardPage() {
   };
 
   const handleItemClick = async (item: NotificationItem) => {
+    setReadIds((prev) => new Set([...prev, item.id]));
     if (!item.is_read) {
       try {
         await request(`/api/v1/notifications/${item.id}/read`, { method: "PATCH" });
@@ -262,6 +270,7 @@ export function PortalDashboardPage() {
 
   const handleDismissNotif = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    setReadIds((prev) => new Set([...prev, id]));
     try {
       await request(`/api/v1/notifications/${id}/read`, { method: "PATCH" });
       queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });

@@ -97,6 +97,36 @@ const AdminLeaveApprovalsPage = lazy(() =>
 const AdminClientBrandPage = lazy(() =>
   import("../features/admin/AdminClientBrandPage").then((m) => ({ default: m.AdminClientBrandPage }))
 );
+const PodLeadDashboardPage = lazy(() =>
+  import("../pages/admin/PodLeadDashboardPage").then((m) => ({ default: m.PodLeadDashboardPage }))
+);
+const PodTaskBoardPage = lazy(() =>
+  import("../pages/admin/PodTaskBoardPage").then((m) => ({ default: m.PodTaskBoardPage }))
+);
+const PodDeliverablesReviewPage = lazy(() =>
+  import("../pages/admin/PodDeliverablesReviewPage").then((m) => ({ default: m.PodDeliverablesReviewPage }))
+);
+const PodScheduleLeavePage = lazy(() =>
+  import("../pages/admin/PodScheduleLeavePage").then((m) => ({ default: m.PodScheduleLeavePage }))
+);
+const PodClientAllocationsPage = lazy(() =>
+  import("../pages/admin/PodClientAllocationsPage").then((m) => ({ default: m.PodClientAllocationsPage }))
+);
+
+// Team Member Workstation & Collaboration Hub
+const MemberOverviewPage = lazy(() =>
+  import("../pages/admin/MemberOverviewPage").then((m) => ({ default: m.MemberOverviewPage }))
+);
+const MemberTaskBoardPage = lazy(() =>
+  import("../pages/admin/MemberTaskBoardPage").then((m) => ({ default: m.MemberTaskBoardPage }))
+);
+
+const MemberSchedulePTOPage = lazy(() =>
+  import("../pages/admin/MemberSchedulePTOPage").then((m) => ({ default: m.MemberSchedulePTOPage }))
+);
+const SlackChatPage = lazy(() =>
+  import("../pages/admin/SlackChatPage").then((m) => ({ default: m.SlackChatPage }))
+);
 
 function RouteLoading() {
   return (
@@ -481,9 +511,94 @@ export function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/admin/pod-dashboard"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
+                      <PodLeadDashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/pod"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
+                      <PodLeadDashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/lead/dashboard"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
+                      <PodLeadDashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/lead/tasks"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
+                      <PodTaskBoardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/lead/deliverables"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
+                      <PodDeliverablesReviewPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/lead/schedule"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
+                      <PodScheduleLeavePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/lead/clients"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
+                      <PodClientAllocationsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/lead/clients/:clientId"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
+                      <AdminClientBrandPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Team Member Workstation Pages */}
+                <Route path="/workstation" element={<MemberOverviewPage />} />
+                <Route path="/workstation/overview" element={<MemberOverviewPage />} />
+                <Route path="/member" element={<MemberOverviewPage />} />
+                <Route path="/member/overview" element={<MemberOverviewPage />} />
+
+                <Route path="/workstation/tasks" element={<MemberTaskBoardPage />} />
+                <Route path="/member/tasks" element={<MemberTaskBoardPage />} />
+
+                <Route path="/workstation/handoff" element={<Navigate to="/workstation/tasks" replace />} />
+                <Route path="/member/handoff" element={<Navigate to="/workstation/tasks" replace />} />
+
+                <Route path="/workstation/schedule" element={<MemberSchedulePTOPage />} />
+                <Route path="/member/schedule" element={<MemberSchedulePTOPage />} />
+
+                {/* Universal Slack Hub */}
+                <Route path="/slack" element={<SlackChatPage />} />
+                <Route path="/workstation/slack" element={<SlackChatPage />} />
+                <Route path="/admin/slack" element={<SlackChatPage />} />
+                <Route path="/portal/slack" element={<SlackChatPage />} />
 
                 {/* Redirect legacy Kanban routes to Task Queue */}
-                <Route path="/dashboard" element={<Navigate to="/admin/tasks" replace />} />
+                <Route path="/dashboard" element={<Navigate to="/admin/pod-dashboard" replace />} />
                 <Route path="/kanban" element={<Navigate to="/admin/tasks" replace />} />
               </Route>
 

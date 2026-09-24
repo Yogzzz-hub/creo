@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import {
-  Search,
   CheckCircle2,
   MoreVertical,
-  Layers,
   Inbox,
+  X,
+  RotateCcw,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 
@@ -31,57 +31,19 @@ const INITIAL_TICKETS: TicketItem[] = [];
 
 export function AdminSupportTicketsPage() {
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
-  const [priorityFilter, setPriorityFilter] = useState("all");
-  const [lifecycleFilter, setLifecycleFilter] = useState("all");
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [tickets, setTickets] = useState<TicketItem[]>(INITIAL_TICKETS);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [alertModal, setAlertModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    ticketId?: string;
+    client?: string;
+    tier?: string;
+    type?: "success" | "info" | "warning";
+  } | null>(null);
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage((curr) => (curr === msg ? null : curr));
-    }, 3000);
-  };
-
-  const handleToggleResolve = (ticketId: string) => {
-    setTickets((prev) =>
-      prev.map((t) => {
-        if (t.id === ticketId) {
-          const isResolved = t.status === "Resolved";
-          const nextStatus = isResolved ? "Open" : "Resolved";
-          const nextAction = isResolved ? "Resolve" : "Reopen";
-          showToast(`Ticket #${t.id} marked as ${nextStatus.toLowerCase()}!`);
-          return {
-            ...t,
-            status: nextStatus,
-            primaryAction: nextAction,
-            timeLog: isResolved ? "Reopened just now" : "Resolved just now",
-          };
-        }
-        return t;
-      })
-    );
-  };
-
-  const filteredTickets = tickets.filter((t) => {
-    const matchesSearch =
-      t.id.includes(search) ||
-      t.client.toLowerCase().includes(search.toLowerCase()) ||
-      t.issueTitle.toLowerCase().includes(search.toLowerCase()) ||
-      t.agent.toLowerCase().includes(search.toLowerCase());
-
-    const matchesPriority =
-      priorityFilter === "all" ||
-      t.priority.toLowerCase().includes(priorityFilter.toLowerCase());
-
-    const matchesLifecycle =
-      lifecycleFilter === "all" ||
-      t.status.toLowerCase().replace(" ", "_") === lifecycleFilter.toLowerCase();
-
-    return matchesSearch && matchesPriority && matchesLifecycle;
-  });
+  const filteredTickets = tickets;
 
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredTickets.length) {
@@ -99,31 +61,84 @@ export function AdminSupportTicketsPage() {
     }
   };
 
+  const handlePrimaryAction = (t: TicketItem) => {
+    if (t.status !== "Resolved") {
+      setTickets((prev) =>
+        prev.map((item) =>
+          item.id === t.id
+            ? {
+                ...item,
+                status: "Resolved",
+                primaryAction: "Reopen",
+                secondaryAction: "View Log",
+                timeLog: "Resolved just now",
+              }
+            : item
+        )
+      );
+      setAlertModal({
+        isOpen: true,
+        title: "Ticket Marked as Resolved!",
+        message: `Ticket #${t.id} has been marked as resolved! SLA compliance verified and confirmation sent to ${t.client}.`,
+        ticketId: t.id,
+        client: t.client,
+        tier: t.tier,
+        type: "success",
+      });
+    } else {
+      setTickets((prev) =>
+        prev.map((item) =>
+          item.id === t.id
+            ? {
+                ...item,
+                status: "In Progress",
+                primaryAction: "Resolve",
+                secondaryAction: "Assign",
+                timeLog: "Reopened just now",
+              }
+            : item
+        )
+      );
+      setAlertModal({
+        isOpen: true,
+        title: "Ticket Reopened",
+        message: `Ticket #${t.id} for ${t.client} has been reopened and placed back into the active triage queue.`,
+        ticketId: t.id,
+        client: t.client,
+        tier: t.tier,
+        type: "info",
+      });
+    }
+  };
+
+  const openCount = tickets.filter((t) => t.status === "Open" || t.status === "In Progress").length;
+  const resolvedCount = tickets.filter((t) => t.status === "Resolved").length;
+
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F8FAFC] flex flex-col">
       <AdminTopHeader activeTab="Support" />
 
-      <main className="flex-1 px-6 lg:px-8 py-6 max-w-[1500px] w-full mx-auto space-y-6">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 sm:pb-8 max-w-[1500px] w-full mx-auto space-y-5 sm:space-y-6">
         {/* Top Summary Cards Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Open Tickets */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-                OPEN TICKETS
+                ACTIVE / OPEN TICKETS
               </span>
               <div className="size-8 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
                 <Inbox className="size-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-slate-900">14</span>
-              <span className="text-xs font-bold text-blue-600">+3 today</span>
+              <span className="text-3xl font-black text-slate-900">{openCount}</span>
+              <span className="text-xs font-bold text-blue-600">active items</span>
             </div>
             <div className="pt-1">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 text-[11px] font-bold border border-rose-200">
                 <span className="size-1.5 rounded-full bg-rose-500 animate-pulse" />
-                5 Urgent requiring immediate review
+                Live SLA Monitoring
               </span>
             </div>
           </div>
@@ -139,7 +154,7 @@ export function AdminSupportTicketsPage() {
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-slate-900">38</span>
+              <span className="text-3xl font-black text-slate-900">{resolvedCount + 37}</span>
               <span className="text-xs font-semibold text-slate-500">Tickets closed</span>
             </div>
             <div className="pt-1">
@@ -151,92 +166,111 @@ export function AdminSupportTicketsPage() {
           </div>
         </div>
 
-        {/* Filter & Search Toolbar Card */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            {/* Search Input */}
-            <div className="relative flex-1 max-w-lg">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search tickets by ID, client, issue description, or assignee..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
-              />
+        {/* Mobile Tickets Card List (< md) */}
+        <div className="block md:hidden space-y-3">
+          {filteredTickets.length === 0 ? (
+            <div className="bg-white rounded-2xl p-8 border border-slate-200 text-center text-slate-400 text-xs font-bold">
+              No tickets matching the selected filters.
             </div>
-
-            {/* View Switch Button */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs shadow-2xs"
+          ) : (
+            filteredTickets.map((t) => (
+              <div
+                key={t.id}
+                onClick={() => navigate(`/admin/support/tickets/${t.id}`)}
+                className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs space-y-3 hover:border-blue-300 transition-all cursor-pointer active:scale-[0.99]"
               >
-                <Layers className="size-3.5 text-blue-600" />
-                List View
-              </button>
-            </div>
-          </div>
+                {/* Header: ID + Priority + Status */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-xs text-slate-500">#{t.id}</span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${
+                        t.priority === "Urgent"
+                          ? "bg-rose-500 text-white"
+                          : t.priority === "High"
+                          ? "bg-amber-100 text-amber-800"
+                          : t.priority === "Medium"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {t.priority}
+                    </span>
+                  </div>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                      t.status === "Open"
+                        ? "bg-rose-50 text-rose-700 border-rose-200"
+                        : t.status === "In Progress"
+                        ? "bg-blue-50 text-blue-700 border-blue-200"
+                        : t.status === "Pending Client"
+                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                        : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    }`}
+                  >
+                    {t.status}
+                  </span>
+                </div>
 
-          {/* Filter Pills Row */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-slate-100 text-xs font-semibold">
-            {/* Priority Filters */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-slate-400 text-[11px] font-bold uppercase tracking-wider mr-1">
-                Priority:
-              </span>
-              {[
-                { id: "all", label: "All Tickets (52)" },
-                { id: "urgent", label: "Urgent (5)", badge: "bg-rose-500 text-white" },
-                { id: "high", label: "High (8)", badge: "bg-amber-100 text-amber-800" },
-                { id: "medium", label: "Medium (19)" },
-                { id: "low", label: "Low (20)" },
-              ].map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setPriorityFilter(p.id)}
-                  className={`px-3 py-1 rounded-full transition-all text-xs ${
-                    priorityFilter === p.id
-                      ? "bg-blue-600 text-white font-bold shadow-2xs"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
+                {/* Client info */}
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className={`size-8 rounded-xl ${t.avatarBg} text-white font-black text-xs flex items-center justify-center shrink-0`}
+                  >
+                    {t.client[0]}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-xs text-slate-900 truncate">{t.client}</span>
+                      <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold bg-blue-100 text-blue-800 uppercase">
+                        {t.tier}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-mono truncate">{t.email}</div>
+                  </div>
+                </div>
 
-            {/* Lifecycle Filters */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-400 text-[11px] font-bold uppercase tracking-wider mr-1">
-                Lifecycle:
-              </span>
-              {[
-                { id: "all", label: "All" },
-                { id: "open", label: "Open (14)" },
-                { id: "in_progress", label: "In Progress (6)" },
-                { id: "resolved", label: "Resolved (38)" },
-              ].map((lc) => (
-                <button
-                  key={lc.id}
-                  type="button"
-                  onClick={() => setLifecycleFilter(lc.id)}
-                  className={`px-3 py-1 rounded-full transition-all text-xs ${
-                    lifecycleFilter === lc.id
-                      ? "bg-slate-800 text-white font-bold shadow-2xs"
-                      : "text-slate-600 hover:text-slate-900"
-                  }`}
-                >
-                  {lc.label}
-                </button>
-              ))}
-            </div>
-          </div>
+                {/* Issue Details */}
+                <div className="space-y-1">
+                  <h4 className="font-bold text-xs text-slate-900 leading-snug">{t.issueTitle}</h4>
+                  <p className="text-[11px] text-slate-500 line-clamp-2">{t.issueDesc}</p>
+                </div>
+
+                {/* Footer: Agent & Quick Actions */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <div className="size-6 rounded-full bg-slate-800 text-white font-bold text-[9px] flex items-center justify-center shrink-0">
+                      {t.agentInitials}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-600 truncate">{t.agent}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      onClick={() => handlePrimaryAction(t)}
+                      className={`px-3 py-1 rounded-xl text-white text-[11px] font-bold transition-all ${
+                        t.status === "Resolved" ? "bg-slate-700" : "bg-blue-600"
+                      }`}
+                    >
+                      {t.primaryAction}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/admin/support/tickets/${t.id}`)}
+                      className="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold hover:bg-slate-200"
+                    >
+                      {t.secondaryAction}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
-        {/* Tickets Table */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
+        {/* Desktop Tickets Table (hidden on md) */}
+        <div className="hidden md:block bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
@@ -374,11 +408,11 @@ export function AdminSupportTicketsPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
-                            onClick={() => handleToggleResolve(t.id)}
-                            className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all shadow-2xs ${
+                            onClick={() => handlePrimaryAction(t)}
+                            className={`px-3 py-1 rounded-xl text-white text-[11px] font-bold transition-all shadow-2xs active:scale-95 cursor-pointer ${
                               t.status === "Resolved"
-                                ? "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
-                                : "bg-blue-600 text-white hover:bg-blue-700"
+                                ? "bg-slate-700 hover:bg-slate-800"
+                                : "bg-blue-600 hover:bg-blue-700"
                             }`}
                           >
                             {t.primaryAction}
@@ -386,13 +420,15 @@ export function AdminSupportTicketsPage() {
                           <button
                             type="button"
                             onClick={() => navigate(`/admin/support/tickets/${t.id}`)}
-                            className="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold hover:bg-slate-200 transition-colors"
+                            className="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold hover:bg-slate-200 transition-colors cursor-pointer"
                           >
                             {t.secondaryAction}
                           </button>
                           <button
                             type="button"
-                            className="p-1 text-slate-400 hover:text-slate-600 rounded"
+                            onClick={() => navigate(`/admin/support/tickets/${t.id}`)}
+                            className="p-1 text-slate-400 hover:text-slate-600 rounded cursor-pointer"
+                            aria-label="More actions"
                           >
                             <MoreVertical className="size-4" />
                           </button>
@@ -407,20 +443,99 @@ export function AdminSupportTicketsPage() {
         </div>
       </main>
 
-      {/* ── Toast Notification ── */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-800 animate-in fade-in slide-in-from-bottom-2">
-          <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
-          <span className="text-xs font-semibold">{toastMessage}</span>
-          <button
-            type="button"
-            className="text-slate-400 hover:text-white text-xs ml-2 cursor-pointer"
-            onClick={() => setToastMessage(null)}
+      {/* Centered Popup Modal with Whole Background Blurred */}
+      {alertModal?.isOpen && (
+        <div
+          className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
+          onClick={() => setAlertModal(null)}
+        >
+          <div
+            className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
           >
-            ✕
-          </button>
+            {/* Top Close Button */}
+            <button
+              type="button"
+              onClick={() => setAlertModal(null)}
+              className="absolute top-4 right-4 size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+              aria-label="Close dialog"
+            >
+              <X className="size-4" />
+            </button>
+
+            {/* Tone Icon Badge */}
+            <div
+              className={`size-16 rounded-3xl flex items-center justify-center mb-4 ring-8 shadow-inner ${
+                alertModal.type === "success"
+                  ? "bg-emerald-50 text-emerald-600 ring-emerald-50/60"
+                  : "bg-blue-50 text-blue-600 ring-blue-50/60"
+              }`}
+            >
+              {alertModal.type === "success" ? (
+                <CheckCircle2 className="size-8" />
+              ) : (
+                <RotateCcw className="size-8" />
+              )}
+            </div>
+
+            {/* Modal Title */}
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">
+              {alertModal.title}
+            </h3>
+
+            {/* Modal Description */}
+            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed max-w-sm">
+              {alertModal.message}
+            </p>
+
+            {/* Ticket Context Information Box */}
+            {alertModal.ticketId && (
+              <div className="w-full mt-5 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs font-semibold text-slate-700">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                    #{alertModal.ticketId}
+                  </span>
+                  <span className="text-slate-400">•</span>
+                  <span className="font-bold text-slate-800">{alertModal.client}</span>
+                </div>
+                {alertModal.tier && (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 uppercase tracking-wide">
+                    {alertModal.tier}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* OK and View Ticket Action Buttons */}
+            <div className="w-full mt-6 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setAlertModal(null)}
+                autoFocus
+                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+              >
+                OK
+              </button>
+              {alertModal.ticketId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const id = alertModal.ticketId;
+                    setAlertModal(null);
+                    navigate(`/admin/support/tickets/${id}`);
+                  }}
+                  className="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                >
+                  View Ticket
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
   );
 }
+

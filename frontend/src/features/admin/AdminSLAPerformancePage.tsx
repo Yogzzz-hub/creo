@@ -1,14 +1,11 @@
-import { useState } from "react";
 import { useNavigate } from "react-router";
 import {
   Shield,
-  Download,
   Sliders,
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
   Bell,
-  Activity,
   Clock,
   Zap,
 } from "lucide-react";
@@ -16,8 +13,6 @@ import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 
 export function AdminSLAPerformancePage() {
   const navigate = useNavigate();
-  const [timeframe, setTimeframe] = useState<"7d" | "30d" | "quarter" | "ytd">("30d");
-
   const podLeaderboard = [
     {
       pod: "Pod A",
@@ -82,109 +77,55 @@ export function AdminSLAPerformancePage() {
         <AdminTopHeader activeTab="Support" />
 
         <main className="px-6 lg:px-8 py-6 max-w-[1500px] w-full mx-auto space-y-6">
-          {/* Top Controls Bar */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                <Activity className="size-3.5 text-blue-600 animate-pulse" />
-                REAL-TIME TELEMETRY
-              </span>
-              <span>•</span>
-              <span className="text-slate-500 font-medium lowercase first-letter:uppercase">Tier-1 Ops Governance</span>
-            </div>
-
-            {/* Header Controls */}
-            <div className="flex items-center gap-2.5 flex-wrap">
-              {/* Timeframe Selector */}
-              <div className="flex items-center bg-white border border-slate-200 p-1 rounded-xl text-xs font-bold text-slate-600 shadow-2xs">
-                {[
-                  { id: "7d", label: "Last 7 Days" },
-                  { id: "30d", label: "Last 30 Days" },
-                  { id: "quarter", label: "Quarter" },
-                  { id: "ytd", label: "YTD" },
-                ].map((tf) => (
-                  <button
-                    key={tf.id}
-                    type="button"
-                    onClick={() => setTimeframe(tf.id as any)}
-                    className={`px-3 py-1.5 rounded-lg transition-all ${
-                      timeframe === tf.id
-                        ? "bg-blue-600 text-white shadow-2xs font-extrabold"
-                        : "hover:text-slate-900"
-                    }`}
-                  >
-                    {tf.label}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-bold text-xs hover:bg-slate-50 shadow-2xs transition-all"
-              >
-                <Sliders className="size-3.5 text-slate-500" />
-                Configure Thresholds
-              </button>
-
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm transition-all"
-              >
-                <Download className="size-3.5" />
-                Download Executive SLA Audit
-              </button>
-            </div>
-          </div>
-
           {/* Top 2 KPI Metric Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* Metric Card 1: Overall Compliance */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs flex items-center justify-between">
-              <div className="space-y-1.5">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+            <div className="bg-white border border-slate-200/90 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xs flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   OVERALL COMPLIANCE
                 </span>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-black text-slate-900">98.4%</span>
-                  <span className="text-xs font-bold text-emerald-600 flex items-center gap-0.5">
-                    <TrendingUp className="size-3.5" /> +0.6% MoM
+                <div className="flex items-baseline gap-2">
+                  <span className="text-xl sm:text-2xl font-black text-slate-900">98.4%</span>
+                  <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-0.5">
+                    <TrendingUp className="size-3" /> +0.6% MoM
                   </span>
                 </div>
-                <div className="flex items-center gap-3 pt-1 text-xs font-semibold">
+                <div className="flex items-center gap-2 pt-0.5 text-[11px] font-semibold">
                   <span className="text-slate-500">Target: <strong className="text-slate-800">98.0%</strong></span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold border border-emerald-200">
+                  <span className="px-2 py-0.2 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-extrabold border border-emerald-200">
                     OPTIMAL
                   </span>
                 </div>
               </div>
 
-              <div className="size-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-                <Shield className="size-7" />
+              <div className="size-8 sm:size-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                <Shield className="size-4 sm:size-5" />
               </div>
             </div>
 
             {/* Metric Card 2: Active SLA Watchlist */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs flex items-center justify-between">
-              <div className="space-y-1.5">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+            <div className="bg-white border border-slate-200/90 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xs flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   ACTIVE SLA WATCHLIST
                 </span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-black text-slate-900">2</span>
-                  <span className="text-base font-bold text-slate-600">Active</span>
+                  <span className="text-xl sm:text-2xl font-black text-slate-900">2</span>
+                  <span className="text-xs font-bold text-slate-600">Active</span>
                 </div>
-                <div className="flex items-center gap-2 pt-1 text-xs font-semibold">
-                  <span className="px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 text-[11px] font-bold border border-rose-200">
+                <div className="flex items-center gap-1.5 pt-0.5 text-[11px] font-semibold">
+                  <span className="px-2 py-0.2 rounded-md bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200">
                     1 Approaching
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200">
+                  <span className="px-2 py-0.2 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
                     • 1 Resolved
                   </span>
                 </div>
               </div>
 
-              <div className="size-14 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 shrink-0">
-                <Bell className="size-7" />
+              <div className="size-8 sm:size-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 shrink-0">
+                <Bell className="size-4 sm:size-5" />
               </div>
             </div>
           </div>
