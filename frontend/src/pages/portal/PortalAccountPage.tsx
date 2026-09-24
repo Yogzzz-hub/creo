@@ -1110,7 +1110,7 @@ export function PortalAccountPage() {
                         </div>
                         <div className="sm:text-right">
                           <div className="text-xl font-extrabold text-[#0052FF] leading-none tracking-tight">
-                            $8,500 <span className="text-xs text-slate-400 font-medium">/mo</span>
+                            ₹85,000 <span className="text-xs text-slate-400 font-medium">/mo</span>
                           </div>
                           <p className="text-[11px] text-slate-400 mt-1 font-medium">
                             Unlimited revisions included

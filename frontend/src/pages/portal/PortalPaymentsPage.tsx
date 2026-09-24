@@ -924,28 +924,28 @@ export function PortalPaymentsPage() {
     {
       id: "#CR-8821",
       date: "Oct 01, 2024",
-      amount: "$10,250.00",
+      amount: "₹1,02,500.00",
       status: "Paid",
       plan: "Enterprise Growth Tier",
     },
     {
       id: "#CR-7910",
       date: "Sep 01, 2024",
-      amount: "$10,250.00",
+      amount: "₹1,02,500.00",
       status: "Paid",
       plan: "Enterprise Growth Tier",
     },
     {
       id: "#CR-6802",
       date: "Aug 01, 2024",
-      amount: "$8,500.00",
+      amount: "₹85,000.00",
       status: "Paid",
       plan: "Enterprise Growth Tier",
     },
     {
       id: "#CR-5411",
       date: "Jul 01, 2024",
-      amount: "$8,500.00",
+      amount: "₹85,000.00",
       status: "Paid",
       plan: "Enterprise Growth Tier",
     },
@@ -1101,7 +1101,7 @@ export function PortalPaymentsPage() {
               <div className="text-left sm:text-right shrink-0">
                 <div className="flex items-baseline sm:justify-end gap-1">
                   <span className="text-3xl sm:text-4xl font-black text-[#0052FF] tracking-tight">
-                    $8,500
+                    ₹85,000
                   </span>
                   <span className="text-xs sm:text-sm font-semibold text-slate-500">/mo</span>
                 </div>
@@ -1254,7 +1254,7 @@ export function PortalPaymentsPage() {
                 className="text-xs font-bold text-[#0052FF] bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-3 py-1 rounded-full whitespace-nowrap transition-colors cursor-pointer"
                 title="Manage add-on packs"
               >
-                +$1,750 / mo
+                +₹17,500 / mo
               </button>
             </div>
 
@@ -1276,7 +1276,7 @@ export function PortalPaymentsPage() {
                 </div>
                 <div className="text-right shrink-0">
                   <span className="text-xs sm:text-sm font-bold text-slate-900 inline-flex items-center gap-1.5">
-                    $1,200 / mo <span className="size-1.5 rounded-full bg-emerald-500" />
+                    ₹12,000 / mo <span className="size-1.5 rounded-full bg-emerald-500" />
                   </span>
                 </div>
               </div>
@@ -1298,7 +1298,7 @@ export function PortalPaymentsPage() {
                 </div>
                 <div className="text-right shrink-0">
                   <span className="text-xs sm:text-sm font-bold text-slate-900 inline-flex items-center gap-1.5">
-                    $550 / mo <span className="size-1.5 rounded-full bg-emerald-500" />
+                    ₹5,500 / mo <span className="size-1.5 rounded-full bg-emerald-500" />
                   </span>
                 </div>
               </div>

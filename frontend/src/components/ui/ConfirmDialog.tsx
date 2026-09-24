@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import {
   AlertTriangle,
   AlertCircle,
+  CheckCircle2,
   LogOut,
   PackageMinus,
   Trash2,
@@ -10,7 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-export type ConfirmTone = "danger" | "warning" | "info";
+export type ConfirmTone = "danger" | "warning" | "info" | "success";
 
 export interface ConfirmOptions {
   title: string;
@@ -19,11 +20,24 @@ export interface ConfirmOptions {
   confirmText?: string;
   cancelText?: string;
   tone?: ConfirmTone;
-  icon?: "danger" | "warning" | "logout" | "remove_plan" | "trash" | "info";
+  icon?: "danger" | "warning" | "logout" | "remove_plan" | "trash" | "info" | "success" | "check";
+  isAlertOnly?: boolean;
 }
+
+export type AlertInput =
+  | string
+  | {
+      title: string;
+      description?: string;
+      details?: string[];
+      confirmText?: string;
+      tone?: ConfirmTone;
+      icon?: "danger" | "warning" | "logout" | "remove_plan" | "trash" | "info" | "success" | "check";
+    };
 
 interface ConfirmContextType {
   confirm: (options: ConfirmOptions) => Promise<boolean>;
+  alert: (input: AlertInput) => Promise<void>;
 }
 
 const ConfirmContext = createContext<ConfirmContextType | null>(null);
@@ -36,6 +50,14 @@ export function useConfirm() {
   return context.confirm;
 }
 
+export function useAlert() {
+  const context = useContext(ConfirmContext);
+  if (!context) {
+    throw new Error("useAlert must be used within a ConfirmProvider");
+  }
+  return context.alert;
+}
+
 export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -45,7 +67,33 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const confirm = useCallback((opts: ConfirmOptions) => {
     return new Promise<boolean>((resolve) => {
       resolveRef.current = resolve;
-      setOptions(opts);
+      setOptions({ ...opts, isAlertOnly: false });
+      setIsOpen(true);
+      setIsProcessing(false);
+    });
+  }, []);
+
+  const alert = useCallback((input: AlertInput) => {
+    return new Promise<void>((resolve) => {
+      resolveRef.current = () => resolve();
+      if (typeof input === "string") {
+        setOptions({
+          title: "Notice",
+          description: input,
+          confirmText: "OK",
+          tone: "info",
+          icon: "info",
+          isAlertOnly: true,
+        });
+      } else {
+        setOptions({
+          ...input,
+          confirmText: input.confirmText || "OK",
+          tone: input.tone || (input.icon === "success" || input.icon === "check" ? "success" : "info"),
+          icon: input.icon || (input.tone === "success" ? "success" : "info"),
+          isAlertOnly: true,
+        });
+      }
       setIsOpen(true);
       setIsProcessing(false);
     });
@@ -70,7 +118,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <ConfirmContext.Provider value={{ confirm }}>
+    <ConfirmContext.Provider value={{ confirm, alert }}>
       {children}
       {isOpen && options && (
         <ConfirmDialog
@@ -82,6 +130,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
           cancelText={options.cancelText}
           tone={options.tone || "danger"}
           icon={options.icon}
+          isAlertOnly={options.isAlertOnly}
           isProcessing={isProcessing}
           onConfirm={handleConfirm}
           onClose={handleClose}
@@ -99,7 +148,8 @@ export interface ConfirmDialogProps {
   confirmText?: string;
   cancelText?: string;
   tone?: ConfirmTone;
-  icon?: "danger" | "warning" | "logout" | "remove_plan" | "trash" | "info";
+  icon?: "danger" | "warning" | "logout" | "remove_plan" | "trash" | "info" | "success" | "check";
+  isAlertOnly?: boolean;
   isProcessing?: boolean;
   onConfirm: () => void;
   onClose: () => void;
@@ -114,6 +164,7 @@ export function ConfirmDialog({
   cancelText = "Cancel",
   tone = "danger",
   icon,
+  isAlertOnly = false,
   isProcessing = false,
   onConfirm,
   onClose,
@@ -134,9 +185,20 @@ export function ConfirmDialog({
 
   // Icon resolution
   const renderIcon = () => {
-    const selectedIcon = icon || (tone === "warning" ? "warning" : tone === "info" ? "info" : "danger");
+    const selectedIcon =
+      icon ||
+      (tone === "success"
+        ? "success"
+        : tone === "warning"
+        ? "warning"
+        : tone === "info"
+        ? "info"
+        : "danger");
 
     switch (selectedIcon) {
+      case "success":
+      case "check":
+        return <CheckCircle2 className="size-5 text-emerald-600" />;
       case "logout":
         return <LogOut className="size-5 text-amber-600" />;
       case "remove_plan":
@@ -155,6 +217,8 @@ export function ConfirmDialog({
 
   const getToneBadgeStyle = () => {
     switch (tone) {
+      case "success":
+        return "bg-emerald-50 border-emerald-200 text-emerald-600";
       case "warning":
         return "bg-amber-50 border-amber-200 text-amber-600";
       case "info":
@@ -167,6 +231,8 @@ export function ConfirmDialog({
 
   const getConfirmButtonStyle = () => {
     switch (tone) {
+      case "success":
+        return "bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-md shadow-emerald-600/25";
       case "warning":
         return "bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white shadow-md shadow-amber-600/25";
       case "info":
@@ -179,7 +245,7 @@ export function ConfirmDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs transition-opacity duration-200"
+      className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md transition-opacity duration-200 overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isProcessing) {
           onClose();
@@ -198,7 +264,7 @@ export function ConfirmDialog({
           onClick={onClose}
           disabled={isProcessing}
           className="absolute top-4 right-4 size-8 rounded-full bg-slate-100/80 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
-          aria-label="Close confirmation dialog"
+          aria-label="Close dialog"
         >
           <X className="size-4" />
         </button>
@@ -235,6 +301,8 @@ export function ConfirmDialog({
                 ? "bg-rose-50/50 border-rose-100"
                 : tone === "warning"
                 ? "bg-amber-50/50 border-amber-100"
+                : tone === "success"
+                ? "bg-emerald-50/50 border-emerald-100"
                 : "bg-blue-50/40 border-blue-100"
             }`}
           >
@@ -250,6 +318,8 @@ export function ConfirmDialog({
                         ? "bg-rose-500"
                         : tone === "warning"
                         ? "bg-amber-500"
+                        : tone === "success"
+                        ? "bg-emerald-500"
                         : "bg-[#2B7BC4]"
                     }`}
                   />
@@ -262,20 +332,24 @@ export function ConfirmDialog({
 
         {/* Action Buttons */}
         <div className="mt-6 flex items-center justify-end gap-2.5">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isProcessing}
-            className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100/80 active:scale-95 text-xs font-bold transition-all cursor-pointer"
-          >
-            {cancelText}
-          </button>
+          {!isAlertOnly && (
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isProcessing}
+              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100/80 active:scale-95 text-xs font-bold transition-all cursor-pointer"
+            >
+              {cancelText}
+            </button>
+          )}
           <button
             type="button"
             onClick={onConfirm}
             disabled={isProcessing}
             autoFocus
-            className={`px-5 py-2 rounded-xl text-xs font-bold active:scale-95 transition-all cursor-pointer flex items-center gap-1.5 ${getConfirmButtonStyle()}`}
+            className={`px-5 py-2.5 rounded-xl text-xs font-bold active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              isAlertOnly ? "w-full" : ""
+            } ${getConfirmButtonStyle()}`}
           >
             {isProcessing && <Loader2 className="size-3.5 animate-spin" />}
             <span>{confirmText}</span>
@@ -286,3 +360,4 @@ export function ConfirmDialog({
     document.body
   );
 }
+

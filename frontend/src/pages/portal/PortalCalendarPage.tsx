@@ -4,13 +4,10 @@ import { Link } from "react-router";
 import {
   ChevronLeft,
   ChevronRight,
-  Calendar as CalendarIcon,
   Clock,
   Loader2,
   Video,
   Image as ImageIcon,
-  Grid,
-  List,
   CheckCircle2,
   ExternalLink,
   X,
@@ -126,13 +123,9 @@ export function PortalCalendarPage() {
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-
-  const [selectedFormat, setSelectedFormat] = useState<string>("all");
+  const [selectedFormat] = useState<string>("all");
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
-  const [viewMode, setViewMode] = useState<"month" | "list">("month");
   const [previewEntry, setPreviewEntry] = useState<CalendarEntry | null>(null);
-  const [isApproving, setIsApproving] = useState(false);
-  const [approvalMessage, setApprovalMessage] = useState<string | null>(null);
   const [selectedHookIndex, setSelectedHookIndex] = useState<number>(0);
   const [isConceptSubmitting, setIsConceptSubmitting] = useState<boolean>(false);
   const [conceptFeedback, setConceptFeedback] = useState<{ text: string; type: "success" | "error" } | null>(null);
@@ -211,11 +204,6 @@ export function PortalCalendarPage() {
     setCurrentYear(newYear);
   };
 
-  const goToToday = () => {
-    setCurrentYear(today.getFullYear());
-    setCurrentMonth(today.getMonth());
-  };
-
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDay = new Date(currentYear, currentMonth, 1).getDay();
   const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() === currentMonth;
@@ -234,16 +222,6 @@ export function PortalCalendarPage() {
     if (selectedFormat === "all") return monthEntries;
     return monthEntries.filter((e) => (e.type || "").toLowerCase() === selectedFormat);
   }, [monthEntries, selectedFormat]);
-
-  // Overall counts for month
-  const quota = useMemo(() => {
-    const counts = { total: monthEntries.length, reel: 0, poster: 0, story: 0 };
-    monthEntries.forEach((e) => {
-      const t = (e.type || "poster") as "reel" | "poster" | "story";
-      if (t in counts) counts[t]++;
-    });
-    return counts;
-  }, [monthEntries]);
 
   // Calendar cells for month grid
   const calendarCells = useMemo(() => {
@@ -270,27 +248,6 @@ export function PortalCalendarPage() {
     });
   };
 
-
-
-  const hasDraftSlots = useMemo(() => {
-    return entries.some((e) => e.calendar_status === "draft");
-  }, [entries]);
-
-  const handleApproveCalendar = async () => {
-    setIsApproving(true);
-    setApprovalMessage(null);
-    try {
-      const res = await request<any>("/api/v1/calendar/approve", {
-        method: "POST",
-      });
-      setApprovalMessage(`Campaign approved! Locked ${res.approved_slots ?? "all"} slots & dispatched rolling window.`);
-      queryClient.invalidateQueries({ queryKey: ["calendar-entries"] });
-    } catch (err: any) {
-      setApprovalMessage(err.message || "Failed to approve calendar plan.");
-    } finally {
-      setIsApproving(false);
-    }
-  };
 
   const handleApproveConcept = async () => {
     if (!previewEntry || !previewEntry.blueprint?.hooks?.length) return;
@@ -460,7 +417,6 @@ export function PortalCalendarPage() {
 
                 const scheduled = dayEntries.length;
                 const approved = dayEntries.filter(e => e.status === "approved" || e.concept_status === "concept_approved").length;
-                const isSlaReview = day === 25; // Just mocking based on image for visual accuracy, in real logic we'd check entry types
 
                 return (
                   <div
@@ -562,8 +518,6 @@ export function PortalCalendarPage() {
               }
 
               return tasks.map((entry, idx) => {
-                const isApproved = entry.status === "approved" || entry.concept_status === "concept_approved";
-                
                 // Mocks for avatars and pod names based on index to make it look like the image
                 const pods = ["POD A • NORTHWIND LABS", "POD B • BLOOM STUDIO", "POD C • ATLAS COMMERCE", "POD E • LUMINA HEALTH"];
                 const initials = ["OV", "AT", "KS", "SJ"];

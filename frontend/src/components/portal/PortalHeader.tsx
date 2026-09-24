@@ -29,6 +29,7 @@ export function PortalHeader() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
   const bellRef = useRef<HTMLButtonElement>(null);
 
@@ -41,10 +42,16 @@ export function PortalHeader() {
     refetchInterval: 15000,
   });
 
-  const unreadCount = notifData?.unread_count || 0;
-  const notifications = notifData?.items || [];
+  const rawNotifications = notifData?.items || [];
+  const notifications = rawNotifications.map((n) => ({
+    ...n,
+    is_read: n.is_read || readIds.has(n.id),
+  }));
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   const handleMarkAllRead = async () => {
+    const allIds = notifications.map((n) => n.id);
+    setReadIds((prev) => new Set([...prev, ...allIds]));
     try {
       await request("/api/v1/notifications/mark-all-read", { method: "POST" });
       queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
@@ -54,6 +61,7 @@ export function PortalHeader() {
   };
 
   const handleItemClick = async (item: NotificationItem) => {
+    setReadIds((prev) => new Set([...prev, item.id]));
     if (!item.is_read) {
       try {
         await request(`/api/v1/notifications/${item.id}/read`, { method: "PATCH" });

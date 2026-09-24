@@ -126,6 +126,7 @@ export function PortalDashboardPage() {
   const [bargainModalOpen, setBargainModalOpen] = useState(false);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
   const [activeCalendarFilter, setActiveCalendarFilter] = useState("All");
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
   const { data: notifData } = useQuery<NotificationPayload>({
     queryKey: ["notifications", user?.id],
@@ -162,9 +163,15 @@ export function PortalDashboardPage() {
   const subscriptionActive = !!dashboard?.active_plan && ["active", "trialing"].includes(dashboard?.active_plan?.status);
 
   const rawNotifications = notifData?.items || [];
-  const unreadCount = notifData?.unread_count ?? (rawNotifications.filter(n => !n.is_read).length || (pendingCount + ticketCount));
+  const notifications = rawNotifications.map((n) => ({
+    ...n,
+    is_read: n.is_read || readIds.has(n.id),
+  }));
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   const handleMarkAllRead = async () => {
+    const allIds = notifications.map((n) => n.id);
+    setReadIds((prev) => new Set([...prev, ...allIds]));
     try {
       await request("/api/v1/notifications/mark-all-read", { method: "POST" });
       queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
@@ -174,6 +181,7 @@ export function PortalDashboardPage() {
   };
 
   const handleItemClick = async (item: NotificationItem) => {
+    setReadIds((prev) => new Set([...prev, item.id]));
     if (!item.is_read) {
       try {
         await request(`/api/v1/notifications/${item.id}/read`, { method: "PATCH" });
@@ -189,6 +197,7 @@ export function PortalDashboardPage() {
 
   const handleDismissNotif = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    setReadIds((prev) => new Set([...prev, id]));
     try {
       await request(`/api/v1/notifications/${id}/read`, { method: "PATCH" });
       queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
@@ -378,8 +387,8 @@ export function PortalDashboardPage() {
                 <div className="flex items-baseline sm:justify-end">
                   <span className="text-3xl sm:text-4xl font-black text-[#0F172A] tracking-tight">
                     {subscriptionActive && (dashboard?.active_plan as any)?.price_minor
-                      ? "$" + ((dashboard?.active_plan as any).price_minor / 100).toLocaleString()
-                      : "$8,500"}
+                      ? "₹" + ((dashboard?.active_plan as any).price_minor / 100).toLocaleString("en-IN")
+                      : "₹85,000"}
                   </span>
                   <span className="text-xs sm:text-sm font-medium text-slate-400 ml-1">/mo</span>
                 </div>
@@ -483,7 +492,7 @@ export function PortalDashboardPage() {
                       CONFIGURED ADD-ONS
                     </span>
                     <span className="bg-blue-50 text-blue-600 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-blue-100/90 shadow-xs">
-                      + $1,750/mo
+                      + ₹17,500/mo
                     </span>
                   </div>
 
@@ -509,7 +518,7 @@ export function PortalDashboardPage() {
                         </div>
                       </div>
                       <div className="text-right shrink-0 ml-3">
-                        <span className="text-xs sm:text-sm font-black text-slate-900">$1,200</span>
+                        <span className="text-xs sm:text-sm font-black text-slate-900">₹12,000</span>
                         <span className="text-[11px] font-medium text-slate-400">/mo</span>
                       </div>
                     </Link>
@@ -535,7 +544,7 @@ export function PortalDashboardPage() {
                         </div>
                       </div>
                       <div className="text-right shrink-0 ml-3">
-                        <span className="text-xs sm:text-sm font-black text-slate-900">$550</span>
+                        <span className="text-xs sm:text-sm font-black text-slate-900">₹5,500</span>
                         <span className="text-[11px] font-medium text-slate-400">/mo</span>
                       </div>
                     </Link>
