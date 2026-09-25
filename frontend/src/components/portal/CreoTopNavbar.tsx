@@ -36,8 +36,6 @@ export function CreoTopNavbar() {
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
   
-  // Mobile Menu State
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Notification State
   const [notificationOpen, setNotificationOpen] = useState(false);
@@ -117,15 +115,11 @@ export function CreoTopNavbar() {
   return (
     <header className="fixed top-4 inset-x-4 lg:inset-x-8 z-[100] transition-all pointer-events-none">
       <div className="flex items-center justify-between px-6 max-w-[1600px] mx-auto h-16 w-full bg-white rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-slate-100 pointer-events-auto">
-        {/* Mobile Left: Logo & Page Title */}
-        <div className="flex-1 flex items-center xl:hidden gap-3 min-w-0 pr-2">
+        {/* Mobile Left: Logo */}
+        <div className="flex-1 flex items-center xl:hidden min-w-0 pr-2">
           <Link to="/portal" className="flex items-center hover:scale-105 hover:drop-shadow-sm transition-all shrink-0">
             <span className="text-[20px] font-black tracking-tighter text-slate-900">creo<span className="text-[#0052FF]">.</span></span>
           </Link>
-          <div className="w-[1px] h-4 bg-slate-200 shrink-0"></div>
-          <h1 className="text-[15px] sm:text-[16px] font-black tracking-tight text-slate-900 truncate">
-            {getPageName(location.pathname, true)}
-          </h1>
         </div>
 
         {/* Desktop Left: Page Title */}
@@ -212,18 +206,6 @@ export function CreoTopNavbar() {
         {/* Right: Utilities */}
         <div className="flex-1 flex items-center justify-end gap-3">
           
-          {/* Mobile hamburger */}
-          <button
-            type="button"
-            className="xl:hidden p-1 text-slate-500 hover:text-slate-700 transition"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Menu"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
-            </svg>
-          </button>
-
           {/* Notifications */}
           <div className="relative group">
             <button
@@ -368,65 +350,6 @@ export function CreoTopNavbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
-      {mobileMenuOpen && (
-        <div className="pointer-events-auto absolute top-[70px] inset-x-0 xl:hidden bg-white border border-slate-200/80 rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] p-4 space-y-1.5 animate-scale-up z-[150]">
-          <Link
-            to="/portal"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`block px-5 py-3.5 rounded-2xl text-[15px] font-bold transition-colors ${
-              location.pathname === "/portal" ? "bg-slate-100 text-slate-900" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-            }`}
-          >
-            Dashboard
-          </Link>
-          <Link
-            to="/portal/payments"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`block px-5 py-3.5 rounded-2xl text-[15px] font-bold transition-colors ${
-              location.pathname.includes("/payments") ? "bg-slate-100 text-slate-900" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-            }`}
-          >
-            Plans
-          </Link>
-          <Link
-            to="/portal/creative-pod"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`block px-5 py-3.5 rounded-2xl text-[15px] font-bold transition-colors ${
-              location.pathname.includes("/creative-pod") ? "bg-slate-100 text-slate-900" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-            }`}
-          >
-            Creative Pod
-          </Link>
-          <Link
-            to="/portal/calendar"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`block px-5 py-3.5 rounded-2xl text-[15px] font-bold transition-colors ${
-              location.pathname.includes("/calendar") ? "bg-slate-100 text-slate-900" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-            }`}
-          >
-            Calendar
-          </Link>
-          <Link
-            to="/portal/deliverables"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`block px-5 py-3.5 rounded-2xl text-[15px] font-bold transition-colors ${
-              location.pathname.includes("/deliverables") ? "bg-slate-100 text-slate-900" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-            }`}
-          >
-            Deliverables
-          </Link>
-          <Link
-            to="/portal/support"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`block px-5 py-3.5 rounded-2xl text-[15px] font-bold transition-colors ${
-              location.pathname.includes("/support") ? "bg-slate-100 text-slate-900" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-            }`}
-          >
-            Support
-          </Link>
-        </div>
-      )}
     </header>
   );
 }

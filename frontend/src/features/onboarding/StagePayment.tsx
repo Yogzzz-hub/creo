@@ -12,6 +12,7 @@ import { confirmPayment, createOrder, fetchPlans } from "../../lib/onboarding-ap
 import { openRazorpayCheckout } from "../../lib/razorpay";
 import { useAuth } from "../../lib/auth-context";
 import type { Plan } from "../../types/api";
+import { Check, Calendar, Zap } from "lucide-react";
 
 interface StagePaymentProps {
   userId: string;
@@ -44,12 +45,12 @@ function PlanCard({
       onClick={onSelect}
       className={`relative rounded-2xl p-5 sm:p-6 cursor-pointer transition-all flex flex-col h-full min-w-[200px] ${
         selected
-          ? "border-2 border-[#2B7BC4] bg-[#F0F7FD] shadow-md ring-2 ring-[#2B7BC4]/10"
-          : "border border-[#C9DFF0] bg-white hover:border-[#2B7BC4]/40 hover:shadow-xs"
+          ? "border-2 border-[#2B7BC4] bg-[#F4F9FF] shadow-lg ring-4 ring-[#2B7BC4]/10"
+          : "border border-slate-200 bg-white hover:border-[#2B7BC4]/40 hover:shadow-md"
       }`}
     >
       {plan.is_recommended && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#2B7BC4] text-white text-[10px] font-bold tracking-wider uppercase px-3 py-1 rounded-full shadow-xs whitespace-nowrap">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#2B7BC4] text-white text-[10px] font-bold tracking-wider uppercase px-4 py-1 rounded-full shadow-md whitespace-nowrap">
           Most Popular
         </div>
       )}
@@ -63,16 +64,18 @@ function PlanCard({
         </h3>
 
         <div className="my-2 sm:my-3">
-          <span className="text-2xl sm:text-3xl font-extrabold text-[#0D2137]">
+          <span className="text-3xl sm:text-4xl font-extrabold text-[#0D2137] tracking-tight">
             {formatINR(plan.price_minor)}
           </span>
           <span className="text-xs text-[#64748B] ml-1.5 font-medium">/mo</span>
         </div>
 
-        <ul className="space-y-2.5 my-3 sm:my-4 flex-1">
+        <ul className="space-y-3 my-4 flex-1">
           {plan.highlights.map((h) => (
-            <li key={h} className="text-xs text-[#374151] flex items-start gap-2 leading-relaxed">
-              <span className="text-emerald-600 font-bold shrink-0 mt-0.5">✓</span>
+            <li key={h} className="text-xs text-[#374151] flex items-start gap-2.5 leading-relaxed font-medium">
+              <div className="size-4 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Check className="w-2.5 h-2.5 text-emerald-600 stroke-[3]" />
+              </div>
               <span>{h}</span>
             </li>
           ))}
@@ -80,13 +83,19 @@ function PlanCard({
       </div>
 
       <div
-        className={`w-full mt-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold text-center transition-all ${
+        className={`w-full mt-4 py-3 rounded-xl text-xs sm:text-sm font-semibold text-center transition-all flex items-center justify-center gap-1.5 ${
           selected
-            ? "bg-[#2B7BC4] text-white shadow-xs"
-            : "bg-slate-50 text-[#64748B] border border-[#C9DFF0] hover:bg-white"
+            ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/20"
+            : "bg-slate-50 text-slate-700 border border-slate-200 hover:bg-white"
         }`}
       >
-        {selected ? "Selected Plan" : "Choose Plan"}
+        {selected ? (
+          <>
+            Selected Plan <Check className="w-4 h-4" />
+          </>
+        ) : (
+          "Choose Plan"
+        )}
       </div>
     </motion.div>
   );
@@ -204,18 +213,32 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-4xl lg:max-w-5xl w-full mx-auto rounded-2xl border border-[#C9DFF0] bg-white p-5 sm:p-7 lg:p-8 shadow-sm"
+      className="max-w-4xl lg:max-w-5xl w-full mx-auto"
     >
-      <header className="mb-4 sm:mb-5">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F4FD] border border-[#C9DFF0] text-[#2B7BC4] text-[10px] font-bold uppercase tracking-wider mb-2">
-          Step 3 of 5
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7 lg:p-8 shadow-sm mb-6">
+      <header className="mb-6 sm:mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500 text-white text-[10px] font-bold uppercase tracking-wider mb-3 shadow-sm">
+            Step 3 of 5
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold font-display text-[#0D2137] tracking-tight mb-2">
+            Choose Your Plan
+          </h2>
+          <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed max-w-lg">
+            Select the subscription tier that matches your creative growth ambition. Upgrade or cancel anytime.
+          </p>
         </div>
-        <h2 className="text-xl sm:text-2xl font-bold font-display text-[#0D2137] tracking-tight">
-          Choose Your Plan
-        </h2>
-        <p className="text-xs sm:text-sm text-[#64748B] mt-1 leading-normal">
-          Select the subscription tier that matches your creative growth ambition. Upgrade or cancel anytime.
-        </p>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-2 mt-2 md:mt-0">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-blue-200 bg-white text-blue-600 text-[10px] font-bold shadow-xs">
+            <Calendar className="w-3.5 h-3.5" />
+            30-Day Production Cycle
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 text-[10px] font-bold shadow-xs">
+            <Zap className="w-3.5 h-3.5 fill-emerald-600" />
+            Instant Workspace Provisioning
+          </div>
+        </div>
       </header>
 
       <AnimatePresence mode="wait">
@@ -249,33 +272,6 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
                 ⚠ {errorMsg}
               </div>
             )}
-
-            <div className="flex flex-col sm:flex-row items-center gap-3">
-              {onBack && (
-                <button
-                  type="button"
-                  onClick={onBack}
-                  className="w-full sm:w-auto py-3 px-5 rounded-xl border border-[#C9DFF0] text-xs font-bold text-[#64748B] hover:text-[#0D2137] hover:bg-[#F8FAFC] transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5 shrink-0"
-                >
-                  <span>← Back to Service Agreement</span>
-                </button>
-              )}
-              <motion.button
-                id="checkout-btn"
-                type="button"
-                onClick={handleCheckout}
-                disabled={!selectedPlanId || phase === "processing"}
-                whileHover={selectedPlanId && phase !== "processing" ? { scale: 1.01 } : {}}
-                whileTap={selectedPlanId && phase !== "processing" ? { scale: 0.99 } : {}}
-                className={`flex-1 w-full py-3 px-6 rounded-xl font-bold text-sm transition-all shadow-sm ${
-                  selectedPlanId && phase !== "processing"
-                    ? "bg-[#2B7BC4] text-white hover:bg-[#1A5EA8] cursor-pointer shadow-blue-500/20"
-                    : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
-                }`}
-              >
-                {phase === "processing" ? "Opening Razorpay Gateway…" : "Proceed to Secure Checkout →"}
-              </motion.button>
-            </div>
           </motion.div>
         )}
 
@@ -302,25 +298,69 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
             key="confirmed"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="p-10 text-center"
+            className="p-10 sm:p-14 text-center flex flex-col items-center"
           >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="text-5xl mb-3"
-            >
-              🎉
-            </motion.div>
-            <h3 className="font-display font-bold text-xl text-emerald-800 mb-1">
+            <div className="size-20 sm:size-24 rounded-full bg-emerald-100 flex items-center justify-center mb-6 relative">
+              <div className="absolute inset-0 rounded-full border border-emerald-400 animate-ping opacity-20" />
+              <div className="absolute inset-2 rounded-full border border-emerald-300 animate-ping opacity-40 delay-75" />
+              <div className="size-14 sm:size-16 rounded-full bg-emerald-500 flex items-center justify-center z-10 shadow-lg shadow-emerald-500/30">
+                <Check className="w-8 h-8 text-white stroke-[3]" />
+              </div>
+            </div>
+            
+            <h3 className="font-display font-bold text-2xl sm:text-3xl text-[#0D2137] mb-3">
               Payment Confirmed!
             </h3>
-            <p className="text-xs text-[#64748B]">
-              Your subscription is active. Moving to brand onboarding…
+            <p className="text-sm sm:text-base text-[#64748B] max-w-sm mx-auto mb-8 font-medium">
+              Your subscription is active. Moving to brand onboarding...
             </p>
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-50/80 text-emerald-600 text-[10px] font-bold tracking-widest border border-emerald-100 uppercase">
+              <Check className="w-3.5 h-3.5" /> TRANSACTION SECURED • 256-BIT ENCRYPTION
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
+
+      {/* Footer Actions */}
+      {(phase === "select" || phase === "processing") && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
+          {onBack ? (
+            <button
+              type="button"
+              onClick={onBack}
+              className="w-full sm:w-auto py-3.5 px-6 rounded-full bg-white border border-[#C9DFF0] text-sm font-bold text-[#64748B] hover:text-[#0D2137] hover:bg-[#F8FAFC] shadow-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0"
+            >
+              <span>← Back to Service Agreement</span>
+            </button>
+          ) : <div />}
+          <motion.button
+            id="checkout-btn"
+            type="button"
+            onClick={handleCheckout}
+            disabled={!selectedPlanId || phase === "processing"}
+            whileHover={selectedPlanId && phase !== "processing" ? { scale: 1.01 } : {}}
+            whileTap={selectedPlanId && phase !== "processing" ? { scale: 0.99 } : {}}
+            className={`w-full sm:w-auto min-w-[280px] py-3.5 px-8 rounded-full font-bold text-sm transition-all shadow-md ${
+              selectedPlanId && phase !== "processing"
+                ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-pointer shadow-blue-500/20"
+                : "bg-white text-slate-400 border border-slate-200 cursor-not-allowed"
+            }`}
+          >
+            {phase === "processing" ? "Opening Secure Checkout…" : "Proceed to Secure Checkout →"}
+          </motion.button>
+        </div>
+      )}
+
+      {phase === "confirmed" && (
+        <div className="flex justify-center mt-6">
+          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white text-[#2B7BC4] font-medium text-sm shadow-sm border border-[#C9DFF0]">
+            <div className="size-4 border-2 border-[#2B7BC4] border-t-transparent rounded-full animate-spin" />
+            Restoring your brand discovery session...
+          </div>
+        </div>
+      )}
+
     </motion.div>
   );
 }
