@@ -99,19 +99,19 @@ export function AdminBottomNav() {
       label: "Overview",
       href: "/workstation",
       icon: LayoutDashboard,
-      isActive: location.pathname === "/workstation" || location.pathname === "/workstation/overview",
+      isActive: location.pathname === "/workstation" || location.pathname === "/member" || location.pathname === "/workstation/overview",
     },
     {
-      label: "Tasks",
+      label: "My Tasks",
       href: "/workstation/tasks",
       icon: CheckSquare,
-      isActive: location.pathname.includes("/workstation/tasks"),
+      isActive: location.pathname.includes("/workstation/tasks") || location.pathname.includes("/member/tasks"),
     },
     {
       label: "Schedule",
       href: "/workstation/schedule",
       icon: CalendarCheck,
-      isActive: location.pathname.includes("/workstation/schedule"),
+      isActive: location.pathname.includes("/workstation/schedule") || location.pathname.includes("/member/schedule"),
     },
     {
       label: "Slack",
@@ -124,9 +124,10 @@ export function AdminBottomNav() {
   const activeItems = isMemberRole ? memberItems : isTeamLead ? leadItems : adminItems;
 
   const memberMoreLinks = [
-    { label: "Slack Workspace Hub", href: "/slack", icon: MessageSquare, desc: "Pod chat, standups & team communication" },
-    { label: "My Sprint Tasks", href: "/workstation/tasks", icon: CheckSquare, desc: "Kanban board & render queue" },
-    { label: "Schedule & PTO", href: "/workstation/schedule", icon: CalendarCheck, desc: "Leave ledger, holidays & coverage pairing" },
+    { label: "Slack Workspace Hub", href: "/slack", icon: MessageSquare, desc: "Team & project communication" },
+    { label: "My Schedule & PTO", href: "/workstation/schedule", icon: CalendarCheck, desc: "Request leave & shift schedule" },
+    { label: "Asset Handoff QA", href: "/workstation/tasks", icon: CheckSquare, desc: "Submit files for lead sign-off" },
+    { label: "Agency Calendar", href: "/admin/calendar", icon: CalendarDays, desc: "View all scheduled content" },
   ];
 
   const moreLinks = isMemberRole
@@ -155,7 +156,7 @@ export function AdminBottomNav() {
     <>
       <nav
         aria-label="Admin Navigation"
-        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 px-1 pt-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-[0_-4px_25px_rgba(0,0,0,0.08)]"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#161F2D]/95 backdrop-blur-xl border-t border-[#2A3446] px-1 pt-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-[0_-4px_25px_rgba(5,8,16,0.6)]"
       >
         <div className="max-w-md mx-auto flex items-center justify-around">
           {activeItems.map((item) => {
@@ -173,14 +174,14 @@ export function AdminBottomNav() {
                 to={item.href}
                 className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-200 flex-1 min-w-0 max-w-[72px] ${
                   isActive
-                    ? "text-[#2563EB] font-black"
-                    : "text-slate-500 hover:text-slate-900 font-medium"
+                    ? "text-[#BCCCE6] font-bold"
+                    : "text-[#97A0B3] hover:text-white font-medium"
                 }`}
               >
                 <div className="relative">
                   <div
                     className={`p-1 rounded-xl transition-all ${
-                      isActive ? "bg-blue-50 text-[#2563EB]" : ""
+                      isActive ? "bg-[#BCCCE6]/15 text-[#BCCCE6]" : ""
                     }`}
                   >
                     <Icon
@@ -190,7 +191,7 @@ export function AdminBottomNav() {
                     />
                   </div>
                   {isActive && (
-                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full bg-[#2563EB]" />
+                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full bg-[#7FA0D6]" />
                   )}
                 </div>
                 <span className="text-[10px] mt-0.5 tracking-tight truncate w-full text-center">{item.label}</span>
@@ -202,16 +203,16 @@ export function AdminBottomNav() {
           <button
             type="button"
             onClick={() => setMoreDrawerOpen(true)}
-            className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-200 flex-1 min-w-0 max-w-[72px] ${
+            className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-200 flex-1 min-w-0 max-w-[72px] cursor-pointer ${
               moreDrawerOpen
-                ? "text-[#2563EB] font-black"
-                : "text-slate-500 hover:text-slate-900 font-medium"
+                ? "text-[#BCCCE6] font-bold"
+                : "text-[#97A0B3] hover:text-white font-medium"
             }`}
           >
             <div className="relative">
               <div
                 className={`p-1 rounded-xl transition-all ${
-                  moreDrawerOpen ? "bg-blue-50 text-[#2563EB]" : ""
+                  moreDrawerOpen ? "bg-[#BCCCE6]/15 text-[#BCCCE6]" : ""
                 }`}
               >
                 <Menu className="size-4 sm:size-5 stroke-[1.8]" />
@@ -225,27 +226,27 @@ export function AdminBottomNav() {
       {/* Mobile More Sheet / Slide-up Drawer */}
       {moreDrawerOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-[99999] bg-slate-950/60 backdrop-blur-sm flex flex-col justify-end animate-fade-in"
+          className="lg:hidden fixed inset-0 z-[99999] bg-[#050810]/75 backdrop-blur-sm flex flex-col justify-end animate-fade-in"
           onClick={() => setMoreDrawerOpen(false)}
         >
           <div
-            className="w-full bg-white rounded-t-3xl border-t border-slate-200 p-5 shadow-2xl max-h-[82vh] overflow-y-auto space-y-4 animate-slide-up"
+            className="w-full bg-[#161F2D] rounded-t-3xl border-t border-[#2A3446] p-5 shadow-2xl max-h-[82vh] overflow-y-auto space-y-4 animate-slide-up text-left"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
               <div className="flex items-center gap-2">
-                <span className="size-8 rounded-xl bg-blue-50 text-[#0052FF] flex items-center justify-center font-bold text-xs">
+                <span className="size-8 rounded-xl bg-[#7FA0D6]/20 text-[#7FA0D6] flex items-center justify-center font-bold text-xs">
                   ⚡
                 </span>
                 <div>
-                  <h3 className="text-sm font-black text-slate-900">Workspace Navigation</h3>
-                  <p className="text-[11px] text-slate-500">Quick access to all operations hubs</p>
+                  <h3 className="text-sm font-bold text-white">Workspace Navigation</h3>
+                  <p className="text-[11px] text-[#97A0B3]">Quick access to all operations hubs</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setMoreDrawerOpen(false)}
-                className="size-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center"
+                className="size-8 rounded-full bg-[#1F2C3F] text-[#97A0B3] hover:text-white flex items-center justify-center cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -262,24 +263,24 @@ export function AdminBottomNav() {
                     onClick={() => setMoreDrawerOpen(false)}
                     className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
                       isActive
-                        ? "bg-blue-50/80 border-blue-200 text-[#0052FF]"
-                        : "bg-slate-50/60 border-slate-100 hover:bg-slate-100/80 text-slate-800"
+                        ? "bg-[#7FA0D6]/15 border-[#7FA0D6]/40 text-[#BCCCE6]"
+                        : "bg-[#0B111C] border-[#2A3446] hover:bg-[#1F2C3F] text-[#F1F5F9]"
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div
                         className={`size-9 rounded-xl flex items-center justify-center ${
-                          isActive ? "bg-[#0052FF] text-white" : "bg-white text-slate-600 shadow-2xs"
+                          isActive ? "bg-[#BCCCE6] text-[#0B111C]" : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446]"
                         }`}
                       >
                         <Icon className="size-4.5" />
                       </div>
                       <div className="text-left">
                         <div className="text-xs font-bold leading-tight">{link.label}</div>
-                        <div className="text-[10px] text-slate-500 line-clamp-1">{link.desc}</div>
+                        <div className="text-[10px] text-[#97A0B3] line-clamp-1">{link.desc}</div>
                       </div>
                     </div>
-                    <ChevronRight className="size-4 text-slate-400 shrink-0" />
+                    <ChevronRight className="size-4 text-[#97A0B3] shrink-0" />
                   </Link>
                 );
               })}

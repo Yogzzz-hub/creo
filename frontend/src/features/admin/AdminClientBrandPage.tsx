@@ -28,9 +28,9 @@ import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
     active: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    trialing: "bg-blue-50 text-blue-700 border-blue-200",
+    trialing: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
     expired: "bg-rose-50 text-rose-700 border-rose-200",
-    canceled: "bg-slate-100 text-slate-600 border-slate-200",
+    canceled: "bg-[#1F2C3F] text-[#F1F5F9] border-[#2A3446]",
   };
   return (
     <span
@@ -57,13 +57,13 @@ function SectionCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden ${className}`}
+      className={`rounded-2xl border border-[#2A3446]/80 bg-[#161F2D] shadow-sm overflow-hidden ${className}`}
     >
-      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-slate-100 bg-slate-50/50">
-        <div className="size-7 rounded-lg bg-[#E8F4FD] border border-[#C9DFF0] flex items-center justify-center text-[#2B7BC4]">
+      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-[#2A3446] bg-[#0B111C]/50">
+        <div className="size-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
           <Icon className="size-3.5" />
         </div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-[#0D2137]">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-white">
           {title}
         </h3>
       </div>
@@ -80,11 +80,11 @@ function TagBadge({
   color?: "blue" | "red" | "green" | "amber" | "slate";
 }) {
   const colors = {
-    blue: "bg-blue-50 text-blue-700 border-blue-200",
+    blue: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
     red: "bg-rose-50 text-rose-700 border-rose-200",
     green: "bg-emerald-50 text-emerald-700 border-emerald-200",
     amber: "bg-amber-50 text-amber-700 border-amber-200",
-    slate: "bg-slate-100 text-slate-600 border-slate-200",
+    slate: "bg-[#1F2C3F] text-[#F1F5F9] border-[#2A3446]",
   };
   return (
     <span
@@ -98,12 +98,12 @@ function TagBadge({
 function ColorSwatch({ color }: { color: string }) {
   const isValid = typeof color === "string" && color.startsWith("#");
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5">
+    <div className="flex items-center gap-2 rounded-lg border border-[#2A3446] bg-[#0B111C] px-2.5 py-1.5">
       <div
-        className="size-5 rounded-md border border-slate-300 shadow-inner"
+        className="size-5 rounded-md border border-[#2A3446] shadow-inner"
         style={{ backgroundColor: isValid ? color : "#2B7BC4" }}
       />
-      <span className="font-mono text-[11px] font-bold text-slate-700">
+      <span className="font-mono text-[11px] font-bold text-[#F1F5F9]">
         {color}
       </span>
     </div>
@@ -311,7 +311,7 @@ export function AdminClientBrandPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
           <div className="size-8 animate-spin rounded-full border-3 border-[#2B7BC4] border-t-transparent" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#97A0B3]">
             Loading Brand Profile...
           </span>
         </div>
@@ -365,7 +365,7 @@ export function AdminClientBrandPage() {
   };
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Client Details" />
       <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-5 animate-page-in">
         {/* ── Back Navigation ────────────────────────────────── */}
@@ -379,20 +379,20 @@ export function AdminClientBrandPage() {
                 window.location.assign("/lead/clients");
               }
             }}
-            className="inline-flex items-center gap-1.5 text-slate-500 hover:text-[#2B7BC4] font-semibold transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-[#97A0B3] hover:text-[#7FA0D6] font-semibold transition-colors cursor-pointer"
           >
             <ArrowLeft className="size-3.5" />
             Back to Client Directory
           </button>
           <span className="text-slate-300">/</span>
-          <span className="text-slate-400">{client.company_name || client.full_name || "Client"} Brand Brief & Profile</span>
+          <span className="text-[#97A0B3]">{client.company_name || client.full_name || "Client"} Brand Brief & Profile</span>
         </div>
 
       {/* ── Client Header Hero ─────────────────────────────── */}
-      <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-[#0D2137] to-[#1E609A] p-6 sm:p-8 text-white relative overflow-hidden">
+      <div className="rounded-2xl border border-[#2A3446]/80 bg-gradient-to-br from-[#0D2137] to-[#1E609A] p-6 sm:p-8 text-white relative overflow-hidden">
         {/* Ambient glow */}
         <div className="pointer-events-none absolute -top-20 -right-20 size-56 rounded-full bg-sky-400/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 size-44 rounded-full bg-blue-500/15 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 size-44 rounded-full bg-[#7FA0D6]/150/15 blur-2xl" />
 
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-start gap-5">
           {/* Avatar */}
@@ -471,7 +471,7 @@ export function AdminClientBrandPage() {
             ].map((s) => (
               <div
                 key={s.label}
-                className="text-center px-3 py-2 rounded-xl bg-white/10 border border-white/15 backdrop-blur-sm"
+                className="text-center px-3 py-2 rounded-xl bg-[#161F2D]/10 border border-white/15 backdrop-blur-sm"
               >
                 <s.icon className="size-4 mx-auto mb-1 text-cyan-300" />
                 <p className="text-lg font-black">{s.value}</p>
@@ -487,19 +487,19 @@ export function AdminClientBrandPage() {
         <div className="relative z-10 flex flex-wrap gap-2 mt-5 pt-4 border-t border-white/15">
           <Link
             to="/admin/tasks"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold border border-white/20 transition-all"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#161F2D]/15 hover:bg-[#161F2D]/25 text-white text-[11px] font-bold border border-white/20 transition-all"
           >
             <CheckSquare className="size-3" /> View Tasks
           </Link>
           <Link
             to="/admin/calendar"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold border border-white/20 transition-all"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#161F2D]/15 hover:bg-[#161F2D]/25 text-white text-[11px] font-bold border border-white/20 transition-all"
           >
             <CalendarDays className="size-3" /> Content Calendar
           </Link>
           <Link
             to="/admin/deliverables"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold border border-white/20 transition-all"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#161F2D]/15 hover:bg-[#161F2D]/25 text-white text-[11px] font-bold border border-white/20 transition-all"
           >
             <FileStack className="size-3" /> Deliverables
           </Link>
@@ -513,7 +513,7 @@ export function AdminClientBrandPage() {
           <div className="space-y-4">
             {voiceWords.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2 flex items-center gap-1.5">
                   <Eye className="size-3" /> Voice Words
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -525,7 +525,7 @@ export function AdminClientBrandPage() {
             )}
             {antiVoice.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2 flex items-center gap-1.5">
                   <EyeOff className="size-3" /> Anti-Voice (Avoid)
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -537,14 +537,14 @@ export function AdminClientBrandPage() {
             )}
             {writingRules.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
                   Writing Rules
                 </p>
                 <ul className="space-y-1.5">
                   {writingRules.map((r, i) => (
                     <li
                       key={i}
-                      className="text-xs text-slate-600 pl-3 relative before:content-[''] before:absolute before:left-0 before:top-1.5 before:size-1.5 before:rounded-full before:bg-[#2B7BC4]"
+                      className="text-xs text-[#F1F5F9] pl-3 relative before:content-[''] before:absolute before:left-0 before:top-1.5 before:size-1.5 before:rounded-full before:bg-[#2B7BC4]"
                     >
                       {r}
                     </li>
@@ -555,7 +555,7 @@ export function AdminClientBrandPage() {
             {voiceWords.length === 0 &&
               antiVoice.length === 0 &&
               writingRules.length === 0 && (
-                <p className="text-xs text-slate-400 italic">
+                <p className="text-xs text-[#97A0B3] italic">
                   No tone data available yet. Brand DNA will be generated once
                   the client completes the questionnaire.
                 </p>
@@ -568,7 +568,7 @@ export function AdminClientBrandPage() {
           <div className="space-y-4">
             {palette.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
                   Brand Color Palette
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -580,7 +580,7 @@ export function AdminClientBrandPage() {
             )}
             {visualStyles.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
                   Visual Styles
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -591,7 +591,7 @@ export function AdminClientBrandPage() {
               </div>
             )}
             {palette.length === 0 && visualStyles.length === 0 && (
-              <p className="text-xs text-slate-400 italic">
+              <p className="text-xs text-[#97A0B3] italic">
                 No visual direction data available yet.
               </p>
             )}
@@ -605,15 +605,15 @@ export function AdminClientBrandPage() {
               {audiences.map((a: any, i: number) => (
                 <div
                   key={i}
-                  className="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5"
+                  className="rounded-xl border border-[#2A3446] bg-[#0B111C]/50 p-3.5"
                 >
-                  <p className="text-xs font-bold text-[#0D2137]">
+                  <p className="text-xs font-bold text-white">
                     {typeof a === "string"
                       ? a
                       : a.name || "Audience Segment"}
                   </p>
                   {typeof a === "object" && a.description && (
-                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                    <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed">
                       {a.description}
                     </p>
                   )}
@@ -626,7 +626,7 @@ export function AdminClientBrandPage() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-slate-400 italic">
+            <p className="text-xs text-[#97A0B3] italic">
               No audience segment data available.
             </p>
           )}
@@ -639,10 +639,10 @@ export function AdminClientBrandPage() {
               {pillars.map((p: any, i: number) => (
                 <div
                   key={i}
-                  className="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5"
+                  className="rounded-xl border border-[#2A3446] bg-[#0B111C]/50 p-3.5"
                 >
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <p className="text-xs font-bold text-[#0D2137]">
+                    <p className="text-xs font-bold text-white">
                       {typeof p === "string" ? p : p.name || "Content Pillar"}
                     </p>
                     {typeof p === "object" && p.funnel_stage && (
@@ -658,7 +658,7 @@ export function AdminClientBrandPage() {
                     )}
                   </div>
                   {typeof p === "object" && p.rationale && (
-                    <p className="text-[11px] text-slate-600 leading-relaxed">
+                    <p className="text-[11px] text-[#F1F5F9] leading-relaxed">
                       {p.rationale}
                     </p>
                   )}
@@ -675,7 +675,7 @@ export function AdminClientBrandPage() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-slate-400 italic">
+            <p className="text-xs text-[#97A0B3] italic">
               No content pillar data available.
             </p>
           )}
@@ -701,7 +701,7 @@ export function AdminClientBrandPage() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-slate-400 italic">
+            <p className="text-xs text-[#97A0B3] italic">
               No &quot;do not&quot; rules specified.
             </p>
           )}
@@ -712,7 +712,7 @@ export function AdminClientBrandPage() {
           <div className="space-y-4">
             {formats.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
                   Feasible Formats
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -723,7 +723,7 @@ export function AdminClientBrandPage() {
               </div>
             )}
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
                 Default Reel Style
               </p>
               <TagBadge
@@ -735,21 +735,21 @@ export function AdminClientBrandPage() {
             {/* Quota usage */}
             {client.quota_usage.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
                   Monthly Quota Usage
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {client.quota_usage.map((q) => (
                     <div
                       key={q.kind}
-                      className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-center"
+                      className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-3 text-center"
                     >
-                      <p className="text-xs font-bold text-[#0D2137] capitalize">
+                      <p className="text-xs font-bold text-white capitalize">
                         {q.kind.replace(/_/g, " ")}
                       </p>
-                      <p className="text-lg font-black text-[#2B7BC4] mt-0.5">
+                      <p className="text-lg font-black text-[#7FA0D6] mt-0.5">
                         {q.used}
-                        <span className="text-xs text-slate-400 font-medium">
+                        <span className="text-xs text-[#97A0B3] font-medium">
                           {" "}
                           / {q.quota}
                         </span>
@@ -777,7 +777,7 @@ export function AdminClientBrandPage() {
           <div className="overflow-x-auto -mx-1">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] border-b border-[#2A3446]">
                   <th className="pb-2.5 pl-1 pr-3">Team Member</th>
                   <th className="pb-2.5 pr-3">Role</th>
                   <th className="pb-2.5 pr-3">Email</th>
@@ -786,21 +786,21 @@ export function AdminClientBrandPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {client.assigned_team.map((m) => (
-                  <tr key={m.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={m.id} className="hover:bg-[#0B111C]/50 transition-colors">
                     <td className="py-3 pl-1 pr-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="size-7 rounded-lg bg-[#E8F4FD] border border-[#C9DFF0] flex items-center justify-center text-[10px] font-bold text-[#2B7BC4]">
+                        <div className="size-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[10px] font-bold text-[#7FA0D6]">
                           {(m.name?.[0] || "?").toUpperCase()}
                         </div>
-                        <span className="font-semibold text-[#0D2137]">
+                        <span className="font-semibold text-white">
                           {m.name}
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 pr-3 text-slate-600 font-medium">
+                    <td className="py-3 pr-3 text-[#F1F5F9] font-medium">
                       {m.role_label}
                     </td>
-                    <td className="py-3 pr-3 text-slate-500">{m.email}</td>
+                    <td className="py-3 pr-3 text-[#97A0B3]">{m.email}</td>
                     <td className="py-3 pr-1 text-center">
                       {m.is_primary && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
@@ -817,28 +817,28 @@ export function AdminClientBrandPage() {
       )}
 
       {/* ── Brand DNA Meta Footer ──────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 py-3 px-4 rounded-xl border border-slate-200 bg-slate-50/50 text-[10px] text-slate-400 font-medium">
+      <div className="flex flex-wrap items-center justify-between gap-3 py-3 px-4 rounded-xl border border-[#2A3446] bg-[#0B111C]/50 text-[10px] text-[#97A0B3] font-medium">
         <div className="flex items-center gap-4">
           <span>
             DNA Source:{" "}
-            <strong className="text-slate-600 capitalize">
+            <strong className="text-[#F1F5F9] capitalize">
               {client.brand_dna_source}
             </strong>
           </span>
           <span>
             Version:{" "}
-            <strong className="text-slate-600">v{client.brand_dna_version}</strong>
+            <strong className="text-[#F1F5F9]">v{client.brand_dna_version}</strong>
           </span>
           {client.onboarding_completed_at && (
             <span>
               Onboarded:{" "}
-              <strong className="text-slate-600">
+              <strong className="text-[#F1F5F9]">
                 {new Date(client.onboarding_completed_at).toLocaleDateString()}
               </strong>
             </span>
           )}
         </div>
-        <span className="text-[9px] uppercase tracking-wider text-slate-400">
+        <span className="text-[9px] uppercase tracking-wider text-[#97A0B3]">
           Client ID: {client.client_id.slice(0, 8)}
         </span>
       </div>

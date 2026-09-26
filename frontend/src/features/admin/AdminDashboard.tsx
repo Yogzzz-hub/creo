@@ -76,7 +76,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
   return (
     <div
       data-surface="ops"
-      className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col"
+      className="w-full min-h-screen font-sans bg-[#0B111C] text-[#F1F5F9] flex flex-col"
     >
       {/* Top Header */}
       <AdminTopHeader

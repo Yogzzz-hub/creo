@@ -32,16 +32,16 @@ const TIMEFRAME_LABELS: Record<Timeframe, string> = {
 
 // Plan colour palette (index-based)
 const PLAN_COLORS = [
-  { bg: "bg-blue-600", text: "text-white", ring: "border-blue-200 bg-blue-50/40" },
-  { bg: "bg-violet-500", text: "text-white", ring: "border-violet-200 bg-violet-50/40" },
-  { bg: "bg-emerald-500", text: "text-white", ring: "border-emerald-200 bg-emerald-50/40" },
+  { bg: "bg-[#7FA0D6]", text: "text-[#0B111C]", ring: "border-[#2A3446] bg-[#0B111C]" },
+  { bg: "bg-[#BCCCE6]", text: "text-[#0B111C]", ring: "border-[#2A3446] bg-[#0B111C]" },
+  { bg: "bg-[#D8BF9B]", text: "text-[#0B111C]", ring: "border-[#2A3446] bg-[#0B111C]" },
 ];
 
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   const value = payload[0].value as number;
   return (
-    <div className="bg-gray-900 text-white px-3 py-2 rounded-lg shadow-xl text-xs border border-gray-700">
+    <div className="bg-[#050810] text-white px-3 py-2 rounded-lg shadow-xl text-xs border border-[#2A3446]">
       <p className="text-gray-400 font-medium mb-0.5">{label}</p>
       <p className="text-sm font-black">₹{(value / 100).toLocaleString("en-IN")}</p>
     </div>
@@ -104,12 +104,12 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
   return (
     <div
       onClick={() => navigate("/admin/revenue")}
-      className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-blue-200/80 transition-all p-4 sm:p-5 flex flex-col w-full h-full font-sans cursor-pointer group"
+      className="bg-[#161F2D] rounded-2xl border border-[#2A3446] shadow-sm hover:border-[#7FA0D6]/50 transition-all p-4 sm:p-5 flex flex-col w-full h-full font-sans cursor-pointer group"
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-2.5">
-        <h2 className="text-base font-black text-gray-900 group-hover:text-blue-600 transition-colors tracking-tight">Revenue Engine</h2>
-        <div className="flex bg-slate-50 p-0.5 rounded-lg text-xs font-semibold border border-slate-100" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-base font-black text-white group-hover:text-[#7FA0D6] transition-colors tracking-tight">Revenue Engine</h2>
+        <div className="flex bg-[#0B111C] p-0.5 rounded-lg text-xs font-semibold border border-[#2A3446]" onClick={(e) => e.stopPropagation()}>
           {(Object.entries(TIMEFRAME_LABELS) as [Timeframe, string][]).map(([key, label]) => (
             <button
               key={key}
@@ -120,8 +120,8 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
               }}
               className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold cursor-pointer transition-all ${
                 activeTimeframe === key
-                  ? "bg-white text-blue-600 shadow-xs"
-                  : "text-slate-500 hover:text-slate-900"
+                  ? "bg-[#BCCCE6] text-[#0B111C] font-bold shadow-xs"
+                  : "text-[#97A0B3] hover:text-white"
               }`}
             >
               {label}
@@ -132,10 +132,10 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
 
       {/* Revenue Number */}
       <div className="flex items-baseline gap-2 mb-2.5">
-        <span className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+        <span className="text-xl sm:text-2xl font-black text-white tracking-tight">
           {displayRevenue}
         </span>
-        <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+        <span className="text-[11px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 py-0.5 rounded-full border border-[#7FA0D6]/30">
           {displayClients} clients
         </span>
       </div>
@@ -154,11 +154,11 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
           <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
             <defs>
               <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#2563EB" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#2563EB" stopOpacity={0.01} />
+                <stop offset="5%" stopColor="#7FA0D6" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="#7FA0D6" stopOpacity={0.01} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A3446" />
             <XAxis
               dataKey="name"
               tick={{ fontSize: 9, fill: "#94a3b8" }}
@@ -183,18 +183,18 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
             <Tooltip content={<CustomTooltip />} />
             <ReferenceLine
               y={avgTicket * 2 > 0 ? avgTicket * 2 : 10000000}
-              stroke="#94a3b8"
+              stroke="#2A3446"
               strokeDasharray="4 4"
               strokeWidth={1}
             />
             <Area
               type="monotone"
               dataKey="revenue"
-              stroke="#2563EB"
+              stroke="#7FA0D6"
               strokeWidth={2}
               fill="url(#colorRevenue)"
               dot={false}
-              activeDot={{ r: 4, fill: "#2563EB", stroke: "#fff", strokeWidth: 2 }}
+              activeDot={{ r: 4, fill: "#7FA0D6", stroke: "#fff", strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -202,22 +202,22 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
 
       {/* KPI Cards */}
       <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mb-2.5">
-        <div className="bg-slate-50/90 rounded-xl p-1.5 sm:p-2 border border-slate-200/80 flex flex-col items-center justify-center text-center">
-          <span className="text-xs sm:text-sm font-black text-slate-900 leading-none">{displayRevenue}</span>
-          <span className="text-[8px] sm:text-[8.5px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">Total Rev</span>
+        <div className="bg-[#0B111C] rounded-xl p-1.5 sm:p-2 border border-[#2A3446] flex flex-col items-center justify-center text-center">
+          <span className="text-xs sm:text-sm font-black text-white leading-none">{displayRevenue}</span>
+          <span className="text-[8px] sm:text-[8.5px] text-[#97A0B3] uppercase font-bold tracking-wider mt-0.5">Total Rev</span>
         </div>
-        <div className="bg-blue-50/60 rounded-xl p-1.5 sm:p-2 border border-blue-200/80 flex flex-col items-center justify-center text-center">
-          <span className="text-xs sm:text-sm font-black text-blue-600 leading-none">{displayClients}</span>
-          <span className="text-[8px] sm:text-[8.5px] text-blue-600 uppercase font-bold tracking-wider mt-0.5">Active Deals</span>
+        <div className="bg-[#7FA0D6]/15 rounded-xl p-1.5 sm:p-2 border border-[#7FA0D6]/30 flex flex-col items-center justify-center text-center">
+          <span className="text-xs sm:text-sm font-black text-[#7FA0D6] leading-none">{displayClients}</span>
+          <span className="text-[8px] sm:text-[8.5px] text-[#7FA0D6] uppercase font-bold tracking-wider mt-0.5">Active Deals</span>
         </div>
-        <div className="bg-slate-50/90 rounded-xl p-1.5 sm:p-2 border border-slate-200/80 flex flex-col items-center justify-center text-center">
-          <span className="text-xs sm:text-sm font-black text-slate-900 leading-none">{formatCurrency(avgTicket)}</span>
-          <span className="text-[8px] sm:text-[8.5px] text-slate-500 uppercase font-bold tracking-wider mt-0.5">Avg Ticket</span>
+        <div className="bg-[#0B111C] rounded-xl p-1.5 sm:p-2 border border-[#2A3446] flex flex-col items-center justify-center text-center">
+          <span className="text-xs sm:text-sm font-black text-white leading-none">{formatCurrency(avgTicket)}</span>
+          <span className="text-[8px] sm:text-[8.5px] text-[#97A0B3] uppercase font-bold tracking-wider mt-0.5">Avg Ticket</span>
         </div>
       </div>
 
       {/* Sales Details – All Plans */}
-      <h3 className="text-xs font-black text-slate-900 mb-2 shrink-0">Sales Details</h3>
+      <h3 className="text-xs font-black text-white mb-2 shrink-0">Sales Details</h3>
       <div className="flex flex-col gap-2 flex-1 overflow-y-auto min-h-0 pr-0.5 custom-scrollbar">
         {plans.length > 0 ? (
           plans.slice(0, 3).map((plan, idx) => {
@@ -232,7 +232,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
                 <div className="flex items-center gap-2 min-w-0">
                   <div className={`w-2 h-2 rounded-full ${color.bg} shrink-0`} />
                   <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5 truncate">
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5 truncate">
                       {plan.display_name}
                       {isTopSeller && (
                         <span className="px-1 py-0.2 rounded text-[8px] font-black uppercase tracking-wider bg-amber-400 text-amber-950">
@@ -240,7 +240,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
                         </span>
                       )}
                     </span>
-                    <span className="text-[10px] text-slate-500">
+                    <span className="text-[10px] text-[#97A0B3]">
                       {plan.subscriber_count} Active · {formatCurrency(plan.price_minor)}/mo
                     </span>
                   </div>
@@ -248,17 +248,17 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
 
                 {/* Right: revenue + share */}
                 <div className="flex flex-col items-end shrink-0">
-                  <span className="text-xs font-bold text-slate-900">
+                  <span className="text-xs font-bold text-white">
                     {plan.revenue_formatted}
                   </span>
                   <div className="flex items-center gap-1 mt-0.5">
-                    <div className="w-12 h-1 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="w-12 h-1 bg-[#2A3446] rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full ${color.bg}`}
                         style={{ width: `${plan.share_pct}%` }}
                       />
                     </div>
-                    <span className="text-[9px] text-slate-500 font-semibold">
+                    <span className="text-[9px] text-[#97A0B3] font-semibold">
                       {plan.share_pct}%
                     </span>
                   </div>
@@ -267,25 +267,25 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
             );
           })
         ) : (
-          <div className="p-3 rounded-xl border border-dashed border-slate-200 text-center text-xs text-slate-400">
+          <div className="p-3 rounded-xl border border-dashed border-[#2A3446] text-center text-xs text-slate-400">
             No plans found.
           </div>
         )}
       </div>
 
       {/* Action Buttons */}
-      <div className="mt-3 pt-3 border-t border-slate-100 flex gap-2" onClick={(e) => e.stopPropagation()}>
+      <div className="mt-3 pt-3 border-t border-[#2A3446] flex gap-2" onClick={(e) => e.stopPropagation()}>
         <Link
           to="/admin/revenue"
           onClick={(e) => e.stopPropagation()}
-          className="flex-1 text-center py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"
+          className="flex-1 text-center py-1.5 bg-blue-50 text-[#7FA0D6] rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors"
         >
           Manage Revenues
         </Link>
         <Link
           to="/admin/plans"
           onClick={(e) => e.stopPropagation()}
-          className="flex-1 text-center py-1.5 bg-slate-50 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100 border border-slate-200 transition-colors"
+          className="flex-1 text-center py-1.5 bg-slate-50 text-slate-700 rounded-lg text-xs font-bold hover:bg-[#2A3446] border border-[#2A3446] transition-colors"
         >
           Plans & Negotiations
         </Link>

@@ -72,7 +72,7 @@ export function AdminSLAPerformancePage() {
   ];
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F8FAFC] flex flex-col justify-between">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col justify-between">
       <div>
         <AdminTopHeader activeTab="Support" />
 
@@ -80,39 +80,39 @@ export function AdminSLAPerformancePage() {
           {/* Top 2 KPI Metric Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* Metric Card 1: Overall Compliance */}
-            <div className="bg-white border border-slate-200/90 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xs flex items-center justify-between">
+            <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xs flex items-center justify-between">
               <div className="space-y-0.5">
-                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
                   OVERALL COMPLIANCE
                 </span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-xl sm:text-2xl font-black text-slate-900">98.4%</span>
+                  <span className="text-xl sm:text-2xl font-black text-white">98.4%</span>
                   <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-0.5">
                     <TrendingUp className="size-3" /> +0.6% MoM
                   </span>
                 </div>
                 <div className="flex items-center gap-2 pt-0.5 text-[11px] font-semibold">
-                  <span className="text-slate-500">Target: <strong className="text-slate-800">98.0%</strong></span>
+                  <span className="text-[#97A0B3]">Target: <strong className="text-white">98.0%</strong></span>
                   <span className="px-2 py-0.2 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-extrabold border border-emerald-200">
                     OPTIMAL
                   </span>
                 </div>
               </div>
 
-              <div className="size-8 sm:size-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+              <div className="size-8 sm:size-10 rounded-xl bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 flex items-center justify-center text-[#7FA0D6] shrink-0">
                 <Shield className="size-4 sm:size-5" />
               </div>
             </div>
 
             {/* Metric Card 2: Active SLA Watchlist */}
-            <div className="bg-white border border-slate-200/90 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xs flex items-center justify-between">
+            <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xs flex items-center justify-between">
               <div className="space-y-0.5">
-                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
                   ACTIVE SLA WATCHLIST
                 </span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-xl sm:text-2xl font-black text-slate-900">2</span>
-                  <span className="text-xs font-bold text-slate-600">Active</span>
+                  <span className="text-xl sm:text-2xl font-black text-white">2</span>
+                  <span className="text-xs font-bold text-[#F1F5F9]">Active</span>
                 </div>
                 <div className="flex items-center gap-1.5 pt-0.5 text-[11px] font-semibold">
                   <span className="px-2 py-0.2 rounded-md bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200">
@@ -133,16 +133,16 @@ export function AdminSLAPerformancePage() {
           {/* Row 1: Chart & Compliance by Priority */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Chart Card (2 Cols) */}
-            <div className="lg:col-span-2 bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="lg:col-span-2 bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-6 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2A3446] pb-4">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Response & Resolution Trend</h3>
-                  <p className="text-xs text-slate-500">
+                  <h3 className="text-sm font-bold text-white">Response & Resolution Trend</h3>
+                  <p className="text-xs text-[#97A0B3]">
                     Daily compliance velocity trajectory (May 10 — June 10, 2025)
                   </p>
                 </div>
                 <div className="flex items-center gap-4 text-xs font-bold">
-                  <span className="flex items-center gap-1.5 text-blue-600">
+                  <span className="flex items-center gap-1.5 text-[#7FA0D6]">
                     <span className="size-2.5 rounded-full bg-blue-600" />
                     Response (99.1%)
                   </span>
@@ -192,25 +192,25 @@ export function AdminSLAPerformancePage() {
                 </svg>
 
                 {/* X Axis Labels */}
-                <div className="flex justify-between text-[11px] font-medium text-slate-400 pt-2 border-t border-slate-100">
+                <div className="flex justify-between text-[11px] font-medium text-[#97A0B3] pt-2 border-t border-[#2A3446]">
                   <span>May 10</span>
                   <span>May 16</span>
                   <span>May 22</span>
                   <span>May 28</span>
                   <span>Jun 03</span>
-                  <span className="font-bold text-blue-600">Jun 10 (Today)</span>
+                  <span className="font-bold text-[#7FA0D6]">Jun 10 (Today)</span>
                 </div>
               </div>
             </div>
 
             {/* Compliance by Priority Card (1 Col) */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-6 shadow-xs space-y-5">
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Compliance by Priority</h3>
-                  <p className="text-xs text-slate-500">Strict contract adherence by urgency level</p>
+                  <h3 className="text-sm font-bold text-white">Compliance by Priority</h3>
+                  <p className="text-xs text-[#97A0B3]">Strict contract adherence by urgency level</p>
                 </div>
-                <Sliders className="size-4 text-slate-400" />
+                <Sliders className="size-4 text-[#97A0B3]" />
               </div>
 
               {/* Progress Bars Stack */}
@@ -218,13 +218,13 @@ export function AdminSLAPerformancePage() {
                 {/* Item 1: Urgent */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-bold">
-                    <span className="flex items-center gap-1.5 text-slate-900">
+                    <span className="flex items-center gap-1.5 text-white">
                       <span className="size-2 rounded-full bg-rose-600" />
                       Urgent (1h SLA)
                     </span>
-                    <span className="text-slate-900">96.8% <span className="text-slate-400 font-normal">(5/5 Compliant)</span></span>
+                    <span className="text-white">96.8% <span className="text-[#97A0B3] font-normal">(5/5 Compliant)</span></span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-2 w-full rounded-full bg-[#1F2C3F] overflow-hidden">
                     <div className="h-full bg-rose-600 rounded-full" style={{ width: "96.8%" }} />
                   </div>
                 </div>
@@ -232,13 +232,13 @@ export function AdminSLAPerformancePage() {
                 {/* Item 2: High Priority */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-bold">
-                    <span className="flex items-center gap-1.5 text-slate-900">
+                    <span className="flex items-center gap-1.5 text-white">
                       <span className="size-2 rounded-full bg-blue-600" />
                       High Priority (2h SLA)
                     </span>
-                    <span className="text-slate-900">98.2% <span className="text-slate-400 font-normal">(8/8 Compliant)</span></span>
+                    <span className="text-white">98.2% <span className="text-[#97A0B3] font-normal">(8/8 Compliant)</span></span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-2 w-full rounded-full bg-[#1F2C3F] overflow-hidden">
                     <div className="h-full bg-blue-600 rounded-full" style={{ width: "98.2%" }} />
                   </div>
                 </div>
@@ -246,13 +246,13 @@ export function AdminSLAPerformancePage() {
                 {/* Item 3: Medium Priority */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-bold">
-                    <span className="flex items-center gap-1.5 text-slate-900">
+                    <span className="flex items-center gap-1.5 text-white">
                       <span className="size-2 rounded-full bg-sky-500" />
                       Medium Priority (4h SLA)
                     </span>
-                    <span className="text-slate-900">99.4% <span className="text-slate-400 font-normal">(19/19 Compliant)</span></span>
+                    <span className="text-white">99.4% <span className="text-[#97A0B3] font-normal">(19/19 Compliant)</span></span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-2 w-full rounded-full bg-[#1F2C3F] overflow-hidden">
                     <div className="h-full bg-sky-500 rounded-full" style={{ width: "99.4%" }} />
                   </div>
                 </div>
@@ -260,13 +260,13 @@ export function AdminSLAPerformancePage() {
                 {/* Item 4: Normal Priority */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-bold">
-                    <span className="flex items-center gap-1.5 text-slate-900">
+                    <span className="flex items-center gap-1.5 text-white">
                       <span className="size-2 rounded-full bg-emerald-600" />
                       Normal Priority (12h SLA)
                     </span>
-                    <span className="text-slate-900">100.0% <span className="text-slate-400 font-normal">(44/44 Compliant)</span></span>
+                    <span className="text-white">100.0% <span className="text-[#97A0B3] font-normal">(44/44 Compliant)</span></span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-2 w-full rounded-full bg-[#1F2C3F] overflow-hidden">
                     <div className="h-full bg-emerald-600 rounded-full" style={{ width: "100%" }} />
                   </div>
                 </div>
@@ -277,20 +277,20 @@ export function AdminSLAPerformancePage() {
           {/* Row 2: Pod Efficiency Leaderboard & Active Breach Warnings */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Leaderboard (2 Cols) */}
-            <div className="lg:col-span-2 bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="lg:col-span-2 bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">Pod Efficiency Leaderboard</h3>
-                  <p className="text-xs text-slate-500">Operational velocity across client dedicated pods</p>
+                  <h3 className="text-sm font-bold text-white">Pod Efficiency Leaderboard</h3>
+                  <p className="text-xs text-[#97A0B3]">Operational velocity across client dedicated pods</p>
                 </div>
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
                   5 ACTIVE PODS
                 </span>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                  <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
                     <tr>
                       <th className="px-4 py-3">POD / LEAD</th>
                       <th className="px-4 py-3">SLA MET</th>
@@ -301,7 +301,7 @@ export function AdminSLAPerformancePage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
                     {podLeaderboard.map((item) => (
-                      <tr key={item.pod} className="hover:bg-slate-50 transition-colors">
+                      <tr key={item.pod} className="hover:bg-[#0B111C] transition-colors">
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-3">
                             <div
@@ -310,14 +310,14 @@ export function AdminSLAPerformancePage() {
                               {item.pod.replace("Pod ", "")}
                             </div>
                             <div>
-                              <div className="font-bold text-slate-900">{item.pod}</div>
-                              <div className="text-[11px] text-slate-500">{item.lead}</div>
+                              <div className="font-bold text-white">{item.pod}</div>
+                              <div className="text-[11px] text-[#97A0B3]">{item.lead}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3.5 font-bold text-slate-900">{item.slaMet}</td>
-                        <td className="px-4 py-3.5 text-slate-600 font-mono">{item.avgResponse}</td>
-                        <td className="px-4 py-3.5 text-slate-600">{item.resolved}</td>
+                        <td className="px-4 py-3.5 font-bold text-white">{item.slaMet}</td>
+                        <td className="px-4 py-3.5 text-[#F1F5F9] font-mono">{item.avgResponse}</td>
+                        <td className="px-4 py-3.5 text-[#F1F5F9]">{item.resolved}</td>
                         <td className="px-4 py-3.5 text-right">
                           <span
                             className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${item.statusBg}`}
@@ -333,10 +333,10 @@ export function AdminSLAPerformancePage() {
             </div>
 
             {/* Active Breach Warnings (1 Col) */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="text-sm font-bold text-slate-900">Active Breach Warnings</h3>
-                <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-100">
+            <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <h3 className="text-sm font-bold text-white">Active Breach Warnings</h3>
+                <span className="text-[11px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2.5 py-0.5 rounded-full border border-[#7FA0D6]/30">
                   Live Dispatch
                 </span>
               </div>
@@ -388,7 +388,7 @@ export function AdminSLAPerformancePage() {
                     <span className="text-xs font-semibold text-emerald-700">
                       SLA Intact (1.2h elapsed)
                     </span>
-                    <span className="text-[11px] font-medium text-slate-400">Archived</span>
+                    <span className="text-[11px] font-medium text-[#97A0B3]">Archived</span>
                   </div>
                 </div>
 
@@ -410,7 +410,7 @@ export function AdminSLAPerformancePage() {
                     <span className="text-xs font-semibold text-amber-700">Auto-load balancing recommended</span>
                     <button
                       type="button"
-                      className="px-3 py-1 rounded-lg bg-white border border-amber-300 text-amber-800 font-bold text-[11px] hover:bg-amber-100 transition-colors"
+                      className="px-3 py-1 rounded-lg bg-[#161F2D] border border-amber-300 text-amber-800 font-bold text-[11px] hover:bg-amber-100 transition-colors"
                     >
                       Monitor
                     </button>
@@ -423,8 +423,8 @@ export function AdminSLAPerformancePage() {
       </div>
 
       {/* Footer Bar */}
-      <footer className="bg-white border-t border-slate-200 px-6 lg:px-8 py-4 mt-8">
-        <div className="max-w-[1500px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+      <footer className="bg-[#161F2D] border-t border-[#2A3446] px-6 lg:px-8 py-4 mt-8">
+        <div className="max-w-[1500px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#97A0B3]">
           <span>© 2025 creo. Executive Operations Portal. All rights reserved.</span>
           <div className="flex items-center gap-3 font-medium">
             <span className="flex items-center gap-1.5 text-emerald-600 font-bold">

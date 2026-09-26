@@ -162,57 +162,57 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-[fadeIn_0.15s_ease-out]">
-      <div className="relative w-full max-w-2xl rounded-3xl bg-white p-6 sm:p-7 shadow-2xl border border-[#C9DFF0] max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-[#050810]/80 backdrop-blur-md animate-[fadeIn_0.15s_ease-out]">
+      <div className="relative w-full max-w-2xl rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-[#2A3446] text-[#F1F5F9] max-h-[92vh] overflow-y-auto">
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
           disabled={loading}
-          className="absolute top-5 right-5 size-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-[#0D2137] flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute top-5 right-5 size-8 rounded-full bg-[#1F2C3F] text-[#97A0B3] hover:bg-[#25344A] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
         >
           <X className="size-4" />
         </button>
 
         {/* Modal Header */}
-        <div className="flex items-start gap-3.5 mb-5 pb-4 border-b border-slate-100">
-          <div className="size-10 rounded-2xl bg-[#E8F4FD] border border-[#C9DFF0] text-[#2B7BC4] flex items-center justify-center shrink-0">
+        <div className="flex items-start gap-3.5 mb-5 pb-4 border-b border-[#2A3446]">
+          <div className="size-10 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] flex items-center justify-center shrink-0">
             <Sparkles className="size-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-bold text-[#0D2137] tracking-tight">
+              <h3 className="text-lg font-bold text-white tracking-tight">
                 Fix & Customise Retainer Plan
               </h3>
-              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 px-2 py-0.5 text-[10px] font-bold">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 text-[#7FA0D6] px-2 py-0.5 text-[10px] font-bold">
                 <ShieldCheck className="size-3" /> Secure Billing
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Client: <strong className="text-[#0D2137]">{client.company_name || client.email}</strong> •{" "}
+            <p className="text-xs text-[#97A0B3] mt-0.5">
+              Client: <strong className="text-[#F1F5F9]">{client.company_name || client.email}</strong> •{" "}
               {client.plan_name ? `Current: ${client.plan_name}` : "No active plan"}
             </p>
           </div>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+          <div className="mb-4 p-3 rounded-xl bg-rose-950/40 border border-rose-800/50 text-rose-300 text-xs font-medium">
             {error}
           </div>
         )}
 
         {/* Tab Switcher: Standard Presets vs Custom Bargained Package */}
-        <div className="flex items-center p-1 bg-slate-100 rounded-2xl mb-5">
+        <div className="flex items-center p-1 bg-[#0B111C] border border-[#2A3446] rounded-2xl mb-5">
           <button
             type="button"
             onClick={() => setActiveTab("presets")}
             className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === "presets"
-                ? "bg-white text-[#0D2137] shadow-xs"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-[#161F2D] text-white shadow-xs border border-[#2A3446]"
+                : "text-[#97A0B3] hover:text-white"
             }`}
           >
-            <Sparkles className="size-3.5 text-[#2B7BC4]" />
+            <Sparkles className="size-3.5 text-[#7FA0D6]" />
             <span>Standard Retainer Presets</span>
           </button>
           <button
@@ -220,13 +220,13 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
             onClick={() => setActiveTab("custom")}
             className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === "custom"
-                ? "bg-white text-[#0D2137] shadow-xs"
-                : "text-slate-500 hover:text-slate-800"
+                ? "bg-[#161F2D] text-white shadow-xs border border-[#2A3446]"
+                : "text-[#97A0B3] hover:text-white"
             }`}
           >
-            <Sliders className="size-3.5 text-[#2B7BC4]" />
+            <Sliders className="size-3.5 text-[#7FA0D6]" />
             <span>Custom / Bargained Package</span>
-            <span className="inline-flex items-center px-1.5 py-0.2 rounded-md bg-amber-100 text-amber-800 text-[9px] font-extrabold ml-1">
+            <span className="inline-flex items-center px-1.5 py-0.2 rounded-md bg-[#D8BF9B]/20 border border-[#D8BF9B]/30 text-[#D8BF9B] text-[9px] font-extrabold ml-1">
               Call Agmt
             </span>
           </button>
@@ -250,51 +250,51 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
                     onClick={() => setSelectedPreset(preset.id)}
                     className={`relative flex flex-col justify-between rounded-2xl p-4 border transition-all cursor-pointer ${
                       isSelected
-                        ? "border-[#2B7BC4] bg-[#E8F4FD]/40 shadow-xs ring-2 ring-[#2B7BC4]/20"
-                        : "border-slate-200 hover:border-slate-300 bg-white"
+                        ? "border-[#7FA0D6] bg-[#0B111C] shadow-xs ring-2 ring-[#7FA0D6]/30"
+                        : "border-[#2A3446] hover:border-[#7FA0D6]/50 bg-[#0B111C]"
                     }`}
                   >
                     {preset.isPopular && (
-                      <span className="absolute -top-2.5 right-3 inline-flex items-center gap-1 rounded-full bg-[#2B7BC4] px-2 py-0.5 text-[9px] font-black uppercase text-white shadow-2xs tracking-wider">
+                      <span className="absolute -top-2.5 right-3 inline-flex items-center gap-1 rounded-full bg-[#BCCCE6] text-[#0B111C] px-2 py-0.5 text-[9px] font-black uppercase shadow-2xs tracking-wider">
                         Recommended
                       </span>
                     )}
 
                     <div>
                       <div className="flex items-center justify-between gap-1 mb-1">
-                        <h4 className="font-bold text-xs text-[#0D2137]">{preset.name}</h4>
+                        <h4 className="font-bold text-xs text-white">{preset.name}</h4>
                         {isCurrent && (
-                          <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-md">
+                          <span className="text-[9px] font-bold text-emerald-400 bg-emerald-950/50 border border-emerald-800 px-1.5 py-0.2 rounded-md">
                             Current
                           </span>
                         )}
                       </div>
-                      <p className="font-extrabold text-sm text-[#0D2137] mb-2">{preset.priceStr}</p>
+                      <p className="font-extrabold text-sm text-[#F1F5F9] mb-2">{preset.priceStr}</p>
 
                       {/* Quota Highlights */}
-                      <div className="space-y-1.5 text-[11px] text-slate-600 border-t border-slate-100 pt-2 mb-3">
+                      <div className="space-y-1.5 text-[11px] text-[#97A0B3] border-t border-[#2A3446] pt-2 mb-3">
                         <div className="flex items-center gap-1.5">
-                          <Film className="size-3 text-[#2B7BC4]" />
+                          <Film className="size-3 text-[#7FA0D6]" />
                           <span>
-                            <strong className="text-[#0D2137]">{preset.reels}</strong> Reels / mo
+                            <strong className="text-white">{preset.reels}</strong> Reels / mo
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <ImageIcon className="size-3 text-[#2B7BC4]" />
+                          <ImageIcon className="size-3 text-[#7FA0D6]" />
                           <span>
-                            <strong className="text-[#0D2137]">{preset.posters}</strong> Posters / mo
+                            <strong className="text-white">{preset.posters}</strong> Posters / mo
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <Smartphone className="size-3 text-[#2B7BC4]" />
+                          <Smartphone className="size-3 text-[#7FA0D6]" />
                           <span>
-                            <strong className="text-[#0D2137]">{preset.stories}</strong> Stories / mo
+                            <strong className="text-white">{preset.stories}</strong> Stories / mo
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="space-y-1.5 pt-2 border-t border-slate-100/80">
+                    <div className="space-y-1.5 pt-2 border-t border-[#2A3446]">
                       <button
                         type="button"
                         disabled={loading}
@@ -304,8 +304,8 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
                         }}
                         className={`w-full py-1.5 px-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                           isSelected
-                            ? "bg-[#2B7BC4] text-white shadow-xs"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                            ? "bg-[#BCCCE6] text-[#0B111C] shadow-xs"
+                            : "bg-[#161F2D] text-[#F1F5F9] hover:bg-[#1F2C3F] border border-[#2A3446]"
                         }`}
                       >
                         <CheckCircle2 className="size-3" />
@@ -318,7 +318,7 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
                           e.stopPropagation();
                           handleCustomizeFromPreset(preset);
                         }}
-                        className="w-full py-1 text-[11px] text-[#2B7BC4] hover:text-[#1E609A] font-semibold hover:underline flex items-center justify-center gap-1 cursor-pointer"
+                        className="w-full py-1 text-[11px] text-[#7FA0D6] hover:text-[#BCCCE6] font-semibold hover:underline flex items-center justify-center gap-1 cursor-pointer"
                       >
                         <Sliders className="size-2.5" />
                         <span>Customise quotas & price</span>
@@ -331,7 +331,7 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
 
             {/* Negotiation Note */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-[#0D2137]">
+              <label className="block text-xs font-semibold text-[#97A0B3]">
                 Admin Notes (Audit Trail)
               </label>
               <input
@@ -339,7 +339,7 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
                 value={customNotes}
                 onChange={(e) => setCustomNotes(e.target.value)}
                 placeholder="e.g. Standard preset fixed upon client onboarding call."
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-1 focus:ring-[#2B7BC4]"
+                className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F1F5F9] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
               />
             </div>
           </div>
@@ -348,15 +348,15 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
         {/* TAB 2: CUSTOM / BARGAINED PACKAGE */}
         {activeTab === "custom" && (
           <div className="space-y-4">
-            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-50/60 to-slate-50 border border-[#C9DFF0] flex items-start gap-3">
-              <div className="size-8 rounded-xl bg-[#2B7BC4] text-white flex items-center justify-center shrink-0 mt-0.5">
+            <div className="p-3.5 rounded-2xl bg-[#0B111C] border border-[#2A3446] flex items-start gap-3">
+              <div className="size-8 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] flex items-center justify-center shrink-0 mt-0.5">
                 <PhoneCall className="size-4" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-[#0D2137]">
+                <h4 className="text-xs font-bold text-white">
                   Negotiated Retainer Agreement (Strategy Call)
                 </h4>
-                <p className="text-[11px] text-slate-600 mt-0.5">
+                <p className="text-[11px] text-[#97A0B3] mt-0.5">
                   Customize the exact deliverables (reels, posters, stories) and monthly subscription price agreed with the client. The client will be charged this exact rate and their usage counters will immediately reflect these quotas.
                 </p>
               </div>
@@ -365,7 +365,7 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
             {/* Custom Plan Name & Monthly Price */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold text-[#0D2137] mb-1">
+                <label className="block text-xs font-bold text-[#97A0B3] mb-1">
                   Custom Plan Title
                 </label>
                 <input
@@ -373,34 +373,34 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
                   placeholder="e.g. Custom Growth Retainer"
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-1 focus:ring-[#2B7BC4]"
+                  className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs font-medium text-[#F1F5F9] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#0D2137] mb-1">
+                <label className="block text-xs font-bold text-[#97A0B3] mb-1">
                   Agreed Monthly Price (₹)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-2 text-xs font-bold text-slate-400">₹</span>
+                  <span className="absolute left-3 top-2 text-xs font-bold text-[#97A0B3]">₹</span>
                   <input
                     type="number"
                     min="1000"
                     step="500"
                     value={customPrice}
                     onChange={(e) => setCustomPrice(Number(e.target.value))}
-                    className="w-full rounded-xl border border-slate-200 pl-7 pr-3 py-2 text-xs font-extrabold text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-1 focus:ring-[#2B7BC4]"
+                    className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] pl-7 pr-3 py-2 text-xs font-extrabold text-[#F1F5F9] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
                   />
                 </div>
                 {/* Price Suggestion Chips */}
                 <div className="flex items-center gap-1.5 mt-1.5">
-                  <span className="text-[10px] text-slate-400">Quick:</span>
+                  <span className="text-[10px] text-[#97A0B3]">Quick:</span>
                   {[30000, 35000, 42000, 60000, 75000].map((amt) => (
                     <button
                       key={amt}
                       type="button"
                       onClick={() => setCustomPrice(amt)}
-                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-[#0B111C] border border-[#2A3446] hover:bg-[#1F2C3F] text-[#F1F5F9] cursor-pointer"
                     >
                       ₹{amt / 1000}k
                     </button>
@@ -410,33 +410,33 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
             </div>
 
             {/* Custom Quota Counters */}
-            <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
-              <span className="text-xs font-bold text-[#0D2137] block">
+            <div className="p-3.5 rounded-2xl border border-[#2A3446] bg-[#0B111C] space-y-3">
+              <span className="text-xs font-bold text-white block">
                 Deliverable Monthly Quotas (Reels, Posters, Stories)
               </span>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* Reels */}
-                <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                <div className="bg-[#161F2D] p-3 rounded-xl border border-[#2A3446] shadow-2xs">
                   <div className="flex items-center justify-between gap-1 mb-2">
-                    <span className="text-xs font-bold text-[#0D2137] flex items-center gap-1">
-                      <Film className="size-3 text-[#2B7BC4]" /> Reels
+                    <span className="text-xs font-bold text-[#F1F5F9] flex items-center gap-1">
+                      <Film className="size-3 text-[#7FA0D6]" /> Reels
                     </span>
-                    <span className="text-[10px] text-slate-400 font-semibold">/ month</span>
+                    <span className="text-[10px] text-[#97A0B3] font-semibold">/ month</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
                       onClick={() => setCustomReels((prev) => Math.max(0, prev - 1))}
-                      className="size-7 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 cursor-pointer"
+                      className="size-7 rounded-lg bg-[#0B111C] border border-[#2A3446] hover:bg-[#1F2C3F] flex items-center justify-center text-[#97A0B3] hover:text-white cursor-pointer"
                     >
                       <Minus className="size-3" />
                     </button>
-                    <span className="text-base font-black text-[#0D2137]">{customReels}</span>
+                    <span className="text-base font-black text-white">{customReels}</span>
                     <button
                       type="button"
                       onClick={() => setCustomReels((prev) => prev + 1)}
-                      className="size-7 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 cursor-pointer"
+                      className="size-7 rounded-lg bg-[#0B111C] border border-[#2A3446] hover:bg-[#1F2C3F] flex items-center justify-center text-[#97A0B3] hover:text-white cursor-pointer"
                     >
                       <Plus className="size-3" />
                     </button>
@@ -444,26 +444,26 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
                 </div>
 
                 {/* Static Posters */}
-                <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                <div className="bg-[#161F2D] p-3 rounded-xl border border-[#2A3446] shadow-2xs">
                   <div className="flex items-center justify-between gap-1 mb-2">
-                    <span className="text-xs font-bold text-[#0D2137] flex items-center gap-1">
-                      <ImageIcon className="size-3 text-[#2B7BC4]" /> Posters
+                    <span className="text-xs font-bold text-[#F1F5F9] flex items-center gap-1">
+                      <ImageIcon className="size-3 text-[#7FA0D6]" /> Posters
                     </span>
-                    <span className="text-[10px] text-slate-400 font-semibold">/ month</span>
+                    <span className="text-[10px] text-[#97A0B3] font-semibold">/ month</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
                       onClick={() => setCustomPosters((prev) => Math.max(0, prev - 1))}
-                      className="size-7 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 cursor-pointer"
+                      className="size-7 rounded-lg bg-[#0B111C] border border-[#2A3446] hover:bg-[#1F2C3F] flex items-center justify-center text-[#97A0B3] hover:text-white cursor-pointer"
                     >
                       <Minus className="size-3" />
                     </button>
-                    <span className="text-base font-black text-[#0D2137]">{customPosters}</span>
+                    <span className="text-base font-black text-white">{customPosters}</span>
                     <button
                       type="button"
                       onClick={() => setCustomPosters((prev) => prev + 1)}
-                      className="size-7 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 cursor-pointer"
+                      className="size-7 rounded-lg bg-[#0B111C] border border-[#2A3446] hover:bg-[#1F2C3F] flex items-center justify-center text-[#97A0B3] hover:text-white cursor-pointer"
                     >
                       <Plus className="size-3" />
                     </button>
@@ -471,26 +471,26 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
                 </div>
 
                 {/* Stories */}
-                <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                <div className="bg-[#161F2D] p-3 rounded-xl border border-[#2A3446] shadow-2xs">
                   <div className="flex items-center justify-between gap-1 mb-2">
-                    <span className="text-xs font-bold text-[#0D2137] flex items-center gap-1">
-                      <Smartphone className="size-3 text-[#2B7BC4]" /> Stories
+                    <span className="text-xs font-bold text-[#F1F5F9] flex items-center gap-1">
+                      <Smartphone className="size-3 text-[#7FA0D6]" /> Stories
                     </span>
-                    <span className="text-[10px] text-slate-400 font-semibold">/ month</span>
+                    <span className="text-[10px] text-[#97A0B3] font-semibold">/ month</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
                       onClick={() => setCustomStories((prev) => Math.max(0, prev - 1))}
-                      className="size-7 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 cursor-pointer"
+                      className="size-7 rounded-lg bg-[#0B111C] border border-[#2A3446] hover:bg-[#1F2C3F] flex items-center justify-center text-[#97A0B3] hover:text-white cursor-pointer"
                     >
                       <Minus className="size-3" />
                     </button>
-                    <span className="text-base font-black text-[#0D2137]">{customStories}</span>
+                    <span className="text-base font-black text-white">{customStories}</span>
                     <button
                       type="button"
                       onClick={() => setCustomStories((prev) => prev + 1)}
-                      className="size-7 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 cursor-pointer"
+                      className="size-7 rounded-lg bg-[#0B111C] border border-[#2A3446] hover:bg-[#1F2C3F] flex items-center justify-center text-[#97A0B3] hover:text-white cursor-pointer"
                     >
                       <Plus className="size-3" />
                     </button>
@@ -501,7 +501,7 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
 
             {/* Negotiation Details */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-[#0D2137]">
+              <label className="block text-xs font-semibold text-[#97A0B3]">
                 Negotiation Notes & Call Summary
               </label>
               <input
@@ -509,9 +509,9 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
                 value={customNotes}
                 onChange={(e) => setCustomNotes(e.target.value)}
                 placeholder="e.g. Client negotiated on strategy call: agreed rate ₹40,000/mo for 10 reels + 12 posters."
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-1 focus:ring-[#2B7BC4]"
+                className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F1F5F9] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
               />
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-[#97A0B3]">
                 🔒 Security Note: Changes will be recorded in the audit log and client portal billing. The client cannot modify or tamper with their assigned rate.
               </p>
             </div>
@@ -519,15 +519,15 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
         )}
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between pt-4 mt-5 border-t border-slate-100">
-          <div className="text-xs text-slate-500 font-medium">
+        <div className="flex items-center justify-between pt-4 mt-5 border-t border-[#2A3446]">
+          <div className="text-xs text-[#97A0B3] font-medium">
             {activeTab === "presets" ? (
               <span>
-                Fixing as: <strong>{PRESETS.find((p) => p.id === selectedPreset)?.name}</strong>
+                Fixing as: <strong className="text-white">{PRESETS.find((p) => p.id === selectedPreset)?.name}</strong>
               </span>
             ) : (
               <span>
-                Negotiated: <strong>₹{Number(customPrice || 0).toLocaleString("en-IN")}/mo</strong> ({customReels} Reels, {customPosters} Posters, {customStories} Stories)
+                Negotiated: <strong className="text-white">₹{Number(customPrice || 0).toLocaleString("en-IN")}/mo</strong> ({customReels} Reels, {customPosters} Posters, {customStories} Stories)
               </span>
             )}
           </div>
@@ -537,7 +537,7 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-[#97A0B3] hover:text-white hover:bg-[#1F2C3F] transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -545,7 +545,7 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
               type="button"
               disabled={loading}
               onClick={handleConfirm}
-              className="px-5 py-2.5 rounded-xl bg-[#2B7BC4] hover:bg-[#1E609A] text-white text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-[#BCCCE6] hover:bg-[#D4E2F5] text-[#0B111C] text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               {loading ? (
                 <Loader2 className="size-3.5 animate-spin" />

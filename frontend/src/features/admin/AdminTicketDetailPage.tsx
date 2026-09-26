@@ -285,30 +285,30 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
   };
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F8FAFC] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Support" />
 
       {/* Sub-header Breadcrumb Bar */}
-      <div className="bg-white border-b border-slate-200 px-6 lg:px-8 py-3.5">
+      <div className="bg-[#161F2D] border-b border-[#2A3446] px-6 lg:px-8 py-3.5">
         <div className="max-w-[1500px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-slate-500 font-medium">
+          <div className="flex items-center gap-2 text-[#97A0B3] font-medium">
             <Link
               to="/admin/support"
-              className="inline-flex items-center gap-1.5 hover:text-[#2B7BC4] transition-colors font-semibold"
+              className="inline-flex items-center gap-1.5 hover:text-[#7FA0D6] transition-colors font-semibold"
             >
               <ArrowLeft className="size-3.5" />
               Support Tickets
             </Link>
             <span className="text-slate-300">/</span>
-            <span className="font-bold text-slate-900">Ticket #{ticketId}</span>
+            <span className="font-bold text-white">Ticket #{ticketId}</span>
             <span className="text-slate-300">/</span>
-            <span className="text-slate-500">Deliverables Pipeline</span>
+            <span className="text-[#97A0B3]">Deliverables Pipeline</span>
           </div>
 
           <div className="flex items-center gap-2">
             {alarmSilenced && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-semibold text-[11px]">
-                <BellOff className="size-3.5 text-slate-500" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1F2C3F] text-[#F1F5F9] border border-[#2A3446] font-semibold text-[11px]">
+                <BellOff className="size-3.5 text-[#97A0B3]" />
                 Alarms Silenced (1h)
               </span>
             )}
@@ -330,7 +330,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
               toastMessage.type === "error"
                 ? "bg-rose-50 border-rose-200 text-rose-700"
                 : toastMessage.type === "info"
-                ? "bg-blue-50 border-blue-200 text-blue-700"
+                ? "bg-[#7FA0D6]/15 border-[#7FA0D6]/30 text-[#7FA0D6]"
                 : "bg-emerald-50 border-emerald-200 text-emerald-700"
             }`}
           >
@@ -342,10 +342,10 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
         )}
 
         {/* Ticket Header Card */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+        <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-6 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-5">
           <div className="space-y-2.5">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                 API Webhook Timeout on Deliverables Sync
               </h1>
               <span
@@ -369,17 +369,17 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                 </span>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-500 font-medium">
+            <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-[#97A0B3] font-medium">
               <span>
-                Client: <strong className="text-slate-800 font-bold">Northwind Labs</strong>
+                Client: <strong className="text-white font-bold">Northwind Labs</strong>
               </span>
               <span>•</span>
               <span>
-                Reported via: <strong className="text-slate-800">Automated Sentry & Email</strong>
+                Reported via: <strong className="text-white">Automated Sentry & Email</strong>
               </span>
               <span>•</span>
               <span>
-                Assigned Lead: <strong className="text-blue-700 font-bold">{selectedLead.name} ({selectedLead.pod})</strong>
+                Assigned Lead: <strong className="text-[#7FA0D6] font-bold">{selectedLead.name} ({selectedLead.pod})</strong>
               </span>
             </div>
           </div>
@@ -389,9 +389,9 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
             <button
               type="button"
               onClick={() => setReassignModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-2xs transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] shadow-2xs transition-all cursor-pointer"
             >
-              <UserCheck className="size-3.5 text-slate-500" />
+              <UserCheck className="size-3.5 text-[#97A0B3]" />
               Reassign
             </button>
             <button
@@ -424,7 +424,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
               <button
                 type="button"
                 onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-                className="p-2 rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 cursor-pointer transition-colors shadow-2xs"
+                className="p-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-[#97A0B3] hover:bg-[#0B111C] cursor-pointer transition-colors shadow-2xs"
                 title="More Actions"
               >
                 <MoreVertical className="size-4" />
@@ -432,7 +432,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
 
               {moreMenuOpen && (
                 <div
-                  className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
+                  className="absolute right-0 top-full mt-2 w-64 bg-[#161F2D] rounded-2xl shadow-2xl border border-[#2A3446] py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
@@ -440,9 +440,9 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                       setMoreMenuOpen(false);
                       handleDownloadAuditCSV();
                     }}
-                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] flex items-center gap-2.5 transition-colors cursor-pointer"
                   >
-                    <Download className="size-4 text-blue-600" />
+                    <Download className="size-4 text-[#7FA0D6]" />
                     Download Incident Audit (CSV)
                   </button>
                   <button
@@ -450,7 +450,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                       setMoreMenuOpen(false);
                       handleDownloadPayloadDump();
                     }}
-                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] flex items-center gap-2.5 transition-colors cursor-pointer"
                   >
                     <FileText className="size-4 text-purple-600" />
                     Export Telemetry Logs (JSON)
@@ -464,7 +464,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                         "info"
                       );
                     }}
-                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] flex items-center gap-2.5 transition-colors cursor-pointer"
                   >
                     <BellOff className="size-4 text-amber-600" />
                     {alarmSilenced ? "Unsilence SLA Alarms" : "Silence SLA Alarms (1h)"}
@@ -475,12 +475,12 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                       navigator.clipboard?.writeText(window.location.href);
                       showToast("Ticket link copied to clipboard!", "success");
                     }}
-                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] flex items-center gap-2.5 transition-colors cursor-pointer"
                   >
-                    <Share2 className="size-4 text-slate-500" />
+                    <Share2 className="size-4 text-[#97A0B3]" />
                     Copy Ticket Link
                   </button>
-                  <div className="border-t border-slate-100 my-1" />
+                  <div className="border-t border-[#2A3446] my-1" />
                   <button
                     onClick={() => {
                       setMoreMenuOpen(false);
@@ -506,16 +506,16 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`bg-white border rounded-2xl p-6 shadow-xs space-y-4 transition-all ${
+                  className={`bg-[#161F2D] border rounded-2xl p-6 shadow-xs space-y-4 transition-all ${
                     msg.isSystemAudit
                       ? "border-amber-200/80 bg-gradient-to-r from-amber-50/40 to-white"
                       : msg.isInternal
                       ? "border-amber-200 bg-amber-50/20"
-                      : "border-slate-200"
+                      : "border-[#2A3446]"
                   }`}
                 >
                   {/* Reporter / Author Info */}
-                  <div className="flex items-start justify-between border-b border-slate-100 pb-3 gap-4">
+                  <div className="flex items-start justify-between border-b border-[#2A3446] pb-3 gap-4">
                     <div className="flex items-center gap-3">
                       <div
                         className={`size-10 rounded-full ${msg.avatarBg} text-white font-bold flex items-center justify-center text-xs shadow-xs shrink-0`}
@@ -524,32 +524,32 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-bold text-slate-900">{msg.author}</h3>
+                          <h3 className="text-sm font-bold text-white">{msg.author}</h3>
                           <span
                             className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
                               msg.isSystemAudit
-                                ? "bg-slate-100 text-slate-700 border-slate-200"
+                                ? "bg-[#1F2C3F] text-[#F1F5F9] border-[#2A3446]"
                                 : msg.isInternal
                                 ? "bg-amber-100 text-amber-800 border-amber-200"
-                                : "bg-blue-50 text-blue-700 border-blue-100"
+                                : "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30"
                             }`}
                           >
                             {msg.role}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">{msg.timestamp}</p>
+                        <p className="text-xs text-[#97A0B3] mt-0.5">{msg.timestamp}</p>
                       </div>
                     </div>
 
                     {msg.id === "msg-1" && (
-                      <span className="text-[11px] font-mono text-slate-400 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100">
+                      <span className="text-[11px] font-mono text-[#97A0B3] bg-[#0B111C] px-2.5 py-1 rounded-md border border-[#2A3446]">
                         Node: US-East-09
                       </span>
                     )}
                   </div>
 
                   {/* Message Body */}
-                  <div className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line font-normal">
+                  <div className="text-xs sm:text-sm text-[#F1F5F9] leading-relaxed whitespace-pre-line font-normal">
                     {msg.text}
                   </div>
 
@@ -558,7 +558,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                     <>
                       {/* Diagnostics Telemetry & Trace Log */}
                       <div className="rounded-xl bg-[#0F172A] border border-slate-800 overflow-hidden text-slate-200 font-mono text-xs mt-3">
-                        <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                        <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 text-[11px] text-[#97A0B3] font-bold uppercase tracking-wider">
                           <span className="flex items-center gap-2">
                             <FileText className="size-3.5 text-rose-400" />
                             Diagnostics Telemetry & Trace Log
@@ -571,21 +571,21 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                               );
                               showToast("Copied raw trace log to clipboard!", "success");
                             }}
-                            className="inline-flex items-center gap-1 text-slate-400 hover:text-white transition-colors capitalize text-[10px] cursor-pointer"
+                            className="inline-flex items-center gap-1 text-[#97A0B3] hover:text-white transition-colors capitalize text-[10px] cursor-pointer"
                           >
                             <Copy className="size-3" />
                             Copy Raw Log
                           </button>
                         </div>
                         <div className="p-4 space-y-1.5 text-[11px] leading-relaxed overflow-x-auto text-slate-300">
-                          <div className="text-slate-500"># Gateway trace capture ID: trc_98812_useast_prod</div>
+                          <div className="text-[#97A0B3]"># Gateway trace capture ID: trc_98812_useast_prod</div>
                           <div className="text-rose-400 font-semibold">
                             <span className="bg-rose-500/20 px-1 py-0.5 rounded text-rose-300 font-bold mr-1">
                               [ERROR 504]
                             </span>
                             Webhook delivery failed: https://api.northwindlabs.co/v1/deliverables/sync
                           </div>
-                          <div className="text-slate-400">Connection timed out after 30000ms. Retries exhausted (4/4).</div>
+                          <div className="text-[#97A0B3]">Connection timed out after 30000ms. Retries exhausted (4/4).</div>
                           <div className="text-emerald-400 pt-1">
                             &gt; TLS Handshake: 14ms | Payload Size: 1.48 GB (4 assets) | Socket Hangup: Digest Verification
                           </div>
@@ -594,29 +594,29 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
 
                       {/* Attachments with direct download triggers */}
                       <div className="pt-2">
-                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2.5">
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2.5">
                           Attachments (2)
                         </h4>
                         <div className="flex flex-wrap gap-2.5">
                           <button
                             type="button"
                             onClick={handleDownloadPayloadDump}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors cursor-pointer"
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-semibold text-[#F1F5F9] hover:bg-[#7FA0D6]/15 hover:border-[#7FA0D6]/30 hover:text-[#7FA0D6] transition-colors cursor-pointer"
                           >
-                            <FileText className="size-4 text-blue-600" />
+                            <FileText className="size-4 text-[#7FA0D6]" />
                             <span>webhook_payload_dump.json</span>
-                            <span className="text-[10px] text-slate-400 font-mono">(24 KB)</span>
-                            <Download className="size-3.5 text-slate-400 ml-1" />
+                            <span className="text-[10px] text-[#97A0B3] font-mono">(24 KB)</span>
+                            <Download className="size-3.5 text-[#97A0B3] ml-1" />
                           </button>
                           <button
                             type="button"
                             onClick={handleDownloadTraceLog}
-                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 transition-colors cursor-pointer"
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-semibold text-[#F1F5F9] hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 transition-colors cursor-pointer"
                           >
                             <FileText className="size-4 text-rose-600" />
                             <span>sync_failure_trace.log</span>
-                            <span className="text-[10px] text-slate-400 font-mono">(110 KB)</span>
-                            <Download className="size-3.5 text-slate-400 ml-1" />
+                            <span className="text-[10px] text-[#97A0B3] font-mono">(110 KB)</span>
+                            <Download className="size-3.5 text-[#97A0B3] ml-1" />
                           </button>
                         </div>
                       </div>
@@ -627,16 +627,16 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
             </div>
 
             {/* Reply Editor Box */}
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+            <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl shadow-xs overflow-hidden">
               {/* Tab Selector */}
-              <div className="flex items-center border-b border-slate-200 bg-slate-50/70 px-4 pt-3 gap-2">
+              <div className="flex items-center border-b border-[#2A3446] bg-[#0B111C]/70 px-4 pt-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setActiveTab("public")}
                   className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-t border-x cursor-pointer ${
                     activeTab === "public"
-                      ? "bg-white text-blue-700 border-slate-200 shadow-2xs"
-                      : "text-slate-500 border-transparent hover:text-slate-800"
+                      ? "bg-[#161F2D] text-[#7FA0D6] border-[#2A3446] shadow-2xs"
+                      : "text-[#97A0B3] border-transparent hover:text-white"
                   }`}
                 >
                   ✉️ Public Reply to Client
@@ -646,8 +646,8 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                   onClick={() => setActiveTab("internal")}
                   className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-t border-x cursor-pointer ${
                     activeTab === "internal"
-                      ? "bg-white text-amber-700 border-slate-200 shadow-2xs"
-                      : "text-slate-500 border-transparent hover:text-slate-800"
+                      ? "bg-[#161F2D] text-amber-700 border-[#2A3446] shadow-2xs"
+                      : "text-[#97A0B3] border-transparent hover:text-white"
                   }`}
                 >
                   🔒 Internal Note (Team only)
@@ -657,7 +657,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
               <div className="p-5 space-y-4">
                 {/* Quick Macros */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                  <span className="text-[11px] font-bold text-[#97A0B3] uppercase tracking-wider flex items-center gap-1">
                     <Sparkles className="size-3 text-amber-500" />
                     Quick Macros:
                   </span>
@@ -668,7 +668,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                         "We have identified the payload digest mismatch on US-East Gateway. The engineering pod is re-dispatching batch #DL-8821 with extended 60s timeout."
                       )
                     }
-                    className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-semibold border border-blue-200 transition-colors cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-[11px] font-semibold border border-[#7FA0D6]/30 transition-colors cursor-pointer"
                   >
                     SLA Status Update
                   </button>
@@ -690,19 +690,19 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                         "Could you please confirm if your destination webhook server accepts chunked transfer encoding for assets over 1GB?"
                       )
                     }
-                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold border border-slate-200 transition-colors cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-[#1F2C3F] hover:bg-slate-200 text-[#F1F5F9] text-[11px] font-semibold border border-[#2A3446] transition-colors cursor-pointer"
                   >
                     Request Info
                   </button>
                 </div>
 
                 {/* Toolbar */}
-                <div className="flex items-center gap-1 border-b border-slate-100 pb-2 text-slate-500">
+                <div className="flex items-center gap-1 border-b border-[#2A3446] pb-2 text-[#97A0B3]">
                   <button
                     type="button"
                     onClick={() => handleInsertFormat("**")}
                     title="Bold"
-                    className="p-1.5 hover:bg-slate-100 rounded text-slate-700 cursor-pointer"
+                    className="p-1.5 hover:bg-[#1F2C3F] rounded text-[#F1F5F9] cursor-pointer"
                   >
                     <Bold className="size-3.5" />
                   </button>
@@ -710,7 +710,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                     type="button"
                     onClick={() => handleInsertFormat("*")}
                     title="Italic"
-                    className="p-1.5 hover:bg-slate-100 rounded text-slate-700 cursor-pointer"
+                    className="p-1.5 hover:bg-[#1F2C3F] rounded text-[#F1F5F9] cursor-pointer"
                   >
                     <Italic className="size-3.5" />
                   </button>
@@ -718,7 +718,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                     type="button"
                     onClick={() => handleInsertFormat("`")}
                     title="Code snippet"
-                    className="p-1.5 hover:bg-slate-100 rounded text-slate-700 cursor-pointer"
+                    className="p-1.5 hover:bg-[#1F2C3F] rounded text-[#F1F5F9] cursor-pointer"
                   >
                     <Code className="size-3.5" />
                   </button>
@@ -726,7 +726,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                     type="button"
                     onClick={() => handleInsertFormat("[Link Title](", ")")}
                     title="Insert Link"
-                    className="p-1.5 hover:bg-slate-100 rounded text-slate-700 cursor-pointer"
+                    className="p-1.5 hover:bg-[#1F2C3F] rounded text-[#F1F5F9] cursor-pointer"
                   >
                     <Link2 className="size-3.5" />
                   </button>
@@ -734,13 +734,13 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                     type="button"
                     onClick={() => setReplyText((prev) => `${prev}\n- Item 1\n- Item 2`)}
                     title="Bullet List"
-                    className="p-1.5 hover:bg-slate-100 rounded text-slate-700 cursor-pointer"
+                    className="p-1.5 hover:bg-[#1F2C3F] rounded text-[#F1F5F9] cursor-pointer"
                   >
                     <List className="size-3.5" />
                   </button>
                   <label
                     title="Attach File"
-                    className="p-1.5 hover:bg-slate-100 rounded text-slate-700 cursor-pointer"
+                    className="p-1.5 hover:bg-[#1F2C3F] rounded text-[#F1F5F9] cursor-pointer"
                   >
                     <Paperclip className="size-3.5" />
                     <input
@@ -758,9 +758,9 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                     {attachedFiles.map((file, idx) => (
                       <span
                         key={idx}
-                        className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold flex items-center gap-1.5"
+                        className="px-2.5 py-1 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-xs font-semibold flex items-center gap-1.5"
                       >
-                        <FileText className="size-3 text-blue-500" />
+                        <FileText className="size-3 text-[#7FA0D6]" />
                         {file}
                         <button
                           type="button"
@@ -784,7 +784,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                       ? "Type your reply to David K. and Northwind Labs team, or insert a macro above..."
                       : "Type an internal engineering note (visible only to Creo Pod team and Admins)..."
                   }
-                  className="w-full text-xs sm:text-sm p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-800 placeholder-slate-400"
+                  className="w-full text-xs sm:text-sm p-3 border border-[#2A3446] rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-white placeholder-slate-400"
                 />
 
                 {/* Bottom Actions */}
@@ -798,7 +798,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                       }
                       showToast("Draft response saved locally.", "info");
                     }}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-[#F1F5F9] hover:bg-[#1F2C3F] transition-colors cursor-pointer"
                   >
                     Save Draft
                   </button>
@@ -818,89 +818,89 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
           {/* Right Column: Sidebar (1 Col) */}
           <div className="space-y-6">
             {/* Client Context Card */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+            <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#97A0B3]">
                   Client Context
                 </h3>
                 <Link
                   to="/admin/clients"
-                  className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                  className="text-xs font-bold text-[#7FA0D6] hover:text-[#7FA0D6] flex items-center gap-1"
                 >
                   View Profile <ExternalLink className="size-3" />
                 </Link>
               </div>
 
               {/* Brand Summary */}
-              <div className="flex items-center gap-3 bg-blue-50/60 p-3.5 rounded-xl border border-blue-100">
+              <div className="flex items-center gap-3 bg-[#7FA0D6]/15/60 p-3.5 rounded-xl border border-[#7FA0D6]/30">
                 <div className="size-11 rounded-xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">
                   NL
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900">Northwind Labs</h4>
-                  <p className="text-xs text-blue-700 font-semibold">Enterprise Suite • ₹54,000/mo</p>
+                  <h4 className="text-sm font-bold text-white">Northwind Labs</h4>
+                  <p className="text-xs text-[#7FA0D6] font-semibold">Enterprise Suite • ₹54,000/mo</p>
                 </div>
               </div>
 
               {/* Details List */}
-              <div className="text-xs space-y-2.5 pt-1 text-slate-600">
+              <div className="text-xs space-y-2.5 pt-1 text-[#F1F5F9]">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Primary Contact:</span>
-                  <span className="font-bold text-slate-900">David K. (VP Ops)</span>
+                  <span className="text-[#97A0B3]">Primary Contact:</span>
+                  <span className="font-bold text-white">David K. (VP Ops)</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Direct Channel:</span>
-                  <span className="font-mono text-slate-800">ops@northwindlabs.co</span>
+                  <span className="text-[#97A0B3]">Direct Channel:</span>
+                  <span className="font-mono text-white">ops@northwindlabs.co</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Assigned Pod:</span>
-                  <span className="font-bold text-blue-700">{selectedLead.pod}</span>
+                  <span className="text-[#97A0B3]">Assigned Pod:</span>
+                  <span className="font-bold text-[#7FA0D6]">{selectedLead.pod}</span>
                 </div>
               </div>
 
               {/* Quota Progress */}
-              <div className="border-t border-slate-100 pt-3 space-y-2">
+              <div className="border-t border-[#2A3446] pt-3 space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-700">Current Cycle Deliverables</span>
-                  <span className="font-extrabold text-blue-700">19 / 20 Active</span>
+                  <span className="font-bold text-[#F1F5F9]">Current Cycle Deliverables</span>
+                  <span className="font-extrabold text-[#7FA0D6]">19 / 20 Active</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-bold">
-                  <div className="p-2 rounded-lg bg-slate-50 border border-slate-200">
-                    <div className="text-slate-900 text-xs font-black">12/12</div>
-                    <div className="text-slate-400 uppercase tracking-tighter">FEED POSTS</div>
+                  <div className="p-2 rounded-lg bg-[#0B111C] border border-[#2A3446]">
+                    <div className="text-white text-xs font-black">12/12</div>
+                    <div className="text-[#97A0B3] uppercase tracking-tighter">FEED POSTS</div>
                   </div>
-                  <div className="p-2 rounded-lg bg-blue-50 border border-blue-200 text-blue-800">
+                  <div className="p-2 rounded-lg bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 text-blue-800">
                     <div className="text-blue-900 text-xs font-black">4/4</div>
-                    <div className="text-blue-600 uppercase tracking-tighter">4K REELS</div>
+                    <div className="text-[#7FA0D6] uppercase tracking-tighter">4K REELS</div>
                   </div>
-                  <div className="p-2 rounded-lg bg-slate-50 border border-slate-200">
-                    <div className="text-slate-900 text-xs font-black">3/4</div>
-                    <div className="text-slate-400 uppercase tracking-tighter">STORIES</div>
+                  <div className="p-2 rounded-lg bg-[#0B111C] border border-[#2A3446]">
+                    <div className="text-white text-xs font-black">3/4</div>
+                    <div className="text-[#97A0B3] uppercase tracking-tighter">STORIES</div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Ticket Metadata Card */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-4">
-              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-3">
+            <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-5 shadow-xs space-y-4">
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#97A0B3] border-b border-[#2A3446] pb-3">
                 Ticket Metadata
               </h3>
 
               <div className="text-xs space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Ticket ID</span>
-                  <span className="font-mono font-bold text-slate-900">#{ticketId}</span>
+                  <span className="text-[#97A0B3]">Ticket ID</span>
+                  <span className="font-mono font-bold text-white">#{ticketId}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Ingress Channel</span>
-                  <span className="font-semibold text-slate-800 flex items-center gap-1">
-                    <Zap className="size-3 text-blue-600" /> Webhook / Sentry
+                  <span className="text-[#97A0B3]">Ingress Channel</span>
+                  <span className="font-semibold text-white flex items-center gap-1">
+                    <Zap className="size-3 text-[#7FA0D6]" /> Webhook / Sentry
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Assigned Specialist</span>
-                  <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <span className="text-[#97A0B3]">Assigned Specialist</span>
+                  <span className="font-bold text-white flex items-center gap-1.5">
                     <span className="size-5 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center">
                       {selectedLead.initials}
                     </span>
@@ -908,29 +908,29 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Assigned Pod</span>
-                  <span className="font-semibold text-slate-800">{selectedLead.pod}</span>
+                  <span className="text-[#97A0B3]">Assigned Pod</span>
+                  <span className="font-semibold text-white">{selectedLead.pod}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Created</span>
-                  <span className="font-semibold text-slate-800">Today, 09:42 AM</span>
+                  <span className="text-[#97A0B3]">Created</span>
+                  <span className="font-semibold text-white">Today, 09:42 AM</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500">Last Ingress Probe</span>
+                  <span className="text-[#97A0B3]">Last Ingress Probe</span>
                   <span className="font-semibold text-emerald-600">9 mins ago</span>
                 </div>
               </div>
 
               {/* Tags Section */}
-              <div className="border-t border-slate-100 pt-3 space-y-2">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+              <div className="border-t border-[#2A3446] pt-3 space-y-2">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
                   Incident Tags
                 </span>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {tags.map((tg) => (
                     <span
                       key={tg}
-                      className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold border border-slate-200 flex items-center gap-1"
+                      className="px-2 py-0.5 rounded-md bg-[#1F2C3F] text-[#F1F5F9] text-[10px] font-bold border border-[#2A3446] flex items-center gap-1"
                     >
                       {tg}
                       <button
@@ -957,14 +957,14 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                       <button
                         type="button"
                         onClick={handleAddTag}
-                        className="text-[10px] font-bold text-blue-600 hover:text-blue-800 cursor-pointer"
+                        className="text-[10px] font-bold text-[#7FA0D6] hover:text-blue-800 cursor-pointer"
                       >
                         Add
                       </button>
                       <button
                         type="button"
                         onClick={() => setShowAddTag(false)}
-                        className="text-[10px] text-slate-400 hover:text-slate-600 cursor-pointer"
+                        className="text-[10px] text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
                       >
                         &times;
                       </button>
@@ -973,7 +973,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                     <button
                       type="button"
                       onClick={() => setShowAddTag(true)}
-                      className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 text-[10px] font-bold transition-colors cursor-pointer"
+                      className="px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] hover:bg-[#7FA0D6]/20 text-[10px] font-bold transition-colors cursor-pointer"
                     >
                       + Add Tag
                     </button>
@@ -994,20 +994,20 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
           aria-modal="true"
           className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
         >
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl p-6 sm:p-8 max-w-lg w-full space-y-6 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-2xl p-6 sm:p-8 max-w-lg w-full space-y-6 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
               <div className="flex items-center gap-3">
-                <div className="size-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                <div className="size-10 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
                   <UserCheck className="size-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900">Reassign Ticket #{ticketId}</h3>
-                  <p className="text-xs text-slate-500 font-medium">Re-route ticket owner & creative pod responsibility</p>
+                  <h3 className="text-base font-black text-white">Reassign Ticket #{ticketId}</h3>
+                  <p className="text-xs text-[#97A0B3] font-medium">Re-route ticket owner & creative pod responsibility</p>
                 </div>
               </div>
               <button
                 onClick={() => setReassignModalOpen(false)}
-                className="size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer transition-colors"
+                className="size-8 rounded-full bg-[#1F2C3F] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer transition-colors"
               >
                 <X className="size-4" />
               </button>
@@ -1015,7 +1015,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
 
             <div className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-700 mb-1.5">Select Pod & Lead Specialist</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1.5">Select Pod & Lead Specialist</label>
                 <div className="space-y-2">
                   {[
                     { name: "Maya Lin", pod: "Pod A (Core Infra)", initials: "ML", role: "Pod Lead" },
@@ -1029,8 +1029,8 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                       onClick={() => setSelectedLead(lead)}
                       className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
                         selectedLead.name === lead.name
-                          ? "border-blue-600 bg-blue-50/50 shadow-xs"
-                          : "border-slate-200 hover:border-slate-300 bg-white"
+                          ? "border-blue-600 bg-[#7FA0D6]/15/50 shadow-xs"
+                          : "border-[#2A3446] hover:border-[#2A3446] bg-[#161F2D]"
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -1038,12 +1038,12 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                           {lead.initials}
                         </span>
                         <div>
-                          <p className="font-black text-slate-900">{lead.name}</p>
-                          <p className="text-[11px] text-slate-500 font-medium">{lead.pod}</p>
+                          <p className="font-black text-white">{lead.name}</p>
+                          <p className="text-[11px] text-[#97A0B3] font-medium">{lead.pod}</p>
                         </div>
                       </div>
                       {selectedLead.name === lead.name && (
-                        <Check className="size-4 text-blue-600" />
+                        <Check className="size-4 text-[#7FA0D6]" />
                       )}
                     </div>
                   ))}
@@ -1051,22 +1051,22 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1.5">Reassignment Reason</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1.5">Reassignment Reason</label>
                 <input
                   type="text"
                   value={reassignReason}
                   onChange={(e) => setReassignReason(e.target.value)}
                   placeholder="e.g. Requires video codec transcoding expertise"
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800"
+                  className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#2A3446]">
               <button
                 type="button"
                 onClick={() => setReassignModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#F1F5F9] hover:bg-[#1F2C3F] cursor-pointer transition-colors"
               >
                 Cancel
               </button>
@@ -1091,20 +1091,20 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
           aria-modal="true"
           className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
         >
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl p-6 sm:p-8 max-w-lg w-full space-y-6 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-2xl p-6 sm:p-8 max-w-lg w-full space-y-6 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
                   <AlertTriangle className="size-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900">Escalate to Core Engineering</h3>
-                  <p className="text-xs text-slate-500 font-medium">Create critical incident bridge and notify SRE on-call</p>
+                  <h3 className="text-base font-black text-white">Escalate to Core Engineering</h3>
+                  <p className="text-xs text-[#97A0B3] font-medium">Create critical incident bridge and notify SRE on-call</p>
                 </div>
               </div>
               <button
                 onClick={() => setEscalateModalOpen(false)}
-                className="size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer transition-colors"
+                className="size-8 rounded-full bg-[#1F2C3F] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer transition-colors"
               >
                 <X className="size-4" />
               </button>
@@ -1113,7 +1113,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
             <div className="space-y-4 text-xs">
               {/* Priority Selector */}
               <div>
-                <label className="block font-bold text-slate-700 mb-1.5">Priority Override</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1.5">Priority Override</label>
                 <div className="grid grid-cols-3 gap-2">
                   {(["P0", "P1", "P2"] as const).map((p) => (
                     <button
@@ -1125,7 +1125,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                           ? p === "P0"
                             ? "bg-rose-600 text-white border-rose-600 shadow-xs"
                             : "bg-blue-600 text-white border-blue-600 shadow-xs"
-                          : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                          : "bg-[#161F2D] border-[#2A3446] text-[#F1F5F9] hover:bg-[#0B111C]"
                       }`}
                     >
                       {p === "P0" ? "P0 (Blocker)" : p === "P1" ? "P1 (Urgent)" : "P2 (Elevated)"}
@@ -1136,11 +1136,11 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
 
               {/* Target Engineering Unit */}
               <div>
-                <label className="block font-bold text-slate-700 mb-1.5">Target Engineering Unit</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1.5">Target Engineering Unit</label>
                 <select
                   value={escalateTarget}
                   onChange={(e) => setEscalateTarget(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-800 font-medium bg-white"
+                  className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-rose-500 text-white font-medium bg-[#161F2D]"
                 >
                   <option value="Edge Gateway & CDN Fleet">Edge Gateway & CDN Fleet (504 Timeout)</option>
                   <option value="Media Transcoding Engine">Media Transcoding Engine (HEVC/ProRes)</option>
@@ -1151,12 +1151,12 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
 
               {/* Escalation Notes */}
               <div>
-                <label className="block font-bold text-slate-700 mb-1.5">Incident Summary & SRE Brief</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1.5">Incident Summary & SRE Brief</label>
                 <textarea
                   rows={3}
                   value={escalateNotes}
                   onChange={(e) => setEscalateNotes(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-800"
+                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-rose-500 text-white"
                 />
               </div>
 
@@ -1166,17 +1166,17 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                   type="checkbox"
                   checked={notifyPagerDuty}
                   onChange={(e) => setNotifyPagerDuty(e.target.checked)}
-                  className="rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                  className="rounded border-[#2A3446] text-rose-600 focus:ring-rose-500"
                 />
-                <span className="font-semibold text-slate-700">Dispatch immediate PagerDuty on-call page & Slack alert</span>
+                <span className="font-semibold text-[#F1F5F9]">Dispatch immediate PagerDuty on-call page & Slack alert</span>
               </label>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#2A3446]">
               <button
                 type="button"
                 onClick={() => setEscalateModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#F1F5F9] hover:bg-[#1F2C3F] cursor-pointer transition-colors"
               >
                 Cancel
               </button>
