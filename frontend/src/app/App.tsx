@@ -178,19 +178,19 @@ function OnboardingPageWrapper() {
   const userId = user?.id || "00000000-0000-0000-0000-000000000001";
 
   return (
-    <div data-surface="review" className="min-h-screen bg-[#E8F4FD] text-[#0D2137] flex flex-col overflow-x-hidden">
+    <div data-surface="review" className="min-h-screen bg-[#0B111C] text-[#F8FAFC] flex flex-col overflow-x-hidden">
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-30 border-b border-[#C9DFF0] bg-white/95 backdrop-blur-md px-4 sm:px-8 py-3 shadow-xs shrink-0">
+      <header className="sticky top-0 z-30 border-b border-[#2A3446] bg-[#050810]/95 backdrop-blur-md px-4 sm:px-8 py-3 shadow-md shrink-0">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <span className="size-8 flex items-center justify-center rounded-xl bg-gradient-to-br from-[#2B7BC4] to-[#1A5EA8] font-mono text-sm font-bold text-white shadow-xs group-hover:scale-105 transition-transform">
+            <span className="size-8 flex items-center justify-center rounded-xl bg-[#161F2D] border border-[#2A3446] font-mono text-sm font-bold text-[#7FA0D6] shadow-xs group-hover:scale-105 transition-transform">
               C
             </span>
             <div className="flex flex-col">
-              <span className="text-base font-bold font-display tracking-tight text-[#0D2137]">
-                Creo
+              <span className="text-base font-bold font-display tracking-tight text-white">
+                creo<span className="text-[#7FA0D6]">.</span>
               </span>
-              <span className="text-[10px] font-semibold text-[#64748B] -mt-1 tracking-wider uppercase">
+              <span className="text-[10px] font-semibold text-[#97A0B3] -mt-1 tracking-wider uppercase">
                 Client Onboarding
               </span>
             </div>
@@ -199,7 +199,7 @@ function OnboardingPageWrapper() {
           <div className="flex items-center gap-3 sm:gap-4 text-xs font-semibold">
             <Link
               to="/"
-              className="text-[#64748B] hover:text-[#2B7BC4] transition-colors hidden sm:inline-flex items-center gap-1.5"
+              className="text-[#97A0B3] hover:text-white transition-colors hidden sm:inline-flex items-center gap-1.5"
             >
               ← Back to Home
             </Link>
@@ -207,13 +207,13 @@ function OnboardingPageWrapper() {
               href="https://wa.me/919941999415"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#64748B] hover:text-[#2B7BC4] transition-colors inline-flex items-center gap-1.5"
+              className="text-[#97A0B3] hover:text-[#7FA0D6] transition-colors inline-flex items-center gap-1.5"
             >
               Need Help?
             </a>
             <Link
               to="/portal"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#E8F4FD] text-[#2B7BC4] hover:bg-[#D5EBFA] border border-[#C9DFF0] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#161F2D] text-[#BCCCE6] hover:bg-[#2A3446] border border-[#2A3446] transition-colors"
             >
               Go to Portal →
             </Link>

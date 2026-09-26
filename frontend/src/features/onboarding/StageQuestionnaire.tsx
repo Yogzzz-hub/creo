@@ -376,17 +376,17 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
   return (
     <div className="w-full max-w-5xl mx-auto space-y-8">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[#0D2137] via-[#122E4C] to-[#0D2137] rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-white/10">
+      <div className="bg-gradient-to-r from-[#050810] via-[#161F2D] to-[#050810] rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-[#2A3446]">
         <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#2B7BC4] mb-1">
-              <Sparkles className="w-4 h-4 text-amber-400" />
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#7FA0D6] mb-1">
+              <Sparkles className="w-4 h-4 text-[#D8BF9B]" />
               <span>Production Intake & Brand DNA Engine</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#F8FAFC]">
               Creo Production Intelligence Blueprint
             </h1>
-            <p className="text-sm text-slate-300 mt-1 max-w-2xl">
+            <p className="text-sm text-[#97A0B3] mt-1 max-w-2xl">
               Sections A–E configure our editor, designer, and shoot director (~10 min).
               Sections F–G are optional creative enrichment.
             </p>
@@ -394,13 +394,13 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
 
           <div className="flex items-center gap-3">
             {coreUnlocked && (
-              <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold px-3 py-1.5 rounded-full">
+              <div className="inline-flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 text-xs font-semibold px-3 py-1.5 rounded-full">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 <span>Calendar Ready</span>
               </div>
             )}
             <div className="text-right">
-              <span className="text-xs text-slate-400 block font-mono">
+              <span className="text-xs text-[#97A0B3] block font-mono">
                 {isSaving ? "Autosaving..." : saveSuccess ? "Saved ✓" : "Autosave Active"}
               </span>
             </div>
@@ -413,19 +413,19 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-emerald-200"
+          className="bg-emerald-950/40 border border-emerald-800/60 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-emerald-200"
         >
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
             <span className="text-sm font-medium">
-              <strong>Core Discovery Complete!</strong> Your production parameters are locked and calendar generation is unlocked.
+              <strong className="text-emerald-300">Core Discovery Complete!</strong> Your production parameters are locked and calendar generation is unlocked.
             </span>
           </div>
           <button
             type="button"
             onClick={handleSynthesizeAndFinish}
             disabled={isSynthesizing}
-            className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shrink-0 flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-1.5 bg-[#BCCCE6] text-[#0B111C] hover:bg-white rounded-lg text-xs font-bold transition-all shadow-md shrink-0 flex items-center gap-1.5 cursor-pointer"
           >
             {isSynthesizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
             <span>Proceed to Calendar Directly</span>
@@ -445,32 +445,34 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
               onClick={() => setActiveSection(sec.key)}
               className={`flex flex-col items-start p-3 rounded-xl border text-left w-full overflow-hidden transition-all cursor-pointer ${
                 isActive
-                  ? "bg-[#2B7BC4]/10 border-[#2B7BC4] text-[#0D2137] shadow-sm"
-                  : "bg-white border-slate-200 hover:border-slate-300 text-slate-600"
+                  ? "bg-[#161F2D] border-2 border-[#BCCCE6] text-[#F8FAFC] shadow-lg shadow-[#7FA0D6]/10"
+                  : "bg-[#161F2D]/60 border-[#2A3446] hover:border-[#7FA0D6]/50 text-[#97A0B3] hover:text-[#F8FAFC]"
               }`}
             >
               <div className="flex items-center justify-between w-full mb-1">
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 font-mono text-slate-500">
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded font-mono ${
+                  isActive ? "bg-[#7FA0D6] text-[#0B111C]" : "bg-[#0B111C] text-[#97A0B3] border border-[#2A3446]"
+                }`}>
                   {sec.badge}
                 </span>
                 {!sec.isCore && (
-                  <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1 py-0.2 rounded shrink-0">
+                  <span className="text-[9px] font-bold text-[#D8BF9B] bg-[#D8BF9B]/10 border border-[#D8BF9B]/20 px-1 py-0.2 rounded shrink-0">
                     Optional
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-1.5 mt-1 w-full min-w-0">
-                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#2B7BC4]" : "text-slate-400"}`} />
+                <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-[#7FA0D6]" : "text-[#97A0B3]"}`} />
                 <span className="text-[11px] sm:text-xs font-bold truncate">{sec.label}</span>
               </div>
-              <span className="text-[10px] text-slate-400 mt-1">~{sec.estMinutes} min</span>
+              <span className="text-[10px] text-[#97A0B3]/80 mt-1">~{sec.estMinutes} min</span>
             </button>
           );
         })}
       </div>
 
       {/* Main Section Content Form */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-sm">
+      <div className="questionnaire-nebula bg-[#161F2D] rounded-2xl border border-[#2A3446] p-6 sm:p-8 shadow-xl text-[#F8FAFC]">
         {/* SECTION A: IDENTITY */}
         {activeSection === "a" && (
           <div className="space-y-6">
@@ -1406,12 +1408,12 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
         )}
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between pt-6 border-t border-slate-100 mt-8">
+        <div className="flex items-center justify-between pt-6 border-t border-[#2A3446] mt-8">
           <button
             type="button"
             onClick={handlePrevSection}
             disabled={activeSection === "a"}
-            className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 rounded-lg border border-[#2A3446] bg-[#0B111C] text-[#97A0B3] text-xs font-bold hover:text-white hover:border-[#7FA0D6] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back
           </button>
@@ -1422,7 +1424,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                 type="button"
                 onClick={handleNextSection}
                 disabled={isSaving}
-                className="px-5 py-2 rounded-lg bg-[#2B7BC4] hover:bg-[#1f63a3] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2.5 rounded-lg bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
               >
                 {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
                 <span>Save & Continue</span>
@@ -1432,9 +1434,9 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                 type="button"
                 onClick={handleSynthesizeAndFinish}
                 disabled={isSynthesizing}
-                className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                className="px-6 py-2.5 rounded-lg bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-xs font-black transition-all shadow-md flex items-center gap-2 cursor-pointer"
               >
-                {isSynthesizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                {isSynthesizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-[#D8BF9B]" />}
                 <span>Synthesize Brand DNA & Finish</span>
               </button>
             )}

@@ -37,12 +37,12 @@ function ProgressStepper({
   return (
     <div className="w-full max-w-4xl lg:max-w-5xl mx-auto mb-8 sm:mb-10 px-2 sm:px-4">
       {/* Stepper Card */}
-      <div className="relative bg-white rounded-2xl shadow-xs border border-[#C9DFF0] px-5 sm:px-8 py-4 sm:py-5">
+      <div className="relative bg-[#161F2D] rounded-2xl shadow-xl border border-[#2A3446] px-5 sm:px-8 py-4 sm:py-5">
         <div className="flex items-start justify-between relative">
 
           {/* Background track line */}
           <div
-            className="absolute left-0 right-0 h-[2px] rounded-full bg-slate-100"
+            className="absolute left-0 right-0 h-[2px] rounded-full bg-[#2A3446]"
             style={{ top: "16px", marginLeft: "8%", marginRight: "8%" }}
           />
 
@@ -53,7 +53,7 @@ function ProgressStepper({
               top: "16px",
               marginLeft: "8%",
               width: `calc(${Math.max(0, ((maxUnlockedStep - 1) / (STAGES.length - 1)))} * 84%)`,
-              background: "#059669",
+              background: "#7FA0D6",
             }}
           />
 
@@ -75,10 +75,10 @@ function ProgressStepper({
                     <div
                       className={`relative size-8 sm:size-9 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-colors duration-200 ${
                         isDone
-                          ? "bg-emerald-600 text-white"
+                          ? "bg-[#7FA0D6] text-[#0B111C]"
                           : isActive
-                          ? "bg-[#2B7BC4] text-white"
-                          : "bg-slate-100 text-slate-400 border border-slate-200"
+                          ? "bg-[#BCCCE6] text-[#0B111C] font-black ring-4 ring-[#BCCCE6]/20"
+                          : "bg-[#0B111C] text-[#97A0B3] border border-[#2A3446]"
                       }`}
                     >
                       {isDone ? (
@@ -94,16 +94,16 @@ function ProgressStepper({
                   {/* Step label */}
                   <div className="mt-2 text-center">
                     <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-0.5 ${
-                      isActive ? "text-[#2B7BC4]" : isDone ? "text-emerald-600" : "text-slate-400"
+                      isActive ? "text-[#BCCCE6]" : isDone ? "text-[#7FA0D6]" : "text-[#97A0B3]"
                     }`}>
                       Step {s.step}
                     </p>
                     <p className={`text-[10px] sm:text-xs font-bold transition-colors ${
                       isActive
-                        ? "text-[#0D2137]"
+                        ? "text-white"
                         : isDone
-                        ? "text-emerald-800"
-                        : "text-slate-500"
+                        ? "text-[#7FA0D6]"
+                        : "text-[#97A0B3]"
                     }`}>
                       <span className="sm:hidden">{s.short}</span>
                       <span className="hidden sm:inline whitespace-nowrap">{s.label}</span>
@@ -183,20 +183,20 @@ function StageVerifyEmail({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
-      className="max-w-xl mx-auto rounded-2xl border border-[#C9DFF0] bg-white p-8 sm:p-12 shadow-sm text-center"
+      className="max-w-xl mx-auto rounded-2xl border border-[#2A3446] bg-[#161F2D] p-8 sm:p-12 shadow-xl text-center"
     >
-      <div className="size-14 mx-auto mb-4 rounded-2xl bg-[#E8F4FD] border border-[#C9DFF0] flex items-center justify-center text-[#2B7BC4]">
+      <div className="size-14 mx-auto mb-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
         {verifiedSuccess ? (
-          <ShieldCheck className="size-7 text-emerald-600" />
+          <ShieldCheck className="size-7 text-emerald-400" />
         ) : (
-          <Mail className="size-7 text-[#2B7BC4]" />
+          <Mail className="size-7 text-[#7FA0D6]" />
         )}
       </div>
 
-      <h2 className="text-xl sm:text-2xl font-bold font-display text-[#0D2137] tracking-tight">
+      <h2 className="text-xl sm:text-2xl font-bold font-display text-[#F8FAFC] tracking-tight">
         {verifiedSuccess ? "Email Verified" : "Verify Your Email"}
       </h2>
-      <p className="text-xs sm:text-sm text-[#64748B] mt-2 max-w-md mx-auto leading-relaxed">
+      <p className="text-xs sm:text-sm text-[#97A0B3] mt-2 max-w-md mx-auto leading-relaxed">
         {verifiedSuccess
           ? "Your email address has been confirmed. You can now proceed to review and sign the Master Service Agreement."
           : "We protect your agency workspace with fast email verification. Enter your email to receive a 6-digit code."}
@@ -206,8 +206,8 @@ function StageVerifyEmail({
         <div
           className={`mt-4 p-3 rounded-xl text-xs font-medium ${
             message.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-              : "bg-rose-50 text-rose-800 border border-rose-200"
+              ? "bg-emerald-950/40 text-emerald-300 border border-emerald-800/60"
+              : "bg-rose-950/40 text-rose-300 border border-rose-800/60"
           }`}
         >
           {message.text}
@@ -216,8 +216,8 @@ function StageVerifyEmail({
 
       {verifiedSuccess ? (
         <div className="mt-6 space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
-            <CheckCircle2 className="size-4 text-emerald-600" />
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 text-xs font-semibold">
+            <CheckCircle2 className="size-4 text-emerald-400" />
             <span>Verified: {userEmail || email || "Active Client"}</span>
           </div>
 
@@ -225,7 +225,7 @@ function StageVerifyEmail({
             <button
               type="button"
               onClick={onContinueToTerms}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#2B7BC4] text-white font-semibold text-xs sm:text-sm hover:bg-[#1A5EA8] shadow-xs transition-all cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-xs sm:text-sm hover:bg-white shadow-sm transition-all cursor-pointer"
             >
               <span>Continue to Master Service Agreement (Step 2)</span>
               <ArrowRight className="size-4" />
@@ -237,7 +237,7 @@ function StageVerifyEmail({
           {!otpSent ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#0D2137] mb-1.5">
+                <label className="block text-xs font-semibold text-[#F8FAFC] mb-1.5">
                   Email Address
                 </label>
                 <input
@@ -246,14 +246,14 @@ function StageVerifyEmail({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@company.com"
                   required
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#C9DFF0] bg-white text-sm text-[#0D2137] focus:outline-none focus:border-[#2B7BC4] focus:ring-2 focus:ring-[#2B7BC4]/20 transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-sm text-[#F8FAFC] placeholder-[#97A0B3]/50 focus:outline-none focus:border-[#7FA0D6] focus:ring-2 focus:ring-[#7FA0D6]/20 transition-all"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#2B7BC4] text-white font-semibold text-sm hover:bg-[#1A5EA8] shadow-sm transition-all disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-sm hover:bg-white shadow-sm transition-all disabled:opacity-50 cursor-pointer"
               >
                 {loading && <RefreshCw className="size-4 animate-spin" />}
                 <span>Send Verification Code</span>
@@ -263,14 +263,14 @@ function StageVerifyEmail({
             <form onSubmit={handleVerifyOtp} className="space-y-5">
               <div>
                 <div className="flex justify-between items-center mb-3">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">
                     Enter 6-Digit Security Code
                   </label>
                   <button
                     type="button"
                     onClick={() => handleSendOtp()}
                     disabled={loading}
-                    className="text-xs font-semibold text-[#2B7BC4] hover:underline"
+                    className="text-xs font-semibold text-[#7FA0D6] hover:text-[#BCCCE6] transition-colors"
                   >
                     Resend Code
                   </button>
@@ -287,7 +287,7 @@ function StageVerifyEmail({
               <button
                 type="submit"
                 disabled={loading || otpCode.length < 4}
-                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#2B7BC4] text-white font-semibold text-sm hover:bg-[#1A5EA8] shadow-sm transition-all disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-sm hover:bg-white shadow-sm transition-all disabled:opacity-50 cursor-pointer"
               >
                 {loading && <RefreshCw className="size-4 animate-spin" />}
                 <span>Verify Code & Continue</span>
@@ -295,11 +295,11 @@ function StageVerifyEmail({
             </form>
           )}
 
-          <div className="mt-4 pt-4 border-t border-[#F0F4F8] text-center">
+          <div className="mt-4 pt-4 border-t border-[#2A3446] text-center">
             <button
               type="button"
               onClick={onContinueToTerms}
-              className="text-xs text-[#64748B] hover:text-[#0D2137] underline transition-colors"
+              className="text-xs text-[#97A0B3] hover:text-white underline transition-colors"
             >
               Skip verification for now and proceed to Terms →
             </button>
@@ -415,8 +415,8 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3 text-[#64748B]">
-        <div className="size-8 rounded-full border-3 border-[#2B7BC4] border-t-transparent animate-spin" />
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-3 text-[#97A0B3]">
+        <div className="size-8 rounded-full border-3 border-[#7FA0D6] border-t-transparent animate-spin" />
         <span className="text-sm font-medium">Loading onboarding progress...</span>
       </div>
     );
@@ -425,14 +425,14 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
   if (isError || !status) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] p-6 text-center">
-        <div className="max-w-md w-full p-6 rounded-2xl bg-white border border-[#C9DFF0] shadow-sm">
-          <p className="text-sm text-rose-600 font-medium mb-3">
+        <div className="max-w-md w-full p-6 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-xl">
+          <p className="text-sm text-rose-400 font-medium mb-3">
             Unable to connect to onboarding service.
           </p>
           <button
             type="button"
             onClick={() => void refreshStatus()}
-            className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-white font-semibold text-xs hover:bg-[#1A5EA8] transition-colors"
+            className="px-4 py-2 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-xs hover:bg-white transition-colors cursor-pointer"
           >
             Retry Connection
           </button>

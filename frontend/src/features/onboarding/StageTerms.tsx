@@ -105,60 +105,60 @@ export function StageTerms({ onAccepted, onBack, isSubmitting }: StageTermsProps
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         {/* LEFT COLUMN */}
         <div className="lg:col-span-4 flex flex-col gap-4">
-          <div className="rounded-2xl border border-[#C9DFF0] bg-white p-6 sm:p-8 shadow-sm h-full flex flex-col">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500 text-white text-[10px] font-bold uppercase tracking-wider mb-4 shadow-sm">
+          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-6 sm:p-8 shadow-xl h-full flex flex-col">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#7FA0D6]/20 border border-[#7FA0D6]/30 text-[#BCCCE6] text-[10px] font-bold uppercase tracking-wider mb-4 shadow-sm w-fit">
               Step 2 of 5
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black font-display text-[#0D2137] tracking-tight mb-2">
+            <h2 className="text-2xl sm:text-3xl font-black font-display text-[#F8FAFC] tracking-tight mb-2">
               Master Service Agreement
             </h2>
-            <p className="text-xs sm:text-sm text-[#64748B] mb-6 leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#97A0B3] mb-6 leading-relaxed">
               Please review the terms of service below. Scroll to the bottom of the agreement to unlock the acceptance button.
             </p>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 mb-4">
-              <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-200/80">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#0D2137]">
-                  <FileText className="w-4 h-4 text-[#2B7BC4]" />
+            <div className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-4 mb-4">
+              <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#2A3446]">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#F8FAFC]">
+                  <FileText className="w-4 h-4 text-[#7FA0D6]" />
                   Document Highlights
                 </div>
-                <div className="text-[9px] font-bold text-slate-500 bg-slate-200/50 px-2 py-0.5 rounded flex items-center gap-1">
+                <div className="text-[9px] font-bold text-[#97A0B3] bg-[#161F2D] border border-[#2A3446] px-2 py-0.5 rounded flex items-center gap-1">
                   <Lock className="w-2.5 h-2.5" /> SLA Rev 2026.09 • Enforced
                 </div>
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between bg-white border border-slate-200 p-3 rounded-lg shadow-2xs">
+                <div className="flex items-center justify-between bg-[#161F2D] border border-[#2A3446] p-3 rounded-lg shadow-sm">
                   <div>
-                    <p className="text-[11px] font-bold text-[#0D2137]">01. Scope of Services</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Content creation, identity, campaigns</p>
+                    <p className="text-[11px] font-bold text-[#F8FAFC]">01. Scope of Services</p>
+                    <p className="text-[10px] text-[#97A0B3] mt-0.5">Content creation, identity, campaigns</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                  <ChevronRight className="w-4 h-4 text-[#7FA0D6]" />
                 </div>
-                <div className="flex items-center justify-between bg-white border border-slate-200 p-3 rounded-lg shadow-2xs">
+                <div className="flex items-center justify-between bg-[#161F2D] border border-[#2A3446] p-3 rounded-lg shadow-sm">
                   <div>
-                    <p className="text-[11px] font-bold text-[#0D2137]">02. Payment Terms</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Billing cycles & 7-day grace period</p>
+                    <p className="text-[11px] font-bold text-[#F8FAFC]">02. Payment Terms</p>
+                    <p className="text-[10px] text-[#97A0B3] mt-0.5">Billing cycles & 7-day grace period</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                  <ChevronRight className="w-4 h-4 text-[#7FA0D6]" />
                 </div>
               </div>
             </div>
 
             {!hasScrolled ? (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 mt-auto">
-                <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="bg-[#D8BF9B]/10 border border-[#D8BF9B]/30 rounded-xl p-4 flex items-start gap-3 mt-auto">
+                <Clock className="w-5 h-5 text-[#D8BF9B] shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-bold text-amber-800">Reading in progress...</p>
-                  <p className="text-[11px] text-amber-700/80 font-medium mt-0.5">Scroll document to unlock</p>
+                  <p className="text-xs font-bold text-[#D8BF9B]">Reading in progress...</p>
+                  <p className="text-[11px] text-[#D8BF9B]/80 font-medium mt-0.5">Scroll document to unlock</p>
                 </div>
               </div>
             ) : (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 mt-auto">
-                <Check className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <div className="bg-emerald-950/40 border border-emerald-800/60 rounded-xl p-4 flex items-start gap-3 mt-auto">
+                <Check className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-bold text-emerald-800">Reading complete</p>
-                  <p className="text-[11px] text-emerald-700/80 font-medium mt-0.5">You can now accept the agreement</p>
+                  <p className="text-xs font-bold text-emerald-300">Reading complete</p>
+                  <p className="text-[11px] text-emerald-300/80 font-medium mt-0.5">You can now accept the agreement</p>
                 </div>
               </div>
             )}
@@ -167,36 +167,33 @@ export function StageTerms({ onAccepted, onBack, isSubmitting }: StageTermsProps
 
         {/* RIGHT COLUMN */}
         <div className="lg:col-span-8 flex flex-col gap-4">
-          <div className="rounded-2xl border border-[#C9DFF0] bg-white p-6 sm:p-8 shadow-sm flex flex-col h-full relative overflow-hidden">
+          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-6 sm:p-8 shadow-xl flex flex-col h-full relative overflow-hidden">
             
             {/* PDF Header */}
-            <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-100">
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#2A3446]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#F0F7FD] flex items-center justify-center text-[#2B7BC4] shrink-0 border border-[#C9DFF0]">
+                <div className="w-10 h-10 rounded-lg bg-[#0B111C] flex items-center justify-center text-[#7FA0D6] shrink-0 border border-[#2A3446]">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-[#0D2137]">creo_master_agreement_2026.pdf</h3>
-                  <p className="text-[11px] text-slate-500 mt-0.5 font-medium">Last updated: January 2025</p>
+                  <h3 className="text-sm font-bold text-[#F8FAFC]">creo_master_agreement_2026.pdf</h3>
+                  <p className="text-[11px] text-[#97A0B3] mt-0.5 font-medium">Last updated: January 2025</p>
                 </div>
               </div>
               
               <div className="flex items-center gap-3 w-32">
-                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div className={`h-full bg-[#2B7BC4] transition-all duration-300 ${hasScrolled ? 'w-full' : 'w-[5%]'}`} />
+                <div className="flex-1 h-1.5 bg-[#0B111C] border border-[#2A3446] rounded-full overflow-hidden">
+                  <div className={`h-full bg-[#7FA0D6] transition-all duration-300 ${hasScrolled ? 'w-full' : 'w-[5%]'}`} />
                 </div>
-                <span className="text-[10px] font-bold text-[#0D2137]">{hasScrolled ? '100%' : '0%'}</span>
+                <span className="text-[10px] font-bold text-[#BCCCE6]">{hasScrolled ? '100%' : '0%'}</span>
               </div>
             </div>
 
             {/* Scroll container */}
             <div
               ref={scrollContainerRef}
-              className="flex-1 min-h-[300px] h-[50vh] max-h-[600px] overflow-y-auto bg-slate-50/50 border border-slate-200/60 rounded-xl p-6 sm:p-8 mb-6 font-mono text-[11px] sm:text-xs text-slate-600 leading-relaxed whitespace-pre-wrap select-text scroll-smooth shadow-inner relative"
+              className="flex-1 min-h-[300px] h-[50vh] max-h-[600px] overflow-y-auto bg-[#0B111C] border border-[#2A3446] rounded-xl p-6 sm:p-8 mb-6 font-mono text-[11px] sm:text-xs text-[#97A0B3] leading-relaxed whitespace-pre-wrap select-text scroll-smooth shadow-inner relative"
             >
-              <div className="absolute right-2 top-2 bottom-2 w-1.5 bg-slate-200/50 rounded-full hidden sm:block">
-                {/* Custom scrollbar track visual */}
-              </div>
               {MSA_TEXT}
               {/* IntersectionObserver sentinel */}
               <div ref={sentinelRef} className="h-1 mt-6" aria-hidden="true" />
@@ -206,9 +203,9 @@ export function StageTerms({ onAccepted, onBack, isSubmitting }: StageTermsProps
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-3 rounded-xl flex items-center gap-2 mt-auto"
+                className="text-xs font-bold text-emerald-300 bg-emerald-950/40 border border-emerald-800/60 px-4 py-3 rounded-xl flex items-center gap-2 mt-auto"
               >
-                <div className="size-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                <div className="size-5 rounded-full bg-emerald-500 text-[#0B111C] flex items-center justify-center shrink-0">
                   <Check className="w-3 h-3 stroke-[3]" />
                 </div>
                 <span>You have read and scrolled through the full agreement.</span>
@@ -219,12 +216,12 @@ export function StageTerms({ onAccepted, onBack, isSubmitting }: StageTermsProps
       </div>
 
       {/* FOOTER ACTIONS */}
-      <div className="rounded-2xl border border-[#C9DFF0] bg-white p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
         {onBack ? (
           <button
             type="button"
             onClick={onBack}
-            className="w-full sm:w-auto py-3 px-6 rounded-full bg-white border border-[#C9DFF0] text-sm font-bold text-[#64748B] hover:text-[#0D2137] hover:bg-[#F8FAFC] shadow-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0"
+            className="w-full sm:w-auto py-3 px-6 rounded-full bg-[#0B111C] border border-[#2A3446] text-sm font-bold text-[#97A0B3] hover:text-[#F8FAFC] hover:border-[#7FA0D6] shadow-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0"
           >
             <span>← Back to Step 1</span>
           </button>
@@ -239,8 +236,8 @@ export function StageTerms({ onAccepted, onBack, isSubmitting }: StageTermsProps
           whileTap={hasScrolled && !isSubmitting ? { scale: 0.98 } : {}}
           className={`w-full sm:w-auto min-w-[280px] py-3 px-8 rounded-full font-bold text-sm transition-all shadow-md ${
             hasScrolled && !isSubmitting
-              ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white cursor-pointer hover:shadow-blue-500/30"
-              : "bg-[#A2B4C8] text-white cursor-not-allowed shadow-none"
+              ? "bg-[#BCCCE6] text-[#0B111C] cursor-pointer hover:bg-white shadow-[#BCCCE6]/20"
+              : "bg-[#2A3446] text-[#97A0B3] cursor-not-allowed shadow-none"
           }`}
         >
           {isSubmitting ? "Accepting Terms…" : "Accept Agreement & Continue to Payment →"}
