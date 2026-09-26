@@ -731,18 +731,18 @@ export function PortalAccountPage() {
   return (
     <div className="animate-page-in space-y-6 max-w-[1440px] mx-auto px-4 md:px-8 pb-12">
       {/* Sub-navigation Tabs */}
-      <div className="flex items-center justify-between border-b border-[#E2E8F0] text-sm font-medium overflow-x-auto">
+      <div className="flex items-center justify-between border-b border-[#2A3446] text-sm font-medium overflow-x-auto">
         <div className="flex items-center space-x-1">
         <button
           type="button"
           onClick={() => setActiveTab("business")}
           className={`flex items-center gap-2 pb-3 px-3 whitespace-nowrap focus:outline-none transition-colors ${
             activeTab === "business"
-              ? "text-[#0052FF] border-b-2 border-[#0052FF] font-semibold"
-              : "text-[#64748B] hover:text-[#0F172A]"
+              ? "text-[#BCCCE6] border-b-2 border-[#BCCCE6] font-bold"
+              : "text-[#97A0B3] hover:text-white"
           }`}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-[#7FA0D6]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
           </svg>
           Company & Contact
@@ -752,8 +752,8 @@ export function PortalAccountPage() {
           onClick={() => setActiveTab("brand")}
           className={`pb-3 px-3 whitespace-nowrap focus:outline-none transition-colors ${
             activeTab === "brand"
-              ? "text-[#0052FF] border-b-2 border-[#0052FF] font-semibold"
-              : "text-[#64748B] hover:text-[#0F172A]"
+              ? "text-[#BCCCE6] border-b-2 border-[#BCCCE6] font-bold"
+              : "text-[#97A0B3] hover:text-white"
           }`}
         >
           Brand Profile
@@ -763,12 +763,12 @@ export function PortalAccountPage() {
           onClick={() => setActiveTab("security")}
           className={`flex items-center gap-2 pb-3 px-3 whitespace-nowrap focus:outline-none transition-colors ${
             activeTab === "security"
-              ? "text-[#0052FF] border-b-2 border-[#0052FF] font-semibold"
-              : "text-[#64748B] hover:text-[#0F172A]"
+              ? "text-[#BCCCE6] border-b-2 border-[#BCCCE6] font-bold"
+              : "text-[#97A0B3] hover:text-white"
           }`}
         >
           {activeTab === "security" && (
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-[#7FA0D6]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           )}
@@ -779,17 +779,17 @@ export function PortalAccountPage() {
           onClick={() => setActiveTab("integrations")}
           className={`flex items-center gap-2 pb-3 px-3 whitespace-nowrap focus:outline-none transition-colors ${
             activeTab === "integrations"
-              ? "text-[#0052FF] border-b-2 border-[#0052FF] font-semibold"
-              : "text-[#64748B] hover:text-[#0F172A]"
+              ? "text-[#BCCCE6] border-b-2 border-[#BCCCE6] font-bold"
+              : "text-[#97A0B3] hover:text-white"
           }`}
         >
           Social Integrations
-          {igConnected && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
+          {igConnected && <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />}
         </button>
         </div>
         <div className="hidden sm:block shrink-0 pb-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-[#E2E8F0] text-xs font-medium text-[#64748B] shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446] text-xs font-medium text-[#97A0B3] shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
             <span>System Active</span>
           </div>
         </div>
@@ -2075,19 +2075,19 @@ export function PortalAccountPage() {
               </div>
 
               {/* ── Fixed Bottom Bar ── */}
-              <div className="fixed bottom-0 inset-x-0 sm:left-64 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)] px-4 sm:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="fixed bottom-0 inset-x-0 sm:left-64 z-40 bg-[#161F2D] border-t border-[#2A3446] shadow-xl px-4 sm:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-emerald-500" />
-                  <p className="text-[12px] font-bold text-slate-900">All social integration APIs active and operating normally.</p>
+                  <span className="size-2 rounded-full bg-emerald-400" />
+                  <p className="text-[12px] font-bold text-[#F8FAFC]">All social integration APIs active and operating normally.</p>
                 </div>
                 <div className="flex items-center gap-4 w-full sm:w-auto">
-                  <button className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer">
+                  <button className="text-xs font-semibold text-[#97A0B3] hover:text-white transition-colors cursor-pointer">
                     Discard Changes
                   </button>
                   <button
                     onClick={() => updateProfileMutation.mutate({})}
                     disabled={updateProfileMutation.isPending}
-                    className="flex-1 sm:flex-none px-6 py-2.5 bg-[#0052FF] hover:bg-[#0045D8] text-white text-xs font-bold rounded-xl shadow-md shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center cursor-pointer"
+                    className="flex-1 sm:flex-none px-6 py-2.5 bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-xs font-bold rounded-xl shadow-md shadow-[#BCCCE6]/20 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center cursor-pointer"
                   >
                     {updateProfileMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : "Save Integration Settings"}
                   </button>
@@ -2099,11 +2099,11 @@ export function PortalAccountPage() {
 
           {/* Connect Instagram Modal */}
           {showConnectModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-              <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+              <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 max-w-md w-full shadow-2xl text-[#F8FAFC]">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-[#0F172A]">Connect Instagram</h3>
-                  <button type="button" onClick={() => setShowConnectModal(false)} className="text-[#64748B] hover:text-[#0F172A]">
+                  <h3 className="text-lg font-bold text-[#F8FAFC]">Connect Instagram</h3>
+                  <button type="button" onClick={() => setShowConnectModal(false)} className="text-[#97A0B3] hover:text-white">
                     <X className="size-5" />
                   </button>
                 </div>
@@ -2112,15 +2112,15 @@ export function PortalAccountPage() {
                   value={connectIgInput}
                   onChange={(e) => setConnectIgInput(e.target.value)}
                   placeholder="@yourbrand"
-                  className="w-full border border-[#E2E8F0] rounded-xl px-4 py-3 text-sm mb-4 focus:ring-[#0052FF] focus:border-[#0052FF] outline-none"
+                  className="w-full border border-[#2A3446] bg-[#0B111C] text-[#F8FAFC] placeholder-[#97A0B3]/50 rounded-xl px-4 py-3 text-sm mb-4 focus:ring-[#7FA0D6] focus:border-[#7FA0D6] outline-none"
                 />
                 <div className="flex gap-3">
-                  <button type="button" onClick={() => setShowConnectModal(false)} className="flex-1 py-2 text-sm font-semibold text-[#64748B] border border-[#E2E8F0] rounded-lg hover:bg-[#F8F9FC]">Cancel</button>
+                  <button type="button" onClick={() => setShowConnectModal(false)} className="flex-1 py-2 text-sm font-semibold text-[#97A0B3] border border-[#2A3446] bg-[#0B111C] rounded-lg hover:text-white hover:bg-[#161F2D]">Cancel</button>
                   <button
                     type="button"
                     onClick={() => connectInstagramMutation.mutate(connectIgInput)}
                     disabled={connectInstagramMutation.isPending || !connectIgInput.trim()}
-                    className="flex-1 py-2 text-sm font-bold text-white bg-[#0052FF] hover:bg-[#0045D8] rounded-lg disabled:opacity-50"
+                    className="flex-1 py-2 text-sm font-bold text-[#0B111C] bg-[#BCCCE6] hover:bg-white rounded-lg disabled:opacity-50"
                   >
                     {connectInstagramMutation.isPending ? <Loader2 className="size-4 animate-spin mx-auto" /> : "Authorize & Link"}
                   </button>

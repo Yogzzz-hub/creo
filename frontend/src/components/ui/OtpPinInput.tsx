@@ -9,6 +9,7 @@ interface OtpPinInputProps {
   disabled?: boolean;
   hasError?: boolean;
   showDemoFill?: boolean;
+  variant?: "light" | "dark";
 }
 
 export function OtpPinInput({
@@ -18,6 +19,7 @@ export function OtpPinInput({
   length = 6,
   disabled = false,
   hasError = false,
+  variant = "dark",
 }: OtpPinInputProps) {
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -105,6 +107,18 @@ export function OtpPinInput({
       >
         {Array.from({ length }).map((_, i) => {
           const isFilled = Boolean(digits[i]);
+          const darkClasses = hasError
+            ? "border-rose-500/70 bg-rose-950/20 text-rose-300 focus:ring-4 focus:ring-rose-500/20"
+            : isFilled
+            ? "border-[#7FA0D6] bg-[#161F2D] text-[#F8FAFC] shadow-sm shadow-[#7FA0D6]/20"
+            : "border-[#2A3446] bg-[#0B111C] text-[#F8FAFC] hover:border-[#7FA0D6]/60 focus:border-[#BCCCE6] focus:bg-[#161F2D] focus:ring-4 focus:ring-[#BCCCE6]/20";
+
+          const lightClasses = hasError
+            ? "border-red-400 bg-red-50/50 text-red-600 focus:ring-4 focus:ring-red-100"
+            : isFilled
+            ? "border-[#2B7BC4] bg-[#F0F7FF] text-[#0D2137] shadow-xs shadow-[#2B7BC4]/10"
+            : "border-slate-200 bg-slate-50/70 text-[#0D2137] hover:border-slate-300 focus:border-[#2B7BC4] focus:bg-white focus:ring-4 focus:ring-[#2B7BC4]/15";
+
           return (
             <input
               key={i}
@@ -122,11 +136,7 @@ export function OtpPinInput({
               onKeyDown={(e) => handleKeyDown(i, e)}
               onPaste={handlePaste}
               className={`w-11 h-13 sm:w-12 sm:h-14 text-center font-mono text-xl sm:text-2xl font-bold rounded-xl border transition-all select-all outline-none ${
-                hasError
-                  ? "border-red-400 bg-red-50/50 text-red-600 focus:ring-4 focus:ring-red-100"
-                  : isFilled
-                  ? "border-[#2B7BC4] bg-[#F0F7FF] text-[#0D2137] shadow-xs shadow-[#2B7BC4]/10"
-                  : "border-slate-200 bg-slate-50/70 text-[#0D2137] hover:border-slate-300 focus:border-[#2B7BC4] focus:bg-white focus:ring-4 focus:ring-[#2B7BC4]/15"
+                variant === "dark" ? darkClasses : lightClasses
               } disabled:opacity-50 disabled:cursor-not-allowed`}
             />
           );

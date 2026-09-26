@@ -94,64 +94,64 @@ export function PlanBargainCallModal({ isOpen, onClose, onSuccess }: PlanBargain
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-[fadeIn_0.15s_ease-out]">
-      <div className="relative w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl border border-[#E2E8F0] max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-[fadeIn_0.15s_ease-out]">
+      <div className="relative w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-[#2A3446] max-h-[92vh] overflow-y-auto text-[#F8FAFC]">
         {/* Close button */}
         <button
           type="button"
           onClick={onClose}
           disabled={loading}
-          className="absolute top-5 right-5 size-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-[#0F172A] flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute top-5 right-5 size-8 rounded-full bg-[#0B111C] border border-[#2A3446] text-[#97A0B3] hover:bg-[#2A3446] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
         >
           <X className="size-4" />
         </button>
 
         {submitted ? (
           <div className="py-8 text-center space-y-3 animate-[zoomIn_0.2s_ease-out]">
-            <div className="size-14 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center shadow-xs">
+            <div className="size-14 rounded-full bg-emerald-950/50 border border-emerald-800/60 text-emerald-400 mx-auto flex items-center justify-center shadow-sm">
               <CheckCircle2 className="size-7" />
             </div>
-            <h3 className="text-lg font-bold text-[#0F172A]">Call Request Confirmed!</h3>
-            <p className="text-xs text-slate-600 max-w-xs mx-auto leading-relaxed">
+            <h3 className="text-lg font-bold text-[#F8FAFC]">Call Request Confirmed!</h3>
+            <p className="text-xs text-[#97A0B3] max-w-xs mx-auto leading-relaxed">
               Our Agency Director has received your plan negotiation request. We will connect with you at{" "}
-              <strong className="text-[#0F172A]">{phoneNumber}</strong> ({preferredTime}).
+              <strong className="text-white">{phoneNumber}</strong> ({preferredTime}).
             </p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Header */}
-            <div className="flex items-start gap-3.5 pb-3 border-b border-slate-100">
-              <div className="size-10 rounded-2xl bg-gradient-to-br from-[#0052FF] to-[#0045D8] text-white flex items-center justify-center shrink-0 shadow-xs">
+            <div className="flex items-start gap-3.5 pb-3 border-b border-[#2A3446]">
+              <div className="size-10 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] flex items-center justify-center shrink-0 shadow-sm">
                 <PhoneCall className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-[#0F172A] tracking-tight">
+                <h3 className="text-lg font-bold text-[#F8FAFC] tracking-tight">
                   Book a Plan Negotiation Call
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-[#97A0B3] mt-0.5">
                   Bargain custom rates, adjust deliverable quotas, or create a tailored retainer with our Executive Director.
                 </p>
               </div>
             </div>
 
             {error && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
+              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs font-medium">
                 {error}
               </div>
             )}
 
             {/* Negotiation Topic */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-[#0F172A]">
+              <label className="block text-xs font-semibold text-[#F8FAFC]">
                 What would you like to negotiate?
               </label>
               <select
                 value={targetTopic}
                 onChange={(e) => setTargetTopic(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-[#0F172A] focus:outline-none focus:border-[#0052FF] focus:ring-1 focus:ring-[#0052FF]"
+                className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
               >
                 {TOPICS.map((topic) => (
-                  <option key={topic} value={topic}>
+                  <option key={topic} value={topic} className="bg-[#0B111C] text-[#F8FAFC]">
                     {topic}
                   </option>
                 ))}
@@ -160,7 +160,7 @@ export function PlanBargainCallModal({ isOpen, onClose, onSuccess }: PlanBargain
 
             {/* Proposed Budget or Offer */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-[#0F172A]">
+              <label className="block text-xs font-semibold text-[#F8FAFC]">
                 Your Proposed Budget / Scope Target (Optional)
               </label>
               <div className="relative">
@@ -169,15 +169,15 @@ export function PlanBargainCallModal({ isOpen, onClose, onSuccess }: PlanBargain
                   value={proposedOffer}
                   onChange={(e) => setProposedOffer(e.target.value)}
                   placeholder="e.g. Looking for 10 reels at ₹35,000/mo or 15% startup discount"
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#0F172A] focus:outline-none focus:border-[#0052FF] focus:ring-1 focus:ring-[#0052FF]"
+                  className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] placeholder-[#97A0B3]/50 focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
                 />
               </div>
             </div>
 
             {/* Phone Number */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-[#0F172A]">
-                Contact Phone / WhatsApp Number <span className="text-rose-500">*</span>
+              <label className="block text-xs font-semibold text-[#F8FAFC]">
+                Contact Phone / WhatsApp Number <span className="text-rose-400">*</span>
               </label>
               <input
                 type="tel"
@@ -185,22 +185,22 @@ export function PlanBargainCallModal({ isOpen, onClose, onSuccess }: PlanBargain
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="e.g. +91 98765 43210"
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#0F172A] focus:outline-none focus:border-[#0052FF] focus:ring-1 focus:ring-[#0052FF]"
+                className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] placeholder-[#97A0B3]/50 focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
               />
             </div>
 
             {/* Preferred Call Time */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-[#0F172A]">
+              <label className="block text-xs font-semibold text-[#F8FAFC]">
                 Preferred Call Window
               </label>
               <select
                 value={preferredTime}
                 onChange={(e) => setPreferredTime(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-[#0F172A] focus:outline-none focus:border-[#0052FF] focus:ring-1 focus:ring-[#0052FF]"
+                className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
               >
                 {TIME_SLOTS.map((slot) => (
-                  <option key={slot} value={slot}>
+                  <option key={slot} value={slot} className="bg-[#0B111C] text-[#F8FAFC]">
                     {slot}
                   </option>
                 ))}
@@ -209,7 +209,7 @@ export function PlanBargainCallModal({ isOpen, onClose, onSuccess }: PlanBargain
 
             {/* Notes */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-[#0F172A]">
+              <label className="block text-xs font-semibold text-[#F8FAFC]">
                 Additional Notes / Deliverable Needs (Optional)
               </label>
               <textarea
@@ -217,24 +217,24 @@ export function PlanBargainCallModal({ isOpen, onClose, onSuccess }: PlanBargain
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Share any context about your brand cadence, team size, or turnaround needs..."
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#0F172A] focus:outline-none focus:border-[#0052FF] focus:ring-1 focus:ring-[#0052FF] resize-none"
+                className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] placeholder-[#97A0B3]/50 focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6] resize-none"
               />
             </div>
 
             {/* Direct WhatsApp Call Shortcut */}
-            <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-emerald-900">
-                <MessageSquare className="size-4 text-emerald-600 shrink-0" />
+            <div className="p-3 rounded-2xl bg-emerald-950/40 border border-emerald-800/60 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-emerald-200">
+                <MessageSquare className="size-4 text-emerald-400 shrink-0" />
                 <div className="text-left">
-                  <p className="text-xs font-bold">Want to talk immediately?</p>
-                  <p className="text-[10px] text-emerald-700">Connect via direct WhatsApp audio call</p>
+                  <p className="text-xs font-bold text-emerald-300">Want to talk immediately?</p>
+                  <p className="text-[10px] text-emerald-400/80">Connect via direct WhatsApp audio call</p>
                 </div>
               </div>
               <a
                 href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-2xs shrink-0"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors shadow-sm shrink-0"
               >
                 <span>Call Now</span>
                 <ArrowUpRight className="size-3" />
@@ -242,19 +242,19 @@ export function PlanBargainCallModal({ isOpen, onClose, onSuccess }: PlanBargain
             </div>
 
             {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#97A0B3] hover:bg-[#0B111C] hover:text-white transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-5 py-2 rounded-xl bg-[#0052FF] hover:bg-[#0045D8] text-white text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-xs font-bold transition-all shadow-md shadow-[#BCCCE6]/20 inline-flex items-center gap-1.5 cursor-pointer"
               >
                 {loading ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
                 <span>Submit Call Request</span>
