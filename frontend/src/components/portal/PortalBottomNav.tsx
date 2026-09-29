@@ -25,7 +25,7 @@ export function PortalBottomNav() {
   return (
     <nav
       aria-label="Portal Navigation"
-      className="xl:hidden fixed bottom-0 inset-x-0 z-50 bg-[#0B111C]/97 backdrop-blur-xl border-t border-[#2A3446]/70 px-1.5 py-1.5 shadow-[0_-4px_25px_rgba(0,0,0,0.4)]"
+      className="xl:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 px-1.5 py-1.5 shadow-[0_-4px_25px_rgba(0,0,0,0.08)]"
     >
       <div className="max-w-lg mx-auto flex items-center justify-around">
         {navItems.map((item) => {

@@ -6,7 +6,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* Solid Executive Dark Bento Design Tokens */
+  /* Executive Design Tokens */
   --color-void: #050810;
   --color-deep-surface: #0B111C;
   --color-bento-surface: #121926;
@@ -15,7 +15,7 @@
   --color-off-white: #F8FAFC;
   --color-slate-mist: #97A0B3;
   --color-glow-blue: #7FA0D6;
-  --color-live-green: #7FA0D6;
+  --color-live-green: #10B981;
   --color-cta-primary: #BCCCE6;
 
   --color-brand: #2B7BC4;
@@ -89,8 +89,8 @@
 }
 
 :root {
-  --background: #050810;
-  --foreground: #F8FAFC;
+  --background: #ffffff;
+  --foreground: #0D2137;
   --card: #ffffff;
   --card-foreground: #0D2137;
   --popover: #ffffff;

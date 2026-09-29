@@ -628,7 +628,7 @@ export function PortalAccountPage() {
   const handleAddColorSwatch = () => {
     const current = Array.isArray(colorSwatches) ? colorSwatches : [];
     const newId = String(current.length + 1);
-    const presets = ["#8B5CF6", "#EC4899", "#F59E0B", "#7FA0D6", "#3B82F6"];
+    const presets = ["#8B5CF6", "#EC4899", "#F59E0B", "#10B981", "#3B82F6"];
     const presetHex = presets[current.length % presets.length] || "#8B5CF6";
     setColorSwatches([
       ...current,
@@ -794,12 +794,12 @@ export function PortalAccountPage() {
           }`}
         >
           Social Integrations
-          {igConnected && <span className="w-2 h-2 rounded-full bg-[#7FA0D6]500 animate-pulse" />}
+          {igConnected && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
         </button>
         </div>
         <div className="hidden sm:block shrink-0 pb-2">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-[#E2E8F0] text-xs font-medium text-[#64748B] shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-[#7FA0D6]500" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span>System Active</span>
           </div>
         </div>
@@ -813,7 +813,7 @@ export function PortalAccountPage() {
         <div className="space-y-6">
           {/* Global Alert */}
           {saved && (
-            <div className="p-3.5 rounded-xl bg-[#7FA0D6]50 border border-emerald-200 text-xs font-bold text-emerald-800 flex items-center gap-2">
+            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 flex items-center gap-2">
               <CheckCircle2 className="size-4 text-emerald-600" />
               <span>{saveMessage}</span>
             </div>
@@ -831,7 +831,7 @@ export function PortalAccountPage() {
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center gap-2.5">
                         <h3 className="text-base font-bold text-[#0F172A] tracking-tight">Profile</h3>
-                        <span className="bg-[#7FA0D6]50 text-emerald-600 border border-emerald-100 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                        <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
                           ACTIVE CLIENT
                         </span>
                       </div>
@@ -883,7 +883,7 @@ export function PortalAccountPage() {
                       <div className="flex items-center justify-between mb-2.5">
                         <label className="text-xs font-bold text-[#0F172A]">Connect Instagram ID</label>
                         {igConnected ? (
-                          <span className="bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded">
+                          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded">
                             Live
                           </span>
                         ) : (
@@ -961,7 +961,7 @@ export function PortalAccountPage() {
                         <div className="size-9 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs border border-slate-300">
                           ML
                         </div>
-                        <span className="absolute bottom-0 right-0 size-2.5 bg-[#7FA0D6]500 border-2 border-white rounded-full" />
+                        <span className="absolute bottom-0 right-0 size-2.5 bg-emerald-500 border-2 border-white rounded-full" />
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
@@ -975,8 +975,8 @@ export function PortalAccountPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-[#7FA0D6]50 text-emerald-700 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-emerald-100 shrink-0">
-                      <span className="size-1.5 rounded-full bg-[#7FA0D6]500" />
+                    <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-[11px] font-semibold px-2.5 py-1 rounded-full border border-emerald-100 shrink-0">
+                      <span className="size-1.5 rounded-full bg-emerald-500" />
                       Active in Slack
                     </div>
                   </div>
@@ -1098,7 +1098,7 @@ export function PortalAccountPage() {
                       <div className="border border-slate-200/80 bg-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
                         <div>
                           <div className="flex items-center gap-2 mb-1.5">
-                            <span className="px-2 py-0.5 bg-[#7FA0D6]50 text-emerald-700 border border-emerald-100 text-[10px] font-black rounded uppercase tracking-wider">
+                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-black rounded uppercase tracking-wider">
                               ACTIVE RETAINER
                             </span>
                             <span className="text-xs text-slate-500 font-medium">Renews Nov 1, 2024</span>
@@ -1110,7 +1110,7 @@ export function PortalAccountPage() {
                         </div>
                         <div className="sm:text-right">
                           <div className="text-xl font-extrabold text-[#0052FF] leading-none tracking-tight">
-                            $8,500 <span className="text-xs text-slate-400 font-medium">/mo</span>
+                            ₹85,000 <span className="text-xs text-slate-400 font-medium">/mo</span>
                           </div>
                           <p className="text-[11px] text-slate-400 mt-1 font-medium">
                             Unlimited revisions included
@@ -1499,7 +1499,7 @@ export function PortalAccountPage() {
                                   >
                                     {asset?.name}
                                   </span>
-                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#7FA0D6]50 text-emerald-600 border border-emerald-200 shrink-0">
+                                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-200 shrink-0">
                                     {asset?.status}
                                   </span>
                                 </div>
@@ -1556,7 +1556,7 @@ export function PortalAccountPage() {
                       </div>
 
                       {/* Verified Banner */}
-                      <div className="rounded-xl bg-[#7FA0D6]50/80 border border-emerald-200/80 p-3 flex items-center justify-center gap-2 text-xs font-semibold text-emerald-800 shadow-xs">
+                      <div className="rounded-xl bg-emerald-50/80 border border-emerald-200/80 p-3 flex items-center justify-center gap-2 text-xs font-semibold text-emerald-800 shadow-xs">
                         <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
                         <span>Assets Verified &amp; Cleaned of Legacy Errors</span>
                       </div>
@@ -1622,7 +1622,7 @@ export function PortalAccountPage() {
 
                   {passwordMsg && (
                     <div className={`mb-5 p-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 ${
-                      passwordMsg.type === "success" ? "bg-[#7FA0D6]50 text-emerald-800 border border-emerald-200" : "bg-rose-50 text-rose-800 border border-rose-200"
+                      passwordMsg.type === "success" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-rose-50 text-rose-800 border border-rose-200"
                     }`}>
                       {passwordMsg.type === "success" ? <CheckCircle2 className="size-4" /> : <X className="size-4" />}
                       {passwordMsg.text}
@@ -1693,10 +1693,10 @@ export function PortalAccountPage() {
                         <span className="text-[9px] text-slate-400 font-semibold">Meets requirements</span>
                       </div>
                       <div className="flex gap-1.5 mb-3">
-                        <div className="h-1 flex-1 bg-[#7FA0D6]500 rounded-full" />
-                        <div className="h-1 flex-1 bg-[#7FA0D6]500 rounded-full" />
-                        <div className="h-1 flex-1 bg-[#7FA0D6]500 rounded-full" />
-                        <div className="h-1 flex-1 bg-[#7FA0D6]500 rounded-full" />
+                        <div className="h-1 flex-1 bg-emerald-500 rounded-full" />
+                        <div className="h-1 flex-1 bg-emerald-500 rounded-full" />
+                        <div className="h-1 flex-1 bg-emerald-500 rounded-full" />
+                        <div className="h-1 flex-1 bg-emerald-500 rounded-full" />
                       </div>
                       <div className="grid grid-cols-2 gap-y-2 gap-x-1">
                         <div className="flex items-center gap-1.5">
@@ -1745,7 +1745,7 @@ export function PortalAccountPage() {
                       <div>
                         <h2 className="text-base font-bold text-[#0F172A] tracking-tight">Two-Factor Authentication (2FA)</h2>
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold mt-1 ${
-                          twoFactorEnabled ? "bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-500 border border-slate-200"
+                          twoFactorEnabled ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-slate-100 text-slate-500 border border-slate-200"
                         }`}>
                           {twoFactorEnabled ? "Active via Authenticator App" : "Disabled"}
                         </span>
@@ -1803,8 +1803,8 @@ export function PortalAccountPage() {
                           <p className="text-[10px] text-slate-500 mt-0.5">Chrome v122 • Active Now • IP 172.56.21.89</p>
                         </div>
                       </div>
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
-                        <span className="size-1.5 rounded-full bg-[#7FA0D6]500 animate-pulse" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Current Session
                       </span>
                     </div>
@@ -1896,8 +1896,8 @@ export function PortalAccountPage() {
                           <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">Manage direct access tokens and permissions for Meta Business Suite & Facebook Graph API.</p>
                         </div>
                       </div>
-                      <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-[#7FA0D6]50 text-emerald-700 text-[10px] font-bold border border-emerald-100 rounded-full shrink-0">
-                        <span className="size-1.5 rounded-full bg-[#7FA0D6]500 animate-pulse" />
+                      <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-100 rounded-full shrink-0">
+                        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         API Active & Verified
                       </div>
                     </div>
@@ -1928,7 +1928,7 @@ export function PortalAccountPage() {
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-0.5">Access Token Status</p>
                           <div className="flex items-center gap-1.5">
-                            <span className="size-2 rounded-full bg-[#7FA0D6]500" />
+                            <span className="size-2 rounded-full bg-emerald-500" />
                             <p className="text-[12px] font-bold text-slate-900">Valid <span className="font-semibold text-slate-500">(Expires in 58 days)</span></p>
                           </div>
                         </div>
@@ -1974,8 +1974,8 @@ export function PortalAccountPage() {
                           <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">Manage linked Instagram accounts and monitor real-time content delivery syncs.</p>
                         </div>
                       </div>
-                      <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-[#7FA0D6]50 text-emerald-700 text-[10px] font-bold border border-emerald-100 rounded-full shrink-0">
-                        <span className="size-1.5 rounded-full bg-[#7FA0D6]500 animate-pulse" />
+                      <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-100 rounded-full shrink-0">
+                        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Live Syncing
                       </div>
                     </div>
@@ -1995,7 +1995,7 @@ export function PortalAccountPage() {
                             <p className="text-[10px] text-slate-500 mt-0.5">42.5K followers • 184 posts • Connected to {businessName || "Northwind Labs Inc."}</p>
                           </div>
                         </div>
-                        <span className="px-2.5 py-1 text-[10px] font-bold bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200 rounded-full whitespace-nowrap">
+                        <span className="px-2.5 py-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full whitespace-nowrap">
                           Primary Sync
                         </span>
                       </div>
@@ -2050,7 +2050,7 @@ export function PortalAccountPage() {
                           <div className="space-y-1.5">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50/50 border border-slate-100 rounded-xl gap-2">
                               <div className="flex items-center gap-2">
-                                <span className="size-1.5 rounded-full bg-[#7FA0D6]500" />
+                                <span className="size-1.5 rounded-full bg-emerald-500" />
                                 <span className="text-[11px] font-bold text-slate-700">Auto-Publishing Engine</span>
                               </div>
                               <span className="px-2 py-0.5 text-[9px] font-extrabold bg-blue-50 text-[#0052FF] rounded border border-blue-100 uppercase">ACTIVE (Every 6 hrs)</span>
@@ -2062,7 +2062,7 @@ export function PortalAccountPage() {
                               </div>
                               <span className="text-[10px] font-semibold text-slate-600">12 minutes ago (Reel & Ad #1)</span>
                             </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-[#7FA0D6]50/30 border border-emerald-100 rounded-xl gap-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-emerald-50/30 border border-emerald-100 rounded-xl gap-2">
                               <div className="flex items-center gap-2 text-emerald-600">
                                 <ShieldCheck className="size-3.5" />
                                 <span className="text-[11px] font-bold text-emerald-800">API Health Rate</span>
@@ -2087,7 +2087,7 @@ export function PortalAccountPage() {
               {/* ── Fixed Bottom Bar ── */}
               <div className="fixed bottom-0 inset-x-0 sm:left-64 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)] px-4 sm:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-[#7FA0D6]500" />
+                  <span className="size-2 rounded-full bg-emerald-500" />
                   <p className="text-[12px] font-bold text-slate-900">All social integration APIs active and operating normally.</p>
                 </div>
                 <div className="flex items-center gap-4 w-full sm:w-auto">

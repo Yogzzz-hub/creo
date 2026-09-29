@@ -76,7 +76,7 @@ export const MandatoryPasswordResetModal: React.FC = () => {
 
         {success ? (
           <div className="text-center py-6">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#7FA0D6]100 text-emerald-600 mb-4 shadow-xs">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 mb-4 shadow-xs">
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <h3 className="text-lg font-semibold text-[#0D2137]">Password Updated!</h3>

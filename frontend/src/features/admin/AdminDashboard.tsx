@@ -88,11 +88,11 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
       />
 
       {/* Main Container */}
-      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto">
+      <main className="flex-1 px-3 sm:px-5 lg:px-6 pt-3 pb-6 max-w-[1440px] w-full mx-auto">
         {/* Status banner */}
         {message && (
           <div
-            className="mb-6 p-3.5 rounded-lg text-xs font-medium flex items-center gap-2"
+            className="mb-3.5 p-2.5 rounded-xl text-xs font-medium flex items-center gap-2"
             style={{
               background: message.type === "error" ? "#FEE2E2" : "#E6F4EA",
               border: `1px solid ${message.type === "error" ? "#FCA5A5" : "#A8DAB5"}`,
@@ -112,24 +112,24 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
         )}
 
         {/* Top Widgets Grid (3 Columns) */}
-        <div className={`grid grid-cols-1 ${activeTab === "Dashboard" ? "lg:grid-cols-3" : "lg:grid-cols-1 max-w-4xl mx-auto"} gap-6`}>
+        <div className={`grid grid-cols-1 ${activeTab === "Dashboard" ? "lg:grid-cols-3" : "lg:grid-cols-1 max-w-4xl mx-auto"} gap-3.5 sm:gap-4`}>
           {/* Column 1: Revenue */}
           {(activeTab === "Dashboard" || activeTab === "Revenue") && (
-            <div className="flex flex-col gap-6 h-full">
+            <div className="flex flex-col gap-3.5 sm:gap-4 h-full">
               <RevenueEngineWidget kpis={kpis} clients={clients} />
             </div>
           )}
 
           {/* Column 2: Team */}
           {(activeTab === "Dashboard" || activeTab === "Team Details") && (
-            <div className="flex flex-col gap-6 h-full">
+            <div className="flex flex-col gap-3.5 sm:gap-4 h-full">
               <TeamDetailsWidget queue={queue} />
             </div>
           )}
 
           {/* Column 3: Content */}
           {(activeTab === "Dashboard" || activeTab === "Content Engine") && (
-            <div className="flex flex-col gap-6 h-full">
+            <div className="flex flex-col gap-3.5 sm:gap-4 h-full">
               <ContentEngineWidget queue={queue} />
             </div>
           )}
@@ -137,14 +137,14 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
 
         {/* Full Width Row: Client Details */}
         {(activeTab === "Dashboard" || activeTab === "Client Details") && (
-          <div className="mt-6">
+          <div className="mt-3.5 sm:mt-4">
             <ClientDetailsWidget clients={clients} />
           </div>
         )}
 
         {/* Bottom Widgets Grid (2 Columns): Support & SLA */}
         {(activeTab === "Dashboard" || activeTab === "SLA & Support") && (
-          <div className={`mt-6 grid grid-cols-1 ${activeTab === "Dashboard" ? "lg:grid-cols-2" : "lg:grid-cols-1 max-w-4xl mx-auto"} gap-6`}>
+          <div className={`mt-3.5 sm:mt-4 grid grid-cols-1 ${activeTab === "Dashboard" ? "lg:grid-cols-2" : "lg:grid-cols-1 max-w-4xl mx-auto"} gap-3.5 sm:gap-4`}>
             <SupportTicketsWidget slas={slas} />
             <SlaPerformanceWidget slas={slas} />
           </div>

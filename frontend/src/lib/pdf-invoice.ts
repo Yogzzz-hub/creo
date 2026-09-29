@@ -25,7 +25,7 @@ export function generateInvoicePDF(inv: InvoiceData) {
   const lightBg: RGB = [248, 250, 252]; // #F8FAFC
   const darkText: RGB = [30, 41, 59]; // #1E293B
   const mutedText: RGB = [100, 116, 139]; // #64748B
-  const emeraldColor: RGB = [16, 185, 129]; // #7FA0D6
+  const emeraldColor: RGB = [16, 185, 129]; // #10B981
 
   // Parse amount number
   const numericAmount = parseFloat(inv.amount.replace(/[^0-9.]/g, "")) || 25000;

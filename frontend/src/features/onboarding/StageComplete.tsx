@@ -225,7 +225,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.3 }}
-        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#7FA0D6]50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-extrabold uppercase tracking-wider mb-4 shadow-2xs"
+        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-extrabold uppercase tracking-wider mb-4 shadow-2xs"
       >
         <CheckCircle2 className="size-4 text-emerald-600" />
         <span>Stage 5 Active • Creative Pod Allocated & Brief Dispatched</span>
@@ -252,8 +252,8 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
               Matched based on skill competencies, production headroom, and brand category experience
             </p>
           </div>
-          <span className="self-start sm:self-auto text-[11px] font-bold text-emerald-800 bg-[#7FA0D6]100/90 border border-emerald-200 px-3 py-1 rounded-lg shadow-2xs flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-[#7FA0D6]500 animate-pulse" />
+          <span className="self-start sm:self-auto text-[11px] font-bold text-emerald-800 bg-emerald-100/90 border border-emerald-200 px-3 py-1 rounded-lg shadow-2xs flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
             FWB-FCS Pod Active
           </span>
         </div>
@@ -273,8 +273,8 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
               </div>
 
               <div className="flex items-center justify-between pt-3 border-t border-slate-200/60 mt-auto">
-                <span className="text-[10px] font-bold text-emerald-800 bg-[#7FA0D6]50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <span className="size-1.5 rounded-full bg-[#7FA0D6]500 animate-pulse" />
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Assigned & Briefed
                 </span>
                 <button
@@ -465,7 +465,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
                     ? "bg-sky-50 text-sky-700 border-sky-200"
                     : stage === "authority"
                     ? "bg-purple-50 text-purple-700 border-purple-200"
-                    : "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200";
+                    : "bg-emerald-50 text-emerald-700 border-emerald-200";
 
                 return (
                   <div
@@ -605,7 +605,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
         </div>
 
         {/* ── Brief Dispatched Confirmation Callout ───────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[#7FA0D6]50/90 border border-emerald-200 text-xs text-emerald-900 font-medium">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-emerald-50/90 border border-emerald-200 text-xs text-emerald-900 font-medium">
           <div className="flex items-center gap-2.5">
             <Send className="size-4 text-emerald-600 flex-shrink-0" />
             <span>
@@ -616,7 +616,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
             type="button"
             onClick={() => resendMutation.mutate()}
             disabled={resendMutation.isPending}
-            className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-emerald-300 text-emerald-800 hover:bg-[#7FA0D6]100 font-bold text-[11px] shadow-2xs cursor-pointer flex-shrink-0 transition-all disabled:opacity-50"
+            className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-emerald-300 text-emerald-800 hover:bg-emerald-100 font-bold text-[11px] shadow-2xs cursor-pointer flex-shrink-0 transition-all disabled:opacity-50"
           >
             {resendMutation.isPending ? (
               <span>Dispatching...</span>
@@ -636,7 +636,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
       </div>
 
       {/* Calendar Ready Notification Badge */}
-      <div className="flex items-center justify-center gap-2.5 p-4 rounded-xl bg-[#7FA0D6]50 border border-emerald-200 text-xs sm:text-sm font-bold text-emerald-800 mb-7 shadow-2xs">
+      <div className="flex items-center justify-center gap-2.5 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs sm:text-sm font-bold text-emerald-800 mb-7 shadow-2xs">
         <Calendar className="size-4.5 text-emerald-600" />
         <span>Initial 30-day production roadmap generated with +3 business-day due buffer. Ready for kickoff!</span>
       </div>

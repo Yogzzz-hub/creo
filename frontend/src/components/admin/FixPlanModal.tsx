@@ -264,7 +264,7 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
                       <div className="flex items-center justify-between gap-1 mb-1">
                         <h4 className="font-bold text-xs text-[#0D2137]">{preset.name}</h4>
                         {isCurrent && (
-                          <span className="text-[9px] font-bold text-emerald-700 bg-[#7FA0D6]50 border border-emerald-200 px-1.5 py-0.2 rounded-md">
+                          <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-md">
                             Current
                           </span>
                         )}

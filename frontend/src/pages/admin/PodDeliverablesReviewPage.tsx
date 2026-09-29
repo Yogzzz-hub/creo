@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion } from "motion/react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { submitPodQAReview, fetchPodDashboard, type PodDashboardData } from "../../lib/ops-api";
@@ -79,7 +78,7 @@ export function PodDeliverablesReviewPage() {
   };
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
+    <div data-surface="ops" className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans flex flex-col">
       {/* Top Header */}
       <AdminTopHeader title="Content Engine" activeTab="Content Engine" />
 
@@ -90,8 +89,8 @@ export function PodDeliverablesReviewPage() {
           <div
             className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-between shadow-lg animate-fade-in ${
               toastMessage.type === "error"
-                ? "bg-rose-950/80 border-rose-800 text-rose-300"
-                : "bg-emerald-950/80 border-emerald-800 text-emerald-300"
+                ? "bg-rose-50 border-rose-200 text-rose-700"
+                : "bg-emerald-50 border-emerald-200 text-emerald-700"
             }`}
           >
             <span>{toastMessage.text}</span>
@@ -102,18 +101,18 @@ export function PodDeliverablesReviewPage() {
         )}
 
         {/* 1. Quick Actions Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#161F2D] p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-[#2A3446]/80 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-[#7FA0D6] animate-pulse" />
-            <span className="text-xs font-bold text-[#F1F5F9]">{podName} Review Hub · Frame.io Sync Gate</span>
+            <span className="size-2 rounded-full bg-blue-500 animate-pulse" />
+            <span className="text-xs font-bold text-slate-700">{podName} Review Hub · Frame.io Sync Gate</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleExportReviewLedger}
-              className="px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
-              <FileText className="size-3.5 text-[#97A0B3]" />
+              <FileText className="size-3.5 text-slate-500" />
               Export Report
             </button>
             <button
@@ -129,88 +128,73 @@ export function PodDeliverablesReviewPage() {
         {/* 2. Top 3 KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-3">
           {/* Card 1: Pending Lead Sign-off */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.05 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
-          >
+          <div className="bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Pending Lead Sign-Off</span>
-              <div className="size-6 sm:size-7 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">Pending Lead Sign-Off</span>
+              <div className="size-6 sm:size-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                 <FileCheck2 className="size-3 sm:size-3.5" />
               </div>
             </div>
             <div>
               <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">6</span>
-                <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">Deliverables</span>
+                <span className="text-lg sm:text-xl font-black text-[#0F172A]">6</span>
+                <span className="text-[10.5px] sm:text-[11px] font-bold text-slate-500">Deliverables</span>
               </div>
-              <div className="flex items-center gap-2 text-[10px] sm:text-[11px] pt-1.5 border-t border-[#2A3446]">
-                <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center gap-1">
+              <div className="flex items-center gap-2 text-[10px] sm:text-[11px] pt-1.5 border-t border-slate-100">
+                <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1">
                   ● 2 Urgent
                 </span>
-                <span className="text-[#97A0B3] font-medium">Within 2h SLA threshold</span>
+                <span className="text-slate-500 font-medium">Within 2h SLA threshold</span>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Card 2: Average Turnaround Speed */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
-          >
+          <div className="bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Average Turnaround Speed</span>
-              <div className="size-6 sm:size-7 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">Average Turnaround Speed</span>
+              <div className="size-6 sm:size-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                 <Zap className="size-3 sm:size-3.5" />
               </div>
             </div>
             <div>
               <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">38</span>
-                <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">mins</span>
+                <span className="text-lg sm:text-xl font-black text-[#0F172A]">38</span>
+                <span className="text-[10.5px] sm:text-[11px] font-bold text-slate-500">mins</span>
               </div>
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-[#2A3446]">
-                <span className="text-[#97A0B3] font-medium">Benchmark: &lt; 2.0h</span>
-                <span className="font-bold text-emerald-400">↗ 68% Faster</span>
+              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-slate-100">
+                <span className="text-slate-500 font-medium">Benchmark: &lt; 2.0h</span>
+                <span className="font-bold text-emerald-600">↗ 68% Faster</span>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Card 3: QA First-Pass Pass Rate */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
-          >
+          <div className="bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">QA First-Pass Pass Rate</span>
-              <div className="size-6 sm:size-7 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">QA First-Pass Pass Rate</span>
+              <div className="size-6 sm:size-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
                 <ShieldCheck className="size-3 sm:size-3.5" />
               </div>
             </div>
             <div>
               <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">91.4%</span>
+                <span className="text-lg sm:text-xl font-black text-[#0F172A]">91.4%</span>
               </div>
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-[#2A3446]">
-                <span className="text-[#97A0B3] font-medium">Top 5% across pods</span>
-                <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-slate-100">
+                <span className="text-slate-500 font-medium">Top 5% across pods</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                   Rank #1 Studio
                 </span>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* 3. Urgent SLA Alert Banner */}
-        <div className="bg-rose-950/40 rounded-2xl p-3.5 sm:p-4 border border-rose-800/50 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs backdrop-blur-md">
+        <div className="bg-gradient-to-r from-rose-50/90 via-red-50/50 to-white rounded-2xl p-3.5 sm:p-4 border border-rose-200 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-3">
-            <div className="size-8 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 flex items-center justify-center shrink-0">
+            <div className="size-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
               <AlertTriangle className="size-4" />
             </div>
             <div>
@@ -218,10 +202,10 @@ export function PodDeliverablesReviewPage() {
                 <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-rose-600 text-white">
                   Urgent SLA Alert
                 </span>
-                <span className="text-xs font-bold text-[#F1F5F9]">Atlas Commerce · Deliverable #03</span>
+                <span className="text-xs font-bold text-slate-700">Atlas Commerce · Deliverable #03</span>
               </div>
-              <p className="text-[11px] text-[#F1F5F9] font-medium mt-0.5">
-                Post Carousel SLA: <span className="font-bold text-rose-400">01h 14m remaining</span> until escalation.
+              <p className="text-[11px] text-slate-600 font-medium mt-0.5">
+                Post Carousel SLA: <span className="font-bold text-rose-600">01h 14m remaining</span> until escalation.
               </p>
             </div>
           </div>
@@ -237,26 +221,26 @@ export function PodDeliverablesReviewPage() {
         {/* 4. Active Deliverables Stream Section */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black text-white">Active Deliverables Stream</h2>
-            <span className="text-[11px] font-bold text-[#97A0B3]">3 Awaiting Lead Action</span>
+            <h2 className="text-sm font-black text-[#0F172A]">Active Deliverables Stream</h2>
+            <span className="text-[11px] font-bold text-slate-400">3 Awaiting Lead Action</span>
           </div>
 
           {/* Featured Deliverable Card: Northwind Labs Fintech Reel */}
-          <div className="bg-[#161F2D] rounded-2xl border border-[#2A3446]/80 shadow-2xs p-4 sm:p-5 space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-4 sm:p-5 space-y-4">
             {/* Header row */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#2A3446] gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
               <div>
-                <div className="flex items-center gap-2 text-xs font-bold text-[#97A0B3] mb-0.5">
-                  <span className="text-[#7FA0D6] font-black">Northwind Labs</span>
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-0.5">
+                  <span className="text-blue-600 font-black">Northwind Labs</span>
                   <span>· Reel Sprint Q4</span>
                 </div>
-                <h3 className="text-base font-black text-white">Fintech Reel · High Conversion (9:16 Vertical)</h3>
-                <p className="text-[11px] text-[#97A0B3] font-medium mt-0.5">
-                  Specialist: <span className="font-bold text-white">David Kim</span> (Sr. Motion Designer)
+                <h3 className="text-base font-black text-[#0F172A]">Fintech Reel · High Conversion (9:16 Vertical)</h3>
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                  Specialist: <span className="font-bold text-slate-800">David Kim</span> (Sr. Motion Designer)
                 </p>
               </div>
 
-              <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1 self-start sm:self-auto">
+              <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1 self-start sm:self-auto">
                 <Clock className="size-3" />
                 Due in 2 hours
               </span>
@@ -280,19 +264,19 @@ export function PodDeliverablesReviewPage() {
                   {/* Visual Center Graphic Mockup */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center pointer-events-none">
                     <div className="w-48 h-80 rounded-3xl border-2 border-slate-700/80 bg-slate-900/90 p-4 shadow-2xl flex flex-col justify-between transform group-hover:scale-102 transition-transform">
-                      <div className="flex justify-between items-center text-[8px] text-[#97A0B3]">
+                      <div className="flex justify-between items-center text-[8px] text-slate-400">
                         <span>Reel #01</span>
                         <span className="text-emerald-400">● Live</span>
                       </div>
                       <div className="space-y-2 text-left">
-                        <span className="text-[10px] text-[#97A0B3] font-bold block">PORTFOLIO</span>
+                        <span className="text-[10px] text-slate-400 font-bold block">PORTFOLIO</span>
                         <span className="text-sm font-black text-white block leading-none">₹45,230.75</span>
                         <span className="text-[9px] font-bold text-emerald-400 block">+14.2%</span>
                         <div className="h-10 w-full bg-gradient-to-t from-blue-600/30 to-emerald-400/20 rounded-lg flex items-end p-1">
-                          <div className="h-6 w-full bg-[#7FA0D6]/40 rounded-sm" />
+                          <div className="h-6 w-full bg-blue-500/40 rounded-sm" />
                         </div>
                       </div>
-                      <span className="text-[8px] font-bold tracking-widest text-[#97A0B3] uppercase">
+                      <span className="text-[8px] font-bold tracking-widest text-slate-500 uppercase">
                         Finance Redefined
                       </span>
                     </div>
@@ -301,14 +285,14 @@ export function PodDeliverablesReviewPage() {
                   {/* Bottom Video Controls Mockup */}
                   <div className="flex items-center justify-between z-10 pt-2">
                     <div className="flex items-center gap-2">
-                      <div className="size-7 rounded-full bg-[#161F2D]/20 backdrop-blur-md text-white flex items-center justify-center">
+                      <div className="size-7 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center">
                         <Play className="size-3.5 fill-white" />
                       </div>
                       <span className="text-[10px] font-bold text-white">0:15 / 4K UHD</span>
                     </div>
                     <button
                       onClick={() => showToast("Downloaded 4K Master Render (142.4 MB)", "success")}
-                      className="size-7 rounded-full bg-[#161F2D]/20 hover:bg-[#161F2D]/40 backdrop-blur-md text-white flex items-center justify-center transition cursor-pointer"
+                      className="size-7 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-md text-white flex items-center justify-center transition cursor-pointer"
                       title="Download Render"
                     >
                       <Download className="size-3.5" />
@@ -322,40 +306,40 @@ export function PodDeliverablesReviewPage() {
                     href="https://frame.io"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-bold text-[#7FA0D6] hover:underline flex items-center gap-1.5"
+                    className="font-bold text-blue-600 hover:underline flex items-center gap-1.5"
                   >
                     <ExternalLink className="size-3.5" />
                     Open in Frame.io Asset View
                   </a>
-                  <span className="text-[#97A0B3] font-medium">142.4 MB</span>
+                  <span className="text-slate-400 font-medium">142.4 MB</span>
                 </div>
               </div>
 
               {/* Right Column: Specs & QA Rubric (7 cols) */}
               <div className="lg:col-span-7 space-y-6">
                 {/* Tech Specs Table */}
-                <div className="grid grid-cols-2 gap-3 bg-[#0B111C] rounded-2xl p-4 border border-[#2A3446] text-xs">
+                <div className="grid grid-cols-2 gap-3 bg-slate-50 rounded-2xl p-4 border border-slate-100 text-xs">
                   <div>
-                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider block">Aspect Ratio</span>
-                    <span className="font-bold text-white mt-0.5 block">9:16 Vertical Reel</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Aspect Ratio</span>
+                    <span className="font-bold text-slate-800 mt-0.5 block">9:16 Vertical Reel</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider block">Framerate</span>
-                    <span className="font-bold text-white mt-0.5 block">60 fps Smooth Motion</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Framerate</span>
+                    <span className="font-bold text-slate-800 mt-0.5 block">60 fps Smooth Motion</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider block">Color Profile</span>
-                    <span className="font-bold text-white mt-0.5 block">Rec.709 Mastered</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Color Profile</span>
+                    <span className="font-bold text-slate-800 mt-0.5 block">Rec.709 Mastered</span>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider block">Audio Bitrate</span>
-                    <span className="font-bold text-white mt-0.5 block">320kbps AAC Stereo</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Audio Bitrate</span>
+                    <span className="font-bold text-slate-800 mt-0.5 block">320kbps AAC Stereo</span>
                   </div>
                 </div>
 
                 {/* LEAD QA COMPLIANCE RUBRIC (Image 3) */}
                 <div className="space-y-3">
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[#97A0B3] block">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block">
                     Lead QA Compliance Rubric
                   </span>
 
@@ -364,11 +348,11 @@ export function PodDeliverablesReviewPage() {
                       onClick={() => setRubric1(!rubric1)}
                       className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
                         rubric1
-                          ? "bg-[#161F2D] border-[#7FA0D6]/50 text-white shadow-sm"
-                          : "bg-[#0B111C] border-[#2A3446] text-[#97A0B3]"
+                          ? "bg-blue-50/50 border-blue-200 text-blue-900"
+                          : "bg-white border-slate-200 text-slate-600"
                       }`}
                     >
-                      <div className={`size-5 rounded-lg flex items-center justify-center ${rubric1 ? "bg-[#2563EB] text-white" : "border border-[#2A3446]"}`}>
+                      <div className={`size-5 rounded-lg flex items-center justify-center ${rubric1 ? "bg-blue-600 text-white" : "border border-slate-300"}`}>
                         {rubric1 && <Check className="size-3.5 stroke-[3]" />}
                       </div>
                       <span className="text-xs font-bold">Brand contrast & typography guidelines passed</span>
@@ -378,11 +362,11 @@ export function PodDeliverablesReviewPage() {
                       onClick={() => setRubric2(!rubric2)}
                       className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
                         rubric2
-                          ? "bg-[#161F2D] border-[#7FA0D6]/50 text-white shadow-sm"
-                          : "bg-[#0B111C] border-[#2A3446] text-[#97A0B3]"
+                          ? "bg-blue-50/50 border-blue-200 text-blue-900"
+                          : "bg-white border-slate-200 text-slate-600"
                       }`}
                     >
-                      <div className={`size-5 rounded-lg flex items-center justify-center ${rubric2 ? "bg-[#2563EB] text-white" : "border border-[#2A3446]"}`}>
+                      <div className={`size-5 rounded-lg flex items-center justify-center ${rubric2 ? "bg-blue-600 text-white" : "border border-slate-300"}`}>
                         {rubric2 && <Check className="size-3.5 stroke-[3]" />}
                       </div>
                       <span className="text-xs font-bold">Sound stems synchronized</span>
@@ -392,11 +376,11 @@ export function PodDeliverablesReviewPage() {
                       onClick={() => setRubric3(!rubric3)}
                       className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
                         rubric3
-                          ? "bg-[#161F2D] border-[#7FA0D6]/50 text-white shadow-sm"
-                          : "bg-[#0B111C] border-[#2A3446] text-[#97A0B3]"
+                          ? "bg-blue-50/50 border-blue-200 text-blue-900"
+                          : "bg-white border-slate-200 text-slate-600"
                       }`}
                     >
-                      <div className={`size-5 rounded-lg flex items-center justify-center ${rubric3 ? "bg-[#2563EB] text-white" : "border border-[#2A3446]"}`}>
+                      <div className={`size-5 rounded-lg flex items-center justify-center ${rubric3 ? "bg-blue-600 text-white" : "border border-slate-300"}`}>
                         {rubric3 && <Check className="size-3.5 stroke-[3]" />}
                       </div>
                       <span className="text-xs font-bold">Safe-zone compliance (9:16 Reels & Stories)</span>
@@ -411,31 +395,31 @@ export function PodDeliverablesReviewPage() {
                     value={feedbackNote}
                     onChange={(e) => setFeedbackNote(e.target.value)}
                     placeholder="Add specific feedback or revision instructions for David..."
-                    className="w-full text-xs p-3.5 rounded-2xl border border-[#2A3446] bg-[#0B111C]/50 focus:bg-[#161F2D] focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-white"
+                    className="w-full text-xs p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                   />
                 </div>
 
                 {/* Action Buttons (Image 3) */}
                 <div className="flex items-center justify-end gap-3 pt-2">
                   {reviewState === "approved" ? (
-                    <div className="w-full p-3 rounded-2xl bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs font-bold flex items-center justify-between">
+                    <div className="w-full p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-between">
                       <span className="flex items-center gap-2">
-                        <Check className="size-4 text-emerald-400 stroke-[3]" />
+                        <Check className="size-4 text-emerald-600 stroke-[3]" />
                         Approved & Dispatched to Client Frame.io Portal
                       </span>
                       <button
                         onClick={() => setReviewState("pending")}
-                        className="text-[11px] underline text-emerald-400 hover:text-emerald-200 cursor-pointer font-bold"
+                        className="text-[11px] underline text-emerald-700 hover:text-emerald-900 cursor-pointer font-bold"
                       >
                         Reset Review
                       </button>
                     </div>
                   ) : reviewState === "revision" ? (
-                    <div className="w-full p-3 rounded-2xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs font-bold flex items-center justify-between">
+                    <div className="w-full p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center justify-between">
                       <span>Revision request active • Specialist notified</span>
                       <button
                         onClick={() => setReviewState("pending")}
-                        className="text-[11px] underline text-rose-400 hover:text-rose-200 cursor-pointer font-bold"
+                        className="text-[11px] underline text-rose-700 hover:text-rose-900 cursor-pointer font-bold"
                       >
                         Cancel Revision
                       </button>
@@ -452,7 +436,7 @@ export function PodDeliverablesReviewPage() {
                             comment: feedbackNote || "Revisions required for brand contrast.",
                           });
                         }}
-                        className="px-5 py-2.5 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold transition-colors cursor-pointer"
+                        className="px-5 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
                       >
                         Request Revision
                       </button>
@@ -483,42 +467,42 @@ export function PodDeliverablesReviewPage() {
       {/* New Deliverable Modal */}
       {newDeliverableModal && (
         <div className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4">
+          <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-black text-white">Create New Deliverable Stream</h3>
-              <button onClick={() => setNewDeliverableModal(false)} className="text-[#97A0B3] hover:text-[#F1F5F9]">
+              <h3 className="text-base font-black text-[#0F172A]">Create New Deliverable Stream</h3>
+              <button onClick={() => setNewDeliverableModal(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="size-5" />
               </button>
             </div>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Deliverable Name</label>
+                <label className="font-bold text-slate-700 block mb-1">Deliverable Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Q4 TikTok Motion Story (5 Variations)"
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 font-medium"
                 />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Format</label>
-                  <select className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium">
+                  <label className="font-bold text-slate-700 block mb-1">Format</label>
+                  <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 font-medium">
                     <option value="Reel">Reel</option>
                     <option value="Story">Story</option>
                     <option value="Post">Post</option>
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Client</label>
-                  <select className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium">
+                  <label className="font-bold text-slate-700 block mb-1">Client</label>
+                  <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 font-medium">
                     <option>Northwind Labs</option>
                     <option>Bloom Studio</option>
                     <option>Atlas Commerce</option>
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Lead Specialist</label>
-                  <select className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium">
+                  <label className="font-bold text-slate-700 block mb-1">Lead Specialist</label>
+                  <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 font-medium">
                     <option>David Kim (Motion)</option>
                     <option>Elena R. (Brand)</option>
                     <option>Marcus Vance (Copy)</option>
@@ -530,7 +514,7 @@ export function PodDeliverablesReviewPage() {
             <div className="flex justify-end gap-3 pt-3">
               <button
                 onClick={() => setNewDeliverableModal(false)}
-                className="px-4 py-2 rounded-xl bg-[#1F2C3F] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition"
+                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition"
               >
                 Cancel
               </button>

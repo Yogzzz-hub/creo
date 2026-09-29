@@ -91,7 +91,7 @@ function getNotifIcon(title: string, link?: string | null) {
   }
   if (t.includes("invoice") || t.includes("payment") || t.includes("retainer") || t.includes("billing")) {
     return {
-      bg: "bg-[#7FA0D6]50 text-emerald-600 border border-emerald-100",
+      bg: "bg-emerald-50 text-emerald-600 border border-emerald-100",
       icon: (
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -126,6 +126,7 @@ export function PortalDashboardPage() {
   const [bargainModalOpen, setBargainModalOpen] = useState(false);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
   const [activeCalendarFilter, setActiveCalendarFilter] = useState("All");
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
   const { data: notifData } = useQuery<NotificationPayload>({
     queryKey: ["notifications", user?.id],
@@ -162,9 +163,15 @@ export function PortalDashboardPage() {
   const subscriptionActive = !!dashboard?.active_plan && ["active", "trialing"].includes(dashboard?.active_plan?.status);
 
   const rawNotifications = notifData?.items || [];
-  const unreadCount = notifData?.unread_count ?? (rawNotifications.filter(n => !n.is_read).length || (pendingCount + ticketCount));
+  const notifications = rawNotifications.map((n) => ({
+    ...n,
+    is_read: n.is_read || readIds.has(n.id),
+  }));
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   const handleMarkAllRead = async () => {
+    const allIds = notifications.map((n) => n.id);
+    setReadIds((prev) => new Set([...prev, ...allIds]));
     try {
       await request("/api/v1/notifications/mark-all-read", { method: "POST" });
       queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
@@ -174,6 +181,7 @@ export function PortalDashboardPage() {
   };
 
   const handleItemClick = async (item: NotificationItem) => {
+    setReadIds((prev) => new Set([...prev, item.id]));
     if (!item.is_read) {
       try {
         await request(`/api/v1/notifications/${item.id}/read`, { method: "PATCH" });
@@ -189,6 +197,7 @@ export function PortalDashboardPage() {
 
   const handleDismissNotif = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    setReadIds((prev) => new Set([...prev, id]));
     try {
       await request(`/api/v1/notifications/${id}/read`, { method: "PATCH" });
       queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
@@ -230,8 +239,8 @@ export function PortalDashboardPage() {
     <div className="flex items-center justify-between mb-8">
       <div className="flex items-center gap-3">
         <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Profile</h2>
-        <span className="shrink-0 rounded-full px-2.5 py-1 text-[9px] uppercase font-black bg-[#7FA0D6]50 text-emerald-600 flex items-center gap-1.5 border border-emerald-100/50 shadow-xs">
-          <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-[#7FA0D6]500 animate-pulse"></span>
+        <span className="shrink-0 rounded-full px-2.5 py-1 text-[9px] uppercase font-black bg-emerald-50 text-emerald-600 flex items-center gap-1.5 border border-emerald-100/50 shadow-xs">
+          <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-emerald-500 animate-pulse"></span>
           {user?.account_status || "Active"}
         </span>
       </div>
@@ -252,7 +261,7 @@ export function PortalDashboardPage() {
         <div className="w-20 h-20 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[18px] bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-black flex items-center justify-center text-3xl sm:text-2xl shadow-lg shadow-blue-600/20 group-hover/avatar:scale-105 group-hover/avatar:rotate-3 transition-transform duration-300">
           {user?.full_name?.[0]?.toUpperCase() || "N"}
         </div>
-        <span className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-4 sm:h-4 bg-[#7FA0D6]500 border-4 sm:border-[3px] border-white rounded-full shadow-sm"></span>
+        <span className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-4 sm:h-4 bg-emerald-500 border-4 sm:border-[3px] border-white rounded-full shadow-sm"></span>
       </div>
       
       {/* Identity Info */}
@@ -304,7 +313,7 @@ export function PortalDashboardPage() {
         </div>
 
         <div className="bg-slate-50/80 border border-slate-100/80 rounded-[14px] p-2.5 flex items-center gap-2.5 hover:bg-white hover:border-slate-200 hover:shadow-sm transition-all cursor-default group/item">
-          <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]50 border border-emerald-100/80 flex items-center justify-center shrink-0 shadow-xs group-hover/item:scale-105 transition-transform">
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100/80 flex items-center justify-center shrink-0 shadow-xs group-hover/item:scale-105 transition-transform">
             <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
@@ -330,8 +339,8 @@ export function PortalDashboardPage() {
           <p className="text-[10px] text-slate-500 font-semibold mt-0.5 truncate group-hover:text-rose-600 transition-colors">Connected Account</p>
         </div>
       </div>
-      <span className="shrink-0 rounded-full px-2.5 py-1.5 text-[9px] uppercase tracking-wider font-extrabold inline-flex items-center gap-1.5 bg-white text-emerald-600 border border-emerald-100 shadow-xs whitespace-nowrap ml-2 group-hover:bg-[#7FA0D6]50 transition-colors">
-        <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-[#7FA0D6]500 animate-pulse"></span> Live
+      <span className="shrink-0 rounded-full px-2.5 py-1.5 text-[9px] uppercase tracking-wider font-extrabold inline-flex items-center gap-1.5 bg-white text-emerald-600 border border-emerald-100 shadow-xs whitespace-nowrap ml-2 group-hover:bg-emerald-50 transition-colors">
+        <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-emerald-500 animate-pulse"></span> Live
       </span>
     </a>
   </div>
@@ -360,8 +369,8 @@ export function PortalDashboardPage() {
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
               <div>
                 <div className="flex items-center gap-3 mb-2.5">
-                  <span className="rounded-full px-3 py-1 text-xs font-bold inline-flex items-center gap-1.5 bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200/80 tracking-wide shadow-xs">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6]500 shrink-0 animate-pulse"></span>
+                  <span className="rounded-full px-3 py-1 text-xs font-bold inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 tracking-wide shadow-xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 animate-pulse"></span>
                     {subscriptionActive ? "ACTIVE RETAINER" : "NO ACTIVE PLAN"}
                   </span>
                   <span className="text-xs text-slate-400 font-medium">Renews Nov 1, 2024</span>
@@ -378,13 +387,13 @@ export function PortalDashboardPage() {
                 <div className="flex items-baseline sm:justify-end">
                   <span className="text-3xl sm:text-4xl font-black text-[#0F172A] tracking-tight">
                     {subscriptionActive && (dashboard?.active_plan as any)?.price_minor
-                      ? "$" + ((dashboard?.active_plan as any).price_minor / 100).toLocaleString()
-                      : "$8,500"}
+                      ? "₹" + ((dashboard?.active_plan as any).price_minor / 100).toLocaleString("en-IN")
+                      : "₹85,000"}
                   </span>
                   <span className="text-xs sm:text-sm font-medium text-slate-400 ml-1">/mo</span>
                 </div>
                 <div className="mt-2 flex sm:justify-end">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#7FA0D6]50 text-emerald-700 border border-emerald-100/90 text-xs font-semibold shadow-xs">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100/90 text-xs font-semibold shadow-xs">
                     <svg className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
@@ -446,7 +455,7 @@ export function PortalDashboardPage() {
                     <div className="bg-white border border-slate-200/60 rounded-xl p-4 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.04)] hover:shadow-md hover:border-emerald-200/80 transition-all duration-300 group">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-lg bg-[#7FA0D6]50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                          <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
                             </svg>
@@ -461,7 +470,7 @@ export function PortalDashboardPage() {
                       {/* Progress Bar */}
                       <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-2">
                         <div
-                          className="bg-[#7FA0D6]500 h-full rounded-full transition-all duration-1000 ease-out"
+                          className="bg-emerald-500 h-full rounded-full transition-all duration-1000 ease-out"
                           style={{ width: subscriptionActive ? "80%" : "0%" }}
                         ></div>
                       </div>
@@ -483,7 +492,7 @@ export function PortalDashboardPage() {
                       CONFIGURED ADD-ONS
                     </span>
                     <span className="bg-blue-50 text-blue-600 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-blue-100/90 shadow-xs">
-                      + $1,750/mo
+                      + ₹17,500/mo
                     </span>
                   </div>
 
@@ -509,7 +518,7 @@ export function PortalDashboardPage() {
                         </div>
                       </div>
                       <div className="text-right shrink-0 ml-3">
-                        <span className="text-xs sm:text-sm font-black text-slate-900">$1,200</span>
+                        <span className="text-xs sm:text-sm font-black text-slate-900">₹12,000</span>
                         <span className="text-[11px] font-medium text-slate-400">/mo</span>
                       </div>
                     </Link>
@@ -535,7 +544,7 @@ export function PortalDashboardPage() {
                         </div>
                       </div>
                       <div className="text-right shrink-0 ml-3">
-                        <span className="text-xs sm:text-sm font-black text-slate-900">$550</span>
+                        <span className="text-xs sm:text-sm font-black text-slate-900">₹5,500</span>
                         <span className="text-[11px] font-medium text-slate-400">/mo</span>
                       </div>
                     </Link>
@@ -616,7 +625,7 @@ export function PortalDashboardPage() {
                   <div className="w-14 h-14 rounded-2xl bg-[#0052FF] text-white font-black flex items-center justify-center text-lg shadow-md shadow-blue-600/20 group-hover:scale-105 transition-transform">
                     {lead?.name ? lead.name.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase() : "SC"}
                   </div>
-                  <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-[#7FA0D6]500 border-2 border-white shadow-xs"></span>
+                  <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white shadow-xs"></span>
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-1.5 mb-1">
@@ -638,10 +647,10 @@ export function PortalDashboardPage() {
                 </div>
               </div>
 
-              <span className="bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200/80 rounded-full px-3.5 py-1.5 text-xs font-bold inline-flex items-center gap-2 shadow-xs shrink-0 whitespace-nowrap self-start sm:self-auto">
+              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-full px-3.5 py-1.5 text-xs font-bold inline-flex items-center gap-2 shadow-xs shrink-0 whitespace-nowrap self-start sm:self-auto">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#7FA0D6]400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#7FA0D6]500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
                 Active in Slack
               </span>
@@ -678,8 +687,8 @@ export function PortalDashboardPage() {
                       </p>
                     </div>
                   </div>
-                  <span className="bg-[#7FA0D6]50 text-emerald-700 border border-emerald-100 rounded-lg px-2.5 py-1 text-xs font-bold inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap ml-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6]500 shrink-0"></span>
+                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg px-2.5 py-1 text-xs font-bold inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap ml-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                     Active
                   </span>
                 </Link>
@@ -707,8 +716,8 @@ export function PortalDashboardPage() {
                       </p>
                     </div>
                   </div>
-                  <span className="bg-[#7FA0D6]50 text-emerald-700 border border-emerald-100 rounded-lg px-2.5 py-1 text-xs font-bold inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap ml-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6]500 shrink-0"></span>
+                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg px-2.5 py-1 text-xs font-bold inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap ml-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                     Active
                   </span>
                 </Link>
@@ -941,8 +950,8 @@ export function PortalDashboardPage() {
           </div>
           
           <div className="flex items-center gap-3">
-            <span className="rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider inline-flex items-center justify-center bg-[#7FA0D6]50 text-emerald-600 border border-emerald-100 shadow-xs whitespace-nowrap">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6]500 mr-1.5 animate-pulse"></span>{entry.status}
+            <span className="rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider inline-flex items-center justify-center bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-xs whitespace-nowrap">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>{entry.status}
             </span>
             
             {entry.file_url ? (
@@ -1116,8 +1125,8 @@ export function PortalDashboardPage() {
               </svg>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Support Tickets</h2>
-            <span className="rounded-full px-2.5 py-1 text-[9px] font-extrabold inline-flex items-center justify-center bg-[#7FA0D6]50 text-emerald-700 border border-emerald-100 shadow-xs uppercase tracking-wider">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6]500 mr-1.5 animate-pulse"></span>
+            <span className="rounded-full px-2.5 py-1 text-[9px] font-extrabold inline-flex items-center justify-center bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-xs uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
               2-Hour SLA Guarantee
             </span>
           </div>
@@ -1157,10 +1166,10 @@ export function PortalDashboardPage() {
         </div>
         
         <div className="bg-white border border-slate-200/70 rounded-2xl p-4 shadow-sm relative overflow-hidden group/metric">
-          <div className="absolute bottom-0 left-0 h-1 bg-[#7FA0D6]500 rounded-r w-[99.4%]"></div>
+          <div className="absolute bottom-0 left-0 h-1 bg-emerald-500 rounded-r w-[99.4%]"></div>
           <div className="flex justify-between items-start mb-2">
             <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">SLA COMPLIANCE</div>
-            <div className="w-6 h-6 rounded-lg bg-[#7FA0D6]50 flex items-center justify-center border border-emerald-100">
+            <div className="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center border border-emerald-100">
               <svg className="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
               </svg>
@@ -1168,7 +1177,7 @@ export function PortalDashboardPage() {
           </div>
           <div className="text-3xl font-black text-emerald-500 tracking-tight">99.4%</div>
           <div className="flex items-center gap-1.5 mt-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6]500"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             <span className="text-[11px] font-bold text-slate-500">Across 38 tickets resolved this cycle</span>
           </div>
         </div>

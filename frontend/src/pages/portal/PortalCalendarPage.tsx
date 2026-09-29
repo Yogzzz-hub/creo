@@ -123,7 +123,7 @@ export function PortalCalendarPage() {
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-
+  const [selectedFormat] = useState<string>("all");
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [previewEntry, setPreviewEntry] = useState<CalendarEntry | null>(null);
   const [selectedHookIndex, setSelectedHookIndex] = useState<number>(0);
@@ -204,11 +204,6 @@ export function PortalCalendarPage() {
     setCurrentYear(newYear);
   };
 
-  const goToToday = () => {
-    setCurrentYear(today.getFullYear());
-    setCurrentMonth(today.getMonth());
-  };
-
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDay = new Date(currentYear, currentMonth, 1).getDay();
   const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() === currentMonth;
@@ -221,6 +216,12 @@ export function PortalCalendarPage() {
       return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
     });
   }, [entries, currentYear, currentMonth]);
+
+  // Filtered by selected format (all / reel / poster / story)
+  const filteredEntries = useMemo(() => {
+    if (selectedFormat === "all") return monthEntries;
+    return monthEntries.filter((e) => (e.type || "").toLowerCase() === selectedFormat);
+  }, [monthEntries, selectedFormat]);
 
   // Calendar cells for month grid
   const calendarCells = useMemo(() => {
@@ -241,11 +242,12 @@ export function PortalCalendarPage() {
   }, [firstDay, daysInMonth, currentYear, currentMonth]);
 
   const getDayEntries = (day: number) => {
-    return monthEntries.filter((e) => {
+    return filteredEntries.filter((e) => {
       const d = new Date(e.date + "T00:00:00");
       return d.getDate() === day;
     });
   };
+
 
   const handleApproveConcept = async () => {
     if (!previewEntry || !previewEntry.blueprint?.hooks?.length) return;
@@ -377,23 +379,14 @@ export function PortalCalendarPage() {
               <span className="text-sm font-semibold text-slate-400">Production Horizon</span>
             </div>
             
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => { setSelectedDate(null); goToToday(); }}
-                className="px-3 py-1 text-xs font-bold text-slate-600 hover:text-[#0052FF] hover:bg-slate-50 rounded-full border border-slate-200/80 shadow-xs transition-all cursor-pointer"
-              >
-                Today
+            <div className="flex items-center bg-white border border-slate-100/60 rounded-full p-1 shadow-sm">
+              <button onClick={() => { setSelectedDate(null); navigateMonth(-1); }} className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-slate-50 rounded-full transition-all cursor-pointer">
+                <ChevronLeft className="size-4" strokeWidth={2.5} />
               </button>
-              <div className="flex items-center bg-white border border-slate-100/60 rounded-full p-1 shadow-sm">
-                <button onClick={() => { setSelectedDate(null); navigateMonth(-1); }} className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-slate-50 rounded-full transition-all cursor-pointer">
-                  <ChevronLeft className="size-4" strokeWidth={2.5} />
-                </button>
-                <div className="w-[1px] h-4 bg-slate-100 mx-1"></div>
-                <button onClick={() => { setSelectedDate(null); navigateMonth(1); }} className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-slate-50 rounded-full transition-all cursor-pointer">
-                  <ChevronRight className="size-4" strokeWidth={2.5} />
-                </button>
-              </div>
+              <div className="w-[1px] h-4 bg-slate-100 mx-1"></div>
+              <button onClick={() => { setSelectedDate(null); navigateMonth(1); }} className="p-1.5 text-slate-500 hover:text-[#0052FF] hover:bg-slate-50 rounded-full transition-all cursor-pointer">
+                <ChevronRight className="size-4" strokeWidth={2.5} />
+              </button>
             </div>
           </div>
 
@@ -424,7 +417,6 @@ export function PortalCalendarPage() {
 
                 const scheduled = dayEntries.length;
                 const approved = dayEntries.filter(e => e.status === "approved" || e.concept_status === "concept_approved").length;
-                const isSlaReview = day === 25; // Just mocking based on image for visual accuracy, in real logic we'd check entry types
 
                 return (
                   <div
@@ -463,7 +455,7 @@ export function PortalCalendarPage() {
                           3 Scheduled
                         </div>
                       )}
-                      {dayEntries.length === 0 && isSlaReview && (
+                      {dayEntries.length === 0 && day === 25 && (
                          <div className="w-full rounded-lg bg-[#FFFBEB] text-[#D97706] px-2.5 py-1 text-[10px] font-bold truncate text-left">
                           SLA Review
                         </div>
@@ -526,7 +518,6 @@ export function PortalCalendarPage() {
               }
 
               return tasks.map((entry, idx) => {
-                
                 // Mocks for avatars and pod names based on index to make it look like the image
                 const pods = ["POD A • NORTHWIND LABS", "POD B • BLOOM STUDIO", "POD C • ATLAS COMMERCE", "POD E • LUMINA HEALTH"];
                 const initials = ["OV", "AT", "KS", "SJ"];
@@ -610,7 +601,7 @@ export function PortalCalendarPage() {
                       ? "bg-sky-100 text-sky-800"
                       : previewEntry.blueprint.funnel_stage === "authority"
                       ? "bg-indigo-100 text-indigo-800"
-                      : "bg-[#7FA0D6]100 text-emerald-800"
+                      : "bg-emerald-100 text-emerald-800"
                   }`}>
                     {previewEntry.blueprint.funnel_stage.toUpperCase()} (Funnel Mix)
                   </span>
@@ -654,7 +645,7 @@ export function PortalCalendarPage() {
               {conceptFeedback && (
                 <div className={`p-3.5 rounded-xl text-xs font-semibold flex items-center justify-between ${
                   conceptFeedback.type === "success"
-                    ? "bg-[#7FA0D6]50 border border-emerald-200 text-emerald-800"
+                    ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
                     : "bg-red-50 border border-red-200 text-red-800"
                 }`}>
                   <span>{conceptFeedback.text}</span>
@@ -785,7 +776,7 @@ export function PortalCalendarPage() {
                             </div>
 
                             {isApprovedHook && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-[#7FA0D6]50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                                 <CheckCircle2 className="size-3" />
                                 Chosen Hook
                               </span>
@@ -810,7 +801,7 @@ export function PortalCalendarPage() {
                         type="button"
                         onClick={handleApproveConcept}
                         disabled={isConceptSubmitting}
-                        className="w-full py-3 rounded-xl bg-[#7FA0D6]600 hover:bg-[#7FA0D6]700 text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                        className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                       >
                         {isConceptSubmitting ? (
                           <Loader2 className="size-4 animate-spin" />
@@ -823,7 +814,7 @@ export function PortalCalendarPage() {
                       </button>
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-emerald-200 bg-[#7FA0D6]50 p-3 text-xs text-emerald-800 font-semibold flex items-center gap-2">
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 font-semibold flex items-center gap-2">
                       <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
                       <span>Concept Approved! Task dispatched with your selected angle.</span>
                     </div>
@@ -882,7 +873,7 @@ export function PortalCalendarPage() {
                     </span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {previewEntry.blueprint.respects?.map((resp, rIdx) => (
-                        <span key={rIdx} className="text-[10.5px] px-2 py-0.5 rounded bg-[#7FA0D6]50 text-emerald-800 border border-emerald-200 font-medium">
+                        <span key={rIdx} className="text-[10.5px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium">
                           ✓ {resp}
                         </span>
                       ))}

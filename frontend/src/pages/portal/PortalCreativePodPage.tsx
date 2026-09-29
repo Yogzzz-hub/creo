@@ -97,8 +97,8 @@ export function PortalCreativePodPage() {
             <div className="flex items-center justify-between mb-8">
               <div className="flex flex-wrap items-center gap-3">
                 <h2 className="text-xl font-black text-[#0F172A] tracking-tight whitespace-nowrap">Pod Lead</h2>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#7FA0D6]50 text-emerald-700 border border-emerald-100">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6]500 shrink-0" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                   <span className="whitespace-nowrap">Active</span>
                 </span>
               </div>
@@ -113,7 +113,7 @@ export function PortalCreativePodPage() {
                       <div className="size-14 rounded-2xl bg-white border border-slate-200 shadow-sm text-[#0F172A] flex items-center justify-center font-bold text-lg">
                         {podLead.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                       </div>
-                      <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-[#7FA0D6]500 border-2 border-white rounded-full" />
+                      <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
                     </div>
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Lead</span>
                   </div>
@@ -126,7 +126,7 @@ export function PortalCreativePodPage() {
 
                 <div className="mt-auto">
                   <button className="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 text-[11px] font-bold py-3 rounded-xl transition-all shadow-xs cursor-pointer group">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6]500 group-hover:scale-110 transition-transform" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 group-hover:scale-110 transition-transform" />
                     Message in Slack
                     <ArrowRight className="size-3.5 ml-1 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                   </button>
@@ -186,8 +186,8 @@ export function PortalCreativePodPage() {
                         <div className="size-10 rounded-xl bg-slate-50 border border-slate-100 text-[#0F172A] flex items-center justify-center font-bold text-xs group-hover:bg-blue-50 transition-colors">
                           {initials}
                         </div>
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#7FA0D6]50 text-emerald-700 text-[9px] font-bold uppercase tracking-wider">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6]500" />
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[9px] font-bold uppercase tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                           Available
                         </span>
                       </div>
@@ -214,7 +214,7 @@ export function PortalCreativePodPage() {
             <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-100">
               <span className="text-[11px] font-bold text-slate-400">Execution Pod Capacity</span>
               <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6]500" />
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 100% Guaranteed Availability
               </span>
             </div>
@@ -264,7 +264,7 @@ export function PortalCreativePodPage() {
               <span className="text-[11px] font-bold text-slate-500 mb-4">Pod Status</span>
               <div>
                 <div className="flex items-center gap-2 mb-4 border-b border-slate-200 pb-4">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]500" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                   <span className="text-2xl font-black text-[#0F172A]">Active</span>
                 </div>
                 <p className="text-[11px] text-slate-400 font-medium">All execution pipelines operational</p>

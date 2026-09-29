@@ -1,16 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { motion } from "motion/react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { useQuery } from "@tanstack/react-query";
-import { fetchPodDashboard, fetchClientRoster, type PodDashboardData } from "../../lib/ops-api";
-import type { ClientRosterItem } from "../../types/ops";
+import { fetchPodDashboard, type PodDashboardData } from "../../lib/ops-api";
 import {
   Briefcase,
   Layers,
   FileCheck2,
   Star,
   Search,
+  LayoutGrid,
+  List,
   Clock,
   FileText,
   Plus,
@@ -60,13 +60,94 @@ interface ClientAccount {
   hasReviewToday: boolean;
 }
 
-const INITIAL_CLIENTS: ClientAccount[] = [];
+const INITIAL_CLIENTS: ClientAccount[] = [
+  {
+    id: "client-northwind",
+    name: "Northwind Labs",
+    avatar: "NL",
+    avatarBg: "bg-[#0F172A]",
+    tierBadge: "PREMIUM",
+    tierBadgeColor: "bg-purple-50 text-purple-700 border-purple-200",
+    statusBadge: "● Stable",
+    statusBadgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    contact: "Sarah L. (VP Marketing)",
+    slackChannel: "#northwind-creo-pod-a",
+    reviewAssetsCount: 2,
+    deliverableTitle: "Fintech Reel Set (1080x1920 60fps) & Product Carousel",
+    deliverables: [
+      { label: "Reels", current: 4, target: 4, percent: 100, color: "bg-emerald-500" },
+      { label: "Stories", current: 8, target: 8, percent: 100, color: "bg-emerald-500" },
+      { label: "Posts", current: 12, target: 12, percent: 100, color: "bg-emerald-500" },
+    ],
+    assignees: [
+      { name: "David Kim", role: "Motion", avatar: "DK", bg: "bg-[#0F172A]" },
+      { name: "Elena R.", role: "Brand", avatar: "ER", bg: "bg-blue-600" },
+    ],
+    nextHandoff: "Fintech Reel Set due in 2h",
+    isHighPriority: false,
+    hasReviewToday: true,
+  },
+  {
+    id: "client-atlas",
+    name: "Atlas Commerce",
+    avatar: "AC",
+    avatarBg: "bg-[#1E293B]",
+    tierBadge: "ENTERPRISE",
+    tierBadgeColor: "bg-blue-50 text-blue-700 border-blue-200",
+    statusBadge: "Urgent SLA (1h 14m)",
+    statusBadgeColor: "bg-rose-50 text-rose-700 border-rose-200 font-black",
+    contact: "Marcus Groot (Director of Brand)",
+    slackChannel: "#atlas-commerce-urgent",
+    reviewAssetsCount: 3,
+    isUrgent: true,
+    deliverableTitle: "Black Friday Story Revision awaiting sign-off",
+    deliverables: [
+      { label: "Reels", current: 6, target: 6, percent: 100, color: "bg-emerald-500" },
+      { label: "Stories", current: 1, target: 3, percent: 33, color: "bg-rose-500", note: "33% Attention" },
+      { label: "Posts", current: 18, target: 18, percent: 100, color: "bg-emerald-500" },
+    ],
+    assignees: [
+      { name: "Elena R.", role: "Brand", avatar: "ER", bg: "bg-blue-600" },
+      { name: "David Kim", role: "Motion", avatar: "DK", bg: "bg-[#0F172A]" },
+    ],
+    nextHandoff: "Black Friday Story Revision awaiting sign-off",
+    isHighPriority: true,
+    hasReviewToday: true,
+  },
+  {
+    id: "client-bloom",
+    name: "Bloom Studio",
+    avatar: "BS",
+    avatarBg: "bg-indigo-900",
+    tierBadge: "GROWTH",
+    tierBadgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    statusBadge: "● Optimal Flow",
+    statusBadgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    contact: "Helena Vance",
+    slackChannel: "#bloom-studio-sync",
+    reviewAssetsCount: 1,
+    deliverableTitle: "Q4 Reel Concept & Brand Manifesto",
+    deliverables: [
+      { label: "Reels", current: 2, target: 2, percent: 100, color: "bg-emerald-500" },
+      { label: "Stories", current: 4, target: 4, percent: 100, color: "bg-emerald-500" },
+      { label: "Posts", current: 8, target: 12, percent: 66, color: "bg-blue-600" },
+    ],
+    assignees: [
+      { name: "Chloe Tan", role: "Video", avatar: "CT", bg: "bg-teal-600" },
+      { name: "Marcus Vance", role: "Copy", avatar: "MV", bg: "bg-indigo-600" },
+    ],
+    nextHandoff: "Q4 Reel Concept in 4h 30m",
+    isHighPriority: false,
+    hasReviewToday: false,
+  },
+];
 
 export function PodClientAllocationsPage() {
   const navigate = useNavigate();
   const [clients, setClients] = useState<ClientAccount[]>(INITIAL_CLIENTS);
   const [filterTab, setFilterTab] = useState<"all" | "sla" | "review">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [reallocationModal, setReallocationModal] = useState(false);
 
@@ -90,55 +171,6 @@ export function PodClientAllocationsPage() {
     queryKey: ["pod_dashboard"],
     queryFn: () => fetchPodDashboard(),
   });
-
-  const { data: rosterData } = useQuery<ClientRosterItem[]>({
-    queryKey: ["admin_clients_roster"],
-    queryFn: () => fetchClientRoster(),
-  });
-
-  useEffect(() => {
-    if (!rosterData || rosterData.length === 0) {
-      setClients([]);
-      return;
-    }
-    const dynamicClients: ClientAccount[] = rosterData.map((r) => {
-      const name = String(r.company_name || (r.instagram_username ? `@${r.instagram_username}` : (r.email ? r.email.split("@")[0] : "Client")));
-      const initials = name.slice(0, 2).toUpperCase();
-      const reelsQuota = r.quota_usage?.find((q) => q.kind === "reel")?.quota || 4;
-      const reelsUsed = r.quota_usage?.find((q) => q.kind === "reel")?.used || 0;
-      const postersQuota = r.quota_usage?.find((q) => q.kind === "poster")?.quota || 8;
-      const postersUsed = r.quota_usage?.find((q) => q.kind === "poster")?.used || 0;
-      const storiesQuota = r.quota_usage?.find((q) => q.kind === "story")?.quota || 8;
-      const storiesUsed = r.quota_usage?.find((q) => q.kind === "story")?.used || 0;
-
-      return {
-        id: r.client_id || "",
-        name,
-        avatar: initials,
-        avatarBg: "bg-[#0F172A]",
-        tierBadge: (r.plan_display_name || r.plan_name || "GROWTH").toUpperCase(),
-        tierBadgeColor: "bg-blue-50 text-blue-700 border-blue-200",
-        statusBadge: "● Active Sprint",
-        statusBadgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-        contact: r.email || "",
-        slackChannel: `#${name.toLowerCase().replace(/[^a-z0-9]/g, "")}-creo`,
-        reviewAssetsCount: 0,
-        deliverableTitle: `${name} Active Campaign Cadence`,
-        deliverables: [
-          { label: "Reels", current: reelsUsed, target: reelsQuota, percent: Math.round((reelsUsed / (reelsQuota || 1)) * 100), color: "bg-emerald-500" },
-          { label: "Stories", current: storiesUsed, target: storiesQuota, percent: Math.round((storiesUsed / (storiesQuota || 1)) * 100), color: "bg-emerald-500" },
-          { label: "Posts", current: postersUsed, target: postersQuota, percent: Math.round((postersUsed / (postersQuota || 1)) * 100), color: "bg-blue-600" },
-        ],
-        assignees: [
-          { name: "Creative Pod", role: "Creative", avatar: "CP", bg: "bg-purple-600" },
-        ],
-        nextHandoff: "Scheduled Cadence Active",
-        isHighPriority: false,
-        hasReviewToday: false,
-      };
-    });
-    setClients(dynamicClients);
-  }, [rosterData]);
 
   const podName = data?.pod?.name || "Pod A";
 
@@ -257,7 +289,7 @@ export function PodClientAllocationsPage() {
     .reduce((acc, d) => acc + d.current, 0);
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
+    <div data-surface="ops" className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans flex flex-col">
       {/* Top Header */}
       <AdminTopHeader title="Client Details" activeTab="Client Details" />
 
@@ -283,10 +315,10 @@ export function PodClientAllocationsPage() {
         )}
 
         {/* 1. Quick Actions Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#161F2D] p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-[#2A3446]/80 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div className="flex items-center gap-2">
             <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold text-[#F1F5F9]">
+            <span className="text-xs font-bold text-slate-700">
               {podName} Creative Lead Workspace · {clients.length} Active Client Retainers
             </span>
           </div>
@@ -294,9 +326,9 @@ export function PodClientAllocationsPage() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleExportReport}
-              className="px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
-              <FileText className="size-3.5 text-[#97A0B3]" />
+              <FileText className="size-3.5 text-slate-500" />
               Export Report
             </button>
             <button
@@ -310,14 +342,14 @@ export function PodClientAllocationsPage() {
         </div>
 
         {/* 2. Filter Pills & Search Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#161F2D] p-2.5 sm:px-3 rounded-2xl border border-[#2A3446]/80 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white p-2.5 sm:px-3 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div className="flex flex-wrap items-center gap-1.5">
             <button
               onClick={() => setFilterTab("all")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 filterTab === "all"
                   ? "bg-blue-600 text-white shadow-2xs"
-                  : "bg-[#0B111C] text-[#F1F5F9] hover:bg-[#1F2C3F]"
+                  : "bg-slate-50 text-slate-600 hover:bg-slate-100"
               }`}
             >
               All Assigned ({clients.length})
@@ -327,7 +359,7 @@ export function PodClientAllocationsPage() {
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 filterTab === "sla"
                   ? "bg-rose-600 text-white shadow-2xs"
-                  : "bg-[#0B111C] text-[#F1F5F9] hover:bg-[#1F2C3F]"
+                  : "bg-slate-50 text-slate-600 hover:bg-slate-100"
               }`}
             >
               <span className="size-1.5 rounded-full bg-rose-500" />
@@ -338,24 +370,45 @@ export function PodClientAllocationsPage() {
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 filterTab === "review"
                   ? "bg-blue-600 text-white shadow-2xs"
-                  : "bg-[#0B111C] text-[#F1F5F9] hover:bg-[#1F2C3F]"
+                  : "bg-slate-50 text-slate-600 hover:bg-slate-100"
               }`}
             >
-              <span className="size-1.5 rounded-full bg-[#7FA0D6]/150" />
+              <span className="size-1.5 rounded-full bg-blue-500" />
               Review Today ({clients.filter((c) => c.hasReviewToday || c.reviewAssetsCount > 0).length})
             </button>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#97A0B3]" />
+              <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Filter clients..."
-                className="pl-7 pr-3 py-1 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-medium w-44 sm:w-52 focus:w-60 focus:bg-[#161F2D] focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                className="pl-7 pr-3 py-1 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium w-44 sm:w-52 focus:w-60 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
               />
+            </div>
+
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-xl">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-1 rounded-lg transition cursor-pointer ${
+                  viewMode === "grid" ? "bg-white text-blue-600 shadow-2xs" : "text-slate-400"
+                }`}
+                aria-label="Grid view"
+              >
+                <LayoutGrid className="size-3.5" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-1 rounded-lg transition cursor-pointer ${
+                  viewMode === "list" ? "bg-white text-blue-600 shadow-2xs" : "text-slate-400"
+                }`}
+                aria-label="List view"
+              >
+                <List className="size-3.5" />
+              </button>
             </div>
           </div>
         </div>
@@ -363,74 +416,59 @@ export function PodClientAllocationsPage() {
         {/* 3. Top 4 Metric KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           {/* Card 1: Assigned Clients */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.05 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
-          >
+          <div className="bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Assigned Clients
               </span>
-              <div className="size-6 sm:size-7 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center">
+              <div className="size-6 sm:size-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                 <Briefcase className="size-3 sm:size-3.5" />
               </div>
             </div>
             <div>
               <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">{clients.length} Active</span>
+                <span className="text-lg sm:text-xl font-black text-[#0F172A]">{clients.length} Active</span>
               </div>
-              <div className="pt-1.5 border-t border-[#2A3446] text-[10px] sm:text-[11px] flex justify-between items-center">
+              <div className="pt-1.5 border-t border-slate-100 text-[10px] sm:text-[11px] flex justify-between items-center">
                 <span className="font-bold text-emerald-600 flex items-center gap-1">
                   ● 100% SLA compliance
                 </span>
-                <span className="text-[9px] font-bold text-[#97A0B3]">Tier 1 Pod</span>
+                <span className="text-[9px] font-bold text-slate-400">Tier 1 Pod</span>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Card 2: Monthly Asset Quota */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
-          >
+          <div className="bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Monthly Asset Quota
               </span>
-              <div className="size-6 sm:size-7 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center">
+              <div className="size-6 sm:size-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                 <Layers className="size-3 sm:size-3.5" />
               </div>
             </div>
             <div>
               <div className="flex items-baseline justify-between gap-1 mb-1">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-lg sm:text-xl font-black text-white">{totalBurnedAssets}</span>
-                  <span className="text-[#97A0B3] font-bold text-xs">/ 40</span>
+                  <span className="text-lg sm:text-xl font-black text-[#0F172A]">{totalBurnedAssets}</span>
+                  <span className="text-slate-400 font-bold text-xs">/ 40</span>
                 </div>
-                <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-[#7FA0D6]/15 text-[#7FA0D6]">
+                <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-blue-50 text-blue-700">
                   {Math.round((totalBurnedAssets / 40) * 100)}% Burn
                 </span>
               </div>
-              <div className="pt-1.5 border-t border-[#2A3446] text-[10px] sm:text-[11px] flex justify-between items-center">
-                <span className="text-[#97A0B3] font-medium">Sprint burn</span>
+              <div className="pt-1.5 border-t border-slate-100 text-[10px] sm:text-[11px] flex justify-between items-center">
+                <span className="text-slate-500 font-medium">Sprint burn</span>
                 <span className="font-bold text-emerald-600">On Pace</span>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Card 3: Lead Sign-offs */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
-          >
+          <div className="bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Lead Sign-offs
               </span>
               <div
@@ -443,7 +481,7 @@ export function PodClientAllocationsPage() {
             </div>
             <div>
               <div className="flex items-baseline justify-between gap-1 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">{totalSignoffs} Assets</span>
+                <span className="text-lg sm:text-xl font-black text-[#0F172A]">{totalSignoffs} Assets</span>
                 {urgentCount > 0 ? (
                   <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-rose-50 text-rose-700">
                     {urgentCount} SLA Alert{urgentCount > 1 ? "s" : ""}
@@ -454,7 +492,7 @@ export function PodClientAllocationsPage() {
                   </span>
                 )}
               </div>
-              <div className="pt-1.5 border-t border-[#2A3446] text-[10px] sm:text-[11px]">
+              <div className="pt-1.5 border-t border-slate-100 text-[10px] sm:text-[11px]">
                 {urgentCount > 0 ? (
                   <span className="text-rose-600 font-bold flex items-center gap-1">
                     ● Urgent QA awaiting
@@ -466,17 +504,12 @@ export function PodClientAllocationsPage() {
                 )}
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Card 4: Client CSAT */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
-          >
+          <div className="bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Client CSAT
               </span>
               <div className="size-6 sm:size-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -485,51 +518,44 @@ export function PodClientAllocationsPage() {
             </div>
             <div>
               <div className="flex items-baseline justify-between gap-1 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">
-                  4.9 <span className="text-[#97A0B3] font-bold text-xs">/ 5.0</span>
+                <span className="text-lg sm:text-xl font-black text-[#0F172A]">
+                  4.9 <span className="text-slate-400 font-bold text-xs">/ 5.0</span>
                 </span>
                 <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-emerald-50 text-emerald-700">
                   +0.2 MoM
                 </span>
               </div>
-              <div className="pt-1.5 border-t border-[#2A3446] text-[10px] sm:text-[11px] flex justify-between items-center">
-                <span className="text-[#97A0B3] font-medium">Last 24 ratings</span>
+              <div className="pt-1.5 border-t border-slate-100 text-[10px] sm:text-[11px] flex justify-between items-center">
+                <span className="text-slate-500 font-medium">Last 24 ratings</span>
                 <span className="font-bold text-emerald-600">Exceptional</span>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* 4. Active Accounts Full-Width Container (Extended Client Roster) */}
         <div className="w-full space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h2 className="text-sm font-black text-white">{podName} Active Accounts</h2>
-              <p className="text-[11px] text-[#97A0B3] font-medium">
+              <h2 className="text-sm font-black text-[#0F172A]">{podName} Active Accounts</h2>
+              <p className="text-[11px] text-slate-400 font-medium">
                 Contractual scopes, sprint burndown, and talent assignments
               </p>
             </div>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 self-start sm:self-auto">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-700 border border-blue-200 self-start sm:self-auto">
               Sprint 42 · Active
             </span>
           </div>
 
           {/* Account Cards */}
           <div className="space-y-3">
-            {filteredClients.length === 0 ? (
-              <div className="bg-[#161F2D] rounded-2xl p-10 border border-[#2A3446]/80 text-center space-y-2">
-                <Briefcase className="size-8 text-[#97A0B3] mx-auto opacity-50" />
-                <h3 className="text-sm font-bold text-white">No Assigned Clients</h3>
-                <p className="text-xs text-[#97A0B3]">No active clients are currently allocated to this pod filter.</p>
-              </div>
-            ) : (
-              filteredClients.map((client) => (
+            {filteredClients.map((client) => (
               <div
                 key={client.id}
-                className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs hover:border-[#7FA0D6]/30 hover:shadow-xs transition-all space-y-3.5"
+                className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs hover:border-blue-200 hover:shadow-xs transition-all space-y-3.5"
               >
                 {/* Account Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#2A3446] gap-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2.5">
                   <Link
                     to={`/lead/clients/${client.id}`}
                     className="flex items-center gap-3 group cursor-pointer"
@@ -541,9 +567,9 @@ export function PodClientAllocationsPage() {
                     </div>
                     <div>
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <h3 className="text-sm font-black text-white group-hover:text-[#7FA0D6] transition-colors flex items-center gap-1">
+                        <h3 className="text-sm font-black text-[#0F172A] group-hover:text-blue-600 transition-colors flex items-center gap-1">
                           {client.name}
-                          <ArrowRight className="size-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-[#7FA0D6]" />
+                          <ArrowRight className="size-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-blue-600" />
                         </h3>
                         <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black tracking-wider border ${client.tierBadgeColor}`}>
                           {client.tierBadge}
@@ -552,8 +578,8 @@ export function PodClientAllocationsPage() {
                           {client.statusBadge}
                         </span>
                       </div>
-                      <p className="text-[11px] text-[#97A0B3] font-medium mt-0.5">
-                        {client.contact} · <span className="text-[#7FA0D6] font-bold">{client.slackChannel}</span>
+                      <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                        {client.contact} · <span className="text-blue-600 font-bold">{client.slackChannel}</span>
                       </p>
                     </div>
                   </Link>
@@ -562,9 +588,9 @@ export function PodClientAllocationsPage() {
                     {/* Button 1: Client Details */}
                     <Link
                       to={`/lead/clients/${client.id}`}
-                      className="px-3 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#7FA0D6]/15/70 border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs active:scale-95 cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50/70 border border-slate-200 text-slate-700 hover:text-blue-700 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs active:scale-95 cursor-pointer"
                     >
-                      <Sparkles className="size-3 text-[#7FA0D6]" />
+                      <Sparkles className="size-3 text-blue-600" />
                       Client Details
                     </Link>
 
@@ -607,10 +633,10 @@ export function PodClientAllocationsPage() {
                 {/* Deliverables Burndown Bars */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   {client.deliverables.map((del) => (
-                    <div key={del.label} className="bg-[#0B111C] p-2.5 rounded-xl border border-[#2A3446] space-y-1">
+                    <div key={del.label} className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-1">
                       <div className="flex justify-between text-[11px] font-bold">
-                        <span className="text-[#F1F5F9]">{del.label}</span>
-                        <span className="text-[#97A0B3]">
+                        <span className="text-slate-700">{del.label}</span>
+                        <span className="text-slate-500">
                           {del.current} / {del.target} ({del.percent}%)
                         </span>
                       </div>
@@ -625,14 +651,14 @@ export function PodClientAllocationsPage() {
                 </div>
 
                 {/* Assignees & Next Handoff Footer */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-[#2A3446] text-xs text-[#F1F5F9] gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-600 gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-[#97A0B3]">Pod Assignees:</span>
+                    <span className="font-bold text-slate-400">Pod Assignees:</span>
                     <div className="flex items-center gap-1.5">
                       {client.assignees.map((assignee) => (
                         <div
                           key={assignee.name}
-                          className="flex items-center gap-1 bg-[#161F2D] px-2 py-0.5 rounded-lg border border-[#2A3446] text-[11px] font-bold"
+                          className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-slate-200 text-[11px] font-bold"
                         >
                           <div
                             className={`size-4 rounded-md ${assignee.bg} text-white flex items-center justify-center text-[8px] font-black`}
@@ -648,20 +674,20 @@ export function PodClientAllocationsPage() {
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <span className="font-bold text-[#F1F5F9] flex items-center gap-1 text-[11px]">
-                      <Clock className="size-3 text-[#97A0B3]" />
-                      Next Handoff: <span className="text-[#7FA0D6]">{client.nextHandoff}</span>
+                    <span className="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
+                      <Clock className="size-3 text-slate-400" />
+                      Next Handoff: <span className="text-blue-600">{client.nextHandoff}</span>
                     </span>
                     <Link
                       to={`/lead/clients/${client.id}`}
-                      className="text-[11px] font-bold text-[#7FA0D6] hover:text-blue-800 hover:underline flex items-center gap-1 cursor-pointer"
+                      className="text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       View Profile →
                     </Link>
                   </div>
                 </div>
               </div>
-            )))}
+            ))}
           </div>
         </div>
       </main>
@@ -675,13 +701,13 @@ export function PodClientAllocationsPage() {
           onClick={() => setReviewModal(null)}
         >
           <div
-            className="relative w-full max-w-xl bg-[#161F2D] rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#2A3446] space-y-5 animate-in zoom-in-95 duration-150 text-left"
+            className="relative w-full max-w-xl bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5 animate-in zoom-in-95 duration-150 text-left"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
           >
             {/* Top Header */}
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center gap-3">
                 <div
                   className={`size-11 rounded-2xl ${reviewModal.client.avatarBg} text-white font-black text-sm flex items-center justify-center shadow-xs`}
@@ -690,14 +716,14 @@ export function PodClientAllocationsPage() {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base font-black text-white">
+                    <h3 className="text-base font-black text-[#0F172A]">
                       {reviewModal.client.name}
                     </h3>
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider border ${reviewModal.client.tierBadgeColor}`}>
                       {reviewModal.client.tierBadge}
                     </span>
                   </div>
-                  <p className="text-xs text-[#97A0B3] font-medium mt-0.5">
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">
                     Creative Lead QA Sign-off Inspection
                   </p>
                 </div>
@@ -705,7 +731,7 @@ export function PodClientAllocationsPage() {
               <button
                 type="button"
                 onClick={() => setReviewModal(null)}
-                className="size-8 rounded-full bg-[#1F2C3F] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+                className="size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
                 aria-label="Close review dialog"
               >
                 <X className="size-4" />
@@ -713,9 +739,9 @@ export function PodClientAllocationsPage() {
             </div>
 
             {/* Asset Pending Review Card */}
-            <div className="bg-[#0B111C] p-4 rounded-2xl border border-[#2A3446]/80 space-y-2">
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   Deliverable Awaiting Lead Approval
                 </span>
                 {reviewModal.client.isUrgent ? (
@@ -723,19 +749,19 @@ export function PodClientAllocationsPage() {
                     ⚡ Urgent SLA: 1h 14m remaining
                   </span>
                 ) : (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
                     {reviewModal.client.reviewAssetsCount} Assets Queued
                   </span>
                 )}
               </div>
-              <h4 className="text-sm font-black text-white">
+              <h4 className="text-sm font-black text-slate-900">
                 {reviewModal.client.deliverableTitle || "Primary Campaign Asset Package (Batch 4)"}
               </h4>
-              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#F1F5F9] pt-1">
-                <span className="bg-[#161F2D] px-2.5 py-1 rounded-lg border border-[#2A3446] text-[11px]">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600 pt-1">
+                <span className="bg-white px-2.5 py-1 rounded-lg border border-slate-200 text-[11px]">
                   Format: 9:16 Vertical Story • 1080x1920 • 60fps
                 </span>
-                <span className="bg-[#161F2D] px-2.5 py-1 rounded-lg border border-[#2A3446] text-[11px]">
+                <span className="bg-white px-2.5 py-1 rounded-lg border border-slate-200 text-[11px]">
                   Assigned: {reviewModal.client.assignees.map((a) => a.name).join(", ")}
                 </span>
               </div>
@@ -743,10 +769,10 @@ export function PodClientAllocationsPage() {
 
             {/* QA Verification Checklist */}
             <div className="space-y-2.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] block">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
                 Lead Sign-off Verification Checklist:
               </span>
-              <div className="space-y-2 text-xs font-semibold text-[#F1F5F9]">
+              <div className="space-y-2 text-xs font-semibold text-slate-700">
                 {[
                   {
                     id: "brand",
@@ -763,12 +789,12 @@ export function PodClientAllocationsPage() {
                 ].map((item) => (
                   <label
                     key={item.id}
-                    className="flex items-center gap-3 p-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] cursor-pointer transition-colors"
+                    className="flex items-center gap-3 p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 cursor-pointer transition-colors"
                   >
                     <input
                       type="checkbox"
                       defaultChecked
-                      className="size-4 rounded text-[#7FA0D6] focus:ring-blue-500 border-[#2A3446]"
+                      className="size-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300"
                     />
                     <span>{item.label}</span>
                   </label>
@@ -777,11 +803,11 @@ export function PodClientAllocationsPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-3 border-t border-[#2A3446]">
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setReviewModal(null)}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#2A3446] text-[#F1F5F9] text-xs font-bold hover:bg-[#1F2C3F] active:scale-95 transition-all cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -791,7 +817,7 @@ export function PodClientAllocationsPage() {
                   setReviewModal(null);
                   navigate("/lead/deliverables");
                 }}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#1F2C3F] hover:bg-slate-200 text-[#F1F5F9] text-xs font-bold active:scale-95 transition-all cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold active:scale-95 transition-all cursor-pointer"
               >
                 Open Review Studio →
               </button>
@@ -817,7 +843,7 @@ export function PodClientAllocationsPage() {
           onClick={() => setAlertModal(null)}
         >
           <div
-            className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150 text-left"
+            className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-100 flex flex-col items-center text-center animate-in zoom-in-95 duration-150 text-left"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -826,7 +852,7 @@ export function PodClientAllocationsPage() {
             <button
               type="button"
               onClick={() => setAlertModal(null)}
-              className="absolute top-4 right-4 size-8 rounded-full bg-[#1F2C3F] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-4 right-4 size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Close modal"
             >
               <X className="size-4" />
@@ -838,12 +864,12 @@ export function PodClientAllocationsPage() {
             </div>
 
             {/* Title */}
-            <h3 className="text-xl font-black text-white tracking-tight">
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">
               {alertModal.title}
             </h3>
 
             {/* Message */}
-            <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm text-center">
+            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed max-w-sm text-center">
               {alertModal.message}
             </p>
 
@@ -865,7 +891,7 @@ export function PodClientAllocationsPage() {
                     setAlertModal(null);
                     navigate(`/lead/clients/${id}`);
                   }}
-                  className="px-5 py-3 rounded-2xl bg-[#1F2C3F] hover:bg-slate-200 text-[#F1F5F9] font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs active:scale-95 transition-all cursor-pointer"
                 >
                   View Client Profile
                 </button>
@@ -884,51 +910,47 @@ export function PodClientAllocationsPage() {
           onClick={() => setReallocationModal(false)}
         >
           <div
-            className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-in zoom-in-95 duration-150 text-left"
+            className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-4 animate-in zoom-in-95 duration-150 text-left"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
           >
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 className="text-base font-black text-white">Request Pod Re-allocation</h3>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-black text-[#0F172A]">Request Pod Re-allocation</h3>
               <button
                 type="button"
                 onClick={() => setReallocationModal(false)}
-                className="size-8 rounded-full bg-[#1F2C3F] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+                className="size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
               >
                 <X className="size-4" />
               </button>
             </div>
-            <p className="text-xs text-[#97A0B3]">
+            <p className="text-xs text-slate-500">
               Submit workload balancing request to Studio Director:
             </p>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Target Account</label>
-                <select className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white">
-                  {clients.length > 0 ? (
-                    clients.map((c) => (
-                      <option key={c.id} value={c.name}>{c.name}</option>
-                    ))
-                  ) : (
-                    <option value="Ryze">Ryze Mushroom Coffee</option>
-                  )}
+                <label className="font-bold text-slate-700 block mb-1">Target Account</label>
+                <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 font-medium">
+                  <option>Atlas Commerce (Surge load)</option>
+                  <option>Northwind Labs</option>
+                  <option>Bloom Studio</option>
                 </select>
               </div>
               <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Resource Needed</label>
-                <select className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium">
+                <label className="font-bold text-slate-700 block mb-1">Resource Needed</label>
+                <select className="w-full p-2.5 rounded-xl border border-slate-200 bg-slate-50 font-medium">
                   <option>Additional 3D Motion Specialist Support</option>
                   <option>Copywriting surge capacity</option>
                   <option>Senior Visual Designer QA backup</option>
                 </select>
               </div>
             </div>
-            <div className="flex justify-end gap-3 pt-3 border-t border-[#2A3446]">
+            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setReallocationModal(false)}
-                className="px-4 py-2 rounded-xl bg-[#1F2C3F] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
               >
                 Cancel
               </button>

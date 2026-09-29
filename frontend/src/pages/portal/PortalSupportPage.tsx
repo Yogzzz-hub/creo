@@ -390,7 +390,7 @@ export function PortalSupportPage() {
                   Creative Director • Available for fast triage
                 </p>
                 <p className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1.5 mt-1">
-                  <span className="size-1.5 rounded-full bg-[#7FA0D6]500 animate-pulse" />
+                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span>Active in Slack</span>
                 </p>
               </div>
@@ -435,8 +435,8 @@ export function PortalSupportPage() {
                   </p>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-[#7FA0D6]50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full shrink-0">
-                <span className="size-1.5 rounded-full bg-[#7FA0D6]500 animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full shrink-0">
+                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Staffed & Live (24/7)
               </span>
             </div>
@@ -524,7 +524,7 @@ export function PortalSupportPage() {
           <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-xs font-semibold mt-5">
             <span className="text-slate-500 font-medium">Target SLA: &lt; 2.0 hours</span>
             <span className="text-emerald-600 font-bold flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-[#7FA0D6]500" />
+              <span className="size-1.5 rounded-full bg-emerald-500" />
               100% On-Track
             </span>
           </div>
@@ -764,7 +764,7 @@ export function PortalSupportPage() {
                             In Progress
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-[#7FA0D6]50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full">
                             <Check className="size-3 text-emerald-600" />
                             Resolved
                           </span>
@@ -946,7 +946,7 @@ export function PortalSupportPage() {
               </div>
             </div>
 
-            <div className="rounded-xl bg-[#7FA0D6]50 border border-emerald-200 p-3 text-xs text-emerald-800 flex items-center gap-2">
+            <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800 flex items-center gap-2">
               <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
               <span>Direct calendar integration with your assigned creative director.</span>
             </div>

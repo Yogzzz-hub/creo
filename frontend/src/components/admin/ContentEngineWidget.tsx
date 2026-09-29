@@ -44,7 +44,7 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
   const [newTaskAssignee, setNewTaskAssignee] = useState("Maya P.");
   const [newTaskTime, setNewTaskTime] = useState("02:00 PM");
 
-  // Default matrix data matching screenshot exactly
+  // Default matrix data matching strictly Reel, Story, and Post formats
   const matrixColumns: MatrixColumn[] = [
     {
       title: "TO DO",
@@ -53,8 +53,8 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
       badgeText: "text-slate-700",
       titleColor: "text-slate-600",
       items: [
-        { id: "todo-1", title: "Brand Asset Kit", points: 4, assetsCount: 6 },
-        { id: "todo-2", title: "TikTok Hooks", points: 2, assetsCount: 5 },
+        { id: "todo-1", title: "Brand Launch Story", points: 4, assetsCount: 6 },
+        { id: "todo-2", title: "TikTok Reel Series", points: 2, assetsCount: 5 },
       ],
     },
     {
@@ -64,8 +64,8 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
       badgeText: "text-white",
       titleColor: "text-sky-600",
       items: [
-        { id: "comp-1", title: "Fintech Ad Set", points: 3, assetsCount: 6 },
-        { id: "comp-2", title: "Case Study Deck", points: 4, assetsCount: 10 },
+        { id: "comp-1", title: "Fintech Reel", points: 3, assetsCount: 6 },
+        { id: "comp-2", title: "Client Showcase Post", points: 4, assetsCount: 10 },
       ],
     },
     {
@@ -76,7 +76,7 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
       titleColor: "text-blue-600",
       items: [
         { id: "rev-1", title: "Q4 Reel Concept", points: 5, assetsCount: 3 },
-        { id: "rev-2", title: "Social Graphics", points: 5, assetsCount: 12 },
+        { id: "rev-2", title: "Social Post Deck", points: 5, assetsCount: 12 },
       ],
     },
     {
@@ -86,8 +86,8 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
       badgeText: "text-white",
       titleColor: "text-indigo-600",
       items: [
-        { id: "app-1", title: "Enterprise Pitch", points: 7, assetsCount: 4 },
-        { id: "app-2", title: "Product Teaser", points: 3, assetsCount: 2 },
+        { id: "app-1", title: "Enterprise Story Suite", points: 7, assetsCount: 4 },
+        { id: "app-2", title: "Product Launch Reel", points: 3, assetsCount: 2 },
       ],
     },
   ];
@@ -217,59 +217,59 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
   return (
     <div
       onClick={() => navigate("/admin/calendar")}
-      className="bg-white rounded-3xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.04)] hover:shadow-xl hover:border-blue-200/80 transition-all p-6 flex flex-col w-full h-full font-sans cursor-pointer group"
+      className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-blue-200/80 transition-all p-4 sm:p-5 flex flex-col w-full h-full font-sans cursor-pointer group"
     >
       {/* Top Header Row */}
-      <div className="flex items-start justify-between mb-5">
+      <div className="flex items-start justify-between mb-3">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black text-[#0F172A] group-hover:text-[#2563EB] transition-colors tracking-tight">Content Engine</h2>
-            <span className="text-[10px] font-extrabold text-[#2563EB] bg-[#EFF6FF] px-2.5 py-0.5 rounded-full border border-[#DBEAFE]">
+          <div className="flex items-center gap-1.5">
+            <h2 className="text-base font-black text-[#0F172A] group-hover:text-[#2563EB] transition-colors tracking-tight">Content Engine</h2>
+            <span className="text-[9px] font-extrabold text-[#2563EB] bg-[#EFF6FF] px-2 py-0.2 rounded-full border border-[#DBEAFE]">
               Active Q4
             </span>
           </div>
-          <p className="text-xs text-[#94A3B8] font-medium mt-0.5">Deliverables, calendar, and task queue</p>
+          <p className="text-[11px] text-[#94A3B8] font-medium">Deliverables & task queue</p>
         </div>
-        <span className="px-3.5 py-1 rounded-full text-xs font-bold text-[#0284C7] bg-[#E0F2FE]/70 border border-[#BAE6FD] flex items-center gap-1">
+        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold text-[#0284C7] bg-[#E0F2FE]/70 border border-[#BAE6FD] flex items-center gap-1">
           Healthy
         </span>
       </div>
 
       {/* 2x2 Matrix Grid */}
-      <div className="grid grid-cols-2 gap-3.5 mb-5">
+      <div className="grid grid-cols-2 gap-2 mb-3.5">
         {matrixColumns.map((col) => (
           <div
             key={col.title}
-            className="bg-[#F8FAFC]/90 border border-[#E2E8F0]/70 rounded-2xl p-3 flex flex-col gap-2"
+            className="bg-[#F8FAFC]/90 border border-[#E2E8F0]/70 rounded-xl p-2.5 flex flex-col gap-1.5"
           >
             {/* Column Header */}
             <div className="flex items-center justify-between px-0.5">
-              <span className={`text-[11px] font-black tracking-wider ${col.titleColor}`}>
+              <span className={`text-[10px] font-black tracking-wider ${col.titleColor}`}>
                 {col.title}
               </span>
               <span
-                className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black ${col.badgeBg} ${col.badgeText}`}
+                className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[9px] font-black ${col.badgeBg} ${col.badgeText}`}
               >
                 {col.badgeCount}
               </span>
             </div>
 
             {/* Sub Cards */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               {col.items.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-white p-2.5 rounded-xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col gap-0.5 transition-all hover:border-blue-100"
+                  className="bg-white p-2 rounded-lg border border-slate-100 shadow-2xs flex flex-col gap-0.5 transition-all hover:border-blue-100"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-[#0F172A] truncate pr-1">
+                    <span className="text-xs font-bold text-[#0F172A] truncate pr-1">
                       {item.title}
                     </span>
-                    <span className="text-[10px] font-black text-[#2563EB] bg-[#EFF6FF] px-1.5 py-0.5 rounded border border-[#DBEAFE]/80 shrink-0">
+                    <span className="text-[9px] font-black text-[#2563EB] bg-[#EFF6FF] px-1 py-0.2 rounded border border-[#DBEAFE]/80 shrink-0">
                       {item.points} SP
                     </span>
                   </div>
-                  <span className="text-[10px] text-[#94A3B8] font-semibold">
+                  <span className="text-[9px] text-[#94A3B8] font-semibold">
                     {item.assetsCount} assets
                   </span>
                 </div>
@@ -280,14 +280,14 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
       </div>
 
       {/* Today's Tasks Section */}
-      <div className="bg-[#F8FAFC]/60 border border-[#E2E8F0]/80 rounded-2xl p-4 flex flex-col gap-3">
+      <div className="bg-[#F8FAFC]/60 border border-[#E2E8F0]/80 rounded-2xl p-3 flex flex-col gap-2">
         {/* Section Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB]" />
             <h3 className="text-xs font-black text-[#0F172A]">Today's Tasks</h3>
-            <span className="text-[10px] font-extrabold text-[#2563EB] bg-[#EFF6FF] border border-[#DBEAFE] px-2.5 py-0.5 rounded-full">
-              {todayTasks.length} Scheduled · 1 Done
+            <span className="text-[9px] font-extrabold text-[#2563EB] bg-[#EFF6FF] border border-[#DBEAFE] px-2 py-0.2 rounded-full">
+              {todayTasks.length} Scheduled
             </span>
           </div>
           <button
@@ -296,31 +296,31 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
               e.stopPropagation();
               setIsAddModalOpen(true);
             }}
-            className="text-xs font-black text-[#2563EB] hover:text-blue-700 hover:underline flex items-center gap-1 cursor-pointer transition-colors"
+            className="text-xs font-bold text-[#2563EB] hover:text-blue-700 hover:underline flex items-center gap-0.5 cursor-pointer transition-colors"
           >
-            <Plus className="w-3.5 h-3.5 stroke-[3]" /> Add Task
+            <Plus className="w-3 h-3 stroke-[3]" /> Add
           </button>
         </div>
 
         {/* Task Items List */}
-        <div className="flex flex-col gap-2">
-          {todayTasks.map((task) => (
+        <div className="flex flex-col gap-1.5">
+          {todayTasks.slice(0, 3).map((task) => (
             <div
               key={task.id}
-              className="bg-white p-3 rounded-xl border border-gray-100/90 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center justify-between gap-2 hover:border-blue-100 transition-all"
+              className="bg-white p-2 rounded-xl border border-slate-100 shadow-2xs flex items-center justify-between gap-2 hover:border-blue-100 transition-all"
             >
               {/* Left: Avatar + Title & Time */}
-              <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex items-center gap-2 min-w-0">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black text-white shrink-0 shadow-2xs ${task.avatarBg}`}
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black text-white shrink-0 shadow-2xs ${task.avatarBg}`}
                 >
                   {task.initials}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-xs font-black text-[#0F172A] truncate">
+                  <span className="text-xs font-bold text-[#0F172A] truncate">
                     {task.title}
                   </span>
-                  <span className="text-[10px] text-[#94A3B8] font-medium truncate">
+                  <span className="text-[9px] text-[#94A3B8] font-medium truncate">
                     {task.time} · {task.assignee}
                   </span>
                 </div>
@@ -334,20 +334,20 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
       </div>
 
       {/* Footer Navigation */}
-      <div className="mt-4 pt-3.5 border-t border-gray-100 flex items-center justify-between text-xs text-[#94A3B8] font-medium" onClick={(e) => e.stopPropagation()}>
-        <span>Delivery cadence: on track</span>
+      <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-[#94A3B8] font-medium" onClick={(e) => e.stopPropagation()}>
+        <span className="text-[11px]">Delivery: on track</span>
         <Link
           to="/admin/calendar"
           onClick={(e) => e.stopPropagation()}
-          className="text-xs font-black text-[#2563EB] hover:underline flex items-center gap-1 cursor-pointer"
+          className="text-[11px] font-bold text-[#2563EB] hover:underline flex items-center gap-0.5 cursor-pointer"
         >
-          Full calendar &rarr;
+          Calendar &rarr;
         </Link>
       </div>
 
       {/* Quick Add Task Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 w-screen h-screen bg-slate-950/70 backdrop-blur-md z-[9999] flex items-center justify-center p-4 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
           <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-gray-100 space-y-4 animate-scale-up" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <h3 className="text-sm font-black text-gray-900">Add Today's Task</h3>

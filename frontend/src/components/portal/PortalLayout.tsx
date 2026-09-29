@@ -1,6 +1,7 @@
 import { Outlet } from "react-router";
 import { CreoTopNavbar } from "./CreoTopNavbar";
 import { CreoFooter } from "./CreoFooter";
+import { PortalBottomNav } from "./PortalBottomNav";
 import { useRouteMemory } from "../../lib/useRouteMemory";
 
 export function PortalLayout() {
@@ -22,13 +23,19 @@ export function PortalLayout() {
       {/* Main Content Area — wide bento grid, scrolls naturally */}
       <main
         id="main-content"
-        className="flex-1 w-full px-0 pt-24 pb-7 animate-page-in"
+        className="flex-1 w-full px-0 pt-24 pb-24 xl:pb-7 animate-page-in"
       >
         <Outlet />
       </main>
 
       {/* Footer */}
-      <CreoFooter />
+      <div className="pb-16 xl:pb-0">
+        <CreoFooter />
+      </div>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <PortalBottomNav />
     </div>
   );
 }
+

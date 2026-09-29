@@ -422,7 +422,7 @@ export function PortalDeliverablesPage() {
                 : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
             }`}
           >
-            <span className="size-2 rounded-full bg-[#7FA0D6]400" />
+            <span className="size-2 rounded-full bg-emerald-400" />
             <span>Ready to Publish / Approved ({countApproved})</span>
           </button>
         </div>
@@ -548,7 +548,7 @@ export function PortalDeliverablesPage() {
 
                   {/* Status Badge */}
                   {item.statusBadgeVariant === "approved" && (
-                    <span className="bg-[#7FA0D6]50 text-emerald-600 border border-emerald-100 text-[11px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                    <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 text-[11px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1">
                       <Check className="size-3 stroke-[2.5]" />
                       <span>{item.statusBadgeText}</span>
                     </span>
