@@ -1,4 +1,6 @@
-import { useState } from "react";
+import os
+
+content = """import { useState } from "react";
 import { 
   CheckCircle2, ChevronRight,
   Link, Clock, Unlock,
@@ -405,3 +407,7 @@ export function ClientsPage() {
     </div>
   );
 }
+"""
+
+with open('src/pages/public/ClientsPage.tsx', 'w', encoding='utf-8') as f:
+    f.write(content)
