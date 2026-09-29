@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { 
   MessageSquare, 
-  AlertCircle, CheckCircle2, ChevronRight, Linkedin, BarChart3, FileSpreadsheet, HardDrive
+  AlertCircle, CheckCircle2, ChevronRight, BarChart3, FileSpreadsheet, HardDrive
 } from "lucide-react";
 
 export function AboutPage() {
@@ -364,9 +364,9 @@ export function AboutPage() {
       </section>
 
       {/* ── Section 4: Leadership Pods ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-24 lg:py-32 border-t border-[#2A3446]">
+      <section className="max-w-[1240px] mx-auto px-6 py-24 lg:py-32 border-t border-[#2A3446]/50">
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446]/50 text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
             ⚡ THE PEOPLE BEHIND CREO
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-4">
@@ -376,19 +376,20 @@ export function AboutPage() {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Pod 1 */}
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl p-5 flex flex-col hover:border-[#7FA0D6]/40 transition group cursor-pointer">
+          <div className="bg-[#161F2D] border border-[#2A3446]/50 rounded-xl p-5 flex flex-col hover:border-[#7FA0D6]/40 transition group cursor-pointer">
             <div className="flex items-center gap-4 mb-4">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" alt="Ashok Kumar" className="w-12 h-12 rounded-full object-cover border border-[#2A3446]" />
+              <div className="w-12 h-12 rounded-full bg-[#0A0F18] border border-[#2A3446]/50 flex items-center justify-center text-[#7FA0D6] font-bold text-lg">
+                CA
+              </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-[#F8FAFC]">Ashok Kumar</span>
-                  <Linkedin className="size-3 text-[#7FA0D6]" />
+                  <span className="text-sm font-bold text-[#F8FAFC]">Core Architecture Pod</span>
                 </div>
-                <div className="text-[10px] text-[#97A0B3] mt-0.5">Lead Founder &amp; Architect</div>
+                <div className="text-[10px] text-[#97A0B3] mt-0.5">Runtime &amp; State Engine</div>
               </div>
             </div>
-            <p className="text-xs text-[#97A0B3] italic leading-relaxed flex-1 mb-4">
-              "Designing software that gives creative founders operational leverage."
+            <p className="text-xs text-[#97A0B3] leading-relaxed flex-1 mb-4">
+              Specialized team maintaining low-latency review pipelines, real-time sync, and SLA automation logic.
             </p>
             <div className="flex justify-end text-[#7FA0D6]">
               <ChevronRight className="size-4 group-hover:translate-x-1 transition-transform" />
@@ -396,9 +397,9 @@ export function AboutPage() {
           </div>
 
           {/* Pod 2 */}
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl p-5 flex flex-col hover:border-[#7FA0D6]/40 transition group cursor-pointer">
+          <div className="bg-[#161F2D] border border-[#2A3446]/50 rounded-xl p-5 flex flex-col hover:border-[#7FA0D6]/40 transition group cursor-pointer">
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-full bg-[#0A0F18] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] font-bold text-lg">
+              <div className="w-12 h-12 rounded-full bg-[#0A0F18] border border-[#2A3446]/50 flex items-center justify-center text-[#7FA0D6] font-bold text-lg">
                 SP
               </div>
               <div>
@@ -417,9 +418,9 @@ export function AboutPage() {
           </div>
 
           {/* Pod 3 */}
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl p-5 flex flex-col hover:border-[#7FA0D6]/40 transition group cursor-pointer">
+          <div className="bg-[#161F2D] border border-[#2A3446]/50 rounded-xl p-5 flex flex-col hover:border-[#7FA0D6]/40 transition group cursor-pointer">
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-12 h-12 rounded-full bg-[#0A0F18] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] font-bold text-lg">
+              <div className="w-12 h-12 rounded-full bg-[#0A0F18] border border-[#2A3446]/50 flex items-center justify-center text-[#7FA0D6] font-bold text-lg">
                 IE
               </div>
               <div>
