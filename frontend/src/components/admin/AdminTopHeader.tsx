@@ -1,25 +1,24 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import { 
   Bell, 
+  Settings, 
   ChevronLeft, 
-  Check, 
   CheckCheck, 
   CalendarCheck, 
   DollarSign, 
   Users, 
   Clock, 
-  ExternalLink, 
-  ShieldCheck, 
-  Trash2, 
-  LogOut, 
-  Menu
+  ExternalLink,
+  ShieldCheck,
+  Trash2,
+  SlidersHorizontal,
+  Volume2
 } from "lucide-react";
 import { AdminKPIs } from "../../types/ops";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../lib/auth-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "../../lib/http";
-import { useAdminSidebar } from "./AdminSidebarContext";
 
 interface AdminTopHeaderProps {
   title?: string;
@@ -41,12 +40,40 @@ interface NotificationItem {
   is_read?: boolean;
 }
 
-const DEFAULT_NOTIFICATIONS: NotificationItem[] = [];
+const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
+  {
+    id: "n-1",
+    title: "Leave Request Submitted",
+    message: "Elena Rostova requested 3 days of medical/personal leave.",
+    link: "/admin/leaves",
+    type: "leave",
+    created_at: "10 mins ago",
+    is_read: false,
+  },
+  {
+    id: "n-2",
+    title: "Retainer Counter-Offer",
+    message: "Northwind Labs proposed $12,500/mo for Enterprise Tier.",
+    link: "/admin/revenue",
+    type: "revenue",
+    created_at: "45 mins ago",
+    is_read: false,
+  },
+  {
+    id: "n-3",
+    title: "Pod A Delivery Warning",
+    message: "Sprint capacity at 92%. Review task queue allocation.",
+    link: "/admin/team",
+    type: "team",
+    created_at: "2 hours ago",
+    is_read: true,
+  },
+];
 
 export function AdminTopHeader({
   title,
   activeTab = "Dashboard",
-  setActiveTab: _setActiveTab,
+  setActiveTab,
   kpis: _kpis,
   refreshing: _refreshing,
   handleRefreshKpis: _handleRefreshKpis,
@@ -54,29 +81,25 @@ export function AdminTopHeader({
 }: AdminTopHeaderProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { toggleMobile } = useAdminSidebar();
 
-  const isClientRole =
-    user?.role === "client" ||
-    location.pathname.startsWith("/portal");
+  const isRevenueActive = activeTab === "Revenue" || location.pathname.includes("/admin/revenue") || location.pathname.includes("/admin/plans") || location.pathname.includes("/admin/sales");
+  const isTeamActive = activeTab === "Team Details" || location.pathname.includes("/admin/team") || location.pathname.includes("/admin/leaves") || location.pathname.includes("/admin/leave");
+  const isContentActive = activeTab === "Content Engine" || location.pathname.includes("/admin/deliverables") || location.pathname.includes("/admin/calendar") || location.pathname.includes("/admin/tasks");
+  const isClientActive = activeTab === "Client Details" || location.pathname.includes("/admin/clients");
+  const isSupportActive = activeTab === "Support" || activeTab === "SLA & Support" || location.pathname.includes("/admin/support") || location.pathname.includes("/admin/sla") || location.pathname.includes("/admin/escalations");
 
-  const isMemberRole =
-    !isClientRole &&
-    (user?.role === "team_member" ||
-      user?.role === "editor" ||
-      user?.role === "designer" ||
-      location.pathname.startsWith("/workstation") ||
-      location.pathname.startsWith("/member"));
-
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [teamDropdownOpen, setTeamDropdownOpen] = useState(false);
+  const [contentDropdownOpen, setContentDropdownOpen] = useState(false);
+  const [supportDropdownOpen, setSupportDropdownOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [settingsDropdownOpen, setSettingsDropdownOpen] = useState(false);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const notifRef = useRef<HTMLDivElement>(null);
-  const profileRef = useRef<HTMLDivElement>(null);
+  const settingsRef = useRef<HTMLDivElement>(null);
 
   const { data: serverNotifications = [] } = useQuery<NotificationItem[]>({
     queryKey: ["admin-notifications"],
@@ -94,27 +117,7 @@ export function AdminTopHeader({
   });
 
   const rawNotifications = serverNotifications.length > 0 ? serverNotifications : DEFAULT_NOTIFICATIONS;
-  const notificationsList = rawNotifications
-    .filter((n) => !deletedIds.has(n.id))
-    .filter((n) => {
-      if (user?.role === "team_lead") {
-        if (n.type === "revenue") return false;
-        if (n.message.includes("Pod B") || n.message.includes("Pod C") || n.message.includes("Pod D") || n.message.includes("Pod E")) return false;
-      }
-      return true;
-    })
-    .map((n) => {
-      const isRead = Boolean(n.is_read || readIds.has(n.id));
-      if (user?.role === "team_lead") {
-        if (n.link?.includes("/admin/leaves") || n.link?.includes("/admin/leave")) {
-          return { ...n, is_read: isRead, link: "/lead/schedule" };
-        }
-        if (n.link?.includes("/admin/team")) {
-          return { ...n, is_read: isRead, link: "/admin/pod-dashboard" };
-        }
-      }
-      return { ...n, is_read: isRead };
-    });
+  const notificationsList = rawNotifications.filter((n) => !deletedIds.has(n.id));
   const unreadCount = notificationsList.filter((n) => !n.is_read).length;
 
   useEffect(() => {
@@ -122,8 +125,8 @@ export function AdminTopHeader({
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
         setNotificationOpen(false);
       }
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setProfileDropdownOpen(false);
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setSettingsDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -131,24 +134,9 @@ export function AdminTopHeader({
   }, []);
 
   const handleMarkAllAsRead = async () => {
-    const allIds = notificationsList.map((n) => n.id);
-    setReadIds((prev) => new Set([...prev, ...allIds]));
     try {
       await request("/api/v1/notifications/mark-all-read", {
         method: "POST",
-      });
-      queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
-    } catch {
-      // optimistic fallback
-    }
-  };
-
-  const handleMarkSingleAsRead = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    setReadIds((prev) => new Set([...prev, id]));
-    try {
-      await request(`/api/v1/notifications/${id}/read`, {
-        method: "PATCH",
       });
       queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
     } catch {
@@ -173,8 +161,8 @@ export function AdminTopHeader({
     const allIds = notificationsList.map((n) => n.id);
     setDeletedIds((prev) => new Set([...prev, ...allIds]));
     try {
-      await request("/api/v1/notifications", {
-        method: "DELETE",
+      await request("/api/v1/notifications/mark-all-read", {
+        method: "POST",
       });
       queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
     } catch {
@@ -183,7 +171,6 @@ export function AdminTopHeader({
   };
 
   const handleNotificationClick = async (item: NotificationItem) => {
-    setReadIds((prev) => new Set([...prev, item.id]));
     try {
       await request(`/api/v1/notifications/${item.id}/read`, {
         method: "PATCH",
@@ -201,66 +188,32 @@ export function AdminTopHeader({
   const getNotifIcon = (type?: string) => {
     switch (type) {
       case "leave":
-        return <CalendarCheck className="w-4 h-4 text-[#7FA0D6]" />;
+        return <CalendarCheck className="w-4 h-4 text-blue-600" />;
       case "revenue":
-        return <DollarSign className="w-4 h-4 text-[#34D399]" />;
+        return <DollarSign className="w-4 h-4 text-emerald-600" />;
       case "team":
-        return <Users className="w-4 h-4 text-[#D8BF9B]" />;
+        return <Users className="w-4 h-4 text-purple-600" />;
       default:
-        return <ShieldCheck className="w-4 h-4 text-[#BCCCE6]" />;
+        return <ShieldCheck className="w-4 h-4 text-indigo-600" />;
     }
   };
 
   const getNotifBadgeBg = (type?: string) => {
     switch (type) {
       case "leave":
-        return "bg-[#7FA0D6]/15 border-[#7FA0D6]/30";
+        return "bg-blue-50 border-blue-100";
       case "revenue":
-        return "bg-[#34D399]/15 border-[#34D399]/30";
+        return "bg-[#7FA0D6]50 border-emerald-100";
       case "team":
-        return "bg-[#D8BF9B]/15 border-[#D8BF9B]/30";
+        return "bg-purple-50 border-purple-100";
       default:
-        return "bg-[#BCCCE6]/15 border-[#BCCCE6]/30";
+        return "bg-indigo-50 border-indigo-100";
     }
   };
 
   const resolvedTitle =
     title ||
-    (location.pathname === "/portal" || location.pathname === "/portal/"
-      ? "Client Dashboard"
-      : location.pathname.startsWith("/portal/deliverables")
-      ? "Content Deliverables"
-      : location.pathname.startsWith("/portal/calendar")
-      ? "Content Calendar"
-      : location.pathname.startsWith("/portal/creative-pod")
-      ? "Creative Pod"
-      : location.pathname.startsWith("/portal/payments")
-      ? "Plans & Billing"
-      : location.pathname.startsWith("/portal/support")
-      ? "Support Desk"
-      : location.pathname.startsWith("/portal/account")
-      ? "Account Settings"
-      : location.pathname === "/portal/slack"
-      ? "Slack Workspace Hub"
-      : location.pathname.startsWith("/workstation/tasks") || location.pathname.startsWith("/member/tasks")
-      ? "My Tasks"
-      : location.pathname.startsWith("/workstation/schedule") || location.pathname.startsWith("/member/schedule")
-      ? "My Schedule & PTO"
-      : location.pathname.startsWith("/workstation") || location.pathname.startsWith("/member")
-      ? "Workstation Overview"
-      : location.pathname.includes("/slack")
-      ? "Slack Workspace Hub"
-      : location.pathname.includes("/admin/pod-dashboard") || location.pathname.includes("/lead/dashboard")
-      ? "Team Details"
-      : location.pathname.includes("/lead/tasks")
-      ? "Content Engine"
-      : location.pathname.includes("/lead/deliverables")
-      ? "Content Engine"
-      : location.pathname.includes("/lead/schedule")
-      ? "Team Details"
-      : location.pathname.includes("/lead/clients")
-      ? "Client Details"
-      : location.pathname.includes("/admin/revenue")
+    (location.pathname.includes("/admin/revenue")
       ? "Revenue Engine"
       : location.pathname.includes("/admin/plans") || location.pathname.includes("/admin/sales")
       ? "Manage Plans & Negotiations"
@@ -286,71 +239,236 @@ export function AdminTopHeader({
       ? "Executive Analytics"
       : location.pathname.includes("/admin/addons")
       ? "Add-ons Catalog"
+      : location.pathname.includes("/admin/escalations")
+      ? "SLA Escalations"
       : location.pathname.includes("/admin/settings")
       ? "System Settings"
       : activeTab);
 
   return (
-    <div className="sticky top-0 z-40 w-full bg-[#0B111C]/90 backdrop-blur-md pt-2 sm:pt-2.5 pb-1.5 sm:pb-2 px-3.5 sm:px-6 lg:px-8 transition-all">
-      <header className="max-w-[1500px] mx-auto bg-[#161F2D] rounded-xl sm:rounded-full border border-[#2A3446] px-3.5 sm:px-5 lg:px-6 py-1.5 sm:py-2 flex items-center justify-between shadow-[0_4px_20px_rgba(5,8,16,0.5)] min-h-[44px] sm:min-h-[48px]">
-        {/* Left Section: Mobile Hamburger + Back Button + Mobile Brand Logo + Title */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          {/* Mobile Hamburger Menu Toggle Button */}
-          <button
-            type="button"
-            onClick={toggleMobile}
-            className="md:hidden size-8 rounded-full flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#1F2C3F] transition-all cursor-pointer border border-transparent hover:border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] shrink-0"
-            aria-label="Open navigation sidebar"
-            title="Open navigation menu"
-          >
-            <Menu className="w-4 h-4" />
-          </button>
-
+    <div className="sticky top-0 z-40 w-full bg-[#F8FAFC]/90 backdrop-blur-md pt-5 pb-3 px-6 transition-all">
+      <header className="max-w-[1500px] mx-auto bg-white rounded-full border border-gray-100 px-8 lg:px-10 py-3.5 flex items-center justify-between shadow-[0_4px_30px_rgba(0,0,0,0.04)] min-h-[70px]">
+        {/* Left Section: Active Title */}
+        <div className="flex items-center gap-3 min-w-[200px]">
           {showBackButton && (
-            <Link
-              to={isClientRole ? "/portal" : isMemberRole ? "/workstation" : "/admin"}
-              className="p-1 rounded-full hover:bg-[#1F2C3F] text-[#97A0B3] hover:text-white transition-colors shrink-0"
-              title="Go Back"
-            >
-              <ChevronLeft className="w-4 h-4" />
+            <Link to="/admin" className="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors">
+              <ChevronLeft className="w-5 h-5" />
             </Link>
           )}
-
-          {/* Brand Logo - visible on mobile where sidebar is inside drawer */}
-          <Link
-            to={isClientRole ? "/portal" : isMemberRole ? "/workstation" : user?.role === "team_lead" ? "/admin/pod-dashboard" : "/admin"}
-            className="md:hidden flex items-center gap-0.5 font-black text-white text-sm sm:text-base tracking-tight shrink-0 px-1 hover:opacity-85 transition-opacity"
-            title="creo. Home"
-          >
-            creo<span className="text-[#7FA0D6] text-base sm:text-lg leading-none">.</span>
-          </Link>
-
-          <span className="h-4 w-px bg-[#2A3446] mx-1 hidden sm:block shrink-0" />
-
-          {/* Active Page Title */}
-          <h1 className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
+          <h1 className="text-xl lg:text-2xl font-black text-[#0F172A] tracking-tight">
             {resolvedTitle}
           </h1>
         </div>
 
-        {/* Right Utility Icons (Bell with Functional Dropdown, Profile with Dropdown) */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 justify-end">
+        {/* Center Pill Capsule maintaining exact original tab labels */}
+        <div className="hidden lg:flex items-center gap-2 bg-[#F1F4F9] px-5 py-2 rounded-full text-xs font-bold text-[#475569]">
+          <Link
+            to="/admin"
+            onClick={() => setActiveTab?.("Dashboard")}
+            className={`px-3.5 py-1.5 rounded-full transition-all ${
+              activeTab === "Dashboard" && location.pathname === "/admin"
+                ? "text-[#0F172A] font-black bg-white shadow-sm"
+                : "hover:text-[#0F172A]"
+            }`}
+          >
+            Dashboard
+          </Link>
+
+          {/* Revenue Dropdown container */}
+          <div 
+            className="relative group"
+            onMouseEnter={() => setDropdownOpen(true)}
+            onMouseLeave={() => setDropdownOpen(false)}
+          >
+            <span
+              className={`block px-3.5 py-1.5 rounded-full cursor-pointer transition-all ${
+                isRevenueActive
+                  ? "text-[#0F172A] font-black bg-white shadow-sm"
+                  : "hover:text-[#0F172A]"
+              }`}
+            >
+              Revenue
+            </span>
+            {/* Dropdown Menu */}
+            <div 
+              className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 transition-all flex flex-col overflow-hidden z-50 ${
+                dropdownOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"
+              }`}
+            >
+              <Link 
+                to="/admin/revenue" 
+                onClick={() => setDropdownOpen(false)}
+                className="px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              >
+                Income Details
+              </Link>
+              <Link 
+                to="/admin/plans" 
+                onClick={() => setDropdownOpen(false)}
+                className="px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              >
+                Manage Plans & Negotiations
+              </Link>
+            </div>
+          </div>
+
+          {/* Team Details Dropdown container */}
+          <div 
+            className="relative group"
+            onMouseEnter={() => setTeamDropdownOpen(true)}
+            onMouseLeave={() => setTeamDropdownOpen(false)}
+          >
+            <span
+              className={`block px-3.5 py-1.5 rounded-full cursor-pointer transition-all ${
+                isTeamActive
+                  ? "text-[#0F172A] font-black bg-white shadow-sm"
+                  : "hover:text-[#0F172A]"
+              }`}
+            >
+              Team Details
+            </span>
+            {/* Dropdown Menu */}
+            <div 
+              className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 transition-all flex flex-col overflow-hidden z-50 ${
+                teamDropdownOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"
+              }`}
+            >
+              <Link 
+                to="/admin/team" 
+                onClick={() => setTeamDropdownOpen(false)}
+                className="px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              >
+                Team Management
+              </Link>
+              <Link 
+                to="/admin/leaves" 
+                onClick={() => setTeamDropdownOpen(false)}
+                className="px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              >
+                Leave Requests
+              </Link>
+            </div>
+          </div>
+
+          {/* --- CREO LOGO CENTER BADGE WITH BLUE DOT --- */}
+          <Link to="/admin" className="flex items-center gap-0.5 px-3 py-1 font-black text-[#0F172A] text-base tracking-tighter hover:opacity-80 transition-opacity">
+            creo<span className="text-[#2563EB] text-lg leading-none">.</span>
+          </Link>
+
+          {/* Content Engine Dropdown container */}
+          <div 
+            className="relative group"
+            onMouseEnter={() => setContentDropdownOpen(true)}
+            onMouseLeave={() => setContentDropdownOpen(false)}
+          >
+            <span
+              className={`block px-3.5 py-1.5 rounded-full cursor-pointer transition-all ${
+                isContentActive
+                  ? "text-[#0F172A] font-black bg-white shadow-sm"
+                  : "hover:text-[#0F172A]"
+              }`}
+            >
+              Content Engine
+            </span>
+            {/* Dropdown Menu */}
+            <div 
+              className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-gray-100 transition-all flex flex-col overflow-hidden z-50 ${
+                contentDropdownOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"
+              }`}
+            >
+              <Link 
+                to="/admin/deliverables" 
+                onClick={() => setContentDropdownOpen(false)}
+                className="px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              >
+                Deliverables
+              </Link>
+              <Link 
+                to="/admin/calendar" 
+                onClick={() => setContentDropdownOpen(false)}
+                className="px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              >
+                Calendar
+              </Link>
+              <Link 
+                to="/admin/tasks" 
+                onClick={() => setContentDropdownOpen(false)}
+                className="px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              >
+                Task Queue
+              </Link>
+            </div>
+          </div>
+
+          {/* Client Details Direct Link (No Dropdown) */}
+          <Link
+            to="/admin/clients"
+            className={`px-3.5 py-1.5 rounded-full cursor-pointer transition-all ${
+              isClientActive
+                ? "text-[#0F172A] font-black bg-white shadow-sm"
+                : "hover:text-[#0F172A]"
+            }`}
+          >
+            Client Details
+          </Link>
+
+          {/* Support Dropdown container */}
+          <div 
+            className="relative group"
+            onMouseEnter={() => setSupportDropdownOpen(true)}
+            onMouseLeave={() => setSupportDropdownOpen(false)}
+          >
+            <span
+              className={`block px-3.5 py-1.5 rounded-full cursor-pointer transition-all ${
+                isSupportActive
+                  ? "text-[#0F172A] font-black bg-white shadow-sm"
+                  : "hover:text-[#0F172A]"
+              }`}
+            >
+              Support
+            </span>
+            {/* Dropdown Menu */}
+            <div 
+              className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 transition-all flex flex-col overflow-hidden z-50 ${
+                supportDropdownOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"
+              }`}
+            >
+              <Link 
+                to="/admin/support" 
+                onClick={() => setSupportDropdownOpen(false)}
+                className="px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              >
+                Support Tickets
+              </Link>
+              <Link 
+                to="/admin/support/sla" 
+                onClick={() => setSupportDropdownOpen(false)}
+                className="px-4 py-2.5 text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+              >
+                SLA Performance
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Utility Icons (Bell with Functional Dropdown & Delete Options, Gear with Dropdown, Blue N avatar) */}
+        <div className="flex items-center gap-3.5 min-w-[200px] justify-end">
           {/* Functional Notification Bell Container */}
           <div className="relative" ref={notifRef}>
             <button
               type="button"
               title="Notifications"
               onClick={() => setNotificationOpen(!notificationOpen)}
-              className={`size-8 sm:size-8.5 rounded-full flex items-center justify-center transition-all relative cursor-pointer ${
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all relative cursor-pointer ${
                 notificationOpen
-                  ? "bg-[#1F2C3F] text-white shadow-sm border border-[#7FA0D6]"
-                  : "text-[#97A0B3] hover:text-white hover:bg-[#1F2C3F]"
+                  ? "bg-blue-50 text-blue-600 shadow-sm"
+                  : "text-[#64748B] hover:text-[#0F172A] hover:bg-gray-100"
               }`}
               aria-label="Notifications"
             >
-              <Bell className="size-4 sm:size-4.5" />
+              <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 size-3.5 sm:size-4 bg-[#7FA0D6] text-[#0B111C] rounded-full text-[9px] sm:text-[10px] font-black flex items-center justify-center border border-[#161F2D] animate-pulse">
+                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-[#2563EB] text-white rounded-full text-[10px] font-bold flex items-center justify-center border-2 border-white animate-pulse">
                   {unreadCount}
                 </span>
               )}
@@ -358,27 +476,27 @@ export function AdminTopHeader({
 
             {/* Notification Dropdown Panel */}
             {notificationOpen && (
-              <div className="absolute right-0 mt-2 sm:mt-3 w-[calc(100vw-24px)] sm:w-96 max-w-[400px] bg-[#161F2D] rounded-3xl shadow-[0_12px_40px_rgba(5,8,16,0.7)] border border-[#2A3446] z-50 overflow-hidden animate-scale-up text-left">
+              <div className="absolute right-0 mt-3 w-96 max-w-[90vw] bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] border border-gray-100 z-50 overflow-hidden animate-scale-up">
                 {/* Header */}
-                <div className="px-4 sm:px-5 py-3.5 border-b border-[#2A3446] flex items-center justify-between bg-[#0B111C]/60">
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xs sm:text-sm font-bold text-white">Notifications</h3>
+                    <h3 className="text-sm font-bold text-gray-900">Notifications</h3>
                     {unreadCount > 0 ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-50 text-blue-600 border border-blue-200">
                         {unreadCount} Unread
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#1F2C3F] text-[#97A0B3]">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500">
                         All Caught Up
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-3">
                     {unreadCount > 0 && (
                       <button
                         onClick={handleMarkAllAsRead}
-                        className="text-[11px] font-bold text-[#7FA0D6] hover:underline flex items-center gap-1 cursor-pointer"
+                        className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
                         title="Mark all notifications as read"
                       >
                         <CheckCheck className="w-3.5 h-3.5" /> Read
@@ -387,7 +505,7 @@ export function AdminTopHeader({
                     {notificationsList.length > 0 && (
                       <button
                         onClick={handleClearAllNotifications}
-                        className="text-[11px] font-bold text-[#97A0B3] hover:text-[#F87171] flex items-center gap-1 cursor-pointer transition-colors"
+                        className="text-[11px] font-bold text-gray-400 hover:text-rose-600 flex items-center gap-1 cursor-pointer transition-colors"
                         title="Delete all notifications"
                       >
                         <Trash2 className="w-3.5 h-3.5" /> Clear
@@ -397,63 +515,53 @@ export function AdminTopHeader({
                 </div>
 
                 {/* Notification Items List */}
-                <div className="max-h-[340px] sm:max-h-[380px] overflow-y-auto divide-y divide-[#2A3446] scrollbar-thin">
+                <div className="max-h-[380px] overflow-y-auto divide-y divide-gray-50 scrollbar-thin">
                   {notificationsList.map((item) => (
                     <div
                       key={item.id}
                       onClick={() => handleNotificationClick(item)}
-                      className={`p-3.5 sm:p-4 transition-colors cursor-pointer flex items-start gap-3 hover:bg-[#1F2C3F] group relative ${
-                        !item.is_read ? "bg-[#7FA0D6]/10" : "bg-transparent opacity-85"
+                      className={`p-4 transition-colors cursor-pointer flex items-start gap-3 hover:bg-gray-50 group relative ${
+                        !item.is_read ? "bg-blue-50/25" : "bg-white opacity-85"
                       }`}
                     >
                       {/* Icon */}
-                      <div className={`size-8 sm:size-9 rounded-2xl flex items-center justify-center border shrink-0 ${getNotifBadgeBg(item.type)}`}>
+                      <div className={`w-9 h-9 rounded-2xl flex items-center justify-center border shrink-0 ${getNotifBadgeBg(item.type)}`}>
                         {getNotifIcon(item.type)}
                       </div>
 
                       {/* Content */}
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between gap-1">
-                          <h4 className={`text-xs truncate ${!item.is_read ? "font-bold text-white" : "font-medium text-[#F1F5F9]"}`}>
+                          <h4 className={`text-xs truncate ${!item.is_read ? "font-black text-gray-900" : "font-bold text-gray-700"}`}>
                             {item.title}
                           </h4>
                           <div className="flex items-center gap-1.5 shrink-0">
                             {!item.is_read && (
-                              <>
-                                <span className="w-2 h-2 rounded-full bg-[#7FA0D6]" />
-                                <button
-                                  type="button"
-                                  title="Mark as read"
-                                  onClick={(e) => handleMarkSingleAsRead(e, item.id)}
-                                  className="p-1 rounded-lg text-[#7FA0D6] hover:bg-[#1F2C3F] transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
-                                >
-                                  <Check className="w-3.5 h-3.5" />
-                                </button>
-                              </>
+                              <span className="w-2 h-2 rounded-full bg-blue-600" />
                             )}
                             {/* Delete Single Notification Button */}
                             <button
                               type="button"
                               title="Delete notification"
                               onClick={(e) => handleDeleteNotification(e, item.id)}
-                              className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F87171] hover:bg-[#1F2C3F] transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
+                              className="p-1 rounded-lg text-gray-300 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
 
-                        <p className="text-[11px] text-[#97A0B3] line-clamp-2 leading-relaxed font-medium">
+                        <p className="text-[11px] text-gray-600 line-clamp-2 leading-relaxed font-medium">
                           {item.message}
                         </p>
 
-                        <div className="flex items-center justify-between pt-1 text-[10px] text-[#97A0B3]/80 font-semibold">
+                        <div className="flex items-center justify-between pt-1 text-[10px] text-gray-400 font-semibold">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {item.created_at || "Just now"}
                           </span>
                           {item.link && (
-                            <span className="text-[#7FA0D6] font-bold flex items-center gap-0.5 hover:underline">
+                            <span className="text-blue-600 font-bold flex items-center gap-0.5 hover:underline">
                               Open <ExternalLink className="w-2.5 h-2.5" />
                             </span>
                           )}
@@ -463,91 +571,114 @@ export function AdminTopHeader({
                   ))}
 
                   {notificationsList.length === 0 && (
-                    <div className="p-8 text-center text-[#97A0B3] space-y-2">
-                      <Bell className="w-8 h-8 text-[#2A3446] mx-auto" />
-                      <p className="text-xs font-bold text-white">No notifications</p>
-                      <p className="text-[11px] text-[#97A0B3]">You're all caught up with your workspace alerts.</p>
+                    <div className="p-8 text-center text-gray-400 space-y-2">
+                      <Bell className="w-8 h-8 text-gray-300 mx-auto" />
+                      <p className="text-xs font-bold text-gray-600">No notifications</p>
+                      <p className="text-[11px] text-gray-400">You're all caught up with your workspace alerts.</p>
                     </div>
                   )}
                 </div>
 
                 {/* Footer */}
-                <div className="p-3 bg-[#0B111C]/60 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                  <span className="text-[11px] text-[#97A0B3] font-medium">Real-time alerts</span>
+                <div className="p-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs">
+                  <span className="text-[11px] text-gray-500 font-medium">Real-time alerts</span>
                   <Link
-                    to={isClientRole ? "/portal/deliverables" : isMemberRole ? "/workstation/schedule" : "/admin/leaves"}
+                    to="/admin/leaves"
                     onClick={() => setNotificationOpen(false)}
-                    className="text-[11px] font-bold text-[#7FA0D6] hover:underline"
+                    className="text-[11px] font-bold text-blue-600 hover:underline"
                   >
-                    {isClientRole ? "View Deliverables →" : isMemberRole ? "View Schedule →" : "View Approvals →"}
+                    View Approvals &rarr;
                   </Link>
                 </div>
               </div>
             )}
           </div>
           
-          {/* Profile Avatar with Interactive Dropdown Menu */}
-          <div className="relative" ref={profileRef}>
+          {/* Settings Container - Dropdown Attached (No Pop-up Modal) */}
+          <div className="relative" ref={settingsRef}>
             <button
               type="button"
-              title={user?.full_name || "Profile & Account"}
-              onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-              className="size-8 sm:size-8.5 rounded-full bg-[#BCCCE6] hover:bg-[#D4E2F5] text-[#0B111C] font-black text-xs sm:text-sm flex items-center justify-center shadow-md shadow-[#050810]/40 cursor-pointer ml-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]"
-              aria-label="User profile menu"
+              title="Settings"
+              onClick={() => setSettingsDropdownOpen(!settingsDropdownOpen)}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                settingsDropdownOpen
+                  ? "bg-blue-50 text-blue-600 shadow-sm"
+                  : "text-[#64748B] hover:text-[#0F172A] hover:bg-gray-100"
+              }`}
+              aria-label="Settings"
             >
-              {(user?.full_name?.[0] || user?.email?.[0] || (isClientRole ? "C" : isMemberRole ? "D" : "A")).toUpperCase()}
+              <Settings className="w-5 h-5" />
             </button>
 
-            {/* Profile Dropdown Menu */}
-            {profileDropdownOpen && (
-              <div className="absolute right-0 mt-2 sm:mt-3 w-[calc(100vw-24px)] sm:w-72 max-w-[320px] bg-[#161F2D] rounded-3xl shadow-[0_12px_40px_rgba(5,8,16,0.7)] border border-[#2A3446] z-50 overflow-hidden animate-scale-up p-3 space-y-2 text-left">
-                {/* User Header */}
-                <div className="p-3 bg-[#0B111C]/80 rounded-2xl border border-[#2A3446] flex items-center gap-3">
-                  <div className="size-10 rounded-full bg-[#BCCCE6] text-[#0B111C] font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
-                    {(user?.full_name?.[0] || user?.email?.[0] || (isClientRole ? "C" : isMemberRole ? "D" : "A")).toUpperCase()}
+            {/* Attached Settings Dropdown Menu */}
+            {settingsDropdownOpen && (
+              <div className="absolute right-0 mt-3 w-72 bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] border border-gray-100 z-50 overflow-hidden animate-scale-up p-3 space-y-2">
+                {/* Header */}
+                <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-[#2563EB]" />
+                    <span className="text-xs font-black text-gray-900">Admin Settings</span>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-xs font-bold text-white truncate">
-                      {user?.full_name || (isClientRole ? (user?.company_name || "Client Account") : isMemberRole ? "David Kim" : user?.role === "team_lead" ? "Maya Lin" : "Admin User")}
-                    </h4>
-                    <p className="text-[11px] text-[#97A0B3] font-medium truncate">
-                      {user?.email || (isClientRole ? "client@brand.com" : isMemberRole ? "david.kim@creo.agency" : "admin@creo.agency")}
-                    </p>
-                    <div className="mt-1">
-                      <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 capitalize">
-                        {isClientRole
-                          ? "Client Account"
-                          : isMemberRole
-                          ? "Pod A · Sr. Motion"
-                          : user?.role === "team_lead"
-                          ? "Pod A Lead"
-                          : user?.role?.replace("_", " ") || "Administrator"}
-                      </span>
-                    </div>
-                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 capitalize">
+                    {user?.role?.replace("_", " ") || "Super Admin"}
+                  </span>
                 </div>
 
-                {/* Logout Button */}
-                <div className="pt-2 border-t border-[#2A3446]">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setProfileDropdownOpen(false);
-                      try {
-                        await logout();
-                      } catch {
-                        // ignore
-                      }
-                      navigate("/auth");
-                    }}
-                    className="w-full flex items-center justify-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-[#F87171] hover:bg-[#F87171]/15 hover:border-[#F87171]/30 border border-transparent transition-all cursor-pointer shadow-xs"
+                {/* Navigation Links */}
+                <div className="space-y-0.5">
+                  <Link
+                    to="/admin/settings"
+                    onClick={() => setSettingsDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                   >
-                    <LogOut className="w-4 h-4 text-[#F87171]" />
-                    <span>Sign Out / Log Out</span>
-                  </button>
+                    <SlidersHorizontal className="w-4 h-4 text-gray-400" />
+                    <span>System Settings</span>
+                  </Link>
+                  <Link
+                    to="/admin/support/sla"
+                    onClick={() => setSettingsDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-gray-400" />
+                    <span>SLA Configuration</span>
+                  </Link>
+                  <Link
+                    to="/admin/leaves"
+                    onClick={() => setSettingsDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  >
+                    <CalendarCheck className="w-4 h-4 text-gray-400" />
+                    <span>Leave Management</span>
+                  </Link>
+                </div>
+
+                {/* Preference Pills */}
+                <div className="pt-2 border-t border-gray-100 space-y-1.5 px-1">
+                  <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gray-50 text-[11px] font-semibold text-gray-600">
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="w-3 h-3 text-gray-400" />
+                      Auto-Refresh KPI
+                    </span>
+                    <span className="text-emerald-600 font-bold">15s Active</span>
+                  </div>
+                  <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-gray-50 text-[11px] font-semibold text-gray-600">
+                    <span className="flex items-center gap-1.5">
+                      <Volume2 className="w-3 h-3 text-gray-400" />
+                      Sound Alerts
+                    </span>
+                    <span className="text-blue-600 font-bold">Enabled</span>
+                  </div>
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Solid Blue Circle Avatar N */}
+          <div 
+            title={user?.full_name || "Admin User"}
+            className="w-10 h-10 rounded-full bg-[#0066FF] text-white font-black text-sm flex items-center justify-center shadow-md shadow-blue-500/25 cursor-pointer ml-1"
+          >
+            {(user?.full_name?.[0] || "N").toUpperCase()}
           </div>
         </div>
       </header>

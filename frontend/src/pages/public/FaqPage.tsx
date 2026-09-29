@@ -1,307 +1,201 @@
 import { useState } from "react";
-import { Link } from "react-router";
-import { ScrollReveal } from "../../components/ui/ScrollReveal";
-import {
-  ChevronDown,
-  Search,
-  ArrowRight,
-  Sparkles,
-  HelpCircle,
-  MessageSquare,
-  Clock,
-  CreditCard,
-  Palette,
-  Settings,
+import { 
+  Search, Layers, User, BarChart2, Database, 
+  Globe, ShieldCheck, ChevronDown, 
+  Headset, ArrowRight, Zap 
 } from "lucide-react";
 
-interface FaqItem {
-  question: string;
-  answer: string;
-  category: string;
-}
-
-const FAQ_ITEMS: FaqItem[] = [
+const faqs = [
   {
-    category: "Getting Started",
-    question: "How quickly will I see results?",
-    answer:
-      "Most clients receive their first content within 7 days of joining. You'll see initial engagement improvements within the first 2–3 weeks as we ramp up your content cadence and optimize based on early performance data.",
+    category: "Migration & Tools",
+    tag: "MIGRATION & WORKFLOW",
+    question: "How does CREO replace our existing stack of WhatsApp, Drive, and spreadsheets?",
+    icon: Layers,
+    answer: "CREO doesn't just store files; it connects them directly to team capacity and client sign-offs. Your briefs connect to Figma/Adobe, client feedback triggers automated SLA revision tickets to motion leads, and retainer hours calculate contribution margins automatically—eliminating the 7 fragmented silos.",
+    extra: (
+      <div className="text-[#7FA0D6] bg-[#0A0F18] border border-[#2A3446] rounded-md px-3 py-1 text-xs inline-flex items-center gap-1.5 mt-3">
+        <Zap className="size-3.5 fill-current" />
+        Typical agency migration completed in under 48 hours.
+      </div>
+    )
   },
   {
-    category: "Getting Started",
-    question: "How does the onboarding process work?",
-    answer:
-      "After signing up, you'll fill out a short brand questionnaire. Our team builds your growth plan within 7 days, and your first batch of content is delivered right after. You'll have access to your client portal throughout the process.",
+    category: "Client Portals & Approvals",
+    tag: "CLIENT PORTALS",
+    question: "Do our clients need to create a CREO account to review and approve deliverables?",
+    icon: User,
+    answer: "No. Clients receive a secure, 1-click magic link. They can view the asset, leave timestamped comments, and approve directly from their browser without ever logging in."
   },
   {
-    category: "Content & Revisions",
-    question: "What if I don't like the content?",
-    answer:
-      "Every plan includes 2 revision rounds so you can request changes before anything goes live. Our goal is to get it right — and with a 98% approval rate across our client base, we're confident you'll love what we create.",
+    category: "Capacity & Workflows",
+    tag: "CAPACITY & WORKLOAD",
+    question: "How are team capacity meters and burnout alerts calculated?",
+    icon: BarChart2,
+    answer: "CREO monitors active projects, assigned revision tickets, and typical turnaround times. If a designer exceeds 85% capacity based on their historical velocity, the system automatically flags them and pauses new assignments."
   },
   {
-    category: "Content & Revisions",
-    question: "Who creates my content?",
-    answer:
-      "A dedicated team of designers, copywriters, and strategists works on your account. You'll have a consistent team that learns your brand voice over time — not a rotating pool of freelancers.",
+    category: "Retainer Margins & Billing",
+    tag: "RETAINER ECONOMICS",
+    question: "How does the real-time contribution margin calculation work?",
+    icon: Database,
+    answer: "As your team logs hours or completes deliverables, CREO deducts their blended rate from the retainer's value in real-time, giving you an exact profit margin percentage before the month ends."
   },
   {
-    category: "Content & Revisions",
-    question: "How do I review and approve content?",
-    answer:
-      "Everything goes through your client portal. You'll get a notification when new content is ready, can preview it, leave comments, approve, or request revisions — all in one place.",
+    category: "Client Portals & Approvals",
+    tag: "WHITE-LABELING",
+    question: "Can we white-label the entire client experience with our own branding and custom CNAME?",
+    icon: Globe,
+    answer: "Yes. On the Growth and Network tiers, you can deploy CREO on your own domain (e.g., portal.youragency.com) with custom colors, logos, and email templates."
   },
   {
-    category: "Billing & Plans",
-    question: "Is there a contract or lock-in?",
-    answer:
-      "No lock-in. Monthly subscription — cancel anytime. We earn your business every month through results, not contracts.",
-  },
-  {
-    category: "Billing & Plans",
-    question: "Can I get more content than my plan includes?",
-    answer:
-      "Yes — purchase extra posters, reels, or stories at any time through our add-on system directly from your client portal. No plan upgrade needed.",
-  },
-  {
-    category: "Platforms & Integration",
-    question: "What platforms do you create content for?",
-    answer:
-      "We create content optimized for Instagram, Facebook, LinkedIn, and Google Business Profile. All content is designed to perform across platforms, and we can tailor formats for specific channels as needed.",
-  },
-];
-
-const CATEGORIES = [
-  { id: "all", label: "All Questions", icon: HelpCircle },
-  { id: "Getting Started", label: "Getting Started", icon: Sparkles },
-  { id: "Content & Revisions", label: "Content & Revisions", icon: Palette },
-  { id: "Billing & Plans", label: "Billing & Plans", icon: CreditCard },
-  { id: "Platforms & Integration", label: "Platforms", icon: Settings },
+    category: "Security & Compliance",
+    tag: "SECURITY & COMPLIANCE",
+    question: "How does CREO handle enterprise data security and client media privacy?",
+    icon: ShieldCheck,
+    answer: "We are SOC-2 Type II certified. All media is encrypted at rest and in transit. You have granular control over who can download source files versus who can only view them."
+  }
 ];
 
 export function FaqPage() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-  const [activeCategory, setActiveCategory] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All Architecture');
 
-  const toggle = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
-
-  const filteredItems = FAQ_ITEMS.filter((item) => {
-    const matchesCategory =
-      activeCategory === "all" || item.category === activeCategory;
-    const matchesSearch =
-      searchQuery === "" ||
-      item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.answer.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+  const filteredFaqs = faqs.filter(item => {
+    const matchesSearch = item.question.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          item.answer.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'All Architecture' || item.category === selectedCategory;
+    return matchesSearch && matchesCategory;
   });
 
   return (
-    <div className="w-full">
-      {/* ── Hero Section ────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#E8F4FD] via-[#F0F7FD] to-white pt-10 pb-8 sm:pt-14 sm:pb-10">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#2B7BC4]/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-[#2B7BC4] shadow-sm border border-[#C9DFF0] mb-4">
-              <MessageSquare className="size-3.5" />
-              Quick Answers to Common Questions
-            </div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-[#0D2137] sm:text-5xl">
-              Frequently Asked Questions
-            </h1>
-            <p className="mt-4 text-sm sm:text-base leading-relaxed text-slate-600">
-              Everything you need to know about working with Creo.
-            </p>
+    <div className="min-h-screen bg-[#050810] pt-24 pb-20">
+      
+      {/* Hero Header & Search */}
+      <div className="max-w-4xl mx-auto px-6 text-center mb-12">
+        <div className="inline-flex items-center justify-center bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 rounded-full mb-6 gap-2">
+          <div className="relative size-2 flex items-center justify-center">
+            <span className="absolute inset-0 rounded-full bg-[#7FA0D6] animate-ping opacity-30"></span>
+            <span className="relative size-1.5 rounded-full bg-[#7FA0D6]"></span>
+          </div>
+          AGENCY OS KNOWLEDGE BASE
+        </div>
+        <h1 className="text-4xl sm:text-5xl font-black text-[#F8FAFC] tracking-tight max-w-2xl mx-auto mb-4">
+          Frequently Asked <br />
+          <span className="text-[#7FA0D6]">Questions</span>
+        </h1>
+        <p className="text-sm text-[#97A0B3] max-w-lg mx-auto text-center mt-4 mb-8 leading-relaxed">
+          Everything you need to know about deploying CREO across your creative teams, client pods, and unit economics.
+        </p>
 
-              {/* Search Bar */}
-              <div className="mt-6 max-w-md mx-auto relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setOpenIndex(null);
-                  }}
-                  placeholder="Search questions..."
-                  className="w-full rounded-2xl border border-[#C9DFF0] bg-white pl-11 pr-10 py-2.5 text-sm text-[#0D2137] shadow-sm focus:ring-2 focus:ring-[#2B7BC4]/30 focus:border-[#2B7BC4] outline-none transition-all"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setOpenIndex(null);
-                    }}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  >
-                    ×
-                  </button>
+        {/* Search Bar */}
+        <div className="max-w-2xl mx-auto bg-[#0A0F18] border border-[#2A3446] rounded-full py-3.5 px-5 flex items-center gap-3 text-xs text-[#F8FAFC] focus-within:border-[#7FA0D6] transition-colors mb-8">
+          <Search className="size-4 text-[#97A0B3]" />
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search questions on migration, client portals, capacity, or billing..." 
+            className="bg-transparent border-none outline-none flex-1 text-[#F8FAFC] placeholder:text-[#97A0B3]"
+          />
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto">
+          {["All Architecture", "Migration & Tools", "Client Portals & Approvals", "Capacity & Workflows", "Retainer Margins & Billing", "Security & Compliance"].map((tab) => (
+            <button 
+              key={tab}
+              onClick={() => setSelectedCategory(tab)}
+              className={
+                selectedCategory === tab
+                  ? "bg-[#BCCCE6] text-[#050810] font-bold text-xs px-4 py-1.5 rounded-full transition"
+                  : "text-[#97A0B3] hover:text-[#F8FAFC] text-xs px-3 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446] transition-colors"
+              }
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* FAQ Bento Accordion Rows */}
+      <div className="max-w-3xl mx-auto px-6 space-y-4 mt-10">
+        
+        {filteredFaqs.length === 0 ? (
+          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-8 text-center text-[#97A0B3] text-sm font-medium">
+            No questions matching your search.
+          </div>
+        ) : (
+          filteredFaqs.map((faq, idx) => {
+            const isOpen = openIndex === idx;
+            const Icon = faq.icon;
+            return (
+              <div 
+                key={idx} 
+                className={`bg-[#161F2D] border ${isOpen ? 'border-[#7FA0D6] shadow-[0_0_20px_rgba(127,160,214,0.05)] border-l-2 border-l-[#7FA0D6]' : 'border-[#2A3446] hover:border-[#2A3446]/80 border-l-2 border-l-transparent'} rounded-2xl p-5 sm:p-6 transition-all`}
+              >
+                <div 
+                  className="flex items-center justify-between w-full cursor-pointer"
+                  onClick={() => setOpenIndex(isOpen ? null : idx)}
+                >
+                  <div className="flex items-center gap-4 pr-4">
+                    <div className="w-12 h-12 rounded-xl bg-[#0A0F18] border border-[#2A3446] flex items-center justify-center shrink-0 text-[#7FA0D6]">
+                      <Icon className="size-5" />
+                    </div>
+                    <h3 className="text-sm sm:text-base font-bold text-[#F8FAFC] leading-snug">
+                      {faq.question}
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="hidden sm:inline-flex border border-[#2A3446] text-[#7FA0D6] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                      {faq.tag}
+                    </span>
+                    <div className={`w-8 h-8 rounded-full border border-[#2A3446] flex items-center justify-center shrink-0 transition-colors ${isOpen ? 'bg-[#0A0F18] text-[#F8FAFC]' : 'text-[#97A0B3] hover:bg-[#0A0F18]'}`}>
+                      <ChevronDown className={`size-4 transition-transform duration-300 ease-out ${isOpen ? 'rotate-180' : ''}`} />
+                    </div>
+                  </div>
+                </div>
+                
+                {isOpen && (
+                  <div className="pl-0 sm:pl-16 mt-4 animate-fade-in">
+                    <p className="text-xs sm:text-sm text-[#97A0B3] leading-relaxed">
+                      {faq.answer}
+                    </p>
+                    {faq.extra && faq.extra}
+                  </div>
                 )}
               </div>
+            );
+          })
+        )}
+
+      </div>
+
+      {/* Operational Support Card (Bottom Bento) */}
+      <div className="max-w-3xl mx-auto px-6">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 mt-12 shadow-sm">
+          <div className="flex items-center gap-6 text-center sm:text-left w-full">
+            <div className="px-4 h-14 rounded-2xl bg-[#0A0F18] border border-[#2A3446] flex items-center justify-center gap-3 text-[#7FA0D6] shrink-0 mx-auto sm:mx-0 relative">
+              <Headset className="size-6" />
+              <svg className="w-5 h-5 opacity-60 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-bold text-[#F8FAFC]">
+                Have specific operational questions about your agency setup?
+              </h3>
+              <p className="text-xs text-[#97A0B3] mt-1.5">
+                Speak directly with an Agency Solutions Architect. Average response under 15 minutes.
+              </p>
             </div>
           </div>
-        </section>
-
-        {/* ── Category Filters + Accordion ────────────────────────────────── */}
-        <section className="bg-white py-12 sm:py-16">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-            {/* Category Pills */}
-            <ScrollReveal variant="up" className="flex flex-wrap justify-center gap-2 mb-8">
-              {CATEGORIES.map((cat) => {
-                const Icon = cat.icon;
-                return (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveCategory(cat.id);
-                      setOpenIndex(null);
-                    }}
-                    className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
-                      activeCategory === cat.id
-                        ? "bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] text-white shadow-md shadow-blue-500/20"
-                        : "bg-slate-100 text-slate-600 hover:bg-[#E8F4FD] hover:text-[#2B7BC4]"
-                    }`}
-                  >
-                    <Icon className="size-3.5" />
-                    {cat.label}
-                  </button>
-                );
-              })}
-            </ScrollReveal>
-
-          {/* FAQ Items */}
-          <div className="space-y-3">
-            {filteredItems.length === 0 ? (
-              <div className="text-center py-12">
-                <HelpCircle className="size-10 text-slate-300 mx-auto mb-3" />
-                <p className="text-sm font-semibold text-slate-500">
-                  No matching questions found
-                </p>
-                <p className="text-xs text-slate-400 mt-1">
-                  Try a different search term or category
-                </p>
-              </div>
-            ) : (
-              filteredItems.map((item, index) => {
-                const isOpen = openIndex === index;
-                return (
-                  <ScrollReveal
-                    key={item.question}
-                    variant="up"
-                    delay={Math.min(index * 35, 200)}
-                    className={`rounded-2xl border transition-all duration-300 ${
-                      isOpen
-                        ? "border-[#2B7BC4]/30 bg-[#E8F4FD]/20 shadow-md shadow-[#2B7BC4]/5"
-                        : "border-[#C9DFF0] bg-white hover:border-[#2B7BC4]/20"
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => toggle(index)}
-                      className="w-full flex items-center justify-between p-5 sm:p-6 text-left cursor-pointer"
-                    >
-                      <div className="flex items-start gap-3 flex-1 pr-4">
-                        <div
-                          className={`size-8 shrink-0 rounded-xl flex items-center justify-center transition-colors ${
-                            isOpen
-                              ? "bg-[#2B7BC4] text-white"
-                              : "bg-[#E8F4FD] text-[#2B7BC4]"
-                          }`}
-                        >
-                          <HelpCircle className="size-4" />
-                        </div>
-                        <div>
-                          <span
-                            className={`text-sm sm:text-base font-bold transition-colors ${
-                              isOpen ? "text-[#2B7BC4]" : "text-[#0D2137]"
-                            }`}
-                          >
-                            {item.question}
-                          </span>
-                          <span className="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">
-                            {item.category}
-                          </span>
-                        </div>
-                      </div>
-                      <ChevronDown
-                        className={`size-5 text-[#2B7BC4] transition-transform duration-300 shrink-0 ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-
-                    <div
-                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                        isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                      }`}
-                    >
-                      <div className="px-5 sm:px-6 pb-5 sm:pb-6 pl-16 sm:pl-[4.5rem]">
-                        <p className="text-sm leading-relaxed text-slate-600">
-                          {item.answer}
-                        </p>
-                      </div>
-                    </div>
-                  </ScrollReveal>
-                );
-              })
-            )}
-          </div>
-
-          {/* Still Have Questions Banner */}
-          <ScrollReveal variant="scale" delay={100} className="mt-12 rounded-2xl border border-[#C9DFF0] bg-gradient-to-r from-[#E8F4FD] to-sky-50 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-start sm:items-center gap-3">
-              <div className="size-10 rounded-xl bg-[#2B7BC4] text-white flex items-center justify-center shrink-0 shadow-sm">
-                <Clock className="size-5" />
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-[#0D2137]">
-                  Still have questions?
-                </h4>
-                <p className="text-xs text-slate-600 mt-0.5">
-                  Our team responds within 4 business hours during working days
-                  (10:00 AM – 7:00 PM IST).
-                </p>
-              </div>
-            </div>
-            <a
-              href="https://wa.me/919941999415?text=Hi%2C%20I%20have%20a%20question%20about%20Creo"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-95 px-5 py-2.5 text-xs font-bold text-white transition-all shadow-md shadow-blue-500/20 shrink-0 cursor-pointer"
-            >
-              <MessageSquare className="size-3.5" />
-              Chat with Us
-            </a>
-          </ScrollReveal>
+          <button className="bg-[#BCCCE6] text-[#050810] hover:bg-[#D5E1F2] font-semibold transition-all shadow-sm hover:shadow-[0_0_20px_rgba(188,204,230,0.25)] text-xs sm:text-sm px-6 py-3.5 rounded-full shrink-0 flex items-center justify-center gap-2 w-full sm:w-auto">
+            Speak with an OS Specialist <ArrowRight className="size-4" />
+          </button>
         </div>
-      </section>
+      </div>
 
-      {/* ── Bottom CTA ──────────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-br from-[#07192F] via-[#0B2545] to-[#123966] py-14 sm:py-18 text-white relative overflow-hidden">
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-        <ScrollReveal variant="scale" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
-            Ready to start?
-          </h2>
-          <p className="mt-3 text-xs sm:text-base text-blue-100/80 max-w-xl mx-auto">
-            Join 50+ brands growing with Creo every week.
-          </p>
-          <div className="mt-7">
-            <Link
-              to="/pricing"
-              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-95 text-white rounded-xl h-12 px-8 text-sm font-bold shadow-lg shadow-blue-600/30 transition-all cursor-pointer"
-            >
-              Explore Retainer Plans
-              <ArrowRight className="size-4" />
-            </Link>
-          </div>
-        </ScrollReveal>
-      </section>
     </div>
   );
 }

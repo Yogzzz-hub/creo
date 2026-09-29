@@ -1,15 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
-import { motion } from "motion/react";
 import {
+  Search,
   CheckCircle2,
   MoreVertical,
+  Layers,
   Inbox,
-  X,
-  RotateCcw,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
-import { request } from "../../lib/http";
 
 interface TicketItem {
   id: string;
@@ -29,204 +27,61 @@ interface TicketItem {
   secondaryAction: string;
 }
 
-const DEFAULT_INITIAL_TICKETS: TicketItem[] = [
-  {
-    id: "1781",
-    client: "Sushmitaa",
-    tier: "Enterprise Acceleration",
-    email: "sushmitaa1407@gmail.com",
-    avatarBg: "bg-[#0F172A]",
-    issueTitle: "deliverables not received on time, checkout",
-    issueDesc: "I've not received my deliverables which was scheduled yesterday",
-    priority: "High",
-    timeLog: "Logged yesterday",
-    agent: "Maya Lin",
-    pod: "Pod Alpha",
-    agentInitials: "ML",
-    status: "Resolved",
-    primaryAction: "Reopen",
-    secondaryAction: "Assign",
-  },
-  {
-    id: "1042",
-    client: "Ryze",
-    tier: "Starter Growth",
-    email: "sushmitaa1407@gmail.com",
-    avatarBg: "bg-[#0F172A]",
-    issueTitle: "API Webhook Timeout on Deliverables Sync",
-    issueDesc: "Payload dropped after 4 retries via US-East Gateway during automated delivery sync of 4× 4K Reels.",
-    priority: "Urgent",
-    timeLog: "18m remaining",
-    agent: "Maya Lin",
-    pod: "Pod C",
-    agentInitials: "ML",
-    status: "Open",
-    primaryAction: "Resolve",
-    secondaryAction: "Assign",
-  },
-  {
-    id: "1032",
-    client: "Aravindan",
-    tier: "Custom Retainer",
-    email: "aravindan20062006@gmail.com",
-    avatarBg: "bg-[#1E293B]",
-    issueTitle: "Cloud Database Architecture Infographic Review",
-    issueDesc: "Technical schematic revision for zero-latency failover cluster diagram requested by CTO.",
-    priority: "High",
-    timeLog: "Logged 2h ago",
-    agent: "Theo Clark",
-    pod: "Pod A",
-    agentInitials: "TC",
-    status: "In Progress",
-    primaryAction: "Resolve",
-    secondaryAction: "Assign",
-  },
-  {
-    id: "1039",
-    client: "Shanmugaraj",
-    tier: "Brand Accelerator",
-    email: "shanmugaraj2204@gmail.com",
-    avatarBg: "bg-[#0B111C]",
-    issueTitle: "Asset Upload Sync Error in Reels Batch 44",
-    issueDesc: "Audio sync drift of 240ms detected in final MP4 export for upcoming Instagram Reels release.",
-    priority: "Medium",
-    timeLog: "Logged 28m ago",
-    agent: "Omar K.",
-    pod: "Pod A",
-    agentInitials: "OK",
-    status: "Open",
-    primaryAction: "Resolve",
-    secondaryAction: "Assign",
-  },
-];
+const INITIAL_TICKETS: TicketItem[] = [];
 
 export function AdminSupportTicketsPage() {
   const navigate = useNavigate();
-  const [tickets, setTickets] = useState<TicketItem[]>(DEFAULT_INITIAL_TICKETS);
+  const [search, setSearch] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [lifecycleFilter, setLifecycleFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [alertModal, setAlertModal] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    ticketId?: string;
-    client?: string;
-    tier?: string;
-    type?: "success" | "info" | "warning";
-  } | null>(null);
+  const [tickets, setTickets] = useState<TicketItem[]>(INITIAL_TICKETS);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const loadTickets = useCallback(async () => {
-    try {
-      // 1. Fetch from server API
-      let serverItems: any[] = [];
-      try {
-        const res = await request<any[]>("/api/v1/admin/support/tickets");
-        if (Array.isArray(res) && res.length > 0) serverItems = res;
-      } catch {
-        try {
-          const res2 = await request<any[]>("/api/v1/tickets");
-          if (Array.isArray(res2)) serverItems = res2;
-        } catch {}
-      }
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage((curr) => (curr === msg ? null : curr));
+    }, 3000);
+  };
 
-      // 2. Fetch from shared local tickets (client portal submissions)
-      let localItems: any[] = [];
-      try {
-        localItems = JSON.parse(localStorage.getItem("creo_support_tickets") || "[]");
-      } catch {}
-
-      // Map server items
-      const mappedServer: TicketItem[] = serverItems.map((st: any) => {
-        const prio = (st.priority || "medium").toLowerCase();
-        const priority: TicketItem["priority"] =
-          prio === "urgent" ? "Urgent" : prio === "high" ? "High" : prio === "low" ? "Low Priority" : "Medium";
-        const stat = (st.status || "open").toLowerCase();
-        const status: TicketItem["status"] =
-          stat === "resolved" ? "Resolved" : stat === "in_progress" ? "In Progress" : stat === "waiting_on_client" ? "Pending Client" : "Open";
-        const initials = (st.assignee_name || st.agent || "Maya Lin").split(" ").map((w: string) => w[0]).join("").toUpperCase();
-        const shortId = String(st.id).includes("1781")
-          ? "1781"
-          : String(st.id).length > 8
-          ? String(st.id).replace(/-/g, "").slice(-4).toUpperCase()
-          : String(st.id);
-
-        return {
-          id: shortId,
-          client: st.client || "Client Account",
-          tier: st.tier || "Active Retainer",
-          email: st.email || "client@creo.agency",
-          avatarBg: "bg-[#0F172A]",
-          issueTitle: st.title || st.subject || "Support Inquiry",
-          issueDesc: st.description || "",
-          priority,
-          timeLog: st.time || "Logged recently",
-          agent: st.assignee_name || "Maya Lin",
-          pod: "Pod A",
-          agentInitials: initials,
-          status,
-          primaryAction: status === "Resolved" ? "Reopen" : "Resolve",
-          secondaryAction: "Assign",
-        };
-      });
-
-      // Map local items
-      const mappedLocal: TicketItem[] = localItems.map((lt: any) => ({
-        id: String(lt.id),
-        client: lt.client || "Client Account",
-        tier: lt.tier || "Active Retainer",
-        email: lt.email || "client@creo.agency",
-        avatarBg: lt.avatarBg || "bg-[#0F172A]",
-        issueTitle: lt.issueTitle || lt.title || "Support Request",
-        issueDesc: lt.issueDesc || lt.description || "",
-        priority: lt.priority || "Urgent",
-        timeLog: lt.timeLog || "Logged just now",
-        agent: lt.agent || "Maya Lin",
-        pod: lt.pod || "Pod A",
-        agentInitials: lt.agentInitials || "ML",
-        status: lt.status || "Open",
-        primaryAction: lt.status === "Resolved" ? "Reopen" : "Resolve",
-        secondaryAction: "Assign",
-      }));
-
-      // Combine with local first so newly sent tickets appear at the very top
-      const combined = [...mappedLocal, ...mappedServer];
-      const seen = new Set<string>();
-      const deduped: TicketItem[] = [];
-
-      for (const t of combined) {
-        const key = `${t.id}_${t.issueTitle.toLowerCase()}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          deduped.push(t);
+  const handleToggleResolve = (ticketId: string) => {
+    setTickets((prev) =>
+      prev.map((t) => {
+        if (t.id === ticketId) {
+          const isResolved = t.status === "Resolved";
+          const nextStatus = isResolved ? "Open" : "Resolved";
+          const nextAction = isResolved ? "Resolve" : "Reopen";
+          showToast(`Ticket #${t.id} marked as ${nextStatus.toLowerCase()}!`);
+          return {
+            ...t,
+            status: nextStatus,
+            primaryAction: nextAction,
+            timeLog: isResolved ? "Reopened just now" : "Resolved just now",
+          };
         }
-      }
+        return t;
+      })
+    );
+  };
 
-      if (deduped.length > 0) {
-        setTickets(deduped);
-      } else {
-        setTickets(DEFAULT_INITIAL_TICKETS);
-      }
-    } catch (err) {
-      console.error("Failed to load tickets:", err);
-      setTickets(DEFAULT_INITIAL_TICKETS);
-    }
-  }, []);
+  const filteredTickets = tickets.filter((t) => {
+    const matchesSearch =
+      t.id.includes(search) ||
+      t.client.toLowerCase().includes(search.toLowerCase()) ||
+      t.issueTitle.toLowerCase().includes(search.toLowerCase()) ||
+      t.agent.toLowerCase().includes(search.toLowerCase());
 
-  useEffect(() => {
-    loadTickets();
-    const interval = setInterval(loadTickets, 5000);
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === "creo_support_tickets") {
-        loadTickets();
-      }
-    };
-    window.addEventListener("storage", handleStorage);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, [loadTickets]);
+    const matchesPriority =
+      priorityFilter === "all" ||
+      t.priority.toLowerCase().includes(priorityFilter.toLowerCase());
 
-  const filteredTickets = tickets;
+    const matchesLifecycle =
+      lifecycleFilter === "all" ||
+      t.status.toLowerCase().replace(" ", "_") === lifecycleFilter.toLowerCase();
+
+    return matchesSearch && matchesPriority && matchesLifecycle;
+  });
 
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredTickets.length) {
@@ -244,220 +99,147 @@ export function AdminSupportTicketsPage() {
     }
   };
 
-  const handlePrimaryAction = async (t: TicketItem) => {
-    const newStatus: TicketItem["status"] = t.status !== "Resolved" ? "Resolved" : "In Progress";
-    setTickets((prev) =>
-      prev.map((item) =>
-        item.id === t.id
-          ? {
-              ...item,
-              status: newStatus,
-              primaryAction: newStatus === "Resolved" ? "Reopen" : "Resolve",
-              timeLog: newStatus === "Resolved" ? "Resolved just now" : "Reopened just now",
-            }
-          : item
-      )
-    );
-
-    // Update in localStorage
-    try {
-      const stored = JSON.parse(localStorage.getItem("creo_support_tickets") || "[]");
-      const updated = stored.map((st: any) =>
-        st.id === t.id || st.issueTitle === t.issueTitle ? { ...st, status: newStatus } : st
-      );
-      localStorage.setItem("creo_support_tickets", JSON.stringify(updated));
-    } catch {}
-
-    // Update backend if possible
-    try {
-      await request(`/api/v1/admin/support/tickets/${t.id}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: newStatus.toLowerCase().replace(" ", "_") }),
-      });
-    } catch {}
-
-    setAlertModal({
-      isOpen: true,
-      title: newStatus === "Resolved" ? "Ticket Marked as Resolved!" : "Ticket Reopened",
-      message:
-        newStatus === "Resolved"
-          ? `Ticket #${t.id} has been marked as resolved! SLA compliance verified and confirmation sent to ${t.client}.`
-          : `Ticket #${t.id} for ${t.client} has been reopened and placed back into the active triage queue.`,
-      ticketId: t.id,
-      client: t.client,
-      tier: t.tier,
-      type: newStatus === "Resolved" ? "success" : "info",
-    });
-  };
-
-  const openCount = tickets.filter((t) => t.status === "Open" || t.status === "In Progress").length;
-  const resolvedCount = tickets.filter((t) => t.status === "Resolved").length;
-
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F8FAFC] flex flex-col">
       <AdminTopHeader activeTab="Support" />
 
-      <motion.main
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="flex-1 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 sm:pb-8 max-w-[1500px] w-full mx-auto space-y-5 sm:space-y-6"
-      >
+      <main className="flex-1 px-6 lg:px-8 py-6 max-w-[1500px] w-full mx-auto space-y-6">
         {/* Top Summary Cards Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Open Tickets */}
-          <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-5 shadow-xs space-y-3 hover-card-innovative">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
-                ACTIVE / OPEN TICKETS
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                OPEN TICKETS
               </span>
-              <div className="size-8 rounded-xl bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 flex items-center justify-center text-[#7FA0D6]">
+              <div className="size-8 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
                 <Inbox className="size-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white">{openCount}</span>
-              <span className="text-xs font-bold text-[#7FA0D6]">active items</span>
+              <span className="text-3xl font-black text-slate-900">14</span>
+              <span className="text-xs font-bold text-blue-600">+3 today</span>
             </div>
             <div className="pt-1">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/15 text-rose-400 text-[11px] font-bold border border-rose-500/30">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 text-[11px] font-bold border border-rose-200">
                 <span className="size-1.5 rounded-full bg-rose-500 animate-pulse" />
-                Live SLA Monitoring
+                5 Urgent requiring immediate review
               </span>
             </div>
           </div>
 
           {/* Card 2: Resolved Today */}
-          <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-5 shadow-xs space-y-3 hover-card-innovative">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
                 RESOLVED TODAY
               </span>
-              <div className="size-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <div className="size-8 rounded-xl bg-[#7FA0D6]50 border border-emerald-100 flex items-center justify-center text-emerald-600">
                 <CheckCircle2 className="size-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white">{resolvedCount + 37}</span>
-              <span className="text-xs font-semibold text-[#97A0B3]">Tickets closed</span>
+              <span className="text-3xl font-black text-slate-900">38</span>
+              <span className="text-xs font-semibold text-slate-500">Tickets closed</span>
             </div>
             <div className="pt-1">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[11px] font-bold border border-[#7FA0D6]/30">
-                <span className="size-1.5 rounded-full bg-[#7FA0D6]/150" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-[11px] font-bold border border-blue-200">
+                <span className="size-1.5 rounded-full bg-blue-500" />
                 100% SLA Compliance Rate
               </span>
             </div>
           </div>
         </div>
 
-        {/* Mobile Tickets Card List (< md) */}
-        <div className="block md:hidden space-y-3">
-          {filteredTickets.length === 0 ? (
-            <div className="bg-[#161F2D] rounded-2xl p-8 border border-[#2A3446] text-center text-[#97A0B3] text-xs font-bold">
-              No tickets matching the selected filters.
+        {/* Filter & Search Toolbar Card */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-lg">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search tickets by ID, client, issue description, or assignee..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
+              />
             </div>
-          ) : (
-            filteredTickets.map((t) => (
-              <div
-                key={t.id}
-                onClick={() => navigate(`/admin/support/tickets/${t.id}`)}
-                className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/90 shadow-2xs space-y-3 hover:border-blue-300 transition-all cursor-pointer active:scale-[0.99]"
+
+            {/* View Switch Button */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs shadow-2xs"
               >
-                {/* Header: ID + Priority + Status */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-xs text-[#97A0B3]">#{t.id}</span>
-                    <span
-                      className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${
-                        t.priority === "Urgent"
-                          ? "bg-rose-500 text-white"
-                          : t.priority === "High"
-                          ? "bg-amber-100 text-amber-800"
-                          : t.priority === "Medium"
-                          ? "bg-[#7FA0D6]/20 text-blue-800"
-                          : "bg-[#1F2C3F] text-[#F1F5F9]"
-                      }`}
-                    >
-                      {t.priority}
-                    </span>
-                  </div>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                      t.status === "Open"
-                        ? "bg-rose-50 text-rose-700 border-rose-200"
-                        : t.status === "In Progress"
-                        ? "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30"
-                        : t.status === "Pending Client"
-                        ? "bg-amber-50 text-amber-700 border-amber-200"
-                        : "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    }`}
-                  >
-                    {t.status}
-                  </span>
-                </div>
+                <Layers className="size-3.5 text-blue-600" />
+                List View
+              </button>
+            </div>
+          </div>
 
-                {/* Client info */}
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className={`size-8 rounded-xl ${t.avatarBg} text-white font-black text-xs flex items-center justify-center shrink-0`}
-                  >
-                    {t.client[0]}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-xs text-white truncate">{t.client}</span>
-                      <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold bg-[#7FA0D6]/20 text-blue-800 uppercase">
-                        {t.tier}
-                      </span>
-                    </div>
-                    <div className="text-[10px] text-[#97A0B3] font-mono truncate">{t.email}</div>
-                  </div>
-                </div>
+          {/* Filter Pills Row */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-slate-100 text-xs font-semibold">
+            {/* Priority Filters */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-slate-400 text-[11px] font-bold uppercase tracking-wider mr-1">
+                Priority:
+              </span>
+              {[
+                { id: "all", label: "All Tickets (52)" },
+                { id: "urgent", label: "Urgent (5)", badge: "bg-rose-500 text-white" },
+                { id: "high", label: "High (8)", badge: "bg-amber-100 text-amber-800" },
+                { id: "medium", label: "Medium (19)" },
+                { id: "low", label: "Low (20)" },
+              ].map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPriorityFilter(p.id)}
+                  className={`px-3 py-1 rounded-full transition-all text-xs ${
+                    priorityFilter === p.id
+                      ? "bg-blue-600 text-white font-bold shadow-2xs"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
 
-                {/* Issue Details */}
-                <div className="space-y-1">
-                  <h4 className="font-bold text-xs text-white leading-snug">{t.issueTitle}</h4>
-                  <p className="text-[11px] text-[#97A0B3] line-clamp-2">{t.issueDesc}</p>
-                </div>
-
-                {/* Footer: Agent & Quick Actions */}
-                <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] gap-2">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <div className="size-6 rounded-full bg-slate-800 text-white font-bold text-[9px] flex items-center justify-center shrink-0">
-                      {t.agentInitials}
-                    </div>
-                    <span className="text-[10px] font-bold text-[#F1F5F9] truncate">{t.agent}</span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      onClick={() => handlePrimaryAction(t)}
-                      className={`px-3 py-1 rounded-xl text-white text-[11px] font-bold transition-all ${
-                        t.status === "Resolved" ? "bg-slate-700" : "bg-blue-600"
-                      }`}
-                    >
-                      {t.primaryAction}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/admin/support/tickets/${t.id}`)}
-                      className="px-2.5 py-1 rounded-xl bg-[#1F2C3F] text-[#F1F5F9] text-[11px] font-bold hover:bg-slate-200"
-                    >
-                      {t.secondaryAction}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+            {/* Lifecycle Filters */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400 text-[11px] font-bold uppercase tracking-wider mr-1">
+                Lifecycle:
+              </span>
+              {[
+                { id: "all", label: "All" },
+                { id: "open", label: "Open (14)" },
+                { id: "in_progress", label: "In Progress (6)" },
+                { id: "resolved", label: "Resolved (38)" },
+              ].map((lc) => (
+                <button
+                  key={lc.id}
+                  type="button"
+                  onClick={() => setLifecycleFilter(lc.id)}
+                  className={`px-3 py-1 rounded-full transition-all text-xs ${
+                    lifecycleFilter === lc.id
+                      ? "bg-slate-800 text-white font-bold shadow-2xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  {lc.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Desktop Tickets Table (hidden on md) */}
-        <div className="hidden md:block bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl shadow-xs overflow-hidden">
+        {/* Tickets Table */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#0B111C]/80 border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
+              <thead className="bg-slate-50/80 border-b border-slate-200 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
                 <tr>
                   <th className="px-4 py-3.5 w-12 text-center">
                     <input
@@ -465,7 +247,7 @@ export function AdminSupportTicketsPage() {
                       checked={selectedIds.length === filteredTickets.length && filteredTickets.length > 0}
                       onChange={toggleSelectAll}
                       aria-label="Select All Tickets"
-                      className="rounded border-[#2A3446] text-[#7FA0D6] focus:ring-blue-500"
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                     />
                   </th>
                   <th className="px-4 py-3.5">ID</th>
@@ -479,7 +261,7 @@ export function AdminSupportTicketsPage() {
               <tbody className="divide-y divide-slate-100 font-medium">
                 {filteredTickets.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-12 text-[#97A0B3] font-medium">
+                    <td colSpan={7} className="text-center py-12 text-slate-400 font-medium">
                       No tickets matching the selected filters.
                     </td>
                   </tr>
@@ -487,7 +269,7 @@ export function AdminSupportTicketsPage() {
                   filteredTickets.map((t) => (
                     <tr
                       key={t.id}
-                      className="hover:bg-[#0B111C]/80 transition-colors group cursor-pointer"
+                      className="hover:bg-slate-50/80 transition-colors group cursor-pointer"
                       onClick={() => navigate(`/admin/support/tickets/${t.id}`)}
                     >
                       <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
@@ -496,12 +278,12 @@ export function AdminSupportTicketsPage() {
                           checked={selectedIds.includes(t.id)}
                           onChange={() => toggleSelect(t.id)}
                           aria-label={`Select Ticket #${t.id}`}
-                          className="rounded border-[#2A3446] text-[#7FA0D6] focus:ring-blue-500"
+                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                         />
                       </td>
 
                       {/* Ticket ID */}
-                      <td className="px-4 py-4 font-mono font-bold text-[#97A0B3] group-hover:text-[#7FA0D6] transition-colors">
+                      <td className="px-4 py-4 font-mono font-bold text-slate-500 group-hover:text-blue-600 transition-colors">
                         #{t.id}
                       </td>
 
@@ -515,14 +297,14 @@ export function AdminSupportTicketsPage() {
                           </div>
                           <div>
                             <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-white group-hover:text-[#7FA0D6] transition-colors">
+                              <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                                 {t.client}
                               </span>
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 uppercase tracking-wide">
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-blue-100 text-blue-800 uppercase tracking-wide">
                                 {t.tier}
                               </span>
                             </div>
-                            <div className="text-[11px] text-[#97A0B3] font-mono mt-0.5">{t.email}</div>
+                            <div className="text-[11px] text-slate-400 font-mono mt-0.5">{t.email}</div>
                           </div>
                         </div>
                       </td>
@@ -534,24 +316,24 @@ export function AdminSupportTicketsPage() {
                             <span
                               className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
                                 t.priority === "Urgent"
-                                  ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                                  ? "bg-rose-500 text-white"
                                   : t.priority === "High"
-                                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                  ? "bg-amber-100 text-amber-800"
                                   : t.priority === "Medium"
-                                  ? "bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30"
-                                  : "bg-[#1F2C3F] text-[#F1F5F9] border border-[#2A3446]"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-slate-100 text-slate-600"
                               }`}
                             >
                               {t.priority}
                             </span>
-                            <span className="text-[11px] font-semibold text-rose-400">
+                            <span className="text-[11px] font-semibold text-rose-600">
                               {t.timeLog}
                             </span>
                           </div>
-                          <h4 className="font-bold text-white text-xs leading-snug">
+                          <h4 className="font-bold text-slate-900 text-xs leading-snug">
                             {t.issueTitle}
                           </h4>
-                          <p className="text-[11px] text-[#97A0B3] line-clamp-1">
+                          <p className="text-[11px] text-slate-500 line-clamp-1">
                             {t.issueDesc}
                           </p>
                         </div>
@@ -564,8 +346,8 @@ export function AdminSupportTicketsPage() {
                             {t.agentInitials}
                           </div>
                           <div>
-                            <div className="font-bold text-white text-xs">{t.agent}</div>
-                            <div className="text-[10px] text-[#97A0B3]">{t.pod}</div>
+                            <div className="font-bold text-slate-900 text-xs">{t.agent}</div>
+                            <div className="text-[10px] text-slate-400">{t.pod}</div>
                           </div>
                         </div>
                       </td>
@@ -575,12 +357,12 @@ export function AdminSupportTicketsPage() {
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${
                             t.status === "Open"
-                              ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                              ? "bg-rose-50 text-rose-700 border border-rose-200"
                               : t.status === "In Progress"
-                              ? "bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30"
+                              ? "bg-blue-50 text-blue-700 border border-blue-200"
                               : t.status === "Pending Client"
-                              ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
-                              : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                              ? "bg-amber-50 text-amber-700 border border-amber-200"
+                              : "bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200"
                           }`}
                         >
                           {t.status}
@@ -592,11 +374,11 @@ export function AdminSupportTicketsPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
-                            onClick={() => handlePrimaryAction(t)}
-                            className={`px-3 py-1 rounded-xl text-white text-[11px] font-bold transition-all shadow-2xs active:scale-95 cursor-pointer ${
+                            onClick={() => handleToggleResolve(t.id)}
+                            className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all shadow-2xs ${
                               t.status === "Resolved"
-                                ? "bg-slate-700 hover:bg-slate-800"
-                                : "bg-blue-600 hover:bg-blue-700"
+                                ? "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+                                : "bg-blue-600 text-white hover:bg-blue-700"
                             }`}
                           >
                             {t.primaryAction}
@@ -604,15 +386,13 @@ export function AdminSupportTicketsPage() {
                           <button
                             type="button"
                             onClick={() => navigate(`/admin/support/tickets/${t.id}`)}
-                            className="px-2.5 py-1 rounded-xl bg-[#1F2C3F] text-[#F1F5F9] text-[11px] font-bold hover:bg-slate-200 transition-colors cursor-pointer"
+                            className="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 text-[11px] font-bold hover:bg-slate-200 transition-colors"
                           >
                             {t.secondaryAction}
                           </button>
                           <button
                             type="button"
-                            onClick={() => navigate(`/admin/support/tickets/${t.id}`)}
-                            className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded cursor-pointer"
-                            aria-label="More actions"
+                            className="p-1 text-slate-400 hover:text-slate-600 rounded"
                           >
                             <MoreVertical className="size-4" />
                           </button>
@@ -625,101 +405,22 @@ export function AdminSupportTicketsPage() {
             </table>
           </div>
         </div>
-      </motion.main>
+      </main>
 
-      {/* Centered Popup Modal with Whole Background Blurred */}
-      {alertModal?.isOpen && (
-        <div
-          className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
-          onClick={() => setAlertModal(null)}
-        >
-          <div
-            className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
+      {/* ── Toast Notification ── */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl border border-slate-800 animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
+          <span className="text-xs font-semibold">{toastMessage}</span>
+          <button
+            type="button"
+            className="text-slate-400 hover:text-white text-xs ml-2 cursor-pointer"
+            onClick={() => setToastMessage(null)}
           >
-            {/* Top Close Button */}
-            <button
-              type="button"
-              onClick={() => setAlertModal(null)}
-              className="absolute top-4 right-4 size-8 rounded-full bg-[#1F2C3F] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
-              aria-label="Close dialog"
-            >
-              <X className="size-4" />
-            </button>
-
-            {/* Tone Icon Badge */}
-            <div
-              className={`size-16 rounded-3xl flex items-center justify-center mb-4 ring-8 shadow-inner ${
-                alertModal.type === "success"
-                  ? "bg-emerald-50 text-emerald-600 ring-emerald-50/60"
-                  : "bg-[#7FA0D6]/15 text-[#7FA0D6] ring-blue-50/60"
-              }`}
-            >
-              {alertModal.type === "success" ? (
-                <CheckCircle2 className="size-8" />
-              ) : (
-                <RotateCcw className="size-8" />
-              )}
-            </div>
-
-            {/* Modal Title */}
-            <h3 className="text-xl font-black text-white tracking-tight">
-              {alertModal.title}
-            </h3>
-
-            {/* Modal Description */}
-            <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm">
-              {alertModal.message}
-            </p>
-
-            {/* Ticket Context Information Box */}
-            {alertModal.ticketId && (
-              <div className="w-full mt-5 p-3.5 rounded-2xl bg-[#0B111C] border border-[#2A3446]/80 flex items-center justify-between text-xs font-semibold text-[#F1F5F9]">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 py-0.5 rounded-md border border-[#7FA0D6]/30">
-                    #{alertModal.ticketId}
-                  </span>
-                  <span className="text-[#97A0B3]">•</span>
-                  <span className="font-bold text-white">{alertModal.client}</span>
-                </div>
-                {alertModal.tier && (
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#7FA0D6]/20 text-blue-800 uppercase tracking-wide">
-                    {alertModal.tier}
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* OK and View Ticket Action Buttons */}
-            <div className="w-full mt-6 flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setAlertModal(null)}
-                autoFocus
-                className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
-              >
-                OK
-              </button>
-              {alertModal.ticketId && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const id = alertModal.ticketId;
-                    setAlertModal(null);
-                    navigate(`/admin/support/tickets/${id}`);
-                  }}
-                  className="px-5 py-3 rounded-2xl bg-[#1F2C3F] hover:bg-slate-200 text-[#F1F5F9] font-bold text-xs active:scale-95 transition-all cursor-pointer"
-                >
-                  View Ticket
-                </button>
-              )}
-            </div>
-          </div>
+            ✕
+          </button>
         </div>
       )}
     </div>
   );
 }
-

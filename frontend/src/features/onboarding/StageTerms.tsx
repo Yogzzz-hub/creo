@@ -8,7 +8,6 @@ import { motion } from "motion/react";
  */
 import { useCallback, useRef, useState } from "react";
 
-import { Clock, Check, FileText, ChevronRight, Lock } from "lucide-react";
 interface StageTermsProps {
   userId: string;
   onAccepted: () => void;
@@ -100,144 +99,75 @@ export function StageTerms({ onAccepted, onBack, isSubmitting }: StageTermsProps
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="max-w-[1400px] w-full mx-auto space-y-4 pb-12"
+      className="max-w-4xl lg:max-w-5xl w-full mx-auto rounded-2xl border border-[#C9DFF0] bg-white p-8 sm:p-10 lg:p-12 shadow-sm"
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-        {/* LEFT COLUMN */}
-        <div className="lg:col-span-4 flex flex-col gap-4">
-          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-6 sm:p-8 shadow-xl h-full flex flex-col">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#7FA0D6]/20 border border-[#7FA0D6]/30 text-[#BCCCE6] text-[10px] font-bold uppercase tracking-wider mb-4 shadow-sm w-fit">
-              Step 2 of 5
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black font-display text-[#F8FAFC] tracking-tight mb-2">
-              Master Service Agreement
-            </h2>
-            <p className="text-xs sm:text-sm text-[#97A0B3] mb-6 leading-relaxed">
-              Please review the terms of service below. Scroll to the bottom of the agreement to unlock the acceptance button.
-            </p>
-
-            <div className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-4 mb-4">
-              <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#2A3446]">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#F8FAFC]">
-                  <FileText className="w-4 h-4 text-[#7FA0D6]" />
-                  Document Highlights
-                </div>
-                <div className="text-[9px] font-bold text-[#97A0B3] bg-[#161F2D] border border-[#2A3446] px-2 py-0.5 rounded flex items-center gap-1">
-                  <Lock className="w-2.5 h-2.5" /> SLA Rev 2026.09 • Enforced
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between bg-[#161F2D] border border-[#2A3446] p-3 rounded-lg shadow-sm">
-                  <div>
-                    <p className="text-[11px] font-bold text-[#F8FAFC]">01. Scope of Services</p>
-                    <p className="text-[10px] text-[#97A0B3] mt-0.5">Content creation, identity, campaigns</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-[#7FA0D6]" />
-                </div>
-                <div className="flex items-center justify-between bg-[#161F2D] border border-[#2A3446] p-3 rounded-lg shadow-sm">
-                  <div>
-                    <p className="text-[11px] font-bold text-[#F8FAFC]">02. Payment Terms</p>
-                    <p className="text-[10px] text-[#97A0B3] mt-0.5">Billing cycles & 7-day grace period</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-[#7FA0D6]" />
-                </div>
-              </div>
-            </div>
-
-            {!hasScrolled ? (
-              <div className="bg-[#D8BF9B]/10 border border-[#D8BF9B]/30 rounded-xl p-4 flex items-start gap-3 mt-auto">
-                <Clock className="w-5 h-5 text-[#D8BF9B] shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-[#D8BF9B]">Reading in progress...</p>
-                  <p className="text-[11px] text-[#D8BF9B]/80 font-medium mt-0.5">Scroll document to unlock</p>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-emerald-950/40 border border-emerald-800/60 rounded-xl p-4 flex items-start gap-3 mt-auto">
-                <Check className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-xs font-bold text-emerald-300">Reading complete</p>
-                  <p className="text-[11px] text-emerald-300/80 font-medium mt-0.5">You can now accept the agreement</p>
-                </div>
-              </div>
-            )}
-          </div>
+      <header className="mb-6 sm:mb-8">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#E8F4FD] border border-[#C9DFF0] text-[#2B7BC4] text-[11px] font-bold uppercase tracking-wider mb-2.5">
+          Step 2 of 5
         </div>
+        <h2 className="text-2xl sm:text-3xl font-bold font-display text-[#0D2137] tracking-tight">
+          Master Service Agreement
+        </h2>
+        <p className="text-xs sm:text-sm text-[#64748B] mt-1.5 leading-normal">
+          Please review the terms of service below. Scroll to the bottom of the agreement to unlock
+          the acceptance button.
+        </p>
+      </header>
 
-        {/* RIGHT COLUMN */}
-        <div className="lg:col-span-8 flex flex-col gap-4">
-          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-6 sm:p-8 shadow-xl flex flex-col h-full relative overflow-hidden">
-            
-            {/* PDF Header */}
-            <div className="flex items-center justify-between mb-4 pb-4 border-b border-[#2A3446]">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#0B111C] flex items-center justify-center text-[#7FA0D6] shrink-0 border border-[#2A3446]">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-[#F8FAFC]">creo_master_agreement_2026.pdf</h3>
-                  <p className="text-[11px] text-[#97A0B3] mt-0.5 font-medium">Last updated: January 2025</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3 w-32">
-                <div className="flex-1 h-1.5 bg-[#0B111C] border border-[#2A3446] rounded-full overflow-hidden">
-                  <div className={`h-full bg-[#7FA0D6] transition-all duration-300 ${hasScrolled ? 'w-full' : 'w-[5%]'}`} />
-                </div>
-                <span className="text-[10px] font-bold text-[#BCCCE6]">{hasScrolled ? '100%' : '0%'}</span>
-              </div>
-            </div>
-
-            {/* Scroll container */}
-            <div
-              ref={scrollContainerRef}
-              className="flex-1 min-h-[300px] h-[50vh] max-h-[600px] overflow-y-auto bg-[#0B111C] border border-[#2A3446] rounded-xl p-6 sm:p-8 mb-6 font-mono text-[11px] sm:text-xs text-[#97A0B3] leading-relaxed whitespace-pre-wrap select-text scroll-smooth shadow-inner relative"
-            >
-              {MSA_TEXT}
-              {/* IntersectionObserver sentinel */}
-              <div ref={sentinelRef} className="h-1 mt-6" aria-hidden="true" />
-            </div>
-
-            {hasScrolled && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-xs font-bold text-emerald-300 bg-emerald-950/40 border border-emerald-800/60 px-4 py-3 rounded-xl flex items-center gap-2 mt-auto"
-              >
-                <div className="size-5 rounded-full bg-emerald-500 text-[#0B111C] flex items-center justify-center shrink-0">
-                  <Check className="w-3 h-3 stroke-[3]" />
-                </div>
-                <span>You have read and scrolled through the full agreement.</span>
-              </motion.div>
-            )}
-          </div>
-        </div>
+      {/* Scroll container */}
+      <div
+        ref={scrollContainerRef}
+        className="h-72 sm:h-80 md:h-96 max-h-[50vh] overflow-y-auto bg-[#F8FAFC] border border-[#C9DFF0] rounded-2xl p-6 sm:p-8 mb-6 font-mono text-xs sm:text-[13px] text-[#334155] leading-relaxed whitespace-pre-wrap select-text scroll-smooth shadow-inner"
+      >
+        {MSA_TEXT}
+        {/* IntersectionObserver sentinel */}
+        <div ref={sentinelRef} className="h-1 mt-3" aria-hidden="true" />
       </div>
 
-      {/* FOOTER ACTIONS */}
-      <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
-        {onBack ? (
+      {/* Scroll hint */}
+      {!hasScrolled && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mb-6 text-xs sm:text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 px-4 py-3 rounded-xl flex items-center gap-2"
+        >
+          <span>↓</span>
+          <span>Please scroll to the end of the agreement to continue.</span>
+        </motion.p>
+      )}
+
+      {hasScrolled && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mb-6 text-xs sm:text-sm font-medium text-emerald-700 bg-[#7FA0D6]50 border border-emerald-200 px-4 py-3 rounded-xl flex items-center gap-2"
+        >
+          <span>✓</span>
+          <span>You have read and scrolled through the full agreement.</span>
+        </motion.p>
+      )}
+
+      <div className="flex flex-col sm:flex-row items-center gap-3">
+        {onBack && (
           <button
             type="button"
             onClick={onBack}
-            className="w-full sm:w-auto py-3 px-6 rounded-full bg-[#0B111C] border border-[#2A3446] text-sm font-bold text-[#97A0B3] hover:text-[#F8FAFC] hover:border-[#7FA0D6] shadow-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0"
+            className="w-full sm:w-auto py-3.5 sm:py-4 px-6 rounded-xl border border-[#C9DFF0] text-xs sm:text-sm font-bold text-[#64748B] hover:text-[#0D2137] hover:bg-[#F8FAFC] transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0"
           >
             <span>← Back to Step 1</span>
           </button>
-        ) : <div />}
-
+        )}
         <motion.button
           id="accept-terms-btn"
           type="button"
           onClick={onAccepted}
           disabled={!hasScrolled || isSubmitting}
-          whileHover={hasScrolled && !isSubmitting ? { scale: 1.02 } : {}}
-          whileTap={hasScrolled && !isSubmitting ? { scale: 0.98 } : {}}
-          className={`w-full sm:w-auto min-w-[280px] py-3 px-8 rounded-full font-bold text-sm transition-all shadow-md ${
+          whileHover={hasScrolled && !isSubmitting ? { scale: 1.01 } : {}}
+          whileTap={hasScrolled && !isSubmitting ? { scale: 0.99 } : {}}
+          className={`flex-1 w-full py-3.5 sm:py-4 px-8 rounded-xl font-bold text-sm sm:text-base transition-all shadow-sm ${
             hasScrolled && !isSubmitting
-              ? "bg-[#BCCCE6] text-[#0B111C] cursor-pointer hover:bg-white shadow-[#BCCCE6]/20"
-              : "bg-[#2A3446] text-[#97A0B3] cursor-not-allowed shadow-none"
+              ? "bg-[#2B7BC4] text-white hover:bg-[#1A5EA8] cursor-pointer shadow-blue-500/20"
+              : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed"
           }`}
         >
           {isSubmitting ? "Accepting Terms…" : "Accept Agreement & Continue to Payment →"}

@@ -580,20 +580,10 @@ def spread_posters(
         placed = list(no_reel_days)
         rem = quota - len(placed)
         with_reels = [d for d in active if d in reel_days and d not in blackouts]
-        if with_reels and rem > 0:
-            if rem <= len(with_reels):
-                step = (len(with_reels) - 1) / (rem - 1) if rem > 1 else 0
-                for i in range(rem):
-                    placed.append(with_reels[round(i * step)])
-            else:
-                placed.extend(with_reels)
-        # If still more needed, fill round robin from active days
-        active_avail = [d for d in active if d not in blackouts]
-        if active_avail and len(placed) < quota:
-            idx = 0
-            while len(placed) < quota:
-                placed.append(active_avail[idx % len(active_avail)])
-                idx += 1
+        if with_reels:
+            step = (len(with_reels) - 1) / (rem - 1) if rem > 1 else 0
+            for i in range(rem):
+                placed.append(with_reels[round(i * step)])
         return sorted(placed)
 
 
@@ -660,14 +650,7 @@ def spread_stories(
                 if len(assigned) >= quota:
                     break
         if not added_any:
-            # If MAX_PER_DAY cap reached, bypass cap to fulfill client's contracted quota
-            if not active_sorted:
-                break
-            for d in active_sorted:
-                story_counts[d] += 1
-                assigned.append((d, "standalone"))
-                if len(assigned) >= quota:
-                    break
+            break
 
     return assigned
 
@@ -865,9 +848,8 @@ async def generate_client_cycle(
     if reel_base_quota > 8:
         reel_cap_policy["min_gap_days"] = dict(policy.get("min_gap_days", {}))
         reel_cap_policy["min_gap_days"]["reel"] = 0
-    # Deliver 100% of subscribed reel quota without prorating loss
-    prorated_reels = min(reel_base_quota, reel_cap_max) if reel_cap_max > 0 else reel_base_quota
-    reel_credit = max(0, reel_base_quota - prorated_reels)
+    reel_cap_max = capacity(first_reel_date, cycle_end, {0, 1, 2, 3, 4, 5, 6}, "reel", reel_cap_policy, blackout_dates)
+    prorated_reels, reel_credit = resolve_quota("reel", reel_base_quota, reel_window_days, cycle_days, reel_cap_max)
 
     poster_quota = base_quotas["poster"] + carryover.get("poster", 0)
     story_quota = base_quotas["story"] + carryover.get("story", 0)

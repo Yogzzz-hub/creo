@@ -43,10 +43,10 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = Field(
-        default="postgresql+asyncpg://postgres:postgres@localhost:5432/creo"
+        default="postgresql+asyncpg://postgres:postgrespassword@localhost:5432/creo"
     )
     DIRECT_DATABASE_URL: str = Field(
-        default="postgresql+asyncpg://postgres:postgres@localhost:5432/creo"
+        default="postgresql+asyncpg://postgres:postgrespassword@localhost:5432/creo"
     )
 
     @field_validator("DATABASE_URL", "DIRECT_DATABASE_URL", "REDIS_URL", mode="before")

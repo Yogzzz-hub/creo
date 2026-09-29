@@ -4,6 +4,8 @@ import { motion } from "motion/react";
 import { useNavigate } from "react-router";
 import {
   ArrowRight,
+  Sparkles,
+  CheckCircle2,
   Calendar,
   UserCheck,
   Target,
@@ -213,80 +215,72 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="max-w-[1400px] w-full mx-auto space-y-4 pb-12"
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+      className="max-w-4xl lg:max-w-5xl w-full mx-auto rounded-3xl border border-[#C9DFF0] bg-gradient-to-b from-white via-[#F8FAFC] to-[#F0F7FD] p-5 sm:p-8 lg:p-10 shadow-xl text-center relative overflow-hidden"
     >
-      {/* Header Container */}
-      <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-6 sm:p-8 shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 text-[10px] font-extrabold uppercase tracking-widest mb-4">
-            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Stage 5 Active • Creative Pod Allocated & Brief Dispatched
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-black font-display text-[#F8FAFC] tracking-tight mb-2">
-            Your Dedicated Creative Pod is Live!
-          </h2>
-          <p className="text-sm text-[#97A0B3] max-w-2xl leading-relaxed">
-            Your retainer is active, your Brand Strategy DNA is synthesized, and your dedicated
-            production specialists have been briefed with your 30-day content calendar.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onLaunchPortal}
-          className="shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-bold text-sm shadow-md transition-all cursor-pointer"
-        >
-          Go to Client Portal <ArrowRight className="size-4" />
-        </button>
-      </div>
+      {/* Onboarding Complete Header Badge */}
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#7FA0D6]50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-extrabold uppercase tracking-wider mb-4 shadow-2xs"
+      >
+        <CheckCircle2 className="size-4 text-emerald-600" />
+        <span>Stage 5 Active • Creative Pod Allocated & Brief Dispatched</span>
+      </motion.div>
 
-      {/* Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-        
-        {/* Left Column (Span 4) */}
-        <div className="lg:col-span-4 flex flex-col gap-4">
-      <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-6 text-left shadow-xl">
-        <div className="flex flex-col gap-3 mb-4 pb-3 border-b border-[#2A3446]">
+      <h2 className="text-2xl sm:text-4xl font-black font-display text-[#0D2137] tracking-tight">
+        Your Dedicated Creative Pod is Live!
+      </h2>
+
+      <p className="text-sm sm:text-base text-[#64748B] mt-2 mb-7 max-w-2xl mx-auto leading-relaxed">
+        Your retainer is active, your Brand Strategy DNA is synthesized, and your dedicated
+        production specialists have been briefed with your 30-day content calendar.
+      </p>
+
+      {/* ── Algorithm-Assigned Creative Pod Card ────────────────────────────── */}
+      <div className="rounded-2xl border border-[#C9DFF0] bg-white p-5 sm:p-6 mb-7 text-left shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-[#C9DFF0]/70">
           <div>
-            <p className="text-xs font-extrabold uppercase tracking-wider text-[#7FA0D6] flex items-center gap-2">
-              <UserCheck className="size-4 text-[#7FA0D6]" />
+            <p className="text-xs font-extrabold uppercase tracking-wider text-[#2B7BC4] flex items-center gap-2">
+              <UserCheck className="size-4 text-[#2B7BC4]" />
               <span>Dedicated Creative Pod (Algorithm Selected)</span>
             </p>
-            <p className="text-[11px] text-[#97A0B3] mt-0.5">
+            <p className="text-[11px] text-slate-500 mt-0.5">
               Matched based on skill competencies, production headroom, and brand category experience
             </p>
           </div>
-          <span className="self-start sm:self-auto text-[11px] font-bold text-emerald-300 bg-emerald-950/40 border border-emerald-800/60 px-3 py-1 rounded-lg flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="self-start sm:self-auto text-[11px] font-bold text-emerald-800 bg-[#7FA0D6]100/90 border border-emerald-200 px-3 py-1 rounded-lg shadow-2xs flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-[#7FA0D6]500 animate-pulse" />
             FWB-FCS Pod Active
           </span>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {effectiveTeam.map((member) => (
             <div
               key={member.id || member.name}
-              className="flex flex-col justify-between p-4 rounded-xl bg-[#0B111C] border border-[#2A3446] shadow-sm hover:border-[#7FA0D6]/60 transition-all group"
+              className="flex flex-col justify-between p-4 rounded-xl bg-slate-50/80 border border-slate-200/80 shadow-2xs hover:border-[#2B7BC4]/50 hover:bg-white transition-all group"
             >
               <div className="flex items-center gap-3 mb-3">
                 <Avatar name={member.name} role={member.role} />
                 <div className="min-w-0 flex-1">
-                  <p className="font-extrabold text-sm text-[#F8FAFC] truncate">{member.name}</p>
-                  <p className="text-[11px] font-semibold text-[#97A0B3] truncate mt-0.5">{member.role}</p>
+                  <p className="font-extrabold text-sm text-[#0D2137] truncate">{member.name}</p>
+                  <p className="text-[11px] font-semibold text-[#64748B] truncate mt-0.5">{member.role}</p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-[#2A3446] mt-auto">
-                <span className="text-[10px] font-bold text-emerald-300 bg-emerald-950/40 border border-emerald-800/60 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="flex items-center justify-between pt-3 border-t border-slate-200/60 mt-auto">
+                <span className="text-[10px] font-bold text-emerald-800 bg-[#7FA0D6]50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-[#7FA0D6]500 animate-pulse" />
                   Assigned & Briefed
                 </span>
                 <button
                   type="button"
                   onClick={() => handleMessageSpecialist(member)}
-                  className="inline-flex items-center gap-1 text-[11px] font-bold text-[#7FA0D6] hover:text-[#BCCCE6] cursor-pointer transition-colors"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-[#2B7BC4] hover:text-[#1E609A] hover:underline cursor-pointer"
                 >
                   <MessageSquare className="size-3" />
                   <span>Support / Chat</span>
@@ -297,120 +291,56 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
         </div>
       </div>
 
-
-          {/* Core Strategic Positioning & Audience */}
-          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-6 shadow-xl">
-            <div>
-              <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7FA0D6] mb-1.5">
-                <Compass className="size-3.5" />
-                <span>Core Strategic Positioning Vector</span>
-              </div>
-              <p className="text-sm sm:text-base text-[#F8FAFC] font-bold leading-relaxed italic">
-                &ldquo;{strategicSummary}&rdquo;
-              </p>
-              {positioningStatement && positioningStatement !== strategicSummary && (
-                <p className="text-xs text-[#97A0B3] mt-2 font-medium leading-relaxed">
-                  {positioningStatement}
-                </p>
-              )}
-            </div>
-
-            <div className="pt-4 mt-4 border-t border-[#2A3446]">
-              <div className="flex items-center gap-2 mb-3 text-xs font-bold uppercase tracking-wider text-[#F8FAFC]">
-                <Users className="size-3.5 text-[#7FA0D6]" />
-                <span>Target Audience Segments & Core Pain Points</span>
-              </div>
-
-              {audienceSegments ? (
-                <div className="flex flex-col gap-3">
-                  {audienceSegments.map((seg, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] shadow-sm flex flex-col justify-between"
-                    >
-                      <div>
-                        <h4 className="font-bold text-xs text-[#F8FAFC] mb-1">{safeString(seg.name, `Segment ${idx + 1}`)}</h4>
-                        <p className="text-[11px] text-[#97A0B3] leading-relaxed mb-2.5">
-                          {safeString(seg.description)}
-                        </p>
-                      </div>
-                      {seg.core_pain_point && (
-                        <div className="pt-2 border-t border-[#2A3446] flex items-start gap-1.5 text-[11px] text-rose-300 bg-rose-950/40 p-2 rounded-lg border border-rose-800/60">
-                          <Target className="size-3 text-rose-400 mt-0.5 flex-shrink-0" />
-                          <span className="font-medium">
-                            <strong>Pain Point:</strong> {safeString(seg.core_pain_point)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-[#97A0B3] leading-relaxed">{fallbackAudience}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-6 shadow-xl flex-1 flex flex-col justify-center space-y-3">
-            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#F8FAFC]">
-              <Palette className="size-3.5 text-[#7FA0D6]" />
-              <span>Visual Identity & Palette</span>
-            </div>
-
-            <div className="flex gap-2 items-center flex-wrap">
-              {palette.map((c) => (
-                <div key={c} className="flex items-center gap-1.5 bg-[#0B111C] px-2 py-1 rounded-lg border border-[#2A3446] shadow-sm">
-                  <div
-                    className="size-4 rounded border border-white/10 shadow-xs"
-                    style={{ backgroundColor: c }}
-                  />
-                  <span className="font-mono text-[10px] font-bold text-[#97A0B3]">{c}</span>
-                </div>
-              ))}
-            </div>
-
-            {visualStyles.length > 0 && (
-              <div className="flex gap-1.5 flex-wrap pt-1">
-                {visualStyles.map((st) => (
-                  <span key={st} className="px-2 py-0.5 rounded-md bg-[#0B111C] text-[#97A0B3] text-[10px] font-semibold border border-[#2A3446]">
-                    {st}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {visualAvoid.length > 0 && (
-              <div className="text-[10px] text-rose-400">
-                <strong>Visual Avoid:</strong> {visualAvoid.join(", ")}
-              </div>
-            )}
-          </div>
-
+      {/* ── Gemini AI Brand Strategy DNA Blueprint ─────────────────────────── */}
+      <div className="rounded-2xl border border-[#C9DFF0] bg-white p-5 sm:p-7 mb-7 text-left shadow-sm space-y-6">
+        <div className="flex items-center justify-between pb-3 border-b border-[#C9DFF0]/70">
+          <p className="text-xs font-extrabold uppercase tracking-wider text-[#0D2137] flex items-center gap-2">
+            <Sparkles className="size-4 text-[#2B7BC4] animate-pulse" />
+            <span>Gemini AI Strategic Brand Blueprint</span>
+          </p>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#2B7BC4] bg-[#E8F4FD] border border-[#C9DFF0] px-2.5 py-0.5 rounded-full">
+            {dnaStatus?.brand_dna_source === "gemini" ? "Gemini 2.0 Flash Synthesis" : "Strategic Synthesis"}
+          </span>
         </div>
 
-        {/* Right Column (Span 8) */}
-        <div className="lg:col-span-8 flex flex-col gap-4">
-        <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-6 shadow-xl">
+        {/* Strategic Positioning Line */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#F0F7FD] via-white to-[#F0F7FD] border border-[#C9DFF0]/80 shadow-2xs">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#2B7BC4] mb-1.5">
+            <Compass className="size-3.5" />
+            <span>Core Strategic Positioning Vector</span>
+          </div>
+          <p className="text-sm sm:text-base text-[#0D2137] font-bold leading-relaxed italic">
+            &ldquo;{strategicSummary}&rdquo;
+          </p>
+          {positioningStatement && positioningStatement !== strategicSummary && (
+            <p className="text-xs text-slate-600 mt-2 font-medium leading-relaxed">
+              {positioningStatement}
+            </p>
+          )}
+        </div>
+
+        {/* ── Tone & Voice Architecture Matrix ──────────────────────────────── */}
+        <div className="rounded-xl bg-slate-50/70 border border-slate-200/80 p-4 sm:p-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#F8FAFC]">
-              <Sliders className="size-3.5 text-[#7FA0D6]" />
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-700">
+              <Sliders className="size-3.5 text-[#2B7BC4]" />
               <span>Tone & Voice Architecture Matrix</span>
             </div>
-            <span className="text-[10px] font-semibold text-[#97A0B3]">Strict Production Boundary</span>
+            <span className="text-[10px] font-semibold text-slate-400">Strict Production Boundary</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Left: Voice Words & Anti-Voice */}
             <div className="space-y-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1.5">
                   Voice Words (Always Sound)
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {voiceWords.map((word) => (
                     <span
                       key={word}
-                      className="px-2.5 py-0.5 rounded-md bg-[#7FA0D6]/20 text-[#BCCCE6] border border-[#7FA0D6]/40 text-xs font-bold"
+                      className="px-2.5 py-0.5 rounded-md bg-blue-50 text-[#1E609A] border border-blue-200 text-xs font-bold"
                     >
                       {word}
                     </span>
@@ -420,14 +350,14 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
 
               {antiVoiceWords.length > 0 && (
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400 block mb-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 block mb-1.5">
                     Anti-Voice Words (Never Sound)
                   </span>
                   <div className="flex flex-wrap gap-1.5">
                     {antiVoiceWords.map((word) => (
                       <span
                         key={word}
-                        className="px-2.5 py-0.5 rounded-md bg-rose-950/40 text-rose-300 border border-rose-800/60 text-xs font-semibold"
+                        className="px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 text-xs font-semibold"
                       >
                         Avoid {word}
                       </span>
@@ -438,13 +368,13 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
 
               {writingRules.length > 0 && (
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
                     Editorial Writing Rules
                   </span>
                   <ul className="space-y-1">
                     {writingRules.slice(0, 3).map((rule, idx) => (
-                      <li key={idx} className="text-xs text-[#97A0B3] flex items-start gap-1.5">
-                        <Check className="size-3 text-emerald-400 mt-0.5 flex-shrink-0" />
+                      <li key={idx} className="text-xs text-slate-600 flex items-start gap-1.5">
+                        <Check className="size-3 text-emerald-600 mt-0.5 flex-shrink-0" />
                         <span>{rule}</span>
                       </li>
                     ))}
@@ -454,20 +384,20 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
             </div>
 
             {/* Right: Tone Dimension Sliders */}
-            <div className="space-y-2.5 bg-[#0B111C] p-3.5 rounded-xl border border-[#2A3446]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
+            <div className="space-y-2.5 bg-white p-3.5 rounded-xl border border-slate-200/70">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
                 Tone Dimensions (0–10 Calibration)
               </span>
               <div className="space-y-2">
                 {toneGauges.map((g) => (
                   <div key={g.label} className="space-y-0.5">
-                    <div className="flex items-center justify-between text-[11px] font-semibold text-[#97A0B3]">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600">
                       <span>{g.label}</span>
-                      <span className="font-bold text-[#F8FAFC]">{g.value}/10</span>
+                      <span className="font-bold text-[#0D2137]">{g.value}/10</span>
                     </div>
-                    <div className="h-1.5 w-full rounded-full bg-[#161F2D] border border-[#2A3446] overflow-hidden">
+                    <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-[#7FA0D6]"
+                        className="h-full rounded-full bg-gradient-to-r from-[#2B7BC4] to-[#1E609A]"
                         style={{ width: `${Math.min(100, Math.max(10, g.value * 10))}%` }}
                       />
                     </div>
@@ -478,13 +408,50 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-6 shadow-xl">
+        {/* ── Target Audience Segments ──────────────────────────────────────── */}
+        <div className="rounded-xl bg-slate-50/70 border border-slate-200/80 p-4 sm:p-5">
+          <div className="flex items-center gap-2 mb-3 text-xs font-bold uppercase tracking-wider text-slate-700">
+            <Users className="size-3.5 text-[#2B7BC4]" />
+            <span>Target Audience Segments & Core Pain Points</span>
+          </div>
+
+          {audienceSegments ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {audienceSegments.map((seg, idx) => (
+                <div
+                  key={idx}
+                  className="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs flex flex-col justify-between"
+                >
+                  <div>
+                    <h4 className="font-bold text-xs text-[#0D2137] mb-1">{safeString(seg.name, `Segment ${idx + 1}`)}</h4>
+                    <p className="text-[11px] text-slate-600 leading-relaxed mb-2.5">
+                      {safeString(seg.description)}
+                    </p>
+                  </div>
+                  {seg.core_pain_point && (
+                    <div className="pt-2 border-t border-slate-100 flex items-start gap-1.5 text-[11px] text-rose-700 bg-rose-50/60 p-2 rounded-lg">
+                      <Target className="size-3 text-rose-600 mt-0.5 flex-shrink-0" />
+                      <span className="font-medium">
+                        <strong>Pain Point:</strong> {safeString(seg.core_pain_point)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-600 leading-relaxed">{fallbackAudience}</p>
+          )}
+        </div>
+
+        {/* ── 30-Day Content Pillars with Funnel Stages ──────────────────────── */}
+        <div className="rounded-xl bg-blue-50/30 border border-[#C9DFF0] p-4 sm:p-5">
           <div className="flex items-center justify-between mb-3.5">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#F8FAFC]">
-              <Layers className="size-3.5 text-[#7FA0D6]" />
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#1E609A]">
+              <Layers className="size-3.5 text-[#2B7BC4]" />
               <span>Synthesized 30-Day Content Pillars</span>
             </div>
-            <span className="text-[10px] font-bold text-[#0B111C] bg-[#BCCCE6] px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold text-[#2B7BC4] bg-[#E8F4FD] px-2 py-0.5 rounded-full border border-[#C9DFF0]">
               Full Funnel Matrix
             </span>
           </div>
@@ -495,15 +462,15 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
                 const stage = safeString(pillar.funnel_stage, "reach").toLowerCase();
                 const stageColor =
                   stage === "reach"
-                    ? "bg-sky-950/40 text-sky-300 border-sky-800/60"
+                    ? "bg-sky-50 text-sky-700 border-sky-200"
                     : stage === "authority"
-                    ? "bg-purple-950/40 text-purple-300 border-purple-800/60"
-                    : "bg-emerald-950/40 text-emerald-300 border-emerald-800/60";
+                    ? "bg-purple-50 text-purple-700 border-purple-200"
+                    : "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200";
 
                 return (
                   <div
                     key={idx}
-                    className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] shadow-sm flex flex-col justify-between"
+                    className="p-3.5 rounded-xl bg-white border border-[#C9DFF0] shadow-2xs flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-1 mb-1.5">
@@ -511,26 +478,26 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
                           {stage}
                         </span>
                         {Array.isArray(pillar.best_formats) && pillar.best_formats.length > 0 && (
-                          <span className="text-[9px] font-semibold text-[#97A0B3] truncate">
+                          <span className="text-[9px] font-semibold text-slate-400 truncate">
                             {pillar.best_formats.map((f) => safeString(f)).join(", ")}
                           </span>
                         )}
                       </div>
-                      <h4 className="font-bold text-xs text-[#F8FAFC] mb-1">{safeString(pillar.name, `Pillar ${idx + 1}`)}</h4>
-                      <p className="text-[11px] text-[#97A0B3] leading-relaxed">
+                      <h4 className="font-bold text-xs text-[#0D2137] mb-1">{safeString(pillar.name, `Pillar ${idx + 1}`)}</h4>
+                      <p className="text-[11px] text-slate-600 leading-relaxed">
                         {safeString(pillar.rationale)}
                       </p>
                     </div>
 
                     {Array.isArray(pillar.example_angles) && pillar.example_angles.length > 0 && (
-                      <div className="mt-3 pt-2 border-t border-[#2A3446]">
-                        <span className="text-[9px] font-bold uppercase text-[#97A0B3] block mb-1">
+                      <div className="mt-3 pt-2 border-t border-slate-100">
+                        <span className="text-[9px] font-bold uppercase text-slate-400 block mb-1">
                           Example Hooks:
                         </span>
                         <ul className="space-y-0.5">
                           {pillar.example_angles.slice(0, 2).map((angle, aIdx) => (
-                            <li key={aIdx} className="text-[10px] text-[#97A0B3] truncate flex items-center gap-1">
-                              <span className="size-1 rounded-full bg-[#7FA0D6]" />
+                            <li key={aIdx} className="text-[10px] text-slate-600 truncate flex items-center gap-1">
+                              <span className="size-1 rounded-full bg-[#2B7BC4]" />
                               <span>{safeString(angle)}</span>
                             </li>
                           ))}
@@ -546,9 +513,9 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
               {fallbackThemes.map((theme, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#0B111C] border border-[#2A3446] text-xs font-semibold text-[#F8FAFC] shadow-sm"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-[#C9DFF0] text-xs font-semibold text-[#0D2137] shadow-2xs"
                 >
-                  <span className="size-1.5 rounded-full bg-[#7FA0D6]" />
+                  <span className="size-1.5 rounded-full bg-[#2B7BC4]" />
                   <span className="truncate">{theme}</span>
                 </div>
               ))}
@@ -556,9 +523,48 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
           )}
         </div>
 
-          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-6 shadow-xl flex-1 flex flex-col justify-center space-y-3">
-            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#F8FAFC]">
-              <Film className="size-3.5 text-[#7FA0D6]" />
+        {/* ── Visual Identity & Production Guardrails ────────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          {/* Visual Palette & Styles */}
+          <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-3">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700">
+              <Palette className="size-3.5 text-[#2B7BC4]" />
+              <span>Visual Identity & Palette</span>
+            </div>
+
+            <div className="flex gap-2 items-center flex-wrap">
+              {palette.map((c) => (
+                <div key={c} className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-lg border border-slate-200 shadow-2xs">
+                  <div
+                    className="size-4 rounded border border-black/10 shadow-xs"
+                    style={{ backgroundColor: c }}
+                  />
+                  <span className="font-mono text-[10px] font-bold text-slate-700">{c}</span>
+                </div>
+              ))}
+            </div>
+
+            {visualStyles.length > 0 && (
+              <div className="flex gap-1.5 flex-wrap pt-1">
+                {visualStyles.map((st) => (
+                  <span key={st} className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-semibold border border-slate-200">
+                    {st}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {visualAvoid.length > 0 && (
+              <div className="text-[10px] text-rose-700">
+                <strong>Visual Avoid:</strong> {visualAvoid.join(", ")}
+              </div>
+            )}
+          </div>
+
+          {/* Production Boundaries & Formats */}
+          <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-3">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-700">
+              <Film className="size-3.5 text-[#2B7BC4]" />
               <span>Production Directives & Formats</span>
             </div>
 
@@ -566,29 +572,29 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
               {formats.map((f) => (
                 <span
                   key={f}
-                  className="px-2.5 py-1 rounded-md bg-[#0B111C] text-[#7FA0D6] border border-[#2A3446] font-bold text-[11px] shadow-sm"
+                  className="px-2.5 py-1 rounded-md bg-[#E8F4FD] text-[#2B7BC4] border border-[#C9DFF0] font-bold text-[11px] shadow-2xs"
                 >
                   {f}
                 </span>
               ))}
             </div>
 
-            <div className="text-[11px] text-[#97A0B3] flex items-center gap-1.5">
-              <span className="font-semibold text-[#97A0B3]">Default Reel Style:</span>
-              <span className="font-bold text-[#F8FAFC] capitalize">
+            <div className="text-[11px] text-slate-600 flex items-center gap-1.5">
+              <span className="font-semibold text-slate-400">Default Reel Style:</span>
+              <span className="font-bold text-[#0D2137] capitalize">
                 {reelStyle.replace(/_/g, " ")}
               </span>
             </div>
 
             {doNotRules.length > 0 && (
-              <div className="pt-2 border-t border-[#2A3446]">
-                <div className="flex items-center gap-1 text-[10px] font-bold uppercase text-rose-400 mb-1">
+              <div className="pt-2 border-t border-slate-200/60">
+                <div className="flex items-center gap-1 text-[10px] font-bold uppercase text-rose-600 mb-1">
                   <ShieldAlert className="size-3" />
                   <span>Hard Production Constraints:</span>
                 </div>
                 <ul className="space-y-0.5">
                   {doNotRules.slice(0, 2).map((rule, rIdx) => (
-                    <li key={rIdx} className="text-[10px] text-[#97A0B3] truncate">
+                    <li key={rIdx} className="text-[10px] text-slate-600 truncate">
                       • {rule}
                     </li>
                   ))}
@@ -597,34 +603,31 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
             )}
           </div>
         </div>
-      </div>
 
-      {/* Footer Area */}
-
-      <div className="flex flex-col gap-3 mt-2">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-xs text-emerald-200 font-medium">
+        {/* ── Brief Dispatched Confirmation Callout ───────────────────────────── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-[#7FA0D6]50/90 border border-emerald-200 text-xs text-emerald-900 font-medium">
           <div className="flex items-center gap-2.5">
-            <Send className="size-4 text-emerald-400 flex-shrink-0" />
+            <Send className="size-4 text-emerald-600 flex-shrink-0" />
             <span>
-              <strong className="text-emerald-300">Summary Brief Dispatched:</strong> Your assigned Team Lead and Pod Specialists have received this Brand DNA summary and client production parameters via in-app notifications and email dispatch.
+              <strong>Summary Brief Dispatched:</strong> Your assigned Team Lead and Pod Specialists have received this Brand DNA summary and client production parameters via in-app notifications and email dispatch.
             </span>
           </div>
           <button
             type="button"
             onClick={() => resendMutation.mutate()}
             disabled={resendMutation.isPending}
-            className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0B111C] border border-[#2A3446] text-emerald-300 hover:text-white hover:border-emerald-600 font-bold text-[11px] shadow-sm cursor-pointer flex-shrink-0 transition-all disabled:opacity-50"
+            className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-emerald-300 text-emerald-800 hover:bg-[#7FA0D6]100 font-bold text-[11px] shadow-2xs cursor-pointer flex-shrink-0 transition-all disabled:opacity-50"
           >
             {resendMutation.isPending ? (
               <span>Dispatching...</span>
             ) : resendFeedback ? (
               <>
-                <Check className="size-3 text-emerald-400" />
+                <Check className="size-3 text-emerald-600" />
                 <span>{resendFeedback}</span>
               </>
             ) : (
               <>
-                <Send className="size-3 text-emerald-400" />
+                <Send className="size-3 text-emerald-600" />
                 <span>Notify Pod Again</span>
               </>
             )}
@@ -633,9 +636,9 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
       </div>
 
       {/* Calendar Ready Notification Badge */}
-      <div className="flex items-center justify-center gap-2.5 p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-xs sm:text-sm font-bold text-emerald-300 shadow-sm">
-        <Calendar className="size-4.5 text-emerald-400" />
-        <span>Initial 30-day production roadmap generated with +1 business-day due buffer. Ready for kickoff!</span>
+      <div className="flex items-center justify-center gap-2.5 p-4 rounded-xl bg-[#7FA0D6]50 border border-emerald-200 text-xs sm:text-sm font-bold text-emerald-800 mb-7 shadow-2xs">
+        <Calendar className="size-4.5 text-emerald-600" />
+        <span>Initial 30-day production roadmap generated with +3 business-day due buffer. Ready for kickoff!</span>
       </div>
 
       {/* Launch Portal CTA Dock */}
@@ -643,7 +646,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
         <button
           type="button"
           onClick={() => navigate("/portal/support")}
-          className="w-full sm:w-1/3 py-4 px-6 rounded-2xl border border-[#2A3446] bg-[#0B111C] text-[#97A0B3] hover:text-[#F8FAFC] hover:border-[#7FA0D6] font-bold text-sm transition-all cursor-pointer"
+          className="w-full sm:w-1/3 py-4 px-6 rounded-2xl border-2 border-[#2B7BC4] text-[#2B7BC4] hover:bg-[#E8F4FD] font-extrabold text-sm transition-all cursor-pointer"
         >
           <span>Support Desk & Requests</span>
         </button>
@@ -651,7 +654,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
           id="launch-portal-btn"
           type="button"
           onClick={onLaunchPortal}
-          className="w-full sm:w-2/3 inline-flex items-center justify-center gap-2.5 py-4 px-8 rounded-2xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] font-black text-sm sm:text-base shadow-xl shadow-[#BCCCE6]/10 active:scale-[0.99] transition-all cursor-pointer"
+          className="w-full sm:w-2/3 inline-flex items-center justify-center gap-2.5 py-4 px-8 rounded-2xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-blue-500/25 active:scale-[0.99] transition-all cursor-pointer"
         >
           <span>Enter Client Portal & Production Roadmap</span>
           <ArrowRight className="size-4 sm:size-5" />

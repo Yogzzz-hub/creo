@@ -29,7 +29,6 @@ export function PortalHeader() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
   const bellRef = useRef<HTMLButtonElement>(null);
 
@@ -42,16 +41,10 @@ export function PortalHeader() {
     refetchInterval: 15000,
   });
 
-  const rawNotifications = notifData?.items || [];
-  const notifications = rawNotifications.map((n) => ({
-    ...n,
-    is_read: n.is_read || readIds.has(n.id),
-  }));
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const unreadCount = notifData?.unread_count || 0;
+  const notifications = notifData?.items || [];
 
   const handleMarkAllRead = async () => {
-    const allIds = notifications.map((n) => n.id);
-    setReadIds((prev) => new Set([...prev, ...allIds]));
     try {
       await request("/api/v1/notifications/mark-all-read", { method: "POST" });
       queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] });
@@ -61,7 +54,6 @@ export function PortalHeader() {
   };
 
   const handleItemClick = async (item: NotificationItem) => {
-    setReadIds((prev) => new Set([...prev, item.id]));
     if (!item.is_read) {
       try {
         await request(`/api/v1/notifications/${item.id}/read`, { method: "PATCH" });
@@ -141,7 +133,7 @@ export function PortalHeader() {
   ].includes(location.pathname);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-[#2A3446]/70 bg-[#0B111C]/95 backdrop-blur-sm px-4 sm:px-8 shadow-sm">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200/80 bg-white/95 backdrop-blur-sm px-4 sm:px-8 shadow-sm">
       {/* Dynamic Page Title & Back Button */}
       <div className="flex items-center gap-2.5">
         {!isMainPortalPage && (
@@ -160,7 +152,7 @@ export function PortalHeader() {
             <ChevronLeft className="size-4 group-hover:-translate-x-0.5 transition-transform" />
           </button>
         )}
-        <h1 className="text-sm font-bold tracking-wider text-[#F1F5F9]">
+        <h1 className="text-sm font-bold tracking-wider text-[#0F172A]">
           {getPageTitle()}
         </h1>
       </div>
@@ -200,7 +192,7 @@ export function PortalHeader() {
           </button>
 
           {notificationOpen && (
-            <div className="absolute right-0 mt-2 w-84 rounded-2xl border border-[#2A3446]/70 bg-[#161F2D] p-4 shadow-xl z-50 text-[#F1F5F9] space-y-3 animate-[zoomIn_0.1s_ease-out]">
+            <div className="absolute right-0 mt-2 w-84 rounded-2xl border border-border bg-white p-4 shadow-xl z-50 text-[#0F172A] space-y-3 animate-[zoomIn_0.1s_ease-out]">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-[#0052FF]">
@@ -277,7 +269,7 @@ export function PortalHeader() {
           </button>
 
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-64 rounded-xl border border-[#2A3446]/70 bg-[#161F2D] p-2 shadow-lg z-50 text-[#F1F5F9]">
+            <div className="absolute right-0 mt-2 w-64 rounded-xl border border-border bg-white p-2 shadow-lg z-50 text-[#0F172A]">
               <div className="px-3 py-2 border-b border-border mb-1">
                 <div className="flex items-center gap-2 mb-1.5">
                   <div className="flex size-8 items-center justify-center rounded-full bg-[#0052FF] text-white text-xs font-semibold">
