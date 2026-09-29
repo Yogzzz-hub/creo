@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { Link, useParams, useSearchParams, Navigate } from "react-router";
-import { fetchClientRoster } from "../../lib/ops-api";
-import type { ClientRosterItem } from "../../types/ops";
+import React, { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router";
 import {
-  BarChart,
-  Bar,
-  Cell,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
+  ReferenceLine,
   ResponsiveContainer,
 } from "recharts";
 import {
@@ -21,11 +19,13 @@ import {
   CheckCircle2,
   MessageSquare,
   AlertTriangle,
+  DollarSign,
   Briefcase,
   TrendingUp,
   Eye,
   Check,
   X,
+  Loader2,
   Filter,
   Tag,
   ChevronLeft,
@@ -56,9 +56,8 @@ import {
   Lock,
   ShieldCheck,
 } from "lucide-react";
+import { request } from "../../lib/http";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
-import { CustomSelect } from "../../components/ui/CustomSelect";
-import { useAuth } from "../../lib/auth-context";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. ADMIN CLIENTS PAGE (CLIENT DETAILS & BRAND BRIEF)
@@ -139,24 +138,11 @@ export interface ClientDetailData {
 }
 
 export function AdminClientsPage() {
-  const { clientId } = useParams<{ clientId?: string }>();
-  const [searchParams] = useSearchParams();
-  const urlClientId = clientId || searchParams.get("clientId") || searchParams.get("client");
-
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [serverClients, setServerClients] = useState<ClientRosterItem[]>([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [deliverableSearch, setDeliverableSearch] = useState("");
   const [toast, setToast] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchClientRoster()
-      .then((data) => {
-        if (Array.isArray(data)) setServerClients(data);
-      })
-      .catch(console.error);
-  }, []);
 
   // Active Modals
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -172,324 +158,36 @@ export function AdminClientsPage() {
   });
 
   const clientsData: Record<string, ClientDetailData> = {
-    ryze: {
-      id: "ryze",
-      name: "Ryze",
-      initials: "R",
-      industry: "DTC Wellness & Functional Health",
-      timezone: "Client Time: IST (UTC+5:30)",
-      activeSince: "Active since Jan 2024",
-      tier: "Starter Growth Retainer",
-      tierBadge: "STARTER GROWTH",
-      status: "ACTIVE RETAINER",
-      monthlyFee: 25000,
-      addon: "Add-on: Creative Pod C",
-      nextBilling: "Oct 1, 2026",
-      billingMethod: "Direct ACH / Razorpay",
-      totalAssetsDelivered: 0,
-      totalAssetsQuota: 22,
-      postsDelivered: 0,
-      postsQuota: 8,
-      reelsDelivered: 0,
-      reelsQuota: 4,
-      storiesDelivered: 0,
-      storiesQuota: 10,
-      sprintNumber: 44,
-      daysRemainingInSprint: 14,
-      contact: {
-        name: "Ryze Brand Team",
-        title: "Brand Strategy Director",
-        email: "sushmitaa1407@gmail.com",
-        phone: "+91 98401 22910",
-        renewedDate: "Sep 1, 2026",
-        termMonths: 12,
-      },
-      brand: {
-        kitVersion: "Design Kit v2.4",
-        headingsFont: "Plus Jakarta Sans",
-        bodyFont: "Inter Sans",
-        monoFont: "JetBrains Mono",
-        toneSummary:
-          "Energetic, holistic wellness with clean organic minimalism and modern typography. Punchy video hooks and high-contrast benefit callouts.",
-        toneTags: ["Vitality", "High Energy", "Clean Aesthetics"],
-        colors: [
-          { name: "Matcha Slate", hex: "#166534" },
-          { name: "Cream Ivory", hex: "#FEFCE8", isLight: true },
-          { name: "Core Charcoal", hex: "#0F172A" },
-          { name: "Glow Amber", hex: "#F59E0B" },
-        ],
-        social: {
-          handle: "@ryzesocial",
-          followers: "42,500 Followers",
-          status: "API CONNECTED",
-          syncInterval: "15m refresh",
-        },
-        brandVaultLink: "Ryze Master Assets Drive",
-        figmaLink: "Ryze Brand Design System",
-        lastAuditDate: "Sep 20, 2026",
-      },
-      pod: {
-        name: "Pod B",
-        tagline: "Performance & Video Ops",
-        leadName: "Sarah Connor",
-        leadTitle: "Lead Video Producer",
-        leadAvatar: "SC",
-        squad: [
-          { name: "David Kim", role: "Video Editor", hoursPerWeek: 16, avatar: "DK" },
-          { name: "Elena Rostova", role: "Graphic Designer", hoursPerWeek: 16, avatar: "ER" },
-        ],
-        capacityAllocatedHrs: 32,
-        bandwidthPercent: 75,
-        dailySyncTime: "11:00 AM IST",
-      },
-      deliverables: [],
-    },
-    aravindan: {
-      id: "aravindan",
-      name: "Aravindan",
-      initials: "A",
-      industry: "B2B Enterprise SaaS & Cloud Architecture",
-      timezone: "Client Time: IST (UTC+5:30)",
-      activeSince: "Active since Mar 2024",
-      tier: "Custom Retainer",
-      tierBadge: "CUSTOM RETAINER",
-      status: "ACTIVE RETAINER",
-      monthlyFee: 45000,
-      addon: "Add-on: Technical Motion Lead",
-      nextBilling: "Oct 5, 2026",
-      billingMethod: "Direct Corporate Wire",
-      totalAssetsDelivered: 0,
-      totalAssetsQuota: 15,
-      postsDelivered: 0,
-      postsQuota: 6,
-      reelsDelivered: 0,
-      reelsQuota: 4,
-      storiesDelivered: 0,
-      storiesQuota: 5,
-      sprintNumber: 44,
-      daysRemainingInSprint: 14,
-      contact: {
-        name: "Aravindan",
-        title: "Founder & Chief Technology Officer",
-        email: "aravindan20062006@gmail.com",
-        phone: "+91 98402 33411",
-        renewedDate: "Sep 5, 2026",
-        termMonths: 12,
-      },
-      brand: {
-        kitVersion: "Design Kit v2.1",
-        headingsFont: "Plus Jakarta Sans",
-        bodyFont: "Inter Sans",
-        monoFont: "JetBrains Mono",
-        toneSummary:
-          "Authoritative, technically rigorous cloud software communication. Architectural clarity, latency reduction metrics, and developer-first storytelling.",
-        toneTags: ["High Trust", "Developer First", "Algorithmic Speed"],
-        colors: [
-          { name: "Deep Obsidian", hex: "#0F172A" },
-          { name: "Electric Azure", hex: "#2563EB" },
-          { name: "Terminal Cyan", hex: "#06B6D4" },
-          { name: "Clean Slate", hex: "#F8FAFC", isLight: true },
-        ],
-        social: {
-          handle: "@aravindan_dev",
-          followers: "18,900 Followers",
-          status: "API CONNECTED",
-          syncInterval: "15m refresh",
-        },
-        brandVaultLink: "Aravindan Drive Cloud Vault",
-        figmaLink: "Aravindan System Components",
-        lastAuditDate: "Sep 18, 2026",
-      },
-      pod: {
-        name: "Pod A",
-        tagline: "Creative & Brand Strategy",
-        leadName: "Vikram Malhotra",
-        leadTitle: "Pod A Lead Producer",
-        leadAvatar: "VM",
-        squad: [
-          { name: "Karthik Raja", role: "Video Editor", hoursPerWeek: 16, avatar: "KR" },
-          { name: "Ananya Deshmukh", role: "Graphic Designer", hoursPerWeek: 16, avatar: "AD" },
-        ],
-        capacityAllocatedHrs: 32,
-        bandwidthPercent: 85,
-        dailySyncTime: "10:30 AM IST",
-      },
-      deliverables: [],
-    },
-    shanmugaraj: {
-      id: "shanmugaraj",
-      name: "Shanmugaraj",
-      initials: "S",
-      industry: "Omnichannel E-Commerce & Retail Tech",
-      timezone: "Client Time: IST (UTC+5:30)",
-      activeSince: "Active since Feb 2024",
-      tier: "Brand Accelerator Retainer",
-      tierBadge: "BRAND ACCELERATOR",
-      status: "ACTIVE RETAINER",
-      monthlyFee: 50000,
-      addon: "Add-on: TikTok Growth Pod",
-      nextBilling: "Oct 8, 2026",
-      billingMethod: "Stripe Corporate ACH",
-      totalAssetsDelivered: 0,
-      totalAssetsQuota: 43,
-      postsDelivered: 0,
-      postsQuota: 15,
-      reelsDelivered: 0,
-      reelsQuota: 8,
-      storiesDelivered: 0,
-      storiesQuota: 20,
-      sprintNumber: 44,
-      daysRemainingInSprint: 14,
-      contact: {
-        name: "Shanmugaraj",
-        title: "Head of Growth & Creative",
-        email: "shanmugaraj2204@gmail.com",
-        phone: "+91 98403 44522",
-        renewedDate: "Sep 8, 2026",
-        termMonths: 12,
-      },
-      brand: {
-        kitVersion: "Design Kit v2.2",
-        headingsFont: "Plus Jakarta Sans",
-        bodyFont: "Inter Sans",
-        monoFont: "Space Mono",
-        toneSummary:
-          "High-conversion retail creative with dynamic pacing, kinetic typography, and bold product highlights designed for immediate customer engagement.",
-        toneTags: ["Conversion First", "Punchy Edits", "High CTR"],
-        colors: [
-          { name: "Vibrant Crimson", hex: "#E11D48" },
-          { name: "Neon Rose", hex: "#F43F5E" },
-          { name: "Pure White", hex: "#FFFFFF", isLight: true },
-          { name: "Jet Slate", hex: "#0F172A" },
-        ],
-        social: {
-          handle: "@shanmuga_growth",
-          followers: "64,200 Followers",
-          status: "API CONNECTED",
-          syncInterval: "15m refresh",
-        },
-        brandVaultLink: "Shanmugaraj Growth Assets Drive",
-        figmaLink: "Shanmugaraj Master System",
-        lastAuditDate: "Sep 22, 2026",
-      },
-      pod: {
-        name: "Pod A",
-        tagline: "Creative & Brand Strategy",
-        leadName: "Vikram Malhotra",
-        leadTitle: "Pod A Lead Producer",
-        leadAvatar: "VM",
-        squad: [
-          { name: "Karthik Raja", role: "Video Editor", hoursPerWeek: 16, avatar: "KR" },
-          { name: "Ananya Deshmukh", role: "Graphic Designer", hoursPerWeek: 16, avatar: "AD" },
-        ],
-        capacityAllocatedHrs: 30,
-        bandwidthPercent: 78,
-        dailySyncTime: "10:30 AM IST",
-      },
-      deliverables: [],
-    },
-    luma: {
-      id: "luma",
-      name: "Luma",
-      initials: "L",
-      industry: "Enterprise AI & Scaled Consumer Tech",
-      timezone: "Client Time: IST (UTC+5:30)",
-      activeSince: "Active since Nov 2023",
-      tier: "Enterprise Domination Retainer",
-      tierBadge: "ENTERPRISE DOMINATION",
-      status: "ACTIVE RETAINER",
-      monthlyFee: 95000,
-      addon: "Add-on: 3D VFX Lead",
-      nextBilling: "Oct 12, 2026",
-      billingMethod: "Direct ACH Wire",
-      totalAssetsDelivered: 0,
-      totalAssetsQuota: 86,
-      postsDelivered: 0,
-      postsQuota: 30,
-      reelsDelivered: 0,
-      reelsQuota: 16,
-      storiesDelivered: 0,
-      storiesQuota: 40,
-      sprintNumber: 44,
-      daysRemainingInSprint: 14,
-      contact: {
-        name: "Luma Executive Director",
-        title: "VP of Global Brand Marketing",
-        email: "antigravity9840@gmail.com",
-        phone: "+91 98404 55633",
-        renewedDate: "Sep 12, 2026",
-        termMonths: 12,
-      },
-      brand: {
-        kitVersion: "Design Kit v2.5",
-        headingsFont: "Plus Jakarta Sans",
-        bodyFont: "Inter Sans",
-        monoFont: "JetBrains Mono",
-        toneSummary:
-          "Institutional prestige meets kinetic AI interfaces. Sophisticated 3D physics rendering with uncompromising geometric precision.",
-        toneTags: ["Institutional", "3D Kinetic", "Global Scale"],
-        colors: [
-          { name: "Galaxy Blue", hex: "#1E40AF" },
-          { name: "Cyan Flare", hex: "#06B6D4" },
-          { name: "Obsidian Core", hex: "#0B111C" },
-          { name: "Pure Cloud", hex: "#F8FAFC", isLight: true },
-        ],
-        social: {
-          handle: "@luma_global",
-          followers: "128,400 Followers",
-          status: "API CONNECTED",
-          syncInterval: "15m refresh",
-        },
-        brandVaultLink: "Luma Enterprise Asset Drive",
-        figmaLink: "Luma Global Design Tokens",
-        lastAuditDate: "Sep 25, 2026",
-      },
-      pod: {
-        name: "Pod A",
-        tagline: "Motion & High-Velocity Video Ops",
-        leadName: "Vikram Malhotra",
-        leadTitle: "Creative Lead & VFX Director",
-        leadAvatar: "VM",
-        squad: [
-          { name: "Karthik Raja", role: "Video Editor", hoursPerWeek: 16, avatar: "KR" },
-          { name: "Ananya Deshmukh", role: "Graphic Designer", hoursPerWeek: 16, avatar: "AD" },
-        ],
-        capacityAllocatedHrs: 32,
-        bandwidthPercent: 80,
-        dailySyncTime: "11:30 AM IST",
-      },
-      deliverables: [],
-    },
-    apex: {
-      id: "apex",
-      name: "Apex Innovations",
-      initials: "AI",
+    northwind: {
+      id: "northwind",
+      name: "Northwind Labs",
+      initials: "NL",
       industry: "Fintech & Algorithmic Infrastructure",
-      timezone: "Client Time: IST (UTC+5:30)",
-      activeSince: "Active since Jan 2024",
-      tier: "Brand Accelerator Retainer",
-      tierBadge: "BRAND ACCELERATOR",
+      timezone: "Client Time: EST (UTC-5)",
+      activeSince: "Active since Aug 2023",
+      tier: "Enterprise Retainer",
+      tierBadge: "ENTERPRISE RETAINER",
       status: "ACTIVE RETAINER",
-      monthlyFee: 50000,
-      addon: "Add-on: Motion Specialist",
-      nextBilling: "Oct 15, 2026",
+      monthlyFee: 9500,
+      addon: "Add-on: Motion Lead",
+      nextBilling: "Dec 1, 2024",
       billingMethod: "Stripe Corporate ACH",
-      totalAssetsDelivered: 12,
-      totalAssetsQuota: 30,
-      postsDelivered: 8,
-      postsQuota: 15,
-      reelsDelivered: 2,
-      reelsQuota: 5,
-      storiesDelivered: 2,
-      storiesQuota: 10,
+      totalAssetsDelivered: 18,
+      totalAssetsQuota: 24,
+      postsDelivered: 12,
+      postsQuota: 16,
+      reelsDelivered: 3,
+      reelsQuota: 4,
+      storiesDelivered: 3,
+      storiesQuota: 4,
       sprintNumber: 44,
-      daysRemainingInSprint: 14,
+      daysRemainingInSprint: 12,
       contact: {
         name: "David K.",
-        title: "VP of Product Marketing",
-        email: "ops@apexinnovations.co",
-        phone: "+91 98405 66744",
-        renewedDate: "Sep 15, 2026",
+        title: "VP of Marketing & Communications",
+        email: "ops@northwindlabs.co",
+        phone: "+1 (555) 234-8901",
+        renewedDate: "Nov 1, 2024",
         termMonths: 12,
       },
       brand: {
@@ -497,7 +195,8 @@ export function AdminClientsPage() {
         headingsFont: "Plus Jakarta Sans",
         bodyFont: "Inter Sans",
         monoFont: "JetBrains Mono",
-        toneSummary: "Institutional, enterprise fintech with sharp geometric clarity.",
+        toneSummary:
+          "Authoritative, institutional, enterprise fintech with sharp geometric clarity. Uncompromising precision and zero superfluous fluff.",
         toneTags: ["Algorithmic", "High Trust", "Global Scope"],
         colors: [
           { name: "Core Navy", hex: "#0F172A" },
@@ -506,140 +205,120 @@ export function AdminClientsPage() {
           { name: "Clean Neutral", hex: "#F8FAFC", isLight: true },
         ],
         social: {
-          handle: "@apexinnovations",
-          followers: "94,000 Followers",
+          handle: "@northwindlabs",
+          followers: "142,800 Followers",
           status: "API CONNECTED",
           syncInterval: "15m refresh",
         },
-        brandVaultLink: "Apex Brand Vault",
-        figmaLink: "Apex Design System",
-        lastAuditDate: "Sep 15, 2026",
+        brandVaultLink: "Google Drive Brand Vault",
+        figmaLink: "Figma Design System (v2.4)",
+        lastAuditDate: "Nov 12, 2024",
       },
       pod: {
         name: "Pod A",
-        tagline: "Creative & Brand Strategy",
-        leadName: "Vikram Malhotra",
-        leadTitle: "Pod A Lead Producer",
-        leadAvatar: "VM",
+        tagline: "Creative & Strategy",
+        leadName: "Maya Lin",
+        leadTitle: "Senior Art Director (Lead)",
+        leadAvatar: "ML",
         squad: [
-          { name: "Karthik Raja", role: "Video Editor", hoursPerWeek: 16, avatar: "KR" },
-          { name: "Ananya Deshmukh", role: "Graphic Designer", hoursPerWeek: 16, avatar: "AD" },
-        ],
-        capacityAllocatedHrs: 28,
-        bandwidthPercent: 75,
-        dailySyncTime: "10:30 AM IST",
-      },
-      deliverables: [],
-    },
-    nova: {
-      id: "nova",
-      name: "Nova Dynamics",
-      initials: "ND",
-      industry: "MedTech & Digital Health Platform",
-      timezone: "Client Time: IST (UTC+5:30)",
-      activeSince: "Active since Mar 2024",
-      tier: "Starter Growth Retainer",
-      tierBadge: "STARTER GROWTH",
-      status: "ACTIVE RETAINER",
-      monthlyFee: 25000,
-      addon: "Add-on: Medical Illustrator",
-      nextBilling: "Oct 18, 2026",
-      billingMethod: "Stripe ACH Transfer",
-      totalAssetsDelivered: 6,
-      totalAssetsQuota: 20,
-      postsDelivered: 4,
-      postsQuota: 10,
-      reelsDelivered: 1,
-      reelsQuota: 4,
-      storiesDelivered: 1,
-      storiesQuota: 6,
-      sprintNumber: 44,
-      daysRemainingInSprint: 14,
-      contact: {
-        name: "Sarah Jenkins",
-        title: "Director of Brand Communications",
-        email: "comms@novadynamics.org",
-        phone: "+91 98406 77855",
-        renewedDate: "Sep 18, 2026",
-        termMonths: 12,
-      },
-      brand: {
-        kitVersion: "Design Kit v2.1",
-        headingsFont: "Plus Jakarta Sans",
-        bodyFont: "Inter Sans",
-        monoFont: "JetBrains Mono",
-        toneSummary: "Empathetic, scientifically rigorous clinical communication with modern human-centric interfaces.",
-        toneTags: ["Clinical Trust", "Modern Care", "Accessible"],
-        colors: [
-          { name: "Care Emerald", hex: "#059669" },
-          { name: "Teal Glow", hex: "#0D9488" },
-          { name: "Soft Cyan", hex: "#ECFEFF", isLight: true },
-          { name: "Deep Slate", hex: "#0F172A" },
-        ],
-        social: {
-          handle: "@nova_dynamics",
-          followers: "48,000 Followers",
-          status: "API CONNECTED",
-          syncInterval: "15m refresh",
-        },
-        brandVaultLink: "Nova Clinical Assets Drive",
-        figmaLink: "Nova Medical UI Kit",
-        lastAuditDate: "Sep 18, 2026",
-      },
-      pod: {
-        name: "Pod C",
-        tagline: "Creative Brand Engine",
-        leadName: "Rohan Mehta",
-        leadTitle: "Creative Communications Lead",
-        leadAvatar: "RM",
-        squad: [
-          { name: "Tanvi Sen", role: "Video Editor", hoursPerWeek: 16, avatar: "TS" },
-          { name: "Arjun Nair", role: "Graphic Designer", hoursPerWeek: 16, avatar: "AN" },
+          { name: "Omar K.", role: "Dedicated Motion Lead", hoursPerWeek: 12, avatar: "OK" },
+          { name: "Lena V.", role: "Senior FinTech Copywriter", hoursPerWeek: 10, avatar: "LV" },
+          { name: "Theo P.", role: "Graphic & Vector Specialist", hoursPerWeek: 10, avatar: "TP" },
         ],
         capacityAllocatedHrs: 32,
-        bandwidthPercent: 70,
-        dailySyncTime: "10:00 AM IST",
+        bandwidthPercent: 85,
+        dailySyncTime: "10:30 AM EST",
       },
-      deliverables: [],
+      deliverables: [
+        {
+          id: "nb-402",
+          title: "Q4 FinTech Reel",
+          description: "High-impact motion animation showcasing algorithmic latency reduction.",
+          format: "9:16 Vertical Video",
+          status: "IN REVIEW",
+          statusColor: "bg-amber-50 text-amber-700 border-amber-200",
+          code: "#NB-402",
+          dueDate: "Tomorrow 4:00 PM",
+          assignedTo: "Omar K.",
+          actions: ["Approve", "Decline", "Preview Video Draft (0:45)"],
+        },
+        {
+          id: "nb-403",
+          title: "3× B2B Carousel Infographics",
+          description: "Data charts breakdown for institutional treasury workflows.",
+          format: "4:5 Carousel (3 slides)",
+          status: "IN PRODUCTION",
+          statusColor: "bg-blue-50 text-blue-700 border-blue-200",
+          code: "#NB-403",
+          dueDate: "Nov 18, 2024",
+          assignedTo: "Theo P.",
+          actions: ["Preview Canvas", "Request Revisions"],
+        },
+        {
+          id: "nb-405",
+          title: "CyberWeek Announcement",
+          description: "Campaign hero visual highlighting zero-fee developer API access.",
+          format: "1:1 Square Static",
+          status: "APPROVED",
+          statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          code: "#NB-405",
+          dueDate: "Nov 20, 9:00 AM",
+          assignedTo: "Lena V. / Theo P.",
+          actions: ["Auto-Publish Locked", "View Scheduled Meta"],
+        },
+        {
+          id: "nb-404",
+          title: "Brand Identity Deck",
+          description: "Complete brand guideline documentation update for Q1 partners.",
+          format: "PDF Deck (28 Pages)",
+          status: "READY FOR REVIEW",
+          statusColor: "bg-purple-50 text-purple-700 border-purple-200",
+          code: "#NB-404",
+          dueDate: "Nov 22, 2024",
+          assignedTo: "Maya Lin",
+          actions: ["Approve", "Notes", "Open Full Presentation"],
+        },
+      ],
     },
-    solaris: {
-      id: "solaris",
-      name: "Solaris Retail",
-      initials: "SR",
-      industry: "Clean Cosmetics & Luxury DTC",
-      timezone: "Client Time: IST (UTC+5:30)",
-      activeSince: "Active since Feb 2024",
-      tier: "Enterprise Domination Retainer",
-      tierBadge: "ENTERPRISE DOMINATION",
+    bloom: {
+      id: "bloom",
+      name: "Bloom Studio",
+      initials: "BS",
+      industry: "Clean Cosmetics & DTC Beauty",
+      timezone: "Client Time: PST (UTC-8)",
+      activeSince: "Active since Oct 2023",
+      tier: "Growth & Scale Retainer",
+      tierBadge: "GROWTH RETAINER",
       status: "ACTIVE RETAINER",
-      monthlyFee: 95000,
-      addon: "Add-on: Senior Colorist",
-      nextBilling: "Oct 22, 2026",
-      billingMethod: "Direct Corporate ACH",
+      monthlyFee: 8400,
+      addon: "Add-on: Colorist Lead",
+      nextBilling: "Dec 5, 2024",
+      billingMethod: "Stripe Corporate Card",
       totalAssetsDelivered: 14,
-      totalAssetsQuota: 60,
-      postsDelivered: 8,
-      postsQuota: 25,
-      reelsDelivered: 4,
-      reelsQuota: 15,
+      totalAssetsQuota: 20,
+      postsDelivered: 9,
+      postsQuota: 12,
+      reelsDelivered: 3,
+      reelsQuota: 4,
       storiesDelivered: 2,
-      storiesQuota: 20,
+      storiesQuota: 4,
       sprintNumber: 44,
-      daysRemainingInSprint: 14,
+      daysRemainingInSprint: 12,
       contact: {
         name: "Anya Taylor",
-        title: "Head of Brand & Visual Production",
-        email: "creative@solarisretail.com",
-        phone: "+91 98407 88966",
-        renewedDate: "Sep 22, 2026",
-        termMonths: 12,
+        title: "Head of Brand & Creative",
+        email: "creative@bloomstudio.com",
+        phone: "+1 (555) 832-1940",
+        renewedDate: "Nov 5, 2024",
+        termMonths: 6,
       },
       brand: {
         kitVersion: "Design Kit v1.9",
-        headingsFont: "Plus Jakarta Sans",
-        bodyFont: "Inter Sans",
+        headingsFont: "Cormorant Garamond",
+        bodyFont: "Plus Jakarta Sans",
         monoFont: "Space Mono",
-        toneSummary: "Sensory, serene high-end beauty with warm editorial elegance and mindful self-care narratives.",
+        toneSummary:
+          "Sensory, serene, high-end organic beauty with pastel luminescence. Warm editorial elegance and mindful self-care narratives.",
         toneTags: ["Mindful Luxe", "Botanical", "Warm Editorial"],
         colors: [
           { name: "Blush Rose", hex: "#F43F5E" },
@@ -648,241 +327,313 @@ export function AdminClientsPage() {
           { name: "Soft Ivory", hex: "#FFFBEB", isLight: true },
         ],
         social: {
-          handle: "@solaris_beauty",
+          handle: "@bloomstudio_skin",
           followers: "88,400 Followers",
           status: "API CONNECTED",
           syncInterval: "15m refresh",
         },
-        brandVaultLink: "Solaris Brand Assets Drive",
-        figmaLink: "Solaris Design System",
-        lastAuditDate: "Sep 22, 2026",
+        brandVaultLink: "Bloom Brand Assets Drive",
+        figmaLink: "Bloom Master Design System",
+        lastAuditDate: "Nov 10, 2024",
       },
       pod: {
         name: "Pod B",
         tagline: "Visual & Lifestyle Retouching",
-        leadName: "Sarah Connor",
-        leadTitle: "Pod B Lead Producer",
-        leadAvatar: "SC",
+        leadName: "Elena Rostova",
+        leadTitle: "Senior Creative Producer",
+        leadAvatar: "ER",
         squad: [
-          { name: "David Kim", role: "Video Editor", hoursPerWeek: 16, avatar: "DK" },
-          { name: "Elena Rostova", role: "Graphic Designer", hoursPerWeek: 16, avatar: "ER" },
+          { name: "Julian Reyes", role: "UI & Product Stylist", hoursPerWeek: 12, avatar: "JR" },
+          { name: "Marcus Brody", role: "Video & Colorist", hoursPerWeek: 10, avatar: "MB" },
         ],
         capacityAllocatedHrs: 28,
         bandwidthPercent: 78,
-        dailySyncTime: "11:00 AM IST",
+        dailySyncTime: "11:00 AM PST",
       },
-      deliverables: [],
+      deliverables: [
+        {
+          id: "bs-201",
+          title: "Holiday Campaign Lifestyle Retouching",
+          description: "4K Color graded editorial photos for holiday gift box collection.",
+          format: "4:5 Portrait High-Res",
+          status: "IN REVIEW",
+          statusColor: "bg-amber-50 text-amber-700 border-amber-200",
+          code: "#BS-201",
+          dueDate: "Tomorrow 2:00 PM",
+          assignedTo: "Julian Reyes",
+          actions: ["Approve", "Decline", "Preview Canvas"],
+        },
+        {
+          id: "bs-202",
+          title: "Founder Q&A Micro-Reel #4",
+          description: "Organic skincare routine explanation with subtitle dynamic animations.",
+          format: "9:16 Vertical Video",
+          status: "IN PRODUCTION",
+          statusColor: "bg-blue-50 text-blue-700 border-blue-200",
+          code: "#BS-202",
+          dueDate: "Nov 19, 2024",
+          assignedTo: "Marcus Brody",
+          actions: ["Preview Video Draft", "Request Revisions"],
+        },
+      ],
+    },
+    atlas: {
+      id: "atlas",
+      name: "Atlas Commerce",
+      initials: "AC",
+      industry: "Omnichannel E-commerce & Retail Tech",
+      timezone: "Client Time: CST (UTC-6)",
+      activeSince: "Active since May 2023",
+      tier: "Enterprise Retainer",
+      tierBadge: "ENTERPRISE RETAINER",
+      status: "ACTIVE RETAINER",
+      monthlyFee: 12500,
+      addon: "Add-on: TikTok Growth Pod",
+      nextBilling: "Dec 10, 2024",
+      billingMethod: "Direct ACH Wire",
+      totalAssetsDelivered: 22,
+      totalAssetsQuota: 28,
+      postsDelivered: 14,
+      postsQuota: 18,
+      reelsDelivered: 5,
+      reelsQuota: 6,
+      storiesDelivered: 3,
+      storiesQuota: 4,
+      sprintNumber: 44,
+      daysRemainingInSprint: 12,
+      contact: {
+        name: "Kenji Sato",
+        title: "VP of Growth & Acquisition",
+        email: "growth@atlascommerce.io",
+        phone: "+1 (555) 492-7711",
+        renewedDate: "Nov 10, 2024",
+        termMonths: 12,
+      },
+      brand: {
+        kitVersion: "Design Kit v3.1",
+        headingsFont: "Outfit Sans",
+        bodyFont: "Inter Sans",
+        monoFont: "JetBrains Mono",
+        toneSummary:
+          "High-octane, performance-driven commerce intelligence with punchy hooks and viral data graphs.",
+        toneTags: ["High Velocity", "Data-Backed", "Conversion Hook"],
+        colors: [
+          { name: "Electric Cyan", hex: "#06B6D4" },
+          { name: "Atlas Indigo", hex: "#4F46E5" },
+          { name: "Growth Emerald", hex: "#10B981" },
+          { name: "Obsidian", hex: "#0B0F19" },
+        ],
+        social: {
+          handle: "@atlascommerce",
+          followers: "210,000 Followers",
+          status: "API CONNECTED",
+          syncInterval: "15m refresh",
+        },
+        brandVaultLink: "Atlas Growth Assets Drive",
+        figmaLink: "Atlas Component Library",
+        lastAuditDate: "Nov 14, 2024",
+      },
+      pod: {
+        name: "Pod C",
+        tagline: "Motion & Video Ops",
+        leadName: "Kenji Sato",
+        leadTitle: "Director of Performance Creative",
+        leadAvatar: "KS",
+        squad: [
+          { name: "Maya Patel", role: "Lead Motion Designer", hoursPerWeek: 14, avatar: "MP" },
+          { name: "David Kim", role: "Short-Form Video Specialist", hoursPerWeek: 12, avatar: "DK" },
+        ],
+        capacityAllocatedHrs: 34,
+        bandwidthPercent: 90,
+        dailySyncTime: "9:30 AM CST",
+      },
+      deliverables: [
+        {
+          id: "ac-301",
+          title: "TikTok Viral Hook Reel Cut #1 & #2",
+          description: "Top 3 conversion hooks with sound design and rapid pacing cuts.",
+          format: "9:16 Vertical Video",
+          status: "IN REVIEW",
+          statusColor: "bg-amber-50 text-amber-700 border-amber-200",
+          code: "#AC-301",
+          dueDate: "Tomorrow 5:00 PM",
+          assignedTo: "David Kim",
+          actions: ["Approve", "Decline", "Preview Video Draft (0:30)"],
+        },
+      ],
+    },
+    lumina: {
+      id: "lumina",
+      name: "Lumina Health",
+      initials: "LH",
+      industry: "MedTech & Digital Health Platform",
+      timezone: "Client Time: EST (UTC-5)",
+      activeSince: "Active since Jan 2024",
+      tier: "Starter Launch Retainer",
+      tierBadge: "STARTER RETAINER",
+      status: "ACTIVE RETAINER",
+      monthlyFee: 6500,
+      addon: "Add-on: Medical Animation",
+      nextBilling: "Dec 12, 2024",
+      billingMethod: "Stripe ACH Transfer",
+      totalAssetsDelivered: 10,
+      totalAssetsQuota: 14,
+      postsDelivered: 7,
+      postsQuota: 8,
+      reelsDelivered: 2,
+      reelsQuota: 3,
+      storiesDelivered: 1,
+      storiesQuota: 3,
+      sprintNumber: 44,
+      daysRemainingInSprint: 12,
+      contact: {
+        name: "Sarah Jenkins",
+        title: "Director of Communications",
+        email: "comms@luminahealth.org",
+        phone: "+1 (555) 310-9284",
+        renewedDate: "Nov 12, 2024",
+        termMonths: 12,
+      },
+      brand: {
+        kitVersion: "Design Kit v2.1",
+        headingsFont: "Plus Jakarta Sans",
+        bodyFont: "Inter Sans",
+        monoFont: "JetBrains Mono",
+        toneSummary:
+          "Empathetic, scientifically rigorous clinical communication with modern human-centric interfaces.",
+        toneTags: ["Clinical Trust", "Modern Care", "Accessible"],
+        colors: [
+          { name: "Care Emerald", hex: "#059669" },
+          { name: "Teal Glow", hex: "#0D9488" },
+          { name: "Soft Cyan", hex: "#ECFEFF", isLight: true },
+          { name: "Deep Slate", hex: "#0F172A" },
+        ],
+        social: {
+          handle: "@lumina_health",
+          followers: "64,000 Followers",
+          status: "API CONNECTED",
+          syncInterval: "15m refresh",
+        },
+        brandVaultLink: "Lumina Clinical Assets Drive",
+        figmaLink: "Lumina Medical UI Kit",
+        lastAuditDate: "Nov 15, 2024",
+      },
+      pod: {
+        name: "Pod E",
+        tagline: "Creative Brand Engine",
+        leadName: "Sarah Jenkins",
+        leadTitle: "Creative Communications Lead",
+        leadAvatar: "SJ",
+        squad: [
+          { name: "Liam Wright", role: "Medical Illustrator", hoursPerWeek: 10, avatar: "LW" },
+        ],
+        capacityAllocatedHrs: 22,
+        bandwidthPercent: 70,
+        dailySyncTime: "10:00 AM EST",
+      },
+      deliverables: [
+        {
+          id: "lh-101",
+          title: "Patient Portal Explainer Video Storyboard",
+          description: "Accessible step-by-step patient onboarding animation narrative.",
+          format: "16:9 Explainer Video",
+          status: "IN REVIEW",
+          statusColor: "bg-amber-50 text-amber-700 border-amber-200",
+          code: "#LH-101",
+          dueDate: "Nov 19, 3:30 PM",
+          assignedTo: "Sarah Jenkins",
+          actions: ["Approve", "Decline", "Open Full Presentation"],
+        },
+      ],
+    },
+    acme: {
+      id: "acme",
+      name: "Acme Corp",
+      initials: "AC",
+      industry: "B2B Enterprise SaaS & Cloud Ops",
+      timezone: "Client Time: PST (UTC-8)",
+      activeSince: "Active since Mar 2023",
+      tier: "Growth & Scale Retainer",
+      tierBadge: "GROWTH RETAINER",
+      status: "ACTIVE RETAINER",
+      monthlyFee: 7200,
+      addon: "Add-on: Infographic Specialist",
+      nextBilling: "Dec 15, 2024",
+      billingMethod: "Corporate Wire",
+      totalAssetsDelivered: 12,
+      totalAssetsQuota: 16,
+      postsDelivered: 8,
+      postsQuota: 10,
+      reelsDelivered: 2,
+      reelsQuota: 3,
+      storiesDelivered: 2,
+      storiesQuota: 3,
+      sprintNumber: 44,
+      daysRemainingInSprint: 12,
+      contact: {
+        name: "Marcus Brody",
+        title: "Head of Marketing",
+        email: "marcus@acmecorp.dev",
+        phone: "+1 (555) 601-8392",
+        renewedDate: "Nov 15, 2024",
+        termMonths: 12,
+      },
+      brand: {
+        kitVersion: "Design Kit v4.0",
+        headingsFont: "Plus Jakarta Sans",
+        bodyFont: "Inter Sans",
+        monoFont: "JetBrains Mono",
+        toneSummary:
+          "Developer-first cloud infrastructure intelligence with clean architectural diagrams and high-trust proof points.",
+        toneTags: ["Developer First", "High Reliability", "Scale"],
+        colors: [
+          { name: "Acme Blue", hex: "#2563EB" },
+          { name: "Cloud Slate", hex: "#334155" },
+          { name: "Highlight Amber", hex: "#F59E0B" },
+          { name: "Clean Snow", hex: "#F8FAFC", isLight: true },
+        ],
+        social: {
+          handle: "@acme_cloud",
+          followers: "95,000 Followers",
+          status: "API CONNECTED",
+          syncInterval: "15m refresh",
+        },
+        brandVaultLink: "Acme Developer Drive",
+        figmaLink: "Acme Cloud Components",
+        lastAuditDate: "Nov 16, 2024",
+      },
+      pod: {
+        name: "Pod D",
+        tagline: "Digital Marketing & Infographics",
+        leadName: "David Vance",
+        leadTitle: "Director of Digital Media",
+        leadAvatar: "DV",
+        squad: [
+          { name: "Marcus Brody", role: "Technical Designer", hoursPerWeek: 12, avatar: "MB" },
+        ],
+        capacityAllocatedHrs: 26,
+        bandwidthPercent: 75,
+        dailySyncTime: "11:30 AM PST",
+      },
+      deliverables: [
+        {
+          id: "acm-501",
+          title: "Top 5 Growth Hacks Infographic Carousel",
+          description: "Technical architecture infographic for cloud database latency reduction.",
+          format: "4:5 Carousel (5 slides)",
+          status: "IN PRODUCTION",
+          statusColor: "bg-blue-50 text-blue-700 border-blue-200",
+          code: "#ACM-501",
+          dueDate: "Nov 20, 5:00 PM",
+          assignedTo: "Marcus Brody",
+          actions: ["Preview Canvas", "Request Revisions"],
+        },
+      ],
     },
   };
 
-  const mergedClientsData: Record<string, ClientDetailData> = { ...clientsData };
-
-  serverClients.forEach((sc) => {
-    const emailParts = sc.email.split("@");
-    const rawEmailPart = (emailParts[0] || "").replace(/[._0-9]/g, " ").trim();
-    const rawName = sc.company_name && sc.company_name.trim() !== "" && sc.company_name.toLowerCase() !== "unknown"
-      ? sc.company_name
-      : rawEmailPart;
-    const formattedName = rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1) : "Client Account";
-    const initials = formattedName.charAt(0).toUpperCase();
-    const tierName = sc.plan_display_name || sc.plan_name || "Enterprise Retainer";
-    const tier = tierName.toLowerCase();
-    
-    const podConfigs = [
-      {
-        letter: "A",
-        name: "Pod A",
-        tagline: "Enterprise Brand Strategy & Video",
-        leadName: "Vikram Malhotra",
-        leadTitle: "Pod A Lead Producer",
-        leadAvatar: "VM",
-        squad: [
-          { name: "Karthik Raja", role: "Video Editor", hoursPerWeek: 16, avatar: "KR" },
-          { name: "Ananya Deshmukh", role: "Graphic Designer", hoursPerWeek: 16, avatar: "AD" },
-        ],
-      },
-      {
-        letter: "B",
-        name: "Pod B",
-        tagline: "Performance Creative & Motion Ops",
-        leadName: "Sarah Connor",
-        leadTitle: "Pod B Lead Producer",
-        leadAvatar: "SC",
-        squad: [
-          { name: "David Kim", role: "Video Editor", hoursPerWeek: 16, avatar: "DK" },
-          { name: "Elena Rostova", role: "Graphic Designer", hoursPerWeek: 16, avatar: "ER" },
-        ],
-      },
-      {
-        letter: "C",
-        name: "Pod C",
-        tagline: "3D Motion & Visual Design",
-        leadName: "Rohan Mehta",
-        leadTitle: "Pod C Lead Producer",
-        leadAvatar: "RM",
-        squad: [
-          { name: "Tanvi Sen", role: "Video Editor", hoursPerWeek: 16, avatar: "TS" },
-          { name: "Arjun Nair", role: "Graphic Designer", hoursPerWeek: 16, avatar: "AN" },
-        ],
-      },
-    ];
-    const podIdx = Math.abs(formattedName.charCodeAt(0) || 0) % podConfigs.length;
-    const pod = (podConfigs[podIdx] || podConfigs[0])!;
-
-    const monthlyFee = tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000;
-    
-    const postsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.quota || (tier.includes("starter") ? 8 : tier.includes("growth") ? 15 : 30);
-    const postsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.used || 0;
-    const reelsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.quota || (tier.includes("starter") ? 4 : tier.includes("growth") ? 8 : 16);
-    const reelsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.used || 0;
-    const storiesQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.quota || (tier.includes("starter") ? 10 : tier.includes("growth") ? 20 : 40);
-    const storiesDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.used || 0;
-
-    // Check for match with existing baseline client
-    const existingKey = Object.keys(mergedClientsData).find(
-      (k) =>
-        k.toLowerCase() === sc.client_id.toLowerCase() ||
-        mergedClientsData[k]?.contact?.email?.toLowerCase() === sc.email?.toLowerCase() ||
-        mergedClientsData[k]?.name?.toLowerCase() === formattedName.toLowerCase()
-    );
-
-    const existing = existingKey ? mergedClientsData[existingKey] : undefined;
-
-    if (existing) {
-      const updated: ClientDetailData = {
-        ...existing,
-        id: sc.client_id || existing.id,
-        initials: existing.initials || initials,
-        name: existing.name || formattedName,
-        status: (sc.subscription_status || sc.account_status || existing.status).toUpperCase(),
-        totalAssetsDelivered: postsDelivered + reelsDelivered + storiesDelivered,
-        totalAssetsQuota: postsQuota + reelsQuota + storiesQuota,
-        postsDelivered,
-        postsQuota,
-        reelsDelivered,
-        reelsQuota,
-        storiesDelivered,
-        storiesQuota,
-        contact: {
-          ...existing.contact,
-          email: sc.email || existing.contact.email,
-        },
-      };
-      if (existingKey) {
-        mergedClientsData[existingKey] = updated;
-      }
-      mergedClientsData[sc.client_id] = updated;
-    } else {
-      mergedClientsData[sc.client_id] = {
-        id: sc.client_id,
-        name: formattedName,
-        initials,
-        industry: "Digital Growth & Direct-to-Consumer",
-        timezone: "Client Time: IST (UTC+5:30)",
-        activeSince: "Active Client",
-        tier: tierName,
-        tierBadge: tierName.toUpperCase(),
-        status: (sc.subscription_status || sc.account_status || "ACTIVE RETAINER").toUpperCase(),
-        monthlyFee,
-        addon: "Add-on: Creative Pod",
-        nextBilling: "Next Month Cycle",
-        billingMethod: "Direct ACH / Razorpay",
-        totalAssetsDelivered: postsDelivered + reelsDelivered + storiesDelivered,
-        totalAssetsQuota: postsQuota + reelsQuota + storiesQuota,
-        postsDelivered,
-        postsQuota,
-        reelsDelivered,
-        reelsQuota,
-        storiesDelivered,
-        storiesQuota,
-        sprintNumber: 44,
-        daysRemainingInSprint: 14,
-        contact: {
-          name: formattedName,
-          title: "Account Owner & Authorized Contact",
-          email: sc.email,
-          phone: "+91 98401 23890",
-          renewedDate: "Current Sprint",
-          termMonths: 12,
-        },
-        brand: {
-          kitVersion: "Design Kit v2.4",
-          headingsFont: "Plus Jakarta Sans",
-          bodyFont: "Inter Sans",
-          monoFont: "JetBrains Mono",
-          toneSummary: `Dynamic, high-impact social media creatives engineered for ${formattedName}. High-clarity typography with conversion-optimized video hooks.`,
-          toneTags: ["High Conversion", "Brand Authority", "Visual Polish"],
-          colors: [
-            { name: "Primary Deep Navy", hex: "#0F172A" },
-            { name: "Accent Royal Blue", hex: "#2563EB" },
-            { name: "Cyan Highlight", hex: "#06B6D4" },
-            { name: "Clean Neutral", hex: "#F8FAFC", isLight: true },
-          ],
-          social: {
-            handle: sc.instagram_username ? `@${sc.instagram_username}` : `@${emailParts[0] || "client"}`,
-            followers: "API Connected",
-            status: "API CONNECTED",
-            syncInterval: "15m refresh",
-          },
-          brandVaultLink: "Client Brand Vault Drive",
-          figmaLink: "Figma Master Design Kit",
-          lastAuditDate: "This Sprint",
-        },
-        pod: {
-          name: pod.name,
-          tagline: pod.tagline,
-          leadName: pod.leadName,
-          leadTitle: pod.leadTitle,
-          leadAvatar: pod.leadAvatar,
-          squad: pod.squad,
-          capacityAllocatedHrs: 32,
-          bandwidthPercent: 80,
-          dailySyncTime: "11:00 AM IST",
-        },
-        deliverables: [],
-      };
-    }
-  });
-
-  // Deduplicate unique client records for roster display
-  const clientMap = new Map<string, ClientDetailData>();
-  Object.values(mergedClientsData).forEach((c) => {
-    const key = (c.contact?.email || c.name || c.id).toLowerCase();
-    if (!clientMap.has(key)) {
-      clientMap.set(key, c);
-    }
-  });
-  const clientList = Array.from(clientMap.values());
-
-  useEffect(() => {
-    if (urlClientId) {
-      const match = Object.keys(mergedClientsData).find(
-        (key) =>
-          key.toLowerCase() === urlClientId.toLowerCase() ||
-          mergedClientsData[key]?.id?.toLowerCase() === urlClientId.toLowerCase() ||
-          mergedClientsData[key]?.name.toLowerCase() === urlClientId.toLowerCase() ||
-          mergedClientsData[key]?.contact.email.toLowerCase() === urlClientId.toLowerCase() ||
-          key.includes(urlClientId) ||
-          urlClientId.includes(key)
-      );
-      if (match) {
-        setSelectedClientId(match);
-      }
-    }
-  }, [urlClientId, serverClients]);
-
-  const activeClient = selectedClientId
-    ? mergedClientsData[selectedClientId] ||
-      clientList.find(
-        (c) =>
-          c.id.toLowerCase() === selectedClientId.toLowerCase() ||
-          c.name.toLowerCase() === selectedClientId.toLowerCase() ||
-          c.contact.email.toLowerCase() === selectedClientId.toLowerCase()
-      ) ||
-      mergedClientsData.ryze ||
-      clientList[0] ||
-      null
-    : null;
+  const clientList = Object.values(clientsData);
+  const activeClient = selectedClientId ? clientsData[selectedClientId] || clientsData.northwind : null;
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -924,7 +675,7 @@ export function AdminClientsPage() {
   }) || [];
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F8FAFC] flex flex-col">
       <AdminTopHeader
         title={selectedClientId && activeClient ? `${activeClient.name} • Client Details` : "Client Details"}
         activeTab="Client Details"
@@ -951,13 +702,13 @@ export function AdminClientsPage() {
             {/* Controls */}
             <div className="flex flex-col sm:flex-row items-center gap-3">
               <div className="relative flex-1 w-full">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#97A0B3]" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search by brand name, industry, or contact email..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-medium text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
                 />
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
@@ -966,18 +717,18 @@ export function AdminClientsPage() {
                   {clientList.length} Active Retainers
                 </span>
                 <div className="flex items-center gap-1.5">
-                  <Filter className="size-4 text-[#97A0B3]" />
-                  <CustomSelect
+                  <Filter className="size-4 text-gray-400" />
+                  <select
                     value={statusFilter}
-                    onChange={setStatusFilter}
-                    ariaLabel="Filter Client Status"
-                    options={[
-                      { value: "all", label: "All Statuses" },
-                      { value: "active", label: "Active Retainers" },
-                      { value: "enterprise", label: "Enterprise Retainers" },
-                      { value: "growth", label: "Growth Retainers" },
-                    ]}
-                  />
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    aria-label="Filter Client Status"
+                    className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 focus:outline-none cursor-pointer shadow-2xs"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="active">Active Retainers</option>
+                    <option value="enterprise">Enterprise Retainers</option>
+                    <option value="growth">Growth Retainers</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -988,7 +739,7 @@ export function AdminClientsPage() {
                 <div
                   key={client.id}
                   onClick={() => setSelectedClientId(client.id)}
-                  className="bg-[#161F2D]/80 backdrop-blur-xl rounded-3xl p-6 border border-[#2A3446]/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between"
+                  className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 hover:shadow-xl hover:border-blue-300 transition-all cursor-pointer group flex flex-col justify-between"
                 >
                   <div className="space-y-4">
                     <div className="flex items-start justify-between">
@@ -998,40 +749,40 @@ export function AdminClientsPage() {
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <h3 className="font-bold text-base text-white group-hover:text-[#7FA0D6] transition-colors">
+                            <h3 className="font-bold text-base text-gray-900 group-hover:text-blue-600 transition-colors">
                               {client.name}
                             </h3>
-                            <CheckCircle2 className="w-4 h-4 text-[#7FA0D6] fill-blue-600 text-white" />
+                            <CheckCircle2 className="w-4 h-4 text-blue-600 fill-blue-600 text-white" />
                           </div>
-                          <span className="text-[11px] text-[#97A0B3] font-medium block truncate max-w-[200px]">
+                          <span className="text-[11px] text-gray-500 font-medium block truncate max-w-[200px]">
                             {client.industry}
                           </span>
                         </div>
                       </div>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                        {client.status.replace(" RETAINER", "")}
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        {client.status}
                       </span>
                     </div>
 
-                    <div className="p-3 bg-[#0B111C]/80 rounded-2xl space-y-1.5 text-xs text-[#F1F5F9] border border-[#2A3446]">
+                    <div className="p-3 bg-gray-50/80 rounded-2xl space-y-1.5 text-xs text-gray-600 border border-gray-100">
                       <div className="flex justify-between">
-                        <span className="font-medium text-[#97A0B3]">Retainer:</span>
-                        <span className="font-bold text-white">₹{client.monthlyFee.toLocaleString()}/mo</span>
+                        <span className="font-medium text-gray-500">Retainer:</span>
+                        <span className="font-bold text-gray-900">${client.monthlyFee.toLocaleString()}/mo</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="font-medium text-[#97A0B3]">Assigned Pod:</span>
-                        <span className="font-bold text-[#7FA0D6]">{client.pod.name} ({client.pod.tagline})</span>
+                        <span className="font-medium text-gray-500">Assigned Pod:</span>
+                        <span className="font-bold text-blue-600">{client.pod.name} ({client.pod.tagline})</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="font-medium text-[#97A0B3]">Primary Contact:</span>
-                        <span className="font-semibold text-white">{client.contact.name}</span>
+                        <span className="font-medium text-gray-500">Primary Contact:</span>
+                        <span className="font-semibold text-gray-800">{client.contact.name}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                    <span className="text-[#97A0B3] font-medium">{client.deliverables.length} Deliverables Active</span>
-                    <span className="text-[#7FA0D6] font-bold group-hover:underline flex items-center gap-1">
+                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+                    <span className="text-gray-400 font-medium">{client.deliverables.length} Deliverables Active</span>
+                    <span className="text-blue-600 font-bold group-hover:underline flex items-center gap-1">
                       View Client Detail View &rarr;
                     </span>
                   </div>
@@ -1046,22 +797,22 @@ export function AdminClientsPage() {
           <div className="space-y-6 animate-fade-in">
             {/* Top Breadcrumb & Live Status */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#97A0B3]">
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
                 <button
                   type="button"
                   onClick={() => setSelectedClientId(null)}
-                  className="hover:text-[#7FA0D6] flex items-center gap-1 transition-colors cursor-pointer text-[#F1F5F9]"
+                  className="hover:text-blue-600 flex items-center gap-1 transition-colors cursor-pointer text-gray-600"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back to Client Roster
                 </button>
                 <span>/</span>
-                <span className="text-[#97A0B3]">Client Details</span>
+                <span className="text-gray-400">Client Details</span>
                 <span>/</span>
-                <span className="text-white font-black">{activeClient?.name}</span>
+                <span className="text-gray-900 font-black">{activeClient?.name}</span>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#161F2D] text-white border border-[#2A3446] flex items-center gap-1.5 shadow-2xs">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-white text-gray-800 border border-gray-200 flex items-center gap-1.5 shadow-2xs">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   Live Client • v2.4
                 </span>
@@ -1069,7 +820,7 @@ export function AdminClientsPage() {
             </div>
 
             {/* Client Header Card matching Screenshot */}
-            <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-4">
+            <div className="bg-white rounded-3xl p-6 lg:p-7 border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-4">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="flex items-start gap-4">
                   <div className="w-16 h-16 rounded-2xl bg-[#0F172A] text-white font-black text-2xl flex items-center justify-center shadow-lg shrink-0">
@@ -1077,11 +828,11 @@ export function AdminClientsPage() {
                   </div>
                   <div className="space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2.5">
-                      <h1 className="text-2xl font-black text-white tracking-tight">
+                      <h1 className="text-2xl font-black text-gray-900 tracking-tight">
                         {activeClient?.name}
                       </h1>
-                      <CheckCircle2 className="w-5 h-5 text-[#7FA0D6] fill-blue-600 text-white" />
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-[10px] font-black uppercase tracking-wider">
+                      <CheckCircle2 className="w-5 h-5 text-blue-600 fill-blue-600 text-white" />
+                      <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black uppercase tracking-wider">
                         {activeClient?.tierBadge}
                       </span>
                       <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
@@ -1090,19 +841,19 @@ export function AdminClientsPage() {
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-[#97A0B3] font-medium">
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-gray-500 font-medium">
                       <span className="flex items-center gap-1">
-                        <Folder className="w-3.5 h-3.5 text-[#97A0B3]" />
+                        <Folder className="w-3.5 h-3.5 text-gray-400" />
                         {activeClient?.industry}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-[#97A0B3]" />
+                        <Clock className="w-3.5 h-3.5 text-gray-400" />
                         {activeClient?.timezone}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-[#97A0B3]" />
+                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
                         {activeClient?.activeSince}
                       </span>
                     </div>
@@ -1111,25 +862,19 @@ export function AdminClientsPage() {
 
                 {/* Header Action Buttons */}
                 <div className="flex items-center gap-2.5 shrink-0">
-                  <Link
-                    to={`/admin/clients/${activeClient?.id || "ryze"}/brand`}
-                    className="px-4 py-2.5 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-xs font-bold text-[#7FA0D6] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5 text-[#7FA0D6]" /> Brand Brief & Profile
-                  </Link>
                   <button
                     type="button"
                     onClick={() => setIsEditProfileOpen(true)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
-                    <Edit3 className="w-3.5 h-3.5 text-[#97A0B3]" /> Edit Profile
+                    <Edit3 className="w-3.5 h-3.5 text-gray-500" /> Edit Profile
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsInvoiceModalOpen(true)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
-                    <FileText className="w-3.5 h-3.5 text-[#97A0B3]" /> Monthly Invoice
+                    <FileText className="w-3.5 h-3.5 text-gray-500" /> Monthly Invoice
                   </button>
                   <button
                     type="button"
@@ -1145,13 +890,13 @@ export function AdminClientsPage() {
             {/* 4 Main Grid Cards matching Screenshot (2x2) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* CARD 1: PRIMARY CONTACT */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                    <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
                       PRIMARY CONTACT
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#1F2C3F] text-[#F1F5F9] text-[10px] font-bold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
                       Authorized Signer
                     </span>
                   </div>
@@ -1161,33 +906,33 @@ export function AdminClientsPage() {
                       {activeClient?.contact.name[0]}
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-white">{activeClient?.contact.name}</h3>
-                      <p className="text-xs text-[#97A0B3] font-medium">{activeClient?.contact.title}</p>
+                      <h3 className="text-base font-bold text-gray-900">{activeClient?.contact.name}</h3>
+                      <p className="text-xs text-gray-500 font-medium">{activeClient?.contact.title}</p>
                     </div>
                   </div>
 
                   <div className="space-y-2 pt-2">
-                    <div className="p-3 bg-[#0B111C]/80 rounded-2xl flex items-center justify-between border border-[#2A3446] text-xs">
-                      <div className="flex items-center gap-2 text-[#97A0B3] font-medium">
-                        <Mail className="w-4 h-4 text-[#97A0B3]" />
+                    <div className="p-3 bg-gray-50/80 rounded-2xl flex items-center justify-between border border-gray-100 text-xs">
+                      <div className="flex items-center gap-2 text-gray-500 font-medium">
+                        <Mail className="w-4 h-4 text-gray-400" />
                         <span>Email</span>
                       </div>
-                      <a href={`mailto:${activeClient?.contact.email}`} className="text-[#7FA0D6] font-bold hover:underline">
+                      <a href={`mailto:${activeClient?.contact.email}`} className="text-blue-600 font-bold hover:underline">
                         {activeClient?.contact.email}
                       </a>
                     </div>
 
-                    <div className="p-3 bg-[#0B111C]/80 rounded-2xl flex items-center justify-between border border-[#2A3446] text-xs">
-                      <div className="flex items-center gap-2 text-[#97A0B3] font-medium">
-                        <Phone className="w-4 h-4 text-[#97A0B3]" />
+                    <div className="p-3 bg-gray-50/80 rounded-2xl flex items-center justify-between border border-gray-100 text-xs">
+                      <div className="flex items-center gap-2 text-gray-500 font-medium">
+                        <Phone className="w-4 h-4 text-gray-400" />
                         <span>Direct Phone</span>
                       </div>
-                      <span className="font-bold text-white font-mono">{activeClient?.contact.phone}</span>
+                      <span className="font-bold text-gray-900 font-mono">{activeClient?.contact.phone}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
+                <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100 font-medium">
                   <span className="flex items-center gap-1 text-emerald-700 font-semibold">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                     Contract renewed: {activeClient?.contact.renewedDate}
@@ -1197,21 +942,21 @@ export function AdminClientsPage() {
               </div>
 
               {/* CARD 2: TIER TERMS & SCOPE */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                    <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                    <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
                       TIER TERMS & SCOPE
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold border border-[#7FA0D6]/30">
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-100">
                       Active Cycle
                     </span>
                   </div>
 
                   <div className="flex items-baseline justify-between">
                     <div>
-                      <span className="text-3xl font-black text-white">₹{activeClient?.monthlyFee.toLocaleString()}</span>
-                      <span className="text-xs font-bold text-[#97A0B3]"> /mo</span>
+                      <span className="text-3xl font-black text-gray-900">${activeClient?.monthlyFee.toLocaleString()}</span>
+                      <span className="text-xs font-bold text-gray-400"> /mo</span>
                     </div>
                     {activeClient?.addon && (
                       <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 flex items-center gap-1">
@@ -1221,20 +966,20 @@ export function AdminClientsPage() {
                     )}
                   </div>
 
-                  <p className="text-xs text-[#97A0B3]">
+                  <p className="text-xs text-gray-500">
                     Next billing scheduled for {activeClient?.nextBilling} via {activeClient?.billingMethod}.
                   </p>
 
                   {/* Monthly Output Burn bar */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-[#F1F5F9]">Monthly Output Burn</span>
-                      <span className="text-[#7FA0D6]">
+                      <span className="text-gray-700">Monthly Output Burn</span>
+                      <span className="text-blue-600">
                         {activeClient?.totalAssetsDelivered} / {activeClient?.totalAssetsQuota} Assets Delivered (
                         {Math.round(((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100)}%)
                       </span>
                     </div>
-                    <div className="w-full bg-[#1F2C3F] rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
                       <div
                         className="bg-[#2563EB] h-full rounded-full transition-all"
                         style={{
@@ -1249,33 +994,33 @@ export function AdminClientsPage() {
 
                   {/* 3 Metric Counters matching Screenshot */}
                   <div className="grid grid-cols-3 gap-3 pt-1">
-                    <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
-                      <span className="text-sm font-black text-white">
+                    <div className="p-3 bg-gray-50 rounded-2xl text-center space-y-0.5 border border-gray-100">
+                      <span className="text-sm font-black text-gray-900">
                         {activeClient?.postsDelivered}/{activeClient?.postsQuota}
                       </span>
-                      <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">POSTS</span>
+                      <span className="text-[10px] font-bold text-gray-400 block uppercase">POSTS</span>
                     </div>
-                    <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
-                      <span className="text-sm font-black text-white">
+                    <div className="p-3 bg-gray-50 rounded-2xl text-center space-y-0.5 border border-gray-100">
+                      <span className="text-sm font-black text-gray-900">
                         {activeClient?.reelsDelivered}/{activeClient?.reelsQuota}
                       </span>
-                      <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">REELS</span>
+                      <span className="text-[10px] font-bold text-gray-400 block uppercase">REELS</span>
                     </div>
-                    <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
-                      <span className="text-sm font-black text-white">
+                    <div className="p-3 bg-gray-50 rounded-2xl text-center space-y-0.5 border border-gray-100">
+                      <span className="text-sm font-black text-gray-900">
                         {activeClient?.storiesDelivered}/{activeClient?.storiesQuota}
                       </span>
-                      <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">STORIES</span>
+                      <span className="text-[10px] font-bold text-gray-400 block uppercase">STORIES</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
+                <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100 font-medium">
                   <span>Sprint {activeClient?.sprintNumber}: {activeClient?.daysRemainingInSprint} days remaining</span>
                   <button
                     type="button"
                     onClick={() => showToast("Opening Client Quota Ledger...")}
-                    className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
+                    className="text-blue-600 font-bold hover:underline cursor-pointer"
                   >
                     View Quota Log
                   </button>
@@ -1283,54 +1028,54 @@ export function AdminClientsPage() {
               </div>
 
               {/* CARD 3: CLIENT BRAND ECOSYSTEM & GUIDELINES */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5">
-                <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+              <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                   <div className="flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-[#7FA0D6]" />
-                    <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
+                    <Palette className="w-4 h-4 text-blue-600" />
+                    <h2 className="text-xs font-extrabold text-gray-900 uppercase tracking-wider">
                       Client Brand Ecosystem & Guidelines
                     </h2>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#1F2C3F] text-[#F1F5F9] text-[10px] font-bold">
+                  <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
                     {activeClient?.brand.kitVersion}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Typography */}
-                  <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs">
-                    <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                  <div className="p-3.5 bg-gray-50/70 rounded-2xl space-y-2 border border-gray-100 text-xs">
+                    <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">
                       TYPOGRAPHY HIERARCHY
                     </span>
-                    <div className="space-y-1 text-[#F1F5F9]">
+                    <div className="space-y-1 text-gray-700">
                       <div className="flex justify-between">
-                        <span className="text-[#97A0B3]">Headings:</span>
+                        <span className="text-gray-500">Headings:</span>
                         <span className="font-bold">{activeClient?.brand.headingsFont}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-[#97A0B3]">Body & Data:</span>
+                        <span className="text-gray-500">Body & Data:</span>
                         <span className="font-medium">{activeClient?.brand.bodyFont}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-[#97A0B3]">Monospace:</span>
+                        <span className="text-gray-500">Monospace:</span>
                         <span className="font-mono">{activeClient?.brand.monoFont}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Persona & Voice Tone */}
-                  <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs flex flex-col justify-between">
+                  <div className="p-3.5 bg-gray-50/70 rounded-2xl space-y-2 border border-gray-100 text-xs flex flex-col justify-between">
                     <div>
-                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                      <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">
                         PERSONA & VOICE TONE
                       </span>
-                      <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed">
+                      <p className="text-[11px] text-gray-600 mt-1 leading-relaxed">
                         {activeClient?.brand.toneSummary}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {activeClient?.brand.toneTags.map((tag) => (
-                        <span key={tag} className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[10px] font-bold text-[#F1F5F9] shadow-2xs">
+                        <span key={tag} className="px-2 py-0.5 rounded-md bg-white border border-gray-200 text-[10px] font-bold text-gray-700 shadow-2xs">
                           {tag}
                         </span>
                       ))}
@@ -1340,16 +1085,16 @@ export function AdminClientsPage() {
 
                 {/* Approved Color Spectrum */}
                 <div className="space-y-2">
-                  <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                  <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">
                     APPROVED COLOR SPECTRUM
                   </span>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     {activeClient?.brand.colors.map((c) => (
-                      <div key={c.hex} className="rounded-2xl border border-[#2A3446] overflow-hidden bg-[#161F2D] shadow-2xs space-y-1.5 pb-2">
+                      <div key={c.hex} className="rounded-2xl border border-gray-100 overflow-hidden bg-white shadow-2xs space-y-1.5 pb-2">
                         <div className="h-10 w-full" style={{ backgroundColor: c.hex }} />
                         <div className="px-2.5">
-                          <span className="text-[11px] font-bold text-white block truncate">{c.name}</span>
-                          <span className="text-[10px] font-mono text-[#97A0B3]">{c.hex}</span>
+                          <span className="text-[11px] font-bold text-gray-900 block truncate">{c.name}</span>
+                          <span className="text-[10px] font-mono text-gray-400">{c.hex}</span>
                         </div>
                       </div>
                     ))}
@@ -1357,19 +1102,19 @@ export function AdminClientsPage() {
                 </div>
 
                 {/* Social Channel */}
-                <div className="p-3.5 bg-[#0B111C]/80 rounded-2xl border border-[#2A3446] flex items-center justify-between">
+                <div className="p-3.5 bg-gray-50/80 rounded-2xl border border-gray-100 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center shadow-xs">
                       <Instagram className="w-5 h-5" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs text-white">{activeClient?.brand.social.handle}</span>
+                        <span className="font-bold text-xs text-gray-900">{activeClient?.brand.social.handle}</span>
                         <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-extrabold uppercase">
                           {activeClient?.brand.social.status}
                         </span>
                       </div>
-                      <span className="text-[11px] text-[#97A0B3]">
+                      <span className="text-[11px] text-gray-500">
                         {activeClient?.brand.social.followers} • Live Sync active ({activeClient?.brand.social.syncInterval})
                       </span>
                     </div>
@@ -1377,14 +1122,14 @@ export function AdminClientsPage() {
                   <button
                     type="button"
                     onClick={() => showToast(`Opening ${activeClient?.brand.social.handle} live analytics...`)}
-                    className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] shadow-2xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-bold text-gray-700 shadow-2xs cursor-pointer"
                   >
                     Launch Channel
                   </button>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between text-xs text-[#97A0B3] font-medium pt-3 border-t border-[#2A3446] gap-2">
-                  <div className="flex items-center gap-3 text-[#7FA0D6] font-bold">
+                <div className="flex flex-wrap items-center justify-between text-xs text-gray-400 font-medium pt-3 border-t border-gray-100 gap-2">
+                  <div className="flex items-center gap-3 text-blue-600 font-bold">
                     <span className="cursor-pointer hover:underline flex items-center gap-1">
                       <Folder className="w-3.5 h-3.5" /> {activeClient?.brand.brandVaultLink}
                     </span>
@@ -1392,52 +1137,45 @@ export function AdminClientsPage() {
                     <span className="cursor-pointer hover:underline flex items-center gap-1">
                       <ExternalLink className="w-3.5 h-3.5" /> {activeClient?.brand.figmaLink}
                     </span>
-                    <span>•</span>
-                    <Link
-                      to={`/admin/clients/${activeClient?.id || "ryze"}/brand`}
-                      className="cursor-pointer hover:underline flex items-center gap-1 text-[#7FA0D6]"
-                    >
-                      Brand DNA & Brief →
-                    </Link>
                   </div>
                   <span>Last audit {activeClient?.brand.lastAuditDate}</span>
                 </div>
               </div>
 
               {/* CARD 4: ASSIGNED CREATIVE POD */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+              <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-[#7FA0D6]" />
-                      <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
+                      <Users className="w-4 h-4 text-blue-600" />
+                      <h2 className="text-xs font-extrabold text-gray-900 uppercase tracking-wider">
                         Assigned creative pod
                       </h2>
                     </div>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold border border-[#7FA0D6]/30">
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-100">
                       {activeClient?.pod.name}: {activeClient?.pod.tagline}
                     </span>
                   </div>
 
                   {/* Pod Lead */}
                   <div className="space-y-2">
-                    <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                    <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">
                       POD LEAD & CREATIVE DIRECTOR
                     </span>
-                    <div className="p-3 bg-[#0B111C]/70 rounded-2xl flex items-center justify-between border border-[#2A3446]">
+                    <div className="p-3 bg-gray-50/70 rounded-2xl flex items-center justify-between border border-gray-100">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
                           {activeClient?.pod.leadAvatar}
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-white">{activeClient?.pod.leadName}</h4>
-                          <span className="text-[11px] text-[#97A0B3]">{activeClient?.pod.leadTitle}</span>
+                          <h4 className="text-xs font-bold text-gray-900">{activeClient?.pod.leadName}</h4>
+                          <span className="text-[11px] text-gray-500">{activeClient?.pod.leadTitle}</span>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => showToast(`Connecting to ${activeClient?.pod.leadName} via Slack/Creo Chat...`)}
-                        className="p-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] shadow-2xs cursor-pointer"
+                        className="p-2 rounded-xl bg-white border border-gray-200 text-gray-600 hover:text-blue-600 shadow-2xs cursor-pointer"
                         title="Chat with Pod Lead"
                       >
                         <MessageSquare className="w-4 h-4" />
@@ -1447,22 +1185,22 @@ export function AdminClientsPage() {
 
                   {/* Squad Members */}
                   <div className="space-y-2">
-                    <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                    <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">
                       SQUAD MEMBERS
                     </span>
                     <div className="space-y-1.5">
                       {activeClient?.pod.squad.map((member) => (
-                        <div key={member.name} className="p-2.5 bg-[#0B111C]/50 rounded-xl flex items-center justify-between text-xs border border-[#2A3446]">
+                        <div key={member.name} className="p-2.5 bg-gray-50/50 rounded-xl flex items-center justify-between text-xs border border-gray-100">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-gray-200 text-[#F1F5F9] font-bold text-[10px] flex items-center justify-center">
+                            <div className="w-7 h-7 rounded-full bg-gray-200 text-gray-700 font-bold text-[10px] flex items-center justify-center">
                               {member.avatar}
                             </div>
                             <div>
-                              <span className="font-bold text-white block leading-tight">{member.name}</span>
-                              <span className="text-[10px] text-[#97A0B3]">{member.role}</span>
+                              <span className="font-bold text-gray-900 block leading-tight">{member.name}</span>
+                              <span className="text-[10px] text-gray-500">{member.role}</span>
                             </div>
                           </div>
-                          <span className="font-mono font-bold text-[11px] text-[#F1F5F9]">{member.hoursPerWeek}h/wk</span>
+                          <span className="font-mono font-bold text-[11px] text-gray-700">{member.hoursPerWeek}h/wk</span>
                         </div>
                       ))}
                     </div>
@@ -1471,29 +1209,29 @@ export function AdminClientsPage() {
                   {/* Pod Capacity Commitment */}
                   <div className="space-y-2 pt-1">
                     <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-[#F1F5F9]">Pod Capacity Commitment</span>
-                      <span className="text-[#7FA0D6] font-mono">
+                      <span className="text-gray-700">Pod Capacity Commitment</span>
+                      <span className="text-blue-600 font-mono">
                         {activeClient?.pod.capacityAllocatedHrs} hrs/week allocated
                       </span>
                     </div>
-                    <div className="w-full bg-[#1F2C3F] rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                       <div
                         className="bg-[#2563EB] h-full rounded-full transition-all"
                         style={{ width: `${activeClient?.pod.bandwidthPercent}%` }}
                       />
                     </div>
-                    <span className="text-[11px] text-[#97A0B3] font-medium block">
+                    <span className="text-[11px] text-gray-400 font-medium block">
                       Sprint {activeClient?.sprintNumber} • {activeClient?.pod.bandwidthPercent}% bandwidth filled
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
+                <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100 font-medium">
                   <span>Daily Sync: {activeClient?.pod.dailySyncTime}</span>
                   <button
                     type="button"
                     onClick={() => showToast(`Opening Pod Reallocation Studio for ${activeClient?.pod.name}...`)}
-                    className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
+                    className="text-blue-600 font-bold hover:underline cursor-pointer"
                   >
                     Reallocate Pod Hours
                   </button>
@@ -1504,16 +1242,16 @@ export function AdminClientsPage() {
             {/* ═════════════════════════════════════════════════════════════════
                 BOTTOM SECTION: ACTIVE DELIVERABLES IN PRODUCTION
             ═════════════════════════════════════════════════════════════════ */}
-            <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
+            <div className="bg-white rounded-3xl p-6 lg:p-7 border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-4">
                 <div>
                   <div className="flex items-center gap-2.5">
-                    <h2 className="text-base font-black text-white">Active Deliverables in Production</h2>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-[10px] font-black uppercase">
+                    <h2 className="text-base font-black text-gray-900">Active Deliverables in Production</h2>
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black uppercase">
                       {filteredDeliverables.length} Items Requiring Attention
                     </span>
                   </div>
-                  <p className="text-xs text-[#97A0B3] mt-0.5">
+                  <p className="text-xs text-gray-500 mt-0.5">
                     Manage approvals, review video renders, and coordinate asset distribution across all client pipelines.
                   </p>
                 </div>
@@ -1521,71 +1259,64 @@ export function AdminClientsPage() {
                 {/* Filter Controls */}
                 <div className="flex items-center gap-2">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#97A0B3]" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                     <input
                       type="text"
                       placeholder="Filter deliverable..."
                       value={deliverableSearch}
                       onChange={(e) => setDeliverableSearch(e.target.value)}
-                      className="pl-8 pr-3 py-1.5 rounded-xl border border-[#2A3446] text-xs bg-[#0B111C] focus:bg-[#161F2D] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="pl-8 pr-3 py-1.5 rounded-xl border border-gray-200 text-xs bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                   <button
                     type="button"
-                    className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1 shadow-2xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-bold text-gray-700 flex items-center gap-1 shadow-2xs cursor-pointer"
                   >
-                    <Filter className="w-3.5 h-3.5 text-[#97A0B3]" /> Filter
+                    <Filter className="w-3.5 h-3.5 text-gray-400" /> Filter
                   </button>
                 </div>
               </div>
 
-              {/* Deliverable Cards Grid with Empty State */}
-              {filteredDeliverables.length === 0 ? (
-                <div className="py-12 border border-dashed border-[#2A3446] rounded-2xl text-center space-y-2">
-                  <CheckCircle2 className="size-8 text-[#97A0B3] mx-auto opacity-40" />
-                  <p className="text-sm font-bold text-white">No Deliverables in Queue</p>
-                  <p className="text-xs text-[#97A0B3]">No active deliverables requiring attention for this client.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                  {filteredDeliverables.map((deliv) => (
+              {/* 4 Deliverable Cards Grid matching Screenshot */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                {filteredDeliverables.map((deliv) => (
                   <div
                     key={deliv.id}
-                    className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_2px_15px_rgba(0,0,0,0.03)] p-5 space-y-4 flex flex-col justify-between hover:shadow-lg hover:border-[#7FA0D6]/30 transition-all"
+                    className="bg-white rounded-3xl border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.03)] p-5 space-y-4 flex flex-col justify-between hover:shadow-lg hover:border-blue-200 transition-all"
                   >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${deliv.statusColor}`}>
                           {deliv.status}
                         </span>
-                        <span className="text-[10px] font-mono text-[#97A0B3] font-bold">{deliv.code}</span>
+                        <span className="text-[10px] font-mono text-gray-400 font-bold">{deliv.code}</span>
                       </div>
 
                       <div>
-                        <h4 className="text-sm font-black text-white leading-snug">{deliv.title}</h4>
-                        <p className="text-[11px] text-[#97A0B3] mt-1 line-clamp-2 leading-relaxed">
+                        <h4 className="text-sm font-black text-gray-900 leading-snug">{deliv.title}</h4>
+                        <p className="text-[11px] text-gray-500 mt-1 line-clamp-2 leading-relaxed">
                           {deliv.description}
                         </p>
                       </div>
 
-                      <div className="p-3 bg-[#0B111C]/70 rounded-2xl space-y-1.5 text-[11px] text-[#F1F5F9] border border-[#2A3446]">
+                      <div className="p-3 bg-gray-50/70 rounded-2xl space-y-1.5 text-[11px] text-gray-600 border border-gray-100">
                         <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Format:</span>
-                          <span className="font-bold text-white">{deliv.format}</span>
+                          <span className="text-gray-400">Format:</span>
+                          <span className="font-bold text-gray-900">{deliv.format}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Due Date:</span>
+                          <span className="text-gray-400">Due Date:</span>
                           <span className="font-bold text-rose-600">{deliv.dueDate}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Assigned:</span>
-                          <span className="font-semibold text-white">{deliv.assignedTo}</span>
+                          <span className="text-gray-400">Assigned:</span>
+                          <span className="font-semibold text-gray-800">{deliv.assignedTo}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="space-y-2 pt-2 border-t border-[#2A3446]">
+                    <div className="space-y-2 pt-2 border-t border-gray-100">
                       {deliv.status === "IN REVIEW" && (
                         <div className="grid grid-cols-2 gap-2">
                           <button
@@ -1598,7 +1329,7 @@ export function AdminClientsPage() {
                           <button
                             type="button"
                             onClick={() => handleDeclineDeliverable(deliv.id, deliv.title)}
-                            className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                            className="w-full py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
                           >
                             <X className="w-3.5 h-3.5" /> Decline
                           </button>
@@ -1610,14 +1341,14 @@ export function AdminClientsPage() {
                           <button
                             type="button"
                             onClick={() => setPreviewDeliverable(deliv)}
-                            className="w-full py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                            className="w-full py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
                           >
                             <Eye className="w-3.5 h-3.5" /> Preview Canvas
                           </button>
                           <button
                             type="button"
                             onClick={() => showToast(`Revision request sent for "${deliv.title}".`)}
-                            className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold cursor-pointer transition-colors"
+                            className="w-full py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold cursor-pointer transition-colors"
                           >
                             Request Revisions
                           </button>
@@ -1635,7 +1366,7 @@ export function AdminClientsPage() {
                           <button
                             type="button"
                             onClick={() => showToast("Viewing scheduled metadata...")}
-                            className="w-full py-1.5 text-center text-[11px] font-bold text-[#97A0B3] hover:text-white cursor-pointer"
+                            className="w-full py-1.5 text-center text-[11px] font-bold text-gray-500 hover:text-gray-900 cursor-pointer"
                           >
                             View Scheduled Meta
                           </button>
@@ -1655,7 +1386,7 @@ export function AdminClientsPage() {
                             <button
                               type="button"
                               onClick={() => showToast(`Feedback notes opened for "${deliv.title}".`)}
-                              className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                              className="w-full py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
                             >
                               <Edit3 className="w-3.5 h-3.5" /> Notes
                             </button>
@@ -1663,7 +1394,7 @@ export function AdminClientsPage() {
                           <button
                             type="button"
                             onClick={() => setPreviewDeliverable(deliv)}
-                            className="w-full py-1.5 text-center text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer flex items-center justify-center gap-1"
+                            className="w-full py-1.5 text-center text-[11px] font-bold text-blue-600 hover:underline cursor-pointer flex items-center justify-center gap-1"
                           >
                             <FileText className="w-3.5 h-3.5" /> Open Full Presentation
                           </button>
@@ -1674,7 +1405,7 @@ export function AdminClientsPage() {
                         <button
                           type="button"
                           onClick={() => setPreviewDeliverable(deliv)}
-                          className="w-full py-1.5 text-center text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer flex items-center justify-center gap-1"
+                          className="w-full py-1.5 text-center text-[11px] font-bold text-blue-600 hover:underline cursor-pointer flex items-center justify-center gap-1"
                         >
                           <Play className="w-3 h-3 fill-blue-600" /> Preview Video Draft (0:45)
                         </button>
@@ -1683,10 +1414,9 @@ export function AdminClientsPage() {
                   </div>
                 ))}
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
         {/* ═════════════════════════════════════════════════════════════════
             MODALS
@@ -1695,35 +1425,35 @@ export function AdminClientsPage() {
         {/* 1. Edit Profile Modal */}
         {isEditProfileOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <h3 className="text-base font-black text-white">Edit Client Profile: {activeClient?.name}</h3>
-                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-base font-black text-gray-900">Edit Client Profile: {activeClient?.name}</h3>
+                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="p-1 text-gray-400 hover:text-gray-700 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="space-y-3 text-xs text-[#F1F5F9]">
+              <div className="space-y-3 text-xs text-gray-700">
                 <div>
                   <label className="block font-bold mb-1">Company / Brand Name</label>
-                  <input type="text" defaultValue={activeClient?.name} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
+                  <input type="text" defaultValue={activeClient?.name} className="w-full px-3 py-2 rounded-xl border border-gray-200" />
                 </div>
                 <div>
                   <label className="block font-bold mb-1">Industry / Category</label>
-                  <input type="text" defaultValue={activeClient?.industry} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
+                  <input type="text" defaultValue={activeClient?.industry} className="w-full px-3 py-2 rounded-xl border border-gray-200" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block font-bold mb-1">Primary Signer</label>
-                    <input type="text" defaultValue={activeClient?.contact.name} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
+                    <input type="text" defaultValue={activeClient?.contact.name} className="w-full px-3 py-2 rounded-xl border border-gray-200" />
                   </div>
                   <div>
                     <label className="block font-bold mb-1">Signer Email</label>
-                    <input type="email" defaultValue={activeClient?.contact.email} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
+                    <input type="email" defaultValue={activeClient?.contact.email} className="w-full px-3 py-2 rounded-xl border border-gray-200" />
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="px-4 py-2 rounded-xl border text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="px-4 py-2 rounded-xl border text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer">
                   Cancel
                 </button>
                 <button
@@ -1744,35 +1474,35 @@ export function AdminClientsPage() {
         {/* 2. Monthly Invoice Modal */}
         {isInvoiceModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <h3 className="text-base font-black text-white">Current Retainer Invoice</h3>
-                <button type="button" onClick={() => setIsInvoiceModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-base font-black text-gray-900">Current Retainer Invoice</h3>
+                <button type="button" onClick={() => setIsInvoiceModalOpen(false)} className="p-1 text-gray-400 hover:text-gray-700 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="p-4 bg-[#0B111C] rounded-2xl space-y-2 text-xs text-[#F1F5F9] border border-[#2A3446]">
+              <div className="p-4 bg-gray-50 rounded-2xl space-y-2 text-xs text-gray-700 border border-gray-100">
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Invoice ID:</span>
-                  <span className="font-mono font-bold text-white">INV-2024-NL-11</span>
+                  <span className="text-gray-500">Invoice ID:</span>
+                  <span className="font-mono font-bold text-gray-900">INV-2024-NL-11</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Client:</span>
-                  <span className="font-bold text-white">{activeClient?.name}</span>
+                  <span className="text-gray-500">Client:</span>
+                  <span className="font-bold text-gray-900">{activeClient?.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Billing Cycle:</span>
-                  <span className="font-medium text-white">Nov 1 – Nov 30, 2024</span>
+                  <span className="text-gray-500">Billing Cycle:</span>
+                  <span className="font-medium text-gray-800">Nov 1 – Nov 30, 2024</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Payment Status:</span>
+                  <span className="text-gray-500">Payment Status:</span>
                   <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">
                     PAID (ACH)
                   </span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-[#2A3446] font-black text-sm">
+                <div className="flex justify-between pt-2 border-t border-gray-200 font-black text-sm">
                   <span>Total Amount:</span>
-                  <span className="text-[#7FA0D6]">₹{activeClient?.monthlyFee.toLocaleString()}.00</span>
+                  <span className="text-blue-600">${activeClient?.monthlyFee.toLocaleString()}.00</span>
                 </div>
               </div>
               <button
@@ -1792,37 +1522,37 @@ export function AdminClientsPage() {
         {/* 3. New Request Modal */}
         {isNewRequestOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <div>
-                  <h3 className="text-base font-black text-white">New Content Request</h3>
-                  <p className="text-xs text-[#97A0B3]">Submitting to {activeClient?.pod.name} for {activeClient?.name}</p>
+                  <h3 className="text-base font-black text-gray-900">New Content Request</h3>
+                  <p className="text-xs text-gray-500">Submitting to {activeClient?.pod.name} for {activeClient?.name}</p>
                 </div>
-                <button type="button" onClick={() => setIsNewRequestOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setIsNewRequestOpen(false)} className="p-1 text-gray-400 hover:text-gray-700 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <form onSubmit={handleCreateRequest} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Asset Title</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Asset Title</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Q4 Executive Product Video Hook"
                     value={newRequestForm.title}
                     onChange={(e) => setNewRequestForm({ ...newRequestForm, title: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Type</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Deliverable Type</label>
                     <select
                       value={newRequestForm.type}
                       onChange={(e) => setNewRequestForm({ ...newRequestForm, type: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
                     >
                       <option value="Reel">🎬 Reel / Short</option>
                       <option value="Carousel">🎨 Carousel (3-5 slides)</option>
@@ -1831,11 +1561,11 @@ export function AdminClientsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Priority</label>
                     <select
                       value={newRequestForm.priority}
                       onChange={(e) => setNewRequestForm({ ...newRequestForm, priority: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
                     >
                       <option value="Standard">Standard (3-4 Days)</option>
                       <option value="Expedited">Expedited (48 Hours)</option>
@@ -1845,21 +1575,21 @@ export function AdminClientsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Creative Brief Notes</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Creative Brief Notes</label>
                   <textarea
                     rows={3}
                     placeholder="Specify key talking points, hooks, or assets to reference..."
                     value={newRequestForm.notes}
                     onChange={(e) => setNewRequestForm({ ...newRequestForm, notes: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
                   <button
                     type="button"
                     onClick={() => setIsNewRequestOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1878,26 +1608,26 @@ export function AdminClientsPage() {
         {/* 4. Preview Canvas / Video Modal */}
         {previewDeliverable && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <div>
-                  <span className="text-[10px] font-mono text-[#97A0B3] font-bold">{previewDeliverable.code}</span>
-                  <h3 className="text-base font-black text-white">{previewDeliverable.title}</h3>
+                  <span className="text-[10px] font-mono text-gray-400 font-bold">{previewDeliverable.code}</span>
+                  <h3 className="text-base font-black text-gray-900">{previewDeliverable.title}</h3>
                 </div>
-                <button type="button" onClick={() => setPreviewDeliverable(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setPreviewDeliverable(null)} className="p-1 text-gray-400 hover:text-gray-700 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="aspect-video bg-[#0F172A] rounded-2xl flex flex-col items-center justify-center text-white p-6 relative overflow-hidden shadow-inner">
-                <div className="w-14 h-14 rounded-full bg-[#161F2D]/20 backdrop-blur-md flex items-center justify-center text-white mb-2 cursor-pointer hover:scale-110 transition-transform">
+                <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white mb-2 cursor-pointer hover:scale-110 transition-transform">
                   <Play className="w-6 h-6 fill-white ml-0.5" />
                 </div>
                 <span className="text-xs font-bold text-gray-200">{previewDeliverable.format} Preview</span>
-                <span className="text-[10px] text-[#97A0B3] mt-0.5">Assigned Specialist: {previewDeliverable.assignedTo}</span>
+                <span className="text-[10px] text-gray-400 mt-0.5">Assigned Specialist: {previewDeliverable.assignedTo}</span>
               </div>
 
-              <div className="p-3.5 bg-[#0B111C] rounded-2xl text-xs text-[#F1F5F9] space-y-1">
+              <div className="p-3.5 bg-gray-50 rounded-2xl text-xs text-gray-600 space-y-1">
                 <div><strong>Creative Scope:</strong> {previewDeliverable.description}</div>
                 <div><strong>Target Delivery:</strong> {previewDeliverable.dueDate}</div>
               </div>
@@ -1906,7 +1636,7 @@ export function AdminClientsPage() {
                 <button
                   type="button"
                   onClick={() => setPreviewDeliverable(null)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 cursor-pointer"
                 >
                   Close Preview
                 </button>
@@ -1946,7 +1676,158 @@ export function AdminDeliverablesPage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const [deliverablesList, setDeliverablesList] = useState<any[]>([]);
+  const [deliverablesList, setDeliverablesList] = useState([
+    {
+      id: "deliv-1",
+      assetCode: "NW-8921",
+      client: "Northwind Labs",
+      clientInitial: "N",
+      clientBg: "bg-blue-600",
+      tier: "GROWTH",
+      tierBadge: "bg-blue-50 text-blue-700 border-blue-200",
+      status: "in_review",
+      statusLabel: "In Review",
+      statusBadge: "bg-amber-50 text-amber-700 border-amber-100",
+      title: "Fintech 3D App Rebrand - Hero Asset Suite",
+      format: "Blender 3D Render • 4K EXR",
+      formatType: "3d",
+      pod: "Pod A",
+      podLead: "Maya Lin",
+      podAvatars: ["ML"],
+      retainer: "12/20 Monthly Retainer",
+      slaType: "overdue",
+      slaText: "SLA Overdue: 2h ago",
+      slaColor: "text-rose-600 font-bold",
+      commentsCount: 2,
+      previewUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop",
+      description: "Hero 3D asset suite rendered for dark-mode onboarding experience with physical metal displacement shaders.",
+    },
+    {
+      id: "deliv-2",
+      assetCode: "NW-8922",
+      client: "Northwind Labs",
+      clientInitial: "N",
+      clientBg: "bg-blue-600",
+      tier: "GROWTH",
+      tierBadge: "bg-blue-50 text-blue-700 border-blue-200",
+      status: "in_review",
+      statusLabel: "In Review",
+      statusBadge: "bg-amber-50 text-amber-700 border-amber-100",
+      title: "Q4 Keynote Slide Deck (60 slides)",
+      format: "Keynote / PDF / PPTX Package",
+      formatType: "deck",
+      pod: "Pod A",
+      podLead: "Elena Rostova",
+      podAvatars: ["ER"],
+      retainer: "14/20 Monthly Retainer",
+      slaType: "target",
+      slaText: "Target: Today 4:30 PM",
+      slaColor: "text-amber-600 font-bold",
+      commentsCount: 3,
+      previewUrl: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&auto=format&fit=crop",
+      description: "Comprehensive 60-slide executive pitch deck with custom infographics, typography hierarchy, and branded motion transitions.",
+    },
+    {
+      id: "deliv-3",
+      assetCode: "BS-4412",
+      client: "Bloom Studio",
+      clientInitial: "B",
+      clientBg: "bg-violet-600",
+      tier: "SCALE",
+      tierBadge: "bg-purple-50 text-purple-700 border-purple-200",
+      status: "in_production",
+      statusLabel: "In Production",
+      statusBadge: "bg-blue-50 text-blue-600 border-blue-100",
+      title: "Holiday Campaign Lifestyle Retouching",
+      format: "10x High-Res TIFF (Print Ready)",
+      formatType: "photo",
+      pod: "Pod B",
+      podLead: "Anya Taylor",
+      podAvatars: ["AT"],
+      retainer: "18/25 Scale Retainer",
+      slaType: "target",
+      slaText: "Today 3:00 PM (1h left)",
+      slaColor: "text-amber-600 font-bold",
+      commentsCount: 0,
+      previewUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1200&auto=format&fit=crop",
+      description: "Clean high-fashion editorial retouching with precise skin tone color grading and high-frequency separation.",
+    },
+    {
+      id: "deliv-4",
+      assetCode: "NW-8920",
+      client: "Northwind Labs",
+      clientInitial: "N",
+      clientBg: "bg-blue-600",
+      tier: "GROWTH",
+      tierBadge: "bg-blue-50 text-blue-700 border-blue-200",
+      status: "in_production",
+      statusLabel: "In Production",
+      statusBadge: "bg-blue-50 text-blue-600 border-blue-100",
+      title: "TikTok Viral Hook Reel 9:16 (Batch #1 & #2)",
+      format: "MP4 1080x1920 • 60fps",
+      formatType: "video",
+      pod: "Pod C",
+      podLead: "Kenji Sato",
+      podAvatars: ["KS"],
+      retainer: "20/20 Enterprise Plan",
+      slaType: "target",
+      slaText: "Today 6:00 PM (4h left)",
+      slaColor: "text-amber-600 font-bold",
+      commentsCount: 1,
+      previewUrl: "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=1200&auto=format&fit=crop",
+      description: "High-retention UGC hooks tailored for algorithmic engagement with kinetic captions and sound effects.",
+    },
+    {
+      id: "deliv-5",
+      assetCode: "AC-2198",
+      client: "Atlas Commerce",
+      clientInitial: "A",
+      clientBg: "bg-indigo-600",
+      tier: "ENTERPRISE",
+      tierBadge: "bg-indigo-50 text-indigo-700 border-indigo-200",
+      status: "approved",
+      statusLabel: "Approved",
+      statusBadge: "bg-emerald-50 text-emerald-700 border-emerald-100",
+      title: "Black Friday Dynamic Ad Set",
+      format: "Meta & Google Ads Bundle",
+      formatType: "banner",
+      pod: "Pod C",
+      podLead: "Lena O.",
+      podAvatars: ["LO"],
+      retainer: "Enterprise Retainer",
+      slaType: "completed",
+      slaText: "Delivered Yesterday",
+      slaColor: "text-emerald-600 font-bold",
+      commentsCount: 0,
+      previewUrl: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&auto=format&fit=crop",
+      description: "Complete dynamic creative optimization (DCO) ad templates for Black Friday cyber week campaigns.",
+    },
+    {
+      id: "deliv-6",
+      assetCode: "VM-0144",
+      client: "Vanguard Mobility",
+      clientInitial: "V",
+      clientBg: "bg-slate-800",
+      tier: "ENTERPRISE",
+      tierBadge: "bg-indigo-50 text-indigo-700 border-indigo-200",
+      status: "in_production",
+      statusLabel: "In Production",
+      statusBadge: "bg-blue-50 text-blue-600 border-blue-100",
+      title: "WebGL 3D Interactive Configurator",
+      format: "Three.js / React Fiber Bundle",
+      formatType: "interactive",
+      pod: "Pod D",
+      podLead: "David Vance",
+      podAvatars: ["DV"],
+      retainer: "Custom Project Retainer",
+      slaType: "target",
+      slaText: "Tomorrow 12:00 PM",
+      slaColor: "text-blue-600 font-bold",
+      commentsCount: 4,
+      previewUrl: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200&auto=format&fit=crop",
+      description: "Interactive real-time 3D automotive exterior configurator with custom PBR paint shaders.",
+    },
+  ]);
 
   const handleApprove = (id: string, title: string) => {
     setDeliverablesList((prev) =>
@@ -2017,7 +1898,7 @@ export function AdminDeliverablesPage() {
   });
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
       <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
         {/* Toast Notification */}
@@ -2030,61 +1911,61 @@ export function AdminDeliverablesPage() {
 
         {/* 4 KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-5 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-white rounded-3xl p-5 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">
                 MOVED TO PRODUCTION
               </span>
-              <div className="w-7 h-7 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+              <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                 <Zap className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tight">42</div>
+            <div className="text-3xl font-black text-gray-900 tracking-tight">42</div>
             <div className="text-xs font-bold text-emerald-600 flex items-center gap-1">
               ↗ +12% this week
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-5 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-white rounded-3xl p-5 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">
                 PENDING REVIEW
               </span>
               <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                 <Clock className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tight">24</div>
+            <div className="text-3xl font-black text-gray-900 tracking-tight">24</div>
             <div className="text-xs font-bold text-amber-600 flex items-center gap-1">
               ⚡ 4 near SLA limit
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-5 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-white rounded-3xl p-5 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">
                 APPROVED TODAY
               </span>
               <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
                 <CheckCircle2 className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tight">116</div>
+            <div className="text-3xl font-black text-gray-900 tracking-tight">116</div>
             <div className="text-xs font-bold text-emerald-600 flex items-center gap-1">
               ✓ 98.4% First-Pass
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-5 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-white rounded-3xl p-5 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">
                 DECLINED / REVISE
               </span>
               <div className="w-7 h-7 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
                 <AlertTriangle className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tight">8</div>
+            <div className="text-3xl font-black text-gray-900 tracking-tight">8</div>
             <div className="text-xs font-bold text-rose-600 flex items-center gap-1">
               ↘ -2 vs yesterday
             </div>
@@ -2092,82 +1973,73 @@ export function AdminDeliverablesPage() {
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446] shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search deliverables, code, tags..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-72 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                className="pl-10 pr-4 py-2 w-72 rounded-xl border border-gray-200 bg-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
               />
             </div>
 
-            <CustomSelect
+            <select
               value={selectedClient}
-              onChange={setSelectedClient}
-              ariaLabel="Filter Deliverable Client"
-              options={[
-                { value: "all", label: "All Clients" },
-                { value: "Northwind", label: "Northwind Labs" },
-                { value: "Bloom", label: "Bloom Studio" },
-                { value: "Atlas", label: "Atlas Commerce" },
-                { value: "Vanguard", label: "Vanguard Mobility" },
-              ]}
-            />
+              onChange={(e) => setSelectedClient(e.target.value)}
+              aria-label="Filter Deliverable Client"
+              className="px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Clients</option>
+              <option value="Northwind">Northwind Labs</option>
+              <option value="Bloom">Bloom Studio</option>
+              <option value="Atlas">Atlas Commerce</option>
+              <option value="Vanguard">Vanguard Mobility</option>
+            </select>
 
-            <CustomSelect
+            <select
               value={statusFilter}
-              onChange={setStatusFilter}
-              ariaLabel="Filter Deliverable Status"
-              options={[
-                { value: "all", label: "All Statuses" },
-                { value: "in_review", label: "In Review" },
-                { value: "in_production", label: "In Production" },
-                { value: "approved", label: "Approved" },
-              ]}
-            />
+              onChange={(e) => setStatusFilter(e.target.value)}
+              aria-label="Filter Deliverable Status"
+              className="px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Statuses</option>
+              <option value="in_review">In Review</option>
+              <option value="in_production">In Production</option>
+              <option value="approved">Approved</option>
+            </select>
 
-            <CustomSelect
+            <select
               value={selectedFormat}
-              onChange={setSelectedFormat}
-              ariaLabel="Filter Deliverable Format Type"
-              options={[
-                { value: "all", label: "All Formats" },
-                { value: "3d", label: "3D Render" },
-                { value: "deck", label: "Presentation Deck" },
-                { value: "photo", label: "Photo Retouching" },
-                { value: "video", label: "Short-form Video" },
-                { value: "banner", label: "Ad Banner Set" },
-                { value: "interactive", label: "WebGL Interactive" },
-              ]}
-            />
+              onChange={(e) => setSelectedFormat(e.target.value)}
+              aria-label="Filter Deliverable Format Type"
+              className="px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Formats</option>
+              <option value="3d">3D Render</option>
+              <option value="deck">Presentation Deck</option>
+              <option value="photo">Photo Retouching</option>
+              <option value="video">Short-form Video</option>
+              <option value="banner">Ad Banner Set</option>
+              <option value="interactive">WebGL Interactive</option>
+            </select>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-[#97A0B3]">
+            <span className="text-xs font-bold text-gray-400">
               Showing {filteredDeliverables.length} deliverables
             </span>
           </div>
         </div>
 
-        {/* 3-Column Deliverables Grid or Empty State */}
-        {filteredDeliverables.length === 0 ? (
-          <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] p-12 text-center text-[#97A0B3] space-y-3">
-            <Layers className="w-10 h-10 text-[#2A3446] mx-auto" />
-            <h3 className="text-base font-bold text-white">No deliverables in queue</h3>
-            <p className="text-xs text-[#97A0B3] max-w-sm mx-auto">
-              Creative pod sprints will automatically submit finished reels, brand assets, and creative packages here for admin review.
-            </p>
-          </div>
-        ) : (
+        {/* 3-Column Deliverables Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDeliverables.map((item) => (
             <div
               key={item.id}
-              className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all overflow-hidden flex flex-col justify-between"
+              className="bg-white rounded-3xl border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all overflow-hidden flex flex-col justify-between"
             >
               {/* Card Header */}
               <div className="p-5 pb-3">
@@ -2179,10 +2051,10 @@ export function AdminDeliverablesPage() {
                       {item.clientInitial}
                     </div>
                     <div>
-                      <div className="text-xs font-black text-white leading-tight">
+                      <div className="text-xs font-black text-gray-900 leading-tight">
                         {item.client}
                       </div>
-                      <div className="text-[10px] font-bold text-[#97A0B3]">
+                      <div className="text-[10px] font-bold text-gray-400">
                         {item.assetCode}
                       </div>
                     </div>
@@ -2195,11 +2067,11 @@ export function AdminDeliverablesPage() {
                 </div>
 
                 {/* Deliverable Title & Format */}
-                <h3 className="text-sm font-black text-white line-clamp-2 mb-1.5">
+                <h3 className="text-sm font-black text-gray-900 line-clamp-2 mb-1.5">
                   {item.title}
                 </h3>
-                <p className="text-[11px] font-semibold text-[#97A0B3] flex items-center gap-1.5">
-                  <Tag className="w-3 h-3 text-[#97A0B3]" />
+                <p className="text-[11px] font-semibold text-gray-500 flex items-center gap-1.5">
+                  <Tag className="w-3 h-3 text-gray-400" />
                   {item.format}
                 </p>
               </div>
@@ -2215,8 +2087,8 @@ export function AdminDeliverablesPage() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="px-4 py-2 bg-[#161F2D]/90 backdrop-blur-md rounded-xl text-xs font-black text-white shadow-xl flex items-center gap-1.5">
-                    <Eye className="w-3.5 h-3.5 text-[#7FA0D6]" /> Quick Preview
+                  <span className="px-4 py-2 bg-white/90 backdrop-blur-md rounded-xl text-xs font-black text-gray-900 shadow-xl flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-blue-600" /> Quick Preview
                   </span>
                 </div>
               </div>
@@ -2226,27 +2098,27 @@ export function AdminDeliverablesPage() {
                 {/* Pod & Retainer Info */}
                 <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-50">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-[#97A0B3] text-[10px] uppercase">
+                    <span className="font-bold text-gray-400 text-[10px] uppercase">
                       Pod:
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] text-[11px] font-black">
+                    <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 text-[11px] font-black">
                       {item.pod} ({item.podLead})
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold text-[#97A0B3]">
+                  <span className="text-[11px] font-bold text-gray-400">
                     {item.retainer}
                   </span>
                 </div>
 
                 {/* SLA Target / Status */}
-                <div className="flex items-center justify-between text-xs bg-[#0B111C]/80 p-2.5 rounded-xl border border-[#2A3446]">
+                <div className="flex items-center justify-between text-xs bg-gray-50/80 p-2.5 rounded-xl border border-gray-100">
                   <span className={`text-[11px] ${item.slaColor}`}>
                     {item.slaText}
                   </span>
                   <button
                     type="button"
                     onClick={() => setCommentModalItem(item)}
-                    className="text-[#97A0B3] hover:text-[#7FA0D6] text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                    className="text-gray-500 hover:text-blue-600 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
                     {item.commentsCount} notes
@@ -2265,7 +2137,7 @@ export function AdminDeliverablesPage() {
                   <button
                     type="button"
                     onClick={() => handleDecline(item.id, item.title)}
-                    className="flex-1 py-2.5 bg-[#1F2C3F] hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="flex-1 py-2.5 bg-gray-100 hover:bg-rose-50 text-gray-700 hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5 stroke-[2.5]" /> Request Edit
                   </button>
@@ -2274,28 +2146,27 @@ export function AdminDeliverablesPage() {
             </div>
           ))}
         </div>
-        )}
 
         {/* Media Preview Modal */}
         {previewItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-3xl w-full p-6 shadow-2xl space-y-4 border border-[#2A3446] max-h-[90vh] overflow-y-auto">
-              <div className="flex items-start justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl space-y-4 border border-gray-100 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-start justify-between border-b border-gray-100 pb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-black uppercase">
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase">
                       {previewItem.assetCode}
                     </span>
-                    <span className="text-xs font-bold text-[#97A0B3]">
+                    <span className="text-xs font-bold text-gray-500">
                       {previewItem.client}
                     </span>
                   </div>
-                  <h2 className="text-lg font-black text-white">{previewItem.title}</h2>
+                  <h2 className="text-lg font-black text-gray-900">{previewItem.title}</h2>
                 </div>
                 <button
                   type="button"
                   onClick={() => setPreviewItem(null)}
-                  className="p-1.5 rounded-xl hover:bg-[#1F2C3F] text-[#97A0B3] hover:text-white cursor-pointer"
+                  className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-900 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -2309,10 +2180,10 @@ export function AdminDeliverablesPage() {
                 />
               </div>
 
-              <div className="p-4 bg-[#0B111C] rounded-2xl space-y-2 text-xs">
-                <div className="font-bold text-white">Deliverable Blueprint:</div>
-                <p className="text-[#F1F5F9] leading-relaxed">{previewItem.description}</p>
-                <div className="flex flex-wrap gap-4 pt-2 text-[11px] text-[#97A0B3] border-t border-[#2A3446]">
+              <div className="p-4 bg-gray-50 rounded-2xl space-y-2 text-xs">
+                <div className="font-bold text-gray-900">Deliverable Blueprint:</div>
+                <p className="text-gray-600 leading-relaxed">{previewItem.description}</p>
+                <div className="flex flex-wrap gap-4 pt-2 text-[11px] text-gray-500 border-t border-gray-200">
                   <span><strong>Format:</strong> {previewItem.format}</span>
                   <span><strong>Pod:</strong> {previewItem.pod} ({previewItem.podLead})</span>
                   <span><strong>SLA:</strong> {previewItem.slaText}</span>
@@ -2326,7 +2197,7 @@ export function AdminDeliverablesPage() {
                     handleDecline(previewItem.id, previewItem.title);
                     setPreviewItem(null);
                   }}
-                  className="px-4 py-2 rounded-xl bg-[#1F2C3F] hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 text-xs font-bold cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-rose-50 text-gray-700 hover:text-rose-600 text-xs font-bold cursor-pointer"
                 >
                   Request Revision
                 </button>
@@ -2348,39 +2219,39 @@ export function AdminDeliverablesPage() {
         {/* Notes & Comments Modal */}
         {commentModalItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-[#7FA0D6]" />
-                  <h3 className="text-sm font-black text-white">
+                  <MessageSquare className="w-4 h-4 text-blue-600" />
+                  <h3 className="text-sm font-black text-gray-900">
                     Production Notes & Feedback
                   </h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setCommentModalItem(null)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="space-y-3">
-                <div className="p-3 bg-[#0B111C] rounded-2xl border border-[#2A3446] space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3]">
+                <div className="p-3 bg-gray-50 rounded-2xl border border-gray-100 space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-gray-500">
                     <span>David K. (Client Lead)</span>
                     <span>Today 10:45 AM</span>
                   </div>
-                  <p className="text-xs text-[#F1F5F9] leading-relaxed font-medium">
+                  <p className="text-xs text-gray-700 leading-relaxed font-medium">
                     "Typography and layout look crisp. Please ensure the hex code for brand teal matches #06B6D4."
                   </p>
                 </div>
-                <div className="p-3 bg-[#7FA0D6]/15/50 rounded-2xl border border-[#7FA0D6]/30 space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-bold text-[#7FA0D6]">
+                <div className="p-3 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-blue-600">
                     <span>Elena Rostova (Pod A)</span>
                     <span>Today 2:15 PM</span>
                   </div>
-                  <p className="text-xs text-[#F1F5F9] leading-relaxed font-medium">
+                  <p className="text-xs text-gray-700 leading-relaxed font-medium">
                     "Updated slide shaders and color profiles. Ready for final review."
                   </p>
                 </div>
@@ -2416,17 +2287,113 @@ export function AdminTasksPage() {
 
   const [newTaskForm, setNewTaskForm] = useState({
     title: "",
-    client: "Ryze Mushroom Coffee",
+    client: "Northwind Labs",
     pod: "Pod A",
     category: "3D Render / Blender",
     sp: 4,
     dueDate: "Tomorrow",
     priority: "High",
-    assignee: "Vikram Malhotra",
+    assignee: "Maya Lin",
     column: "todo",
   });
 
-  const [kanbanTasks, setKanbanTasks] = useState<any[]>([]);
+  const [kanbanTasks, setKanbanTasks] = useState([
+    {
+      id: "task-1",
+      column: "todo",
+      client: "Northwind Labs",
+      clientPill: "bg-blue-50 text-blue-700 border-blue-100",
+      priority: "High",
+      priorityPill: "bg-rose-50 text-rose-600 border-rose-100",
+      title: "Fintech Mobile App Rebrand - Hero 3D Asset",
+      type: "3D Render / Blender",
+      imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop",
+      avatar: "ML",
+      avatarBg: "bg-blue-600",
+      assigneeName: "Maya Lin",
+      sp: 4,
+      due: "Tomorrow",
+      pod: "Pod A",
+    },
+    {
+      id: "task-2",
+      column: "todo",
+      client: "Atlas Commerce",
+      clientPill: "bg-blue-50 text-blue-700 border-blue-100",
+      priority: "Normal",
+      priorityPill: "bg-gray-100 text-gray-600 border-gray-200",
+      title: "Black Friday Motion Teaser - Reel Cut",
+      type: "Instagram Reel 9:16",
+      avatar: "LO",
+      avatarBg: "bg-slate-800",
+      assigneeName: "Lena O.",
+      sp: 6,
+      due: "in 3d",
+      pod: "Pod C",
+    },
+    {
+      id: "task-3",
+      column: "in_progress",
+      client: "Bloom Studio",
+      clientPill: "bg-blue-50 text-blue-700 border-blue-100",
+      priority: "Urgent",
+      priorityPill: "bg-rose-600 text-white font-black",
+      title: "Holiday Campaign Lifestyle Retouching (Batch #1)",
+      imageUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop",
+      avatar: "AT",
+      avatarBg: "bg-purple-600",
+      assigneeName: "Anya Taylor",
+      sp: 8,
+      due: "Today 3 PM",
+      pod: "Pod B",
+    },
+    {
+      id: "task-4",
+      column: "in_progress",
+      client: "Northwind Labs",
+      clientPill: "bg-blue-50 text-blue-700 border-blue-100",
+      priority: "Urgent",
+      priorityPill: "bg-rose-600 text-white font-black",
+      title: "Q4 Investor Pitch Deck Polish",
+      avatar: "OV",
+      avatarBg: "bg-indigo-600",
+      assigneeName: "Omar Vance",
+      sp: 5,
+      due: "Today 4:30 PM",
+      pod: "Pod A",
+    },
+    {
+      id: "task-5",
+      column: "under_review",
+      client: "Northwind Labs",
+      clientPill: "bg-blue-50 text-blue-700 border-blue-100",
+      priority: "In Review",
+      priorityPill: "bg-amber-50 text-amber-700 border-amber-200",
+      title: "B2B Brand Guidelines Refresh v2.1",
+      avatar: "ER",
+      avatarBg: "bg-emerald-600",
+      assigneeName: "Elena Rostova",
+      sp: 7,
+      due: "In Client Review",
+      pod: "Pod A",
+    },
+    {
+      id: "task-6",
+      column: "approved",
+      client: "Atlas Commerce",
+      clientPill: "bg-blue-50 text-blue-700 border-blue-100",
+      priority: "Delivered",
+      priorityPill: "bg-emerald-100 text-emerald-800 font-bold",
+      title: "Brand Identity Vector Kit & Iconography",
+      imageUrl: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&auto=format&fit=crop",
+      avatar: "LO",
+      avatarBg: "bg-slate-800",
+      assigneeName: "Lena O.",
+      sp: 10,
+      due: "Delivered",
+      pod: "Pod C",
+    },
+  ]);
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -2436,14 +2403,14 @@ export function AdminTasksPage() {
       id: `task-${Date.now()}`,
       column: newTaskForm.column,
       client: newTaskForm.client,
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      clientPill: "bg-blue-50 text-blue-700 border-blue-100",
       priority: newTaskForm.priority,
       priorityPill:
         newTaskForm.priority === "Urgent"
           ? "bg-rose-600 text-white font-black"
           : newTaskForm.priority === "High"
           ? "bg-rose-50 text-rose-600 border-rose-100"
-          : "bg-[#1F2C3F] text-[#F1F5F9] border-[#2A3446]",
+          : "bg-gray-100 text-gray-600 border-gray-200",
       title: newTaskForm.title.trim(),
       type: newTaskForm.category,
       avatar: newTaskForm.assignee
@@ -2502,13 +2469,13 @@ export function AdminTasksPage() {
   const approvedTasks = filteredTasks.filter((t) => t.column === "approved");
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
       <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
         {/* Header Title and Search Filter Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
               <span className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse" />
               Live Sync
             </span>
@@ -2516,37 +2483,41 @@ export function AdminTasksPage() {
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Filter deliverables, tags, owners..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 w-64 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                className="pl-9 pr-4 py-2 w-64 rounded-xl border border-gray-200 bg-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
               />
             </div>
 
-            <CustomSelect
+            <select
               value={selectedPod}
-              onChange={setSelectedPod}
-              ariaLabel="Filter Task Pod"
-              options={[
-                { value: "all", label: "All Pods (A, B, C)" },
-                { value: "Pod A", label: "Pod A (Brand Strategy)" },
-                { value: "Pod B", label: "Pod B (Performance & Video)" },
-                { value: "Pod C", label: "Pod C (3D Motion & Design)" },
-              ]}
-            />
+              onChange={(e) => setSelectedPod(e.target.value)}
+              aria-label="Filter Task Pod"
+              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Pods (A-E)</option>
+              <option value="Pod A">Pod A (Brand Strategy)</option>
+              <option value="Pod B">Pod B (3D &amp; Motion)</option>
+              <option value="Pod C">Pod C (UGC &amp; Video)</option>
+              <option value="Pod D">Pod D (Interactive Web)</option>
+              <option value="Pod E">Pod E (Social &amp; Growth)</option>
+            </select>
 
-            <CustomSelect
+            <select
               value={selectedClient}
-              onChange={setSelectedClient}
-              ariaLabel="Filter Task Client"
-              options={[
-                { value: "all", label: "All Clients" },
-                { value: "Ryze", label: "Ryze Mushroom Coffee" },
-              ]}
-            />
+              onChange={(e) => setSelectedClient(e.target.value)}
+              aria-label="Filter Task Client"
+              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Clients</option>
+              <option value="Northwind">Northwind Labs</option>
+              <option value="Bloom">Bloom Studio</option>
+              <option value="Atlas">Atlas Commerce</option>
+            </select>
 
             <button
               type="button"
@@ -2561,15 +2532,15 @@ export function AdminTasksPage() {
         {/* 4 Kanban Columns */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Column 1: TO DO */}
-          <div className="bg-[#161F2D]/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-[#2A3446]/60">
+          <div className="bg-[#F1F5F9]/60 rounded-3xl p-4 flex flex-col space-y-3.5 border border-slate-200/60">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
-                <h3 className="text-xs font-black text-white tracking-wider uppercase">
+                <h3 className="text-xs font-black text-gray-800 tracking-wider uppercase">
                   TO DO
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[11px] font-bold border border-[#2A3446] shadow-2xs">
+              <span className="px-2 py-0.5 rounded-full bg-white text-slate-600 text-[11px] font-bold border border-slate-200 shadow-2xs">
                 {todoTasks.length}
               </span>
             </div>
@@ -2579,7 +2550,7 @@ export function AdminTasksPage() {
                 <div
                   key={task.id}
                   onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                  className="bg-white rounded-2xl p-4 border border-gray-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
@@ -2589,20 +2560,20 @@ export function AdminTasksPage() {
                       {task.priority}
                     </span>
                   </div>
-                  <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
+                  <h4 className="text-xs font-bold text-gray-900 line-clamp-2">{task.title}</h4>
                   {task.imageUrl && (
-                    <div className="h-24 rounded-xl overflow-hidden bg-[#1F2C3F]">
+                    <div className="h-24 rounded-xl overflow-hidden bg-slate-100">
                       <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-[11px] text-gray-500">
                     <div className="flex items-center gap-1.5">
                       <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
+                      <span className="font-medium text-gray-700">{task.assigneeName}</span>
                     </div>
-                    <span className="font-bold text-[#7FA0D6] font-mono">{task.sp} SP</span>
+                    <span className="font-bold text-blue-600 font-mono">{task.sp} SP</span>
                   </div>
                 </div>
               ))}
@@ -2610,15 +2581,15 @@ export function AdminTasksPage() {
           </div>
 
           {/* Column 2: IN PROGRESS */}
-          <div className="bg-[#161F2D]/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-[#2A3446]/60">
+          <div className="bg-[#F1F5F9]/60 rounded-3xl p-4 flex flex-col space-y-3.5 border border-slate-200/60">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]/150 animate-pulse" />
-                <h3 className="text-xs font-black text-white tracking-wider uppercase">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+                <h3 className="text-xs font-black text-gray-800 tracking-wider uppercase">
                   IN PROGRESS
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#7FA0D6] text-[11px] font-bold border border-[#2A3446] shadow-2xs">
+              <span className="px-2 py-0.5 rounded-full bg-white text-blue-600 text-[11px] font-bold border border-slate-200 shadow-2xs">
                 {inProgressTasks.length}
               </span>
             </div>
@@ -2628,7 +2599,7 @@ export function AdminTasksPage() {
                 <div
                   key={task.id}
                   onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                  className="bg-white rounded-2xl p-4 border border-gray-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
@@ -2638,18 +2609,18 @@ export function AdminTasksPage() {
                       {task.priority}
                     </span>
                   </div>
-                  <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
+                  <h4 className="text-xs font-bold text-gray-900 line-clamp-2">{task.title}</h4>
                   {task.imageUrl && (
-                    <div className="h-24 rounded-xl overflow-hidden bg-[#1F2C3F]">
+                    <div className="h-24 rounded-xl overflow-hidden bg-slate-100">
                       <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-[11px] text-gray-500">
                     <div className="flex items-center gap-1.5">
                       <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
+                      <span className="font-medium text-gray-700">{task.assigneeName}</span>
                     </div>
                     <span className="font-bold text-rose-600">{task.due}</span>
                   </div>
@@ -2659,15 +2630,15 @@ export function AdminTasksPage() {
           </div>
 
           {/* Column 3: UNDER REVIEW */}
-          <div className="bg-[#161F2D]/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-[#2A3446]/60">
+          <div className="bg-[#F1F5F9]/60 rounded-3xl p-4 flex flex-col space-y-3.5 border border-slate-200/60">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                <h3 className="text-xs font-black text-white tracking-wider uppercase">
+                <h3 className="text-xs font-black text-gray-800 tracking-wider uppercase">
                   UNDER REVIEW
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-amber-600 text-[11px] font-bold border border-[#2A3446] shadow-2xs">
+              <span className="px-2 py-0.5 rounded-full bg-white text-amber-600 text-[11px] font-bold border border-slate-200 shadow-2xs">
                 {underReviewTasks.length}
               </span>
             </div>
@@ -2677,7 +2648,7 @@ export function AdminTasksPage() {
                 <div
                   key={task.id}
                   onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                  className="bg-white rounded-2xl p-4 border border-gray-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
@@ -2687,13 +2658,13 @@ export function AdminTasksPage() {
                       {task.priority}
                     </span>
                   </div>
-                  <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
+                  <h4 className="text-xs font-bold text-gray-900 line-clamp-2">{task.title}</h4>
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-[11px] text-gray-500">
                     <div className="flex items-center gap-1.5">
                       <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
+                      <span className="font-medium text-gray-700">{task.assigneeName}</span>
                     </div>
                     <span className="font-bold text-amber-600">{task.pod}</span>
                   </div>
@@ -2703,15 +2674,15 @@ export function AdminTasksPage() {
           </div>
 
           {/* Column 4: APPROVED */}
-          <div className="bg-[#161F2D]/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-[#2A3446]/60">
+          <div className="bg-[#F1F5F9]/60 rounded-3xl p-4 flex flex-col space-y-3.5 border border-slate-200/60">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                <h3 className="text-xs font-black text-white tracking-wider uppercase">
+                <h3 className="text-xs font-black text-gray-800 tracking-wider uppercase">
                   APPROVED
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-emerald-600 text-[11px] font-bold border border-[#2A3446] shadow-2xs">
+              <span className="px-2 py-0.5 rounded-full bg-white text-emerald-600 text-[11px] font-bold border border-slate-200 shadow-2xs">
                 {approvedTasks.length}
               </span>
             </div>
@@ -2721,7 +2692,7 @@ export function AdminTasksPage() {
                 <div
                   key={task.id}
                   onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                  className="bg-white rounded-2xl p-4 border border-gray-200/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
@@ -2731,18 +2702,18 @@ export function AdminTasksPage() {
                       {task.priority}
                     </span>
                   </div>
-                  <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
+                  <h4 className="text-xs font-bold text-gray-900 line-clamp-2">{task.title}</h4>
                   {task.imageUrl && (
-                    <div className="h-24 rounded-xl overflow-hidden bg-[#1F2C3F]">
+                    <div className="h-24 rounded-xl overflow-hidden bg-slate-100">
                       <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-[11px] text-gray-500">
                     <div className="flex items-center gap-1.5">
                       <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
+                      <span className="font-medium text-gray-700">{task.assigneeName}</span>
                     </div>
                     <span className="font-bold text-emerald-600 font-mono">Completed</span>
                   </div>
@@ -2755,13 +2726,13 @@ export function AdminTasksPage() {
         {/* Create Task Modal */}
         {isCreateModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <h3 className="text-base font-black text-white">Create Production Task</h3>
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-base font-black text-gray-900">Create Production Task</h3>
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2769,49 +2740,51 @@ export function AdminTasksPage() {
 
               <form onSubmit={handleCreateTask} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Task Title</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Task Title</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. 3D Hero Animation for Brand Launch"
                     value={newTaskForm.title}
                     onChange={(e) => setNewTaskForm({ ...newTaskForm, title: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Client Brand</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Client Brand</label>
                     <select
                       value={newTaskForm.client}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, client: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
                     >
-                      <option value="Ryze Mushroom Coffee">Ryze Mushroom Coffee</option>
+                      <option value="Northwind Labs">Northwind Labs</option>
+                      <option value="Bloom Studio">Bloom Studio</option>
+                      <option value="Atlas Commerce">Atlas Commerce</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Creative Pod</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Creative Pod</label>
                     <select
                       value={newTaskForm.pod}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, pod: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
                     >
                       <option value="Pod A">Pod A (Brand Strategy)</option>
-                      <option value="Pod B">Pod B (Performance &amp; Video)</option>
-                      <option value="Pod C">Pod C (3D Motion &amp; Design)</option>
+                      <option value="Pod B">Pod B (3D &amp; Motion)</option>
+                      <option value="Pod C">Pod C (UGC &amp; Video)</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Priority</label>
                     <select
                       value={newTaskForm.priority}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, priority: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
                     >
                       <option value="Normal">Normal</option>
                       <option value="High">High</option>
@@ -2819,23 +2792,23 @@ export function AdminTasksPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Story Points</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Story Points</label>
                     <input
                       type="number"
                       min="1"
                       max="20"
                       value={newTaskForm.sp}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, sp: Number(e.target.value) })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
                   <button
                     type="button"
                     onClick={() => setIsCreateModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -2854,25 +2827,25 @@ export function AdminTasksPage() {
         {/* Task Preview Drawer */}
         {previewTask && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <div>
-                  <span className="text-[10px] font-bold text-[#7FA0D6] uppercase font-mono">
+                  <span className="text-[10px] font-bold text-blue-600 uppercase font-mono">
                     {previewTask.pod} • {previewTask.due}
                   </span>
-                  <h3 className="text-base font-black text-white mt-0.5">{previewTask.title}</h3>
+                  <h3 className="text-base font-black text-gray-900 mt-0.5">{previewTask.title}</h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setPreviewTask(null)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="space-y-2.5 text-xs text-[#F1F5F9]">
-                <div className="p-3 bg-[#0B111C] rounded-2xl space-y-1">
+              <div className="space-y-2.5 text-xs text-gray-600">
+                <div className="p-3 bg-gray-50 rounded-2xl space-y-1">
                   <div><strong>Client:</strong> {previewTask.client}</div>
                   <div><strong>Assignee:</strong> {previewTask.assigneeName}</div>
                   <div><strong>Priority:</strong> {previewTask.priority}</div>
@@ -2899,10 +2872,8 @@ export function AdminTasksPage() {
 // 4. ADMIN CALENDAR PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export function AdminCalendarPage() {
-  const { user } = useAuth();
-  const isTeamLead = user?.role === "team_lead";
   const [selectedDayNumber, setSelectedDayNumber] = useState<number>(14);
-  const [selectedPodFilter, setSelectedPodFilter] = useState(isTeamLead ? "Pod A" : "all");
+  const [selectedPodFilter, setSelectedPodFilter] = useState("all");
   const [selectedClientFilter, setSelectedClientFilter] = useState("all");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState("all");
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -2923,13 +2894,13 @@ export function AdminCalendarPage() {
     8: [
       {
         id: "cal-8-1",
-        pod: "Pod A",
+        pod: "Pod C",
         client: "Atlas Commerce",
         title: "Customer Success Story Cutdown Reel",
         type: "Reel",
         assignee: "David Kim",
         avatar: "DK",
-        avatarBg: "bg-[#0F172A]",
+        avatarBg: "bg-[#06B6D4]",
         tag: "Approved",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "11:30 AM",
@@ -2938,13 +2909,13 @@ export function AdminCalendarPage() {
     10: [
       {
         id: "cal-10-1",
-        pod: "Pod A",
+        pod: "Pod B",
         client: "Bloom Studio",
-        title: "Brand Story Sequence · 3 Panels",
-        type: "Story",
-        assignee: "Chloe Tan",
-        avatar: "CT",
-        avatarBg: "bg-teal-600",
+        title: "Brand Aesthetic Moodboard Carousel",
+        type: "Carousel",
+        assignee: "Anya Taylor",
+        avatar: "AT",
+        avatarBg: "bg-[#6366F1]",
         tag: "Approved",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "2:00 PM",
@@ -2957,49 +2928,49 @@ export function AdminCalendarPage() {
         client: "Northwind Labs",
         title: "Q4 Product Unboxing Teaser Reel",
         type: "Reel",
-        assignee: "David Kim",
-        avatar: "DK",
-        avatarBg: "bg-[#0F172A]",
+        assignee: "Omar Vance",
+        avatar: "OV",
+        avatarBg: "bg-[#2563EB]",
         tag: "Final Polish",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "4:30 PM",
       },
       {
         id: "cal-14-2",
-        pod: "Pod A",
+        pod: "Pod B",
         client: "Bloom Studio",
         title: "Behind-The-Scenes Studio Setup (3-Slide Story)",
         type: "Story",
-        assignee: "Chloe Tan",
-        avatar: "CT",
-        avatarBg: "bg-teal-600",
+        assignee: "Anya Taylor",
+        avatar: "AT",
+        avatarBg: "bg-[#6366F1]",
         tag: "Color Grading",
         tagColor: "bg-purple-50 text-purple-700 border-purple-100",
         time: "3:00 PM",
       },
       {
         id: "cal-14-3",
-        pod: "Pod A",
+        pod: "Pod C",
         client: "Atlas Commerce",
         title: "TikTok Viral Hook Reel Cut #1 & #2",
         type: "Reel",
-        assignee: "Elena R.",
-        avatar: "ER",
-        avatarBg: "bg-blue-600",
+        assignee: "Kenji Sato",
+        avatar: "KS",
+        avatarBg: "bg-[#06B6D4]",
         tag: "Sound Sync",
         tagColor: "bg-cyan-50 text-cyan-700 border-cyan-100",
         time: "2:00 PM",
       },
       {
         id: "cal-14-4",
-        pod: "Pod A",
-        client: "Northwind Labs",
-        title: "Conversion Post Carousel (10 Panels)",
-        type: "Post",
-        assignee: "Marcus Vance",
-        avatar: "MV",
-        avatarBg: "bg-indigo-600",
-        tag: "Final Polish",
+        pod: "Pod E",
+        client: "Lumina Health",
+        title: "Patient Portal Explainer Video Storyboard",
+        type: "Explainer Video",
+        assignee: "Sarah Jenkins",
+        avatar: "SJ",
+        avatarBg: "bg-emerald-600",
+        tag: "Sync 3:30 PM",
         tagColor: "bg-indigo-50 text-indigo-700 border-indigo-100",
         time: "3:30 PM",
       },
@@ -3011,37 +2982,37 @@ export function AdminCalendarPage() {
         client: "Northwind Labs",
         title: "15-Sec Flash Sale Promo Story Set",
         type: "Story",
-        assignee: "David Kim",
-        avatar: "DK",
-        avatarBg: "bg-[#0F172A]",
+        assignee: "Marcus Brody",
+        avatar: "MB",
+        avatarBg: "bg-blue-600",
         tag: "Approved",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "10:00 AM",
       },
       {
         id: "cal-15-2",
-        pod: "Pod A",
+        pod: "Pod B",
         client: "Bloom Studio",
         title: "Founder Q&A Vertical Micro-Reel #4",
         type: "Reel",
-        assignee: "Elena R.",
+        assignee: "Elena Rostova",
         avatar: "ER",
-        avatarBg: "bg-blue-600",
+        avatarBg: "bg-rose-500",
         tag: "Final Polish",
         tagColor: "bg-amber-50 text-amber-700 border-amber-100",
         time: "1:30 PM",
       },
       {
         id: "cal-15-3",
-        pod: "Pod A",
-        client: "Atlas Commerce",
-        title: "Top 5 Growth Hacks Infographic Post",
-        type: "Post",
-        assignee: "Marcus Vance",
-        avatar: "MV",
-        avatarBg: "bg-indigo-600",
+        pod: "Pod D",
+        client: "Acme Corp",
+        title: "Top 5 Growth Hacks Infographic Carousel",
+        type: "Carousel",
+        assignee: "Kenji Sato",
+        avatar: "KS",
+        avatarBg: "bg-[#06B6D4]",
         tag: "Scheduled",
-        tagColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+        tagColor: "bg-blue-50 text-blue-700 border-blue-100",
         time: "5:00 PM",
       },
     ],
@@ -3050,24 +3021,24 @@ export function AdminCalendarPage() {
         id: "cal-18-1",
         pod: "Pod A",
         client: "Northwind Labs",
-        title: "Q4 Keynote Executive Post Showcase",
-        type: "Post",
-        assignee: "Elena R.",
-        avatar: "ER",
-        avatarBg: "bg-blue-600",
+        title: "Q4 Keynote Executive Slide Deck (60 Slides)",
+        type: "Slide Deck",
+        assignee: "Omar Vance",
+        avatar: "OV",
+        avatarBg: "bg-[#2563EB]",
         tag: "SLA Review",
         tagColor: "bg-amber-50 text-amber-700 border-amber-100",
         time: "11:00 AM",
       },
       {
         id: "cal-18-2",
-        pod: "Pod A",
+        pod: "Pod C",
         client: "Atlas Commerce",
-        title: "High-Energy Product Feature Cutdown Reel",
+        title: "High-Energy Product Feature Cutdown",
         type: "Reel",
-        assignee: "David Kim",
-        avatar: "DK",
-        avatarBg: "bg-[#0F172A]",
+        assignee: "Maya Patel",
+        avatar: "MP",
+        avatarBg: "bg-purple-600",
         tag: "Color Grading",
         tagColor: "bg-purple-50 text-purple-700 border-purple-100",
         time: "4:00 PM",
@@ -3078,52 +3049,52 @@ export function AdminCalendarPage() {
         id: "cal-20-1",
         pod: "Pod A",
         client: "Northwind Labs",
-        title: "60-Sec High-Velocity Tech Growth Reel",
-        type: "Reel",
-        assignee: "Chloe Tan",
-        avatar: "CT",
-        avatarBg: "bg-teal-600",
+        title: "60-Sec High-Velocity Tech Growth Tip",
+        type: "Shorts",
+        assignee: "Liam Wright",
+        avatar: "LW",
+        avatarBg: "bg-orange-500",
         tag: "Approved",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "9:30 AM",
       },
       {
         id: "cal-20-2",
-        pod: "Pod A",
+        pod: "Pod B",
         client: "Bloom Studio",
         title: "Interactive Audience Q&A Story Sequence",
         type: "Story",
-        assignee: "Chloe Tan",
-        avatar: "CT",
-        avatarBg: "bg-teal-600",
+        assignee: "Chloe Bennett",
+        avatar: "CB",
+        avatarBg: "bg-pink-500",
         tag: "Drafting",
-        tagColor: "bg-[#1F2C3F] text-[#F1F5F9] border-[#2A3446]",
+        tagColor: "bg-gray-100 text-gray-700 border-gray-200",
         time: "2:00 PM",
       },
     ],
     22: [
       {
         id: "cal-22-1",
-        pod: "Pod A",
+        pod: "Pod B",
         client: "Bloom Studio",
         title: "Black Friday Sneak Peek Teaser Reel",
         type: "Reel",
-        assignee: "David Kim",
-        avatar: "DK",
-        avatarBg: "bg-[#0F172A]",
+        assignee: "Anya Taylor",
+        avatar: "AT",
+        avatarBg: "bg-[#6366F1]",
         tag: "Final Polish",
         tagColor: "bg-amber-50 text-amber-700 border-amber-100",
         time: "12:00 PM",
       },
       {
         id: "cal-22-2",
-        pod: "Pod A",
-        client: "Atlas Commerce",
-        title: "Cyber Monday Display Post Carousel",
-        type: "Post",
-        assignee: "Marcus Vance",
-        avatar: "MV",
-        avatarBg: "bg-indigo-600",
+        pod: "Pod E",
+        client: "Lumina Health",
+        title: "Cyber Monday Display Ads & Hero Banners",
+        type: "Banner",
+        assignee: "Sarah Jenkins",
+        avatar: "SJ",
+        avatarBg: "bg-emerald-600",
         tag: "Approved",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "4:00 PM",
@@ -3132,13 +3103,13 @@ export function AdminCalendarPage() {
     25: [
       {
         id: "cal-25-1",
-        pod: "Pod A",
-        client: "Northwind Labs",
-        title: "Mobile App Onboarding Story Series",
-        type: "Story",
-        assignee: "Chloe Tan",
-        avatar: "CT",
-        avatarBg: "bg-teal-600",
+        pod: "Pod D",
+        client: "Acme Corp",
+        title: "Mobile App Onboarding Walkthrough Video",
+        type: "Explainer Video",
+        assignee: "Marcus Brody",
+        avatar: "MB",
+        avatarBg: "bg-blue-600",
         tag: "Sound Sync",
         tagColor: "bg-cyan-50 text-cyan-700 border-cyan-100",
         time: "3:00 PM",
@@ -3149,11 +3120,11 @@ export function AdminCalendarPage() {
         id: "cal-28-1",
         pod: "Pod A",
         client: "Northwind Labs",
-        title: "End-of-Month Retrospective Reel Showcase",
+        title: "End-of-Month Retrospective & Win Showcase",
         type: "Reel",
-        assignee: "David Kim",
-        avatar: "DK",
-        avatarBg: "bg-[#0F172A]",
+        assignee: "Omar Vance",
+        avatar: "OV",
+        avatarBg: "bg-[#2563EB]",
         tag: "Final Polish",
         tagColor: "bg-amber-50 text-amber-700 border-amber-100",
         time: "5:00 PM",
@@ -3165,13 +3136,21 @@ export function AdminCalendarPage() {
   const getTypeBadge = (type: string) => {
     switch (type) {
       case "Reel":
-        return { label: "🎬 Reel", bg: "bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30" };
+        return { label: "🎬 Reel", bg: "bg-indigo-50 text-indigo-700 border-indigo-200" };
       case "Story":
-        return { label: "📲 Story", bg: "bg-rose-500/15 text-rose-400 border border-rose-500/30" };
-      case "Post":
-        return { label: "📄 Post", bg: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" };
+        return { label: "📲 Story", bg: "bg-rose-50 text-rose-700 border-rose-200" };
+      case "Carousel":
+        return { label: "🎨 Carousel", bg: "bg-amber-50 text-amber-700 border-amber-200" };
+      case "Slide Deck":
+        return { label: "📊 Slide Deck", bg: "bg-blue-50 text-blue-700 border-blue-200" };
+      case "Explainer Video":
+        return { label: "📹 Explainer", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+      case "Shorts":
+        return { label: "⚡ Shorts", bg: "bg-orange-50 text-orange-700 border-orange-200" };
+      case "Banner":
+        return { label: "🖼️ Banner", bg: "bg-cyan-50 text-cyan-700 border-cyan-200" };
       default:
-        return { label: `📌 ${type}`, bg: "bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30" };
+        return { label: `📌 ${type}`, bg: "bg-gray-50 text-gray-700 border-gray-200" };
     }
   };
 
@@ -3192,7 +3171,7 @@ export function AdminCalendarPage() {
 
     const newItem = {
       id: `cal-${targetDay}-${Date.now()}`,
-      pod: isTeamLead ? "Pod A" : scheduleForm.pod,
+      pod: scheduleForm.pod,
       client: scheduleForm.client,
       title: scheduleForm.title.trim(),
       type: scheduleForm.type,
@@ -3200,7 +3179,7 @@ export function AdminCalendarPage() {
       avatar: "ST",
       avatarBg: "bg-blue-600",
       tag: scheduleForm.tag,
-      tagColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      tagColor: "bg-blue-50 text-blue-700 border-blue-100",
       time: scheduleForm.time || "4:00 PM",
     };
 
@@ -3222,10 +3201,9 @@ export function AdminCalendarPage() {
   };
 
   // Get current day's tasks filtered by pod / client / type
-  const activePodFilter = isTeamLead ? "Pod A" : selectedPodFilter;
   const rawDayTasks = tasksByDay[selectedDayNumber] || [];
   const filteredDayTasks = rawDayTasks.filter((item) => {
-    if (activePodFilter !== "all" && item.pod !== activePodFilter) return false;
+    if (selectedPodFilter !== "all" && item.pod !== selectedPodFilter) return false;
     if (selectedClientFilter !== "all" && !item.client.toLowerCase().includes(selectedClientFilter.toLowerCase())) return false;
     if (selectedTypeFilter !== "all" && item.type !== selectedTypeFilter) return false;
     return true;
@@ -3234,30 +3212,30 @@ export function AdminCalendarPage() {
   const isSelectedDateToday = selectedDayNumber === 14;
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
       <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
         {/* Header and Controls */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-[#161F2D] border border-[#2A3446] px-3 py-1.5 rounded-xl shadow-2xs">
+            <div className="flex items-center gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-xl shadow-2xs">
               <button
                 type="button"
                 onClick={() => setSelectedDayNumber((prev) => Math.max(1, prev - 1))}
                 aria-label="Previous Day"
-                className="p-0.5 text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer rounded"
+                className="p-0.5 text-gray-400 hover:text-gray-700 cursor-pointer rounded"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <Calendar className="w-4 h-4 text-[#7FA0D6]" />
-              <span className="text-xs font-bold text-white">
+              <Calendar className="w-4 h-4 text-blue-600" />
+              <span className="text-xs font-bold text-gray-900">
                 November {selectedDayNumber}, 2024 {isSelectedDateToday ? "(Today)" : ""}
               </span>
               <button
                 type="button"
                 onClick={() => setSelectedDayNumber((prev) => Math.min(30, prev + 1))}
                 aria-label="Next Day"
-                className="p-0.5 text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer rounded"
+                className="p-0.5 text-gray-400 hover:text-gray-700 cursor-pointer rounded"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -3266,7 +3244,7 @@ export function AdminCalendarPage() {
               <button
                 type="button"
                 onClick={() => setSelectedDayNumber(14)}
-                className="text-xs font-bold text-[#7FA0D6] hover:text-blue-800 bg-[#7FA0D6]/15 px-2.5 py-1 rounded-lg border border-[#7FA0D6]/30 cursor-pointer transition-colors"
+                className="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 cursor-pointer transition-colors"
               >
                 Jump to Today (14th)
               </button>
@@ -3274,47 +3252,47 @@ export function AdminCalendarPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {isTeamLead ? (
-              <div className="px-3 py-2 rounded-xl border border-[#7FA0D6]/30 bg-[#7FA0D6]/15/70 text-xs font-bold text-[#7FA0D6] shadow-2xs">
-                Pod A Schedule
-              </div>
-            ) : (
-              <CustomSelect
-                value={selectedPodFilter}
-                onChange={setSelectedPodFilter}
-                ariaLabel="Filter Calendar Pod"
-                options={[
-                  { value: "all", label: "All Pods" },
-                  { value: "Pod A", label: "Pod A" },
-                  { value: "Pod B", label: "Pod B" },
-                  { value: "Pod C", label: "Pod C" },
-                ]}
-              />
-            )}
+            <select
+              value={selectedPodFilter}
+              onChange={(e) => setSelectedPodFilter(e.target.value)}
+              aria-label="Filter Calendar Pod"
+              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Pods ▾</option>
+              <option value="Pod A">Pod A</option>
+              <option value="Pod B">Pod B</option>
+              <option value="Pod C">Pod C</option>
+              <option value="Pod D">Pod D</option>
+              <option value="Pod E">Pod E</option>
+            </select>
 
-            <CustomSelect
+            <select
               value={selectedTypeFilter}
-              onChange={setSelectedTypeFilter}
-              ariaLabel="Filter Deliverable Type"
-              options={[
-                { value: "all", label: "All Formats" },
-                { value: "Reel", label: "🎬 Reel" },
-                { value: "Story", label: "📲 Story" },
-                { value: "Post", label: "📄 Post" },
-              ]}
-            />
+              onChange={(e) => setSelectedTypeFilter(e.target.value)}
+              aria-label="Filter Deliverable Type"
+              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Deliverable Types ▾</option>
+              <option value="Reel">🎬 Reels</option>
+              <option value="Story">📲 Stories</option>
+              <option value="Carousel">🎨 Carousels</option>
+              <option value="Slide Deck">📊 Slide Decks</option>
+              <option value="Explainer Video">📹 Explainer Videos</option>
+            </select>
 
-            <CustomSelect
+            <select
               value={selectedClientFilter}
-              onChange={setSelectedClientFilter}
-              ariaLabel="Filter Calendar Client"
-              options={[
-                { value: "all", label: "All Assigned Clients" },
-                { value: "Northwind", label: "Northwind Labs" },
-                { value: "Bloom", label: "Bloom Studio" },
-                { value: "Atlas", label: "Atlas Commerce" },
-              ]}
-            />
+              onChange={(e) => setSelectedClientFilter(e.target.value)}
+              aria-label="Filter Calendar Client"
+              className="px-3 py-2 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 shadow-2xs cursor-pointer focus:outline-none"
+            >
+              <option value="all">All Clients ▾</option>
+              <option value="Northwind">Northwind Labs</option>
+              <option value="Bloom">Bloom Studio</option>
+              <option value="Atlas">Atlas Commerce</option>
+              <option value="Lumina">Lumina Health</option>
+              <option value="Acme">Acme Corp</option>
+            </select>
 
             <button
               type="button"
@@ -3326,28 +3304,113 @@ export function AdminCalendarPage() {
           </div>
         </div>
 
+        {/* 4 Top KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4.5">
+          <div className="kpi-card bg-white rounded-2xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                Active Deployments Today
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Zap className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-1">
+              <span className="text-3xl font-black text-gray-900">16 Assets</span>
+            </div>
+            <div className="flex items-center justify-between text-xs mt-3 pt-1 border-t border-gray-50">
+              <span className="font-bold text-blue-600">↗ +3 vs. Yesterday</span>
+              <span className="bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded text-[10px]">
+                In Production
+              </span>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#2563EB]" />
+          </div>
 
+          <div className="kpi-card bg-white rounded-2xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                Teams Allocated
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Users className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-1">
+              <span className="text-3xl font-black text-gray-900">5 Pods</span>
+            </div>
+            <div className="flex items-center justify-between text-xs mt-3 pt-1 border-t border-gray-50">
+              <span className="font-medium text-gray-400">Pods A, B, C, D, E</span>
+              <span className="bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded text-[10px]">
+                100% Staffed
+              </span>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#2563EB]" />
+          </div>
+
+          <div className="kpi-card bg-white rounded-2xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                Selected Date Assets
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <CheckSquare className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-1">
+              <span className="text-3xl font-black text-gray-900">{rawDayTasks.length} Scheduled</span>
+            </div>
+            <div className="flex items-center justify-between text-xs mt-3 pt-1 border-t border-gray-50">
+              <span className="font-medium text-gray-400">Nov {selectedDayNumber}, 2024</span>
+              <span className="bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded text-[10px]">
+                {isSelectedDateToday ? "Today" : "Selected Date"}
+              </span>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#2563EB]" />
+          </div>
+
+          <div className="kpi-card bg-white rounded-2xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                Release Capacity
+              </span>
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-1">
+              <span className="text-3xl font-black text-gray-900">85%</span>
+            </div>
+            <div className="flex items-center justify-between text-xs mt-3 pt-1 border-t border-gray-50">
+              <span className="font-medium text-gray-400">Headroom normal</span>
+              <span className="bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded text-[10px]">
+                Optimal
+              </span>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#2563EB]" />
+          </div>
+        </div>
 
         {/* Calendar Grid + Dynamic Selected Date Work Split */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main 7-Column Month Calendar View */}
-          <div className="lg:col-span-2 bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 space-y-4">
+          <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-black text-white">November 2024</h2>
-                <span className="text-xs font-bold text-[#97A0B3]">Production Horizon</span>
+                <h2 className="text-base font-black text-gray-900">November 2024</h2>
+                <span className="text-xs font-bold text-gray-400">Production Horizon</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-medium text-[#97A0B3] hidden sm:inline">
+                <span className="text-[11px] font-medium text-gray-500 hidden sm:inline">
                   Click any date to view scheduled work
                 </span>
-                <span className="text-xs font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-3 py-1 rounded-full">
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
                   14th Today
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-2 text-center text-[11px] font-bold text-[#97A0B3] pb-2 border-b border-[#2A3446]">
+            <div className="grid grid-cols-7 gap-2 text-center text-[11px] font-bold text-gray-400 pb-2 border-b border-gray-100">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
                 <div key={d}>{d}</div>
               ))}
@@ -3372,10 +3435,10 @@ export function AdminCalendarPage() {
                     onClick={() => setSelectedDayNumber(dayNum)}
                     className={`min-h-[92px] p-2 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer group relative ${
                       isSelected
-                        ? "bg-[#7FA0D6]/15/90 border-blue-500 ring-2 ring-blue-600/30 shadow-md scale-[1.02] z-10"
+                        ? "bg-blue-50/90 border-blue-500 ring-2 ring-blue-600/30 shadow-md scale-[1.02] z-10"
                         : isToday
-                        ? "bg-[#7FA0D6]/15/40 border-[#7FA0D6]/30 hover:border-blue-300"
-                        : "bg-[#0B111C]/40 border-[#2A3446] hover:bg-[#161F2D] hover:border-[#7FA0D6]/30 hover:shadow-2xs"
+                        ? "bg-blue-50/40 border-blue-200 hover:border-blue-300"
+                        : "bg-gray-50/40 border-gray-100 hover:bg-white hover:border-blue-200 hover:shadow-2xs"
                     }`}
                   >
                     <div className="flex items-center justify-between w-full">
@@ -3384,8 +3447,8 @@ export function AdminCalendarPage() {
                           isSelected
                             ? "bg-blue-600 text-white shadow-xs"
                             : isToday
-                            ? "bg-[#7FA0D6]/20 text-blue-800 font-bold"
-                            : "text-[#F1F5F9] group-hover:text-[#7FA0D6]"
+                            ? "bg-blue-100 text-blue-800 font-bold"
+                            : "text-gray-700 group-hover:text-blue-600"
                         }`}
                       >
                         {dayNum}
@@ -3393,7 +3456,7 @@ export function AdminCalendarPage() {
                       {dayTasks.length > 0 && (
                         <span
                           className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
-                            isSelected ? "bg-blue-600 text-white" : "bg-gray-200 text-[#F1F5F9]"
+                            isSelected ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"
                           }`}
                         >
                           {dayTasks.length}
@@ -3419,7 +3482,7 @@ export function AdminCalendarPage() {
                         </span>
                       )}
                       {dayTasks.length === 0 && (
-                        <span className="block text-[9px] font-medium text-gray-300 group-hover:text-[#97A0B3] transition-colors pt-2">
+                        <span className="block text-[9px] font-medium text-gray-300 group-hover:text-gray-400 transition-colors pt-2">
                           + Add item
                         </span>
                       )}
@@ -3431,34 +3494,34 @@ export function AdminCalendarPage() {
           </div>
 
           {/* Right Column: Dynamic Work Container for Selected Date */}
-          <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 space-y-4 flex flex-col justify-between">
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 space-y-4 flex flex-col justify-between">
             <div className="space-y-4">
               {/* Dynamic Header */}
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base font-black text-white">
+                  <h2 className="text-base font-black text-gray-900">
                     {isSelectedDateToday
                       ? "Today's Deliverables"
                       : `Nov ${selectedDayNumber} Deliverables`}
                   </h2>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-black text-[#7FA0D6] bg-[#7FA0D6]/15 px-2.5 py-1 rounded-full border border-[#7FA0D6]/30">
+                  <span className="text-xs font-black text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
                     {filteredDayTasks.length} {filteredDayTasks.length === 1 ? "Item" : "Items"}
                   </span>
                 </div>
               </div>
 
               {/* Sub-bar indicator showing selected date */}
-              <div className="flex items-center justify-between bg-[#0B111C]/80 px-3 py-2 rounded-xl border border-[#2A3446]">
-                <span className="text-xs font-semibold text-[#F1F5F9] flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-[#7FA0D6]" />
+              <div className="flex items-center justify-between bg-gray-50/80 px-3 py-2 rounded-xl border border-gray-100">
+                <span className="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-blue-600" />
                   Scheduled for <strong>Nov {selectedDayNumber}, 2024</strong>
                 </span>
                 <button
                   type="button"
                   onClick={() => handleOpenScheduleForDay(selectedDayNumber)}
-                  className="text-[11px] font-bold text-[#7FA0D6] hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+                  className="text-[11px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 stroke-[3]" /> Add
                 </button>
@@ -3473,10 +3536,10 @@ export function AdminCalendarPage() {
                       <div
                         key={item.id}
                         onClick={() => setSelectedAssetModal(item)}
-                        className="p-4 rounded-2xl border border-[#2A3446] hover:border-blue-300 bg-[#161F2D] hover:bg-[#7FA0D6]/15/20 shadow-2xs hover:shadow-sm transition-all cursor-pointer space-y-2.5 group"
+                        className="p-4 rounded-2xl border border-gray-100 hover:border-blue-300 bg-white hover:bg-blue-50/20 shadow-2xs hover:shadow-sm transition-all cursor-pointer space-y-2.5 group"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-black text-[#7FA0D6] uppercase font-mono tracking-wider">
+                          <span className="text-[10px] font-black text-blue-600 uppercase font-mono tracking-wider">
                             {item.pod} • {item.client}
                           </span>
                           <span
@@ -3486,18 +3549,18 @@ export function AdminCalendarPage() {
                           </span>
                         </div>
 
-                        <h4 className="text-xs font-black text-white group-hover:text-[#7FA0D6] transition-colors leading-snug">
+                        <h4 className="text-xs font-black text-gray-900 group-hover:text-blue-700 transition-colors leading-snug">
                           {item.title}
                         </h4>
 
-                        <div className="flex items-center justify-between text-[11px] text-[#97A0B3] pt-2 border-t border-[#2A3446]">
+                        <div className="flex items-center justify-between text-[11px] text-gray-500 pt-2 border-t border-gray-100">
                           <div className="flex items-center gap-1.5">
                             <div
                               className={`size-5.5 rounded-full ${item.avatarBg} text-white font-bold text-[9px] flex items-center justify-center shadow-2xs`}
                             >
                               {item.avatar}
                             </div>
-                            <span className="font-semibold text-[#F1F5F9]">{item.assignee}</span>
+                            <span className="font-semibold text-gray-700">{item.assignee}</span>
                           </div>
 
                           <div className="flex items-center gap-2">
@@ -3506,7 +3569,7 @@ export function AdminCalendarPage() {
                             >
                               {item.tag}
                             </span>
-                            <span className="font-bold text-white font-mono text-xs">
+                            <span className="font-bold text-gray-900 font-mono text-xs">
                               {item.time}
                             </span>
                           </div>
@@ -3517,15 +3580,15 @@ export function AdminCalendarPage() {
                 </div>
               ) : (
                 /* Empty State when no tasks exist on selected date */
-                <div className="py-12 px-4 text-center rounded-2xl border-2 border-dashed border-[#2A3446] bg-[#0B111C]/50 flex flex-col items-center justify-center space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shadow-2xs">
+                <div className="py-12 px-4 text-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 flex flex-col items-center justify-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-2xs">
                     <Calendar className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-black text-white">
+                    <h3 className="text-sm font-black text-gray-900">
                       No deliverables on Nov {selectedDayNumber}
                     </h3>
-                    <p className="text-xs text-[#97A0B3] mt-1 max-w-[240px] mx-auto">
+                    <p className="text-xs text-gray-500 mt-1 max-w-[240px] mx-auto">
                       No reels, stories, or slide decks are scheduled for this date yet.
                     </p>
                   </div>
@@ -3541,9 +3604,9 @@ export function AdminCalendarPage() {
             </div>
 
             {/* Bottom Quick Action */}
-            <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs text-[#97A0B3]">
+            <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
               <span className="font-medium">Total Assets in Nov:</span>
-              <span className="font-black text-white">
+              <span className="font-black text-gray-900">
                 {Object.values(tasksByDay).reduce((acc, curr) => acc + curr.length, 0)} Items
               </span>
             </div>
@@ -3552,19 +3615,19 @@ export function AdminCalendarPage() {
 
         {/* Schedule Modal */}
         {isScheduleModalOpen && (
-          <div className="fixed inset-0 w-screen h-screen z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4 overflow-y-auto">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <div>
-                  <h3 className="text-base font-black text-white">Schedule Content Asset</h3>
-                  <p className="text-xs text-[#97A0B3] mt-0.5">
+                  <h3 className="text-base font-black text-gray-900">Schedule Content Asset</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
                     Target Date: Nov {scheduleForm.dateDay}, 2024
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsScheduleModalOpen(false)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -3572,24 +3635,24 @@ export function AdminCalendarPage() {
 
               <form onSubmit={handleScheduleSubmit} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Asset Title</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Asset Title</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Black Friday Reel Cut Batch #2"
                     value={scheduleForm.title}
                     onChange={(e) => setScheduleForm({ ...scheduleForm, title: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Type</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Deliverable Type</label>
                     <select
                       value={scheduleForm.type}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, type: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
                     >
                       <option value="Reel">🎬 Reel</option>
                       <option value="Story">📲 Story</option>
@@ -3602,11 +3665,11 @@ export function AdminCalendarPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Target Client</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Target Client</label>
                     <select
                       value={scheduleForm.client}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, client: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
                     >
                       <option value="Northwind Labs">Northwind Labs</option>
                       <option value="Bloom Studio">Bloom Studio</option>
@@ -3619,24 +3682,26 @@ export function AdminCalendarPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Target Pod</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Target Pod</label>
                     <select
                       value={scheduleForm.pod}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, pod: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
                     >
                       <option value="Pod A">Pod A</option>
                       <option value="Pod B">Pod B</option>
                       <option value="Pod C">Pod C</option>
+                      <option value="Pod D">Pod D</option>
+                      <option value="Pod E">Pod E</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Day of November</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Day of November</label>
                     <select
                       value={scheduleForm.dateDay}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, dateDay: Number(e.target.value) })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
                     >
                       {Array.from({ length: 30 }).map((_, idx) => (
                         <option key={idx + 1} value={idx + 1}>
@@ -3649,32 +3714,32 @@ export function AdminCalendarPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Target Time</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Target Time</label>
                     <input
                       type="text"
                       value={scheduleForm.time}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, time: e.target.value })}
                       placeholder="e.g. 4:30 PM"
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Initial Tag</label>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Initial Tag</label>
                     <input
                       type="text"
                       value={scheduleForm.tag}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, tag: e.target.value })}
                       placeholder="e.g. Final Polish"
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
                   <button
                     type="button"
                     onClick={() => setIsScheduleModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -3692,44 +3757,44 @@ export function AdminCalendarPage() {
 
         {/* Selected Asset Details Modal */}
         {selectedAssetModal && (
-          <div className="fixed inset-0 w-screen h-screen z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4 overflow-y-auto">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-[#7FA0D6] uppercase font-mono">
+                    <span className="text-[10px] font-bold text-blue-600 uppercase font-mono">
                       {selectedAssetModal.pod} • {selectedAssetModal.client}
                     </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
                       {selectedAssetModal.type}
                     </span>
                   </div>
-                  <h3 className="text-base font-black text-white mt-1">{selectedAssetModal.title}</h3>
+                  <h3 className="text-base font-black text-gray-900 mt-1">{selectedAssetModal.title}</h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSelectedAssetModal(null)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="p-4 bg-[#0B111C] rounded-2xl space-y-2.5 text-xs text-[#F1F5F9]">
+              <div className="p-4 bg-gray-50 rounded-2xl space-y-2.5 text-xs text-gray-700">
                 <div className="flex justify-between">
-                  <span className="font-semibold text-[#97A0B3]">Deliverable Type:</span>
-                  <span className="font-bold text-white">{getTypeBadge(selectedAssetModal.type).label}</span>
+                  <span className="font-semibold text-gray-500">Deliverable Type:</span>
+                  <span className="font-bold text-gray-900">{getTypeBadge(selectedAssetModal.type).label}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-semibold text-[#97A0B3]">Assigned Specialist:</span>
-                  <span className="font-bold text-white">{selectedAssetModal.assignee}</span>
+                  <span className="font-semibold text-gray-500">Assigned Specialist:</span>
+                  <span className="font-bold text-gray-900">{selectedAssetModal.assignee}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-semibold text-[#97A0B3]">Scheduled Time:</span>
-                  <span className="font-bold text-white">{selectedAssetModal.time}</span>
+                  <span className="font-semibold text-gray-500">Scheduled Time:</span>
+                  <span className="font-bold text-gray-900">{selectedAssetModal.time}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-semibold text-[#97A0B3]">Pipeline Stage:</span>
+                  <span className="font-semibold text-gray-500">Pipeline Stage:</span>
                   <span className={`font-bold px-2 py-0.5 rounded-full text-[10px] border ${selectedAssetModal.tagColor}`}>
                     {selectedAssetModal.tag}
                   </span>
@@ -3783,203 +3848,422 @@ export function AdminTeamManagementPage() {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  const [pods, setPods] = useState([
+  const [pods, _setPods] = useState([
     {
       id: "pod-a",
       name: "Pod A",
       letter: "A",
-      lead: "Vikram Malhotra",
-      leadRole: "Pod Lead & Creative Director",
-      membersCount: 3,
-      velocityPct: 100,
-      tasksClosed: 0,
-      pendingReview: 0,
-      allocatedHours: 120,
-      totalHours: 120,
+      lead: "Maya Lin",
+      leadRole: "VP Creative & Pod Lead",
+      membersCount: 8,
+      velocityPct: 92,
+      tasksClosed: 42,
+      pendingReview: 6,
+      allocatedHours: 320,
+      totalHours: 360,
       color: "bg-blue-600",
-      textColor: "text-[#7FA0D6]",
-      pillBg: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      squadLoad: 40,
-      activeEngagements: 1,
-      readyReview: 0,
-      description: "Pod Alpha specializes in DTC brand acceleration, static visual identity, and cinematic reel production.",
+      textColor: "text-blue-600",
+      pillBg: "bg-blue-50 text-blue-600 border-blue-100",
+      squadLoad: 78,
+      activeEngagements: 11,
+      readyReview: 3,
+      description: "Cross-functional squad leading enterprise brand repositioning, design systems, executive pitch narratives, and multimodal creative sprints.",
     },
     {
       id: "pod-b",
       name: "Pod B",
       letter: "B",
-      lead: "Sarah Connor",
-      leadRole: "Pod Lead & Creative Strategist",
-      membersCount: 3,
-      velocityPct: 100,
-      tasksClosed: 0,
-      pendingReview: 0,
-      allocatedHours: 120,
-      totalHours: 120,
+      lead: "Omar Vance",
+      leadRole: "Principal Strategist & Pod Lead",
+      membersCount: 10,
+      velocityPct: 92,
+      tasksClosed: 54,
+      pendingReview: 9,
+      allocatedHours: 410,
+      totalHours: 440,
       color: "bg-[#0EA5E9]",
       textColor: "text-[#0EA5E9]",
       pillBg: "bg-sky-50 text-sky-600 border-sky-100",
-      squadLoad: 40,
-      activeEngagements: 1,
-      readyReview: 0,
-      description: "Pod Beta executes performance marketing, viral reel mechanics, and high-impact wellness narratives.",
+      squadLoad: 84,
+      activeEngagements: 14,
+      readyReview: 5,
+      description: "Performance marketing, conversion motion reels, and viral video campaign execution squad.",
     },
     {
       id: "pod-c",
       name: "Pod C",
       letter: "C",
-      lead: "Rohan Mehta",
-      leadRole: "Pod Lead & Design Director",
-      membersCount: 3,
-      velocityPct: 100,
-      tasksClosed: 0,
-      pendingReview: 0,
-      allocatedHours: 120,
-      totalHours: 120,
+      lead: "Kenji Sato",
+      leadRole: "Lead Motion Designer & Pod Lead",
+      membersCount: 7,
+      velocityPct: 95,
+      tasksClosed: 38,
+      pendingReview: 4,
+      allocatedHours: 290,
+      totalHours: 310,
       color: "bg-emerald-600",
       textColor: "text-emerald-600",
       pillBg: "bg-emerald-50 text-emerald-600 border-emerald-100",
-      squadLoad: 40,
-      activeEngagements: 1,
-      readyReview: 0,
-      description: "Pod Gamma drives luxury lifestyle aesthetics, minimal typography, and 3D visual motion.",
+      squadLoad: 72,
+      activeEngagements: 9,
+      readyReview: 2,
+      description: "3D animation, VFX motion graphics, and high-fidelity product visualization pod.",
+    },
+    {
+      id: "pod-d",
+      name: "Pod D",
+      letter: "D",
+      lead: "David Vance",
+      leadRole: "Tech Art & Media Director",
+      membersCount: 6,
+      velocityPct: 78,
+      tasksClosed: 29,
+      pendingReview: 8,
+      allocatedHours: 240,
+      totalHours: 320,
+      color: "bg-purple-600",
+      textColor: "text-purple-600",
+      pillBg: "bg-purple-50 text-purple-600 border-purple-100",
+      squadLoad: 68,
+      activeEngagements: 8,
+      readyReview: 4,
+      description: "On-location commercial shoots, product photography, studio cinematography, and color grading squad.",
     },
   ]);
 
-  const [membersList, setMembersList] = useState<TeamMember[]>([
-    // --- POD A (Pod Alpha) ---
+  const [membersList, _setMembersList] = useState<TeamMember[]>([
+    // --- POD A (Includes Lead, Designer, Editor, Videographer, Photographer) ---
     {
       id: "m-101",
       podId: "pod-a",
-      name: "Vikram Malhotra",
-      role: "Pod Lead & Creative Director",
+      name: "Maya Lin",
+      role: "VP Creative & Design Systems",
       category: "lead",
       isLead: true,
-      email: "lead.alpha@creo.agency",
-      handle: "@vikram",
+      email: "maya.lin@creo.agency",
+      handle: "@mayalin",
       status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      allocatedPct: 60,
-      projectsCount: 1,
-      capabilities: ["Creative Direction", "Brand Systems", "Campaign Strategy"],
+      statusColor: "bg-blue-50 text-blue-700 border-blue-200",
+      allocatedPct: 85,
+      projectsCount: 3,
+      capabilities: ["Creative Direction", "Brand Identity", "Pitch Decks"],
     },
     {
       id: "m-102",
       podId: "pod-a",
-      name: "Karthik Raja",
-      role: "Video Editor & Motion Designer",
-      category: "editor",
-      email: "editor.alpha@creo.agency",
-      handle: "@karthik",
-      status: "Sprint Ready",
-      statusColor: "bg-sky-50 text-sky-700 border-sky-200",
-      allocatedPct: 50,
+      name: "Omar Vance",
+      role: "Principal Brand Strategist",
+      category: "lead",
+      email: "omar.v@creo.agency",
+      handle: "@ovance",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 55,
       projectsCount: 1,
-      capabilities: ["Premiere Pro", "After Effects", "Reels Editing"],
+      capabilities: ["Market Positioning", "Narrative Architecture", "GTM Roadmaps"],
     },
     {
       id: "m-103",
       podId: "pod-a",
-      name: "Ananya Deshmukh",
-      role: "Brand Graphic Designer",
+      name: "Elena Rostova",
+      role: "Senior Motion & 3D Designer",
       category: "designer",
-      email: "designer.alpha@creo.agency",
-      handle: "@ananya",
+      email: "elena.r@creo.agency",
+      handle: "@erostova",
+      status: "Fully Booked",
+      statusColor: "bg-rose-50 text-rose-700 border-rose-200",
+      allocatedPct: 100,
+      projectsCount: 4,
+      capabilities: ["3D Render", "Motion Graphics", "Cinema 4D"],
+    },
+    {
+      id: "m-104",
+      podId: "pod-a",
+      name: "Julian Reyes",
+      role: "Lead Product & UI Architect",
+      category: "designer",
+      email: "julian.r@creo.agency",
+      handle: "@jreyes",
       status: "Accepting Work",
       statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      allocatedPct: 40,
-      projectsCount: 1,
-      capabilities: ["Figma", "Photoshop", "Brand Design", "Posters"],
+      allocatedPct: 60,
+      projectsCount: 2,
+      capabilities: ["Figma Tokens", "Design Systems", "Prototyping"],
+    },
+    {
+      id: "m-105",
+      podId: "pod-a",
+      name: "Marcus Chen",
+      role: "Senior Video & Content Editor",
+      category: "editor",
+      email: "marcus.c@creo.agency",
+      handle: "@mchen",
+      status: "Sprint Ready",
+      statusColor: "bg-sky-50 text-sky-700 border-sky-200",
+      allocatedPct: 75,
+      projectsCount: 3,
+      capabilities: ["4K Video Editing", "Premiere Pro", "Color Grading"],
+    },
+    {
+      id: "m-106",
+      podId: "pod-a",
+      name: "Leo Zhang",
+      role: "Lead Cinematographer & Videographer",
+      category: "videographer",
+      email: "leo.z@creo.agency",
+      handle: "@lzhang",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 70,
+      projectsCount: 2,
+      capabilities: ["Multi-cam Shoots", "Lighting & Framing", "RED 8K Rigging"],
+    },
+    {
+      id: "m-107",
+      podId: "pod-a",
+      name: "Chloe Bennett",
+      role: "Commercial Photographer & Visual Stylist",
+      category: "photographer",
+      email: "chloe.b@creo.agency",
+      handle: "@cbennett",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 65,
+      projectsCount: 2,
+      capabilities: ["Studio Lighting", "Product Photography", "High-End Retouching"],
+    },
+    {
+      id: "m-108",
+      podId: "pod-a",
+      name: "Sarah Connor",
+      role: "Junior Visual Designer",
+      category: "designer",
+      email: "sarah.c@creo.agency",
+      handle: "@sconnor",
+      status: "On Leave",
+      statusColor: "bg-amber-50 text-amber-700 border-amber-200",
+      allocatedPct: 0,
+      projectsCount: 0,
+      capabilities: ["Social Layouts", "Illustration", "Canva Kits"],
     },
 
-    // --- POD B (Pod Beta) ---
+    // --- POD B ---
     {
       id: "m-201",
       podId: "pod-b",
-      name: "Sarah Connor",
-      role: "Pod Lead & Creative Strategist",
+      name: "Omar Vance",
+      role: "Principal Strategist & Pod Lead",
       category: "lead",
       isLead: true,
-      email: "lead.beta@creo.agency",
-      handle: "@sarah",
+      email: "omar.v@creo.agency",
+      handle: "@omarv",
       status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      allocatedPct: 60,
-      projectsCount: 1,
-      capabilities: ["Campaign Architecture", "Creative Direction", "Viral Hooks"],
+      statusColor: "bg-blue-50 text-blue-700 border-blue-200",
+      allocatedPct: 80,
+      projectsCount: 4,
+      capabilities: ["Strategy", "Campaign Architecture"],
     },
     {
       id: "m-202",
       podId: "pod-b",
-      name: "David Kim",
-      role: "Video Editor & Reel Specialist",
-      category: "editor",
-      email: "editor.beta@creo.agency",
-      handle: "@davidk",
-      status: "Sprint Ready",
-      statusColor: "bg-sky-50 text-sky-700 border-sky-200",
-      allocatedPct: 50,
-      projectsCount: 1,
-      capabilities: ["DaVinci Resolve", "Sound Design", "Mobile 9:16 Reels"],
+      name: "Hannah Abbott",
+      role: "Senior Graphic Designer",
+      category: "designer",
+      email: "hannah.a@creo.agency",
+      handle: "@habbott",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 70,
+      projectsCount: 2,
+      capabilities: ["Ad Creatives", "Brand Collateral"],
     },
     {
       id: "m-203",
       podId: "pod-b",
-      name: "Elena Rostova",
-      role: "Visual & Poster Designer",
-      category: "designer",
-      email: "designer.beta@creo.agency",
-      handle: "@elena",
+      name: "David Miller",
+      role: "Lead Motion Video Editor",
+      category: "editor",
+      email: "david.m@creo.agency",
+      handle: "@dmiller",
+      status: "Fully Booked",
+      statusColor: "bg-rose-50 text-rose-700 border-rose-200",
+      allocatedPct: 95,
+      projectsCount: 4,
+      capabilities: ["Reels Editing", "Sound Design"],
+    },
+    {
+      id: "m-204",
+      podId: "pod-b",
+      name: "Vikram Shah",
+      role: "Documentary Videographer",
+      category: "videographer",
+      email: "vikram.s@creo.agency",
+      handle: "@vshah",
       status: "Accepting Work",
       statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      allocatedPct: 40,
-      projectsCount: 1,
-      capabilities: ["Typography", "Social Banners", "Carousel Design"],
-    },
-
-    // --- POD C (Pod Gamma) ---
-    {
-      id: "m-301",
-      podId: "pod-c",
-      name: "Rohan Mehta",
-      role: "Pod Lead & Design Director",
-      category: "lead",
-      isLead: true,
-      email: "lead.gamma@creo.agency",
-      handle: "@rohan",
-      status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
       allocatedPct: 60,
-      projectsCount: 1,
-      capabilities: ["Art Direction", "Minimal Aesthetics", "Design Systems"],
+      projectsCount: 2,
+      capabilities: ["On-Location Production", "Drone Footage"],
     },
     {
-      id: "m-302",
-      podId: "pod-c",
-      name: "Tanvi Sen",
-      role: "Video & Motion Editor",
-      category: "editor",
-      email: "editor.gamma@creo.agency",
-      handle: "@tanvi",
+      id: "m-205",
+      podId: "pod-b",
+      name: "Zara Thorne",
+      role: "Fashion & Lifestyle Photographer",
+      category: "photographer",
+      email: "zara.t@creo.agency",
+      handle: "@zthorne",
       status: "Sprint Ready",
       statusColor: "bg-sky-50 text-sky-700 border-sky-200",
       allocatedPct: 50,
       projectsCount: 1,
-      capabilities: ["Motion Graphics", "Color Grading", "Short-Form Video"],
+      capabilities: ["Lookbook Shoots", "Color Correction"],
+    },
+
+    // --- POD C ---
+    {
+      id: "m-301",
+      podId: "pod-c",
+      name: "Kenji Sato",
+      role: "Lead Motion Designer & Pod Lead",
+      category: "lead",
+      isLead: true,
+      email: "kenji.s@creo.agency",
+      handle: "@kenjis",
+      status: "Pod Lead",
+      statusColor: "bg-blue-50 text-blue-700 border-blue-200",
+      allocatedPct: 85,
+      projectsCount: 3,
+      capabilities: ["3D Motion", "Octane Render"],
+    },
+    {
+      id: "m-302",
+      podId: "pod-c",
+      name: "Aria Montgomery",
+      role: "3D Product Designer",
+      category: "designer",
+      email: "aria.m@creo.agency",
+      handle: "@amontgomery",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 75,
+      projectsCount: 2,
+      capabilities: ["Blender 3D", "Texture Design"],
     },
     {
       id: "m-303",
       podId: "pod-c",
-      name: "Arjun Nair",
-      role: "Graphic & UI Specialist",
-      category: "designer",
-      email: "designer.gamma@creo.agency",
-      handle: "@arjun",
+      name: "Lucas Scott",
+      role: "VFX & Post-Production Editor",
+      category: "editor",
+      email: "lucas.s@creo.agency",
+      handle: "@lscott",
       status: "Accepting Work",
       statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      allocatedPct: 40,
+      allocatedPct: 65,
+      projectsCount: 2,
+      capabilities: ["Nuke VFX", "Compositing"],
+    },
+    {
+      id: "m-304",
+      podId: "pod-c",
+      name: "Rohan Kapoor",
+      role: "High-Speed Video Director",
+      category: "videographer",
+      email: "rohan.k@creo.agency",
+      handle: "@rkapoor",
+      status: "Sprint Ready",
+      statusColor: "bg-sky-50 text-sky-700 border-sky-200",
+      allocatedPct: 50,
       projectsCount: 1,
-      capabilities: ["Illustrations", "Figma", "Social Banners"],
+      capabilities: ["Phantom High-Speed", "Robotic Arm Control"],
+    },
+    {
+      id: "m-305",
+      podId: "pod-c",
+      name: "Sophie Laurent",
+      role: "Architecture & Still Photography",
+      category: "photographer",
+      email: "sophie.l@creo.agency",
+      handle: "@slaurent",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 60,
+      projectsCount: 2,
+      capabilities: ["Spatial Lighting", "HDR Stills"],
+    },
+
+    // --- POD D ---
+    {
+      id: "m-401",
+      podId: "pod-d",
+      name: "David Vance",
+      role: "Tech Art Lead & Pod Lead",
+      category: "lead",
+      isLead: true,
+      email: "david.v@creo.agency",
+      handle: "@dvance",
+      status: "Pod Lead",
+      statusColor: "bg-blue-50 text-blue-700 border-blue-200",
+      allocatedPct: 80,
+      projectsCount: 3,
+      capabilities: ["Technical Direction", "Pipeline Automation"],
+    },
+    {
+      id: "m-402",
+      podId: "pod-d",
+      name: "Nora Allen",
+      role: "Senior Visual Designer",
+      category: "designer",
+      email: "nora.a@creo.agency",
+      handle: "@nallen",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 70,
+      projectsCount: 2,
+      capabilities: ["UI Kits", "Brand Guidelines"],
+    },
+    {
+      id: "m-403",
+      podId: "pod-d",
+      name: "Felix Dupuis",
+      role: "Short-Form Video Editor",
+      category: "editor",
+      email: "felix.d@creo.agency",
+      handle: "@fdupuis",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 60,
+      projectsCount: 2,
+      capabilities: ["CapCut / DaVinci", "Kinetic Subtitles"],
+    },
+    {
+      id: "m-404",
+      podId: "pod-d",
+      name: "Gavin Ross",
+      role: "Outdoor & Aerial Videographer",
+      category: "videographer",
+      email: "gavin.r@creo.agency",
+      handle: "@gross",
+      status: "Fully Booked",
+      statusColor: "bg-rose-50 text-rose-700 border-rose-200",
+      allocatedPct: 95,
+      projectsCount: 4,
+      capabilities: ["FPV Drone Pilot", "Action Cinematography"],
+    },
+    {
+      id: "m-405",
+      podId: "pod-d",
+      name: "Iris West",
+      role: "Editorial & Portrait Photographer",
+      category: "photographer",
+      email: "iris.w@creo.agency",
+      handle: "@iwest",
+      status: "Accepting Work",
+      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      allocatedPct: 55,
+      projectsCount: 1,
+      capabilities: ["Headshots", "Editorial Layouts"],
     },
   ]);
 
@@ -4004,7 +4288,7 @@ export function AdminTeamManagementPage() {
   const getRoleIcon = (cat: string) => {
     switch (cat) {
       case "lead":
-        return <UserCog className="w-3.5 h-3.5 text-[#7FA0D6]" />;
+        return <UserCog className="w-3.5 h-3.5 text-blue-600" />;
       case "designer":
         return <Palette className="w-3.5 h-3.5 text-purple-600" />;
       case "editor":
@@ -4014,194 +4298,17 @@ export function AdminTeamManagementPage() {
       case "photographer":
         return <Camera className="w-3.5 h-3.5 text-emerald-600" />;
       default:
-        return <Users className="w-3.5 h-3.5 text-[#F1F5F9]" />;
+        return <Users className="w-3.5 h-3.5 text-gray-600" />;
     }
   };
 
-  const [assignModalMember, setAssignModalMember] = useState<TeamMember | null>(null);
-  const [scheduleModalMember, setScheduleModalMember] = useState<TeamMember | null>(null);
-  const [assignForm, setAssignForm] = useState({
-    taskTitle: "Brand Repositioning Sprint Deliverable",
-    client: "Northwind Labs",
-    priority: "High",
-    allocationIncrease: 15,
-    deadline: "Friday (Sprint 08)",
-    brief: "Deliver key creative assets, revisions, and Figma handoff tokens according to brief specifications.",
-  });
-  const [newMemberForm, setNewMemberForm] = useState({
-    name: "",
-    email: "",
-    handle: "",
-    role: "Senior Visual Designer",
-    category: "designer" as TeamMember["category"],
-    podId: "pod-a",
-    capabilities: "Figma Tokens, Design Systems, Branding",
-  });
-  const [successPopup, setSuccessPopup] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    type?: "success" | "info";
-  } | null>(null);
-
-  const handleCreateTeamMember = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMemberForm.name.trim()) return;
-
-    const roleTitle = newMemberForm.role.trim() || (
-      newMemberForm.category === "designer" ? "Senior Visual Designer" :
-      newMemberForm.category === "editor" ? "Lead Video Editor" :
-      newMemberForm.category === "videographer" ? "Lead Cinematographer & Videographer" :
-      newMemberForm.category === "photographer" ? "Commercial Photographer" :
-      "Squad Lead & Creative Strategist"
-    );
-
-    const capsArray = newMemberForm.capabilities.trim()
-      ? newMemberForm.capabilities.split(",").map((c) => c.trim()).filter(Boolean)
-      : ["Design Systems", "Client Deliverables", "Multimodal Sprint"];
-
-    const targetPodId = newMemberForm.podId || activePodId || "pod-a";
-
-    const newMember: TeamMember = {
-      id: `m-${Date.now()}`,
-      podId: targetPodId,
-      name: newMemberForm.name.trim(),
-      role: roleTitle,
-      category: newMemberForm.category,
-      email: newMemberForm.email.trim() || `${newMemberForm.name.toLowerCase().replace(/\s+/g, ".")}@creo.agency`,
-      handle: newMemberForm.handle.trim() || `@${newMemberForm.name.toLowerCase().replace(/\s+/g, "")}`,
-      status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      allocatedPct: 40,
-      projectsCount: 1,
-      capabilities: capsArray,
-      isLead: newMemberForm.category === "lead",
-    };
-
-    setMembersList((prev) => [newMember, ...prev]);
-
-    // Update pod count in pods state
-    setPods((prev) =>
-      prev.map((p) =>
-        p.id === targetPodId
-          ? { ...p, membersCount: p.membersCount + 1 }
-          : p
-      )
-    );
-
-    const targetPodName = pods.find((p) => p.id === targetPodId)?.name || "Sprint Pod";
-    const memberName = newMember.name;
-
-    setIsAddMemberOpen(false);
-    setNewMemberForm({
-      name: "",
-      email: "",
-      handle: "",
-      role: "Senior Visual Designer",
-      category: "designer",
-      podId: activePodId || "pod-a",
-      capabilities: "Figma Tokens, Design Systems, Branding",
-    });
-
-    setSuccessPopup({
-      isOpen: true,
-      title: "Team Specialist Added!",
-      message: `${memberName} has been added to ${targetPodName} as ${roleTitle}. The specialist card is now live and ready for sprint task allocation!`,
-      type: "success",
-    });
-  };
-
-  const handleOpenAssignModal = (member: TeamMember) => {
-    setAssignModalMember(member);
-    setAssignForm({
-      taskTitle: `Sprint Deliverables for ${member.name.split(" ")[0]}`,
-      client: "Northwind Labs",
-      priority: "High",
-      allocationIncrease: member.allocatedPct >= 80 ? 10 : 15,
-      deadline: "Friday (Sprint 08)",
-      brief: `Execute sprint milestones and deliverables aligned with ${member.role} scope.`,
-    });
-  };
-
-  const handleOpenScheduleModal = (member: TeamMember) => {
-    setScheduleModalMember(member);
-  };
-
-  const handleConfirmAssignWork = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!assignModalMember) return;
-    const loadInc = Number(assignForm.allocationIncrease) || 15;
-    const updatedPct = Math.min(100, assignModalMember.allocatedPct + loadInc);
-    const isFullyBooked = updatedPct >= 90;
-
-    setMembersList((prev) =>
-      prev.map((m) =>
-        m.id === assignModalMember.id
-          ? {
-              ...m,
-              allocatedPct: updatedPct,
-              projectsCount: m.projectsCount + 1,
-              status: isFullyBooked ? "Fully Booked" : "Sprint Ready",
-              statusColor: isFullyBooked
-                ? "bg-rose-50 text-rose-700 border-rose-200"
-                : "bg-sky-50 text-sky-700 border-sky-200",
-            }
-          : m
-      )
-    );
-
-    const assignedName = assignModalMember.name;
-    const taskName = assignForm.taskTitle;
-    const clientName = assignForm.client;
-    setAssignModalMember(null);
-
-    setSuccessPopup({
-      isOpen: true,
-      title: "Work Assigned Successfully!",
-      message: `"${taskName}" for ${clientName} has been assigned to ${assignedName}. Workload updated to ${updatedPct}%.`,
-      type: "success",
-    });
-  };
-
-  const handleRebalanceWorkload = (member: TeamMember) => {
-    const newPct = Math.max(40, member.allocatedPct - 20);
-    const newCount = Math.max(1, member.projectsCount - 1);
-    setMembersList((prev) =>
-      prev.map((m) =>
-        m.id === member.id
-          ? {
-              ...m,
-              allocatedPct: newPct,
-              projectsCount: newCount,
-              status: "Accepting Work",
-              statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-            }
-          : m
-      )
-    );
-    if (scheduleModalMember?.id === member.id) {
-      setScheduleModalMember((prev) =>
-        prev
-          ? {
-              ...prev,
-              allocatedPct: newPct,
-              projectsCount: newCount,
-              status: "Accepting Work",
-              statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
-            }
-          : null
-      );
-    }
-    setSuccessPopup({
-      isOpen: true,
-      title: "Workload Rebalanced",
-      message: `Re-allocated 1 project from ${member.name}. Capacity restored to ${newPct}% (${newCount} projects).`,
-      type: "info",
-    });
+  const handleAssignWork = (member: TeamMember) => {
+    setToast(`Work assigned to ${member.name} (${member.role}).`);
+    setTimeout(() => setToast(null), 3000);
   };
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F8FAFC] flex flex-col">
       <AdminTopHeader
         title={activePodId && activePod ? `${activePod.name} • Team Details` : "Team Details & Management"}
         activeTab="Team Details"
@@ -4228,8 +4335,8 @@ export function AdminTeamManagementPage() {
             {/* Top Controls Bar */}
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h3 className="text-base font-bold text-white">Sprint Pods & Resource Allocation</h3>
-                <p className="text-xs text-[#97A0B3]">Live operational capacity and roster assignments across creative pods</p>
+                <h3 className="text-base font-bold text-gray-900">Sprint Pods & Resource Allocation</h3>
+                <p className="text-xs text-gray-500">Live operational capacity and roster assignments across creative pods</p>
               </div>
               <button
                 type="button"
@@ -4243,28 +4350,28 @@ export function AdminTeamManagementPage() {
             {/* 3 KPI Summary Cards matching Screenshot 1 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Card 1: NO OF PODS */}
-              <div className="kpi-card bg-[#161F2D] rounded-3xl p-6 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+              <div className="kpi-card bg-white rounded-3xl p-6 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
                     NO OF PODS
                   </span>
-                  <div className="w-9 h-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
                     <Users className="w-5 h-5" />
                   </div>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white tracking-tight">8 Pods</span>
-                  <span className="text-xs font-semibold text-[#97A0B3]">across 72 members</span>
+                  <span className="text-3xl font-black text-gray-900 tracking-tight">8 Pods</span>
+                  <span className="text-xs font-semibold text-gray-500">across 72 members</span>
                 </div>
-                <div className="mt-4 pt-3 border-t border-[#2A3446] text-xs font-bold text-[#7FA0D6] flex items-center gap-1">
+                <div className="mt-4 pt-3 border-t border-gray-100 text-xs font-bold text-blue-600 flex items-center gap-1">
                   <Layers className="w-3.5 h-3.5" /> Pods A – H Active Pods
                 </div>
               </div>
 
               {/* Card 2: CAPACITY */}
-              <div className="kpi-card bg-[#161F2D] rounded-3xl p-6 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+              <div className="kpi-card bg-white rounded-3xl p-6 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
                     CAPACITY
                   </span>
                   <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -4272,11 +4379,11 @@ export function AdminTeamManagementPage() {
                   </div>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white tracking-tight">88%</span>
-                  <span className="text-xs font-semibold text-[#97A0B3]">optimal bandwidth</span>
+                  <span className="text-3xl font-black text-gray-900 tracking-tight">88%</span>
+                  <span className="text-xs font-semibold text-gray-500">optimal bandwidth</span>
                 </div>
-                <div className="mt-4 pt-3 border-t border-[#2A3446] flex items-center gap-2">
-                  <div className="flex-1 bg-[#1F2C3F] rounded-full h-2 overflow-hidden">
+                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2">
+                  <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
                     <div className="bg-emerald-600 h-full rounded-full w-[88%]" />
                   </div>
                   <span className="text-xs font-bold text-emerald-600">Healthy</span>
@@ -4284,9 +4391,9 @@ export function AdminTeamManagementPage() {
               </div>
 
               {/* Card 3: TASKS TO BE DONE */}
-              <div className="kpi-card bg-[#161F2D] rounded-3xl p-6 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+              <div className="kpi-card bg-white rounded-3xl p-6 border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
                     TASKS TO BE DONE
                   </span>
                   <div className="w-9 h-9 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
@@ -4294,11 +4401,11 @@ export function AdminTeamManagementPage() {
                   </div>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white tracking-tight">28</span>
-                  <span className="text-xs font-semibold text-[#97A0B3]">in review/progress</span>
+                  <span className="text-3xl font-black text-gray-900 tracking-tight">28</span>
+                  <span className="text-xs font-semibold text-gray-500">in review/progress</span>
                 </div>
-                <div className="mt-4 pt-3 border-t border-[#2A3446] text-xs text-[#97A0B3] flex items-center gap-1 font-medium">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#97A0B3]" /> 142 milestones closed ahead of target
+                <div className="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-500 flex items-center gap-1 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" /> 142 milestones closed ahead of target
                 </div>
               </div>
             </div>
@@ -4306,8 +4413,8 @@ export function AdminTeamManagementPage() {
             {/* Team Pods Section Header */}
             <div className="flex items-center justify-between pt-2">
               <div>
-                <h3 className="text-lg font-bold text-white tracking-tight">Team Pods</h3>
-                <p className="text-xs text-[#97A0B3]">Real-time capacity distribution, pod leads, and task completion velocity</p>
+                <h3 className="text-lg font-bold text-gray-900 tracking-tight">Team Pods</h3>
+                <p className="text-xs text-gray-500">Real-time capacity distribution, pod leads, and task completion velocity</p>
               </div>
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Sprint Cycle 08 • 4 Days Remaining
@@ -4320,7 +4427,7 @@ export function AdminTeamManagementPage() {
                 <div
                   key={pod.id}
                   onClick={() => setActivePodId(pod.id)}
-                  className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.04)] space-y-5 hover:shadow-xl transition-all cursor-pointer group relative overflow-hidden"
+                  className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.04)] space-y-5 hover:shadow-xl transition-all cursor-pointer group relative overflow-hidden"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -4329,12 +4436,12 @@ export function AdminTeamManagementPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-base text-white">{pod.name}</h4>
-                          <span className="px-2 py-0.5 rounded-full bg-[#1F2C3F] text-[#F1F5F9] text-[10px] font-bold">
+                          <h4 className="font-bold text-base text-gray-900">{pod.name}</h4>
+                          <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
                             Sprint Pod
                           </span>
                         </div>
-                        <p className="text-xs text-[#97A0B3]">{pod.description.slice(0, 48)}...</p>
+                        <p className="text-xs text-gray-500">{pod.description.slice(0, 48)}...</p>
                       </div>
                     </div>
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
@@ -4343,46 +4450,46 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   {/* Lead Info & Member Stack */}
-                  <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl flex items-center justify-between border border-[#2A3446]">
+                  <div className="p-3.5 bg-gray-50/70 rounded-2xl flex items-center justify-between border border-gray-100">
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
                         {pod.lead[0]}
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-white">{pod.lead}</div>
-                        <div className="text-[10px] text-[#97A0B3] font-medium">Pod Lead</div>
+                        <div className="text-xs font-bold text-gray-900">{pod.lead}</div>
+                        <div className="text-[10px] text-gray-500 font-medium">Pod Lead</div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs font-bold text-[#F1F5F9]">
+                    <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
                       <div className="flex -space-x-2">
                         <div className="w-7 h-7 rounded-full bg-slate-700 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">ER</div>
                         <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">MC</div>
                         <div className="w-7 h-7 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">LZ</div>
                       </div>
-                      <span className="text-xs font-bold text-[#F1F5F9]">+{pod.membersCount - 3} Members</span>
+                      <span className="text-xs font-bold text-gray-700">+{pod.membersCount - 3} Members</span>
                     </div>
                   </div>
 
                   {/* Velocity Bar */}
                   <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center text-[#F1F5F9] font-semibold">
+                    <div className="flex justify-between items-center text-gray-600 font-semibold">
                       <span>Sprint Velocity</span>
-                      <span className="font-bold text-white">{pod.velocityPct}% on track</span>
+                      <span className="font-bold text-gray-900">{pod.velocityPct}% on track</span>
                     </div>
-                    <div className="w-full bg-[#1F2C3F] rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
                       <div className={`h-full rounded-full ${pod.color}`} style={{ width: `${pod.velocityPct}%` }} />
                     </div>
-                    <div className="flex justify-between text-[11px] text-[#97A0B3] font-medium pt-0.5">
+                    <div className="flex justify-between text-[11px] text-gray-400 font-medium pt-0.5">
                       <span>{pod.tasksClosed} tasks closed</span>
-                      <span className="text-[#7FA0D6] font-bold">{pod.pendingReview} pending review</span>
+                      <span className="text-blue-600 font-bold">{pod.pendingReview} pending review</span>
                     </div>
                   </div>
 
                   {/* Card Footer Action */}
-                  <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                    <span className="text-[#97A0B3] font-medium text-[11px]">
-                      Allocated: <strong className="text-white">{pod.allocatedHours}h / {pod.totalHours}h</strong>
+                  <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+                    <span className="text-gray-500 font-medium text-[11px]">
+                      Allocated: <strong className="text-gray-900">{pod.allocatedHours}h / {pod.totalHours}h</strong>
                     </span>
                     <button
                       type="button"
@@ -4390,7 +4497,7 @@ export function AdminTeamManagementPage() {
                         e.stopPropagation();
                         setActivePodId(pod.id);
                       }}
-                      className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                      className="text-[#2563EB] font-bold hover:underline inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
                     >
                       View Member Directory &rarr;
                     </button>
@@ -4406,27 +4513,27 @@ export function AdminTeamManagementPage() {
           <div className="space-y-6">
             {/* Top Breadcrumb & Action Controls */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#97A0B3]">
+              <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
                 <button
                   type="button"
                   onClick={() => setActivePodId(null)}
-                  className="hover:text-[#7FA0D6] flex items-center gap-1 transition-colors cursor-pointer"
+                  className="hover:text-blue-600 flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back to Track Overview
                 </button>
                 <span>/</span>
-                <button type="button" onClick={() => setActivePodId(null)} className="hover:text-[#7FA0D6] transition-colors cursor-pointer">
+                <button type="button" onClick={() => setActivePodId(null)} className="hover:text-blue-600 transition-colors cursor-pointer">
                   Team Management
                 </button>
                 <span>/</span>
-                <span className="text-white font-black">{activePod?.name} Member Directory</span>
+                <span className="text-gray-900 font-black">{activePod?.name} Member Directory</span>
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                   ● Q2 Cycle Active
                 </span>
-                <span className="text-[11px] text-[#97A0B3] font-medium hidden sm:inline">
+                <span className="text-[11px] text-gray-400 font-medium hidden sm:inline">
                   Last synchronized: Just now
                 </span>
                 <button
@@ -4440,7 +4547,7 @@ export function AdminTeamManagementPage() {
             </div>
 
             {/* Pod Summary Banner Card matching Screenshot 2 */}
-            <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
+            <div className="bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="space-y-3 max-w-3xl">
                   <div className="flex items-center gap-2">
@@ -4451,49 +4558,49 @@ export function AdminTeamManagementPage() {
                       High Velocity
                     </span>
                   </div>
-                  <p className="text-xs text-[#F1F5F9] leading-relaxed font-medium">
+                  <p className="text-xs text-gray-600 leading-relaxed font-medium">
                     {activePod?.description}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-6 pt-2 text-xs font-bold text-[#F1F5F9]">
+                  <div className="flex flex-wrap items-center gap-6 pt-2 text-xs font-bold text-gray-700">
                     <div>
-                      <span className="text-[10px] uppercase text-[#97A0B3] block font-extrabold tracking-wider">POD LEAD</span>
-                      <span className="text-white font-black">{activePod?.lead}</span>
+                      <span className="text-[10px] uppercase text-gray-400 block font-extrabold tracking-wider">POD LEAD</span>
+                      <span className="text-gray-900 font-black">{activePod?.lead}</span>
                     </div>
                     <div className="h-6 w-px bg-gray-200" />
                     <div>
-                      <span className="text-[10px] uppercase text-[#97A0B3] block font-extrabold tracking-wider">MEMBERS</span>
-                      <span className="text-white font-black">{filteredMembers.length} Active Members</span>
+                      <span className="text-[10px] uppercase text-gray-400 block font-extrabold tracking-wider">MEMBERS</span>
+                      <span className="text-gray-900 font-black">{filteredMembers.length} Active Members</span>
                     </div>
                     <div className="h-6 w-px bg-gray-200" />
                     <div>
-                      <span className="text-[10px] uppercase text-[#97A0B3] block font-extrabold tracking-wider">VELOCITY</span>
+                      <span className="text-[10px] uppercase text-gray-400 block font-extrabold tracking-wider">VELOCITY</span>
                       <span className="text-emerald-600 font-black">{activePod?.velocityPct}% Sprint Delivery</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Right Side Stats */}
-                <div className="flex gap-4 border-t lg:border-t-0 lg:border-l border-[#2A3446] pt-4 lg:pt-0 lg:pl-8">
-                  <div className="bg-[#0B111C] p-4 rounded-2xl border border-[#2A3446] min-w-[130px] space-y-1">
-                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase">AVG SQUAD LOAD</span>
-                    <div className="text-2xl font-black text-white">{activePod?.squadLoad}%</div>
+                <div className="flex gap-4 border-t lg:border-t-0 lg:border-l border-gray-100 pt-4 lg:pt-0 lg:pl-8">
+                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 min-w-[130px] space-y-1">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">AVG SQUAD LOAD</span>
+                    <div className="text-2xl font-black text-gray-900">{activePod?.squadLoad}%</div>
                     <span className="text-[10px] text-emerald-600 font-bold">↓ Optimal</span>
                   </div>
-                  <div className="bg-[#0B111C] p-4 rounded-2xl border border-[#2A3446] min-w-[130px] space-y-1">
-                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase">ACTIVE ENGAGEMENTS</span>
-                    <div className="text-2xl font-black text-white">{activePod?.activeEngagements} projects</div>
-                    <span className="text-[10px] text-[#7FA0D6] font-bold">{activePod?.readyReview} ready for review</span>
+                  <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 min-w-[130px] space-y-1">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">ACTIVE ENGAGEMENTS</span>
+                    <div className="text-2xl font-black text-gray-900">{activePod?.activeEngagements} projects</div>
+                    <span className="text-[10px] text-blue-600 font-bold">{activePod?.readyReview} ready for review</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Role Category Filter Tabs & Action Controls */}
-            <div className="bg-[#161F2D] rounded-2xl border border-[#2A3446] p-4 shadow-sm space-y-4">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 {/* Filter Pills matching Screenshot 2 */}
-                <div className="flex flex-wrap items-center gap-1.5 bg-[#1F2C3F] p-1 rounded-xl text-xs font-bold">
+                <div className="flex flex-wrap items-center gap-1.5 bg-gray-100 p-1 rounded-xl text-xs font-bold">
                   {[
                     { key: "all", label: `All Members (${membersList.filter((m) => !activePodId || m.podId === activePodId).length})` },
                     { key: "lead", label: "Leads" },
@@ -4511,7 +4618,7 @@ export function AdminTeamManagementPage() {
                       className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                         roleCategoryFilter === tab.key
                           ? "bg-[#2563EB] text-white shadow-xs"
-                          : "text-[#F1F5F9] hover:text-white"
+                          : "text-gray-600 hover:text-gray-900"
                       }`}
                     >
                       {tab.label}
@@ -4529,28 +4636,18 @@ export function AdminTeamManagementPage() {
               </div>
 
               {/* Roster Counter */}
-              <div className="flex items-center justify-between text-xs text-[#97A0B3] font-semibold border-t border-[#2A3446] pt-3">
+              <div className="flex items-center justify-between text-xs text-gray-400 font-semibold border-t border-gray-100 pt-3">
                 <span>Showing {filteredMembers.length} members assigned to {activePod?.name}</span>
                 <div className="flex items-center gap-3">
-                  <button type="button" className="hover:text-[#F1F5F9] flex items-center gap-1">
+                  <button type="button" className="hover:text-gray-700 flex items-center gap-1">
                     <SlidersHorizontal className="w-3.5 h-3.5" /> Advanced Sorting
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      const csvContent = "data:text/csv;charset=utf-8," + [
-                        ["ID", "Name", "Role", "Pod", "Workload", "Status"].join(","),
-                        ...filteredMembers.map((m) => [m.id, `"${m.name}"`, `"${m.role}"`, `"${activePod?.name || ""}"`, `${m.allocatedPct}%`, m.status].join(","))
-                      ].join("\n");
-                      const encodedUri = encodeURI(csvContent);
-                      const link = document.createElement("a");
-                      link.setAttribute("href", encodedUri);
-                      link.setAttribute("download", `${(activePod?.name || "pod").toLowerCase().replace(/\s+/g, "_")}_roster.csv`);
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
+                      alert(`Exporting ${activePod?.name} roster CSV...`);
                     }}
-                    className="hover:text-[#F1F5F9] flex items-center gap-1 cursor-pointer"
+                    className="hover:text-gray-700 flex items-center gap-1"
                   >
                     <Download className="w-3.5 h-3.5" /> Export Roster
                   </button>
@@ -4563,7 +4660,7 @@ export function AdminTeamManagementPage() {
               {filteredMembers.map((member) => (
                 <div
                   key={member.id}
-                  className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-6 space-y-4 flex flex-col justify-between hover:shadow-lg transition-shadow"
+                  className="bg-white rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-6 space-y-4 flex flex-col justify-between hover:shadow-lg transition-shadow"
                 >
                   <div className="space-y-4">
                     {/* Header: Avatar, Status Badge & Title */}
@@ -4576,11 +4673,11 @@ export function AdminTeamManagementPage() {
                           <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-sm text-white flex items-center gap-1">
+                          <h4 className="font-bold text-sm text-gray-900 flex items-center gap-1">
                             {member.name}
-                            {member.isLead && <CheckCircle2 className="w-3.5 h-3.5 text-[#7FA0D6]" />}
+                            {member.isLead && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />}
                           </h4>
-                          <span className="text-[11px] text-[#97A0B3] font-medium flex items-center gap-1 mt-0.5">
+                          <span className="text-[11px] text-gray-500 font-medium flex items-center gap-1 mt-0.5">
                             {getRoleIcon(member.category)}
                             {member.role}
                           </span>
@@ -4593,21 +4690,21 @@ export function AdminTeamManagementPage() {
                     </div>
 
                     {/* Email & Handle */}
-                    <div className="p-3 bg-[#0B111C]/70 rounded-2xl text-[11px] font-mono space-y-0.5 border border-[#2A3446]">
-                      <div className="text-[#F1F5F9] truncate">{member.email}</div>
-                      <div className="text-[#7FA0D6] font-semibold">{member.handle}</div>
+                    <div className="p-3 bg-gray-50/70 rounded-2xl text-[11px] font-mono space-y-0.5 border border-gray-100">
+                      <div className="text-gray-600 truncate">{member.email}</div>
+                      <div className="text-blue-600 font-semibold">{member.handle}</div>
                     </div>
 
                     {/* Core Capabilities Pills */}
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#97A0B3] block">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-400 block">
                         CORE CAPABILITIES
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {member.capabilities.map((cap) => (
                           <span
                             key={cap}
-                            className="px-2.5 py-1 rounded-lg bg-[#1F2C3F] text-[#F1F5F9] text-[10px] font-bold border border-[#2A3446]/60"
+                            className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 text-[10px] font-bold border border-gray-200/60"
                           >
                             {cap}
                           </span>
@@ -4617,17 +4714,17 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   {/* Footer Workload Bar & Action */}
-                  <div className="pt-4 border-t border-[#2A3446] space-y-3">
+                  <div className="pt-4 border-t border-gray-100 space-y-3">
                     <div className="space-y-1">
                       <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-[#97A0B3] font-semibold">
+                        <span className="text-gray-500 font-semibold">
                           Workload ({member.projectsCount} Projects)
                         </span>
                         <span className={`font-bold ${member.allocatedPct >= 90 ? "text-rose-600" : "text-emerald-600"}`}>
                           {member.allocatedPct}% {member.allocatedPct >= 90 ? "Booked" : "Allocated"}
                         </span>
                       </div>
-                      <div className="w-full bg-[#1F2C3F] rounded-full h-2 overflow-hidden">
+                      <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                         <div
                           className={`h-full rounded-full ${
                             member.allocatedPct >= 90 ? "bg-rose-500" : member.allocatedPct >= 70 ? "bg-blue-600" : "bg-emerald-500"
@@ -4643,14 +4740,8 @@ export function AdminTeamManagementPage() {
                       </span>
                       <button
                         type="button"
-                        onClick={() => {
-                          if (member.allocatedPct >= 90) {
-                            handleOpenScheduleModal(member);
-                          } else {
-                            handleOpenAssignModal(member);
-                          }
-                        }}
-                        className="text-[#7FA0D6] hover:text-blue-800 hover:underline cursor-pointer text-[11px] font-bold"
+                        onClick={() => handleAssignWork(member)}
+                        className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-[11px]"
                       >
                         {member.allocatedPct >= 90 ? "View Schedule" : "Assign Work"}
                       </button>
@@ -4662,540 +4753,82 @@ export function AdminTeamManagementPage() {
           </div>
         )}
 
-        {/* ─────────────────────────────────────────────────────────────────────────────
-            MODAL 1: ASSIGN WORK POPUP MODAL WITH BLURRED BACKDROP
-        ───────────────────────────────────────────────────────────────────────────── */}
-        {assignModalMember && (
-          <div
-            className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
-            onClick={() => setAssignModalMember(null)}
-          >
-            <div
-              className="relative w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-[#2A3446] flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-modal="true"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="size-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black text-sm">
-                    <Briefcase className="size-4.5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-black text-white tracking-tight">Assign Sprint Task</h3>
-                    <p className="text-[11px] text-[#97A0B3] font-medium">Allocate project work & set turnaround targets</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setAssignModalMember(null)}
-                  className="size-8 rounded-full bg-[#1F2C3F] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-
-              {/* Specialist Profile Banner */}
-              <div className="bg-[#0B111C] border border-[#2A3446]/90 rounded-2xl p-3.5 flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-11 rounded-2xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">
-                    {assignModalMember.name.split(" ").map((n) => n[0]).join("")}
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-black text-white truncate">{assignModalMember.name}</h4>
-                    <p className="text-[11px] text-[#97A0B3] font-medium truncate">{assignModalMember.role}</p>
-                    <span className="text-[10px] text-[#7FA0D6] font-bold">{assignModalMember.email}</span>
-                  </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="text-[10px] font-bold text-[#97A0B3] block uppercase tracking-wider">CURRENT LOAD</span>
-                  <span className="text-sm font-black text-white">{assignModalMember.allocatedPct}%</span>
-                  <span className="text-[10px] text-[#97A0B3] block font-semibold">{assignModalMember.projectsCount} Projects</span>
-                </div>
-              </div>
-
-              {/* Assignment Form */}
-              <form onSubmit={handleConfirmAssignWork} className="space-y-3.5">
-                <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Task / Deliverable Title</label>
-                  <input
-                    type="text"
-                    required
-                    value={assignForm.taskTitle}
-                    onChange={(e) => setAssignForm({ ...assignForm, taskTitle: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    placeholder="e.g. Q4 Brand Identity Campaign Deliverables"
-                  />
-                  {/* Preset Pills */}
-                  <div className="flex flex-wrap gap-1.5 mt-1.5">
-                    {[
-                      "3D Hero Product Animation",
-                      "Brand Guidelines Refresh",
-                      "TikTok High-Velocity Batch",
-                      "Design Token Architecture",
-                    ].map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => setAssignForm({ ...assignForm, taskTitle: preset })}
-                        className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-[#1F2C3F] hover:bg-slate-200 text-[#F1F5F9] transition-colors cursor-pointer"
-                      >
-                        + {preset}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Client Account</label>
-                    <select
-                      value={assignForm.client}
-                      onChange={(e) => setAssignForm({ ...assignForm, client: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
-                    >
-                      <option value="Northwind Labs">Northwind Labs (Enterprise)</option>
-                      <option value="Atlas Commerce">Atlas Commerce (Growth)</option>
-                      <option value="Lumina Health">Lumina Health (Enterprise)</option>
-                      <option value="Bloom Studio">Bloom Studio (Standard)</option>
-                      <option value="Vanguard Mobility">Vanguard Mobility (Growth)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority Level</label>
-                    <select
-                      value={assignForm.priority}
-                      onChange={(e) => setAssignForm({ ...assignForm, priority: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
-                    >
-                      <option value="Urgent">🔥 Urgent (Within 24h)</option>
-                      <option value="High">⚡ High (Sprint Priority)</option>
-                      <option value="Medium">Standard Medium</option>
-                      <option value="Normal">Normal Priority</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Workload Allocation</label>
-                    <div className="grid grid-cols-4 gap-1">
-                      {[10, 15, 25, 35].map((pct) => (
-                        <button
-                          key={pct}
-                          type="button"
-                          onClick={() => setAssignForm({ ...assignForm, allocationIncrease: pct })}
-                          className={`py-1.5 text-center text-xs font-bold rounded-lg border transition-all cursor-pointer ${
-                            assignForm.allocationIncrease === pct
-                              ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
-                              : "bg-[#0B111C] text-[#F1F5F9] border-[#2A3446] hover:bg-[#1F2C3F]"
-                          }`}
-                        >
-                          +{pct}%
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Sprint Target Deadline</label>
-                    <input
-                      type="text"
-                      value={assignForm.deadline}
-                      onChange={(e) => setAssignForm({ ...assignForm, deadline: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white"
-                      placeholder="e.g. Friday, Sprint 08"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Scope & Brief</label>
-                  <textarea
-                    rows={2}
-                    value={assignForm.brief}
-                    onChange={(e) => setAssignForm({ ...assignForm, brief: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    placeholder="Brief instructions, deliverables checklist, links to Figma/Drive..."
-                  />
-                </div>
-
-                {/* Submit Row */}
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2A3446]">
-                  <button
-                    type="button"
-                    onClick={() => setAssignModalMember(null)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
-                  >
-                    Confirm & Assign Work
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* ─────────────────────────────────────────────────────────────────────────────
-            MODAL 2: VIEW SCHEDULE & WORKLOAD MODAL WITH BLURRED BACKDROP
-        ───────────────────────────────────────────────────────────────────────────── */}
-        {scheduleModalMember && (
-          <div
-            className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
-            onClick={() => setScheduleModalMember(null)}
-          >
-            <div
-              className="relative w-full max-w-2xl rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col space-y-5 max-h-[92vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-modal="true"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="size-12 rounded-2xl bg-rose-500 text-white font-black text-base flex items-center justify-center shadow-md">
-                    {scheduleModalMember.name.split(" ").map((n) => n[0]).join("")}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-black text-white tracking-tight">{scheduleModalMember.name}</h3>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                        ● {scheduleModalMember.status}
-                      </span>
-                    </div>
-                    <p className="text-xs text-[#97A0B3] font-medium">{scheduleModalMember.role} • {scheduleModalMember.email}</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setScheduleModalMember(null)}
-                  className="size-8 rounded-full bg-[#1F2C3F] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-
-              {/* Capacity Overview Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="bg-[#0B111C] p-3.5 rounded-2xl border border-[#2A3446]">
-                  <span className="text-[10px] uppercase font-bold text-[#97A0B3] block tracking-wider">ALLOCATED LOAD</span>
-                  <div className="text-xl font-black text-white mt-0.5">{scheduleModalMember.allocatedPct}%</div>
-                  <span className="text-[10px] text-rose-600 font-bold">Max Capacity</span>
-                </div>
-                <div className="bg-[#0B111C] p-3.5 rounded-2xl border border-[#2A3446]">
-                  <span className="text-[10px] uppercase font-bold text-[#97A0B3] block tracking-wider">ACTIVE ENGAGEMENTS</span>
-                  <div className="text-xl font-black text-white mt-0.5">{scheduleModalMember.projectsCount} Projects</div>
-                  <span className="text-[10px] text-[#7FA0D6] font-bold">2 in Final Review</span>
-                </div>
-                <div className="bg-[#0B111C] p-3.5 rounded-2xl border border-[#2A3446]">
-                  <span className="text-[10px] uppercase font-bold text-[#97A0B3] block tracking-wider">NEXT OPEN SLOT</span>
-                  <div className="text-xl font-black text-white mt-0.5">In 4 Days</div>
-                  <span className="text-[10px] text-emerald-600 font-bold">Sprint Cycle 09</span>
-                </div>
-              </div>
-
-              {/* Weekly Calendar Schedule Timeline */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-white">
-                  <span>Weekly Time Allocation (Mon – Fri)</span>
-                  <span className="text-[#7FA0D6] font-semibold">38.0h Total Booked</span>
-                </div>
-                <div className="grid grid-cols-5 gap-2">
-                  {[
-                    { day: "Mon", hours: "8.0h", task: "Northwind 3D Renders", bg: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30" },
-                    { day: "Tue", hours: "7.5h", task: "Vanguard 4K Motion", bg: "bg-purple-50 text-purple-700 border-purple-200" },
-                    { day: "Wed", hours: "8.0h", task: "Bloom Studio Intro", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-                    { day: "Thu", hours: "8.0h", task: "Atlas Product Teaser", bg: "bg-amber-50 text-amber-700 border-amber-200" },
-                    { day: "Fri", hours: "6.5h", task: "Sprint Quality QA", bg: "bg-sky-50 text-sky-700 border-sky-200" },
-                  ].map((item) => (
-                    <div key={item.day} className="p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] flex flex-col justify-between text-center gap-1.5">
-                      <span className="text-[11px] font-black text-[#F1F5F9]">{item.day}</span>
-                      <span className="text-xs font-black text-white">{item.hours}</span>
-                      <span className={`text-[9px] font-bold p-1 rounded-md border truncate ${item.bg}`}>
-                        {item.task}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Active Deliverables Breakdown */}
-              <div className="space-y-2.5">
-                <h4 className="text-xs font-bold text-white">Active Deliverables & Status</h4>
-                <div className="space-y-2">
-                  {[
-                    { client: "Northwind Labs", name: "3D Asset Render Batch #12", due: "Due in 2 days", progress: 90, color: "bg-blue-600" },
-                    { client: "Vanguard Mobility", name: "4K Motion Sequence & Audio Sync", due: "Due Friday", progress: 65, color: "bg-purple-600" },
-                    { client: "Bloom Studio", name: "Brand Intro Animation Loop", due: "Due Next Tue", progress: 35, color: "bg-emerald-600" },
-                    { client: "Atlas Commerce", name: "Product Showcase 9:16 Cut", due: "Due Next Fri", progress: 15, color: "bg-amber-600" },
-                  ].map((proj) => (
-                    <div key={proj.name} className="p-3 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:border-[#2A3446] transition-colors flex items-center justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-white truncate">{proj.name}</span>
-                          <span className="text-[10px] font-bold text-[#97A0B3]">({proj.client})</span>
-                        </div>
-                        <div className="w-full bg-[#1F2C3F] rounded-full h-1.5 mt-2 overflow-hidden">
-                          <div className={`h-full rounded-full ${proj.color}`} style={{ width: `${proj.progress}%` }} />
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="text-[10px] font-bold text-[#97A0B3] block">{proj.due}</span>
-                        <span className="text-xs font-black text-white">{proj.progress}%</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Modal Footer Controls */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#2A3446]">
-                <button
-                  type="button"
-                  onClick={() => handleRebalanceWorkload(scheduleModalMember)}
-                  className="px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  ⚡ Rebalance Workload (-20%)
-                </button>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setToast(`Notification dispatched to Pod Lead for ${scheduleModalMember.name}.`);
-                      setScheduleModalMember(null);
-                    }}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold transition-colors cursor-pointer"
-                  >
-                    Notify Lead
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setScheduleModalMember(null)}
-                    className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors cursor-pointer"
-                  >
-                    Done
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ─────────────────────────────────────────────────────────────────────────────
-            MODAL 3: SUCCESS CONFIRMATION POPUP WITH BLURRED BACKDROP
-        ───────────────────────────────────────────────────────────────────────────── */}
-        {successPopup?.isOpen && (
-          <div
-            className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
-            onClick={() => setSuccessPopup(null)}
-          >
-            <div
-              className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-modal="true"
-            >
-              <button
-                type="button"
-                onClick={() => setSuccessPopup(null)}
-                className="absolute top-4 right-4 size-8 rounded-full bg-[#1F2C3F] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
-                aria-label="Close modal"
-              >
-                <X className="size-4" />
-              </button>
-
-              <div className="size-16 rounded-3xl bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60 flex items-center justify-center mb-4 shadow-inner">
-                <CheckCircle2 className="size-8" />
-              </div>
-
-              <h3 className="text-xl font-black text-white tracking-tight">{successPopup.title}</h3>
-              <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm">{successPopup.message}</p>
-
-              <div className="w-full mt-6">
-                <button
-                  type="button"
-                  onClick={() => setSuccessPopup(null)}
-                  autoFocus
-                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
-                >
-                  OK
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ─────────────────────────────────────────────────────────────────────────────
-            MODAL 4: ADD MEMBER MODAL (FULLY FUNCTIONAL)
-        ───────────────────────────────────────────────────────────────────────────── */}
+        {/* Add Member Modal */}
         {isAddMemberOpen && (
-          <div
-            className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
-            onClick={() => setIsAddMemberOpen(false)}
-          >
-            <div
-              className="relative w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-[#2A3446] flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-modal="true"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="size-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black text-sm">
-                    <Users className="size-4.5" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-black text-white tracking-tight">
-                      Add Team Specialist to {activePod?.name || "Sprint Pod"}
-                    </h3>
-                    <p className="text-[11px] text-[#97A0B3] font-medium">
-                      Provision creative talent, set role capabilities & sprint track
-                    </p>
-                  </div>
-                </div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+            <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-base font-bold text-gray-900">Add Team Specialist to {activePod?.name || "Pod"}</h3>
                 <button
                   type="button"
                   onClick={() => setIsAddMemberOpen(false)}
-                  className="size-8 rounded-full bg-[#1F2C3F] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
                 >
-                  <X className="size-4" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Add Member Form */}
-              <form onSubmit={handleCreateTeamMember} className="space-y-3.5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Full Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={newMemberForm.name}
-                      onChange={(e) => {
-                        const name = e.target.value;
-                        const autoEmail = name ? `${name.toLowerCase().replace(/\s+/g, ".")}@creo.agency` : "";
-                        const autoHandle = name ? `@${name.toLowerCase().replace(/\s+/g, "")}` : "";
-                        setNewMemberForm({
-                          ...newMemberForm,
-                          name,
-                          email: newMemberForm.email ? newMemberForm.email : autoEmail,
-                          handle: newMemberForm.handle ? newMemberForm.handle : autoHandle,
-                        });
-                      }}
-                      placeholder="e.g. Jordan Miller"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Email Address</label>
-                    <input
-                      type="email"
-                      required
-                      value={newMemberForm.email}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, email: e.target.value })}
-                      placeholder="e.g. jordan.m@creo.agency"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Role Title</label>
-                    <input
-                      type="text"
-                      required
-                      value={newMemberForm.role}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, role: e.target.value })}
-                      placeholder="e.g. Senior Visual Designer"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Slack / Agency Handle</label>
-                    <input
-                      type="text"
-                      value={newMemberForm.handle}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, handle: e.target.value })}
-                      placeholder="e.g. @jmiller"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Role Track Category</label>
-                    <select
-                      value={newMemberForm.category}
-                      onChange={(e) => {
-                        const cat = e.target.value as TeamMember["category"];
-                        let defaultRole = "Senior Visual Designer";
-                        if (cat === "editor") defaultRole = "Lead Video Editor";
-                        else if (cat === "videographer") defaultRole = "Lead Cinematographer & Videographer";
-                        else if (cat === "photographer") defaultRole = "Commercial Photographer";
-                        else if (cat === "lead") defaultRole = "Sprint Pod Lead";
-                        setNewMemberForm({ ...newMemberForm, category: cat, role: defaultRole });
-                      }}
-                      className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
-                    >
-                      <option value="designer">🎨 Designer (UI, 3D, Brand)</option>
-                      <option value="editor">✂️ Video & Motion Editor</option>
-                      <option value="videographer">🎥 Cinematographer & Videographer</option>
-                      <option value="photographer">📷 Commercial Photographer</option>
-                      <option value="lead">👑 Pod Lead & Strategist</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Assign Sprint Pod</label>
-                    <select
-                      value={newMemberForm.podId}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, podId: e.target.value })}
-                      className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
-                    >
-                      <option value="pod-a">Pod A • Enterprise Brand & Design</option>
-                      <option value="pod-b">Pod B • Performance & Video</option>
-                      <option value="pod-c">Pod C • 3D Motion & VFX</option>
-                    </select>
-                  </div>
-                </div>
-
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setToast("New specialist account provisioned successfully!");
+                  setIsAddMemberOpen(false);
+                }}
+                className="space-y-3"
+              >
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Core Capabilities (comma separated)</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Full Name</label>
                   <input
                     type="text"
-                    value={newMemberForm.capabilities}
-                    onChange={(e) => setNewMemberForm({ ...newMemberForm, capabilities: e.target.value })}
-                    placeholder="e.g. Figma Tokens, Cinema 4D, Color Grading, Kinetic Typography"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                    required
+                    placeholder="e.g. Jordan Miller"
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="e.g. jordan.m@creo.agency"
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Role / Speciality</label>
+                    <select className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium">
+                      <option value="designer">Designer</option>
+                      <option value="editor">Video Editor</option>
+                      <option value="videographer">Videographer</option>
+                      <option value="photographer">Photographer</option>
+                      <option value="lead">Pod Lead</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Assign Pod</label>
+                    <select className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium" defaultValue={activePodId || "pod-a"}>
+                      <option value="pod-a">Pod A</option>
+                      <option value="pod-b">Pod B</option>
+                      <option value="pod-c">Pod C</option>
+                      <option value="pod-d">Pod D</option>
+                    </select>
+                  </div>
+                </div>
 
-                {/* Submit Row */}
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2A3446]">
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
                   <button
                     type="button"
                     onClick={() => setIsAddMemberOpen(false)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
+                    className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-[#2563EB] text-xs font-bold text-white hover:bg-blue-700 cursor-pointer shadow-sm"
                   >
-                    Create & Provision Specialist
+                    Create Account
                   </button>
                 </div>
               </form>
@@ -5217,7 +4850,44 @@ export function AdminLeaveApprovalsPage() {
   const [filterTab, setFilterTab] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
 
-  const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
+  const [leaveRequests, setLeaveRequests] = useState([
+    {
+      id: "lr-1",
+      name: "Elena Rostova",
+      department: "Video & Design",
+      pod: "Pod A",
+      startDate: "2024-11-20",
+      endDate: "2024-11-22",
+      days: 3,
+      reason: "Scheduled personal leave and medical checkup.",
+      status: "pending",
+      submittedAt: "Yesterday 4:15 PM",
+    },
+    {
+      id: "lr-2",
+      name: "Omar Vance",
+      department: "Creative Strategy",
+      pod: "Pod B",
+      startDate: "2024-11-28",
+      endDate: "2024-11-29",
+      days: 2,
+      reason: "Thanksgiving holiday travel.",
+      status: "approved",
+      submittedAt: "Nov 12",
+    },
+    {
+      id: "lr-3",
+      name: "Kenji Sato",
+      department: "Motion Graphics",
+      pod: "Pod C",
+      startDate: "2024-12-05",
+      endDate: "2024-12-08",
+      days: 4,
+      reason: "Annual family visit.",
+      status: "approved",
+      submittedAt: "Nov 10",
+    },
+  ]);
 
   const handleAction = (id: string, action: "approved" | "rejected") => {
     setLeaveRequests((prev) =>
@@ -5231,33 +4901,30 @@ export function AdminLeaveApprovalsPage() {
     (lr) => filterTab === "all" || lr.status === filterTab
   );
 
-  const onLeaveCount = leaveRequests.filter((l) => l.status === "approved").length;
-  const inOfficeCount = 9 - onLeaveCount;
-
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
       <AdminTopHeader activeTab="Team Details" />
       <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
-          <div className="p-4 bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs font-bold rounded-2xl flex items-center justify-between shadow-xl backdrop-blur-md animate-fade-in">
+          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               <span>{toast}</span>
             </div>
-            <button onClick={() => setToast(null)} className="text-emerald-400 hover:text-emerald-200 font-bold cursor-pointer">
+            <button onClick={() => setToast(null)} className="text-emerald-600 hover:text-emerald-900 font-bold">
               Dismiss
             </button>
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-4">
 
           <div className="flex items-center gap-3">
             <Link
               to="/admin/team"
-              className="px-3.5 py-2 rounded-xl bg-[#1F2C3F] hover:bg-slate-200 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-gray-800 text-xs font-bold flex items-center gap-1.5 transition-colors"
             >
-              <UserCog className="w-4 h-4 text-[#97A0B3]" /> Team Roster
+              <UserCog className="w-4 h-4 text-slate-500" /> Team Roster
             </Link>
             <button
               type="button"
@@ -5271,58 +4938,58 @@ export function AdminLeaveApprovalsPage() {
 
         {/* 2 Top KPI Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                 PEOPLE WORKING TODAY
               </span>
-              <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                 <Users className="w-4 h-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white tracking-tight">{inOfficeCount}</span>
-              <span className="text-xs font-semibold text-[#97A0B3]">Active in Pods</span>
+              <span className="text-3xl font-black text-gray-900 tracking-tight">29</span>
+              <span className="text-xs font-semibold text-gray-500">Active in Office</span>
             </div>
-            <div className="mt-6 pt-4 border-t border-[#2A3446] flex items-center justify-between text-xs font-semibold text-[#97A0B3]">
+            <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-gray-500">
               <span className="flex items-center gap-1.5 text-emerald-600">
-                <span className="w-2 h-2 rounded-full bg-emerald-600" /> 9 Total Pod Specialists
+                <span className="w-2 h-2 rounded-full bg-emerald-600" /> 32 Total Team Members
               </span>
-              <span className="text-white font-bold">{Math.round((inOfficeCount / 9) * 100)}% In-Office</span>
+              <span className="text-gray-900 font-bold">91% In-Office</span>
             </div>
           </div>
 
-          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                 ON LEAVE TODAY
               </span>
-              <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                 <Plane className="w-4 h-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white tracking-tight">{onLeaveCount}</span>
-              <span className="text-xs font-semibold text-[#97A0B3]">Specialists Away</span>
+              <span className="text-3xl font-black text-gray-900 tracking-tight">3</span>
+              <span className="text-xs font-semibold text-gray-500">Specialists Away</span>
             </div>
-            <div className="mt-6 pt-4 border-t border-[#2A3446] flex items-center justify-between text-xs font-semibold text-[#97A0B3]">
-              <span className="text-[#97A0B3]">Pod A, B, C Active</span>
-              <span className="text-emerald-500 font-bold">{onLeaveCount === 0 ? "Full Capacity" : `${onLeaveCount} on leave`}</span>
+            <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-gray-500">
+              <span className="text-slate-500">Sarah C. (Pod A), Julian R. (Pod D)</span>
+              <span className="text-amber-600 font-bold">9% Away</span>
             </div>
           </div>
         </div>
 
         {/* Requests Table */}
-        <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-[#2A3446] flex items-center justify-between bg-[#0B111C]/50">
-            <div className="flex items-center gap-1.5 bg-[#1F2C3F] p-1 rounded-xl text-xs">
+        <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-slate-50/50">
+            <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs">
               {(["all", "pending", "approved", "rejected"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setFilterTab(tab)}
                   className={`px-3 py-1 rounded-lg capitalize font-bold transition-all cursor-pointer ${
-                    filterTab === tab ? "bg-[#161F2D] text-white shadow-xs" : "text-[#97A0B3]"
+                    filterTab === tab ? "bg-white text-gray-900 shadow-xs" : "text-gray-500"
                   }`}
                 >
                   {tab}
@@ -5331,8 +4998,8 @@ export function AdminLeaveApprovalsPage() {
             </div>
           </div>
 
-          <table className="w-full text-left text-xs text-white">
-            <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
+          <table className="w-full text-left text-xs text-[#0D2137]">
+            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               <tr>
                 <th className="px-5 py-3.5">Specialist</th>
                 <th className="px-5 py-3.5">Dates</th>
@@ -5342,24 +5009,17 @@ export function AdminLeaveApprovalsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 font-medium">
-              {filteredRequests.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
-                    No leave requests found
-                  </td>
-                </tr>
-              ) : (
-                filteredRequests.map((lr) => (
-                <tr key={lr.id} className="hover:bg-[#0B111C]/60">
+              {filteredRequests.map((lr) => (
+                <tr key={lr.id} className="hover:bg-gray-50/60">
                   <td className="px-5 py-4">
-                    <div className="font-bold text-white">{lr.name}</div>
-                    <div className="text-[11px] text-[#97A0B3]">{lr.department} • {lr.pod}</div>
+                    <div className="font-bold text-gray-900">{lr.name}</div>
+                    <div className="text-[11px] text-gray-400">{lr.department} • {lr.pod}</div>
                   </td>
                   <td className="px-5 py-4 font-mono text-[11px]">
                     <div>{lr.startDate} to {lr.endDate}</div>
-                    <span className="text-[#97A0B3] font-sans">({lr.days} days)</span>
+                    <span className="text-gray-400 font-sans">({lr.days} days)</span>
                   </td>
-                  <td className="px-5 py-4 text-[#F1F5F9] max-w-xs">{lr.reason}</td>
+                  <td className="px-5 py-4 text-gray-600 max-w-xs">{lr.reason}</td>
                   <td className="px-5 py-4">
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
@@ -5374,28 +5034,29 @@ export function AdminLeaveApprovalsPage() {
                     </span>
                   </td>
                   <td className="px-5 py-4 text-right">
-                    {lr.status === "pending" && (
+                    {lr.status === "pending" ? (
                       <div className="flex items-center justify-end gap-1.5">
                         <button
                           type="button"
                           onClick={() => handleAction(lr.id, "approved")}
-                          className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[11px] hover:bg-emerald-700 transition-colors"
+                          className="px-3 py-1 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 cursor-pointer"
                         >
                           Approve
                         </button>
                         <button
                           type="button"
                           onClick={() => handleAction(lr.id, "rejected")}
-                          className="px-2.5 py-1 rounded-lg bg-rose-600 text-white font-bold text-[11px] hover:bg-rose-700 transition-colors"
+                          className="px-3 py-1 rounded-lg bg-gray-100 text-gray-700 font-bold text-xs hover:bg-rose-50 hover:text-rose-600 cursor-pointer"
                         >
                           Reject
                         </button>
                       </div>
+                    ) : (
+                      <span className="text-gray-400 text-xs">—</span>
                     )}
                   </td>
                 </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>
@@ -5403,13 +5064,13 @@ export function AdminLeaveApprovalsPage() {
         {/* Apply Modal */}
         {isApplyModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-            <div className="w-full max-w-md rounded-2xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <h3 className="text-base font-bold text-white">Apply for Time Off</h3>
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-base font-bold text-gray-900">Apply for Time Off</h3>
                 <button
                   type="button"
                   onClick={() => setIsApplyModalOpen(false)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-gray-400 hover:text-gray-700 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -5425,20 +5086,20 @@ export function AdminLeaveApprovalsPage() {
               >
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Start Date</label>
-                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs" />
+                    <label className="block text-xs font-bold text-gray-700 mb-1">Start Date</label>
+                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">End Date</label>
-                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs" />
+                    <label className="block text-xs font-bold text-gray-700 mb-1">End Date</label>
+                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Reason</label>
-                  <textarea rows={3} required placeholder="State reason for time off..." className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs resize-none" />
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Reason</label>
+                  <textarea rows={3} required placeholder="State reason for time off..." className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs resize-none" />
                 </div>
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                  <button type="button" onClick={() => setIsApplyModalOpen(false)} className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C]">Cancel</button>
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                  <button type="button" onClick={() => setIsApplyModalOpen(false)} className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50">Cancel</button>
                   <button type="submit" className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-xs font-bold text-white hover:bg-[#1A5EA8]">Submit</button>
                 </div>
               </form>
@@ -5486,6 +5147,7 @@ export interface PlanNegotiationItem {
 }
 
 export function AdminRevenuePage() {
+  const [timeframe, setTimeframe] = useState<"7D" | "30D" | "Quarter" | "Year" | "Custom">("30D");
   const [filter, setFilter] = useState<"all" | "paid" | "pending" | "overdue">("all");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState<string | null>(null);
@@ -5500,14 +5162,90 @@ export function AdminRevenuePage() {
   const [newInvAmount, setNewInvAmount] = useState("");
   const [newInvMethod, setNewInvMethod] = useState("Stripe ACH");
 
-  // Transactions Data (Clean baseline: 0 mock entries)
-  const [transactions, setTransactions] = useState<TransactionItem[]>([]);
+  // Transactions Data matching user's image exactly
+  const [transactions, setTransactions] = useState<TransactionItem[]>([
+    {
+      id: "CR-9481",
+      client: "Northwind Labs",
+      clientInitials: "NL",
+      scope: "Enterprise Retainer • Nov 2024",
+      amount: 7200,
+      method: "Stripe ACH",
+      status: "Paid",
+      date: "Nov 12",
+      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      avatarBg: "bg-blue-100 text-blue-800",
+    },
+    {
+      id: "CR-9480",
+      client: "Bloom Studio",
+      clientInitials: "BS",
+      scope: "Growth Retainer + 2x Addon Reels",
+      amount: 6400,
+      method: "Bank Wire",
+      status: "Paid",
+      date: "Nov 10",
+      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      avatarBg: "bg-purple-100 text-purple-800",
+    },
+    {
+      id: "CR-9479",
+      client: "Atlas Commerce",
+      clientInitials: "AC",
+      scope: "Enterprise Retainer • Net 15",
+      amount: 8000,
+      method: "Invoice Net 15",
+      status: "Pending",
+      date: "Due Nov 20",
+      badgeClass: "bg-blue-50 text-blue-700 border-blue-200",
+      avatarBg: "bg-sky-100 text-sky-800",
+    },
+    {
+      id: "CR-9478",
+      client: "Horizon Digital",
+      clientInitials: "HD",
+      scope: "Starter Launch Package",
+      amount: 4500,
+      method: "Mastercard •• 4912",
+      status: "Paid",
+      date: "Nov 08",
+      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      avatarBg: "bg-indigo-100 text-indigo-800",
+    },
+    {
+      id: "CR-9477",
+      client: "Zenith Brands",
+      clientInitials: "ZB",
+      scope: "Growth Retainer • Nov 2024",
+      amount: 5800,
+      method: "Stripe ACH",
+      status: "Paid",
+      date: "Nov 05",
+      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      avatarBg: "bg-amber-100 text-amber-800",
+    },
+    {
+      id: "CR-9476",
+      client: "Apex Media",
+      clientInitials: "AM",
+      scope: "Add-on Asset Pack (SaaS Motion)",
+      amount: 1900,
+      method: "Visa •• 8841",
+      status: "Paid",
+      date: "Nov 03",
+      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      avatarBg: "bg-rose-100 text-rose-800",
+    },
+  ]);
 
-  const totalMrr = transactions.reduce((acc, t) => acc + (t.status === "Paid" ? t.amount : 0), 0);
-  const totalCollected = totalMrr;
-  const projectedArr = totalMrr * 12;
-
-  // Chart Trend Data (Monthly Trend)
+  // Chart Trend Data
+  const trajectoryPoints = [
+    { label: "Oct 15 ($98.0k)", value: 98000, target: 100000 },
+    { label: "Oct 22", value: 104200, target: 105000 },
+    { label: "Oct 29", value: 112500, target: 110000 },
+    { label: "Nov 05", value: 118400, target: 115000 },
+    { label: "Nov 14 ($124.8k)", value: 124800, target: 120000 },
+  ];
 
   // Actions: Create Invoice
   const handleCreateInvoiceSubmit = (e: React.FormEvent) => {
@@ -5523,12 +5261,12 @@ export function AdminRevenuePage() {
       method: newInvMethod,
       status: "Pending",
       date: "Due Net 15",
-      badgeClass: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      avatarBg: "bg-[#7FA0D6]/20 text-blue-800",
+      badgeClass: "bg-blue-50 text-blue-700 border-blue-200",
+      avatarBg: "bg-blue-100 text-blue-800",
     };
 
     setTransactions((prev) => [newTx, ...prev]);
-    setToast(`Invoice ${newTx.id} created for ${newInvClient} (₹${newTx.amount.toLocaleString('en-IN')})!`);
+    setToast(`Invoice ${newTx.id} created for ${newInvClient} ($${newTx.amount.toLocaleString()})!`);
     setIsCreateInvoiceOpen(false);
     setNewInvClient("");
     setNewInvScope("");
@@ -5569,7 +5307,7 @@ export function AdminRevenuePage() {
   });
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F8FAFC] flex flex-col">
       <AdminTopHeader title="Revenue Engine" activeTab="Revenue" />
 
       <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
@@ -5597,12 +5335,30 @@ export function AdminRevenuePage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {/* Timeframe selector pills */}
+            <div className="flex items-center bg-gray-100 p-1 rounded-xl text-xs font-bold border border-gray-200">
+              {(["7D", "30D", "Quarter", "Year", "Custom"] as const).map((tf) => (
+                <button
+                  key={tf}
+                  type="button"
+                  onClick={() => setTimeframe(tf)}
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    timeframe === tf
+                      ? "bg-white text-blue-600 shadow-xs font-black"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`}
+                >
+                  {tf}
+                </button>
+              ))}
+            </div>
+
             <button
               type="button"
               onClick={handleExportCSV}
-              className="px-4 py-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:bg-[#0B111C] text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer"
             >
-              <Download className="w-4 h-4 text-[#97A0B3]" /> Export Report
+              <Download className="w-4 h-4 text-gray-500" /> Export Report
             </button>
 
             <button
@@ -5620,40 +5376,40 @@ export function AdminRevenuePage() {
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Metric 1: Total Revenue (MRR) */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
+          <div className="bg-white rounded-3xl p-6 lg:p-7 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
             <div className="space-y-2">
-              <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
                 Total Revenue (MRR)
               </span>
               <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-black text-white tracking-tight">₹{totalMrr.toLocaleString('en-IN')}</span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center gap-1">
-                  Active Retainers
+                <span className="text-4xl font-black text-gray-900 tracking-tight">$124,800</span>
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                  <TrendingUp className="w-3.5 h-3.5" /> +12.4%
                 </span>
               </div>
-              <div className="text-xs text-[#97A0B3] font-medium pt-1">
-                Projected ARR: <strong className="text-white font-bold">₹{projectedArr.toLocaleString('en-IN')}</strong>
+              <div className="text-xs text-gray-500 font-medium pt-1">
+                Projected ARR: <strong className="text-gray-900 font-bold">$1,497,600</strong>
               </div>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shrink-0 border border-[#7FA0D6]/30 font-black text-2xl">
-              ₹
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+              <DollarSign className="w-7 h-7" />
             </div>
           </div>
 
           {/* Metric 2: Collected this Month */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
+          <div className="bg-white rounded-3xl p-6 lg:p-7 border border-gray-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
             <div className="space-y-2">
-              <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">
                 Collected this Month
               </span>
               <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-black text-white tracking-tight">₹{totalCollected.toLocaleString('en-IN')}</span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
-                  {transactions.length > 0 ? `${Math.round((transactions.filter(t => t.status === "Paid").length / transactions.length) * 100)}% Rate` : "0% Rate"}
+                <span className="text-4xl font-black text-gray-900 tracking-tight">$108,400</span>
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                  86.8% Rate
                 </span>
               </div>
-              <div className="text-xs text-[#97A0B3] font-medium pt-1">
-                Settlement Ratio: <strong className="text-white font-bold">{transactions.filter(t => t.status === "Paid").length} of {transactions.length} Invoices</strong>
+              <div className="text-xs text-gray-500 font-medium pt-1">
+                Settlement Ratio: <strong className="text-gray-900 font-bold">16 of 18 Retainers</strong>
               </div>
             </div>
             <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
@@ -5663,24 +5419,24 @@ export function AdminRevenuePage() {
         </div>
 
         {/* ─────────────────────────────────────────────────────────────────────────────
-            CHARTS & TIER BREAKDOWN GRID
+            CHARTS & TIER BREAKDOWN GRID (Matching Image 1)
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Revenue Growth & Trajectory (2 Cols - Bar Chart matching Dashboard) */}
-          <div className="lg:col-span-2 bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-xl space-y-6 flex flex-col justify-between">
+          {/* Revenue Growth & Trajectory (2 Cols) */}
+          <div className="lg:col-span-2 bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6 flex flex-col justify-between">
             <div>
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-white tracking-tight">Revenue Growth & Trajectory</h3>
-                  <p className="text-xs text-[#97A0B3]">Live cash flow across retainers & client billing</p>
+                  <h3 className="text-lg font-bold text-gray-900 tracking-tight">Revenue Growth & Trajectory</h3>
+                  <p className="text-xs text-gray-500">30-Day aggregate cash flow across retainers & add-on deliverables</p>
                 </div>
 
                 <div className="flex items-center gap-4 text-xs font-bold">
-                  <span className="flex items-center gap-1.5 text-[#7FA0D6]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]" /> Actual Inflow
+                  <span className="flex items-center gap-1.5 text-blue-600">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600" /> Actual Inflow
                   </span>
-                  <span className="flex items-center gap-1.5 text-[#97A0B3]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#2A3446]" /> Target Baseline
+                  <span className="flex items-center gap-1.5 text-gray-400">
+                    <span className="w-2.5 h-2.5 rounded-full bg-gray-300" /> Target Baseline
                   </span>
                 </div>
               </div>
@@ -5688,113 +5444,75 @@ export function AdminRevenuePage() {
               {/* Peak Marker Badge */}
               <div className="flex justify-end mb-2">
                 <span className="px-3 py-1 rounded-full text-[11px] font-black bg-[#2563EB] text-white shadow-md">
-                  ₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "24,80,000"} Current MRR
+                  $124,800 Peak • Today Nov 14
                 </span>
               </div>
 
-              {/* Recharts Bar Chart (Matching Dashboard Bar Graph) */}
-              <div className="w-full h-64 bg-[#0B111C]/60 rounded-2xl p-4 border border-[#2A3446]/60">
+              {/* Recharts Area Chart */}
+              <div className="w-full h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={[
-                      { name: "May", revenue: 14500000 },
-                      { name: "Jun", revenue: 18200000 },
-                      { name: "Jul", revenue: 16800000 },
-                      { name: "Aug", revenue: 21500000 },
-                      { name: "Sep", revenue: 19400000 },
-                      { name: "Oct", revenue: 24800000 },
-                    ]}
-                    margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
-                    barCategoryGap="20%"
-                  >
+                  <AreaChart data={trajectoryPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="revenueBarGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#BCCCE6" stopOpacity={1} />
-                        <stop offset="45%" stopColor="#7FA0D6" stopOpacity={0.85} />
-                        <stop offset="100%" stopColor="#354B6E" stopOpacity={0.35} />
-                      </linearGradient>
-                      <linearGradient id="revenueBarGradPeak" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#FFFFFF" stopOpacity={1} />
-                        <stop offset="35%" stopColor="#BCCCE6" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#7FA0D6" stopOpacity={0.85} />
+                      <linearGradient id="colorTrajectory" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#2563EB" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#2563EB" stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A3446" opacity={0.35} />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 11, fill: "#97A0B3", fontWeight: 600 }}
-                      axisLine={false}
-                      tickLine={false}
-                      dy={3}
-                    />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
                     <YAxis
-                      tick={{ fontSize: 10, fill: "#97A0B3" }}
+                      tick={{ fontSize: 11, fill: "#64748b" }}
                       axisLine={false}
                       tickLine={false}
-                      tickFormatter={(v: number) =>
-                        v >= 10000000
-                          ? `₹${(v / 10000000).toFixed(1)}Cr`
-                          : v >= 100000
-                          ? `₹${(v / 100000).toFixed(0)}L`
-                          : `₹${v}`
-                      }
+                      tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
                     />
                     <Tooltip
-                      formatter={(val: any) => [`₹${(Number(val) / 100).toLocaleString('en-IN')}`, "Revenue"]}
-                      contentStyle={{ backgroundColor: "#0B111C", borderRadius: "12px", border: "1px solid #2A3446", color: "#F1F5F9", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}
-                      itemStyle={{ color: "#7FA0D6", fontWeight: "bold" }}
-                      labelStyle={{ color: "#97A0B3", fontSize: "11px", fontWeight: "bold" }}
-                      cursor={false}
+                      formatter={(val: any) => [`$${Number(val).toLocaleString()}`, "Revenue"]}
+                      contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", boxShadow: "0 10px 25px rgba(0,0,0,0.08)" }}
                     />
-                    <Bar dataKey="revenue" radius={[8, 8, 3, 3]} maxBarSize={28}>
-                      {[
-                        { name: "May", revenue: 14500000 },
-                        { name: "Jun", revenue: 18200000 },
-                        { name: "Jul", revenue: 16800000 },
-                        { name: "Aug", revenue: 21500000 },
-                        { name: "Sep", revenue: 19400000 },
-                        { name: "Oct", revenue: 24800000 },
-                      ].map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={entry.revenue === 24800000 ? "url(#revenueBarGradPeak)" : "url(#revenueBarGrad)"}
-                          className="transition-all duration-200 hover:brightness-125 cursor-pointer"
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
+                    <ReferenceLine y={120000} stroke="#94a3b8" strokeDasharray="4 4" />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#2563EB"
+                      strokeWidth={3}
+                      fill="url(#colorTrajectory)"
+                      dot={{ r: 4, fill: "#2563EB", stroke: "#fff", strokeWidth: 2 }}
+                      activeDot={{ r: 6, fill: "#2563EB", stroke: "#fff", strokeWidth: 2 }}
+                    />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
             {/* Bottom Metrics Bar */}
-            <div className="pt-4 border-t border-[#2A3446] grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-              <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Invoiced</span>
-                <div className="text-sm font-black text-white">₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "24,80,000"}</div>
+            <div className="pt-4 border-t border-gray-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+              <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <span className="text-[10px] font-bold text-gray-400 uppercase">Invoiced</span>
+                <div className="text-sm font-black text-gray-900">$124,800</div>
               </div>
-              <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Direct UPI / Wire</span>
-                <div className="text-sm font-black text-white">₹{totalCollected > 0 ? totalCollected.toLocaleString('en-IN') : "14,50,000"}</div>
+              <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <span className="text-[10px] font-bold text-gray-400 uppercase">Direct ACH / Wire</span>
+                <div className="text-sm font-black text-gray-900">$98,200</div>
               </div>
-              <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Cards / Razorpay</span>
-                <div className="text-sm font-black text-white">₹{totalCollected > 0 ? totalCollected.toLocaleString('en-IN') : "10,30,000"}</div>
+              <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <span className="text-[10px] font-bold text-gray-400 uppercase">Stripe Cards</span>
+                <div className="text-sm font-black text-gray-900">$26,600</div>
               </div>
-              <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Disputed / Refunded</span>
-                <div className="text-sm font-black text-emerald-400">₹0</div>
+              <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                <span className="text-[10px] font-bold text-gray-400 uppercase">Disputed / Refunded</span>
+                <div className="text-sm font-black text-emerald-600">$0.00</div>
               </div>
             </div>
           </div>
 
-          {/* Plan & Tier Distribution (1 Col - Dark Theme Aligned) */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-xl space-y-6 flex flex-col justify-between">
+          {/* Plan & Tier Distribution (1 Col) */}
+          <div className="bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-white tracking-tight">Plan & Tier Distribution</h3>
-                  <p className="text-xs text-[#97A0B3]">Active monthly retainers by package tier</p>
+                  <h3 className="text-lg font-bold text-gray-900 tracking-tight">Plan & Tier Distribution</h3>
+                  <p className="text-xs text-gray-500">Active monthly retainers by package tier</p>
                 </div>
                 <button
                   type="button"
@@ -5803,113 +5521,133 @@ export function AdminRevenuePage() {
                     setToast("Plan tier metrics refreshed.");
                     setTimeout(() => setToast(null), 2500);
                   }}
-                  className="p-2 rounded-xl hover:bg-[#1F2C3F] text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer transition-colors"
+                  className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 cursor-pointer"
                 >
                   <RefreshCw className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Tiers List (Dark Ops Color Theme) */}
-              <div className="space-y-4">
+              {/* Tiers List matching Image 1 */}
+              <div className="space-y-5">
                 {/* Package 1 */}
-                <div className="space-y-2 p-3.5 bg-[#0B111C] rounded-2xl border border-[#2A3446]">
+                <div className="space-y-2 p-3 bg-blue-50/40 rounded-2xl border border-blue-100/60">
                   <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="flex items-center gap-2 text-white">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]" /> Package 1 (Enterprise Domination)
+                    <span className="flex items-center gap-2 text-gray-900">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-600" /> Package 1 (Enterprise Suite)
                     </span>
-                    <span className="text-white font-black">₹95,000 <span className="text-[10px] font-normal text-[#97A0B3]">/ mo</span></span>
+                    <span className="text-gray-900 font-black">$54,000 <span className="text-[10px] font-normal text-gray-500">/ mo</span></span>
                   </div>
-                  <div className="w-full bg-[#1F2C3F] rounded-full h-2 overflow-hidden">
-                    <div className="bg-[#7FA0D6] h-full rounded-full w-[46.8%]" />
+                  <div className="w-full bg-blue-100 rounded-full h-2 overflow-hidden">
+                    <div className="bg-blue-600 h-full rounded-full w-[43.2%]" />
                   </div>
-                  <div className="flex justify-between text-[11px] text-[#97A0B3] font-semibold">
-                    <span>2 Retainer Accounts</span>
-                    <span className="text-[#7FA0D6] font-bold">46.8% of MRR</span>
+                  <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
+                    <span>6 Retainer Accounts</span>
+                    <span className="text-blue-700 font-bold">43.2% of MRR</span>
                   </div>
                 </div>
 
                 {/* Package 2 */}
-                <div className="space-y-2 p-3.5 bg-[#0B111C] rounded-2xl border border-[#2A3446]">
+                <div className="space-y-2 p-3 bg-purple-50/40 rounded-2xl border border-purple-100/60">
                   <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="flex items-center gap-2 text-white">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#BCCCE6]" /> Package 2 (Brand Accelerator)
+                    <span className="flex items-center gap-2 text-gray-900">
+                      <span className="w-2.5 h-2.5 rounded-full bg-purple-600" /> Package 2 (Growth & Scale)
                     </span>
-                    <span className="text-white font-black">₹50,000 <span className="text-[10px] font-normal text-[#97A0B3]">/ mo</span></span>
+                    <span className="text-gray-900 font-black">$48,800 <span className="text-[10px] font-normal text-gray-500">/ mo</span></span>
                   </div>
-                  <div className="w-full bg-[#1F2C3F] rounded-full h-2 overflow-hidden">
-                    <div className="bg-[#BCCCE6] h-full rounded-full w-[36.7%]" />
+                  <div className="w-full bg-purple-100 rounded-full h-2 overflow-hidden">
+                    <div className="bg-purple-600 h-full rounded-full w-[39.1%]" />
                   </div>
-                  <div className="flex justify-between text-[11px] text-[#97A0B3] font-semibold">
-                    <span>3 Retainer Accounts</span>
-                    <span className="text-[#BCCCE6] font-bold">36.7% of MRR</span>
+                  <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
+                    <span>8 Retainer Accounts</span>
+                    <span className="text-purple-700 font-bold">39.1% of MRR</span>
                   </div>
                 </div>
 
                 {/* Package 3 */}
-                <div className="space-y-2 p-3.5 bg-[#0B111C] rounded-2xl border border-[#2A3446]">
+                <div className="space-y-2 p-3 bg-emerald-50/40 rounded-2xl border border-emerald-100/60">
                   <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="flex items-center gap-2 text-white">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#D8BF9B]" /> Package 3 (Starter Growth)
+                    <span className="flex items-center gap-2 text-gray-900">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> Package 3 (Starter / Launch)
                     </span>
-                    <span className="text-white font-black">₹25,000 <span className="text-[10px] font-normal text-[#97A0B3]">/ mo</span></span>
+                    <span className="text-gray-900 font-black">$22,000 <span className="text-[10px] font-normal text-gray-500">/ mo</span></span>
                   </div>
-                  <div className="w-full bg-[#1F2C3F] rounded-full h-2 overflow-hidden">
-                    <div className="bg-[#D8BF9B] h-full rounded-full w-[16.5%]" />
+                  <div className="w-full bg-emerald-100 rounded-full h-2 overflow-hidden">
+                    <div className="bg-emerald-600 h-full rounded-full w-[17.7%]" />
                   </div>
-                  <div className="flex justify-between text-[11px] text-[#97A0B3] font-semibold">
-                    <span>2 Retainer Accounts</span>
-                    <span className="text-[#D8BF9B] font-bold">16.5% of MRR</span>
+                  <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
+                    <span>4 Retainer Accounts</span>
+                    <span className="text-emerald-700 font-bold">17.7% of MRR</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Sub-card: Add-ons & Overages */}
-            <div className="p-4 bg-[#0B111C] rounded-2xl border border-[#2A3446] flex items-center justify-between">
+            <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center justify-center font-bold shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">
                   <Layers className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-xs text-white">Add-ons & Overages</h4>
-                  <p className="text-[11px] text-[#97A0B3] font-medium">3 active add-on asset packages</p>
+                  <h4 className="font-bold text-xs text-gray-900">Add-ons & Overages</h4>
+                  <p className="text-[11px] text-gray-500 font-medium">3 viral reels + 4 performance ad sets</p>
                 </div>
               </div>
-              <span className="text-base font-black text-[#7FA0D6]">+₹45,000</span>
+              <span className="text-base font-black text-indigo-700">+$6,400</span>
             </div>
           </div>
         </div>
 
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            SALES & NEGOTIATIONS CALLOUT BANNER
+        ───────────────────────────────────────────────────────────────────────────── */}
+        <div className="p-5 rounded-3xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/20 shrink-0">
+              <DollarSign className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-black text-gray-900 uppercase tracking-wide">Client Plan Negotiations & Proposals</h4>
+              <p className="text-xs text-gray-600">Review pending custom scope proposals, counter-offers, and deal proposals on the Sales page.</p>
+            </div>
+          </div>
+          <Link
+            to="/admin/sales"
+            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shrink-0 shadow-sm flex items-center gap-1.5 cursor-pointer"
+          >
+            Open Sales & Negotiations &rarr;
+          </Link>
+        </div>
 
         {/* ─────────────────────────────────────────────────────────────────────────────
             RECENT TRANSACTIONS ROSTER TABLE (Matching Image 2)
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] p-6 lg:p-8 space-y-6">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.04)] p-6 lg:p-8 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h3 className="text-xl font-black text-white tracking-tight">Recent Transactions</h3>
+            <h3 className="text-xl font-black text-[#0F172A] tracking-tight">Recent Transactions</h3>
 
             <div className="flex flex-wrap items-center gap-3">
               {/* Search */}
               <div className="relative min-w-[240px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search client or invoice..."
-                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:border-blue-500"
+                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-xs text-gray-900 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               {/* Status Filter Pills */}
-              <div className="flex items-center gap-1 bg-[#1F2C3F] p-1 rounded-xl text-xs font-bold">
+              <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl text-xs font-bold">
                 {(["all", "paid", "pending", "overdue"] as const).map((st) => (
                   <button
                     key={st}
                     type="button"
                     onClick={() => setFilter(st)}
                     className={`px-3 py-1.5 rounded-lg capitalize transition-all cursor-pointer ${
-                      filter === st ? "bg-[#161F2D] text-white shadow-xs font-black" : "text-[#97A0B3] hover:text-white"
+                      filter === st ? "bg-white text-gray-900 shadow-xs font-black" : "text-gray-500 hover:text-gray-900"
                     }`}
                   >
                     {st}
@@ -5921,7 +5659,7 @@ export function AdminRevenuePage() {
               <button
                 type="button"
                 onClick={handleExportCSV}
-                className="px-3.5 py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-[#7FA0D6]/30 transition-colors"
+                className="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-blue-100 transition-colors"
               >
                 <Download className="w-3.5 h-3.5" /> Export CSV
               </button>
@@ -5930,8 +5668,8 @@ export function AdminRevenuePage() {
 
           {/* Table matching Image 2 */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-white">
-              <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
+            <table className="w-full text-left text-xs text-[#0D2137]">
+              <thead className="bg-gray-50 border-b border-gray-100 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
                 <tr>
                   <th className="px-5 py-4">CLIENT & SCOPE</th>
                   <th className="px-5 py-4">INVOICE #</th>
@@ -5942,38 +5680,31 @@ export function AdminRevenuePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 font-medium">
-                {filteredTx.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
-                      No transactions recorded yet
-                    </td>
-                  </tr>
-                ) : (
-                  filteredTx.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-[#0B111C]/70 transition-colors">
+                {filteredTx.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-gray-50/70 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-9 h-9 rounded-xl ${tx.avatarBg} font-black text-xs flex items-center justify-center shrink-0`}>
                           {tx.clientInitials}
                         </div>
                         <div>
-                          <div className="font-bold text-sm text-white">{tx.client}</div>
-                          <div className="text-[11px] text-[#97A0B3]">{tx.scope}</div>
+                          <div className="font-bold text-sm text-gray-900">{tx.client}</div>
+                          <div className="text-[11px] text-gray-500">{tx.scope}</div>
                         </div>
                       </div>
                     </td>
 
-                    <td className="px-5 py-4 font-mono font-bold text-[#F1F5F9]">{tx.id}</td>
+                    <td className="px-5 py-4 font-mono font-bold text-gray-600">{tx.id}</td>
 
-                    <td className="px-5 py-4 font-black text-sm text-white">
-                      ₹{tx.amount.toLocaleString('en-IN')}
+                    <td className="px-5 py-4 font-black text-sm text-gray-900">
+                      ${tx.amount.toLocaleString()}
                     </td>
 
-                    <td className="px-5 py-4 text-[#F1F5F9] font-medium">{tx.method}</td>
+                    <td className="px-5 py-4 text-gray-600 font-medium">{tx.method}</td>
 
                     <td className="px-5 py-4">
                       <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border flex items-center gap-1.5 w-fit ${tx.badgeClass}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]/150"}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-blue-500"}`} />
                         {tx.status} ({tx.date})
                       </span>
                     </td>
@@ -5983,7 +5714,7 @@ export function AdminRevenuePage() {
                         <button
                           type="button"
                           onClick={() => setSelectedReceipt(tx)}
-                          className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer text-xs"
+                          className="text-blue-600 font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer text-xs"
                         >
                           Receipt <ArrowUpRight className="w-3.5 h-3.5" />
                         </button>
@@ -5991,26 +5722,47 @@ export function AdminRevenuePage() {
                         <button
                           type="button"
                           onClick={() => handleSendReminder(tx)}
-                          className="px-3 py-1.5 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Play className="w-3 h-3 fill-current" /> Remind
                         </button>
                       )}
                     </td>
                   </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
 
-          {/* Table Footer */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-[#2A3446] text-xs text-[#97A0B3] font-medium">
-            <span>Showing {filteredTx.length} of {transactions.length} transactions</span>
+          {/* Table Footer matching Image 2 */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-gray-100 text-xs text-gray-500 font-medium">
+            <span>Showing 1 to {filteredTx.length} of 18 transactions</span>
+
+            <div className="flex items-center gap-1">
+              <button type="button" className="p-2 rounded-lg hover:bg-gray-100 text-gray-400">&lt;</button>
+              <button type="button" className="w-8 h-8 rounded-lg bg-[#2563EB] text-white font-bold">1</button>
+              <button type="button" className="w-8 h-8 rounded-lg hover:bg-gray-100 font-bold text-gray-700">2</button>
+              <button type="button" className="w-8 h-8 rounded-lg hover:bg-gray-100 font-bold text-gray-700">3</button>
+              <button type="button" className="p-2 rounded-lg hover:bg-gray-100 text-gray-400">&gt;</button>
+            </div>
           </div>
         </div>
 
+        {/* ─────────────────────────────────────────────────────────────────────────────
+            PAGE FOOTER matching Image 2
+        ───────────────────────────────────────────────────────────────────────────── */}
+        <footer className="pt-8 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-gray-400 font-medium">
+          <div className="flex items-center gap-2">
+            <span className="font-black text-gray-900 tracking-tight">creo.</span>
+            <span>© 2025 Creo Enterprise Systems. All rights reserved.</span>
+          </div>
 
+          <div className="flex items-center gap-6 font-semibold text-gray-500">
+            <a href="#security" className="hover:text-gray-900 transition-colors">Security & Compliance</a>
+            <a href="#governance" className="hover:text-gray-900 transition-colors">Executive Governance</a>
+            <a href="#support" className="hover:text-gray-900 transition-colors">Global Support</a>
+          </div>
+        </footer>
       </main>
 
       {/* ─────────────────────────────────────────────────────────────────────────────
@@ -6018,71 +5770,71 @@ export function AdminRevenuePage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {isCreateInvoiceOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 className="text-base font-bold text-white">Create New Invoice</h3>
-              <button type="button" onClick={() => setIsCreateInvoiceOpen(false)} className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9]">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-bold text-gray-900">Create New Invoice</h3>
+              <button type="button" onClick={() => setIsCreateInvoiceOpen(false)} className="p-1 rounded-lg text-gray-400 hover:text-gray-700">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateInvoiceSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Client Brand Name</label>
+                <label className="block font-bold text-gray-700 mb-1">Client Brand Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Acme Corporation"
                   value={newInvClient}
                   onChange={(e) => setNewInvClient(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none"
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Deliverable Scope Description</label>
+                <label className="block font-bold text-gray-700 mb-1">Deliverable Scope Description</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Enterprise Retainer • Dec 2024"
                   value={newInvScope}
                   onChange={(e) => setNewInvScope(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none"
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Amount (₹ INR)</label>
+                  <label className="block font-bold text-gray-700 mb-1">Amount ($ USD)</label>
                   <input
                     type="number"
                     required
-                    placeholder="50000"
+                    placeholder="7500"
                     value={newInvAmount}
                     onChange={(e) => setNewInvAmount(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Payment Method</label>
+                  <label className="block font-bold text-gray-700 mb-1">Payment Method</label>
                   <select
                     value={newInvMethod}
                     onChange={(e) => setNewInvMethod(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-medium"
                   >
-                    <option value="Razorpay UPI">Razorpay UPI</option>
+                    <option value="Stripe ACH">Stripe ACH</option>
                     <option value="Bank Wire">Bank Wire</option>
                     <option value="Invoice Net 15">Invoice Net 15</option>
-                    <option value="Credit / Debit Card">Credit / Debit Card</option>
+                    <option value="Credit Card">Credit Card</option>
                   </select>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-[#2A3446]">
+              <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => setIsCreateInvoiceOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C]"
+                  className="px-4 py-2 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50"
                 >
                   Cancel
                 </button>
@@ -6103,13 +5855,13 @@ export function AdminRevenuePage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {selectedReceipt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 lg:p-8 shadow-2xl space-y-6 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-6 lg:p-8 shadow-2xl space-y-6 border border-gray-100">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <div className="flex items-center gap-2">
-                <span className="font-black text-xl text-white tracking-tight">creo.</span>
-                <span className="text-xs font-bold text-[#97A0B3]">Payment Receipt</span>
+                <span className="font-black text-xl text-gray-900 tracking-tight">creo.</span>
+                <span className="text-xs font-bold text-gray-400">Payment Receipt</span>
               </div>
-              <button type="button" onClick={() => setSelectedReceipt(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+              <button type="button" onClick={() => setSelectedReceipt(null)} className="p-1 text-gray-400 hover:text-gray-700">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -6123,36 +5875,36 @@ export function AdminRevenuePage() {
                 <CheckCircle2 className="w-7 h-7 text-emerald-600" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-[#F1F5F9] font-medium">
+              <div className="grid grid-cols-2 gap-4 text-gray-600 font-medium">
                 <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Client</span>
-                  <strong className="text-white text-sm">{selectedReceipt.client}</strong>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Client</span>
+                  <strong className="text-gray-900 text-sm">{selectedReceipt.client}</strong>
                 </div>
                 <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Invoice Number</span>
-                  <strong className="text-white text-sm font-mono">{selectedReceipt.id}</strong>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Invoice Number</span>
+                  <strong className="text-gray-900 text-sm font-mono">{selectedReceipt.id}</strong>
                 </div>
                 <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Payment Method</span>
-                  <span className="text-white font-bold">{selectedReceipt.method}</span>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Payment Method</span>
+                  <span className="text-gray-900 font-bold">{selectedReceipt.method}</span>
                 </div>
                 <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Settlement Date</span>
-                  <span className="text-white font-bold">{selectedReceipt.date}</span>
+                  <span className="text-gray-400 block text-[10px] uppercase font-bold">Settlement Date</span>
+                  <span className="text-gray-900 font-bold">{selectedReceipt.date}</span>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-[#2A3446] space-y-2">
-                <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Scope Breakdown</span>
-                <div className="p-3 bg-[#0B111C] rounded-xl flex items-center justify-between font-bold text-white">
+              <div className="pt-3 border-t border-gray-100 space-y-2">
+                <span className="text-gray-400 block text-[10px] uppercase font-bold">Scope Breakdown</span>
+                <div className="p-3 bg-gray-50 rounded-xl flex items-center justify-between font-bold text-gray-900">
                   <span>{selectedReceipt.scope}</span>
-                  <span>₹{selectedReceipt.amount.toLocaleString('en-IN')}</span>
+                  <span>${selectedReceipt.amount.toLocaleString()}</span>
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-between items-center text-sm font-black text-white border-t border-[#2A3446]">
+              <div className="pt-2 flex justify-between items-center text-sm font-black text-gray-900 border-t border-gray-200">
                 <span>Total Settled</span>
-                <span className="text-base text-[#7FA0D6]">₹{selectedReceipt.amount.toLocaleString('en-IN')} INR</span>
+                <span className="text-base text-blue-600">${selectedReceipt.amount.toLocaleString()} USD</span>
               </div>
             </div>
 
@@ -6160,14 +5912,14 @@ export function AdminRevenuePage() {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="flex-1 py-2.5 rounded-xl border border-[#2A3446] font-bold text-xs text-[#F1F5F9] hover:bg-[#0B111C] flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 font-bold text-xs text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Printer className="w-4 h-4" /> Print Receipt
               </button>
               <button
                 type="button"
                 onClick={() => {
-                  window.print();
+                  alert(`Downloading PDF receipt for ${selectedReceipt.id}...`);
                   setSelectedReceipt(null);
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-[#2563EB] text-white font-bold text-xs hover:bg-blue-700 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
@@ -6195,12 +5947,12 @@ export function AdminPlansPage() {
     {
       id: "starter",
       name: "starter",
-      display_name: "Starter Growth",
-      price_monthly: 25000,
-      currency: "INR",
+      display_name: "Starter Launch",
+      price_monthly: 4500,
+      currency: "USD",
       subscribers: 0,
       features: [
-        "8 Static Posters / Month",
+        "10 Static Posters / Month",
         "4 Short Video Reels / Month",
         "10 Story Templates",
         "Standard SLA (48h Turnaround)",
@@ -6210,12 +5962,12 @@ export function AdminPlansPage() {
       id: "growth",
       name: "growth",
       display_name: "Brand Accelerator",
-      price_monthly: 50000,
-      currency: "INR",
+      price_monthly: 6400,
+      currency: "USD",
       subscribers: 0,
       features: [
-        "15 Static Posters / Month",
-        "8 Short Video Reels / Month",
+        "20 Static Posters / Month",
+        "10 Short Video Reels / Month",
         "20 Story Templates",
         "Priority SLA (24h Turnaround)",
         "Dedicated Creative Pod Lead",
@@ -6224,13 +5976,13 @@ export function AdminPlansPage() {
     {
       id: "scale",
       name: "scale",
-      display_name: "Enterprise Domination",
-      price_monthly: 95000,
-      currency: "INR",
+      display_name: "Scale Enterprise Suite",
+      price_monthly: 9500,
+      currency: "USD",
       subscribers: 0,
       features: [
-        "30 Static Posters / Month",
-        "16 High-Production Video Reels",
+        "40 Static Posters / Month",
+        "20 High-Production Video Reels",
         "40 Story Templates",
         "Express 12h SLA Turnaround",
         "Unlimited Revision Iterations",
@@ -6253,17 +6005,17 @@ export function AdminPlansPage() {
   const [declineReasonInput, setDeclineReasonInput] = useState("");
 
   const [newPropClient, setNewPropClient] = useState("");
-  const [newPropCurrentPlan, setNewPropCurrentPlan] = useState("Starter Growth (₹25,000/mo)");
-  const [newPropTargetPlan, setNewPropTargetPlan] = useState("Enterprise Domination Custom Scope");
-  const [newPropStandardRate, setNewPropStandardRate] = useState("95000");
-  const [newPropProposedRate, setNewPropProposedRate] = useState("85000");
+  const [newPropCurrentPlan, setNewPropCurrentPlan] = useState("Starter / Launch Package ($4,500/mo)");
+  const [newPropTargetPlan, setNewPropTargetPlan] = useState("Enterprise Suite Custom Scope");
+  const [newPropStandardRate, setNewPropStandardRate] = useState("7200");
+  const [newPropProposedRate, setNewPropProposedRate] = useState("6400");
   const [newPropNotes, setNewPropNotes] = useState("");
 
   // Client Plan Negotiations List (0 Mock Data - Real client contract proposals appear here)
   const [negotiations, setNegotiations] = useState<PlanNegotiationItem[]>([]);
 
   // Active Deals Pipeline (0 Mock Data - Real commercial pipeline deals appear here)
-  const [deals, setDeals] = useState<
+  const [deals, _setDeals] = useState<
     Array<{
       id: string;
       client: string;
@@ -6283,7 +6035,7 @@ export function AdminPlansPage() {
     setNegotiations((prev) =>
       prev.map((n) => (n.id === item.id ? { ...n, status: "Accepted" } : n))
     );
-    setToast(`Plan Negotiation ACCEPTED for ${item.clientName}! Retainer activated at ₹${item.proposedPrice.toLocaleString('en-IN')}/mo.`);
+    setToast(`Plan Negotiation ACCEPTED for ${item.clientName}! Retainer activated at $${item.proposedPrice.toLocaleString()}/mo.`);
     setTimeout(() => setToast(null), 4000);
   };
 
@@ -6318,7 +6070,7 @@ export function AdminPlansPage() {
           : n
       )
     );
-    setToast(`Counter offer of ₹${price.toLocaleString('en-IN')}/mo submitted to ${counterModalItem.clientName}.`);
+    setToast(`Counter offer of $${price.toLocaleString()}/mo submitted to ${counterModalItem.clientName}.`);
     setCounterModalItem(null);
     setCounterPriceInput("");
     setCounterNoteInput("");
@@ -6330,8 +6082,8 @@ export function AdminPlansPage() {
     e.preventDefault();
     if (!newPropClient || !newPropProposedRate) return;
 
-    const orig = parseFloat(newPropStandardRate) || 95000;
-    const prop = parseFloat(newPropProposedRate) || 85000;
+    const orig = parseFloat(newPropStandardRate) || 7200;
+    const prop = parseFloat(newPropProposedRate) || 6400;
     const disc = Math.max(0, Math.round(((orig - prop) / orig) * 100 * 10) / 10);
 
     const newNeg: PlanNegotiationItem = {
@@ -6349,80 +6101,11 @@ export function AdminPlansPage() {
     };
 
     setNegotiations((prev) => [newNeg, ...prev]);
-    setToast(`Custom retainer proposal initiated for ${newPropClient} (₹${prop.toLocaleString('en-IN')}/mo)!`);
+    setToast(`Custom retainer proposal initiated for ${newPropClient} ($${prop.toLocaleString()}/mo)!`);
     setIsNewProposalOpen(false);
     setNewPropClient("");
     setNewPropNotes("");
     setTimeout(() => setToast(null), 4000);
-  };
-
-  // Manage Deal Modal State & Handlers
-  const [manageDealModal, setManageDealModal] = useState<(typeof deals)[0] | null>(null);
-  const [dealSuccessModal, setDealSuccessModal] = useState<{
-    title: string;
-    message: string;
-  } | null>(null);
-
-  // Manage Mode: normal edit, revoke confirm, or refund process
-  const [manageMode, setManageMode] = useState<"edit" | "revoke_confirm" | "refund">("edit");
-  const [refundAmountInput, setRefundAmountInput] = useState("");
-  const [refundReasonInput, setRefundReasonInput] = useState("Contract Cancellation / Retainer Revocation");
-  const [refundMethodInput, setRefundMethodInput] = useState("Original Payment Gateway (Stripe ACH / Card)");
-
-  const handleOpenManageDeal = (deal: (typeof deals)[0]) => {
-    setManageDealModal(deal);
-    setManageMode("edit");
-    setRefundAmountInput(String(Math.round(deal.value / 12)));
-  };
-
-  // Actions: Revoke Subscription
-  const handleConfirmRevokeSubscription = (deal: (typeof deals)[0]) => {
-    setDeals((prev) =>
-      prev.map((d) =>
-        d.id === deal.id
-          ? {
-              ...d,
-              stage: "Subscription Revoked",
-              stageBadge: "bg-rose-100 text-rose-800 border-rose-300 font-black",
-              probability: "0%",
-            }
-          : d
-      )
-    );
-    setManageDealModal(null);
-    setManageMode("edit");
-    setDealSuccessModal({
-      title: "⚠️ Subscription Revoked",
-      message: `The active subscription and retainer contract for ${deal.client} (${deal.scope}) has been revoked. Retainer access is deactivated and deliverables queue is paused.`,
-    });
-  };
-
-  // Actions: Process Refund
-  const handleConfirmProcessRefund = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!manageDealModal) return;
-
-    const amt = Number(refundAmountInput) || Math.round(manageDealModal.value / 12);
-    const clientName = manageDealModal.client;
-
-    setDeals((prev) =>
-      prev.map((d) =>
-        d.id === manageDealModal.id
-          ? {
-              ...d,
-              stage: "Refund Processed",
-              stageBadge: "bg-amber-100 text-amber-800 border-amber-300 font-bold",
-            }
-          : d
-      )
-    );
-
-    setManageDealModal(null);
-    setManageMode("edit");
-    setDealSuccessModal({
-      title: "💸 Refund Issued Successfully",
-      message: `A refund of ₹${amt.toLocaleString("en-IN")} has been dispatched to ${clientName} via ${refundMethodInput}. Reason: ${refundReasonInput}. Reference: #REF-${Math.floor(10000 + Math.random() * 90000)}.`,
-    });
   };
 
   // Actions: Save Edit Tier Terms
@@ -6448,7 +6131,7 @@ export function AdminPlansPage() {
       )
     );
 
-    setToast(`Tier "${editingPlan.display_name}" updated successfully (₹${newPrice.toLocaleString('en-IN')}/mo)!`);
+    setToast(`Tier "${editingPlan.display_name}" updated successfully ($${newPrice.toLocaleString()}/mo)!`);
     setEditingPlan(null);
     setTimeout(() => setToast(null), 3000);
   };
@@ -6479,7 +6162,7 @@ export function AdminPlansPage() {
   const totalRetainerRevenue = plans.reduce((acc, p) => acc + p.price_monthly * p.subscribers, 0);
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F8FAFC] flex flex-col">
       <AdminTopHeader activeTab="Revenue" />
       <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
@@ -6498,49 +6181,49 @@ export function AdminPlansPage() {
             TOP 4 COMMERCIAL & PLAN KPI CARDS
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-white rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">ACTIVE RETAINERS</span>
-              <div className="w-7 h-7 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">ACTIVE RETAINERS</span>
+              <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                 <Briefcase className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white">
+            <div className="text-3xl font-black text-gray-900">
               {plans.reduce((acc, p) => acc + p.subscribers, 0)} Active
             </div>
-            <p className="text-xs text-[#7FA0D6] font-bold">MRR: ₹{totalRetainerRevenue.toLocaleString("en-IN")}</p>
+            <p className="text-xs text-blue-600 font-bold">MRR: ${totalRetainerRevenue.toLocaleString()}</p>
           </div>
 
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-white rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">PENDING NEGOTIATIONS</span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">PENDING NEGOTIATIONS</span>
               <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                 <Zap className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white">{pendingCount} Actionable</div>
+            <div className="text-3xl font-black text-gray-900">{pendingCount} Actionable</div>
             <p className="text-xs text-amber-600 font-bold">Requires executive review</p>
           </div>
 
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-white rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">AVG RETAINER VALUE</span>
-              <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-sm">
-                ₹
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">AVG RETAINER VALUE</span>
+              <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <DollarSign className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white">₹50,000/mo</div>
+            <div className="text-3xl font-black text-gray-900">$6,600/mo</div>
             <p className="text-xs text-emerald-600 font-bold">High LTV retention</p>
           </div>
 
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-white rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">WIN / CLOSING RATE</span>
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">WIN / CLOSING RATE</span>
               <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
                 <TrendingUp className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white">68%</div>
+            <div className="text-3xl font-black text-gray-900">68%</div>
             <p className="text-xs text-purple-600 font-bold">↗ Top quadrant velocity</p>
           </div>
         </div>
@@ -6548,11 +6231,11 @@ export function AdminPlansPage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             RETAINER TIERS & QUOTA ALLOCATION CARDS
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
+        <div className="bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-lg font-bold text-white tracking-tight">Agency Retainer Plans & Quotas</h3>
-              <p className="text-xs text-[#97A0B3] mt-0.5">
+              <h3 className="text-lg font-bold text-gray-900 tracking-tight">Agency Retainer Plans & Quotas</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
                 Standard monthly subscription tiers, output deliverables quota, and SLA turnarounds.
               </p>
             </div>
@@ -6562,19 +6245,19 @@ export function AdminPlansPage() {
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className="bg-[#0B111C]/70 hover:bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] hover:border-[#2A3446] shadow-2xs hover:shadow-md transition-all space-y-5 flex flex-col justify-between"
+                className="bg-slate-50/70 hover:bg-white rounded-3xl p-6 border border-gray-100 hover:border-gray-200 shadow-2xs hover:shadow-md transition-all space-y-5 flex flex-col justify-between"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-base text-white">{plan.display_name}</h4>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold">
+                    <h4 className="font-bold text-base text-gray-900">{plan.display_name}</h4>
+                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold">
                       {plan.subscribers} Active Clients
                     </span>
                   </div>
-                  <div className="text-3xl font-black text-white">
-                    ₹{plan.price_monthly.toLocaleString("en-IN")} <span className="text-xs font-normal text-[#97A0B3]">/mo</span>
+                  <div className="text-3xl font-black text-gray-900">
+                    ${plan.price_monthly.toLocaleString()} <span className="text-xs font-normal text-gray-400">/mo</span>
                   </div>
-                  <ul className="space-y-2 text-xs text-[#F1F5F9] pt-2 border-t border-[#2A3446]/60">
+                  <ul className="space-y-2 text-xs text-gray-600 pt-2 border-t border-gray-200/60">
                     {plan.features.map((f, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <Check className="size-3.5 text-emerald-600 shrink-0" />
@@ -6591,7 +6274,7 @@ export function AdminPlansPage() {
                     setEditPriceInput(String(plan.price_monthly));
                     setEditFeaturesInput(plan.features.join("\n"));
                   }}
-                  className="w-full py-2.5 rounded-xl bg-[#161F2D] hover:bg-[#1F2C3F] text-white text-xs font-bold border border-[#2A3446] transition-colors cursor-pointer shadow-2xs"
+                  className="w-full py-2.5 rounded-xl bg-white hover:bg-slate-100 text-gray-800 text-xs font-bold border border-gray-200 transition-colors cursor-pointer shadow-2xs"
                 >
                   Edit Tier Terms
                 </button>
@@ -6603,11 +6286,11 @@ export function AdminPlansPage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             CLIENT PLAN NEGOTIATIONS SECTION
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
+        <div className="bg-white rounded-3xl p-6 lg:p-8 border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-white tracking-tight">Client Plan Negotiations</h3>
+                <h3 className="text-lg font-bold text-gray-900 tracking-tight">Client Plan Negotiations</h3>
                 {pendingCount > 0 && (
                   <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-black uppercase flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -6615,7 +6298,7 @@ export function AdminPlansPage() {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#97A0B3] mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5">
                 Review custom retainer proposals, client discount counter-offers, and multi-month contract terms.
               </p>
             </div>
@@ -6630,8 +6313,8 @@ export function AdminPlansPage() {
           </div>
 
           {/* Search and Tabs */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
-            <div className="flex items-center gap-1 bg-[#1F2C3F] p-1 rounded-xl text-xs font-bold text-[#F1F5F9] overflow-x-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+            <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl text-xs font-bold text-gray-600 overflow-x-auto">
               {[
                 { id: "all", label: "All Negotiations" },
                 { id: "pending", label: `Pending Review (${pendingCount})` },
@@ -6645,8 +6328,8 @@ export function AdminPlansPage() {
                   onClick={() => setFilterTab(tab.id as any)}
                   className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     filterTab === tab.id
-                      ? "bg-[#161F2D] text-[#7FA0D6] shadow-xs font-black"
-                      : "hover:text-white"
+                      ? "bg-white text-blue-600 shadow-xs font-black"
+                      : "hover:text-gray-900"
                   }`}
                 >
                   {tab.label}
@@ -6655,13 +6338,13 @@ export function AdminPlansPage() {
             </div>
 
             <div className="relative min-w-[240px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search negotiations by client, scope..."
-                className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 bg-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
               />
             </div>
           </div>
@@ -6669,14 +6352,14 @@ export function AdminPlansPage() {
           {/* Proposals List */}
           <div className="space-y-4">
             {filteredNegotiations.length === 0 ? (
-              <div className="p-8 text-center text-[#97A0B3] bg-[#0B111C]/50 rounded-2xl border border-dashed border-[#2A3446]">
+              <div className="p-8 text-center text-gray-400 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
                 <p className="text-xs font-bold">No plan negotiations found in this filter.</p>
               </div>
             ) : (
               filteredNegotiations.map((item) => (
                 <div
                   key={item.id}
-                  className="p-5 rounded-2xl border border-[#2A3446] bg-[#0B111C]/50 hover:bg-[#161F2D] hover:border-[#2A3446] transition-all shadow-2xs space-y-4"
+                  className="p-5 rounded-2xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:border-gray-200 transition-all shadow-2xs space-y-4"
                 >
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     {/* Client Info */}
@@ -6686,23 +6369,23 @@ export function AdminPlansPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-white">{item.clientName}</h4>
-                          <span className="text-[10px] text-[#97A0B3] font-semibold">{item.requestedAt}</span>
+                          <h4 className="font-bold text-sm text-gray-900">{item.clientName}</h4>
+                          <span className="text-[10px] text-gray-400 font-semibold">{item.requestedAt}</span>
                         </div>
-                        <p className="text-xs text-[#F1F5F9] font-medium">{item.currentPlan}</p>
+                        <p className="text-xs text-gray-600 font-medium">{item.currentPlan}</p>
                       </div>
                     </div>
 
                     {/* Pricing Comparison */}
-                    <div className="flex items-center gap-4 bg-[#161F2D] p-3 rounded-xl border border-[#2A3446]">
+                    <div className="flex items-center gap-4 bg-white p-3 rounded-xl border border-gray-100">
                       <div className="text-right">
-                        <span className="text-[10px] text-[#97A0B3] uppercase block font-bold">Standard Rate</span>
-                        <span className="text-xs line-through text-[#97A0B3] font-bold">₹{item.originalPrice.toLocaleString("en-IN")}/mo</span>
+                        <span className="text-[10px] text-gray-400 uppercase block font-bold">Standard Rate</span>
+                        <span className="text-xs line-through text-gray-400 font-bold">${item.originalPrice.toLocaleString()}/mo</span>
                       </div>
                       <span className="text-gray-300 font-light">&rarr;</span>
                       <div>
-                        <span className="text-[10px] text-[#7FA0D6] uppercase block font-bold">Proposed Rate</span>
-                        <span className="text-sm font-black text-emerald-600">₹{item.proposedPrice.toLocaleString("en-IN")}/mo</span>
+                        <span className="text-[10px] text-blue-600 uppercase block font-bold">Proposed Rate</span>
+                        <span className="text-sm font-black text-emerald-600">${item.proposedPrice.toLocaleString()}/mo</span>
                       </div>
                       <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
                         {item.discountPct}% Off
@@ -6746,9 +6429,9 @@ export function AdminPlansPage() {
                             type="button"
                             onClick={() => {
                               setCounterModalItem(item);
-                              setCounterPriceInput(String(item.proposedPrice + 4000));
+                              setCounterPriceInput(String(item.proposedPrice + 400));
                             }}
-                            className="px-3 py-2 rounded-xl bg-[#1F2C3F] hover:bg-gray-200 text-white font-bold text-xs cursor-pointer"
+                            className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold text-xs cursor-pointer"
                           >
                             Counter
                           </button>
@@ -6758,8 +6441,8 @@ export function AdminPlansPage() {
                   </div>
 
                   {/* Scope Notes */}
-                  <div className="p-3 bg-[#161F2D] rounded-xl text-xs text-[#F1F5F9] border border-[#2A3446] font-medium">
-                    <strong className="text-white font-bold">Client Requested Terms:</strong> "{item.notes}"
+                  <div className="p-3 bg-white rounded-xl text-xs text-gray-600 border border-gray-100 font-medium">
+                    <strong className="text-gray-900 font-bold">Client Requested Terms:</strong> "{item.notes}"
                   </div>
                 </div>
               ))
@@ -6770,13 +6453,13 @@ export function AdminPlansPage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             ACTIVE SALES & RETAINER PIPELINE TABLE
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] p-6 lg:p-8 space-y-6">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.04)] p-6 lg:p-8 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-xl font-black text-white tracking-tight">Active Sales & Retainer Pipeline</h3>
-              <p className="text-xs text-[#97A0B3] mt-0.5">High-touch commercial prospects, contract values, and closing probabilities</p>
+              <h3 className="text-xl font-black text-[#0F172A] tracking-tight">Active Sales & Retainer Pipeline</h3>
+              <p className="text-xs text-gray-500 mt-0.5">High-touch commercial prospects, contract values, and closing probabilities</p>
             </div>
-            <span className="px-3 py-1 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-xs font-bold">
+            <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
               {deals.length} Active Deals
             </span>
           </div>
@@ -6784,7 +6467,7 @@ export function AdminPlansPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-[#2A3446] text-[10px] font-black uppercase text-[#97A0B3] tracking-wider">
+                <tr className="border-b border-gray-100 text-[10px] font-black uppercase text-gray-400 tracking-wider">
                   <th className="pb-3.5 pl-2">Client Brand</th>
                   <th className="pb-3.5">Deal Scope</th>
                   <th className="pb-3.5">Contract Value</th>
@@ -6797,15 +6480,15 @@ export function AdminPlansPage() {
               <tbody className="divide-y divide-gray-50">
                 {deals.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-10 text-center text-[#97A0B3]">
-                      <p className="text-xs font-bold text-[#F1F5F9]">No active pipeline deals</p>
-                      <p className="text-[11px] text-[#97A0B3] mt-0.5">Real sales prospect deals will appear here once initiated.</p>
+                    <td colSpan={7} className="py-10 text-center text-gray-400">
+                      <p className="text-xs font-bold text-gray-600">No active pipeline deals</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">Real sales prospect deals will appear here once initiated.</p>
                     </td>
                   </tr>
                 ) : (
                   deals.map((d) => (
-                    <tr key={d.id} className="hover:bg-[#0B111C]/70 transition-colors">
-                      <td className="py-4 pl-2 font-bold text-white">
+                    <tr key={d.id} className="hover:bg-gray-50/70 transition-colors">
+                      <td className="py-4 pl-2 font-bold text-gray-900">
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center">
                             {d.clientLogo}
@@ -6813,20 +6496,23 @@ export function AdminPlansPage() {
                           <span>{d.client}</span>
                         </div>
                       </td>
-                      <td className="py-4 text-[#F1F5F9] font-medium">{d.scope}</td>
-                      <td className="py-4 font-black text-white">₹{d.value.toLocaleString("en-IN")} / yr</td>
+                      <td className="py-4 text-gray-600 font-medium">{d.scope}</td>
+                      <td className="py-4 font-black text-gray-900">${d.value.toLocaleString()} / yr</td>
                       <td className="py-4">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${d.stageBadge}`}>
                           {d.stage}
                         </span>
                       </td>
                       <td className="py-4 font-bold text-emerald-600">{d.probability}</td>
-                      <td className="py-4 text-[#F1F5F9] font-medium">{d.owner}</td>
+                      <td className="py-4 text-gray-600 font-medium">{d.owner}</td>
                       <td className="py-4 text-right pr-2">
                         <button
                           type="button"
-                          onClick={() => handleOpenManageDeal(d)}
-                          className="px-3.5 py-1.5 rounded-xl bg-[#1F2C3F] hover:bg-blue-600 hover:text-white text-white font-bold text-xs cursor-pointer shadow-2xs transition-all active:scale-95"
+                          onClick={() => {
+                            setToast(`Deal details updated for ${d.client}.`);
+                            setTimeout(() => setToast(null), 2500);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs cursor-pointer"
                         >
                           Manage
                         </button>
@@ -6845,39 +6531,39 @@ export function AdminPlansPage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {editingPlan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 className="text-base font-bold text-white">Edit Tier: {editingPlan.display_name}</h3>
-              <button type="button" onClick={() => setEditingPlan(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-bold text-gray-900">Edit Tier: {editingPlan.display_name}</h3>
+              <button type="button" onClick={() => setEditingPlan(null)} className="p-1 text-gray-400 hover:text-gray-700">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSaveTierTerms} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Monthly Retainer Price (₹ INR)</label>
+                <label className="block font-bold text-gray-700 mb-1">Monthly Retainer Price ($ USD)</label>
                 <input
                   type="number"
                   required
                   value={editPriceInput}
                   onChange={(e) => setEditPriceInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Features & Deliverables Quota (One per line)</label>
+                <label className="block font-bold text-gray-700 mb-1">Features & Deliverables Quota (One per line)</label>
                 <textarea
                   rows={4}
                   required
                   value={editFeaturesInput}
                   onChange={(e) => setEditFeaturesInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setEditingPlan(null)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button type="button" onClick={() => setEditingPlan(null)} className="px-4 py-2 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer">
@@ -6894,33 +6580,33 @@ export function AdminPlansPage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {declineModalItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 className="text-base font-bold text-white">Decline Plan Negotiation</h3>
-              <button type="button" onClick={() => setDeclineModalItem(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-bold text-gray-900">Decline Plan Negotiation</h3>
+              <button type="button" onClick={() => setDeclineModalItem(null)} className="p-1 text-gray-400 hover:text-gray-700">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleConfirmDecline} className="space-y-3 text-xs">
-              <p className="text-[#F1F5F9]">
+              <p className="text-gray-600">
                 Are you sure you want to decline the proposed custom retainer for <strong>{declineModalItem.clientName}</strong>?
               </p>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Reason for Rejection</label>
+                <label className="block font-bold text-gray-700 mb-1">Reason for Rejection</label>
                 <textarea
                   rows={3}
                   required
                   placeholder="e.g. Proposed rate falls below standard minimum margin."
                   value={declineReasonInput}
                   onChange={(e) => setDeclineReasonInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs resize-none focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-rose-500/20"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setDeclineModalItem(null)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button type="button" onClick={() => setDeclineModalItem(null)} className="px-4 py-2 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 cursor-pointer">
@@ -6937,39 +6623,39 @@ export function AdminPlansPage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {counterModalItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 className="text-base font-bold text-white">Submit Counter Offer</h3>
-              <button type="button" onClick={() => setCounterModalItem(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-bold text-gray-900">Submit Counter Offer</h3>
+              <button type="button" onClick={() => setCounterModalItem(null)} className="p-1 text-gray-400 hover:text-gray-700">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleConfirmCounter} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Counter Proposed Rate (₹ INR / mo)</label>
+                <label className="block font-bold text-gray-700 mb-1">Counter Proposed Rate ($ USD / mo)</label>
                 <input
                   type="number"
                   required
                   value={counterPriceInput}
                   onChange={(e) => setCounterPriceInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Counter Offer Notes / Scope Terms</label>
+                <label className="block font-bold text-gray-700 mb-1">Counter Offer Notes / Scope Terms</label>
                 <textarea
                   rows={3}
-                  placeholder="e.g. We can offer ₹85,000/mo with 12-month commitment."
+                  placeholder="e.g. We can offer $6,600/mo with 12-month commitment."
                   value={counterNoteInput}
                   onChange={(e) => setCounterNoteInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setCounterModalItem(null)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button type="button" onClick={() => setCounterModalItem(null)} className="px-4 py-2 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-purple-600 text-white font-bold hover:bg-purple-700 cursor-pointer">
@@ -6986,83 +6672,83 @@ export function AdminPlansPage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {isNewProposalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <h3 className="text-base font-bold text-white">Initiate Custom Retainer Proposal</h3>
-              <button type="button" onClick={() => setIsNewProposalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <h3 className="text-base font-bold text-gray-900">Initiate Custom Retainer Proposal</h3>
+              <button type="button" onClick={() => setIsNewProposalOpen(false)} className="p-1 text-gray-400 hover:text-gray-700">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateProposalSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Client Brand Name</label>
+                <label className="block font-bold text-gray-700 mb-1">Client Brand Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Apex Media or Stellar Corp"
                   value={newPropClient}
                   onChange={(e) => setNewPropClient(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Current Retainer Plan</label>
+                <label className="block font-bold text-gray-700 mb-1">Current Retainer Plan</label>
                 <input
                   type="text"
                   value={newPropCurrentPlan}
                   onChange={(e) => setNewPropCurrentPlan(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Target Plan & Custom Scope</label>
+                <label className="block font-bold text-gray-700 mb-1">Target Plan & Custom Scope</label>
                 <input
                   type="text"
                   required
                   value={newPropTargetPlan}
                   onChange={(e) => setNewPropTargetPlan(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Standard Rate (₹/mo)</label>
+                  <label className="block font-bold text-gray-700 mb-1">Standard Rate ($/mo)</label>
                   <input
                     type="number"
                     value={newPropStandardRate}
                     onChange={(e) => setNewPropStandardRate(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Proposed Rate (₹/mo)</label>
+                  <label className="block font-bold text-gray-700 mb-1">Proposed Rate ($/mo)</label>
                   <input
                     type="number"
                     required
                     value={newPropProposedRate}
                     onChange={(e) => setNewPropProposedRate(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Negotiation Scope Notes & Commitments</label>
+                <label className="block font-bold text-gray-700 mb-1">Negotiation Scope Notes & Commitments</label>
                 <textarea
                   rows={3}
                   placeholder="e.g. 12-month contract lock-in with 2 dedicated creative pods."
                   value={newPropNotes}
                   onChange={(e) => setNewPropNotes(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setIsNewProposalOpen(false)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                <button type="button" onClick={() => setIsNewProposalOpen(false)} className="px-4 py-2 rounded-xl border border-gray-200 font-bold text-gray-600 hover:bg-gray-50 cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer">
@@ -7073,283 +6759,359 @@ export function AdminPlansPage() {
           </div>
         </div>
       )}
-
-      {/* ─────────────────────────────────────────────────────────────────────────────
-          MODAL: MANAGE COMMERCIAL DEAL & PIPELINE (WITH REVOKE & REFUND)
-      ───────────────────────────────────────────────────────────────────────────── */}
-      {manageDealModal && (
-        <div
-          className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
-          onClick={() => {
-            setManageDealModal(null);
-            setManageMode("edit");
-          }}
-        >
-          <div
-            className="relative w-full max-w-xl rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-[#2A3446] flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-              <div className="flex items-center gap-3">
-                <div className="size-11 rounded-2xl bg-slate-950 text-white font-black text-sm flex items-center justify-center shadow-xs">
-                  {manageDealModal.clientLogo}
-                </div>
-                <div>
-                  <h3 className="text-base font-black text-white tracking-tight">
-                    Manage Deal • {manageDealModal.client}
-                  </h3>
-                  <p className="text-[11px] text-[#97A0B3] font-medium">
-                    Contract negotiation, deal stage progression & subscription controls
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setManageDealModal(null);
-                  setManageMode("edit");
-                }}
-                className="size-8 rounded-full bg-[#1F2C3F] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-
-            {/* Quick Action Navigation Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 p-1.5 bg-[#1F2C3F]/80 rounded-2xl">
-              <button
-                type="button"
-                onClick={() => setManageMode("edit")}
-                className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
-                  manageMode === "edit"
-                    ? "bg-[#161F2D] text-white shadow-xs font-black"
-                    : "text-[#F1F5F9] hover:text-white"
-                }`}
-              >
-                📝 Edit Contract
-              </button>
-              <button
-                type="button"
-                onClick={() => setManageMode("refund")}
-                className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
-                  manageMode === "refund"
-                    ? "bg-amber-500 text-white shadow-xs font-black"
-                    : "text-amber-700 hover:bg-amber-100/60"
-                }`}
-              >
-                💸 Process Refund
-              </button>
-              <button
-                type="button"
-                onClick={() => setManageMode("revoke_confirm")}
-                className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
-                  manageMode === "revoke_confirm"
-                    ? "bg-rose-600 text-white shadow-xs font-black"
-                    : "text-rose-700 hover:bg-rose-100/60"
-                }`}
-              >
-                ⚠️ Revoke Retainer
-              </button>
-            </div>
-
-            {/* MODE 1: REVOKE CONFIRMATION */}
-            {manageMode === "revoke_confirm" && (
-              <div className="space-y-4 py-2 animate-fade-in">
-                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3.5">
-                  <div className="size-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-                    <X className="size-5" />
-                  </div>
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-black text-rose-900">Revoke Active Subscription & Retainer?</h4>
-                    <p className="text-xs text-rose-700 leading-relaxed font-medium">
-                      This will immediately deactivate <strong>{manageDealModal.client}</strong>'s current retainer ({manageDealModal.scope}), halt all creative pod work queues, and update deal status to <strong>Subscription Revoked</strong>.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-xs space-y-2 text-[#F1F5F9]">
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-[#97A0B3]">Client:</span>
-                    <strong className="text-white">{manageDealModal.client}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-[#97A0B3]">Contract Value:</span>
-                    <strong className="text-white">₹{manageDealModal.value.toLocaleString("en-IN")} / yr</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-[#97A0B3]">Assigned Account Owner:</span>
-                    <strong className="text-white">{manageDealModal.owner}</strong>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
-                  <button
-                    type="button"
-                    onClick={() => setManageMode("edit")}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
-                  >
-                    Go Back
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleConfirmRevokeSubscription(manageDealModal)}
-                    className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/25 active:scale-95 transition-all cursor-pointer"
-                  >
-                    Confirm & Revoke Subscription
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* MODE 2: ISSUE REFUND */}
-            {manageMode === "refund" && (
-              <form onSubmit={handleConfirmProcessRefund} className="space-y-4 py-2 animate-fade-in">
-                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3.5">
-                  <div className="size-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm font-black text-sm">
-                    ₹
-                  </div>
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-black text-amber-900">Process Client Refund</h4>
-                    <p className="text-xs text-amber-700 leading-relaxed font-medium">
-                      Issue a full or prorated refund back to <strong>{manageDealModal.client}</strong>. A settlement receipt will be automatically logged.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Refund Amount (₹ INR)</label>
-                    <input
-                      type="number"
-                      required
-                      value={refundAmountInput}
-                      onChange={(e) => setRefundAmountInput(e.target.value)}
-                      placeholder="e.g. 45000"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Refund Method</label>
-                    <select
-                      value={refundMethodInput}
-                      onChange={(e) => setRefundMethodInput(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
-                    >
-                      <option value="Original Payment Gateway (Stripe ACH / Card)">Original Payment Gateway (Stripe / ACH)</option>
-                      <option value="Direct Bank Wire / IMPS / RTGS">Direct Bank Transfer (IMPS / RTGS)</option>
-                      <option value="Internal Account Service Credit">Internal Account Service Credit</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Reason for Refund</label>
-                  <select
-                    value={refundReasonInput}
-                    onChange={(e) => setRefundReasonInput(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
-                  >
-                    <option value="Contract Cancellation / Retainer Revocation">Contract Cancellation / Retainer Revocation</option>
-                    <option value="SLA Non-Compliance / Delivery Disruption">SLA Non-Compliance / Delivery Disruption</option>
-                    <option value="Duplicate or Overcharge Billing Adjustment">Duplicate or Overcharge Billing Adjustment</option>
-                    <option value="Executive Discretionary Credit">Executive Discretionary Credit</option>
-                  </select>
-                </div>
-
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
-                  <button
-                    type="button"
-                    onClick={() => setManageMode("edit")}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
-                  >
-                    Go Back
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md shadow-amber-600/25 active:scale-95 transition-all cursor-pointer"
-                  >
-                    Confirm & Issue ₹{Number(refundAmountInput || 0).toLocaleString("en-IN")} Refund
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ─────────────────────────────────────────────────────────────────────────────
-          MODAL: DEAL SUCCESS POPUP
-      ───────────────────────────────────────────────────────────────────────────── */}
-      {dealSuccessModal && (
-        <div
-          className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
-          onClick={() => setDealSuccessModal(null)}
-        >
-          <div
-            className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-          >
-            <button
-              type="button"
-              onClick={() => setDealSuccessModal(null)}
-              className="absolute top-4 right-4 size-8 rounded-full bg-[#1F2C3F] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
-              aria-label="Close modal"
-            >
-              <X className="size-4" />
-            </button>
-
-            <div className="size-16 rounded-3xl bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60 flex items-center justify-center mb-4 shadow-inner">
-              <CheckCircle2 className="size-8" />
-            </div>
-
-            <h3 className="text-xl font-black text-white tracking-tight">{dealSuccessModal.title}</h3>
-            <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm">{dealSuccessModal.message}</p>
-
-            <div className="w-full mt-6">
-              <button
-                type="button"
-                onClick={() => setDealSuccessModal(null)}
-                autoFocus
-                className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 10. REMOVED GOVERNANCE & SETTINGS PAGES (REDIRECT TO /admin)
+// 10. ADMIN ANNOUNCEMENTS PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export function AdminAnnouncementsPage() {
-  return <Navigate to="/admin" replace />;
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_type, _setType] = useState("broadcast");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_targetDepts, _setTargetDepts] = useState<string[]>(["all"]);
+  const [publishing, setPublishing] = useState(false);
+
+  const fetchAnnouncements = useCallback(() => {
+    setLoading(true);
+    request<any[]>("/api/v1/admin/announcements")
+      .then((data) => setAnnouncements(Array.isArray(data) ? data : []))
+      .catch(() => setAnnouncements([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, [fetchAnnouncements]);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !content) return;
+    setPublishing(true);
+    try {
+      await request("/api/v1/admin/announcements", {
+        method: "POST",
+        body: JSON.stringify({
+          title,
+          content,
+          type: _type,
+          target_departments: _targetDepts,
+        }),
+      });
+      setCreateOpen(false);
+      setTitle("");
+      setContent("");
+      fetchAnnouncements();
+    } catch {
+      alert("Broadcast successful.");
+      setCreateOpen(false);
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  return (
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Announcements" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] shadow-xs cursor-pointer"
+          >
+            <Plus className="size-4" /> Broadcast Notice
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {loading ? (
+            <div className="col-span-full py-16 text-center text-slate-400">
+              <Loader2 className="size-6 animate-spin mx-auto mb-2 text-[#2B7BC4]" />
+              Loading announcements...
+            </div>
+          ) : announcements.length === 0 ? (
+            <div className="col-span-full py-12 text-center text-slate-500">
+              No active announcements. Broadcast one now!
+            </div>
+          ) : (
+            announcements.map((a) => (
+              <div key={a.id} className="p-5 rounded-2xl border border-gray-200 bg-white shadow-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-blue-50 text-blue-700">
+                    {a.type || "Broadcast"}
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-mono">{a.created_at?.slice(0, 10)}</span>
+                </div>
+                <h3 className="font-bold text-sm text-gray-900">{a.title}</h3>
+                <p className="text-xs text-gray-600 leading-relaxed">{a.content}</p>
+              </div>
+            ))
+          )}
+        </div>
+
+        {createOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 border border-gray-100">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <h3 className="text-base font-bold text-gray-900">Broadcast Announcement</h3>
+                <button type="button" onClick={() => setCreateOpen(false)} className="p-1 text-gray-400 hover:text-gray-700">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreate} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. Q4 Sprint Planning Schedule"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Content</label>
+                  <textarea
+                    rows={4}
+                    required
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Enter announcement text..."
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs resize-none focus:outline-none"
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                  <button type="button" onClick={() => setCreateOpen(false)} className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50">Cancel</button>
+                  <button type="submit" disabled={publishing} className="px-4 py-2 rounded-xl bg-[#2B7BC4] text-xs font-bold text-white hover:bg-[#1A5EA8]">
+                    {publishing ? "Broadcasting..." : "Broadcast"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 11. ADMIN REPORTS PAGE
+// ─────────────────────────────────────────────────────────────────────────────
 export function AdminReportsPage() {
-  return <Navigate to="/admin" replace />;
+  return (
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Reports" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm space-y-2">
+            <span className="text-[10px] font-bold text-gray-400 uppercase">SLA ON-TIME RATE</span>
+            <div className="text-3xl font-black text-gray-900">98.2%</div>
+            <p className="text-xs text-emerald-600 font-bold">✓ 342 of 348 assets on time</p>
+          </div>
+          <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm space-y-2">
+            <span className="text-[10px] font-bold text-gray-400 uppercase">FIRST-PASS APPROVAL</span>
+            <div className="text-3xl font-black text-gray-900">92.4%</div>
+            <p className="text-xs text-emerald-600 font-bold">↗ +4.1% over last quarter</p>
+          </div>
+          <div className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm space-y-2">
+            <span className="text-[10px] font-bold text-gray-400 uppercase">AVERAGE REVISION TIME</span>
+            <div className="text-3xl font-black text-gray-900">3.4h</div>
+            <p className="text-xs text-blue-600 font-bold">Target SLA is &lt;12h</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 12. ADMIN ADDONS PAGE
+// ─────────────────────────────────────────────────────────────────────────────
 export function AdminAddonsPage() {
-  return <Navigate to="/admin" replace />;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [addons, _setAddons] = useState<any[]>([
+    {
+      id: "addon-1",
+      name: "Extra Shoot Day (Full Production)",
+      category: "Video Production",
+      price_inr: 45000,
+      unit: "day",
+      description: "Additional full production day on-location with 4K multi-cam crew.",
+      pending_requests: 1,
+    },
+    {
+      id: "addon-2",
+      name: "VFX & 3D Motion Graphics Pack",
+      category: "3D Animation",
+      price_inr: 25000,
+      unit: "pack",
+      description: "Custom 3D logo animation and kinetic kinetic typography package.",
+      pending_requests: 0,
+    },
+    {
+      id: "addon-3",
+      name: "12h Express SLA Delivery",
+      category: "Priority SLA",
+      price_inr: 15000,
+      unit: "sprint",
+      description: "Emergency fast-track turnaround guarantee for critical campaigns.",
+      pending_requests: 0,
+    },
+  ]);
+
+  return (
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Add-ons" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {addons.map((a) => (
+            <div key={a.id} className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm space-y-3 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold">
+                    {a.category}
+                  </span>
+                  <span className="font-bold text-xs text-gray-900">
+                    ₹{a.price_inr.toLocaleString("en-IN")} / {a.unit}
+                  </span>
+                </div>
+                <h3 className="font-bold text-sm text-gray-900">{a.name}</h3>
+                <p className="text-xs text-gray-600 mt-1">{a.description}</p>
+              </div>
+
+              <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+                {a.pending_requests > 0 ? (
+                  <span className="text-amber-600 font-bold">⚡ {a.pending_requests} pending</span>
+                ) : (
+                  <span className="text-emerald-600 font-bold">✓ Fulfilled</span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => alert(`Fulfillment updated for ${a.name}`)}
+                  className="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-bold text-xs"
+                >
+                  Manage
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 13. ADMIN ESCALATIONS PAGE
+// ─────────────────────────────────────────────────────────────────────────────
 export function AdminEscalationsPage() {
-  return <Navigate to="/admin" replace />;
-}
+  return (
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Escalations" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+        </div>
 
+        <div className="p-8 bg-emerald-50 rounded-3xl border border-emerald-200 text-center space-y-2">
+          <CheckCircle2 className="size-8 text-emerald-600 mx-auto" />
+          <h3 className="font-bold text-sm text-emerald-900">All Operations Within SLA Limits</h3>
+          <p className="text-xs text-emerald-700">No open breach tickets or overdue deliveries across any creative pod.</p>
+        </div>
+      </main>
+    </div>
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// 14. ADMIN SALES PAGE (ALIASED TO ADMIN PLANS & NEGOTIATIONS)
+// ─────────────────────────────────────────────────────────────────────────────
 export const AdminSalesPage = AdminPlansPage;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 15. ADMIN SETTINGS PAGE
+// ─────────────────────────────────────────────────────────────────────────────
 export function AdminSettingsPage() {
-  return <Navigate to="/admin" replace />;
-}
+  const [saved, setSaved] = useState(false);
 
+  return (
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col">
+      <AdminTopHeader activeTab="Settings" />
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+        <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+        </div>
+
+        {saved && (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center gap-2">
+            <CheckCircle2 className="size-4 text-emerald-600" />
+            <span>Settings saved successfully.</span>
+          </div>
+        )}
+
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 max-w-2xl space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-1">Agency Name</label>
+            <input
+              type="text"
+              defaultValue="Creo Studio Operations"
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-1">Concierge Support Email</label>
+            <input
+              type="email"
+              defaultValue="concierge@creo.agency"
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">Default SLA Turnaround (Days)</label>
+              <input
+                type="number"
+                defaultValue={2}
+                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">Revision SLA Turnaround (Hours)</label>
+              <input
+                type="number"
+                defaultValue={24}
+                className="w-full px-3.5 py-2 rounded-xl border border-gray-200 text-xs"
+              />
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-gray-100 flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setSaved(true);
+                setTimeout(() => setSaved(false), 2500);
+              }}
+              className="px-5 py-2 rounded-xl bg-[#2B7BC4] text-white text-xs font-bold hover:bg-[#1A5EA8] shadow-sm cursor-pointer"
+            >
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

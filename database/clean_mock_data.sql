@@ -34,12 +34,7 @@ DELETE FROM staff_profiles WHERE user_id != '00000000-0000-0000-0000-00000000000
 -- 4. Clear all mock users except the primary Executive Super Admin
 DELETE FROM users WHERE email != 'admin@creo.agency';
 
--- 5. Refresh executive KPIs view to reflect 0 mock clients / 0 mock MRR (if it exists)
-DO $$ 
-BEGIN 
-    IF EXISTS (SELECT 1 FROM pg_matviews WHERE matviewname = 'mv_exec_kpis') THEN 
-        REFRESH MATERIALIZED VIEW mv_exec_kpis; 
-    END IF; 
-END $$;
+-- 5. Refresh executive KPIs view to reflect 0 mock clients / 0 mock MRR
+REFRESH MATERIALIZED VIEW mv_exec_kpis;
 
 COMMIT;

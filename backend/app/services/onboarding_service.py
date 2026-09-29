@@ -668,20 +668,19 @@ async def notify_team_of_new_client_summary(
         member = item["user"]
         role_title = item["role_title"]
 
-        # 1. In-app Notification with role-based internal route
-        if item.get("role_key") == "team_lead":
-            in_app_link = "/lead/clients"
-        elif item.get("role_key") in ["video_editor", "graphic_designer", "copywriter"]:
-            in_app_link = "/workstation/tasks"
-        else:
-            in_app_link = "/admin/clients"
-
+        # 1. In-app Notification
+        notif_msg = (
+            f"Client {company_name} (@{ig_handle}) has completed onboarding.\n"
+            f"Your Assigned Role: {role_title}\n"
+            f"Strategic Vector: \"{positioning}\"\n"
+            f"30-day production roadmap and calendar slots are active in workspace."
+        )
         notif = Notification(
             id=uuid.uuid4(),
             user_id=member.id,
             title=f"New Client Assigned: {company_name}",
             message=notif_msg,
-            link=in_app_link,
+            link=portal_link,
             is_read=False,
             sent_at=datetime.now(UTC),
         )

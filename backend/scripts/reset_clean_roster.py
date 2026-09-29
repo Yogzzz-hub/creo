@@ -18,7 +18,7 @@ from __future__ import annotations
 import asyncio
 import sys
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 # Ensure backend directory is in path
 sys.path.insert(0, ".")
@@ -30,8 +30,8 @@ from typing import TypedDict
 
 from app.core.security import hash_password
 from app.db.session import async_session_factory
-from app.models.billing import Plan, Subscription
-from app.models.enums import AccountStatus, PaymentProvider, UserRole
+from app.models.billing import Plan
+from app.models.enums import AccountStatus, UserRole
 from app.models.user import ClientProfile, StaffProfile, User
 from app.models.work import ClientAssignment, ContentCalendar, Deliverable, Task
 from app.services.fair_dispatch_service import assign_client_and_generate_schedule
@@ -99,18 +99,10 @@ STAFF_ROSTER: list[StaffRosterItem] = [
         "skills": ["carousels", "posters", "figma", "typography", "branding"],
         "team_lead_email": "lead.alpha@creo.agency",
     },
-    # 4. Team 2 — Pod Beta (Pod B)
+    # 4. Team 2 — Pod Beta (3 members)
     {
         "email": "lead.beta@creo.agency",
-        "full_name": "Sarah Connor (Lead - Pod B)",
-        "role": UserRole.TEAM_LEAD,
-        "department": "creative",
-        "skills": ["creative_direction", "motion_supervision", "qa", "client_success"],
-        "team_lead_email": None,
-    },
-    {
-        "email": "lead@creo.agency",
-        "full_name": "Sarah Connor (Lead - Pod B)",
+        "full_name": "Sarah Connor (Lead - Pod Beta)",
         "role": UserRole.TEAM_LEAD,
         "department": "creative",
         "skills": ["creative_direction", "motion_supervision", "qa", "client_success"],
@@ -118,15 +110,7 @@ STAFF_ROSTER: list[StaffRosterItem] = [
     },
     {
         "email": "editor.beta@creo.agency",
-        "full_name": "David Kim (Editor - Pod B)",
-        "role": UserRole.EDITOR,
-        "department": "video",
-        "skills": ["after_effects", "3d_motion", "viral_hooks", "short_form"],
-        "team_lead_email": "lead.beta@creo.agency",
-    },
-    {
-        "email": "member@creo.agency",
-        "full_name": "David Kim (Editor - Pod B)",
+        "full_name": "Liam Vance (Editor - Pod Beta)",
         "role": UserRole.EDITOR,
         "department": "video",
         "skills": ["after_effects", "3d_motion", "viral_hooks", "short_form"],
@@ -134,16 +118,16 @@ STAFF_ROSTER: list[StaffRosterItem] = [
     },
     {
         "email": "designer.beta@creo.agency",
-        "full_name": "Elena Rostova (Designer - Pod B)",
+        "full_name": "Ethan Hunt (Designer - Pod Beta)",
         "role": UserRole.DESIGNER,
         "department": "design",
         "skills": ["visual_identity", "editorial_design", "photoshop", "infographics"],
         "team_lead_email": "lead.beta@creo.agency",
     },
-    # 5. Team 3 — Pod Gamma (Pod C)
+    # 5. Team 3 — Pod Gamma (3 members)
     {
         "email": "lead.gamma@creo.agency",
-        "full_name": "Rohan Mehta (Lead - Pod C)",
+        "full_name": "Rohan Roy (Lead - Pod Gamma)",
         "role": UserRole.TEAM_LEAD,
         "department": "creative",
         "skills": ["creative_direction", "brand_narrative", "pacing", "review_cycles"],
@@ -151,7 +135,7 @@ STAFF_ROSTER: list[StaffRosterItem] = [
     },
     {
         "email": "editor.gamma@creo.agency",
-        "full_name": "Tanvi Sen (Editor - Pod C)",
+        "full_name": "Maya Lin (Editor - Pod Gamma)",
         "role": UserRole.EDITOR,
         "department": "video",
         "skills": ["motion_graphics", "dynamic_typography", "davinci_resolve", "reels"],
@@ -159,11 +143,36 @@ STAFF_ROSTER: list[StaffRosterItem] = [
     },
     {
         "email": "designer.gamma@creo.agency",
-        "full_name": "Arjun Nair (Designer - Pod C)",
+        "full_name": "Zara Sheikh (Designer - Pod Gamma)",
         "role": UserRole.DESIGNER,
         "department": "design",
         "skills": ["modern_minimalism", "illustrations", "figma", "social_banners"],
         "team_lead_email": "lead.gamma@creo.agency",
+    },
+    # 6. Team 4 — Pod Delta (3 members)
+    {
+        "email": "lead.delta@creo.agency",
+        "full_name": "Aditya Verma (Lead - Pod Delta)",
+        "role": UserRole.TEAM_LEAD,
+        "department": "creative",
+        "skills": ["creative_direction", "content_strategy", "qa_pipeline", "team_coaching"],
+        "team_lead_email": None,
+    },
+    {
+        "email": "editor.delta@creo.agency",
+        "full_name": "Dev Patel (Editor - Pod Delta)",
+        "role": UserRole.EDITOR,
+        "department": "video",
+        "skills": ["reels", "cinematic_edits", "pace_cutting", "audio_engineering"],
+        "team_lead_email": "lead.delta@creo.agency",
+    },
+    {
+        "email": "designer.delta@creo.agency",
+        "full_name": "Meera Joshi (Designer - Pod Delta)",
+        "role": UserRole.DESIGNER,
+        "department": "design",
+        "skills": ["brand_guidelines", "story_templates", "carousel_mastery", "typography"],
+        "team_lead_email": "lead.delta@creo.agency",
     },
 ]
 
@@ -174,30 +183,15 @@ async def run_cleanup_and_reseed() -> None:
 
     async with async_session_factory() as db:
         print("\n=== STEP 1: PURGE ALL MOCK REELS, DELIVERABLES, AND OPERATIONAL TABLES ===")
-        # 1. Truncate mock support, leaves, announcements, deliverables, blackouts, tasks
-        await db.execute(text("DELETE FROM shoot_days;"))
-        await db.execute(text("DELETE FROM calendar_blackouts;"))
-        await db.execute(text("DELETE FROM calendar_policies;"))
-        await db.execute(text("DELETE FROM contact_messages;"))
+        # 1. Truncate mock support, leaves, announcements, deliverables
         await db.execute(text("DELETE FROM ticket_messages;"))
         await db.execute(text("DELETE FROM tickets;"))
         await db.execute(text("DELETE FROM leave_requests;"))
         await db.execute(text("DELETE FROM announcements;"))
         await db.execute(text("DELETE FROM notifications;"))
         await db.execute(text("DELETE FROM deliverables;"))  # Remove all mock reels & deliverables
-        await db.execute(text("DELETE FROM tasks;"))
-        await db.execute(text("DELETE FROM content_calendar;"))
-        await db.execute(text("DELETE FROM client_assignments;"))
-        await db.execute(text("DELETE FROM client_cycles;"))
-        await db.execute(text("DELETE FROM client_role_requirements;"))
-        await db.execute(text("DELETE FROM team_members;"))
-        await db.execute(text("UPDATE teams SET lead_id = NULL;"))
-        await db.execute(text("DELETE FROM teams;"))
-        await db.execute(text("UPDATE faq_items SET updated_by = NULL;"))
-        await db.execute(text("UPDATE audit_log SET actor_id = NULL;"))
-        await db.execute(text("DELETE FROM staff_profiles;"))
         await db.commit()
-        print("[OK] Purged all operational tables, tasks, deliverables, blackouts, tickets, leave requests, and teams.")
+        print("[OK] Purged tickets, ticket messages, leave requests, announcements, and deliverables.")
 
         # 2. Get real clients to preserve
         real_clients_res = await db.execute(
@@ -208,29 +202,45 @@ async def run_cleanup_and_reseed() -> None:
         real_client_emails = [r[1] for r in real_clients]
         print(f"[OK] Preserved real clients: {real_client_emails}")
 
-        # 3. Clean usage, subscriptions, questionnaires, profiles for non-real clients
+        # 3. Clean client assignments, tasks, calendar for non-real clients
         if real_client_ids:
+            await db.execute(delete(ClientAssignment).where(~ClientAssignment.client_id.in_(real_client_ids)))
+            await db.execute(delete(ContentCalendar).where(~ContentCalendar.client_id.in_(real_client_ids)))
+            await db.execute(delete(Task).where(~Task.client_id.in_(real_client_ids)))
             await db.execute(text("DELETE FROM usage_counters WHERE client_id NOT IN (SELECT id FROM users WHERE email LIKE '%@gmail.com')"))
             await db.execute(text("DELETE FROM subscriptions WHERE client_id NOT IN (SELECT id FROM users WHERE email LIKE '%@gmail.com')"))
             await db.execute(text("DELETE FROM questionnaires WHERE user_id NOT IN (SELECT id FROM users WHERE email LIKE '%@gmail.com')"))
             await db.execute(delete(ClientProfile).where(~ClientProfile.user_id.in_(real_client_ids)))
         else:
+            await db.execute(delete(ClientAssignment))
+            await db.execute(delete(ContentCalendar))
+            await db.execute(delete(Task))
             await db.execute(text("DELETE FROM usage_counters;"))
             await db.execute(text("DELETE FROM subscriptions;"))
             await db.execute(text("DELETE FROM questionnaires;"))
             await db.execute(delete(ClientProfile))
+
+        # Also purge any client assignments / tasks on real clients to cleanly regenerate with new pods
+        await db.execute(delete(ClientAssignment))
+        await db.execute(delete(ContentCalendar))
+        await db.execute(delete(Task))
         await db.commit()
+        print("[OK] Cleaned tasks, calendar, and client assignments.")
 
         # 4. Remove all mock users (anything not a real client and not our staff)
         allowed_staff_emails = [s["email"] for s in STAFF_ROSTER]
-        all_preserved_emails = allowed_staff_emails + real_client_emails + ["client@creo.agency"]
+        all_preserved_emails = allowed_staff_emails + real_client_emails
+
+        # Clear staff profiles first
+        await db.execute(delete(StaffProfile))
+        await db.commit()
 
         # Delete all other users
         await db.execute(delete(User).where(~User.email.in_(all_preserved_emails)))
         await db.commit()
         print("[OK] Deleted all mock users from database.")
 
-        print("\n=== STEP 2: SEED EXACT STAFF ROSTER (1 Super Admin, 2 Admins, 3 Teams x 3 Members) ===")
+        print("\n=== STEP 2: SEED EXACT STAFF ROSTER (1 Super Admin, 2 Admins, 4 Teams x 3 Members) ===")
         # Seed or update all 15 staff members
         created_users: dict[str, User] = {}
         for s_def in STAFF_ROSTER:
@@ -283,82 +293,7 @@ async def run_cleanup_and_reseed() -> None:
             db.add(sp)
 
         await db.commit()
-        print(f"[OK] Created Staff Profiles with proper department, skills, capacity, and team lead relations.")
-
-        # Seed standard client with working login
-        client_email = "client@creo.agency"
-        c_user = (await db.execute(select(User).where(User.email == client_email))).scalar_one_or_none()
-        if not c_user:
-            c_user = User(
-                id=uuid.uuid4(),
-                auth_id=f"auth-{uuid.uuid4().hex[:12]}",
-                email=client_email,
-                full_name="Sushmitaa (Ryze Mushroom Coffee)",
-                hashed_password=standard_password_hash,
-                role=UserRole.CLIENT,
-                account_status=AccountStatus.ACTIVE,
-                must_reset_password=False,
-                email_verified_at=now,
-            )
-            db.add(c_user)
-            await db.flush()
-        else:
-            c_user.hashed_password = standard_password_hash
-            c_user.account_status = AccountStatus.ACTIVE
-            c_user.must_reset_password = False
-
-        growth_plan = (await db.execute(select(Plan).where(Plan.name == "growth"))).scalar_one_or_none()
-        if not growth_plan:
-            growth_plan = (await db.execute(select(Plan))).scalars().first()
-
-        cp = (await db.execute(select(ClientProfile).where(ClientProfile.user_id == c_user.id))).scalar_one_or_none()
-        if not cp:
-            cp = ClientProfile(
-                user_id=c_user.id,
-                company_name="Ryze Mushroom Coffee",
-                instagram_username="ryzemushroomcoffee",
-                brand_summary="Organic functional mushroom coffee for sustained morning energy, razor-sharp focus, and zero jitters.",
-                brand_dna={
-                    "company_name": "Ryze Mushroom Coffee",
-                    "positioning": "Organic functional mushroom coffee for sustained morning energy and zero jitters.",
-                    "tone": {"voice_words": ["Energizing", "Grounded", "Authoritative", "Warm"]},
-                    "visual_direction": {"primary_colors": ["#10B981", "#065F46", "#F59E0B"]},
-                    "content_pillars": [
-                        {"name": "Morning Rituals & Focus", "funnel_stage": "reach"},
-                        {"name": "Functional Mushroom Science", "funnel_stage": "consideration"},
-                        {"name": "Customer Transformations", "funnel_stage": "conversion"}
-                    ]
-                },
-                brand_dna_source="gemini",
-                brand_dna_version=1,
-                onboarding_completed_at=now,
-            )
-            db.add(cp)
-            await db.flush()
-
-        sub = (await db.execute(select(Subscription).where(Subscription.client_id == c_user.id))).scalar_one_or_none()
-        if not sub and growth_plan:
-            sub = Subscription(
-                id=uuid.uuid4(),
-                client_id=c_user.id,
-                plan_id=growth_plan.id,
-                status="active",
-                gateway=PaymentProvider.RAZORPAY,
-                amount=growth_plan.monthly_price,
-                current_period_start=now,
-                current_period_end=now + timedelta(days=30),
-            )
-            db.add(sub)
-            await db.flush()
-
-        await db.commit()
-
-        # Dispatch pod assignment and feasible calendar for Ryze
-        try:
-            res_ryze = await assign_client_and_generate_schedule(db, c_user.id)
-            print(f"[OK] Dispatched client {client_email}: Lead={res_ryze.get('team_lead')}, Tasks={res_ryze.get('created_tasks')}")
-        except Exception as e_disp:
-            print(f"Notice dispatching {client_email}: {e_disp}")
+        print("[OK] Created 15 Staff Profiles with proper department, skills, capacity, and team lead relations.")
 
         print("\n=== STEP 3: RE-DISPATCH CREATIVE PODS FOR ONBOARDED REAL CLIENTS ===")
         # Check real clients that have completed questionnaire / brand discovery

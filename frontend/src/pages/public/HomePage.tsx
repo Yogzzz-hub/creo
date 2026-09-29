@@ -1,716 +1,382 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
-import {
-  ArrowRight,
-  CheckCircle2,
-  Zap,
-  Play,
-  FileText,
-  Rocket,
-  Star,
-  Film,
-  Layers,
-  Clock,
-  Loader2,
-  Calendar,
-} from "lucide-react";
-import { request } from "../../lib/http";
-import { ScrollReveal } from "../../components/ui/ScrollReveal";
-
-interface MetricItem {
-  target: number;
-  decimals?: number;
-  prefix?: string;
-  suffix?: string;
-  label: string;
-  sub: string;
-}
-
-const METRIC_ITEMS: MetricItem[] = [
-  { target: 50, suffix: "+", label: "Active Brands Scaled", sub: "Across 12 industries" },
-  { target: 1200, suffix: "+", label: "Reels & Carousels Delivered", sub: "4K & Retina exports" },
-  { target: 98.4, decimals: 1, suffix: "%", label: "First-Round Approval Rate", sub: "Minimal revision cycles" },
-  { target: 3.4, decimals: 1, suffix: "x", label: "Average Client ROI Lift", sub: "Verified performance" },
-  { target: 7, suffix: " Days", label: "Onboarding to 1st Batch", sub: "Guaranteed SLA delivery" },
-];
-
-function AnimatedMetricCard({ item, isLast }: { item: MetricItem; isLast?: boolean }) {
-  const [count, setCount] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const hasTriggeredRef = useRef(false);
-
-  useEffect(() => {
-    const triggerAnimation = () => {
-      if (hasTriggeredRef.current) return;
-      hasTriggeredRef.current = true;
-      setIsAnimating(true);
-
-      const duration = 1600;
-      const startTime = performance.now();
-
-      const update = (now: number) => {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        // Quartic ease-out curve for a natural decelerating count
-        const easeOut = 1 - Math.pow(1 - progress, 4);
-        const currentVal = easeOut * item.target;
-        setCount(currentVal);
-
-        if (progress < 1) {
-          requestAnimationFrame(update);
-        } else {
-          setCount(item.target);
-          setIsAnimating(false);
-        }
-      };
-
-      requestAnimationFrame(update);
-    };
-
-    if (typeof IntersectionObserver !== "undefined" && cardRef.current) {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0]?.isIntersecting) {
-            triggerAnimation();
-            observer.disconnect();
-          }
-        },
-        { threshold: 0.2 }
-      );
-      observer.observe(cardRef.current);
-      return () => observer.disconnect();
-    } else {
-      const timer = setTimeout(triggerAnimation, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [item.target]);
-
-  const displayCount = () => {
-    if (item.decimals) {
-      return count.toFixed(item.decimals);
-    }
-    return Math.round(count).toLocaleString();
-  };
-
-  return (
-    <div
-      ref={cardRef}
-      className={`group relative p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col justify-center items-center transition-all duration-300 hover:border-[#2B7BC4]/60 hover:shadow-lg hover:-translate-y-1 overflow-hidden ${
-        isLast ? "col-span-2 md:col-span-1" : ""
-      }`}
-    >
-      {/* Top dynamic loading accent bar */}
-      <div
-        className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] transition-all duration-700 ease-out"
-        style={{ width: hasTriggeredRef.current ? "100%" : "0%" }}
-      />
-
-      {/* Numerical metric with animated counter */}
-      <div className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0D2137] mb-1.5 transition-transform duration-300 group-hover:scale-105 font-mono">
-        <span>{item.prefix || ""}</span>
-        <span className="tabular-nums">{displayCount()}</span>
-        <span className="text-[#2B7BC4]">{item.suffix || ""}</span>
-      </div>
-
-      <div className="text-sm font-bold text-slate-700">{item.label}</div>
-      <div className="text-xs text-slate-400 mt-0.5">{item.sub}</div>
-
-      {/* Subtle pulsing live indicator during animation */}
-      {isAnimating && (
-        <span className="absolute top-2 right-2 size-1.5 rounded-full bg-[#2B7BC4] animate-ping" />
-      )}
-    </div>
-  );
-}
-
-
-
-const ONBOARDING_STEPS = [
-  {
-    day: "Day 1",
-    number: "01",
-    title: "Brand DNA Intake",
-    description:
-      "Complete a 5-minute brand questionnaire covering your tone, aesthetic guidelines, target audience demographics, and top competitors.",
-    icon: FileText,
-    image: "/assets/workflow/step1_brand_dna.jpg",
-  },
-  {
-    day: "Days 2–3",
-    number: "02",
-    title: "Editorial Strategy & Blueprint",
-    description:
-      "Our creative directors craft your tailored 30-day content calendar, narrative pillars, hook library, and visual moodboard.",
-    icon: Zap,
-    image: "/assets/workflow/step2_strategy.jpg",
-  },
-  {
-    day: "Days 4–6",
-    number: "03",
-    title: "Dedicated Production Sprint",
-    description:
-      "Our motion designers, video editors, and copywriters script, shoot, edit, and polish your inaugural content drops.",
-    icon: Film,
-    image: "/assets/workflow/step3_production.jpg",
-  },
-  {
-    day: "Day 7",
-    number: "04",
-    title: "Batch #01 In Your Portal",
-    description:
-      "Your first batch lands directly in your private client portal. Review high-res previews, request tweaks, or approve with one click.",
-    icon: CheckCircle2,
-    image: "/assets/workflow/step4_portal.jpg",
-  },
-  {
-    day: "Weekly",
-    number: "05",
-    title: "Auto-Publish & Growth",
-    description:
-      "Approved content is auto-scheduled to Instagram or exported ready-to-post. New fresh batches arrive every 7 days like clockwork.",
-    icon: Rocket,
-    image: "/assets/workflow/step5_autopublish.jpg",
-  },
-];
-
-const COMPARISON_ROWS = [
-  {
-    feature: "Monthly Cost",
-    creo: "Flat ₹25,000 – ₹95,000 / month",
-    traditional: "₹1,50,000+ plus retainer markups",
-    freelancer: "Unpredictable per-gig pricing",
-  },
-  {
-    feature: "First Batch SLA",
-    creo: "Guaranteed 7 Days from intake",
-    traditional: "3 to 4 weeks of bureaucracy",
-    freelancer: "Unreliable & missed deadlines",
-  },
-  {
-    feature: "Creative Team",
-    creo: "Dedicated Creative Pod (Lead + Editor + Designer)",
-    traditional: "Junior interns & rotating account managers",
-    freelancer: "Single point of failure",
-  },
-  {
-    feature: "Revisions",
-    creo: "2 Revision rounds included per asset",
-    traditional: "Extra billable hours for small edits",
-    freelancer: "Scope creep arguments",
-  },
-  {
-    feature: "Contract Commitment",
-    creo: "Month-to-month. Cancel or pause anytime.",
-    traditional: "6 to 12 month binding contracts",
-    freelancer: "No guarantee of availability",
-  },
-  {
-    feature: "Workflow Platform",
-    creo: "Custom Client Portal with live approvals & calendar",
-    traditional: "Messy email threads & Google Drive links",
-    freelancer: "Disorganized WhatsApp/WeTransfer files",
-  },
-];
-
-
+import { CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
 
 export function HomePage() {
-  const [email, setEmail] = useState("");
-  const [leadStatus, setLeadStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [leadError, setLeadError] = useState("");
+  const [assets, setAssets] = useState([
+    { id: 1, name: "Autumn drop teaser", type: "Reel 9:16", status: "awaiting" },
+    { id: 2, name: "The 36-hour dough", type: "Carousel 4 slides", status: "awaiting" },
+    { id: 3, name: "Serum launch countdown", type: "Story 3 frames", status: "approved" },
+  ]);
 
-  async function handleLeadSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLeadStatus("loading");
-    setLeadError("");
+  const updateStatus = (id: number, status: string) => {
+    setAssets(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+  };
 
-    try {
-      await request("/api/v1/lead-magnet", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      });
-      setLeadStatus("success");
-    } catch {
-      // In dev or offline fallback, provide responsive positive feedback
-      setLeadStatus("success");
-    }
-  }
+  const approvedCount = assets.filter(a => a.status === "approved").length;
 
   return (
-    <div className="w-full bg-white text-[#0D2137] overflow-hidden">
-      {/* ── 1. Hero Section (Blue to White Left-to-Right Gradient) ─────────── */}
-      <section
-        className="relative overflow-hidden bg-gradient-to-r from-[#07192F] via-[#0B2545] via-25% via-[#123966] via-50% via-[#1D5E9E] via-72% to-[#EAF3FB] to-95% text-white pt-8 pb-12 lg:pt-12 lg:pb-16"
-        id="hero"
-      >
-        {/* Subtle Tech Grid Pattern */}
-        <div
-          className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{
-            backgroundImage:
-              "radial-gradient(rgba(255, 255, 255, 0.25) 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-          }}
-        />
-
-        {/* Ambient Glows */}
-        <div className="absolute top-1/4 left-[-10%] w-[500px] h-[500px] bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-[15%] w-[450px] h-[450px] bg-sky-300/20 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-            {/* Left Column: Headline, Trust Signals & CTAs */}
-            <div className="lg:col-span-6 z-10">
-
-              {/* Main Headline */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight leading-[1.06] text-white">
-                Your brand. <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-cyan-300">
-                  Growing.
-                </span>{" "}
-                Every <br />
-                week.
-              </h1>
-
-              {/* Subheadline */}
-              <p className="mt-6 text-lg sm:text-xl text-blue-100/90 font-normal leading-relaxed max-w-xl">
-                Onboarded in 7 days. High-impact reels, swipeable carousels, and branded stories delivered every week. Zero contracts. Zero agency overhead.
-              </p>
-
-              {/* Call to Actions */}
-              <div className="mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-                <Link
-                  to="/pricing"
-                  className="group inline-flex items-center justify-center gap-2.5 px-8 py-4 text-base font-bold text-[#0B2545] bg-white hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 rounded-full shadow-xl shadow-black/15 cursor-pointer"
-                >
-                  <span>See Our Plans</span>
-                  <ArrowRight className="size-5 transition-transform duration-200 group-hover:translate-x-1 text-[#1D5E9E]" />
-                </Link>
-
-                <a
-                  href="https://wa.me/919941999415"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group inline-flex items-center justify-center gap-2.5 px-8 py-4 text-base font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/25 backdrop-blur-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 rounded-full shadow-sm cursor-pointer"
-                >
-                  <span>Book a Strategy Call</span>
-                  <svg
-                    className="size-4.5 transition-transform duration-200 group-hover:rotate-45"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2.2"
-                      d="M7 17L17 7M17 7H7M17 7V17"
-                    />
-                  </svg>
-                </a>
-              </div>
-
-              {/* Social Proof & Guarantees */}
-              <div className="mt-10 pt-8 border-t border-white/15 flex flex-wrap items-center gap-y-4 gap-x-8 text-xs text-blue-100/80">
-                <div className="flex items-center gap-2">
-                  <div className="flex -space-x-2">
-                    {["#1E3A8A", "#0D9488", "#7C3AED", "#EA580C", "#2563EB"].map((c, i) => (
-                      <div
-                        key={i}
-                        style={{ backgroundColor: c }}
-                        className="size-7 rounded-full border-2 border-[#0B2545] flex items-center justify-center text-[10px] font-bold text-white shadow-xs"
-                      >
-                        {["A", "U", "Z", "K", "H"][i]}
-                      </div>
-                    ))}
-                  </div>
-                  <div>
-                    <div className="flex items-center text-amber-300">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="size-3 fill-amber-300" />
-                      ))}
-                    </div>
-                    <span className="font-semibold text-white">4.9/5 Rating</span> from 50+ founders
-                  </div>
-                </div>
-              </div>
+    <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#7FA0D6]/30">
+      
+      {/* 1. Hero Section + Collage */}
+      <section className="max-w-[1240px] mx-auto px-6 py-16 lg:py-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-start">
+          
+          {/* Left Hero Column */}
+          <div className="pr-4 lg:pr-12">
+            <div className="text-[11px] tracking-widest uppercase font-bold text-[#97A0B3] mb-5 flex items-center">
+              <span className="text-[#38BDF8] mr-1.5 text-lg leading-none">&bull;</span> A CREATIVE POD FOR D2C BRANDS
             </div>
-
-            {/* Right Column: Interactive Creative Production Suite Mockup */}
-            <div className="lg:col-span-6 flex justify-center lg:justify-end relative">
-              {/* Main Studio Operating Window */}
-              <div className="w-full max-w-lg lg:max-w-none rounded-3xl border border-white/60 bg-white/95 backdrop-blur-2xl shadow-2xl shadow-blue-950/25 p-5 sm:p-7 text-slate-800 relative transition-transform duration-500 hover:shadow-blue-500/20">
-                {/* Window Bar */}
-                <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <div className="size-3 rounded-full bg-rose-400" />
-                    <div className="size-3 rounded-full bg-amber-400" />
-                    <div className="size-3 rounded-full bg-emerald-400" />
-                    <span className="ml-2 text-xs font-bold text-slate-700">Creo Creative Hub · Sprint #34</span>
-                  </div>
-                </div>
-
-                {/* 2 Live Deliverable Preview Cards with Real AI Images & Animations */}
-                <div className="space-y-3.5">
-                  {/* Card 1: Cinematic 9:16 Reel */}
-                  <div className="group relative rounded-2xl border border-slate-200/90 bg-gradient-to-r from-slate-50 to-blue-50/40 p-4 transition-all duration-300 hover:border-blue-300 hover:shadow-md">
-                    <div className="flex items-start gap-3.5">
-                      {/* Video Thumbnail Preview with Real AI Media & Pulse Animation */}
-                      <div className="relative size-16 sm:size-20 rounded-xl overflow-hidden shrink-0 shadow-md group-hover:shadow-lg transition-all duration-500 border border-slate-200/80 bg-slate-900">
-                        <img
-                          src="/assets/deliverables/astra_living_reel.jpg"
-                          alt="Astra Living Reel"
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                        
-                        {/* Animated Play Button with Wave Pulse */}
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="absolute size-7 rounded-full bg-white/40 animate-ping opacity-75" />
-                          <div className="relative size-7 rounded-full bg-white/90 backdrop-blur-xs flex items-center justify-center text-[#0B2545] shadow-sm group-hover:scale-110 transition-transform">
-                            <Play className="size-3 fill-[#0B2545] ml-0.5" />
-                          </div>
-                        </div>
-
-                        <span className="absolute bottom-1 right-1 text-[9px] font-extrabold bg-black/80 backdrop-blur-xs text-white px-1.5 py-0.5 rounded shadow-xs">
-                          0:28
-                        </span>
-                      </div>
-
-                      {/* Video Metadata */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100/70 px-2 py-0.5 rounded-md">
-                            <Film className="size-3" />
-                            4K Reel · 9:16
-                          </span>
-                          <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/80 flex items-center gap-1">
-                            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            Ready to Post
-                          </span>
-                        </div>
-                        <h4 className="text-sm font-bold text-[#0D2137] mt-1.5 truncate group-hover:text-[#2B7BC4] transition-colors">
-                          Astra Living · Golden Hour Minimalist Drop
-                        </h4>
-                        <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
-                          <span className="font-semibold text-slate-700">48.2k Views</span>
-                          <span>•</span>
-                          <span className="text-emerald-600 font-semibold">+340% Reach</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Card 2: Editorial Carousel */}
-                  <div className="group relative rounded-2xl border border-slate-200/90 bg-gradient-to-r from-slate-50 to-emerald-50/30 p-4 transition-all duration-300 hover:border-emerald-300 hover:shadow-md">
-                    <div className="flex items-start gap-3.5">
-                      {/* Carousel Thumbnail with Real AI Media & Layer Indicator */}
-                      <div className="relative size-16 sm:size-20 rounded-xl overflow-hidden shrink-0 shadow-md group-hover:shadow-lg transition-all duration-500 border border-slate-200/80 bg-slate-900">
-                        <img
-                          src="/assets/deliverables/urban_bakes_carousel.jpg"
-                          alt="Urban Bakes 36-Hr Fermentation Guide"
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-
-                        <span className="absolute bottom-1 right-1 text-[9px] font-extrabold bg-black/80 backdrop-blur-xs text-white px-1.5 py-0.5 rounded shadow-xs">
-                          1/8
-                        </span>
-                      </div>
-
-                      {/* Carousel Metadata */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-md">
-                            <Layers className="size-3" />
-                            Editorial Carousel
-                          </span>
-                          <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/80 flex items-center gap-1">
-                            <span className="size-1.5 rounded-full bg-blue-500 animate-ping" />
-                            Auto-Sync
-                          </span>
-                        </div>
-                        <h4 className="text-sm font-bold text-[#0D2137] mt-1.5 truncate group-hover:text-[#2B7BC4] transition-colors">
-                          Urban Bakes · 36-Hr Fermentation Guide
-                        </h4>
-                        <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
-                          <span className="font-semibold text-slate-700">1,280 Saves</span>
-                          <span>•</span>
-                          <span className="text-blue-600 font-semibold">8.4% Save Rate</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Velocity Progress Tracker */}
-                <div className="mt-5 pt-4 border-t border-slate-100">
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="font-semibold text-slate-600">Weekly Quota Completion</span>
-                    <span className="font-bold text-[#2B7BC4]">4 of 4 Assets Delivered (100%)</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                    <div className="h-full rounded-full bg-gradient-to-r from-[#2B7BC4] to-emerald-400 w-full" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 2. Brand Partners & Key Impact Numbers ───────────────────────── */}
-      <section className="py-10 sm:py-12 bg-gradient-to-b from-white via-slate-50/60 to-white border-b border-slate-200/70" id="stats">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-
-          {/* 5 Impact Metric Cards with Count-Up Loading Animations */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 sm:gap-6 text-center">
-            {METRIC_ITEMS.map((m, idx) => (
-              <AnimatedMetricCard
-                key={m.label}
-                item={m}
-                isLast={idx === 4}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 4. How It Works: The 7-Day Roadmap ───────────────────────────── */}
-      <section className="py-12 sm:py-16 bg-gradient-to-b from-[#F4F9FD] to-white border-y border-slate-200/70" id="how-it-works">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <ScrollReveal variant="up">
-            <div className="text-center max-w-3xl mx-auto mb-10">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#2B7BC4] border border-blue-200/80 shadow-2xs mb-3">
-                <Clock className="size-3.5" />
-                <span>Turnaround Timeline</span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#0D2137]">
-                From Sign-Up to First Batch <br />
-                <span className="text-[#2B7BC4]">in Exactly 7 Days</span>
-              </h2>
-              <p className="mt-3 text-sm sm:text-base text-slate-600">
-                No protracted 6-week agency setups. A streamlined 5-step workflow engineered for rapid execution.
-              </p>
-            </div>
-          </ScrollReveal>
-
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6 relative">
-            {ONBOARDING_STEPS.map((step, idx) => {
-              const Icon = step.icon;
-              return (
-                <ScrollReveal key={step.number} variant="up" delay={idx * 100}>
-                  <div className="rounded-2xl bg-white p-3.5 sm:p-4 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-xl transition-all duration-500 flex flex-col justify-between group overflow-hidden h-full">
-                    <div>
-                      {/* Real Animated AI Step Visual */}
-                      <div className="relative aspect-[4/3] rounded-xl overflow-hidden mb-3.5 bg-slate-100 shadow-inner">
-                        <img
-                          src={step.image}
-                          alt={step.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30" />
-                        
-                        <div className="absolute top-2 left-2 flex items-center gap-1.5">
-                          <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-white/95 backdrop-blur-xs text-[#2B7BC4] shadow-xs">
-                            {step.day}
-                          </span>
-                        </div>
-                        
-                        <div className="absolute top-2 right-2">
-                          <span className="text-[11px] font-black text-white/95 bg-black/50 backdrop-blur-xs px-2 py-0.5 rounded-md">
-                            #{step.number}
-                          </span>
-                        </div>
-
-                        <div className="absolute bottom-2 left-2 size-7 rounded-lg bg-white/90 backdrop-blur-xs text-[#2B7BC4] flex items-center justify-center shadow-sm group-hover:scale-110 group-hover:bg-[#2B7BC4] group-hover:text-white transition-all duration-300">
-                          <Icon className="size-3.5" />
-                        </div>
-                      </div>
-
-                      <h3 className="text-sm font-bold text-[#0D2137] mb-1.5 group-hover:text-[#2B7BC4] transition-colors">
-                        {step.title}
-                      </h3>
-                      <p className="text-[11px] text-slate-600 leading-relaxed">{step.description}</p>
-                    </div>
-                  </div>
-                </ScrollReveal>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 5. Why Brands Switch to Creo (Comparison Matrix) ─────────────── */}
-      <section className="py-12 sm:py-16 bg-white" id="comparison">
-        <div className="max-w-6xl mx-auto px-6 sm:px-8">
-          <ScrollReveal variant="up">
-            <div className="text-center max-w-3xl mx-auto mb-10">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#0D2137]">
-                Why Ambitious Brands <br />
-                <span className="text-[#2B7BC4]">Choose Creo Over the Rest</span>
-              </h2>
-              <p className="mt-3 text-sm sm:text-base text-slate-600">
-                Traditional agencies are too slow. Freelancers are too unreliable. Creo gives you the sweet spot: agency-grade output with startup agility.
-              </p>
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal variant="scale" delay={120}>
-            <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-bold uppercase tracking-wider text-slate-500">
-                    <th className="p-4 sm:p-5">Feature</th>
-                    <th className="p-4 sm:p-5 text-slate-400">Traditional Agency</th>
-                    <th className="p-4 sm:p-5 text-slate-400">Freelancer Marketplace</th>
-                    <th className="p-4 sm:p-5 bg-blue-50/80 text-[#2B7BC4] font-black border-l border-blue-200">
-                      Creo Retainer ⚡
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-sm">
-                  {COMPARISON_ROWS.map((row) => (
-                    <tr key={row.feature} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="p-4 sm:p-5 font-bold text-[#0D2137]">{row.feature}</td>
-                      <td className="p-4 sm:p-5 text-slate-500">{row.traditional}</td>
-                      <td className="p-4 sm:p-5 text-slate-500">{row.freelancer}</td>
-                      <td className="p-4 sm:p-5 font-bold text-[#0D2137] bg-blue-50/40 border-l border-blue-100">
-                        {row.creo}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ── 7. Retainer Quick-Glance Section ──────────────────────────────── */}
-      <section className="py-12 sm:py-16 bg-white" id="pricing-glance">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <ScrollReveal variant="scale">
-            <div className="rounded-3xl bg-gradient-to-r from-[#0D2137] via-[#123966] to-[#1D5E9E] p-8 sm:p-12 lg:p-14 text-white shadow-2xl relative overflow-hidden">
-              <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
-                <div className="lg:col-span-7">
-                  <span className="text-xs font-bold uppercase tracking-widest text-cyan-300">
-                    Predictable Month-to-Month Retainers
-                  </span>
-                  <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight mt-2 text-white">
-                    Plans Starting at Just ₹25,000 / month
-                  </h3>
-                  <p className="mt-3 text-sm sm:text-base text-blue-100/90 leading-relaxed max-w-xl">
-                    Choose between Starter Growth, Brand Accelerator, or Enterprise Pro. Every plan includes dedicated video editors, graphic designers, and auto-scheduling.
-                  </p>
-
-                  <div className="mt-6 flex flex-wrap items-center gap-4 sm:gap-6 text-xs sm:text-sm">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="size-4 text-emerald-400" />
-                      <span>8 to 30 Deliverables / Month</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="size-4 text-emerald-400" />
-                      <span>2 Revision Rounds</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="size-4 text-emerald-400" />
-                      <span>Zero Setup Fees</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-3 justify-center">
-                  <Link
-                    to="/pricing"
-                    className="px-7 py-3.5 rounded-xl bg-white text-[#0D2137] font-extrabold text-sm text-center hover:bg-slate-50 transition-all duration-200 shadow-lg hover:scale-105"
-                  >
-                    View Full Plans & Pricing →
-                  </Link>
-                  <a
-                    href="https://wa.me/919941999415"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-7 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold text-sm text-center backdrop-blur-md transition-all duration-200"
-                  >
-                    Schedule Custom Demo
-                  </a>
-                </div>
-              </div>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
-
-      {/* ── 8. Free 30-Day Content Calendar Template (Lead Magnet) ────────── */}
-      <section className="py-12 sm:py-16 bg-gradient-to-b from-[#EAF3FB] to-white relative" id="lead-magnet">
-        <div className="max-w-4xl mx-auto px-6 sm:px-8 text-center relative z-10">
-          <ScrollReveal variant="up">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-1.5 text-xs font-bold text-[#2B7BC4] border border-blue-200 mb-3 shadow-2xs">
-              <Calendar className="size-3.5" />
-              <span>Free Agency Resource</span>
-            </div>
-
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#0D2137] mb-3">
-              Download the 30-Day Content Calendar Blueprint
-            </h2>
-          <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto mb-6 leading-relaxed">
-            The exact social media content matrix we use for our top retainer brands. Includes 30 post concepts, proven video hooks, and call-to-action scripts.
-          </p>
-
-          {leadStatus === "success" ? (
-            <div className="mt-8 inline-flex items-center gap-2.5 rounded-2xl bg-emerald-50 border border-emerald-300 px-8 py-4 text-base font-semibold text-emerald-800 shadow-xs">
-              <CheckCircle2 className="size-5 text-emerald-600" />
-              Check your inbox! Your free 30-day template and video hook bank are on their way.
-            </div>
-          ) : (
-            <form
-              onSubmit={handleLeadSubmit}
-              className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center max-w-xl mx-auto"
-            >
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="Enter your work email..."
-                className="h-13 flex-1 rounded-2xl border border-[#C9DFF0] bg-white px-5 text-sm text-[#0D2137] outline-none focus:ring-2 focus:ring-[#2B7BC4]/50 shadow-xs"
-              />
-              <button
-                type="submit"
-                disabled={leadStatus === "loading"}
-                className="h-13 rounded-2xl bg-gradient-to-r from-[#2B7BC4] to-[#1E609A] hover:brightness-110 active:scale-95 px-8 text-white font-bold text-sm inline-flex items-center justify-center gap-2 transition-all shadow-md shadow-blue-500/20 cursor-pointer disabled:opacity-60"
+            
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[0.98] sm:leading-[1.0] text-[#F8FAFC]">
+              Content that <br />
+              ships every week. <br />
+              <span className="italic font-serif font-light text-[#F8FAFC] pr-2">Proof you can</span> <br />
+              <span className="font-black text-[#F8FAFC]">check.</span>
+            </h1>
+            
+            <p className="text-sm sm:text-base text-[#97A0B3] leading-relaxed max-w-md mt-6 mb-7">
+              A dedicated lead, editor and designer learn your brand, then deliver reels, carousels and stories to a portal where you approve them in one click.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <Link 
+                to="/signup?intent=sample"
+                className="bg-[#BCCCE6] text-[#050810] font-bold text-xs sm:text-sm px-6 py-3 rounded-full hover:bg-white transition w-full sm:w-auto text-center shadow-sm"
               >
-                {leadStatus === "loading" ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    <span>Sending...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Get Free Template</span>
-                    <ArrowRight className="size-4" />
-                  </>
-                )}
-              </button>
-            </form>
-          )}
+                Get a free sample batch &rarr;
+              </Link>
+              <Link 
+                to="/portal"
+                className="bg-[#121926] border border-[#222F44] text-[#F8FAFC] text-xs sm:text-sm px-6 py-3 rounded-full hover:bg-[#1A2333] transition w-full sm:w-auto text-center shadow-sm"
+              >
+                Explore the portal first
+              </Link>
+            </div>
+            
+            <div className="text-[11px] font-semibold text-[#97A0B3] mt-8 border-t border-[#222F44] pt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <span>Month-to-month</span>
+              <span className="w-1 h-1 rounded-full bg-[#97A0B3]/50"></span>
+              <span>First batch in 7 days</span>
+              <span className="w-1 h-1 rounded-full bg-[#97A0B3]/50"></span>
+              <span>Late batch? Next cycle credited</span>
+            </div>
+          </div>
 
-          {leadStatus === "error" && (
-            <p className="mt-3 text-sm text-rose-600">{leadError}</p>
-          )}
+          {/* Right 3-Column Asymmetric Media Collage */}
+          <div className="grid grid-cols-3 gap-4 lg:h-[600px]">
+            
+            {/* Col 1 */}
+            <div className="flex flex-col gap-4">
+              <div className="relative aspect-[9/16] rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926]">
+                <img src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80" alt="Athlete" className="w-full h-full object-cover block" />
+                <div className="absolute bottom-3 left-3 bg-black/60 px-2.5 py-1 rounded text-[11px] text-white">
+                  Reel &middot; 9:16
+                </div>
+              </div>
+              <div className="relative aspect-[16/11] rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926]">
+                <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80" alt="Sourdough" className="w-full h-full object-cover block" />
+              </div>
+            </div>
 
-          <p className="text-xs text-slate-400 mt-4 tracking-wide">
-            Instant PDF & Notion download link. Zero spam. Unsubscribe anytime.
-          </p>
-          </ScrollReveal>
+            {/* Col 2 */}
+            <div className="flex flex-col gap-4 pt-8">
+              <div className="relative aspect-[16/11] rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926]">
+                <img src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=80" alt="Interior" className="w-full h-full object-cover block" />
+              </div>
+              <div className="relative aspect-[9/16] rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926]">
+                <img src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80" alt="Reel" className="w-full h-full object-cover block" />
+                <div className="absolute bottom-3 left-3 bg-black/60 px-2.5 py-1 rounded text-[11px] text-white">
+                  Reel &middot; 9:16
+                </div>
+              </div>
+            </div>
+
+            {/* Col 3 */}
+            <div className="flex flex-col gap-4">
+              <div className="relative aspect-[9/14] rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926]">
+                <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80" alt="Model" className="w-full h-full object-cover block" />
+              </div>
+              <div className="relative aspect-[4/5] rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926]">
+                <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=800&q=80" alt="Serum" className="w-full h-full object-cover block" />
+              </div>
+            </div>
+
+          </div>
         </div>
       </section>
 
+      {/* 2. The Studio Ledger Section */}
+      <section className="bg-[#0B111C] py-20 lg:py-24 border-y border-[#222F44]">
+        <div className="max-w-[1240px] mx-auto px-6">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <div className="text-[11px] tracking-widest uppercase font-bold text-[#7FA0D6] mb-4">
+              THE STUDIO LEDGER
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-5">
+              No star ratings. <span className="text-[#7FA0D6]">Just the clock.</span>
+            </h2>
+            <p className="text-sm text-[#97A0B3] leading-relaxed">
+              Every batch we ship is timestamped from the SLA service. Brands stay anonymous, the turnaround doesn't.
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto bg-[#161F2D] border border-[#2A3446] rounded-2xl overflow-hidden shadow-2xl">
+            <div className="grid grid-cols-4 bg-[#0A0F18] border-b border-[#2A3446] p-4 sm:p-5 items-center">
+              <div className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider">Industry</div>
+              <div className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider">Milestone</div>
+              <div className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider">SLA Time</div>
+              <div className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider text-right">Status</div>
+            </div>
+            
+            <div className="divide-y divide-[#2A3446]">
+              {[
+                { industry: "Food & beverage", batch: "Batch 04", time: "4d 18h", status: "Approved" },
+                { industry: "Skincare", batch: "Batch 12", time: "2d 02h", status: "Approved" },
+                { industry: "Home & living", batch: "Batch 02", time: "3d 14h", status: "Revisions" },
+                { industry: "Activewear", batch: "Batch 07", time: "4d 01h", status: "Approved" },
+                { industry: "Mobility", batch: "Batch 01", time: "5d 00h", status: "Awaiting" }
+              ].map((row, i) => (
+                <div key={i} className="grid grid-cols-4 items-center p-4 sm:p-5 hover:bg-[#121926] transition-colors">
+                  <div className="text-sm font-semibold text-[#F8FAFC]">{row.industry}</div>
+                  <div className="text-sm text-[#97A0B3]">{row.batch}</div>
+                  <div className="text-sm font-mono text-[#F8FAFC]">{row.time}</div>
+                  <div className="text-right">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider ${
+                      row.status === "Approved" ? "bg-[#050810] border border-[#10B981]/50 text-[#10B981]" : 
+                      row.status === "Revisions" ? "bg-[#050810] border border-[#D8BF9B]/50 text-[#D8BF9B]" : 
+                      "bg-[#050810] border border-[#7FA0D6]/50 text-[#7FA0D6]"
+                    }`}>
+                      {row.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Horizontal 5-Step Process Rail */}
+      <section className="max-w-[1240px] mx-auto px-6 pt-20">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 py-8 border-b border-[#2A3446]/40">
+          {[
+            { step: "01", time: "Day 1: Brand DNA", desc: "Upload your assets, fonts, and guidelines." },
+            { step: "02", time: "Days 2-3: Blueprint", desc: "We map out the content pillars and shot lists." },
+            { step: "03", time: "Days 4-6: Production", desc: "Our pod designs and edits your deliverables." },
+            { step: "04", time: "Day 7: Batch 01", desc: "You receive a secure link to approve or request changes." },
+            { step: "05", time: "Weekly: Publish & repeat", desc: "Consistent output that scales with your growth." }
+          ].map((item, i) => (
+            <div key={i} className="flex flex-col group">
+              <div className="w-7 h-7 rounded-full border border-[#2A3446] text-[#7FA0D6] flex items-center justify-center text-xs font-bold mb-2 group-hover:border-[#7FA0D6] transition-colors">
+                {item.step}
+              </div>
+              <h4 className="text-sm font-bold text-[#F8FAFC] mb-1">{item.time}</h4>
+              <p className="text-xs text-[#97A0B3]">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 4. Interactive Approval Portal Layout */}
+      <section className="max-w-[1240px] mx-auto px-6 pb-20 lg:pb-24 pt-12">
+        <div className="relative">
+          <div className="absolute -top-4 left-6 bg-[#0A0F18] border border-[#7FA0D6]/50 text-[#7FA0D6] text-[10px] font-bold px-4 py-1.5 rounded-full z-10 shadow-lg tracking-wider">
+            TRY IT — THIS PANEL WORKS
+          </div>
+          
+          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+            <div className="flex items-center justify-between pb-4 border-b border-[#2A3446]">
+              <div className="font-black text-[#F8FAFC] text-lg">Batch 04</div>
+              <div className="text-[11px] font-bold text-[#97A0B3]">
+                {approvedCount} of 3 approved &bull; <span className="text-[#10B981]">On track: 2 days early</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
+              {assets.map((asset, idx) => (
+                <div key={asset.id} className="bg-[#0A0F18] border border-[#2A3446] rounded-xl overflow-hidden flex flex-col">
+                  {/* Thumbnail */}
+                  <img 
+                    src={idx === 0 ? "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80" : idx === 1 ? "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80" : "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=600&q=80"}
+                    alt={asset.name} 
+                    className="h-44 object-cover w-full"
+                  />
+                  
+                  <div className="p-4 flex-1 flex flex-col">
+                    <div className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider mb-1">
+                      {asset.type.replace(' ', ' • ')}
+                    </div>
+                    <div className="text-sm font-bold text-[#F8FAFC] mb-4 flex-1">{asset.name}</div>
+                    
+                    <div className="flex items-center justify-between mt-auto">
+                      {asset.status === "awaiting" && (
+                        <div className="flex items-center gap-2 w-full">
+                          <button 
+                            onClick={() => updateStatus(asset.id, "approved")}
+                            className="flex-1 bg-[#10B981] hover:bg-[#059669] text-[#050810] font-bold text-xs py-2 rounded-full transition-colors flex items-center justify-center gap-1.5"
+                          >
+                            <CheckCircle2 className="size-3.5" /> Approve
+                          </button>
+                          <button 
+                            onClick={() => updateStatus(asset.id, "revision")}
+                            className="flex-1 bg-transparent border border-[#2A3446] hover:bg-[#222F44] text-[#F8FAFC] font-bold text-xs py-2 rounded-full transition-colors"
+                          >
+                            Change
+                          </button>
+                        </div>
+                      )}
+                      
+                      {asset.status === "approved" && (
+                        <div className="flex items-center justify-between w-full">
+                          <div className="inline-flex items-center gap-1.5 text-[#10B981] text-[10px] font-bold">
+                            <CheckCircle2 className="size-3.5" /> Approved (queued)
+                          </div>
+                          <button 
+                            onClick={() => updateStatus(asset.id, "awaiting")}
+                            className="bg-[#161F2D] border border-[#2A3446] hover:bg-[#222F44] text-[#F8FAFC] text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors"
+                          >
+                            Undo
+                          </button>
+                        </div>
+                      )}
+
+                      {asset.status === "revision" && (
+                        <div className="flex items-center justify-between w-full">
+                          <div className="inline-flex items-center gap-1.5 text-[#D8BF9B] text-[10px] font-bold">
+                            <AlertCircle className="size-3.5" /> Revision requested
+                          </div>
+                          <button 
+                            onClick={() => updateStatus(asset.id, "awaiting")}
+                            className="bg-[#161F2D] border border-[#2A3446] hover:bg-[#222F44] text-[#F8FAFC] text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors"
+                          >
+                            Undo
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Pricing Cards */}
+      <section className="bg-[#050810] py-16">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-4">
+              Priced per month. <span className="text-[#7FA0D6]">Measured per asset.</span>
+            </h2>
+            <p className="text-sm text-[#97A0B3] max-w-xl mx-auto leading-relaxed">
+              The more you commit, the less each piece costs. No setup fee, pause or cancel any month.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto my-16">
+            {/* Starter */}
+            <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 flex flex-col justify-between">
+              <div>
+                <div className="text-xs font-bold text-[#7FA0D6] uppercase tracking-wider mb-2">Starter</div>
+                <div className="text-3xl font-black text-[#F8FAFC] mb-1">₹25,000<span className="text-sm font-medium text-[#97A0B3]">/mo</span></div>
+                <div className="text-[11px] text-[#97A0B3] mb-6">(₹1,136/asset)</div>
+                
+                <ul className="space-y-3 mb-8 text-sm text-[#F8FAFC]">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 22 assets</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 1 revision round</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 3 business-day SLA</li>
+                </ul>
+              </div>
+              <Link to="/signup?intent=starter" className="w-full text-center bg-transparent border border-[#2A3446] hover:bg-[#2A3446] text-[#F8FAFC] font-bold text-xs py-3 rounded-full transition-colors mt-8">
+                Start with a free sample
+              </Link>
+            </div>
+
+            {/* Growth */}
+            <div className="bg-[#121926] border border-[#7FA0D6] rounded-2xl p-6 flex flex-col justify-between relative shadow-[0_0_20px_rgba(127,160,214,0.1)]">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0A0F18] border border-[#7FA0D6] text-[#7FA0D6] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
+                The on-time guarantee
+              </div>
+              <div>
+                <div className="text-xs font-bold text-[#7FA0D6] uppercase tracking-wider mb-2 mt-2">Growth</div>
+                <div className="text-3xl font-black text-[#F8FAFC] mb-1">₹50,000<span className="text-sm font-medium text-[#97A0B3]">/mo</span></div>
+                <div className="text-[11px] text-[#97A0B3] mb-6">(₹1,042/asset)</div>
+                
+                <ul className="space-y-3 mb-8 text-sm text-[#F8FAFC]">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 48 assets</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 2 revision rounds</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 2 business-day SLA</li>
+                </ul>
+              </div>
+              <Link to="/signup?intent=growth" className="w-full text-center bg-[#BCCCE6] hover:bg-white text-[#050810] font-bold text-xs py-3 rounded-full transition-colors mt-8">
+                Start with a free sample
+              </Link>
+            </div>
+
+            {/* Scale */}
+            <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 flex flex-col justify-between">
+              <div>
+                <div className="text-xs font-bold text-[#7FA0D6] uppercase tracking-wider mb-2">Scale</div>
+                <div className="text-3xl font-black text-[#F8FAFC] mb-1">₹95,000<span className="text-sm font-medium text-[#97A0B3]">/mo</span></div>
+                <div className="text-[11px] text-[#97A0B3] mb-6">(₹990/asset)</div>
+                
+                <ul className="space-y-3 mb-8 text-sm text-[#F8FAFC]">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 96 assets</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 3 revision rounds</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 24-hour priority SLA</li>
+                </ul>
+              </div>
+              <Link to="/signup?intent=scale" className="w-full text-center bg-transparent border border-[#2A3446] hover:bg-[#2A3446] text-[#F8FAFC] font-bold text-xs py-3 rounded-full transition-colors mt-8">
+                Start with a free sample
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. "Try Us Before You Pay Us" Lead Capture Section */}
+      <section className="bg-[#0B111C] py-20 lg:py-24 border-y border-[#222F44]">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-5">
+            Try us before you pay us.
+          </h2>
+          <p className="text-sm text-[#97A0B3] leading-relaxed mb-10 max-w-xl mx-auto">
+            Drop your Instagram handle and email below. We'll send you a custom sample batch of reels and carousels for your brand, completely free. No credit card required.
+          </p>
+          
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              alert("Sample batch request submitted!");
+            }} 
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-2xl mx-auto"
+          >
+            <input 
+              type="text" 
+              required
+              placeholder="Instagram handle (@yourbrand)" 
+              className="w-full sm:w-auto flex-1 bg-[#0A0F18] border border-[#2A3446] rounded-xl px-5 py-3.5 text-sm text-[#F8FAFC] placeholder:text-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] transition-colors"
+            />
+            <input 
+              type="email" 
+              required
+              placeholder="Work email (you@brand.com)" 
+              className="w-full sm:w-auto flex-1 bg-[#0A0F18] border border-[#2A3446] rounded-xl px-5 py-3.5 text-sm text-[#F8FAFC] placeholder:text-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] transition-colors"
+            />
+            <button 
+              type="submit" 
+              className="w-full sm:w-auto bg-[#BCCCE6] hover:bg-white text-[#050810] font-bold text-sm px-6 py-3.5 rounded-xl transition-colors shrink-0 flex items-center justify-center gap-2"
+            >
+              Send me a sample batch <ArrowRight className="size-4" />
+            </button>
+          </form>
+          <div className="text-[10px] font-semibold text-[#97A0B3] mt-6">
+            Spots are limited to 10 brands per week to ensure quality.
+          </div>
+        </div>
+      </section>
 
     </div>
   );

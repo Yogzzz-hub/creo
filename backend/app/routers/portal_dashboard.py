@@ -88,9 +88,6 @@ async def get_portal_dashboard(
             "is_expired": False,
             "seconds_remaining": sub_check["seconds_remaining"],
             "days_remaining": sub_check["days_remaining"],
-            "poster_quota": plan.poster_quota,
-            "reel_quota": plan.reel_quota,
-            "story_quota": plan.story_quota,
         }
     elif sub and plan and sub_check["is_expired"]:
         active_plan = {
@@ -104,9 +101,6 @@ async def get_portal_dashboard(
             "is_expired": True,
             "seconds_remaining": 0,
             "days_remaining": 0,
-            "poster_quota": plan.poster_quota,
-            "reel_quota": plan.reel_quota,
-            "story_quota": plan.story_quota,
         }
 
     # 5. Recent deliverables for activity feed

@@ -6,47 +6,50 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  --color-nebula-void: #050810;
-  --color-nebula-navy: #0B111C;
-  --color-nebula-surface: #161F2D;
-  --color-nebula-steel: #2A3446;
-  --color-nebula-mist: #97A0B3;
-  --color-nebula-periwinkle: #BCCCE6;
-  --color-nebula-glow: #7FA0D6;
-  --color-nebula-sand: #D8BF9B;
+  /* Solid Executive Dark Bento Design Tokens */
+  --color-void: #050810;
+  --color-deep-surface: #0B111C;
+  --color-bento-surface: #121926;
+  --color-nested-surface: #0A0F18;
+  --color-hairline: #222F44;
+  --color-off-white: #F8FAFC;
+  --color-slate-mist: #97A0B3;
+  --color-glow-blue: #7FA0D6;
+  --color-live-green: #10B981;
+  --color-cta-primary: #BCCCE6;
 
-  --color-brand: #7FA0D6;
-  --color-brand-dark: #050810;
-  --color-brand-light: #BCCCE6;
-  --color-brand-mid: #7FA0D6;
-  --color-accent: #7FA0D6;
+  --color-brand: #2B7BC4;
+  --color-brand-dark: #0D2137;
+  --color-brand-light: #E8F4FD;
+  --color-brand-mid: #6BAED6;
+  --color-accent: #0EA5E9;
 
-  --color-text: #F8FAFC;
-  --color-text-muted: #97A0B3;
+  --color-text: #374151;
+  --color-text-muted: #6BAED6;
 
-  --color-border: #2A3446;
-  --color-surface: #161F2D;
-  --color-bg: #0B111C;
-  --color-bg-internal: #050810;
+  --color-border: #C9DFF0;
+  --color-surface: #FFFFFF;
+  --color-bg: #E8F4FD;
+  --color-bg-internal: #F9FAFB;
 
-  --color-success: #10B981;
-  --color-success-light: rgba(16, 185, 129, 0.15);
-  --color-warning: #D8BF9B;
-  --color-warning-light: rgba(216, 191, 155, 0.15);
-  --color-error: #EF4444;
-  --color-error-light: rgba(239, 68, 68, 0.15);
-  --color-neutral: #97A0B3;
-  --color-neutral-light: #161F2D;
+  --color-success: #065F46;
+  --color-success-light: #D1FAE5;
+  --color-warning: #D97706;
+  --color-warning-light: #FEF3C7;
+  --color-error: #991B1B;
+  --color-error-light: #FEE2E2;
+  --color-neutral: #374151;
+  --color-neutral-light: #F9FAFB;
 
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
 
-  --shadow-card: 0 4px 20px -2px rgba(5, 8, 16, 0.5);
-  --shadow-modal: 0 16px 48px -4px rgba(5, 8, 16, 0.7);
+  --shadow-card: 0 1px 3px rgba(13, 33, 55, 0.08);
+  --shadow-modal: 0 8px 32px rgba(13, 33, 55, 0.16);
 
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --sidebar-width: 240px;
@@ -86,105 +89,96 @@
 }
 
 :root {
-  --nebula-void: #050810;
-  --nebula-navy: #0B111C;
-  --nebula-surface: #161F2D;
-  --nebula-steel: #2A3446;
-  --nebula-mist: #97A0B3;
-  --nebula-periwinkle: #BCCCE6;
-  --nebula-glow: #7FA0D6;
-  --nebula-sand: #D8BF9B;
-
-  --background: #0B111C;
+  --background: #050810;
   --foreground: #F8FAFC;
-  --card: #161F2D;
-  --card-foreground: #F8FAFC;
-  --popover: #161F2D;
-  --popover-foreground: #F8FAFC;
-  --primary: #BCCCE6;
-  --primary-foreground: #0B111C;
-  --secondary: #161F2D;
-  --secondary-foreground: #97A0B3;
-  --muted: #161F2D;
-  --muted-foreground: #97A0B3;
-  --accent: #7FA0D6;
-  --accent-foreground: #0B111C;
-  --destructive: #EF4444;
-  --border: #2A3446;
-  --input: #2A3446;
-  --ring: #7FA0D6;
-  --chart-1: #7FA0D6;
-  --chart-2: #BCCCE6;
-  --chart-3: #D8BF9B;
-  --chart-4: #38BDF8;
-  --chart-5: #A78BFA;
+  --card: #ffffff;
+  --card-foreground: #0D2137;
+  --popover: #ffffff;
+  --popover-foreground: #0D2137;
+  --primary: #2B7BC4;
+  --primary-foreground: #ffffff;
+  --secondary: #E8F4FD;
+  --secondary-foreground: #0D2137;
+  --muted: #F9FAFB;
+  --muted-foreground: #6BAED6;
+  --accent: #0EA5E9;
+  --accent-foreground: #ffffff;
+  --destructive: #991B1B;
+  --border: #C9DFF0;
+  --input: #C9DFF0;
+  --ring: #0EA5E9;
+  --chart-1: #2B7BC4;
+  --chart-2: #0EA5E9;
+  --chart-3: #6BAED6;
+  --chart-4: #065F46;
+  --chart-5: #D97706;
   --radius: 0.625rem;
-  --sidebar: #050810;
-  --sidebar-foreground: #F8FAFC;
-  --sidebar-primary: #BCCCE6;
-  --sidebar-primary-foreground: #0B111C;
-  --sidebar-accent: #161F2D;
-  --sidebar-accent-foreground: #F8FAFC;
-  --sidebar-border: #2A3446;
-  --sidebar-ring: #7FA0D6;
+  --sidebar: #0D2137;
+  --sidebar-foreground: #E8F4FD;
+  --sidebar-primary: #2B7BC4;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1a3a5c;
+  --sidebar-accent-foreground: #E8F4FD;
+  --sidebar-border: #1a3a5c;
+  --sidebar-ring: #0EA5E9;
 
   --sidebar-width: 240px;
   --topnav-height: 64px;
   --bottomtab-height: 56px;
 
   /* Functional Review & Deliverable Surface Tokens */
-  --surface-bg: #0B111C;
-  --surface-text: #F8FAFC;
-  --surface-card: #161F2D;
-  --surface-border: #2A3446;
-  --surface-hover: #1e2a3c;
-  --surface-active: #233147;
-  --color-raised: #161F2D;
-  --color-hairline: #2A3446;
-  --color-ink: #050810;
-  --color-ink-surface: #0B111C;
-  --color-ink-text: #F8FAFC;
-  --color-ink-muted: #97A0B3;
-  --color-paper: #161F2D;
-  --color-paper-text: #F8FAFC;
-  --color-waiting: #D8BF9B;
-  --color-settled: #10B981;
-  --color-blocked: #EF4444;
-  --color-motion: #7FA0D6;
+  --surface-bg: #E8F4FD;
+  --surface-text: #0D2137;
+  --surface-card: #FFFFFF;
+  --surface-border: #C9DFF0;
+  --surface-hover: #F0F7FD;
+  --surface-active: #E1EFFC;
+  --color-raised: #FFFFFF;
+  --color-hairline: #C9DFF0;
+  --color-ink: #FFFFFF;
+  --color-ink-surface: #F8FAFC;
+  --color-ink-text: #0D2137;
+  --color-ink-muted: #64748B;
+  --color-paper: #FFFFFF;
+  --color-paper-text: #0D2137;
+  --color-waiting: #D97706;
+  --color-settled: #065F46;
+  --color-blocked: #991B1B;
+  --color-motion: #2B7BC4;
 }
 
 .dark {
-  --background: #0B111C;
-  --foreground: #F8FAFC;
-  --card: #161F2D;
-  --card-foreground: #F8FAFC;
-  --popover: #161F2D;
-  --popover-foreground: #F8FAFC;
-  --primary: #BCCCE6;
-  --primary-foreground: #0B111C;
-  --secondary: #161F2D;
-  --secondary-foreground: #97A0B3;
-  --muted: #161F2D;
-  --muted-foreground: #97A0B3;
-  --accent: #7FA0D6;
-  --accent-foreground: #0B111C;
-  --destructive: #EF4444;
-  --border: #2A3446;
-  --input: #2A3446;
-  --ring: #7FA0D6;
-  --chart-1: #7FA0D6;
-  --chart-2: #BCCCE6;
-  --chart-3: #D8BF9B;
-  --chart-4: #38BDF8;
-  --chart-5: #A78BFA;
-  --sidebar: #050810;
-  --sidebar-foreground: #F8FAFC;
-  --sidebar-primary: #BCCCE6;
-  --sidebar-primary-foreground: #0B111C;
-  --sidebar-accent: #161F2D;
-  --sidebar-accent-foreground: #F8FAFC;
-  --sidebar-border: #2A3446;
-  --sidebar-ring: #7FA0D6;
+  --background: #0D2137;
+  --foreground: #E8F4FD;
+  --card: #1a3a5c;
+  --card-foreground: #E8F4FD;
+  --popover: #1a3a5c;
+  --popover-foreground: #E8F4FD;
+  --primary: #2B7BC4;
+  --primary-foreground: #ffffff;
+  --secondary: #1a3a5c;
+  --secondary-foreground: #E8F4FD;
+  --muted: #1a3a5c;
+  --muted-foreground: #6BAED6;
+  --accent: #0EA5E9;
+  --accent-foreground: #ffffff;
+  --destructive: #991B1B;
+  --border: #1a3a5c;
+  --input: #1a3a5c;
+  --ring: #0EA5E9;
+  --chart-1: #2B7BC4;
+  --chart-2: #0EA5E9;
+  --chart-3: #6BAED6;
+  --chart-4: #065F46;
+  --chart-5: #D97706;
+  --sidebar: #0D2137;
+  --sidebar-foreground: #E8F4FD;
+  --sidebar-primary: #2B7BC4;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1a3a5c;
+  --sidebar-accent-foreground: #E8F4FD;
+  --sidebar-border: #1a3a5c;
+  --sidebar-ring: #0EA5E9;
 }
 
 body {
@@ -565,775 +559,28 @@ aside .scrollbar-thin,
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   KPI CARDS OUTLINE & SURFACE: Nebula Palette (#2A3446 steel line default, #7FA0D6 glow blue on hover)
+   KPI CARDS OUTLINE: Dark Blue default (#1E3A8A), Light Blue on hover (#60A5FA)
 ───────────────────────────────────────────────────────────────────────────── */
 .kpi-card,
 [data-kpi-card="true"] {
-  border-width: 1px !important;
-  border-color: #2A3446 !important;
-  background-color: #161F2D !important;
-  color: #F8FAFC !important;
-  transition: border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, transform 0.25s ease !important;
+  border-width: 2px !important;
+  border-color: #1E3A8A !important;
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, transform 0.2s ease !important;
 }
 
 .kpi-card:hover,
 [data-kpi-card="true"]:hover {
-  border-color: #7FA0D6 !important;
-  box-shadow: 0 6px 24px rgba(127, 160, 214, 0.16) !important;
-  transform: translateY(-2px) !important;
+  border-color: #60A5FA !important;
+  box-shadow: 0 4px 20px rgba(96, 165, 250, 0.18) !important;
 }
 
-/* Appended from Dashboard template — Nebula Theme */
+
+
+/* Appended from Dashboard template */
 .card-surface {
-  background-color: #161F2D;
-  color: #F8FAFC;
-  border: 1px solid #2A3446;
-  border-radius: 28px;
-  box-shadow: 0 4px 20px -2px rgba(5, 8, 16, 0.45);
-  position: relative;
-  overflow: hidden;
+  @apply bg-white rounded-[32px] shadow-[0_2px_12px_rgba(0,0,0,0.03)] border-0 relative overflow-hidden;
 }
 
 .card-interactive {
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  @apply transition-all duration-300 ease-out hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 hover:border-slate-200;
 }
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   PORTAL INNOVATIVE ANIMATIONS & MICRO-INTERACTIONS
-───────────────────────────────────────────────────────────────────────────── */
-@keyframes portalFadeInUp {
-  0% {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes portalFadeInScale {
-  0% {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes portalPulseGlow {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(127, 160, 214, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(127, 160, 214, 0);
-  }
-}
-
-@keyframes portalStatusBreathe {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.65;
-    transform: scale(1.25);
-  }
-}
-
-@keyframes portalShimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-@keyframes portalFloatGentle {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-
-.animate-portal-fade-in {
-  animation: portalFadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-portal-scale-in {
-  animation: portalFadeInScale 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-status-breathe {
-  animation: portalStatusBreathe 2.5s ease-in-out infinite;
-}
-
-.animate-float-gentle {
-  animation: portalFloatGentle 4s ease-in-out infinite;
-}
-
-.hover-card-innovative {
-  transition: transform 0.28s cubic-bezier(0.2, 0, 0.2, 1), box-shadow 0.28s ease, border-color 0.28s ease;
-}
-
-.hover-card-innovative:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.45), 0 0 16px 1px rgba(127, 160, 214, 0.2);
-}
-
-.hover-glow-subtle {
-  transition: all 0.25s cubic-bezier(0.2, 0, 0.2, 1);
-}
-
-.hover-glow-subtle:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.25);
-  border-color: rgba(127, 160, 214, 0.6);
-}
-
-.interactive-pill {
-  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
-}
-
-.interactive-pill:hover {
-  transform: translateY(-1px);
-}
-
-.interactive-pill:active {
-  transform: scale(0.96);
-}
-
-.smooth-progress-fill {
-  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.portal-glass-panel {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-/* Antigravity Portal Canvas Atmosphere */
-[data-surface="ops"] {
-  background-color: transparent !important;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   PORTAL DARK THEME OVERRIDES — Full Black Theme
-   Applied via .portal-dark wrapper on all portal routes
-───────────────────────────────────────────────────────────────────────────── */
-
-/* Card surface override */
-.portal-dark .card-surface {
-  background-color: #161F2D !important;
-  border: 1px solid rgba(42, 52, 70, 0.7) !important;
-  color: #F1F5F9 !important;
-}
-
-/* ── Global bg-white nuke ── */
-.portal-dark [class*="bg-white"],
-.portal-dark [class*="bg-slate-50"],
-.portal-dark [class*="bg-slate-100"] {
-  background-color: #161F2D !important;
-  color: #F1F5F9 !important;
-  border-color: rgba(42, 52, 70, 0.7) !important;
-}
-
-/* Ensure /95 opacity white variants also get overridden */
-.portal-dark [class*="bg-white/95"],
-.portal-dark [class*="bg-white/90"] {
-  background-color: rgba(22, 31, 45, 0.97) !important;
-}
-
-/* ── Navbar & Headers ── */
-.portal-dark header,
-.portal-dark [class*="bg-\\[\\#F8F9FC\\]"] {
-  background-color: #0B111C !important;
-  border-color: rgba(42, 52, 70, 0.7) !important;
-}
-
-/* ── Nav pill background ── */
-.portal-dark nav[class*="bg-"] {
-  background-color: rgba(11, 17, 28, 0.8) !important;
-  border-color: rgba(42, 52, 70, 0.5) !important;
-}
-
-/* Active nav link styling — keep visible */
-.portal-dark [class*="bg-white"][class*="shadow"] {
-  background-color: rgba(42, 52, 70, 0.9) !important;
-  color: #F1F5F9 !important;
-}
-
-/* ── Text color overrides ── */
-.portal-dark [class*="text-slate-900"],
-.portal-dark [class*="text-\\[\\#0D2137\\]"],
-.portal-dark [class*="text-\\[\\#0F172A\\]"],
-.portal-dark [class*="text-slate-800"],
-.portal-dark [class*="text-slate-700"] {
-  color: #F1F5F9 !important;
-}
-
-.portal-dark [class*="text-slate-500"],
-.portal-dark [class*="text-slate-400"],
-.portal-dark [class*="text-slate-600"] {
-  color: #97A0B3 !important;
-}
-
-/* ── Dropdowns & Modals ── */
-.portal-dark [class*="shadow-xl"],
-.portal-dark [class*="shadow-2xl"],
-.portal-dark [class*="shadow-lg"] {
-  --tw-shadow-color: rgba(0, 0, 0, 0.5);
-}
-
-/* ── Borders ── */
-.portal-dark [class*="border-slate-200"],
-.portal-dark [class*="border-slate-100"],
-.portal-dark [class*="border-border"] {
-  border-color: rgba(42, 52, 70, 0.7) !important;
-}
-
-/* ── Hover states ── */
-.portal-dark [class*="hover:bg-slate-50"]:hover,
-.portal-dark [class*="hover:bg-slate-100"]:hover {
-  background-color: rgba(42, 52, 70, 0.6) !important;
-}
-
-/* ── Notification/hover tints ── */
-.portal-dark [class*="bg-blue-50"],
-.portal-dark [class*="bg-indigo-50"],
-.portal-dark [class*="bg-\\[\\#EEF4FF\\]"],
-.portal-dark [class*="bg-\\[\\#EBF3FF\\]"],
-.portal-dark [class*="bg-\\[\\#E8F4FD\\]"],
-.portal-dark [class*="bg-\\[\\#D5EBFA\\]"] {
-  background-color: rgba(42, 52, 70, 0.5) !important;
-}
-
-/* ── Bottom nav ── */
-.portal-dark nav[class*="fixed"][class*="bottom-0"] {
-  background-color: rgba(11, 17, 28, 0.97) !important;
-  border-color: rgba(42, 52, 70, 0.7) !important;
-  backdrop-filter: blur(16px) !important;
-}
-
-/* ── Inputs & selects ── */
-.portal-dark input,
-.portal-dark select,
-.portal-dark textarea {
-  background-color: #0B111C !important;
-  border-color: rgba(42, 52, 70, 0.7) !important;
-  color: #F1F5F9 !important;
-}
-
-.portal-dark input::placeholder,
-.portal-dark textarea::placeholder {
-  color: #64748B !important;
-}
-
-/* ── Light bg containers in AdminSubPages ── */
-.portal-dark [class*="bg-\\[\\#F1F5F9\\]"] {
-  background-color: rgba(22, 31, 45, 0.5) !important;
-}
-
-/* ── SLA Performance page light bg cards ── */
-.portal-dark [class*="bg-\\[\\#E0E7FF\\]"],
-.portal-dark [class*="bg-\\[\\#DBEAFE\\]"],
-.portal-dark [class*="bg-\\[\\#FEE2E2\\]"] {
-  background-color: rgba(42, 52, 70, 0.4) !important;
-}
-
-/* ── Scrollbar dark mode ── */
-.portal-dark ::-webkit-scrollbar-track {
-  background: #0B111C;
-}
-.portal-dark ::-webkit-scrollbar-thumb {
-  background: #2A3446;
-  border-radius: 6px;
-}
-.portal-dark ::-webkit-scrollbar-thumb:hover {
-  background: #3B4A5F;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   GLOBAL HOVER & HIGHLIGHT MICRO-ANIMATION SYSTEM (Admin, TL, Team Members)
-───────────────────────────────────────────────────────────────────────────── */
-
-/* Interactive Container Glow & Lift Micro-Animation */
-[data-surface="ops"] .hover-card-innovative,
-[data-surface="ops"] .card-surface,
-[data-surface="ops"] .kpi-card,
-[data-surface="ops"] [data-kpi-card="true"],
-.hover-card-innovative,
-.card-interactive {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-              background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-[data-surface="ops"] .hover-card-innovative:hover,
-[data-surface="ops"] .card-surface:hover,
-[data-surface="ops"] .kpi-card:hover,
-[data-surface="ops"] [data-kpi-card="true"]:hover,
-.hover-card-innovative:hover,
-.card-interactive:hover {
-  transform: translateY(-2.5px) scale(1.008) !important;
-  border-color: rgba(127, 160, 214, 0.55) !important;
-  box-shadow: 0 10px 30px -4px rgba(5, 8, 16, 0.7), 0 0 20px 2px rgba(127, 160, 214, 0.18) !important;
-}
-
-/* Inner Element & Table Row Hover Highlights */
-[data-surface="ops"] table tbody tr:hover {
-  background-color: rgba(31, 44, 63, 0.6) !important;
-  transition: background-color 0.15s ease-in-out;
-}
-
-/* Highlight borders on hover for internal grid cards & boxes */
-[data-surface="ops"] .bg-\[\#161F2D\]:hover,
-[data-surface="ops"] .bg-\[\#0B111C\]:hover {
-  border-color: rgba(127, 160, 214, 0.45);
-}
-
-/* Micro-animations for buttons and interactive badges */
-[data-surface="ops"] button:hover,
-[data-surface="ops"] a:hover {
-  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease;
-}
-
-@keyframes highlightGlowPulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(127, 160, 214, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 12px 3px rgba(127, 160, 214, 0.25);
-  }
-}
-
-.highlight-glow-active {
-  animation: highlightGlowPulse 2.5s ease-in-out infinite;
-}
-
-.card-interactive:hover {
-  border-color: #7FA0D6;
-  box-shadow: 0 8px 30px -4px rgba(127, 160, 214, 0.14);
-  transform: translateY(-2px);
-}
-
-/* Nebula Brand Utility Helpers */
-.bg-nebula-void { background-color: #050810 !important; }
-.bg-nebula-navy { background-color: #0B111C !important; }
-.bg-nebula-surface { background-color: #161F2D !important; }
-.border-nebula-steel { border-color: #2A3446 !important; }
-.text-nebula-mist { color: #97A0B3 !important; }
-.text-nebula-periwinkle { color: #BCCCE6 !important; }
-.bg-nebula-periwinkle { background-color: #BCCCE6 !important; color: #0B111C !important; }
-.text-nebula-glow { color: #7FA0D6 !important; }
-.bg-nebula-glow { background-color: #7FA0D6 !important; }
-.text-nebula-sand { color: #D8BF9B !important; }
-
-/* Questionnaire Nebula Scoped System */
-.questionnaire-nebula {
-  color: #F8FAFC;
-}
-.questionnaire-nebula h1,
-.questionnaire-nebula h2,
-.questionnaire-nebula h3,
-.questionnaire-nebula h4 {
-  color: #F8FAFC !important;
-}
-.questionnaire-nebula p.text-slate-500,
-.questionnaire-nebula p.text-slate-400,
-.questionnaire-nebula p.text-slate-600,
-.questionnaire-nebula span.text-slate-500,
-.questionnaire-nebula span.text-slate-400,
-.questionnaire-nebula span.text-slate-600 {
-  color: #97A0B3 !important;
-}
-.questionnaire-nebula label {
-  color: #F8FAFC !important;
-}
-.questionnaire-nebula input[type="text"],
-.questionnaire-nebula input[type="email"],
-.questionnaire-nebula input[type="number"],
-.questionnaire-nebula input[type="url"],
-.questionnaire-nebula textarea,
-.questionnaire-nebula select {
-  background-color: #0B111C !important;
-  color: #F8FAFC !important;
-  border-color: #2A3446 !important;
-}
-.questionnaire-nebula input::placeholder,
-.questionnaire-nebula textarea::placeholder {
-  color: #97A0B3 !important;
-  opacity: 0.6 !important;
-}
-.questionnaire-nebula input:focus,
-.questionnaire-nebula textarea:focus,
-.questionnaire-nebula select:focus {
-  border-color: #7FA0D6 !important;
-  outline: none !important;
-  box-shadow: 0 0 0 2px rgba(127, 160, 214, 0.25) !important;
-}
-.questionnaire-nebula .border-slate-100,
-.questionnaire-nebula .border-slate-200,
-.questionnaire-nebula .border-slate-200\/80,
-.questionnaire-nebula .border-slate-200\/60,
-.questionnaire-nebula .border-slate-300 {
-  border-color: #2A3446 !important;
-}
-.questionnaire-nebula .bg-slate-50,
-.questionnaire-nebula .bg-slate-50\/50,
-.questionnaire-nebula .bg-slate-50\/70,
-.questionnaire-nebula .bg-slate-100,
-.questionnaire-nebula .bg-slate-200 {
-  background-color: #0B111C !important;
-  color: #97A0B3 !important;
-}
-.questionnaire-nebula .bg-white {
-  background-color: #161F2D !important;
-  border-color: #2A3446 !important;
-  color: #F8FAFC !important;
-}
-.questionnaire-nebula .text-slate-900,
-.questionnaire-nebula .text-slate-800,
-.questionnaire-nebula .text-slate-700 {
-  color: #F8FAFC !important;
-}
-
-/* Portal Global Nebula Overrides */
-.portal-main {
-  color: #F8FAFC;
-}
-
-.portal-main .card-surface {
-  background-color: #161F2D !important;
-  border-color: #2A3446 !important;
-  color: #F8FAFC !important;
-}
-
-.portal-main input[type="text"],
-.portal-main input[type="email"],
-.portal-main input[type="password"],
-.portal-main input[type="search"],
-.portal-main input[type="number"],
-.portal-main input[type="tel"],
-.portal-main input[type="url"],
-.portal-main textarea,
-.portal-main select {
-  background-color: #0B111C !important;
-  color: #F8FAFC !important;
-  border-color: #2A3446 !important;
-}
-
-.portal-main input:focus,
-.portal-main textarea:focus,
-.portal-main select:focus {
-  border-color: #7FA0D6 !important;
-  outline: none !important;
-  box-shadow: 0 0 0 2px rgba(127, 160, 214, 0.25) !important;
-}
-
-.portal-main input::placeholder,
-.portal-main textarea::placeholder {
-  color: #97A0B3 !important;
-  opacity: 0.6 !important;
-}
-
-.portal-main .text-slate-900,
-.portal-main .text-slate-800,
-.portal-main .text-slate-700,
-.portal-main .text-\[\#0D2137\],
-.portal-main .text-\[\#0F172A\] {
-  color: #F8FAFC !important;
-}
-
-.portal-main .text-slate-500,
-.portal-main .text-slate-400,
-.portal-main .text-slate-600,
-.portal-main .text-\[\#64748B\] {
-  color: #97A0B3 !important;
-}
-
-.portal-main .border-slate-100,
-.portal-main .border-slate-200,
-.portal-main .border-slate-200\/80,
-.portal-main .border-slate-200\/70,
-.portal-main .border-slate-200\/60,
-.portal-main .border-slate-200\/90,
-.portal-main .border-slate-300,
-.portal-main .border-\[\#C9DFF0\],
-.portal-main .border-\[\#C9DFF0\]\/70,
-.portal-main .border-\[\#E2E8F0\] {
-  border-color: #2A3446 !important;
-}
-
-.portal-main .bg-slate-50,
-.portal-main .bg-slate-50\/50,
-.portal-main .bg-slate-50\/70,
-.portal-main .bg-slate-50\/80,
-.portal-main .bg-slate-100,
-.portal-main .bg-slate-100\/80,
-.portal-main .bg-slate-100\/90,
-.portal-main .bg-slate-200 {
-  background-color: #0B111C !important;
-  color: #97A0B3 !important;
-  border-color: #2A3446 !important;
-}
-
-.portal-main .bg-white {
-  background-color: #161F2D !important;
-  border-color: #2A3446 !important;
-  color: #F8FAFC !important;
-}
-
-.portal-main .text-\[\#0052FF\],
-.portal-main .text-\[\#2B7BC4\],
-.portal-main .text-\[\#1E609A\],
-.portal-main .text-blue-600 {
-  color: #7FA0D6 !important;
-}
-
-.portal-main .bg-blue-50,
-.portal-main .bg-blue-50\/40,
-.portal-main .bg-blue-50\/50,
-.portal-main .bg-blue-100,
-.portal-main .bg-\[\#F0F7FD\],
-.portal-main .bg-\[\#E8F4FD\],
-.portal-main .bg-\[\#F4F8FF\] {
-  background-color: rgba(127, 160, 214, 0.12) !important;
-  color: #BCCCE6 !important;
-  border-color: #2A3446 !important;
-}
-
-.portal-main .bg-\[\#0052FF\],
-.portal-main .bg-\[\#2B7BC4\],
-.portal-main .bg-\[\#1E609A\] {
-  background-color: #BCCCE6 !important;
-  color: #0B111C !important;
-  font-weight: 700 !important;
-}
-
-.portal-main .hover\:bg-\[\#0045D8\]:hover,
-.portal-main .hover\:bg-\[\#1A5EA8\]:hover {
-  background-color: #FFFFFF !important;
-  color: #0B111C !important;
-}
-
-.portal-main .border-\[\#0052FF\],
-.portal-main .border-\[\#2B7BC4\],
-.portal-main .border-blue-100,
-.portal-main .border-blue-200 {
-}
-
-/* ==========================================================================
-   NEBULA BENTO THEME — Scoped to .bento-theme wrapper
-   Only affects Client Portal & Onboarding pages.
-   ========================================================================== */
-
-:root {
-  --nebula-void: #050810;
-  --nebula-navy: #0B111C;
-  --nebula-surface: #161F2D;
-  --nebula-steel: #2A3446;
-  --nebula-mist: #97A0B3;
-  --nebula-periwinkle: #BCCCE6;
-  --nebula-glow: #7FA0D6;
-  --nebula-sand: #D8BF9B;
-}
-
-/* --- Remove all shadows inside bento-theme --- */
-.bento-theme *,
-.bento-theme *::before,
-.bento-theme *::after {
-  box-shadow: none !important;
-}
-
-/* --- Remove all gradients inside bento-theme --- */
-.bento-theme [class*="bg-gradient-"],
-.bento-theme [class*="from-"],
-.bento-theme [class*="via-"] {
-  background-image: none !important;
-}
-
-/* --- Hide decorative blur glows --- */
-.bento-theme [class*="blur-3xl"],
-.bento-theme [class*="blur-2xl"],
-.bento-theme .animate-ai-bg-drift,
-.bento-theme .animate-ai-orb-1,
-.bento-theme .animate-ai-orb-2 {
-  display: none !important;
-}
-
-/* --- Remove backdrop-filter (frosted glass) --- */
-.bento-theme [class*="backdrop-blur"] {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* --- Remove hover lift transforms for flat bento feel --- */
-.bento-theme .card-interactive:hover,
-.bento-theme .hover\:-translate-y-1:hover,
-.bento-theme [class*="hover:-translate-y"]:hover {
-  transform: none !important;
-}
-
-/* --- Restore typographic and background overrides so it works before manual TSX edits --- */
-.bento-theme {
-  background-color: var(--nebula-navy) !important;
-  color: var(--nebula-periwinkle) !important;
-}
-
-.bento-theme h1, .bento-theme h2, .bento-theme h3, .bento-theme h4, .bento-theme h5, .bento-theme h6,
-.bento-theme .text-slate-900, .bento-theme .text-slate-800, .bento-theme .text-slate-700, .bento-theme .text-gray-900,
-.bento-theme .text-\[\#0D2137\], .bento-theme .text-\[\#0F172A\] {
-  color: var(--nebula-periwinkle) !important;
-}
-
-.bento-theme p,
-.bento-theme .text-slate-500, .bento-theme .text-slate-400, .bento-theme .text-slate-600, .bento-theme .text-gray-500,
-.bento-theme .text-\[\#64748B\], .bento-theme .text-\[\#97A0B3\],
-.bento-theme .text-nebula-mist {
-  color: var(--nebula-mist) !important;
-}
-
-/* --- High contrast active pill tabs & buttons --- */
-.bento-theme .bg-\[\#BCCCE6\],
-.bento-theme [class*="bg-\\[\\#BCCCE6\\]"],
-.bento-theme .bg-nebula-periwinkle {
-  background-color: #BCCCE6 !important;
-  color: #0B111C !important;
-}
-
-.bento-theme .bg-\[\#BCCCE6\] span,
-.bento-theme [class*="bg-\\[\\#BCCCE6\\]"] span,
-.bento-theme .bg-nebula-periwinkle span,
-.bento-theme .bg-\[\#BCCCE6\] *,
-.bento-theme [class*="bg-\\[\\#BCCCE6\\]"] * {
-  color: #0B111C !important;
-}
-
-.bento-theme .text-blue-600, .bento-theme .text-blue-500, .bento-theme .text-\[\#0052FF\], .bento-theme .text-\[\#2B7BC4\],
-.bento-theme .text-\[\#7FA0D6\] {
-  color: var(--nebula-glow) !important;
-}
-
-.bento-theme .text-amber-500, .bento-theme .text-yellow-500, .bento-theme .text-\[\#D8BF9B\] {
-  color: var(--nebula-sand) !important;
-}
-
-.bento-theme .bg-white, .bento-theme .bg-white\/95, .bento-theme .bg-white\/90,
-.bento-theme .bg-slate-50, .bento-theme .bg-slate-100, .bento-theme .bg-gray-50, .bento-theme .bg-gray-100,
-.bento-theme .card-surface, .bento-theme .glass-card,
-.bento-theme .bg-\[\#161F2D\] {
-  background-color: var(--nebula-surface) !important;
-  border-color: var(--nebula-steel) !important;
-  color: var(--nebula-periwinkle) !important;
-}
-
-.bento-theme .border-slate-200, .bento-theme .border-slate-100, .bento-theme .border-slate-300, .bento-theme .border-gray-200,
-.bento-theme .border-\[\#2A3446\] {
-  border-color: var(--nebula-steel) !important;
-}
-
-.bento-theme .bg-blue-600, .bento-theme .bg-blue-500, .bento-theme .bg-\[\#0052FF\], .bento-theme .bg-\[\#2B7BC4\],
-.bento-theme .btn-primary {
-  background-color: var(--nebula-periwinkle) !important;
-  color: var(--nebula-navy) !important;
-  border-color: var(--nebula-periwinkle) !important;
-}
-
-/* --- Fix hover backgrounds --- */
-.bento-theme .hover\:bg-slate-50:hover, 
-.bento-theme .hover\:bg-white:hover,
-.bento-theme .hover\:bg-slate-100:hover,
-.bento-theme .group:hover .group-hover\:bg-slate-50 {
-  background-color: var(--nebula-steel) !important;
-  border-color: var(--nebula-mist) !important;
-}
-
-.bento-theme .bg-slate-50\/40, .bento-theme .bg-slate-50\/50, .bento-theme .bg-slate-50\/80 {
-  background-color: transparent !important;
-  border-color: var(--nebula-steel) !important;
-}
-
-/* --- Fix amber icon backgrounds --- */
-.bento-theme .bg-amber-50, .bento-theme .bg-amber-50\/80, .bento-theme .bg-amber-100 {
-  background-color: transparent !important;
-  border-color: var(--nebula-sand) !important;
-}
-.bento-theme .text-amber-600, .bento-theme .fill-amber-400 {
-  color: var(--nebula-sand) !important;
-  fill: var(--nebula-sand) !important;
-}
-
-/* --- Catch ALL opacity variants of light backgrounds --- */
-.bento-theme [class*="bg-white/"],
-.bento-theme [class*="bg-slate-50/"],
-.bento-theme [class*="bg-slate-100/"],
-.bento-theme [class*="bg-gray-50/"],
-.bento-theme [class*="bg-gray-100/"] {
-  background-color: transparent !important;
-  border-color: var(--nebula-steel) !important;
-}
-
-/* --- Fix Connect Instagram Card --- */
-.bento-theme .bg-\[\#F8FAFC\] {
-  background-color: var(--nebula-surface) !important;
-  border-color: var(--nebula-steel) !important;
-  color: var(--nebula-periwinkle) !important;
-}
-.bento-theme .bg-emerald-50, .bento-theme .bg-emerald-100 {
-  background-color: transparent !important;
-  border-color: var(--nebula-sand) !important;
-}
-.bento-theme .text-emerald-700, .bento-theme .border-emerald-200 {
-  color: var(--nebula-sand) !important;
-  border-color: var(--nebula-sand) !important;
-}
-
-/* --- Professional Creo Loading Animations --- */
-@keyframes spin-reverse {
-  from {
-    transform: rotate(360deg);
-  }
-  to {
-    transform: rotate(0deg);
-  }
-}
-
-@keyframes pulse-ring {
-  0%, 100% {
-    transform: scale(0.95);
-    opacity: 0.35;
-  }
-  50% {
-    transform: scale(1.18);
-    opacity: 0.85;
-  }
-}
-
-@keyframes shimmer-slide {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(200%);
-  }
-}
-
-.animate-spin-reverse {
-  animation: spin-reverse 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-
-.animate-pulse-ring {
-  animation: pulse-ring 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.animate-shimmer-slide {
-  animation: shimmer-slide 1.8s ease-in-out infinite;
-}
-

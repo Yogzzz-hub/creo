@@ -89,7 +89,6 @@ export function PortalSidebar() {
       cancelText: "Stay Logged In",
       tone: "warning",
       icon: "logout",
-      className: "bento-theme",
     });
     if (!ok) return;
 
@@ -240,7 +239,7 @@ export function MobileBottomTabBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-[#2A3446]/70 bg-[#0B111C] px-1 lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-border bg-white px-1 lg:hidden"
       style={{ height: "var(--bottomtab-height)" }}
     >
       {BOTTOM_TAB_ITEMS.map((item) => {

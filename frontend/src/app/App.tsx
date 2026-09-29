@@ -21,7 +21,6 @@ import { GoogleCallbackPage } from "../pages/auth/GoogleCallbackPage";
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
 import { PublicOnlyRoute } from "../components/auth/PublicOnlyRoute";
 import { MandatoryPasswordResetModal } from "../components/auth/MandatoryPasswordResetModal";
-import { CreoLoadingScreen } from "../components/ui/CreoLoadingScreen";
 
 // Portal Layout & Pages
 import { PortalLayout } from "../components/portal/PortalLayout";
@@ -32,7 +31,6 @@ import { PortalPaymentsPage } from "../pages/portal/PortalPaymentsPage";
 import { PortalSupportPage } from "../pages/portal/PortalSupportPage";
 import { PortalAccountPage } from "../pages/portal/PortalAccountPage";
 import { PortalCreativePodPage } from "../pages/portal/PortalCreativePodPage";
-import { PortalLibraryPage } from "../pages/portal/PortalLibraryPage";
 
 // Ops Layout & Features
 import { OpsLayout } from "../components/ops/OpsLayout";
@@ -65,6 +63,12 @@ const AdminSLAPerformancePage = lazy(() =>
   import("../features/admin/AdminSLAPerformancePage").then((m) => ({ default: m.AdminSLAPerformancePage }))
 );
 
+const AdminAnnouncementsPage = lazy(() =>
+  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminAnnouncementsPage }))
+);
+const AdminReportsPage = lazy(() =>
+  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminReportsPage }))
+);
 const AdminRevenuePage = lazy(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminRevenuePage }))
 );
@@ -73,6 +77,15 @@ const AdminPlansPage = lazy(() =>
 );
 const AdminSalesPage = lazy(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminSalesPage }))
+);
+const AdminAddonsPage = lazy(() =>
+  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminAddonsPage }))
+);
+const AdminEscalationsPage = lazy(() =>
+  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminEscalationsPage }))
+);
+const AdminSettingsPage = lazy(() =>
+  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminSettingsPage }))
 );
 
 const AdminTeamManagementPage = lazy(() =>
@@ -84,39 +97,16 @@ const AdminLeaveApprovalsPage = lazy(() =>
 const AdminClientBrandPage = lazy(() =>
   import("../features/admin/AdminClientBrandPage").then((m) => ({ default: m.AdminClientBrandPage }))
 );
-const PodLeadDashboardPage = lazy(() =>
-  import("../pages/admin/PodLeadDashboardPage").then((m) => ({ default: m.PodLeadDashboardPage }))
-);
-const PodTaskBoardPage = lazy(() =>
-  import("../pages/admin/PodTaskBoardPage").then((m) => ({ default: m.PodTaskBoardPage }))
-);
-const PodDeliverablesReviewPage = lazy(() =>
-  import("../pages/admin/PodDeliverablesReviewPage").then((m) => ({ default: m.PodDeliverablesReviewPage }))
-);
-const PodScheduleLeavePage = lazy(() =>
-  import("../pages/admin/PodScheduleLeavePage").then((m) => ({ default: m.PodScheduleLeavePage }))
-);
-const PodClientAllocationsPage = lazy(() =>
-  import("../pages/admin/PodClientAllocationsPage").then((m) => ({ default: m.PodClientAllocationsPage }))
-);
-
-// Team Member Workstation & Collaboration Hub
-const MemberOverviewPage = lazy(() =>
-  import("../pages/admin/MemberOverviewPage").then((m) => ({ default: m.MemberOverviewPage }))
-);
-const MemberTaskBoardPage = lazy(() =>
-  import("../pages/admin/MemberTaskBoardPage").then((m) => ({ default: m.MemberTaskBoardPage }))
-);
-
-const MemberSchedulePTOPage = lazy(() =>
-  import("../pages/admin/MemberSchedulePTOPage").then((m) => ({ default: m.MemberSchedulePTOPage }))
-);
-const SlackChatPage = lazy(() =>
-  import("../pages/admin/SlackChatPage").then((m) => ({ default: m.SlackChatPage }))
-);
 
 function RouteLoading() {
-  return <CreoLoadingScreen label="Loading Creo..." />;
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#FAFAF8] text-[#14171C] text-sm">
+      <div className="flex flex-col items-center gap-3">
+        <div className="size-8 animate-spin rounded-full border-3 border-[#2B7BC4] border-t-transparent" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-[#6B7280]">Loading Creo...</span>
+      </div>
+    </div>
+  );
 }
 
 class OnboardingErrorBoundary extends Component<
@@ -158,19 +148,19 @@ function OnboardingPageWrapper() {
   const userId = user?.id || "00000000-0000-0000-0000-000000000001";
 
   return (
-    <div data-surface="review" className="bento-theme min-h-screen bg-[#0B111C] text-[#F8FAFC] flex flex-col overflow-x-hidden">
+    <div data-surface="review" className="min-h-screen bg-[#E8F4FD] text-[#0D2137] flex flex-col overflow-x-hidden">
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-30 border-b border-[#2A3446] bg-[#050810]/95 backdrop-blur-md px-4 sm:px-8 py-3 shadow-md shrink-0">
+      <header className="sticky top-0 z-30 border-b border-[#C9DFF0] bg-white/95 backdrop-blur-md px-4 sm:px-8 py-3 shadow-xs shrink-0">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <span className="size-8 flex items-center justify-center rounded-xl bg-[#161F2D] border border-[#2A3446] font-mono text-sm font-bold text-[#7FA0D6] shadow-xs group-hover:scale-105 transition-transform">
+            <span className="size-8 flex items-center justify-center rounded-xl bg-gradient-to-br from-[#2B7BC4] to-[#1A5EA8] font-mono text-sm font-bold text-white shadow-xs group-hover:scale-105 transition-transform">
               C
             </span>
             <div className="flex flex-col">
-              <span className="text-base font-bold font-display tracking-tight text-white">
-                creo<span className="text-[#7FA0D6]">.</span>
+              <span className="text-base font-bold font-display tracking-tight text-[#0D2137]">
+                Creo
               </span>
-              <span className="text-[10px] font-semibold text-[#97A0B3] -mt-1 tracking-wider uppercase">
+              <span className="text-[10px] font-semibold text-[#64748B] -mt-1 tracking-wider uppercase">
                 Client Onboarding
               </span>
             </div>
@@ -179,7 +169,7 @@ function OnboardingPageWrapper() {
           <div className="flex items-center gap-3 sm:gap-4 text-xs font-semibold">
             <Link
               to="/"
-              className="text-[#97A0B3] hover:text-white transition-colors hidden sm:inline-flex items-center gap-1.5"
+              className="text-[#64748B] hover:text-[#2B7BC4] transition-colors hidden sm:inline-flex items-center gap-1.5"
             >
               ← Back to Home
             </Link>
@@ -187,13 +177,13 @@ function OnboardingPageWrapper() {
               href="https://wa.me/919941999415"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#97A0B3] hover:text-[#7FA0D6] transition-colors inline-flex items-center gap-1.5"
+              className="text-[#64748B] hover:text-[#2B7BC4] transition-colors inline-flex items-center gap-1.5"
             >
               Need Help?
             </a>
             <Link
               to="/portal"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#161F2D] text-[#BCCCE6] hover:bg-[#2A3446] border border-[#2A3446] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#E8F4FD] text-[#2B7BC4] hover:bg-[#D5EBFA] border border-[#C9DFF0] transition-colors"
             >
               Go to Portal →
             </Link>
@@ -359,7 +349,6 @@ export function App() {
                 <Route path="payments" element={<PortalPaymentsPage />} />
                 <Route path="support" element={<PortalSupportPage />} />
                 <Route path="account" element={<PortalAccountPage />} />
-                <Route path="library" element={<PortalLibraryPage />} />
               </Route>
 
               {/* 5. Agency Operations Surface (Ops Paper Surface - Admin, Super Admin, Team) */}
@@ -399,14 +388,6 @@ export function App() {
                 />
                 <Route
                   path="/admin/clients/:clientId"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                      <AdminClientsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin/clients/:clientId/brand"
                   element={<AdminClientBrandPage />}
                 />
                 <Route path="/admin/calendar" element={<AdminCalendarPage />} />
@@ -435,9 +416,23 @@ export function App() {
                 />
                 <Route path="/admin/leave" element={<AdminLeaveApprovalsPage />} />
                 <Route path="/admin/leaves" element={<AdminLeaveApprovalsPage />} />
-                <Route path="/admin/announcements" element={<Navigate to="/admin" replace />} />
-                <Route path="/admin/reports" element={<Navigate to="/admin" replace />} />
-                <Route path="/admin/kpi" element={<Navigate to="/admin" replace />} />
+                <Route path="/admin/announcements" element={<AdminAnnouncementsPage />} />
+                <Route
+                  path="/admin/reports"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "investor_relations"]}>
+                      <AdminReportsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/kpi"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "investor_relations"]}>
+                      <AdminReportsPage />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/admin/revenue"
                   element={
@@ -464,155 +459,31 @@ export function App() {
                 />
                 <Route
                   path="/admin/addons"
-                  element={<Navigate to="/admin" replace />}
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <AdminAddonsPage />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/admin/escalations"
-                  element={<Navigate to="/admin/support" replace />}
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <AdminEscalationsPage />
+                    </ProtectedRoute>
+                  }
                 />
                 <Route
                   path="/admin/settings"
-                  element={<Navigate to="/admin" replace />}
-                />
-                <Route
-                  path="/admin/pod-dashboard"
                   element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <PodLeadDashboardPage />
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <AdminSettingsPage />
                     </ProtectedRoute>
                   }
                 />
-                <Route
-                  path="/admin/pod"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <PodLeadDashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                {/* Team Lead Portal Routes */}
-                <Route path="/team-lead" element={<Navigate to="/team-lead/dashboard" replace />} />
-                <Route
-                  path="/team-lead/dashboard"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <PodLeadDashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/team-lead/tasks"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <PodTaskBoardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/team-lead/deliverables"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <PodDeliverablesReviewPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/team-lead/schedule"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <PodScheduleLeavePage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/team-lead/clients"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <PodClientAllocationsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/team-lead/clients/:clientId"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <AdminClientBrandPage />
-                    </ProtectedRoute>
-                  }
-                />
-
-                <Route
-                  path="/lead/dashboard"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <PodLeadDashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/lead/tasks"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <PodTaskBoardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/lead/deliverables"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <PodDeliverablesReviewPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/lead/schedule"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <PodScheduleLeavePage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/lead/clients"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <PodClientAllocationsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/lead/clients/:clientId"
-                  element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead"]}>
-                      <AdminClientBrandPage />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Team Member Workstation Pages */}
-                <Route path="/workstation" element={<MemberOverviewPage />} />
-                <Route path="/workstation/overview" element={<MemberOverviewPage />} />
-                <Route path="/member" element={<MemberOverviewPage />} />
-                <Route path="/member/overview" element={<MemberOverviewPage />} />
-
-                <Route path="/workstation/tasks" element={<MemberTaskBoardPage />} />
-                <Route path="/member/tasks" element={<MemberTaskBoardPage />} />
-
-                <Route path="/workstation/handoff" element={<Navigate to="/workstation/tasks" replace />} />
-                <Route path="/member/handoff" element={<Navigate to="/workstation/tasks" replace />} />
-
-                <Route path="/workstation/schedule" element={<MemberSchedulePTOPage />} />
-                <Route path="/member/schedule" element={<MemberSchedulePTOPage />} />
-
-                {/* Universal Slack Hub */}
-                <Route path="/slack" element={<SlackChatPage />} />
-                <Route path="/workstation/slack" element={<SlackChatPage />} />
-                <Route path="/admin/slack" element={<SlackChatPage />} />
-                <Route path="/portal/slack" element={<SlackChatPage />} />
 
                 {/* Redirect legacy Kanban routes to Task Queue */}
-                <Route path="/dashboard" element={<Navigate to="/admin/pod-dashboard" replace />} />
+                <Route path="/dashboard" element={<Navigate to="/admin/tasks" replace />} />
                 <Route path="/kanban" element={<Navigate to="/admin/tasks" replace />} />
               </Route>
 

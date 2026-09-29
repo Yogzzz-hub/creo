@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import {
   fetchAdminKPIs,
   fetchAdminQueue,
@@ -77,7 +76,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
   return (
     <div
       data-surface="ops"
-      className="w-full min-h-screen font-sans bg-[#0B111C] text-[#F1F5F9] flex flex-col"
+      className="w-full min-h-screen font-sans bg-[#F9FAFB] flex flex-col"
     >
       {/* Top Header */}
       <AdminTopHeader
@@ -89,105 +88,65 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
       />
 
       {/* Main Container */}
-      <main className="flex-1 px-3 sm:px-5 lg:px-6 pt-3 pb-6 max-w-[1440px] w-full mx-auto">
+      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto">
         {/* Status banner */}
-        <AnimatePresence>
-          {message && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="mb-3.5 p-2.5 rounded-xl text-xs font-medium flex items-center gap-2"
-              style={{
-                background: message.type === "error" ? "#FEE2E2" : "#E6F4EA",
-                border: `1px solid ${message.type === "error" ? "#FCA5A5" : "#A8DAB5"}`,
-                color: message.type === "error" ? "#E5484D" : "#137333",
-              }}
-            >
-              {message.type === "error" ? (
-                <AlertTriangle className="w-4 h-4" />
-              ) : (
-                <CheckCircle2 className="w-4 h-4" />
-              )}
-              <span>{message.text}</span>
-              <button type="button" onClick={() => setMessage(null)} className="ml-auto underline">
-                Dismiss
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {message && (
+          <div
+            className="mb-6 p-3.5 rounded-lg text-xs font-medium flex items-center gap-2"
+            style={{
+              background: message.type === "error" ? "#FEE2E2" : "#E6F4EA",
+              border: `1px solid ${message.type === "error" ? "#FCA5A5" : "#A8DAB5"}`,
+              color: message.type === "error" ? "#E5484D" : "#137333",
+            }}
+          >
+            {message.type === "error" ? (
+              <AlertTriangle className="w-4 h-4" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4" />
+            )}
+            <span>{message.text}</span>
+            <button type="button" onClick={() => setMessage(null)} className="ml-auto underline">
+              Dismiss
+            </button>
+          </div>
+        )}
 
-        {/* Top 3 Containers Aligned in 1 Single Row (3 Columns) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-4 items-stretch mb-3.5 sm:mb-4">
-          {/* Container 1: Revenue Engine */}
+        {/* Top Widgets Grid (3 Columns) */}
+        <div className={`grid grid-cols-1 ${activeTab === "Dashboard" ? "lg:grid-cols-3" : "lg:grid-cols-1 max-w-4xl mx-auto"} gap-6`}>
+          {/* Column 1: Revenue */}
           {(activeTab === "Dashboard" || activeTab === "Revenue") && (
-            <motion.div 
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.05, ease: "easeOut" }}
-              className="flex flex-col h-full min-h-0 hover-card-innovative rounded-3xl"
-            >
+            <div className="flex flex-col gap-6 h-full">
               <RevenueEngineWidget kpis={kpis} clients={clients} />
-            </motion.div>
+            </div>
           )}
 
-          {/* Container 2: Team Details */}
+          {/* Column 2: Team */}
           {(activeTab === "Dashboard" || activeTab === "Team Details") && (
-            <motion.div 
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.1, ease: "easeOut" }}
-              className="flex flex-col h-full min-h-0 hover-card-innovative rounded-3xl"
-            >
+            <div className="flex flex-col gap-6 h-full">
               <TeamDetailsWidget queue={queue} />
-            </motion.div>
+            </div>
           )}
 
-          {/* Container 3: Content Engine */}
+          {/* Column 3: Content */}
           {(activeTab === "Dashboard" || activeTab === "Content Engine") && (
-            <motion.div 
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.15, ease: "easeOut" }}
-              className="flex flex-col h-full min-h-0 hover-card-innovative rounded-3xl"
-            >
+            <div className="flex flex-col gap-6 h-full">
               <ContentEngineWidget queue={queue} />
-            </motion.div>
+            </div>
           )}
         </div>
 
-
         {/* Full Width Row: Client Details */}
         {(activeTab === "Dashboard" || activeTab === "Client Details") && (
-          <motion.div 
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.2, ease: "easeOut" }}
-            className="mt-3.5 sm:mt-4 hover-card-innovative rounded-2xl"
-          >
+          <div className="mt-6">
             <ClientDetailsWidget clients={clients} />
-          </motion.div>
+          </div>
         )}
 
         {/* Bottom Widgets Grid (2 Columns): Support & SLA */}
         {(activeTab === "Dashboard" || activeTab === "SLA & Support") && (
-          <div className={`mt-3.5 sm:mt-4 grid grid-cols-1 ${activeTab === "Dashboard" ? "lg:grid-cols-2" : "lg:grid-cols-1 max-w-4xl mx-auto"} gap-3.5 sm:gap-4`}>
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.25, ease: "easeOut" }}
-              className="hover-card-innovative rounded-2xl h-full"
-            >
-              <SupportTicketsWidget slas={slas} />
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.3, ease: "easeOut" }}
-              className="hover-card-innovative rounded-2xl h-full"
-            >
-              <SlaPerformanceWidget slas={slas} />
-            </motion.div>
+          <div className={`mt-6 grid grid-cols-1 ${activeTab === "Dashboard" ? "lg:grid-cols-2" : "lg:grid-cols-1 max-w-4xl mx-auto"} gap-6`}>
+            <SupportTicketsWidget slas={slas} />
+            <SlaPerformanceWidget slas={slas} />
           </div>
         )}
 

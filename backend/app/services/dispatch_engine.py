@@ -289,22 +289,13 @@ async def commit_assignment(
         )
     )
 
-    # Determine role-aware notification link
-    staff_user = await db.get(User, staff_id)
-    if staff_user and staff_user.role in [UserRole.SPECIALIST, UserRole.CREATOR]:
-        task_link = f"/workstation/tasks?selected={task.id}"
-    elif staff_user and staff_user.role == UserRole.TEAM_LEAD:
-        task_link = f"/lead/tasks?selected={task.id}"
-    else:
-        task_link = f"/admin/tasks?selected={task.id}"
-
     # Notify assignee
     db.add(
         Notification(
             user_id=staff_id,
             title=f"New Task Assigned ({reason})",
             message=f"You have been assigned task {task.id} ({task.deliverable_type.value if hasattr(task.deliverable_type, 'value') else task.deliverable_type}) due on {task.due_date}.",
-            link=task_link,
+            link=f"/admin/tasks?selected={task.id}",
         )
     )
 
@@ -607,70 +598,6 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
     }
 
 
-def distribute_quota_slots(
-    start_date: date,
-    end_date: date,
-    quota: int,
-    preferred_weekdays: list[int] | None = None,
-) -> list[tuple[date, int]]:
-    """Distribute EXACTLY `quota` publication slots across [start_date, end_date].
-    
-    Returns list of (date, slot_offset_index) tuples, where slot_offset_index is 0 for
-    the primary post on that day, and 1+ for additional posts (which receive staggered times).
-    Guarantees len(result) == quota under all plan quotas and calendar boundaries.
-    """
-    if quota <= 0:
-        return []
-
-    days_count = (end_date - start_date).days + 1
-    if days_count <= 0:
-        days_count = 30
-        end_date = start_date + timedelta(days=29)
-
-    all_days = [start_date + timedelta(days=i) for i in range(days_count)]
-    pref_set = set(preferred_weekdays) if preferred_weekdays else {0, 2, 4}
-
-    pref_biz_days = [d for d in all_days if d.weekday() in pref_set]
-    other_biz_days = [d for d in all_days if d.weekday() < 5 and d.weekday() not in pref_set]
-    weekend_days = [d for d in all_days if d.weekday() >= 5]
-
-    slots: list[tuple[date, int]] = []
-
-    if quota <= len(pref_biz_days):
-        selected_days = evenly_spaced(pref_biz_days, n=quota)
-        slots = [(d, 0) for d in sorted(selected_days)]
-    elif quota <= (len(pref_biz_days) + len(other_biz_days)):
-        needed_other = quota - len(pref_biz_days)
-        selected_other = evenly_spaced(other_biz_days, n=needed_other)
-        combined = sorted(pref_biz_days + selected_other)
-        slots = [(d, 0) for d in combined]
-    elif quota <= len(all_days):
-        biz_days = pref_biz_days + other_biz_days
-        needed_weekend = quota - len(biz_days)
-        selected_weekends = evenly_spaced(weekend_days, n=needed_weekend)
-        combined = sorted(biz_days + selected_weekends)
-        slots = [(d, 0) for d in combined]
-    else:
-        # Quota exceeds total days in range (e.g. 40 stories in 30 days)
-        slots = [(d, 0) for d in all_days]
-        extra_needed = quota - len(all_days)
-
-        if extra_needed <= len(all_days):
-            second_pass_days = evenly_spaced(all_days, n=extra_needed)
-            for d in sorted(second_pass_days):
-                slots.append((d, 1))
-        else:
-            idx = 0
-            while len(slots) < quota:
-                d = all_days[idx % len(all_days)]
-                existing_for_d = sum(1 for s_d, _ in slots if s_d == d)
-                slots.append((d, existing_for_d))
-                idx += 1
-
-    slots.sort(key=lambda x: (x[0], x[1]))
-    return slots[:quota]
-
-
 # --- Part 6: Quota-Driven Calendar Drafting ---
 
 async def draft_month_calendar(
@@ -745,26 +672,24 @@ async def draft_month_calendar(
         time_str = tmpl.get("time", "19:30")
         hour, minute = [int(p) for p in time_str.split(":")]
 
-        # Distribute EXACTLY `quota` publication slots
-        slots_distribution = distribute_quota_slots(start_from, window_end, quota, preferred_weekdays)
+        candidate_days = [
+            d for d in business_days_in_range(start_from, window_end, preferred_weekdays)
+        ]
+
+        chosen = evenly_spaced(candidate_days, n=quota)
+        if len(chosen) < quota:
+            # Fall back to other business days in 30-day window if preferred days are insufficient
+            remaining_needed = quota - len(chosen)
+            all_biz_days = [d for d in business_days_in_range(start_from, window_end) if d not in chosen]
+            chosen += evenly_spaced(all_biz_days, n=remaining_needed)
 
         # 70/30 Anchor + Flex partition
         anchor_quota = max(1, round(quota * 0.7))
         funnel_stages = assign_funnel_stages(anchor_quota)
 
-        for i, (slot_day, slot_offset) in enumerate(slots_distribution):
-            # Stagger times if multiple posts land on the same day
-            if slot_offset == 0:
-                cur_hour, cur_min = hour, minute
-            elif slot_offset == 1:
-                cur_hour = (hour - 7) % 24 if hour >= 16 else (hour + 6) % 24
-                cur_min = minute
-            else:
-                cur_hour = (hour + slot_offset * 3) % 24
-                cur_min = minute
-
+        for i, slot_day in enumerate(chosen):
             # Localize publication time in client timezone, then convert to UTC datetime
-            local_dt = datetime.combine(slot_day, time(hour=cur_hour, minute=cur_min), tzinfo=client_tz)
+            local_dt = datetime.combine(slot_day, time(hour=hour, minute=minute), tzinfo=client_tz)
             utc_dt = local_dt.astimezone(timezone.utc)
             format_label = "Reel" if kind == "reel" else "Poster" if kind in ["poster", "static_post"] else "Carousel / Story"
 
@@ -870,7 +795,7 @@ async def approve_calendar_month(
             sla_due_at=sla_due_at,
             effort_points=effort,
             is_revision=False,
-            assigned_to=default_assignee,
+            assigned_to=None,
             preferred_sub_skill=pref_skill,
             concept_status=slot.concept_status,
             blueprint=slot.blueprint,
@@ -904,27 +829,7 @@ async def approve_calendar_month(
                 user_id=lead_id,
                 title="Client Approved Campaign Plan",
                 message=f"Client {client_id} approved {len(slots)} assets. {dispatched_count} tasks dispatched to the 10-day window.",
-                link="/lead/tasks",
-            )
-        )
-    if editor_id and editor_id != lead_id:
-        reels_cnt = sum(1 for s in slots if s.slot_kind == "reel")
-        db.add(
-            Notification(
-                user_id=editor_id,
-                title="New Campaign Content Pipeline 🎬",
-                message=f"Campaign calendar approved for client. Video production pipeline is active with {reels_cnt} reels scheduled.",
-                link="/workstation/tasks",
-            )
-        )
-    if designer_id and designer_id not in [lead_id, editor_id]:
-        graphics_cnt = sum(1 for s in slots if s.slot_kind in ["poster", "static_post", "carousel", "story"])
-        db.add(
-            Notification(
-                user_id=designer_id,
-                title="New Campaign Content Pipeline 🎨",
-                message=f"Campaign calendar approved for client. Design pipeline is active with {graphics_cnt} creative assets scheduled.",
-                link="/workstation/tasks",
+                link="/admin/tasks",
             )
         )
     await db.commit()
