@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { 
   MessageSquare, 
-  AlertCircle, CheckCircle2, ChevronRight, BarChart3, FileSpreadsheet, HardDrive
+  AlertCircle, ChevronRight, BarChart3, FileSpreadsheet, HardDrive
 } from "lucide-react";
 
 export function AboutPage() {
@@ -32,15 +32,27 @@ export function AboutPage() {
             
             {/* 3 Stat Pods */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="backdrop-blur-md bg-[#161F2D]/40 border border-[#2A3446]/40 rounded-xl px-6 py-4 flex flex-col justify-center">
+              <div className="backdrop-blur-md bg-[#161F2D]/40 border border-[#2A3446]/40 rounded-xl px-6 py-4 flex flex-col justify-center relative">
+                <div className="absolute top-4 right-4 size-1.5 flex items-center justify-center">
+                  <span className="absolute inset-0 rounded-full bg-[#7FA0D6] animate-ping opacity-40"></span>
+                  <span className="relative size-1.5 rounded-full bg-[#7FA0D6]"></span>
+                </div>
                 <div className="text-2xl font-black text-[#F8FAFC] leading-none mb-1.5">48h</div>
                 <div className="text-xs text-[#97A0B3] uppercase tracking-wider font-semibold">Average SLA Turnaround</div>
               </div>
-              <div className="backdrop-blur-md bg-[#161F2D]/40 border border-[#2A3446]/40 rounded-xl px-6 py-4 flex flex-col justify-center">
+              <div className="backdrop-blur-md bg-[#161F2D]/40 border border-[#2A3446]/40 rounded-xl px-6 py-4 flex flex-col justify-center relative">
+                <div className="absolute top-4 right-4 size-1.5 flex items-center justify-center">
+                  <span className="absolute inset-0 rounded-full bg-[#7FA0D6] animate-ping opacity-40"></span>
+                  <span className="relative size-1.5 rounded-full bg-[#7FA0D6]"></span>
+                </div>
                 <div className="text-2xl font-black text-[#F8FAFC] leading-none mb-1.5">99.4%</div>
                 <div className="text-xs text-[#97A0B3] uppercase tracking-wider font-semibold">On-Time Delivery Rate</div>
               </div>
-              <div className="backdrop-blur-md bg-[#161F2D]/40 border border-[#2A3446]/40 rounded-xl px-6 py-4 flex flex-col justify-center">
+              <div className="backdrop-blur-md bg-[#161F2D]/40 border border-[#2A3446]/40 rounded-xl px-6 py-4 flex flex-col justify-center relative">
+                <div className="absolute top-4 right-4 size-1.5 flex items-center justify-center">
+                  <span className="absolute inset-0 rounded-full bg-[#7FA0D6] animate-ping opacity-40"></span>
+                  <span className="relative size-1.5 rounded-full bg-[#7FA0D6]"></span>
+                </div>
                 <div className="text-2xl font-black text-[#F8FAFC] leading-none mb-1.5">1-Click</div>
                 <div className="text-xs text-[#97A0B3] uppercase tracking-wider font-semibold">Frictionless Sign-Off</div>
               </div>
@@ -52,7 +64,11 @@ export function AboutPage() {
             <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
               <div className="font-black text-[#F8FAFC] text-sm tracking-tight">CREO Kernel v2.6 &bull; Architecture Blueprint</div>
               <div className="text-[#7FA0D6] text-xs font-semibold flex items-center gap-2">
-                <span className="size-2 rounded-full bg-[#7FA0D6] animate-pulse"></span> System Status: Autonomous Ops
+                <div className="relative size-2 flex items-center justify-center">
+                  <span className="absolute inset-0 rounded-full bg-[#7FA0D6] animate-ping opacity-30"></span>
+                  <span className="relative size-1.5 rounded-full bg-[#7FA0D6]"></span>
+                </div>
+                System Status: Autonomous Ops
               </div>
             </div>
             
@@ -182,28 +198,28 @@ export function AboutPage() {
 
             <div className="space-y-5 mb-8">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="size-5 text-[#7FA0D6] shrink-0 mt-0.5" />
+                <svg className="size-5 text-[#7FA0D6] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" className="animate-[dash_1s_ease-out_forwards]" strokeDasharray="60" strokeDashoffset="0" /></svg>
                 <div>
                   <div className="text-xs font-bold text-[#F8FAFC]">Unified Client Dossiers</div>
                   <div className="text-[10px] text-[#97A0B3]">All client data, communications &amp; history</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="size-5 text-[#7FA0D6] shrink-0 mt-0.5" />
+                <svg className="size-5 text-[#7FA0D6] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" className="animate-[dash_1s_ease-out_forwards]" strokeDasharray="60" strokeDashoffset="0" /></svg>
                 <div>
                   <div className="text-xs font-bold text-[#F8FAFC]">Utilization-Linked Sprints</div>
                   <div className="text-[10px] text-[#97A0B3]">Right people. Right work. Every time</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="size-5 text-[#7FA0D6] shrink-0 mt-0.5" />
+                <svg className="size-5 text-[#7FA0D6] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" className="animate-[dash_1s_ease-out_forwards]" strokeDasharray="60" strokeDashoffset="0" /></svg>
                 <div>
                   <div className="text-xs font-bold text-[#F8FAFC]">1-Click Client Portal Approvals</div>
                   <div className="text-[10px] text-[#97A0B3]">Faster sign-offs. Happier clients</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="size-5 text-[#7FA0D6] shrink-0 mt-0.5" />
+                <svg className="size-5 text-[#7FA0D6] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" className="animate-[dash_1s_ease-out_forwards]" strokeDasharray="60" strokeDashoffset="0" /></svg>
                 <div>
                   <div className="text-xs font-bold text-[#F8FAFC]">Real-Time Unit Economics</div>
                   <div className="text-[10px] text-[#97A0B3]">Know your numbers. Grow smarter</div>
@@ -218,7 +234,7 @@ export function AboutPage() {
                   <div className="relative size-12 mb-1">
                     <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                       <path className="text-[#050810]" strokeWidth="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                      <path className="text-[#7FA0D6]" strokeWidth="4" strokeDasharray="41.25, 100" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      <path className="text-[#7FA0D6] animate-[dash_1.5s_ease-out_forwards]" strokeWidth="4" strokeDasharray="41.25, 100" strokeDashoffset="0" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-[#F8FAFC]">41.25%</div>
                   </div>
@@ -227,7 +243,7 @@ export function AboutPage() {
               <div className="w-32 h-12 relative flex flex-col items-end justify-end">
                 <span className="text-[8px] text-[#97A0B3] mb-1 absolute top-0">Verified Margin</span>
                 <svg className="w-full h-full" viewBox="0 0 100 40" preserveAspectRatio="none">
-                  <path d="M0,35 L10,32 L20,34 L30,28 L40,30 L50,22 L60,25 L70,18 L80,20 L90,10 L100,5" fill="none" stroke="#7FA0D6" strokeWidth="2" />
+                  <path d="M0,35 L10,32 L20,34 L30,28 L40,30 L50,22 L60,25 L70,18 L80,20 L90,10 L100,5" fill="none" stroke="#7FA0D6" strokeWidth="2" className="animate-[dash_1.5s_ease-out_forwards]" strokeDasharray="150" strokeDashoffset="0" />
                 </svg>
               </div>
             </div>
