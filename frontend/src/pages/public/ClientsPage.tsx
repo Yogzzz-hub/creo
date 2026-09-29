@@ -162,16 +162,16 @@ export function ClientsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
-            { title: 'Motion & 3D Pod', desc: '3D motion, CGI, virtual production, product demos.', img: 'https://images.unsplash.com/photo-1614729939124-03290b5609ce?auto=format&fit=crop&w=600&q=80', badge: 'VIDEO' },
-            { title: 'High-Velocity DTC Creative', desc: 'Short-form, social, paid media, performance creative.', img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80', badge: 'VIDEO' },
-            { title: 'Brand & Design Architecture', desc: 'Visual identity, brand systems, motion design.', img: 'https://images.unsplash.com/photo-1502672260266-1c1c24240f38?auto=format&fit=crop&w=600&q=80', badge: 'DESIGN' },
-            { title: 'Performance Ad Operations', desc: 'Creative testing, scaling, reporting, optimization.', img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80', badge: 'OPS' },
-            { title: 'Enterprise Creative Ops', desc: 'Workflow management, stakeholder sync, delivery.', img: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=600&q=80', badge: 'OPS' },
-            { title: 'Post-Production House', desc: 'Edit, color, sound, VFX, final mastering.', img: 'https://images.unsplash.com/photo-1579227114347-15d08fc37cae?auto=format&fit=crop&w=600&q=80', badge: 'POST' }
+            { title: 'Motion & 3D Pod', desc: '3D motion, CGI, virtual production, product demos.', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80', badge: 'VIDEO' },
+            { title: 'High-Velocity DTC Creative', desc: 'Short-form, social, paid media, performance creative.', img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80', badge: 'VIDEO' },
+            { title: 'Brand & Design Architecture', desc: 'Visual identity, brand systems, motion design.', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80', badge: 'DESIGN' },
+            { title: 'Performance Ad Operations', desc: 'Creative testing, scaling, reporting, optimization.', img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80', badge: 'OPS' },
+            { title: 'Enterprise Creative Ops', desc: 'Workflow management, stakeholder sync, delivery.', img: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=800&q=80', badge: 'OPS' },
+            { title: 'Post-Production House', desc: 'Edit, color, sound, VFX, final mastering.', img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=800&q=80', badge: 'POST' }
           ].map(card => (
             <div key={card.title} className="bg-[#161F2D]/60 backdrop-blur-md border border-[#2A3446]/50 rounded-2xl p-4 group cursor-pointer hover:border-[#7FA0D6]/40 transition-colors flex flex-col">
-              <div className="relative h-40 rounded-xl overflow-hidden mb-5">
-                <img src={card.img} alt={card.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
+              <div className="relative mb-5">
+                <img src={card.img} alt={card.title} className="w-full h-44 object-cover rounded-xl border border-[#2A3446]/40 transition-transform duration-500 hover:scale-[1.02]" />
                 <div className="absolute top-3 right-3 bg-[#050810]/80 backdrop-blur-sm border border-[#2A3446] px-2 py-1 rounded text-[9px] font-bold text-[#F8FAFC]">
                   {card.badge}
                 </div>
@@ -242,7 +242,7 @@ export function ClientsPage() {
           {/* Left: Video Player */}
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-[#050810] border border-[#2A3446]/50 rounded-2xl overflow-hidden relative group aspect-video">
-              <img src="https://images.unsplash.com/photo-1614729939124-03290b5609ce?auto=format&fit=crop&w=1200&q=80" alt="Video Player" className="w-full h-full object-cover opacity-80" />
+              <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1400&q=80" alt="Video Player" className="absolute inset-0 w-full h-full object-cover opacity-80" />
               
               {/* Player Top Bar */}
               <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between bg-gradient-to-b from-[#050810]/80 to-transparent">
@@ -437,9 +437,9 @@ export function ClientsPage() {
               
               <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
                 {[
-                  { name: 'NOSTIC_Logo_v2.png', size: '2.4 MB', img: 'https://images.unsplash.com/photo-1614729939124-03290b5609ce?auto=format&fit=crop&w=100&q=80' },
-                  { name: 'Behind the Scenes.mp4', size: '1.2 GB', img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=100&q=80' },
-                  { name: 'Final Cut v3.mov', size: '890 MB', img: 'https://images.unsplash.com/photo-1502672260266-1c1c24240f38?auto=format&fit=crop&w=100&q=80' }
+                  { name: 'NOSTIC_Logo_v2.png', size: '2.4 MB', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=100&q=80' },
+                  { name: 'Behind the Scenes.mp4', size: '1.2 GB', img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=100&q=80' },
+                  { name: 'Final Cut v3.mov', size: '890 MB', img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=100&q=80' }
                 ].map(asset => (
                   <div key={asset.name} className="flex-1 min-w-[140px] bg-[#0A0F18] border border-[#2A3446]/50 rounded-xl p-2 flex items-center gap-2 group cursor-pointer hover:border-[#7FA0D6]/40 transition-colors">
                     <img src={asset.img} className="size-10 rounded object-cover border border-[#2A3446]/50" />
