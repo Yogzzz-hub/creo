@@ -1,22 +1,42 @@
 services:
   postgres:
-    image: postgres:15
+    image: postgres:15-alpine
+    container_name: creo_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: creo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: creo
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - creo_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d creo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - creo-network
 
   redis:
     image: redis:7-alpine
+    container_name: creo_redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
-    volumes:
-      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - creo-network
 
 volumes:
-  postgres_data:
-  redis_data:
+  creo_pgdata:
+    name: creo_pgdata
+
+networks:
+  creo-network:
+    name: creo-network

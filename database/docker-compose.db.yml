@@ -1,0 +1,47 @@
+# =============================================================================
+# CREO PLATFORM — STANDALONE DATABASE & CACHE STACK
+# =============================================================================
+# Run: docker compose -f database/docker-compose.db.yml up -d
+# Connect URL: postgresql+asyncpg://postgres:postgres@localhost:5432/postgres
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: creo-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./seed_data.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+      - creo_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: creo-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - creo_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  creo_pgdata:
+    name: creo_pgdata
+  creo_redisdata:
+    name: creo_redisdata

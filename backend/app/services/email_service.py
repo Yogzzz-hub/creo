@@ -1,0 +1,257 @@
+"""Email service providing asynchronous SMTP delivery with Creo branding and high inbox deliverability."""
+
+from __future__ import annotations
+
+import asyncio
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import formataddr, formatdate, make_msgid
+import smtplib
+from typing import Any
+
+from app.config import settings
+from app.core.logging import get_logger
+
+import socket
+
+logger = get_logger(__name__)
+
+
+def _create_ipv4_connection(address: tuple[str, int], timeout: float = 12.0, source_address: Any = None) -> socket.socket:
+    """Force IPv4 (AF_INET) socket connection to prevent [Errno 101] Network is unreachable on cloud container networks."""
+    host, port = address
+    err = None
+    for res in socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM):
+        af, socktype, proto, canonname, sa = res
+        sock = None
+        try:
+            sock = socket.socket(af, socktype, proto)
+            if timeout:
+                sock.settimeout(timeout)
+            if source_address:
+                sock.bind(source_address)
+            sock.connect(sa)
+            return sock
+        except socket.error as e:
+            err = e
+            if sock is not None:
+                sock.close()
+    if err is not None:
+        raise err
+    raise socket.error(f"Could not resolve IPv4 for {host}:{port}")
+
+
+class IPv4SMTP(smtplib.SMTP):
+    def _get_socket(self, host: str, port: int, timeout: float) -> socket.socket:
+        return _create_ipv4_connection((host, port), timeout, self.source_address)
+
+
+class IPv4SMTP_SSL(smtplib.SMTP_SSL):
+    def _get_socket(self, host: str, port: int, timeout: float) -> socket.socket:
+        new_socket = _create_ipv4_connection((host, port), timeout, self.source_address)
+        server_hostname = getattr(self, "_host", host) or host
+        return self.context.wrap_socket(new_socket, server_hostname=server_hostname)
+
+
+def _send_smtp_sync(
+    to_email: str,
+    subject: str,
+    html_content: str,
+    text_content: str | None = None,
+) -> bool:
+    """Send an email synchronously over TLS via configured SMTP credentials with RFC-compliant anti-spam headers."""
+    smtp_pw = (settings.SMTP_PASSWORD or "gcic myxm rrep lorb").strip().strip('"').strip("'")
+    smtp_user = (settings.SMTP_USERNAME or "creotool26@gmail.com").strip()
+    smtp_server = (settings.SMTP_SERVER or "smtp.gmail.com").strip()
+    smtp_port = settings.SMTP_PORT or 587
+
+    sender_email = (settings.SMTP_FROM_EMAIL or smtp_user).strip()
+    clean_to = to_email.strip()
+
+    # Primary multipart/alternative container
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    # Use standard formataddr to avoid malformed header penalties
+    msg["From"] = formataddr(("Creo", sender_email))
+    msg["To"] = clean_to
+    msg["Reply-To"] = sender_email
+    msg["Date"] = formatdate(localtime=True)
+    
+    domain = sender_email.split("@")[-1] if "@" in sender_email else "creo.agency"
+    msg["Message-ID"] = make_msgid(domain=domain)
+    
+    # Anti-spam transactional email headers recognized by Google, Microsoft, Yahoo
+    msg["Auto-Submitted"] = "auto-generated"
+    msg["X-Auto-Response-Suppress"] = "All"
+    msg["X-Priority"] = "3"
+    msg["MIME-Version"] = "1.0"
+
+    # Always attach clean plain-text first (RFC alternative order requirement: plain text first, then html)
+    if text_content:
+        msg.attach(MIMEText(text_content, "plain", "utf-8"))
+    else:
+        msg.attach(MIMEText(subject, "plain", "utf-8"))
+
+    # HTML part second
+    msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+    # 1. Primary delivery attempt (e.g. port 587 with STARTTLS over forced IPv4)
+    try:
+        with IPv4SMTP(smtp_server, smtp_port, timeout=12) as server:
+            if settings.SMTP_USE_TLS:
+                server.starttls()
+            server.login(smtp_user, smtp_pw)
+            server.sendmail(sender_email, [clean_to], msg.as_string())
+        logger.info("smtp_email_sent_successfully", to_email=clean_to, subject=subject, port=smtp_port)
+        return True
+    except Exception as e_primary:
+        logger.warning("smtp_primary_attempt_failed", port=smtp_port, error=str(e_primary))
+
+    # 2. Fallback delivery attempt via Port 465 direct SSL over forced IPv4
+    if smtp_port != 465:
+        try:
+            with IPv4SMTP_SSL(smtp_server, 465, timeout=12) as server:
+                server.login(smtp_user, smtp_pw)
+                server.sendmail(sender_email, [clean_to], msg.as_string())
+            logger.info("smtp_email_sent_via_port_465_ssl", to_email=clean_to, subject=subject)
+            return True
+        except Exception as e_ssl:
+            logger.error("smtp_ssl_fallback_failed", error=str(e_ssl))
+
+    return False
+
+
+async def send_email(
+    to_email: str,
+    subject: str,
+    html_content: str,
+    text_content: str | None = None,
+) -> bool:
+    """Non-blocking email delivery executing SMTP or Resend HTTP API on Port 443."""
+    if settings.RESEND_API_KEY:
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(
+                    "https://api.resend.com/emails",
+                    headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+                    json={
+                        "from": "Creo Verification <onboarding@resend.dev>",
+                        "to": [to_email],
+                        "subject": subject,
+                        "html": html_content,
+                        "text": text_content,
+                    },
+                )
+                if resp.status_code < 400:
+                    logger.info("resend_email_sent_successfully", to_email=to_email)
+                    return True
+                else:
+                    logger.warning("resend_api_failed", status=resp.status_code, body=resp.text)
+        except Exception as e_resend:
+            logger.warning("resend_api_exception", error=str(e_resend))
+
+    return await asyncio.to_thread(
+        _send_smtp_sync,
+        to_email=to_email,
+        subject=subject,
+        html_content=html_content,
+        text_content=text_content,
+    )
+
+
+async def send_otp_email(to_email: str, otp_code: str) -> bool:
+    """Send a Creo-branded 6-digit OTP verification code designed for inbox delivery (zero JS, 100% email-safe)."""
+    logger.info("SECURITY_OTP_GENERATED", to_email=to_email, otp_code=otp_code)
+    subject = f"{otp_code} is your Creo verification code"
+    text_content = (
+        f"CREO WORKSPACE VERIFICATION\n\n"
+        f"Your one-time security passcode is: {otp_code}\n\n"
+        f"This code will expire in 10 minutes.\n\n"
+        f"If you did not request this verification code, please ignore this message. "
+        f"Creo staff will never ask for your password or verification code.\n\n"
+        f"— Creo Creative Agency\n"
+        f"https://creo.yogalakshmibaskar20.workers.dev"
+    )
+
+    # Clean, beautiful, pure-HTML/CSS digit boxes without any Javascript or click events
+    digits_html = "".join(
+        f'<td style="padding: 0 4px;" align="center">'
+        f'<div style="width: 44px; height: 52px; line-height: 52px; background-color: #F8FAFC; border: 2px solid #2B7BC4; border-radius: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 28px; font-weight: 800; color: #0D2137; text-align: center; user-select: all; -webkit-user-select: all;">'
+        f'{d}'
+        f'</div>'
+        f'</td>'
+        for d in otp_code
+    )
+
+    html_content = f"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #F1F5F9; padding: 32px 12px;">
+    <tr>
+      <td align="center">
+        <!-- Main Card -->
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 480px; background-color: #FFFFFF; border-radius: 16px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);">
+          <!-- Header -->
+          <tr>
+            <td align="center" style="background: #0D2137; padding: 28px 24px; border-bottom: 2px solid #2B7BC4;">
+              <div style="font-size: 26px; font-weight: 900; letter-spacing: -0.5px; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                CREO<span style="color: #38BDF8;">.</span>
+              </div>
+              <div style="margin-top: 6px; font-size: 11px; font-weight: 700; color: #7DD3FC; text-transform: uppercase; letter-spacing: 1.5px;">
+                Security Verification
+              </div>
+            </td>
+          </tr>
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 32px 28px; text-align: center;">
+              <h1 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 700; color: #0D2137; letter-spacing: -0.3px;">
+                One-Time Security Passcode
+              </h1>
+              <p style="margin: 0 0 24px 0; font-size: 14px; line-height: 1.5; color: #64748B;">
+                Use the verification code below to securely authenticate your session with Creo.
+              </p>
+
+              <!-- Digits Table -->
+              <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto 20px auto;">
+                <tr>
+                  {digits_html}
+                </tr>
+              </table>
+
+              <!-- Expiry Note -->
+              <div style="display: inline-block; background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 20px; padding: 6px 16px; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 24px;">
+                &#9201; Valid for 10 minutes
+              </div>
+
+              <!-- Security Advice -->
+              <div style="border-top: 1px solid #F1F5F9; padding-top: 18px; text-align: left;">
+                <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #94A3B8;">
+                  <strong style="color: #64748B;">Security tip:</strong> Never share this passcode with anyone. Creo staff will never call or message asking for your code.
+                </p>
+              </div>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #F8FAFC; padding: 18px 24px; text-align: center; border-top: 1px solid #E2E8F0;">
+              <p style="margin: 0; font-size: 11px; line-height: 1.4; color: #94A3B8;">
+                &copy; 2026 Creo Creative Studio. All rights reserved.<br />
+                Sent securely via Creo Automated Authentication Service.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    return await send_email(to_email, subject, html_content, text_content)

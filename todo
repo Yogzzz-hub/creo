@@ -1,0 +1,14 @@
+-- 1. Create the application role WITH a password so the backend can connect
+CREATE ROLE creo_app WITH LOGIN PASSWORD 'YOUR_SECURE_PASSWORD_HERE';
+
+-- 2. Grant it access to the public schema
+GRANT USAGE ON SCHEMA public TO creo_app;
+
+-- 3. Grant it read/write access to all tables
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO creo_app;
+
+-- 4. Automatically grant access to any future tables you create
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO creo_app;
+
+-- 5. Crucial: Ensure RLS is strictly enforced for this role
+ALTER ROLE creo_app SET row_security = on;
