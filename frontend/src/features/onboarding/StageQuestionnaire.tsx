@@ -394,7 +394,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
 
           <div className="flex items-center gap-3">
             {coreUnlocked && (
-              <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold px-3 py-1.5 rounded-full">
+              <div className="inline-flex items-center gap-1.5 bg-[#7FA0D6]500/20 border border-emerald-500/40 text-emerald-300 text-xs font-semibold px-3 py-1.5 rounded-full">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 <span>Calendar Ready</span>
               </div>
@@ -413,7 +413,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-emerald-200"
+          className="bg-[#7FA0D6]950/40 border border-emerald-500/30 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-emerald-200"
         >
           <div className="flex items-center gap-2.5">
             <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -425,7 +425,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
             type="button"
             onClick={handleSynthesizeAndFinish}
             disabled={isSynthesizing}
-            className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shrink-0 flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-1.5 bg-[#7FA0D6]600 hover:bg-[#7FA0D6]500 text-white rounded-lg text-xs font-bold transition-all shadow-md shrink-0 flex items-center gap-1.5 cursor-pointer"
           >
             {isSynthesizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
             <span>Proceed to Calendar Directly</span>
@@ -1432,7 +1432,7 @@ export function StageQuestionnaire({ userId, onComplete }: StageQuestionnairePro
                 type="button"
                 onClick={handleSynthesizeAndFinish}
                 disabled={isSynthesizing}
-                className="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                className="px-6 py-2.5 rounded-lg bg-[#7FA0D6]600 hover:bg-[#7FA0D6]500 text-white text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer"
               >
                 {isSynthesizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                 <span>Synthesize Brand DNA & Finish</span>

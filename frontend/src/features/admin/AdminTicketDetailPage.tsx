@@ -138,7 +138,7 @@ export function AdminTicketDetailPage() {
               }}
               className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white shadow-sm transition-all ${
                 isResolved
-                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  ? "bg-[#7FA0D6]600 hover:bg-[#7FA0D6]700"
                   : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
@@ -299,7 +299,7 @@ export function AdminTicketDetailPage() {
                         "Patch deployed to edge ingress router. Asset checksums verified successfully across all 4 Reels. Ticket resolved."
                       )
                     }
-                    className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-semibold border border-emerald-200 transition-colors"
+                    className="px-2.5 py-1 rounded-lg bg-[#7FA0D6]50 hover:bg-[#7FA0D6]100 text-emerald-700 text-[11px] font-semibold border border-emerald-200 transition-colors"
                   >
                     Resolved with Patch
                   </button>

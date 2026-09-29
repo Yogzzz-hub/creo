@@ -1,4 +1,5 @@
-import { Suspense, lazy, Component, type ReactNode, type ErrorInfo } from "react";
+import { Suspense, lazy, Component, type ReactNode, type ErrorInfo, useEffect } from "react";
+import Lenis from "lenis";
 import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "../lib/auth-context";
@@ -234,8 +235,8 @@ function HealthPage() {
         <div className="space-y-3 text-xs">
           <div className="flex justify-between items-center border-b border-[#F0F4F8] py-2">
             <span className="text-[#64748B] font-medium">API Service</span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200">
+              <span className="size-1.5 rounded-full bg-[#7FA0D6]500 animate-pulse" />
               {data?.status || (isLoading ? "Checking..." : "Error")}
             </span>
           </div>
@@ -268,9 +269,32 @@ function HealthPage() {
   );
 }
 
+function LenisProvider({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    const lenis = new Lenis({
+      lerp: 0.05,
+      smoothWheel: true,
+    });
+    
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    
+    requestAnimationFrame(raf);
+    
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
+
+  return <>{children}</>;
+}
+
 export function App() {
   return (
-    <AuthProvider>
+    <LenisProvider>
+      <AuthProvider>
       <ConfirmProvider>
         <BrowserRouter>
           <Suspense fallback={<RouteLoading />}>
@@ -496,6 +520,7 @@ export function App() {
         </BrowserRouter>
       </ConfirmProvider>
     </AuthProvider>
+    </LenisProvider>
   );
 }
 

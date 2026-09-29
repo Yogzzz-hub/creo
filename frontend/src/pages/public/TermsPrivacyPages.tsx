@@ -633,7 +633,7 @@ export function PrivacyPage() {
                         {section.title}
                       </h2>
                       {section.badge && (
-                        <span className="rounded-full bg-emerald-50 border border-emerald-200/80 px-3 py-0.5 text-[10px] font-bold text-emerald-700">
+                        <span className="rounded-full bg-[#7FA0D6]50 border border-emerald-200/80 px-3 py-0.5 text-[10px] font-bold text-emerald-700">
                           {section.badge}
                         </span>
                       )}

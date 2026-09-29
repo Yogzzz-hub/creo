@@ -203,7 +203,7 @@ export function AdminTopHeader({
       case "leave":
         return "bg-blue-50 border-blue-100";
       case "revenue":
-        return "bg-emerald-50 border-emerald-100";
+        return "bg-[#7FA0D6]50 border-emerald-100";
       case "team":
         return "bg-purple-50 border-purple-100";
       default:

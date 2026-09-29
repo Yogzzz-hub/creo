@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { 
-  Building, TrendingUp, Percent, MessageSquare, 
+  MessageSquare, 
   AlertCircle, CheckCircle2, ChevronRight, Linkedin, BarChart3, FileSpreadsheet, HardDrive
 } from "lucide-react";
 
@@ -13,7 +13,7 @@ export function AboutPage() {
     <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen pb-20 lg:pb-24 font-sans selection:bg-[#7FA0D6]/30">
       
       {/* ── Section 1: Hero (2-Column Grid) ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-20 lg:py-24">
+      <section className="max-w-[1240px] mx-auto px-6 py-24 lg:py-32">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           
           {/* Left Column */}
@@ -30,33 +30,25 @@ export function AboutPage() {
               Creative work should be boundless. Agency operations should be mathematical. We built CREO to replace WhatsApp chasing, lost briefs, and blind margins with a single connected operating system.
             </p>
             
-            {/* 4 Stat Pods */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl p-4 flex flex-col justify-center">
-                <div className="text-[#97A0B3] mb-2"><Building className="size-5" /></div>
-                <div className="text-lg font-black text-[#F8FAFC] leading-none mb-1">50+</div>
-                <div className="text-[10px] text-[#97A0B3] font-medium leading-tight">Agencies <br/>Operating Live</div>
+            {/* 3 Stat Pods */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="backdrop-blur-md bg-[#161F2D]/40 border border-[#2A3446]/40 rounded-xl px-6 py-4 flex flex-col justify-center">
+                <div className="text-2xl font-black text-[#F8FAFC] leading-none mb-1.5">48h</div>
+                <div className="text-xs text-[#97A0B3] uppercase tracking-wider font-semibold">Average SLA Turnaround</div>
               </div>
-              <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl p-4 flex flex-col justify-center">
-                <div className="text-[#97A0B3] mb-2"><TrendingUp className="size-5" /></div>
-                <div className="text-lg font-black text-[#F8FAFC] leading-none mb-1">₹4.8Cr+</div>
-                <div className="text-[10px] text-[#97A0B3] font-medium leading-tight">Deliverables <br/>Tracked</div>
+              <div className="backdrop-blur-md bg-[#161F2D]/40 border border-[#2A3446]/40 rounded-xl px-6 py-4 flex flex-col justify-center">
+                <div className="text-2xl font-black text-[#F8FAFC] leading-none mb-1.5">99.4%</div>
+                <div className="text-xs text-[#97A0B3] uppercase tracking-wider font-semibold">On-Time Delivery Rate</div>
               </div>
-              <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl p-4 flex flex-col justify-center">
-                <div className="text-[#97A0B3] mb-2"><Percent className="size-5" /></div>
-                <div className="text-lg font-black text-[#F8FAFC] leading-none mb-1">41.25%</div>
-                <div className="text-[10px] text-[#97A0B3] font-medium leading-tight">Avg. Contribution <br/>Margin</div>
-              </div>
-              <div className="bg-[#161F2D] border border-[#2A3446] rounded-xl p-4 flex flex-col justify-center">
-                <div className="text-[#97A0B3] mb-2"><MessageSquare className="size-5" /></div>
-                <div className="text-lg font-black text-[#F8FAFC] leading-none mb-1">0</div>
-                <div className="text-[10px] text-[#97A0B3] font-medium leading-tight">WhatsApp <br/>Revision Delays</div>
+              <div className="backdrop-blur-md bg-[#161F2D]/40 border border-[#2A3446]/40 rounded-xl px-6 py-4 flex flex-col justify-center">
+                <div className="text-2xl font-black text-[#F8FAFC] leading-none mb-1.5">1-Click</div>
+                <div className="text-xs text-[#97A0B3] uppercase tracking-wider font-semibold">Frictionless Sign-Off</div>
               </div>
             </div>
           </div>
 
           {/* Right Column — Origin & Architecture Terminal */}
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 shadow-2xl relative overflow-hidden flex flex-col gap-6">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/40 rounded-2xl p-6 shadow-2xl relative overflow-hidden flex flex-col gap-6">
             <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
               <div className="font-black text-[#F8FAFC] text-sm tracking-tight">CREO Kernel v2.6 &bull; Architecture Blueprint</div>
               <div className="text-[#7FA0D6] text-xs font-semibold flex items-center gap-2">
@@ -81,14 +73,14 @@ export function AboutPage() {
             
             <div className="mt-4 pt-4 border-t border-[#2A3446] flex items-center justify-between text-[10px] font-medium text-[#97A0B3]">
               <div>Engineered in Bengaluru &bull; Deployed Globally</div>
-              <div className="flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-[#10B981]"></span> Live Latency: 24ms</div>
+              <div className="flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-[#7FA0D6]"></span> Live Latency: 24ms</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* ── Section 2: Why CREO Exists ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-20 lg:py-24 border-t border-[#2A3446]">
+      <section className="max-w-[1240px] mx-auto px-6 py-24 lg:py-32 border-t border-[#2A3446]">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
             ⚡ THE ORIGIN STORY
@@ -103,59 +95,59 @@ export function AboutPage() {
           
           {/* Left Card - The Past / Chaos */}
           <div 
-            className={`bg-[#0A0F18] border rounded-3xl p-6 lg:p-8 transition-all duration-300 ${hoverSection === 'past' ? 'border-red-500/50 shadow-[0_0_20px_-10px_rgba(239,68,68,0.3)]' : 'border-red-500/20'}`}
+            className={`bg-[#0A0F18] border rounded-3xl p-6 lg:p-8 transition-all duration-300 ${hoverSection === 'past' ? 'border-[#D8BF9B]/30 shadow-[0_0_20px_-10px_rgba(216,191,155,0.1)]' : 'border-[#D8BF9B]/20'}`}
             onMouseEnter={() => setHoverSection('past')}
             onMouseLeave={() => setHoverSection(null)}
           >
             <div className="flex items-center gap-3 mb-2">
-              <AlertCircle className="size-5 text-red-500" />
-              <h3 className="text-sm sm:text-base font-bold text-[#F8FAFC]">The Past / <span className="text-red-500">Chaos</span></h3>
+              <AlertCircle className="size-5 text-[#D8BF9B]" />
+              <h3 className="text-sm sm:text-base font-bold text-[#F8FAFC]">The Past / <span className="text-[#D8BF9B]">Chaos</span></h3>
             </div>
             <p className="text-xs sm:text-sm text-[#97A0B3] leading-relaxed mb-8 pb-4 border-b border-[#2A3446]">Disconnected tools. Lost time. Real money.</p>
             
             <div className="flex flex-wrap gap-4 mb-8">
-               <div className="relative w-12 h-12 rounded-xl flex items-center justify-center bg-[#25D366]/20 border border-[#25D366]/40 text-[#25D366]">
+               <div className="relative w-12 h-12 rounded-xl flex items-center justify-center bg-[#0A0F18] border border-[#2A3446] text-[#97A0B3]">
                  <MessageSquare className="size-6" />
-                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow">!</span>
+                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#D8BF9B]/10 border border-[#D8BF9B]/20 text-[#D8BF9B] rounded-full flex items-center justify-center text-[10px] font-bold shadow">!</span>
                </div>
-               <div className="relative w-12 h-12 rounded-xl flex items-center justify-center bg-[#0F9D58]/20 border border-[#0F9D58]/40 text-[#0F9D58]">
+               <div className="relative w-12 h-12 rounded-xl flex items-center justify-center bg-[#0A0F18] border border-[#2A3446] text-[#97A0B3]">
                  <FileSpreadsheet className="size-6" />
-                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow">!</span>
+                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#D8BF9B]/10 border border-[#D8BF9B]/20 text-[#D8BF9B] rounded-full flex items-center justify-center text-[10px] font-bold shadow">!</span>
                </div>
-               <div className="relative w-12 h-12 rounded-xl flex items-center justify-center bg-[#4285F4]/20 border border-[#4285F4]/40 text-[#4285F4]">
+               <div className="relative w-12 h-12 rounded-xl flex items-center justify-center bg-[#0A0F18] border border-[#2A3446] text-[#97A0B3]">
                  <HardDrive className="size-6" />
-                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow">!</span>
+                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#D8BF9B]/10 border border-[#D8BF9B]/20 text-[#D8BF9B] rounded-full flex items-center justify-center text-[10px] font-bold shadow">!</span>
                </div>
-               <div className="relative w-12 h-12 rounded-xl flex items-center justify-center bg-[#FFFFFF]/10 border border-white/20 text-white font-serif font-bold text-lg">
+               <div className="relative w-12 h-12 rounded-xl flex items-center justify-center bg-[#0A0F18] border border-[#2A3446] text-[#97A0B3] font-serif font-bold text-lg">
                  N
-                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow">!</span>
+                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#D8BF9B]/10 border border-[#D8BF9B]/20 text-[#D8BF9B] rounded-full flex items-center justify-center text-[10px] font-bold shadow">!</span>
                </div>
             </div>
             
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="size-5 rounded-full bg-red-500 flex items-center justify-center shrink-0 shadow-sm text-white text-xs font-bold">!</div>
+                <div className="size-5 rounded-full bg-[#D8BF9B]/10 border border-[#D8BF9B]/20 flex items-center justify-center shrink-0 shadow-sm text-[#D8BF9B] text-xs font-bold">!</div>
                 <div>
                   <div className="text-xs font-bold text-[#F8FAFC]">Lost scope</div>
                   <div className="text-[10px] text-[#97A0B3]">Clients scattered across WhatsApp &amp; Email</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="size-5 rounded-full bg-red-500 flex items-center justify-center shrink-0 shadow-sm text-white text-xs font-bold">!</div>
+                <div className="size-5 rounded-full bg-[#D8BF9B]/10 border border-[#D8BF9B]/20 flex items-center justify-center shrink-0 shadow-sm text-[#D8BF9B] text-xs font-bold">!</div>
                 <div>
                   <div className="text-xs font-bold text-[#F8FAFC]">48-hour approval lags</div>
                   <div className="text-[10px] text-[#97A0B3]">Projects lost in Google Sheets &amp; Notion</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="size-5 rounded-full bg-red-500 flex items-center justify-center shrink-0 shadow-sm text-white text-xs font-bold">!</div>
+                <div className="size-5 rounded-full bg-[#D8BF9B]/10 border border-[#D8BF9B]/20 flex items-center justify-center shrink-0 shadow-sm text-[#D8BF9B] text-xs font-bold">!</div>
                 <div>
                   <div className="text-xs font-bold text-[#F8FAFC]">Unbilled extra revisions</div>
                   <div className="text-[10px] text-[#97A0B3]">Assets messy in Drive folders &amp; broken links</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="size-5 rounded-full bg-red-500 flex items-center justify-center shrink-0 shadow-sm text-white text-xs font-bold">!</div>
+                <div className="size-5 rounded-full bg-[#D8BF9B]/10 border border-[#D8BF9B]/20 flex items-center justify-center shrink-0 shadow-sm text-[#D8BF9B] text-xs font-bold">!</div>
                 <div>
                   <div className="text-xs font-bold text-[#F8FAFC]">Zero margin visibility</div>
                   <div className="text-[10px] text-[#97A0B3]">Manual spreadsheets &amp; blind billing</div>
@@ -178,7 +170,7 @@ export function AboutPage() {
 
           {/* Right Card - The CREO Advantage / Precision */}
           <div 
-            className={`bg-[#0A0F18] border rounded-3xl p-6 lg:p-8 relative overflow-hidden transition-all duration-300 ${hoverSection === 'creo' ? 'border-[#7FA0D6]/60 shadow-[0_0_40px_-15px_rgba(127,160,214,0.3)]' : 'border-[#7FA0D6]/30 shadow-[0_0_40px_-15px_rgba(127,160,214,0.1)]'}`}
+            className={`bg-[#0A0F18] border rounded-3xl p-6 lg:p-8 relative overflow-hidden transition-all duration-300 ${hoverSection === 'creo' ? 'border-[#7FA0D6]/60 shadow-[0_0_40px_-15px_rgba(127,160,214,0.3)]' : 'border-[#2A3446]/50 shadow-[0_0_40px_-15px_rgba(127,160,214,0.05)]'}`}
             onMouseEnter={() => setHoverSection('creo')}
             onMouseLeave={() => setHoverSection(null)}
           >
@@ -190,28 +182,28 @@ export function AboutPage() {
 
             <div className="space-y-5 mb-8">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="size-5 text-cyan-400 shrink-0 mt-0.5" />
+                <CheckCircle2 className="size-5 text-[#7FA0D6] shrink-0 mt-0.5" />
                 <div>
                   <div className="text-xs font-bold text-[#F8FAFC]">Unified Client Dossiers</div>
                   <div className="text-[10px] text-[#97A0B3]">All client data, communications &amp; history</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="size-5 text-cyan-400 shrink-0 mt-0.5" />
+                <CheckCircle2 className="size-5 text-[#7FA0D6] shrink-0 mt-0.5" />
                 <div>
                   <div className="text-xs font-bold text-[#F8FAFC]">Utilization-Linked Sprints</div>
                   <div className="text-[10px] text-[#97A0B3]">Right people. Right work. Every time</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="size-5 text-cyan-400 shrink-0 mt-0.5" />
+                <CheckCircle2 className="size-5 text-[#7FA0D6] shrink-0 mt-0.5" />
                 <div>
                   <div className="text-xs font-bold text-[#F8FAFC]">1-Click Client Portal Approvals</div>
                   <div className="text-[10px] text-[#97A0B3]">Faster sign-offs. Happier clients</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="size-5 text-cyan-400 shrink-0 mt-0.5" />
+                <CheckCircle2 className="size-5 text-[#7FA0D6] shrink-0 mt-0.5" />
                 <div>
                   <div className="text-xs font-bold text-[#F8FAFC]">Real-Time Unit Economics</div>
                   <div className="text-[10px] text-[#97A0B3]">Know your numbers. Grow smarter</div>
@@ -226,7 +218,7 @@ export function AboutPage() {
                   <div className="relative size-12 mb-1">
                     <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                       <path className="text-[#050810]" strokeWidth="4" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                      <path className="text-cyan-400" strokeWidth="4" strokeDasharray="41.25, 100" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      <path className="text-[#7FA0D6]" strokeWidth="4" strokeDasharray="41.25, 100" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-[#F8FAFC]">41.25%</div>
                   </div>
@@ -235,7 +227,7 @@ export function AboutPage() {
               <div className="w-32 h-12 relative flex flex-col items-end justify-end">
                 <span className="text-[8px] text-[#97A0B3] mb-1 absolute top-0">Verified Margin</span>
                 <svg className="w-full h-full" viewBox="0 0 100 40" preserveAspectRatio="none">
-                  <path d="M0,35 L10,32 L20,34 L30,28 L40,30 L50,22 L60,25 L70,18 L80,20 L90,10 L100,5" fill="none" stroke="#22d3ee" strokeWidth="2" />
+                  <path d="M0,35 L10,32 L20,34 L30,28 L40,30 L50,22 L60,25 L70,18 L80,20 L90,10 L100,5" fill="none" stroke="#7FA0D6" strokeWidth="2" />
                 </svg>
               </div>
             </div>
@@ -245,7 +237,7 @@ export function AboutPage() {
       </section>
 
       {/* ── Section 3: Three Principles ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-20 lg:py-24 border-t border-[#2A3446]">
+      <section className="max-w-[1240px] mx-auto px-6 py-24 lg:py-32 border-t border-[#2A3446]">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
             ⚡ OUR CORE PHILOSOPHY
@@ -257,7 +249,7 @@ export function AboutPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1 */}
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 lg:p-8 flex flex-col">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/40 rounded-3xl p-6 lg:p-8 flex flex-col">
             <div className="inline-flex items-center rounded-full bg-[#0A0F18] border border-[#2A3446] text-[#7FA0D6] text-[10px] font-bold px-3 py-1 mb-6 w-fit">
               PEOPLE
             </div>
@@ -297,7 +289,7 @@ export function AboutPage() {
           </div>
 
           {/* Card 2 */}
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 lg:p-8 flex flex-col">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/40 rounded-3xl p-6 lg:p-8 flex flex-col">
             <div className="inline-flex items-center rounded-full bg-[#0A0F18] border border-[#2A3446] text-[#7FA0D6] text-[10px] font-bold px-3 py-1 mb-6 w-fit">
               PROCESS
             </div>
@@ -330,7 +322,7 @@ export function AboutPage() {
           </div>
 
           {/* Card 3 */}
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 lg:p-8 flex flex-col">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/40 rounded-3xl p-6 lg:p-8 flex flex-col">
             <div className="inline-flex items-center rounded-full bg-[#0A0F18] border border-[#2A3446] text-[#7FA0D6] text-[10px] font-bold px-3 py-1 mb-6 w-fit">
               PERFORMANCE
             </div>
@@ -372,7 +364,7 @@ export function AboutPage() {
       </section>
 
       {/* ── Section 4: Leadership Pods ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-20 lg:py-24 border-t border-[#2A3446]">
+      <section className="max-w-[1240px] mx-auto px-6 py-24 lg:py-32 border-t border-[#2A3446]">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
             ⚡ THE PEOPLE BEHIND CREO

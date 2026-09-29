@@ -28,7 +28,7 @@ export function AdminSLAPerformancePage() {
       avgResponse: "6.2m",
       resolved: "42 tickets",
       status: "OPTIMAL",
-      statusBg: "bg-emerald-100 text-emerald-800 border-emerald-200",
+      statusBg: "bg-[#7FA0D6]100 text-emerald-800 border-emerald-200",
     },
     {
       pod: "Pod B",
@@ -39,7 +39,7 @@ export function AdminSLAPerformancePage() {
       avgResponse: "7.8m",
       resolved: "38 tickets",
       status: "OPTIMAL",
-      statusBg: "bg-emerald-100 text-emerald-800 border-emerald-200",
+      statusBg: "bg-[#7FA0D6]100 text-emerald-800 border-emerald-200",
     },
     {
       pod: "Pod C",
@@ -61,7 +61,7 @@ export function AdminSLAPerformancePage() {
       avgResponse: "7.1m",
       resolved: "29 tickets",
       status: "OPTIMAL",
-      statusBg: "bg-emerald-100 text-emerald-800 border-emerald-200",
+      statusBg: "bg-[#7FA0D6]100 text-emerald-800 border-emerald-200",
     },
     {
       pod: "Pod E",
@@ -72,7 +72,7 @@ export function AdminSLAPerformancePage() {
       avgResponse: "8.5m",
       resolved: "31 tickets",
       status: "OPTIMAL",
-      statusBg: "bg-emerald-100 text-emerald-800 border-emerald-200",
+      statusBg: "bg-[#7FA0D6]100 text-emerald-800 border-emerald-200",
     },
   ];
 
@@ -152,7 +152,7 @@ export function AdminSLAPerformancePage() {
                 </div>
                 <div className="flex items-center gap-3 pt-1 text-xs font-semibold">
                   <span className="text-slate-500">Target: <strong className="text-slate-800">98.0%</strong></span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold border border-emerald-200">
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]100 text-emerald-800 text-[10px] font-extrabold border border-emerald-200">
                     OPTIMAL
                   </span>
                 </div>
@@ -177,7 +177,7 @@ export function AdminSLAPerformancePage() {
                   <span className="px-2.5 py-0.5 rounded-md bg-rose-50 text-rose-700 text-[11px] font-bold border border-rose-200">
                     1 Approaching
                   </span>
-                  <span className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200">
+                  <span className="px-2.5 py-0.5 rounded-md bg-[#7FA0D6]50 text-emerald-700 text-[11px] font-bold border border-emerald-200">
                     • 1 Resolved
                   </span>
                 </div>
@@ -320,13 +320,13 @@ export function AdminSLAPerformancePage() {
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs font-bold">
                     <span className="flex items-center gap-1.5 text-slate-900">
-                      <span className="size-2 rounded-full bg-emerald-600" />
+                      <span className="size-2 rounded-full bg-[#7FA0D6]600" />
                       Normal Priority (12h SLA)
                     </span>
                     <span className="text-slate-900">100.0% <span className="text-slate-400 font-normal">(44/44 Compliant)</span></span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                    <div className="h-full bg-emerald-600 rounded-full" style={{ width: "100%" }} />
+                    <div className="h-full bg-[#7FA0D6]600 rounded-full" style={{ width: "100%" }} />
                   </div>
                 </div>
               </div>
@@ -430,13 +430,13 @@ export function AdminSLAPerformancePage() {
                 </div>
 
                 {/* Warning 2: Escalation Resolved */}
-                <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2">
+                <div className="p-4 rounded-xl bg-[#7FA0D6]50/70 border border-emerald-200 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
                       <CheckCircle2 className="size-3.5 text-emerald-600" />
                       Escalation Resolved Cleanly
                     </span>
-                    <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-emerald-600 text-white">
+                    <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-[#7FA0D6]600 text-white">
                       CLEARED
                     </span>
                   </div>
@@ -487,7 +487,7 @@ export function AdminSLAPerformancePage() {
           <span>© 2025 creo. Executive Operations Portal. All rights reserved.</span>
           <div className="flex items-center gap-3 font-medium">
             <span className="flex items-center gap-1.5 text-emerald-600 font-bold">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="size-2 rounded-full bg-[#7FA0D6]500 animate-pulse" />
               Systems Optimal
             </span>
             <span>•</span>

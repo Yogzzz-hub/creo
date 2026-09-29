@@ -114,10 +114,10 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
         animate={{ opacity: 1, y: 0 }}
         className="max-w-xl mx-auto rounded-2xl border border-emerald-200 bg-white p-6 sm:p-8 shadow-sm text-center"
       >
-        <div className="size-14 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+        <div className="size-14 rounded-2xl bg-[#7FA0D6]50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
           ✓
         </div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold uppercase tracking-wider mb-2">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7FA0D6]50 border border-emerald-200 text-emerald-800 text-xs font-semibold uppercase tracking-wider mb-2">
           Step 3 Completed
         </div>
         <h2 className="text-xl sm:text-2xl font-bold font-display text-[#0D2137] tracking-tight">

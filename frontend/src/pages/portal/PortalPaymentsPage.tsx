@@ -264,7 +264,7 @@ function PlanPickerModal({
                   </span>
                 )}
                 {isCurrent && hasActiveSubscription && !isExpired && (
-                  <span className="absolute -top-2.5 right-3 bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                  <span className="absolute -top-2.5 right-3 bg-[#7FA0D6]600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
                     <Check className="size-2" /> Current Active
                   </span>
                 )}
@@ -320,7 +320,7 @@ function PlanPickerModal({
                       <li key={h} className="flex items-start gap-1.5 text-[11px] text-slate-700 leading-tight">
                         <div className={`size-3 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                           isCurrent && hasActiveSubscription && !isExpired
-                            ? "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                            ? "bg-[#7FA0D6]50 text-emerald-600 border border-emerald-200"
                             : "bg-blue-50 text-[#2B7BC4] border border-blue-200"
                         }`}>
                           <Check className="size-2" />
@@ -329,7 +329,7 @@ function PlanPickerModal({
                       </li>
                     ))}
                     <li className="flex items-start gap-1.5 text-[11px] font-medium text-[#0D2137] leading-tight">
-                      <div className="size-3 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-200">
+                      <div className="size-3 rounded-full bg-[#7FA0D6]50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-200">
                         <Check className="size-2" />
                       </div>
                       <span>{plan.revision_rounds} revision round{plan.revision_rounds !== 1 ? "s" : ""} included</span>
@@ -349,7 +349,7 @@ function PlanPickerModal({
                   {isCurrent && hasActiveSubscription && !isExpired ? (
                     <button
                       disabled
-                      className="w-full py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
+                      className="w-full py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200 cursor-default"
                     >
                       <Check className="size-3" /> Current Active Plan
                     </button>
@@ -643,8 +643,8 @@ function AddonModal({
               <Sparkles className="size-3 text-[#2B7BC4]" />
               <span>On-Demand Quota Top-Up</span>
             </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#7FA0D6]50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+              <span className="size-1.5 rounded-full bg-[#7FA0D6]500 animate-pulse" />
               <span>Active: {currentPlanName || "Retainer Plan"}</span>
             </span>
           </div>
@@ -1025,7 +1025,7 @@ export function PortalPaymentsPage() {
       {paymentStatus === "success" && (
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-300 rounded-2xl p-4 sm:px-6 sm:py-4.5 text-sm font-semibold text-emerald-950 shadow-md backdrop-blur-xs">
           <div className="flex items-center gap-3.5">
-            <div className="size-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <div className="size-9 rounded-xl bg-[#7FA0D6]600 text-white flex items-center justify-center shrink-0 shadow-xs">
               <CheckCircle2 className="size-5" />
             </div>
             <div>
@@ -1092,8 +1092,8 @@ export function PortalPaymentsPage() {
           <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-xs hover:shadow-sm transition-all relative overflow-hidden group">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
               {/* Top Left Badge */}
-              <div className="flex sm:inline-flex flex-wrap items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-xs font-bold tracking-wide">
-                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <div className="flex sm:inline-flex flex-wrap items-center gap-2 px-3 py-1 rounded-full bg-[#7FA0D6]50 border border-emerald-200/80 text-emerald-700 text-xs font-bold tracking-wide">
+                <span className="size-1.5 rounded-full bg-[#7FA0D6]500 animate-pulse shrink-0" />
                 <span className="break-words text-center sm:text-left">• ACTIVE • ENTERPRISE GROWTH TIER</span>
               </div>
 
@@ -1276,7 +1276,7 @@ export function PortalPaymentsPage() {
                 </div>
                 <div className="text-right shrink-0">
                   <span className="text-xs sm:text-sm font-bold text-slate-900 inline-flex items-center gap-1.5">
-                    $1,200 / mo <span className="size-1.5 rounded-full bg-emerald-500" />
+                    $1,200 / mo <span className="size-1.5 rounded-full bg-[#7FA0D6]500" />
                   </span>
                 </div>
               </div>
@@ -1298,7 +1298,7 @@ export function PortalPaymentsPage() {
                 </div>
                 <div className="text-right shrink-0">
                   <span className="text-xs sm:text-sm font-bold text-slate-900 inline-flex items-center gap-1.5">
-                    $550 / mo <span className="size-1.5 rounded-full bg-emerald-500" />
+                    $550 / mo <span className="size-1.5 rounded-full bg-[#7FA0D6]500" />
                   </span>
                 </div>
               </div>
@@ -1338,7 +1338,7 @@ export function PortalPaymentsPage() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs sm:text-sm font-bold text-slate-900">{inv.id}</span>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                        <span className="text-[10px] font-bold text-emerald-700 bg-[#7FA0D6]50 px-2 py-0.5 rounded-full border border-emerald-200/60">
                           Paid
                         </span>
                       </div>
@@ -1398,7 +1398,7 @@ export function PortalPaymentsPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs sm:text-sm text-slate-900">{inv.id}</span>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                        <span className="text-[10px] font-bold text-emerald-700 bg-[#7FA0D6]50 px-2 py-0.5 rounded-full border border-emerald-200/60">
                           {inv.status}
                         </span>
                       </div>

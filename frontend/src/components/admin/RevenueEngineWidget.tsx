@@ -34,7 +34,7 @@ const TIMEFRAME_LABELS: Record<Timeframe, string> = {
 const PLAN_COLORS = [
   { bg: "bg-blue-600", text: "text-white", ring: "border-blue-200 bg-blue-50/40" },
   { bg: "bg-violet-500", text: "text-white", ring: "border-violet-200 bg-violet-50/40" },
-  { bg: "bg-emerald-500", text: "text-white", ring: "border-emerald-200 bg-emerald-50/40" },
+  { bg: "bg-[#7FA0D6]500", text: "text-white", ring: "border-emerald-200 bg-[#7FA0D6]50/40" },
 ];
 
 function CustomTooltip({ active, payload, label }: any) {

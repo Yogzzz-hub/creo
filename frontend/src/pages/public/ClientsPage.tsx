@@ -11,14 +11,25 @@ export function ClientsPage() {
   return (
     <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen pb-20 lg:pb-24 font-sans selection:bg-[#7FA0D6]/30">
       
-      {/* ── Section 1: Hero (2-Column Grid) ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-20 lg:py-24">
+      {/* - Section 1: Hero (2-Column Grid) - */}
+      <section className="max-w-[1240px] mx-auto px-6 py-20 lg:py-24 relative">\n      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+        <svg className="absolute w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#7FA0D6" strokeWidth="0.5" opacity="0.5"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+            <circle cx="20%" cy="30%" r="2" fill="#7FA0D6" className="animate-ping" />
+            <circle cx="70%" cy="60%" r="3" fill="#BCCCE6" className="animate-pulse" />
+        </svg>
+    </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           
           {/* Left Column */}
           <div className="pr-4 lg:pr-8">
             <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
-              ⚡ POWERING MODERN AGENCY OPERATIONS
+               POWERING MODERN AGENCY OPERATIONS
             </div>
             
             <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-black tracking-tight leading-[1.05] text-[#F8FAFC] mb-6">
@@ -54,7 +65,7 @@ export function ClientsPage() {
             </div>
           </div>
 
-          {/* Right Column — Multi-Studio Network Pulse */}
+          {/* Right Column - Multi-Studio Network Pulse */}
           <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 shadow-2xl relative overflow-hidden flex flex-col">
             
             {/* Header */}
@@ -83,7 +94,7 @@ export function ClientsPage() {
               
               <div className="bg-[#0A0F18] border border-[#2A3446] rounded-xl p-3.5 flex flex-col justify-between">
                 <div className="text-[10px] text-[#97A0B3] font-bold uppercase mb-1">Total Volume</div>
-                <div className="text-xl font-black text-[#F8FAFC]">₹14.8Cr</div>
+                <div className="text-xl font-black text-[#F8FAFC]">$14.8Cr</div>
               </div>
               
               <div className="bg-[#0A0F18] border border-[#2A3446] rounded-xl p-3.5 flex flex-col justify-between">
@@ -100,13 +111,13 @@ export function ClientsPage() {
               </div>
             </div>
 
-            {/* Bottom Section — Live Agency Health Roster */}
+            {/* Bottom Section - Live Agency Health Roster */}
             <div className="bg-[#0A0F18] border border-[#2A3446] rounded-xl p-4 mb-4">
               <div className="text-[10px] text-[#97A0B3] font-bold uppercase mb-4">Live Agency Health Roster</div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex flex-col">
-                    <span className="font-bold text-[#F8FAFC]">Velox Studio &bull; Motion &amp; 3D Pod</span>
+                    <span className="font-bold text-[#F8FAFC]">Series A-C Tech &bull; Motion &amp; 3D Pod</span>
                   </div>
                   <div className="flex items-center gap-4 text-[#97A0B3]">
                     <span>12 Projects</span>
@@ -115,7 +126,7 @@ export function ClientsPage() {
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex flex-col">
-                    <span className="font-bold text-[#F8FAFC]">Hyperdrive Agency &bull; DTC Creative</span>
+                    <span className="font-bold text-[#F8FAFC]">D2C Brands &bull; DTC Creative</span>
                   </div>
                   <div className="flex items-center gap-4 text-[#97A0B3]">
                     <span>24 Projects</span>
@@ -124,7 +135,7 @@ export function ClientsPage() {
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex flex-col">
-                    <span className="font-bold text-[#F8FAFC]">Northstar Studio &bull; Brand Strategy</span>
+                    <span className="font-bold text-[#F8FAFC]">Creative Production Houses &bull; Brand Strategy</span>
                   </div>
                   <div className="flex items-center gap-4 text-[#97A0B3]">
                     <span>8 Projects</span>
@@ -133,7 +144,7 @@ export function ClientsPage() {
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex flex-col">
-                    <span className="font-bold text-[#F8FAFC]">Pulse Motion Lab &bull; Video &amp; Editorial</span>
+                    <span className="font-bold text-[#F8FAFC]">Web3 Protocols &bull; Video &amp; Editorial</span>
                   </div>
                   <div className="flex items-center gap-4 text-[#97A0B3]">
                     <span>10 Projects</span>
@@ -145,19 +156,19 @@ export function ClientsPage() {
 
             {/* Footer Bar */}
             <div className="w-full bg-[#0A0F18] border border-[#2A3446] py-2 px-3 rounded-lg text-[10px] sm:text-xs font-semibold text-[#7FA0D6] flex items-center justify-center gap-2 mt-auto">
-              ⚡ Real-time multi-tenant telemetry across all connected client portals.
+               Real-time multi-tenant telemetry across all connected client portals.
             </div>
             
           </div>
         </div>
       </section>
 
-      {/* ── Section 2: The Studios Scaling on CREO OS ── */}
+      {/* - Section 2: The Studios Scaling on CREO OS - */}
       <section className="max-w-[1240px] mx-auto px-6 py-20 lg:py-24 border-t border-[#2A3446]">
         
         <div className="mb-10">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
-            ⚡ OUR CLIENTS
+             OUR CLIENTS
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-4">
             The Studios Scaling on CREO OS.
@@ -183,7 +194,7 @@ export function ClientsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
-          {/* Card 1: Velox Studio */}
+          {/* Card 1: Series A-C Tech */}
           {(activeFilter === 'All' || activeFilter === 'Motion') && (
           <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 flex flex-col justify-between">
             <div>
@@ -191,7 +202,7 @@ export function ClientsPage() {
                 <div className="flex items-center gap-3">
                   <div className="text-2xl font-black text-[#F8FAFC] leading-none">V</div>
                   <div>
-                    <div className="text-sm font-bold text-[#F8FAFC]">Velox Studio</div>
+                    <div className="text-sm font-bold text-[#F8FAFC]">Series A-C Tech</div>
                     <div className="text-xs text-[#97A0B3]">Motion &amp; 3D</div>
                   </div>
                 </div>
@@ -220,7 +231,7 @@ export function ClientsPage() {
           </div>
           )}
 
-          {/* Card 2: Hyperdrive Agency */}
+          {/* Card 2: D2C Brands */}
           {(activeFilter === 'All' || activeFilter === 'DTC') && (
           <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 flex flex-col justify-between">
             <div>
@@ -228,7 +239,7 @@ export function ClientsPage() {
                 <div className="flex items-center gap-3">
                   <Zap className="size-6 text-[#F8FAFC] fill-[#F8FAFC]" />
                   <div>
-                    <div className="text-sm font-bold text-[#F8FAFC]">Hyperdrive Agency</div>
+                    <div className="text-sm font-bold text-[#F8FAFC]">D2C Brands</div>
                     <div className="text-xs text-[#97A0B3]">DTC Creative</div>
                   </div>
                 </div>
@@ -258,7 +269,7 @@ export function ClientsPage() {
           </div>
           )}
 
-          {/* Card 3: Northstar Studio */}
+          {/* Card 3: Creative Production Houses */}
           {(activeFilter === 'All' || activeFilter === 'Full-Service') && (
           <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 flex flex-col justify-between">
             <div>
@@ -266,7 +277,7 @@ export function ClientsPage() {
                 <div className="flex items-center gap-3">
                   <div className="text-2xl text-[#F8FAFC] leading-none">★</div>
                   <div>
-                    <div className="text-sm font-bold text-[#F8FAFC]">Northstar Studio</div>
+                    <div className="text-sm font-bold text-[#F8FAFC]">Creative Production Houses</div>
                     <div className="text-xs text-[#97A0B3]">Brand &amp; Strategy</div>
                   </div>
                 </div>
@@ -310,7 +321,7 @@ export function ClientsPage() {
                     <div className="h-1.5 w-full bg-[#F8FAFC] skew-x-12" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-[#F8FAFC]">Loom &amp; Craft Media</div>
+                    <div className="text-sm font-bold text-[#F8FAFC]">Enterprise SaaS</div>
                     <div className="text-xs text-[#97A0B3]">High-Cadence Content</div>
                   </div>
                 </div>
@@ -338,7 +349,7 @@ export function ClientsPage() {
           </div>
           )}
 
-          {/* Card 5: Apex Digital */}
+          {/* Card 5: Global Agencies */}
           {(activeFilter === 'All' || activeFilter === 'Full-Service') && (
           <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 flex flex-col justify-between">
             <div>
@@ -350,7 +361,7 @@ export function ClientsPage() {
                     </svg>
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-[#F8FAFC]">Apex Digital</div>
+                    <div className="text-sm font-bold text-[#F8FAFC]">Global Agencies</div>
                     <div className="text-xs text-[#97A0B3]">Performance Marketing</div>
                   </div>
                 </div>
@@ -364,7 +375,7 @@ export function ClientsPage() {
                   <ArrowUpRight className="size-8" />
                 </div>
                 <div>
-                  <div className="text-[14px] font-black text-[#F8FAFC]">₹2.1L</div>
+                  <div className="text-[14px] font-black text-[#F8FAFC]">$2.1L</div>
                   <div className="text-[11px] font-bold text-[#F8FAFC] mb-0.5">Collections Pipeline</div>
                   <div className="text-[10px] text-[#97A0B3]">(Auto-follow ups active)</div>
                 </div>
@@ -379,7 +390,7 @@ export function ClientsPage() {
           </div>
           )}
 
-          {/* Card 6: Pulse Motion Lab */}
+          {/* Card 6: Web3 Protocols */}
           {(activeFilter === 'All' || activeFilter === 'Motion') && (
           <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 flex flex-col justify-between">
             <div>
@@ -389,7 +400,7 @@ export function ClientsPage() {
                     <Play className="size-3 text-[#161F2D] fill-[#161F2D]" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-[#F8FAFC]">Pulse Motion Lab</div>
+                    <div className="text-sm font-bold text-[#F8FAFC]">Web3 Protocols</div>
                     <div className="text-xs text-[#97A0B3]">Video &amp; Editorial</div>
                   </div>
                 </div>
@@ -424,11 +435,11 @@ export function ClientsPage() {
 
       </section>
 
-      {/* ── Section 3: Founder Testimonials ── */}
+      {/* - Section 3: Founder Testimonials - */}
       <section className="max-w-[1240px] mx-auto px-6 py-20 lg:py-24 border-t border-[#2A3446]">
         <div className="mb-12">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
-            ⚡ SUCCESS STORIES
+             SUCCESS STORIES
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC]">
             What Agency Founders Experience.
@@ -439,66 +450,66 @@ export function ClientsPage() {
           <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 lg:p-8 h-full flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-4 mb-6">
-                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" alt="Vikram Malhotra" className="w-12 h-12 rounded-full object-cover border border-[#2A3446]" />
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" alt="Alex Chen" className="w-12 h-12 rounded-full object-cover border border-[#2A3446]" />
                 <div>
-                  <div className="text-sm sm:text-base font-bold text-[#F8FAFC]">Vikram Malhotra</div>
-                  <div className="text-[10px] text-[#7FA0D6] mt-0.5">Founder &amp; MD, Velox Studio</div>
+                  <div className="text-sm sm:text-base font-bold text-[#F8FAFC]">Alex Chen</div>
+                  <div className="text-[10px] text-[#7FA0D6] mt-0.5">Founder &amp; MD, Series A-C Tech</div>
                 </div>
               </div>
               <p className="text-sm text-[#F8FAFC] leading-relaxed my-4 font-medium">
-                "CREO eliminated our single biggest growth bottleneck: client approval friction. Our clients love the 1-click review portal..."
+                "Guaranteed Pod SLA: Seamless integration with your existing team architecture."
               </p>
             </div>
             <div className="w-full bg-[#0A0F18] border border-[#2A3446] py-2 px-3 rounded-lg text-xs font-semibold text-[#7FA0D6] flex items-center gap-2 mt-auto">
-              ⚡ 64% Faster Sign-Off Cadence
+               64% Faster Sign-Off Cadence
             </div>
           </div>
 
           <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 lg:p-8 h-full flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-4 mb-6">
-                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" alt="Sarah Jenkins" className="w-12 h-12 rounded-full object-cover border border-[#2A3446]" />
+                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" alt="Jordan Lee" className="w-12 h-12 rounded-full object-cover border border-[#2A3446]" />
                 <div>
-                  <div className="text-sm sm:text-base font-bold text-[#F8FAFC]">Sarah Jenkins</div>
-                  <div className="text-[10px] text-[#7FA0D6] mt-0.5">Head of Operations, Hyperdrive Creative</div>
+                  <div className="text-sm sm:text-base font-bold text-[#F8FAFC]">Jordan Lee</div>
+                  <div className="text-[10px] text-[#7FA0D6] mt-0.5">Head of Operations, D2C Brands</div>
                 </div>
               </div>
               <p className="text-sm text-[#F8FAFC] leading-relaxed my-4 font-medium">
-                "Before CREO, team utilization was guesswork on a spreadsheet. Now I can see Video Editors at 82%..."
+                "Direct Slack / Portal Handoff: Zero friction from brief to final delivery."
               </p>
             </div>
             <div className="w-full bg-[#0A0F18] border border-[#2A3446] py-2 px-3 rounded-lg text-xs font-semibold text-[#7FA0D6] flex items-center gap-2 mt-auto">
-              ⚡ +30% Team Utilization Accuracy
+               +30% Team Utilization Accuracy
             </div>
           </div>
 
           <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 lg:p-8 h-full flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-4 mb-6">
-                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" alt="Karan Patel" className="w-12 h-12 rounded-full object-cover border border-[#2A3446]" />
+                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" alt="Taylor Reed" className="w-12 h-12 rounded-full object-cover border border-[#2A3446]" />
                 <div>
-                  <div className="text-sm sm:text-base font-bold text-[#F8FAFC]">Karan Patel</div>
-                  <div className="text-[10px] text-[#7FA0D6] mt-0.5">Partner, Northstar Agency</div>
+                  <div className="text-sm sm:text-base font-bold text-[#F8FAFC]">Taylor Reed</div>
+                  <div className="text-[10px] text-[#7FA0D6] mt-0.5">Partner, Creative Production Houses</div>
                 </div>
               </div>
               <p className="text-sm text-[#F8FAFC] leading-relaxed my-4 font-medium">
-                "Seeing our true contribution margin on clients like Astra Living (41.25%) directly inside the operational dashboard..."
+                "Transparent Contribution Margins: Clear visibility into project economics."
               </p>
             </div>
             <div className="w-full bg-[#0A0F18] border border-[#2A3446] py-2 px-3 rounded-lg text-xs font-semibold text-[#7FA0D6] flex items-center gap-2 mt-auto">
-              ⚡ 41.25% Verified Margin Retention
+               41.25% Verified Margin Retention
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Section 4: Client Portal Showcase ── */}
+      {/* - Section 4: Client Portal Showcase - */}
       <section className="max-w-[1240px] mx-auto px-6 py-20 lg:py-24 border-t border-[#2A3446]">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           
           <div className="pr-4 lg:pr-8">
             <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
-              ⚡ CLIENT PORTAL EXPERIENCE
+               CLIENT PORTAL EXPERIENCE
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-10 leading-[1.1]">
               Your clients see your brand, powered by <span className="text-[#F8FAFC]">CREO's engine.</span>
@@ -570,9 +581,9 @@ export function ClientsPage() {
 
             <div className="space-y-3 mb-6">
               {[
-                { name: 'Reel 04 - Product Video', type: 'Video • 2.4 GB', img: 'https://images.unsplash.com/photo-1528271537-7addcf9eff27?auto=format&fit=crop&w=100&q=80' },
-                { name: 'Carousel 03 - Brand Specs', type: 'Design • 15 MB', img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=100&q=80' },
-                { name: 'Reel 05 - Testimonial Video', type: 'Video • 1.8 GB', img: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=100&q=80' },
+                { name: 'Reel 04 - Product Video', type: 'Video · 2.4 GB', img: 'https://images.unsplash.com/photo-1528271537-7addcf9eff27?auto=format&fit=crop&w=100&q=80' },
+                { name: 'Carousel 03 - Brand Specs', type: 'Design · 15 MB', img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=100&q=80' },
+                { name: 'Reel 05 - Testimonial Video', type: 'Video · 1.8 GB', img: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=100&q=80' },
               ].map((item) => (
                 <div key={item.name} className="flex items-center justify-between p-3 rounded-xl bg-[#0A0F18] border border-[#2A3446]">
                   <div className="flex items-center gap-3">
@@ -589,7 +600,7 @@ export function ClientsPage() {
                     <span className="text-[10px] font-semibold text-[#10B981] bg-[#10B981]/10 px-2.5 py-1 rounded-full">✓ Approved (Queued)</span>
                   )}
                   {portalStatus === 'revision' && (
-                    <span className="text-[10px] font-semibold text-[#7FA0D6] bg-[#7FA0D6]/10 px-2.5 py-1 rounded-full">⚡ SLA Revision Ticket Logged</span>
+                    <span className="text-[10px] font-semibold text-[#7FA0D6] bg-[#7FA0D6]/10 px-2.5 py-1 rounded-full"> SLA Revision Ticket Logged</span>
                   )}
                 </div>
               ))}
@@ -601,7 +612,7 @@ export function ClientsPage() {
                 className={`flex-1 font-black text-xs py-2.5 rounded-full flex items-center justify-center gap-1 transition-colors ${
                   portalStatus === 'approved' 
                     ? 'bg-[#10B981] text-[#050810]' 
-                    : 'bg-[#10B981] hover:bg-[#059669] text-[#050810]'
+                    : 'bg-[#10B981] hover:bg-[#D5E1F2] text-[#050810]'
                 }`}
               >
                 <CheckCircle2 className="size-3" /> Approve All

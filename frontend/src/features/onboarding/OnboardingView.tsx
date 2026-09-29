@@ -75,7 +75,7 @@ function ProgressStepper({
                     <div
                       className={`relative size-8 sm:size-9 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-colors duration-200 ${
                         isDone
-                          ? "bg-emerald-600 text-white"
+                          ? "bg-[#7FA0D6]600 text-white"
                           : isActive
                           ? "bg-[#2B7BC4] text-white"
                           : "bg-slate-100 text-slate-400 border border-slate-200"
@@ -206,7 +206,7 @@ function StageVerifyEmail({
         <div
           className={`mt-4 p-3 rounded-xl text-xs font-medium ${
             message.type === "success"
-              ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+              ? "bg-[#7FA0D6]50 text-emerald-800 border border-emerald-200"
               : "bg-rose-50 text-rose-800 border border-rose-200"
           }`}
         >
@@ -216,7 +216,7 @@ function StageVerifyEmail({
 
       {verifiedSuccess ? (
         <div className="mt-6 space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#7FA0D6]50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
             <CheckCircle2 className="size-4 text-emerald-600" />
             <span>Verified: {userEmail || email || "Active Client"}</span>
           </div>

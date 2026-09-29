@@ -1,8 +1,49 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
+import { CheckCircle2, AlertCircle, ArrowRight, Layers, User, BarChart2, Database, ChevronUp, ChevronDown, Zap } from "lucide-react";
+import { useNavigate } from "react-router";
+
+
+const faqs = [
+  {
+    category: "Migration & Tools",
+    tag: "MIGRATION & WORKFLOW",
+    question: "How does CREO replace our existing stack of WhatsApp, Drive, and spreadsheets?",
+    icon: Layers,
+    answer: "CREO doesn't just store files; it connects them directly to team capacity and client sign-offs. Your briefs connect to Figma/Adobe, client feedback triggers automated SLA revision tickets to motion leads, and retainer hours calculate contribution margins automatically—eliminating the 7 fragmented silos.",
+    extra: (
+      <div className="text-[#7FA0D6] bg-[#0A0F18] border border-[#2A3446] rounded-md px-3 py-1 text-xs inline-flex items-center gap-1.5 mt-3">
+        <Zap className="size-3.5 fill-current" />
+        Typical agency migration completed in under 48 hours.
+      </div>
+    )
+  },
+  {
+    category: "Client Portals & Approvals",
+    tag: "CLIENT PORTALS",
+    question: "Do our clients need to create a CREO account to review and approve deliverables?",
+    icon: User,
+    answer: "No. Clients receive a secure, 1-click magic link. They can view the asset, leave timestamped comments, and approve directly from their browser without ever logging in."
+  },
+  {
+    category: "Capacity & Workflows",
+    tag: "CAPACITY & WORKLOAD",
+    question: "How are team capacity meters and burnout alerts calculated?",
+    icon: BarChart2,
+    answer: "CREO monitors active projects, assigned revision tickets, and typical turnaround times. If a designer exceeds 85% capacity based on their historical velocity, the system automatically flags them and pauses new assignments."
+  },
+  {
+    category: "Retainer Margins & Billing",
+    tag: "RETAINER ECONOMICS",
+    question: "How does the real-time contribution margin calculation work?",
+    icon: Database,
+    answer: "As your team logs hours or completes deliverables, CREO deducts their blended rate from the retainer's value in real-time, giving you an exact profit margin percentage before the month ends."
+  }
+];
 
 export function HomePage() {
+  const navigate = useNavigate();
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [assets, setAssets] = useState([
     { id: 1, name: "Autumn drop teaser", type: "Reel 9:16", status: "awaiting" },
     { id: 2, name: "The 36-hour dough", type: "Carousel 4 slides", status: "awaiting" },
@@ -19,11 +60,12 @@ export function HomePage() {
     <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#7FA0D6]/30">
       
       {/* 1. Hero Section + Collage */}
-      <section className="max-w-[1240px] mx-auto px-6 py-16 lg:py-24">
+      <section className="max-w-[1240px] mx-auto px-6 py-28 lg:py-36">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-start">
           
           {/* Left Hero Column */}
-          <div className="pr-4 lg:pr-12">
+          <div className="pr-4 lg:pr-12 relative z-10">
+            <div className="absolute -top-32 -left-32 w-96 h-96 bg-[#7FA0D6]/5 rounded-full blur-[100px] pointer-events-none"></div>
             <div className="text-[11px] tracking-widest uppercase font-bold text-[#97A0B3] mb-5 flex items-center">
               <span className="text-[#38BDF8] mr-1.5 text-lg leading-none">&bull;</span> A CREATIVE POD FOR D2C BRANDS
             </div>
@@ -69,23 +111,23 @@ export function HomePage() {
             {/* Col 1 */}
             <div className="flex flex-col gap-4">
               <div className="relative aspect-[9/16] rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926]">
-                <img src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80" alt="Athlete" className="w-full h-full object-cover block" />
+                <img src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80" alt="Athlete" className="w-full h-full object-cover rounded-xl border border-[#2A3446]/40 transition-transform duration-500 hover:scale-[1.02] block" />
                 <div className="absolute bottom-3 left-3 bg-black/60 px-2.5 py-1 rounded text-[11px] text-white">
                   Reel &middot; 9:16
                 </div>
               </div>
               <div className="relative aspect-[16/11] rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926]">
-                <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80" alt="Sourdough" className="w-full h-full object-cover block" />
+                <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80" alt="Sourdough" className="w-full h-full object-cover rounded-xl border border-[#2A3446]/40 transition-transform duration-500 hover:scale-[1.02] block" />
               </div>
             </div>
 
             {/* Col 2 */}
             <div className="flex flex-col gap-4 pt-8">
               <div className="relative aspect-[16/11] rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926]">
-                <img src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=80" alt="Interior" className="w-full h-full object-cover block" />
+                <img src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=80" alt="Interior" className="w-full h-full object-cover rounded-xl border border-[#2A3446]/40 transition-transform duration-500 hover:scale-[1.02] block" />
               </div>
               <div className="relative aspect-[9/16] rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926]">
-                <img src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80" alt="Reel" className="w-full h-full object-cover block" />
+                <img src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80" alt="Reel" className="w-full h-full object-cover rounded-xl border border-[#2A3446]/40 transition-transform duration-500 hover:scale-[1.02] block" />
                 <div className="absolute bottom-3 left-3 bg-black/60 px-2.5 py-1 rounded text-[11px] text-white">
                   Reel &middot; 9:16
                 </div>
@@ -95,10 +137,10 @@ export function HomePage() {
             {/* Col 3 */}
             <div className="flex flex-col gap-4">
               <div className="relative aspect-[9/14] rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926]">
-                <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80" alt="Model" className="w-full h-full object-cover block" />
+                <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80" alt="Model" className="w-full h-full object-cover rounded-xl border border-[#2A3446]/40 transition-transform duration-500 hover:scale-[1.02] block" />
               </div>
               <div className="relative aspect-[4/5] rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926]">
-                <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=800&q=80" alt="Serum" className="w-full h-full object-cover block" />
+                <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=800&q=80" alt="Serum" className="w-full h-full object-cover rounded-xl border border-[#2A3446]/40 transition-transform duration-500 hover:scale-[1.02] block" />
               </div>
             </div>
 
@@ -107,7 +149,7 @@ export function HomePage() {
       </section>
 
       {/* 2. The Studio Ledger Section */}
-      <section className="bg-[#0B111C] py-20 lg:py-24 border-y border-[#222F44]">
+      <section className="bg-[#0B111C] py-28 lg:py-36 border-y border-[#222F44]">
         <div className="max-w-[1240px] mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <div className="text-[11px] tracking-widest uppercase font-bold text-[#7FA0D6] mb-4">
@@ -121,7 +163,7 @@ export function HomePage() {
             </p>
           </div>
 
-          <div className="max-w-4xl mx-auto bg-[#161F2D] border border-[#2A3446] rounded-2xl overflow-hidden shadow-2xl">
+          <div className="max-w-4xl mx-auto backdrop-blur-md bg-[#161F2D]/70 border border-[#2A3446]/60 rounded-2xl overflow-hidden shadow-2xl">
             <div className="grid grid-cols-4 bg-[#0A0F18] border-b border-[#2A3446] p-4 sm:p-5 items-center">
               <div className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider">Industry</div>
               <div className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider">Milestone</div>
@@ -143,7 +185,7 @@ export function HomePage() {
                   <div className="text-sm font-mono text-[#F8FAFC]">{row.time}</div>
                   <div className="text-right">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider ${
-                      row.status === "Approved" ? "bg-[#050810] border border-[#10B981]/50 text-[#10B981]" : 
+                      row.status === "Approved" ? "bg-[#050810] border border-[#7FA0D6]/50 text-[#7FA0D6]" : 
                       row.status === "Revisions" ? "bg-[#050810] border border-[#D8BF9B]/50 text-[#D8BF9B]" : 
                       "bg-[#050810] border border-[#7FA0D6]/50 text-[#7FA0D6]"
                     }`}>
@@ -182,14 +224,14 @@ export function HomePage() {
       <section className="max-w-[1240px] mx-auto px-6 pb-20 lg:pb-24 pt-12">
         <div className="relative">
           <div className="absolute -top-4 left-6 bg-[#0A0F18] border border-[#7FA0D6]/50 text-[#7FA0D6] text-[10px] font-bold px-4 py-1.5 rounded-full z-10 shadow-lg tracking-wider">
-            TRY IT — THIS PANEL WORKS
+            TRY IT â€” THIS PANEL WORKS
           </div>
           
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+          <div className="backdrop-blur-md bg-[#161F2D]/70 border border-[#2A3446]/60 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
             <div className="flex items-center justify-between pb-4 border-b border-[#2A3446]">
               <div className="font-black text-[#F8FAFC] text-lg">Batch 04</div>
               <div className="text-[11px] font-bold text-[#97A0B3]">
-                {approvedCount} of 3 approved &bull; <span className="text-[#10B981]">On track: 2 days early</span>
+                {approvedCount} of 3 approved &bull; <span className="text-[#7FA0D6]">On track: 2 days early</span>
               </div>
             </div>
 
@@ -205,7 +247,7 @@ export function HomePage() {
                   
                   <div className="p-4 flex-1 flex flex-col">
                     <div className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider mb-1">
-                      {asset.type.replace(' ', ' • ')}
+                      {asset.type.replace(' ', ' â€¢ ')}
                     </div>
                     <div className="text-sm font-bold text-[#F8FAFC] mb-4 flex-1">{asset.name}</div>
                     
@@ -214,7 +256,7 @@ export function HomePage() {
                         <div className="flex items-center gap-2 w-full">
                           <button 
                             onClick={() => updateStatus(asset.id, "approved")}
-                            className="flex-1 bg-[#10B981] hover:bg-[#059669] text-[#050810] font-bold text-xs py-2 rounded-full transition-colors flex items-center justify-center gap-1.5"
+                            className="flex-1 bg-[#BCCCE6] text-[#050810] hover:bg-[#D5E1F2] font-semibold transition-all shadow-sm hover:shadow-[0_0_20px_rgba(188,204,230,0.25)] text-xs py-2 rounded-full flex items-center justify-center gap-1.5"
                           >
                             <CheckCircle2 className="size-3.5" /> Approve
                           </button>
@@ -229,7 +271,7 @@ export function HomePage() {
                       
                       {asset.status === "approved" && (
                         <div className="flex items-center justify-between w-full">
-                          <div className="inline-flex items-center gap-1.5 text-[#10B981] text-[10px] font-bold">
+                          <div className="inline-flex items-center gap-1.5 text-[#7FA0D6] text-[10px] font-bold">
                             <CheckCircle2 className="size-3.5" /> Approved (queued)
                           </div>
                           <button 
@@ -280,8 +322,8 @@ export function HomePage() {
             <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 flex flex-col justify-between">
               <div>
                 <div className="text-xs font-bold text-[#7FA0D6] uppercase tracking-wider mb-2">Starter</div>
-                <div className="text-3xl font-black text-[#F8FAFC] mb-1">₹25,000<span className="text-sm font-medium text-[#97A0B3]">/mo</span></div>
-                <div className="text-[11px] text-[#97A0B3] mb-6">(₹1,136/asset)</div>
+                <div className="text-3xl font-black text-[#F8FAFC] mb-1">$2,500<span className="text-sm font-medium text-[#97A0B3]">/mo</span></div>
+                <div className="text-[11px] text-[#97A0B3] mb-6">($113/asset)</div>
                 
                 <ul className="space-y-3 mb-8 text-sm text-[#F8FAFC]">
                   <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 22 assets</li>
@@ -301,8 +343,8 @@ export function HomePage() {
               </div>
               <div>
                 <div className="text-xs font-bold text-[#7FA0D6] uppercase tracking-wider mb-2 mt-2">Growth</div>
-                <div className="text-3xl font-black text-[#F8FAFC] mb-1">₹50,000<span className="text-sm font-medium text-[#97A0B3]">/mo</span></div>
-                <div className="text-[11px] text-[#97A0B3] mb-6">(₹1,042/asset)</div>
+                <div className="text-3xl font-black text-[#F8FAFC] mb-1">$5,000<span className="text-sm font-medium text-[#97A0B3]">/mo</span></div>
+                <div className="text-[11px] text-[#97A0B3] mb-6">($104/asset)</div>
                 
                 <ul className="space-y-3 mb-8 text-sm text-[#F8FAFC]">
                   <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 48 assets</li>
@@ -319,8 +361,8 @@ export function HomePage() {
             <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 flex flex-col justify-between">
               <div>
                 <div className="text-xs font-bold text-[#7FA0D6] uppercase tracking-wider mb-2">Scale</div>
-                <div className="text-3xl font-black text-[#F8FAFC] mb-1">₹95,000<span className="text-sm font-medium text-[#97A0B3]">/mo</span></div>
-                <div className="text-[11px] text-[#97A0B3] mb-6">(₹990/asset)</div>
+                <div className="text-3xl font-black text-[#F8FAFC] mb-1">$9,500<span className="text-sm font-medium text-[#97A0B3]">/mo</span></div>
+                <div className="text-[11px] text-[#97A0B3] mb-6">($99/asset)</div>
                 
                 <ul className="space-y-3 mb-8 text-sm text-[#F8FAFC]">
                   <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 96 assets</li>
@@ -336,8 +378,61 @@ export function HomePage() {
         </div>
       </section>
 
+      
+      {/* 5.5 FAQ Section */}
+      <section className="max-w-3xl mx-auto px-6 py-28 lg:py-36">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-4">
+            Common <span className="text-[#7FA0D6]">Questions</span>
+          </h2>
+        </div>
+        <div className="space-y-4">
+          {faqs.map((faq, idx) => {
+            const isOpen = openFaqIndex === idx;
+            const Icon = faq.icon;
+            return (
+              <div 
+                key={idx} 
+                className={`backdrop-blur-md bg-[#161F2D]/70 border ${isOpen ? 'border-[#7FA0D6] shadow-[0_0_20px_rgba(127,160,214,0.05)]' : 'border-[#2A3446]/60 hover:border-[#2A3446]'} rounded-2xl p-5 sm:p-6 transition-all`}
+              >
+                <div 
+                  className="flex items-center justify-between w-full cursor-pointer"
+                  onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                >
+                  <div className="flex items-center gap-4 pr-4">
+                    <div className="w-12 h-12 rounded-xl bg-[#0A0F18] border border-[#2A3446] flex items-center justify-center shrink-0 text-[#7FA0D6]">
+                      <Icon className="size-5" />
+                    </div>
+                    <h3 className="text-sm sm:text-base font-bold text-[#F8FAFC] leading-snug">
+                      {faq.question}
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="hidden sm:inline-flex border border-[#2A3446] text-[#7FA0D6] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                      {faq.tag}
+                    </span>
+                    <div className={`w-8 h-8 rounded-full border border-[#2A3446] flex items-center justify-center shrink-0 transition-colors ${isOpen ? 'bg-[#0A0F18] text-[#F8FAFC]' : 'text-[#97A0B3] hover:bg-[#0A0F18]'}`}>
+                      {isOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                    </div>
+                  </div>
+                </div>
+                
+                {isOpen && (
+                  <div className="pl-0 sm:pl-16 mt-4 animate-fade-in">
+                    <p className="text-xs sm:text-sm text-[#97A0B3] leading-relaxed">
+                      {faq.answer}
+                    </p>
+                    {faq.extra && faq.extra}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* 6. "Try Us Before You Pay Us" Lead Capture Section */}
-      <section className="bg-[#0B111C] py-20 lg:py-24 border-y border-[#222F44]">
+      <section className="bg-[#0B111C] py-28 lg:py-36 border-y border-[#222F44]">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-5">
             Try us before you pay us.
@@ -346,34 +441,29 @@ export function HomePage() {
             Drop your Instagram handle and email below. We'll send you a custom sample batch of reels and carousels for your brand, completely free. No credit card required.
           </p>
           
-          <form 
-            onSubmit={(e) => {
-              e.preventDefault();
-              alert("Sample batch request submitted!");
-            }} 
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-2xl mx-auto"
-          >
-            <input 
-              type="text" 
-              required
-              placeholder="Instagram handle (@yourbrand)" 
-              className="w-full sm:w-auto flex-1 bg-[#0A0F18] border border-[#2A3446] rounded-xl px-5 py-3.5 text-sm text-[#F8FAFC] placeholder:text-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] transition-colors"
-            />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-2xl mx-auto backdrop-blur-md bg-[#161F2D]/30 p-2 rounded-2xl border border-[#2A3446]/40">
             <input 
               type="email" 
-              required
-              placeholder="Work email (you@brand.com)" 
-              className="w-full sm:w-auto flex-1 bg-[#0A0F18] border border-[#2A3446] rounded-xl px-5 py-3.5 text-sm text-[#F8FAFC] placeholder:text-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] transition-colors"
+              placeholder="Enter work email for a sample deliverable..." 
+              className="bg-[#0A0F18] border border-[#2A3446] text-[#F8FAFC] rounded-xl px-4 py-3 text-sm focus:border-[#7FA0D6] focus:outline-none w-full sm:w-80 transition-colors" 
             />
             <button 
-              type="submit" 
-              className="w-full sm:w-auto bg-[#BCCCE6] hover:bg-white text-[#050810] font-bold text-sm px-6 py-3.5 rounded-xl transition-colors shrink-0 flex items-center justify-center gap-2"
+              onClick={(e) => {
+                if (localStorage.getItem('creo_auth') !== 'true') {
+                  e.preventDefault();
+                  alert("Please sign in to message the team.");
+                  navigate("/login?redirect=contact");
+                } else {
+                  alert("Contact Modal Triggered");
+                }
+              }}
+              className="w-full sm:w-auto bg-[#BCCCE6] text-[#050810] hover:bg-[#D5E1F2] font-semibold transition-all shadow-sm hover:shadow-[0_0_20px_rgba(188,204,230,0.25)] text-sm px-6 py-3 rounded-xl shrink-0 flex items-center justify-center gap-2"
             >
-              Send me a sample batch <ArrowRight className="size-4" />
+              Request Sample Batch <ArrowRight className="size-4" />
             </button>
-          </form>
+          </div>
           <div className="text-[10px] font-semibold text-[#97A0B3] mt-6">
-            Spots are limited to 10 brands per week to ensure quality.
+            No commitment. 48-hour pilot turnaround for qualified creative agencies.
           </div>
         </div>
       </section>

@@ -108,7 +108,7 @@ export function PlanBargainCallModal({ isOpen, onClose, onSuccess }: PlanBargain
 
         {submitted ? (
           <div className="py-8 text-center space-y-3 animate-[zoomIn_0.2s_ease-out]">
-            <div className="size-14 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center shadow-xs">
+            <div className="size-14 rounded-full bg-[#7FA0D6]100 text-emerald-600 mx-auto flex items-center justify-center shadow-xs">
               <CheckCircle2 className="size-7" />
             </div>
             <h3 className="text-lg font-bold text-[#0F172A]">Call Request Confirmed!</h3>
@@ -222,7 +222,7 @@ export function PlanBargainCallModal({ isOpen, onClose, onSuccess }: PlanBargain
             </div>
 
             {/* Direct WhatsApp Call Shortcut */}
-            <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-between gap-3">
+            <div className="p-3 rounded-2xl bg-[#7FA0D6]50 border border-emerald-200/80 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-emerald-900">
                 <MessageSquare className="size-4 text-emerald-600 shrink-0" />
                 <div className="text-left">
@@ -234,7 +234,7 @@ export function PlanBargainCallModal({ isOpen, onClose, onSuccess }: PlanBargain
                 href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-2xs shrink-0"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#7FA0D6]600 hover:bg-[#7FA0D6]700 text-white text-xs font-bold transition-colors shadow-2xs shrink-0"
               >
                 <span>Call Now</span>
                 <ArrowUpRight className="size-3" />

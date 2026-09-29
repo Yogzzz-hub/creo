@@ -134,7 +134,7 @@ export function AdminSupportTicketsPage() {
               <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
                 RESOLVED TODAY
               </span>
-              <div className="size-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+              <div className="size-8 rounded-xl bg-[#7FA0D6]50 border border-emerald-100 flex items-center justify-center text-emerald-600">
                 <CheckCircle2 className="size-4" />
               </div>
             </div>
@@ -362,7 +362,7 @@ export function AdminSupportTicketsPage() {
                               ? "bg-blue-50 text-blue-700 border border-blue-200"
                               : t.status === "Pending Client"
                               ? "bg-amber-50 text-amber-700 border border-amber-200"
-                              : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200"
                           }`}
                         >
                           {t.status}

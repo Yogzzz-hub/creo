@@ -186,9 +186,9 @@ export function SubscriptionLockedState({
                   href="https://wa.me/919941999415"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2.5 p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 text-emerald-900 hover:bg-emerald-100/80 transition-colors"
+                  className="flex items-center gap-2.5 p-3 rounded-2xl bg-[#7FA0D6]50/80 border border-emerald-200/80 text-emerald-900 hover:bg-[#7FA0D6]100/80 transition-colors"
                 >
-                  <div className="size-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <div className="size-8 rounded-xl bg-[#7FA0D6]600 text-white flex items-center justify-center shrink-0 shadow-xs">
                     <MessageSquare className="size-4" />
                   </div>
                   <div className="text-left min-w-0">
@@ -213,8 +213,8 @@ export function SubscriptionLockedState({
 
               {/* Quick Inquiry Form */}
               {sentSuccess ? (
-                <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
-                  <div className="size-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto text-lg font-bold">
+                <div className="p-5 rounded-2xl bg-[#7FA0D6]50 border border-emerald-200 text-center space-y-2">
+                  <div className="size-10 rounded-full bg-[#7FA0D6]100 text-emerald-600 flex items-center justify-center mx-auto text-lg font-bold">
                     ✓
                   </div>
                   <p className="text-sm font-bold text-emerald-950">Inquiry Received!</p>

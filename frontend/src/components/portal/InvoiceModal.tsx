@@ -51,7 +51,7 @@ export function InvoiceModal({
             <div>
               <h3 className="text-sm font-bold tracking-tight text-white flex items-center gap-2">
                 <span>Official Tax Invoice</span>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#7FA0D6]500/20 text-emerald-300 border border-emerald-500/30">
                   GST Compliant
                 </span>
               </h3>

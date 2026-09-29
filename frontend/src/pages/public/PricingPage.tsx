@@ -113,7 +113,7 @@ export function PricingPage() {
             
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="bg-[#0A0F18] border border-[#222F44] p-2 rounded-lg text-[#10B981] w-9 h-9 flex items-center justify-center shrink-0">
+                <div className="bg-[#0A0F18] border border-[#222F44] p-2 rounded-lg text-[#7FA0D6] w-9 h-9 flex items-center justify-center shrink-0">
                   <Leaf className="size-4" />
                 </div>
                 <div>
@@ -262,7 +262,7 @@ export function PricingPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="bg-[#121926] border border-[#222F44] p-1.5 rounded-md text-[#10B981] w-6 h-6 flex items-center justify-center shrink-0">
+                <div className="bg-[#121926] border border-[#222F44] p-1.5 rounded-md text-[#7FA0D6] w-6 h-6 flex items-center justify-center shrink-0">
                   <Leaf className="size-3" />
                 </div>
                 <div>

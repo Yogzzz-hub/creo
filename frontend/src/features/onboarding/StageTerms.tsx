@@ -140,7 +140,7 @@ export function StageTerms({ onAccepted, onBack, isSubmitting }: StageTermsProps
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mb-6 text-xs sm:text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-3 rounded-xl flex items-center gap-2"
+          className="mb-6 text-xs sm:text-sm font-medium text-emerald-700 bg-[#7FA0D6]50 border border-emerald-200 px-4 py-3 rounded-xl flex items-center gap-2"
         >
           <span>✓</span>
           <span>You have read and scrolled through the full agreement.</span>

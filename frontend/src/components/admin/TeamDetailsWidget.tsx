@@ -153,7 +153,7 @@ export function TeamDetailsWidget({ queue: _queue }: TeamDetailsWidgetProps) {
     >
       {/* Toast Feedback */}
       {toast && (
-        <div className="mb-4 px-4 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl animate-fade-in flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 px-4 py-2 bg-[#7FA0D6]50 border border-emerald-200 text-emerald-700 text-xs font-bold rounded-xl animate-fade-in flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
           <span>{toast}</span>
           <button onClick={() => setToast(null)} className="text-emerald-500 hover:text-emerald-800">
             &times;

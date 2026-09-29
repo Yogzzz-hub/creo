@@ -260,7 +260,7 @@ export function AdminClientsPage() {
           description: "Campaign hero visual highlighting zero-fee developer API access.",
           format: "1:1 Square Static",
           status: "APPROVED",
-          statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          statusColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
           code: "#NB-405",
           dueDate: "Nov 20, 9:00 AM",
           assignedTo: "Lena V. / Theo P.",
@@ -323,7 +323,7 @@ export function AdminClientsPage() {
         colors: [
           { name: "Blush Rose", hex: "#F43F5E" },
           { name: "Petal Mist", hex: "#FFE4E6", isLight: true },
-          { name: "Sage Earth", hex: "#10B981" },
+          { name: "Sage Earth", hex: "#7FA0D6" },
           { name: "Soft Ivory", hex: "#FFFBEB", isLight: true },
         ],
         social: {
@@ -420,7 +420,7 @@ export function AdminClientsPage() {
         colors: [
           { name: "Electric Cyan", hex: "#06B6D4" },
           { name: "Atlas Indigo", hex: "#4F46E5" },
-          { name: "Growth Emerald", hex: "#10B981" },
+          { name: "Growth Emerald", hex: "#7FA0D6" },
           { name: "Obsidian", hex: "#0B0F19" },
         ],
         social: {
@@ -683,12 +683,12 @@ export function AdminClientsPage() {
 
       <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
         {toast && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
+          <div className="p-4 bg-[#7FA0D6]50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               <span>{toast}</span>
             </div>
-            <button type="button" onClick={() => setToast(null)} className="p-1 hover:bg-emerald-100 rounded-lg text-emerald-700">
+            <button type="button" onClick={() => setToast(null)} className="p-1 hover:bg-[#7FA0D6]100 rounded-lg text-emerald-700">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -712,8 +712,8 @@ export function AdminClientsPage() {
                 />
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 shrink-0">
-                  <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#7FA0D6]50 text-emerald-800 text-xs font-bold border border-emerald-200 shrink-0">
+                  <span className="size-2 rounded-full bg-[#7FA0D6]500 animate-pulse" />
                   {clientList.length} Active Retainers
                 </span>
                 <div className="flex items-center gap-1.5">
@@ -759,7 +759,7 @@ export function AdminClientsPage() {
                           </span>
                         </div>
                       </div>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200">
                         {client.status}
                       </span>
                     </div>
@@ -813,7 +813,7 @@ export function AdminClientsPage() {
 
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-white text-gray-800 border border-gray-200 flex items-center gap-1.5 shadow-2xs">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="w-2 h-2 rounded-full bg-[#7FA0D6]500 animate-pulse" />
                   Live Client • v2.4
                 </span>
               </div>
@@ -835,8 +835,8 @@ export function AdminClientsPage() {
                       <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black uppercase tracking-wider">
                         {activeClient?.tierBadge}
                       </span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6]500" />
                         {activeClient?.status}
                       </span>
                     </div>
@@ -959,7 +959,7 @@ export function AdminClientsPage() {
                       <span className="text-xs font-bold text-gray-400"> /mo</span>
                     </div>
                     {activeClient?.addon && (
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 flex items-center gap-1">
+                      <span className="px-2.5 py-1 rounded-lg bg-[#7FA0D6]50 text-emerald-700 text-xs font-bold border border-emerald-200 flex items-center gap-1">
                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                         {activeClient.addon}
                       </span>
@@ -1110,7 +1110,7 @@ export function AdminClientsPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs text-gray-900">{activeClient?.brand.social.handle}</span>
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-extrabold uppercase">
+                        <span className="px-2 py-0.5 rounded-full bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200 text-[9px] font-extrabold uppercase">
                           {activeClient?.brand.social.status}
                         </span>
                       </div>
@@ -1359,7 +1359,7 @@ export function AdminClientsPage() {
                         <div className="space-y-1.5">
                           <button
                             type="button"
-                            className="w-full py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold flex items-center justify-center gap-1 border border-emerald-200 cursor-default"
+                            className="w-full py-2 rounded-xl bg-[#7FA0D6]50 text-emerald-700 text-xs font-bold flex items-center justify-center gap-1 border border-emerald-200 cursor-default"
                           >
                             <Lock className="w-3.5 h-3.5" /> Auto-Publish Locked
                           </button>
@@ -1496,7 +1496,7 @@ export function AdminClientsPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Payment Status:</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">
+                  <span className="px-2 py-0.5 rounded-full bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">
                     PAID (ACH)
                   </span>
                 </div>
@@ -1787,7 +1787,7 @@ export function AdminDeliverablesPage() {
       tierBadge: "bg-indigo-50 text-indigo-700 border-indigo-200",
       status: "approved",
       statusLabel: "Approved",
-      statusBadge: "bg-emerald-50 text-emerald-700 border-emerald-100",
+      statusBadge: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-100",
       title: "Black Friday Dynamic Ad Set",
       format: "Meta & Google Ads Bundle",
       formatType: "banner",
@@ -1837,7 +1837,7 @@ export function AdminDeliverablesPage() {
               ...d,
               status: "approved",
               statusLabel: "Approved",
-              statusBadge: "bg-emerald-50 text-emerald-700 border-emerald-100",
+              statusBadge: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-100",
               slaType: "completed",
               slaText: "Approved Just Now",
               slaColor: "text-emerald-600 font-bold",
@@ -1946,7 +1946,7 @@ export function AdminDeliverablesPage() {
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">
                 APPROVED TODAY
               </span>
-              <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+              <div className="w-7 h-7 rounded-xl bg-[#7FA0D6]50 text-emerald-600 flex items-center justify-center font-bold">
                 <CheckCircle2 className="w-3.5 h-3.5" />
               </div>
             </div>
@@ -2130,7 +2130,7 @@ export function AdminDeliverablesPage() {
                   <button
                     type="button"
                     onClick={() => handleApprove(item.id, item.title)}
-                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 cursor-pointer"
+                    className="flex-1 py-2.5 bg-[#7FA0D6]600 hover:bg-[#7FA0D6]700 text-white rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 cursor-pointer"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" /> Approve
                   </button>
@@ -2207,7 +2207,7 @@ export function AdminDeliverablesPage() {
                     handleApprove(previewItem.id, previewItem.title);
                     setPreviewItem(null);
                   }}
-                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black cursor-pointer shadow-sm"
+                  className="px-5 py-2 rounded-xl bg-[#7FA0D6]600 hover:bg-[#7FA0D6]700 text-white text-xs font-black cursor-pointer shadow-sm"
                 >
                   ✓ Approve Asset
                 </button>
@@ -2371,7 +2371,7 @@ export function AdminTasksPage() {
       priorityPill: "bg-amber-50 text-amber-700 border-amber-200",
       title: "B2B Brand Guidelines Refresh v2.1",
       avatar: "ER",
-      avatarBg: "bg-emerald-600",
+      avatarBg: "bg-[#7FA0D6]600",
       assigneeName: "Elena Rostova",
       sp: 7,
       due: "In Client Review",
@@ -2383,7 +2383,7 @@ export function AdminTasksPage() {
       client: "Atlas Commerce",
       clientPill: "bg-blue-50 text-blue-700 border-blue-100",
       priority: "Delivered",
-      priorityPill: "bg-emerald-100 text-emerald-800 font-bold",
+      priorityPill: "bg-[#7FA0D6]100 text-emerald-800 font-bold",
       title: "Brand Identity Vector Kit & Iconography",
       imageUrl: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&auto=format&fit=crop",
       avatar: "LO",
@@ -2677,7 +2677,7 @@ export function AdminTasksPage() {
           <div className="bg-[#F1F5F9]/60 rounded-3xl p-4 flex flex-col space-y-3.5 border border-slate-200/60">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]500" />
                 <h3 className="text-xs font-black text-gray-800 tracking-wider uppercase">
                   APPROVED
                 </h3>
@@ -2902,7 +2902,7 @@ export function AdminCalendarPage() {
         avatar: "DK",
         avatarBg: "bg-[#06B6D4]",
         tag: "Approved",
-        tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        tagColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-100",
         time: "11:30 AM",
       },
     ],
@@ -2917,7 +2917,7 @@ export function AdminCalendarPage() {
         avatar: "AT",
         avatarBg: "bg-[#6366F1]",
         tag: "Approved",
-        tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        tagColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-100",
         time: "2:00 PM",
       },
     ],
@@ -2932,7 +2932,7 @@ export function AdminCalendarPage() {
         avatar: "OV",
         avatarBg: "bg-[#2563EB]",
         tag: "Final Polish",
-        tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        tagColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-100",
         time: "4:30 PM",
       },
       {
@@ -2969,7 +2969,7 @@ export function AdminCalendarPage() {
         type: "Explainer Video",
         assignee: "Sarah Jenkins",
         avatar: "SJ",
-        avatarBg: "bg-emerald-600",
+        avatarBg: "bg-[#7FA0D6]600",
         tag: "Sync 3:30 PM",
         tagColor: "bg-indigo-50 text-indigo-700 border-indigo-100",
         time: "3:30 PM",
@@ -2986,7 +2986,7 @@ export function AdminCalendarPage() {
         avatar: "MB",
         avatarBg: "bg-blue-600",
         tag: "Approved",
-        tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        tagColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-100",
         time: "10:00 AM",
       },
       {
@@ -3055,7 +3055,7 @@ export function AdminCalendarPage() {
         avatar: "LW",
         avatarBg: "bg-orange-500",
         tag: "Approved",
-        tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        tagColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-100",
         time: "9:30 AM",
       },
       {
@@ -3094,9 +3094,9 @@ export function AdminCalendarPage() {
         type: "Banner",
         assignee: "Sarah Jenkins",
         avatar: "SJ",
-        avatarBg: "bg-emerald-600",
+        avatarBg: "bg-[#7FA0D6]600",
         tag: "Approved",
-        tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        tagColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-100",
         time: "4:00 PM",
       },
     ],
@@ -3144,7 +3144,7 @@ export function AdminCalendarPage() {
       case "Slide Deck":
         return { label: "📊 Slide Deck", bg: "bg-blue-50 text-blue-700 border-blue-200" };
       case "Explainer Video":
-        return { label: "📹 Explainer", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+        return { label: "📹 Explainer", bg: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200" };
       case "Shorts":
         return { label: "⚡ Shorts", bg: "bg-orange-50 text-orange-700 border-orange-200" };
       case "Banner":
@@ -3341,7 +3341,7 @@ export function AdminCalendarPage() {
             </div>
             <div className="flex items-center justify-between text-xs mt-3 pt-1 border-t border-gray-50">
               <span className="font-medium text-gray-400">Pods A, B, C, D, E</span>
-              <span className="bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded text-[10px]">
+              <span className="bg-[#7FA0D6]50 text-emerald-600 font-bold px-2 py-0.5 rounded text-[10px]">
                 100% Staffed
               </span>
             </div>
@@ -3383,7 +3383,7 @@ export function AdminCalendarPage() {
             </div>
             <div className="flex items-center justify-between text-xs mt-3 pt-1 border-t border-gray-50">
               <span className="font-medium text-gray-400">Headroom normal</span>
-              <span className="bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded text-[10px]">
+              <span className="bg-[#7FA0D6]50 text-emerald-600 font-bold px-2 py-0.5 rounded text-[10px]">
                 Optimal
               </span>
             </div>
@@ -3901,9 +3901,9 @@ export function AdminTeamManagementPage() {
       pendingReview: 4,
       allocatedHours: 290,
       totalHours: 310,
-      color: "bg-emerald-600",
+      color: "bg-[#7FA0D6]600",
       textColor: "text-emerald-600",
-      pillBg: "bg-emerald-50 text-emerald-600 border-emerald-100",
+      pillBg: "bg-[#7FA0D6]50 text-emerald-600 border-emerald-100",
       squadLoad: 72,
       activeEngagements: 9,
       readyReview: 2,
@@ -3957,7 +3957,7 @@ export function AdminTeamManagementPage() {
       email: "omar.v@creo.agency",
       handle: "@ovance",
       status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      statusColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       allocatedPct: 55,
       projectsCount: 1,
       capabilities: ["Market Positioning", "Narrative Architecture", "GTM Roadmaps"],
@@ -3985,7 +3985,7 @@ export function AdminTeamManagementPage() {
       email: "julian.r@creo.agency",
       handle: "@jreyes",
       status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      statusColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       allocatedPct: 60,
       projectsCount: 2,
       capabilities: ["Figma Tokens", "Design Systems", "Prototyping"],
@@ -4013,7 +4013,7 @@ export function AdminTeamManagementPage() {
       email: "leo.z@creo.agency",
       handle: "@lzhang",
       status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      statusColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       allocatedPct: 70,
       projectsCount: 2,
       capabilities: ["Multi-cam Shoots", "Lighting & Framing", "RED 8K Rigging"],
@@ -4027,7 +4027,7 @@ export function AdminTeamManagementPage() {
       email: "chloe.b@creo.agency",
       handle: "@cbennett",
       status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      statusColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       allocatedPct: 65,
       projectsCount: 2,
       capabilities: ["Studio Lighting", "Product Photography", "High-End Retouching"],
@@ -4072,7 +4072,7 @@ export function AdminTeamManagementPage() {
       email: "hannah.a@creo.agency",
       handle: "@habbott",
       status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      statusColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       allocatedPct: 70,
       projectsCount: 2,
       capabilities: ["Ad Creatives", "Brand Collateral"],
@@ -4100,7 +4100,7 @@ export function AdminTeamManagementPage() {
       email: "vikram.s@creo.agency",
       handle: "@vshah",
       status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      statusColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       allocatedPct: 60,
       projectsCount: 2,
       capabilities: ["On-Location Production", "Drone Footage"],
@@ -4145,7 +4145,7 @@ export function AdminTeamManagementPage() {
       email: "aria.m@creo.agency",
       handle: "@amontgomery",
       status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      statusColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       allocatedPct: 75,
       projectsCount: 2,
       capabilities: ["Blender 3D", "Texture Design"],
@@ -4159,7 +4159,7 @@ export function AdminTeamManagementPage() {
       email: "lucas.s@creo.agency",
       handle: "@lscott",
       status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      statusColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       allocatedPct: 65,
       projectsCount: 2,
       capabilities: ["Nuke VFX", "Compositing"],
@@ -4187,7 +4187,7 @@ export function AdminTeamManagementPage() {
       email: "sophie.l@creo.agency",
       handle: "@slaurent",
       status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      statusColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       allocatedPct: 60,
       projectsCount: 2,
       capabilities: ["Spatial Lighting", "HDR Stills"],
@@ -4218,7 +4218,7 @@ export function AdminTeamManagementPage() {
       email: "nora.a@creo.agency",
       handle: "@nallen",
       status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      statusColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       allocatedPct: 70,
       projectsCount: 2,
       capabilities: ["UI Kits", "Brand Guidelines"],
@@ -4232,7 +4232,7 @@ export function AdminTeamManagementPage() {
       email: "felix.d@creo.agency",
       handle: "@fdupuis",
       status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      statusColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       allocatedPct: 60,
       projectsCount: 2,
       capabilities: ["CapCut / DaVinci", "Kinetic Subtitles"],
@@ -4260,7 +4260,7 @@ export function AdminTeamManagementPage() {
       email: "iris.w@creo.agency",
       handle: "@iwest",
       status: "Accepting Work",
-      statusColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      statusColor: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       allocatedPct: 55,
       projectsCount: 1,
       capabilities: ["Headshots", "Editorial Layouts"],
@@ -4316,7 +4316,7 @@ export function AdminTeamManagementPage() {
 
       <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
         {toast && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
+          <div className="p-4 bg-[#7FA0D6]50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               <span>{toast}</span>
@@ -4374,7 +4374,7 @@ export function AdminTeamManagementPage() {
                   <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider">
                     CAPACITY
                   </span>
-                  <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-2xl bg-[#7FA0D6]50 text-emerald-600 flex items-center justify-center">
                     <Zap className="w-5 h-5" />
                   </div>
                 </div>
@@ -4384,7 +4384,7 @@ export function AdminTeamManagementPage() {
                 </div>
                 <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-2">
                   <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
-                    <div className="bg-emerald-600 h-full rounded-full w-[88%]" />
+                    <div className="bg-[#7FA0D6]600 h-full rounded-full w-[88%]" />
                   </div>
                   <span className="text-xs font-bold text-emerald-600">Healthy</span>
                 </div>
@@ -4416,8 +4416,8 @@ export function AdminTeamManagementPage() {
                 <h3 className="text-lg font-bold text-gray-900 tracking-tight">Team Pods</h3>
                 <p className="text-xs text-gray-500">Real-time capacity distribution, pod leads, and task completion velocity</p>
               </div>
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Sprint Cycle 08 • 4 Days Remaining
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#7FA0D6]500 animate-pulse" /> Sprint Cycle 08 • 4 Days Remaining
               </span>
             </div>
 
@@ -4444,8 +4444,8 @@ export function AdminTeamManagementPage() {
                         <p className="text-xs text-gray-500">{pod.description.slice(0, 48)}...</p>
                       </div>
                     </div>
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6]500" /> Active
                     </span>
                   </div>
 
@@ -4465,7 +4465,7 @@ export function AdminTeamManagementPage() {
                       <div className="flex -space-x-2">
                         <div className="w-7 h-7 rounded-full bg-slate-700 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">ER</div>
                         <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">MC</div>
-                        <div className="w-7 h-7 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">LZ</div>
+                        <div className="w-7 h-7 rounded-full bg-[#7FA0D6]600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">LZ</div>
                       </div>
                       <span className="text-xs font-bold text-gray-700">+{pod.membersCount - 3} Members</span>
                     </div>
@@ -4554,7 +4554,7 @@ export function AdminTeamManagementPage() {
                     <span className="px-3 py-1 rounded-full bg-blue-600 text-white font-black text-xs uppercase tracking-wider">
                       {activePod?.name}
                     </span>
-                    <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs">
+                    <span className="px-3 py-1 rounded-full bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200 font-bold text-xs">
                       High Velocity
                     </span>
                   </div>
@@ -4670,7 +4670,7 @@ export function AdminTeamManagementPage() {
                           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-base flex items-center justify-center shadow-md">
                             {member.name[0]}
                           </div>
-                          <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                          <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-[#7FA0D6]500 ring-2 ring-white" />
                         </div>
                         <div>
                           <h4 className="font-bold text-sm text-gray-900 flex items-center gap-1">
@@ -4727,7 +4727,7 @@ export function AdminTeamManagementPage() {
                       <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                         <div
                           className={`h-full rounded-full ${
-                            member.allocatedPct >= 90 ? "bg-rose-500" : member.allocatedPct >= 70 ? "bg-blue-600" : "bg-emerald-500"
+                            member.allocatedPct >= 90 ? "bg-rose-500" : member.allocatedPct >= 70 ? "bg-blue-600" : "bg-[#7FA0D6]500"
                           }`}
                           style={{ width: `${member.allocatedPct}%` }}
                         />
@@ -4906,7 +4906,7 @@ export function AdminLeaveApprovalsPage() {
       <AdminTopHeader activeTab="Team Details" />
       <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
+          <div className="p-4 bg-[#7FA0D6]50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               <span>{toast}</span>
@@ -4953,7 +4953,7 @@ export function AdminLeaveApprovalsPage() {
             </div>
             <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-semibold text-gray-500">
               <span className="flex items-center gap-1.5 text-emerald-600">
-                <span className="w-2 h-2 rounded-full bg-emerald-600" /> 32 Total Team Members
+                <span className="w-2 h-2 rounded-full bg-[#7FA0D6]600" /> 32 Total Team Members
               </span>
               <span className="text-gray-900 font-bold">91% In-Office</span>
             </div>
@@ -5024,7 +5024,7 @@ export function AdminLeaveApprovalsPage() {
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                         lr.status === "approved"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          ? "bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200"
                           : lr.status === "rejected"
                           ? "bg-rose-50 text-rose-700 border border-rose-200"
                           : "bg-amber-50 text-amber-700 border border-amber-200"
@@ -5039,7 +5039,7 @@ export function AdminLeaveApprovalsPage() {
                         <button
                           type="button"
                           onClick={() => handleAction(lr.id, "approved")}
-                          className="px-3 py-1 rounded-lg bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 cursor-pointer"
+                          className="px-3 py-1 rounded-lg bg-[#7FA0D6]600 text-white font-bold text-xs hover:bg-[#7FA0D6]700 cursor-pointer"
                         >
                           Approve
                         </button>
@@ -5173,7 +5173,7 @@ export function AdminRevenuePage() {
       method: "Stripe ACH",
       status: "Paid",
       date: "Nov 12",
-      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      badgeClass: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       avatarBg: "bg-blue-100 text-blue-800",
     },
     {
@@ -5185,7 +5185,7 @@ export function AdminRevenuePage() {
       method: "Bank Wire",
       status: "Paid",
       date: "Nov 10",
-      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      badgeClass: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       avatarBg: "bg-purple-100 text-purple-800",
     },
     {
@@ -5209,7 +5209,7 @@ export function AdminRevenuePage() {
       method: "Mastercard •• 4912",
       status: "Paid",
       date: "Nov 08",
-      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      badgeClass: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       avatarBg: "bg-indigo-100 text-indigo-800",
     },
     {
@@ -5221,7 +5221,7 @@ export function AdminRevenuePage() {
       method: "Stripe ACH",
       status: "Paid",
       date: "Nov 05",
-      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      badgeClass: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       avatarBg: "bg-amber-100 text-amber-800",
     },
     {
@@ -5233,7 +5233,7 @@ export function AdminRevenuePage() {
       method: "Visa •• 8841",
       status: "Paid",
       date: "Nov 03",
-      badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      badgeClass: "bg-[#7FA0D6]50 text-emerald-700 border-emerald-200",
       avatarBg: "bg-rose-100 text-rose-800",
     },
   ]);
@@ -5312,7 +5312,7 @@ export function AdminRevenuePage() {
 
       <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
+          <div className="p-4 bg-[#7FA0D6]50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               <span>{toast}</span>
@@ -5328,8 +5328,8 @@ export function AdminRevenuePage() {
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-[#7FA0D6]500 animate-pulse" />
               Live Cash Flow & Retainers
             </span>
           </div>
@@ -5383,7 +5383,7 @@ export function AdminRevenuePage() {
               </span>
               <div className="flex items-baseline gap-3">
                 <span className="text-4xl font-black text-gray-900 tracking-tight">$124,800</span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
                   <TrendingUp className="w-3.5 h-3.5" /> +12.4%
                 </span>
               </div>
@@ -5412,7 +5412,7 @@ export function AdminRevenuePage() {
                 Settlement Ratio: <strong className="text-gray-900 font-bold">16 of 18 Retainers</strong>
               </div>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+            <div className="w-14 h-14 rounded-2xl bg-[#7FA0D6]50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
               <CheckCircle2 className="w-7 h-7" />
             </div>
           </div>
@@ -5564,15 +5564,15 @@ export function AdminRevenuePage() {
                 </div>
 
                 {/* Package 3 */}
-                <div className="space-y-2 p-3 bg-emerald-50/40 rounded-2xl border border-emerald-100/60">
+                <div className="space-y-2 p-3 bg-[#7FA0D6]50/40 rounded-2xl border border-emerald-100/60">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="flex items-center gap-2 text-gray-900">
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> Package 3 (Starter / Launch)
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]600" /> Package 3 (Starter / Launch)
                     </span>
                     <span className="text-gray-900 font-black">$22,000 <span className="text-[10px] font-normal text-gray-500">/ mo</span></span>
                   </div>
-                  <div className="w-full bg-emerald-100 rounded-full h-2 overflow-hidden">
-                    <div className="bg-emerald-600 h-full rounded-full w-[17.7%]" />
+                  <div className="w-full bg-[#7FA0D6]100 rounded-full h-2 overflow-hidden">
+                    <div className="bg-[#7FA0D6]600 h-full rounded-full w-[17.7%]" />
                   </div>
                   <div className="flex justify-between text-[11px] text-gray-500 font-semibold">
                     <span>4 Retainer Accounts</span>
@@ -5704,7 +5704,7 @@ export function AdminRevenuePage() {
 
                     <td className="px-5 py-4">
                       <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border flex items-center gap-1.5 w-fit ${tx.badgeClass}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-blue-500"}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-[#7FA0D6]500" : "bg-blue-500"}`} />
                         {tx.status} ({tx.date})
                       </span>
                     </td>
@@ -5867,7 +5867,7 @@ export function AdminRevenuePage() {
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-between">
+              <div className="p-4 bg-[#7FA0D6]50 rounded-2xl border border-emerald-200 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] font-bold text-emerald-700 uppercase block">Status</span>
                   <span className="text-sm font-black text-emerald-900">Payment Settled (Paid)</span>
@@ -6166,7 +6166,7 @@ export function AdminPlansPage() {
       <AdminTopHeader activeTab="Revenue" />
       <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
+          <div className="p-4 bg-[#7FA0D6]50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               <span>{toast}</span>
@@ -6208,7 +6208,7 @@ export function AdminPlansPage() {
           <div className="kpi-card p-6 bg-white rounded-3xl border-2 border-[#1E3A8A] hover:border-[#60A5FA] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">AVG RETAINER VALUE</span>
-              <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+              <div className="w-7 h-7 rounded-xl bg-[#7FA0D6]50 text-emerald-600 flex items-center justify-center font-bold">
                 <DollarSign className="w-3.5 h-3.5" />
               </div>
             </div>
@@ -6387,7 +6387,7 @@ export function AdminPlansPage() {
                         <span className="text-[10px] text-blue-600 uppercase block font-bold">Proposed Rate</span>
                         <span className="text-sm font-black text-emerald-600">${item.proposedPrice.toLocaleString()}/mo</span>
                       </div>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200">
                         {item.discountPct}% Off
                       </span>
                     </div>
@@ -6397,7 +6397,7 @@ export function AdminPlansPage() {
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase ${
                           item.status === "Accepted"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            ? "bg-[#7FA0D6]50 text-emerald-700 border border-emerald-200"
                             : item.status === "Declined"
                             ? "bg-rose-50 text-rose-700 border border-rose-200"
                             : item.status === "Counter Offered"
@@ -6414,7 +6414,7 @@ export function AdminPlansPage() {
                           <button
                             type="button"
                             onClick={() => handleAcceptNegotiation(item)}
-                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer transition-colors"
+                            className="px-4 py-2 rounded-xl bg-[#7FA0D6]600 hover:bg-[#7FA0D6]700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer transition-colors"
                           >
                             <Check className="w-4 h-4" /> ACCEPT
                           </button>
@@ -7028,7 +7028,7 @@ export function AdminEscalationsPage() {
         <div className="flex items-center justify-between border-b border-slate-200 pb-4">
         </div>
 
-        <div className="p-8 bg-emerald-50 rounded-3xl border border-emerald-200 text-center space-y-2">
+        <div className="p-8 bg-[#7FA0D6]50 rounded-3xl border border-emerald-200 text-center space-y-2">
           <CheckCircle2 className="size-8 text-emerald-600 mx-auto" />
           <h3 className="font-bold text-sm text-emerald-900">All Operations Within SLA Limits</h3>
           <p className="text-xs text-emerald-700">No open breach tickets or overdue deliveries across any creative pod.</p>
@@ -7056,7 +7056,7 @@ export function AdminSettingsPage() {
         </div>
 
         {saved && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center gap-2">
+          <div className="p-4 bg-[#7FA0D6]50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center gap-2">
             <CheckCircle2 className="size-4 text-emerald-600" />
             <span>Settings saved successfully.</span>
           </div>

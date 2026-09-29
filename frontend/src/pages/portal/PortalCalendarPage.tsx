@@ -610,7 +610,7 @@ export function PortalCalendarPage() {
                       ? "bg-sky-100 text-sky-800"
                       : previewEntry.blueprint.funnel_stage === "authority"
                       ? "bg-indigo-100 text-indigo-800"
-                      : "bg-emerald-100 text-emerald-800"
+                      : "bg-[#7FA0D6]100 text-emerald-800"
                   }`}>
                     {previewEntry.blueprint.funnel_stage.toUpperCase()} (Funnel Mix)
                   </span>
@@ -654,7 +654,7 @@ export function PortalCalendarPage() {
               {conceptFeedback && (
                 <div className={`p-3.5 rounded-xl text-xs font-semibold flex items-center justify-between ${
                   conceptFeedback.type === "success"
-                    ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
+                    ? "bg-[#7FA0D6]50 border border-emerald-200 text-emerald-800"
                     : "bg-red-50 border border-red-200 text-red-800"
                 }`}>
                   <span>{conceptFeedback.text}</span>
@@ -785,7 +785,7 @@ export function PortalCalendarPage() {
                             </div>
 
                             {isApprovedHook && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-[#7FA0D6]50 px-2 py-0.5 rounded-full border border-emerald-200">
                                 <CheckCircle2 className="size-3" />
                                 Chosen Hook
                               </span>
@@ -810,7 +810,7 @@ export function PortalCalendarPage() {
                         type="button"
                         onClick={handleApproveConcept}
                         disabled={isConceptSubmitting}
-                        className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                        className="w-full py-3 rounded-xl bg-[#7FA0D6]600 hover:bg-[#7FA0D6]700 text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                       >
                         {isConceptSubmitting ? (
                           <Loader2 className="size-4 animate-spin" />
@@ -823,7 +823,7 @@ export function PortalCalendarPage() {
                       </button>
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 font-semibold flex items-center gap-2">
+                    <div className="rounded-xl border border-emerald-200 bg-[#7FA0D6]50 p-3 text-xs text-emerald-800 font-semibold flex items-center gap-2">
                       <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
                       <span>Concept Approved! Task dispatched with your selected angle.</span>
                     </div>
@@ -882,7 +882,7 @@ export function PortalCalendarPage() {
                     </span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {previewEntry.blueprint.respects?.map((resp, rIdx) => (
-                        <span key={rIdx} className="text-[10.5px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium">
+                        <span key={rIdx} className="text-[10.5px] px-2 py-0.5 rounded bg-[#7FA0D6]50 text-emerald-800 border border-emerald-200 font-medium">
                           ✓ {resp}
                         </span>
                       ))}
