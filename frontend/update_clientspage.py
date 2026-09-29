@@ -1,6 +1,10 @@
-import { useState } from "react";
+import os
+
+content = """import { useState } from "react";
 import { 
-  CheckCircle2, ChevronRight,
+  Users, ShieldCheck, 
+  Search, CheckCircle2, Play, Activity, 
+  Globe, CheckSquare, CreditCard, UserCheck, ChevronRight, ArrowUpRight, Zap, Layers,
   Link, Clock, Unlock
 } from "lucide-react";
 
@@ -221,3 +225,7 @@ export function ClientsPage() {
     </div>
   );
 }
+"""
+
+with open('src/pages/public/ClientsPage.tsx', 'w', encoding='utf-8') as f:
+    f.write(content)
