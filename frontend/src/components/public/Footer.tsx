@@ -17,7 +17,7 @@ export function Footer() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link 
               to="/pricing" 
-              className="w-full sm:w-auto bg-[#BCCCE6] text-[#050810] font-bold text-xs px-6 py-3 rounded-full hover:bg-white transition-colors"
+              className="w-full sm:w-auto text-center bg-[#BCCCE6] text-[#050810] hover:bg-[#D5E1F2] font-semibold transition-all shadow-sm hover:shadow-[0_0_20px_rgba(188,204,230,0.25)] px-6 py-3 rounded-full"
             >
               Deploy CREO in Your Agency &rarr;
             </Link>
