@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { 
-  Check, Star, Leaf, Building2, MessageSquare, 
+  Star, Leaf, Building2, MessageSquare, 
   BarChart2, Banknote, CreditCard, Users, Shield 
 } from "lucide-react";
 
@@ -24,7 +24,7 @@ export function PricingPage() {
         <div className="bg-[#0A0F18] border border-[#222F44] p-1 rounded-full inline-flex mx-auto">
           <button 
             onClick={() => setBillingCycle('monthly')}
-            className={`font-medium text-xs px-4 py-1.5 transition-colors rounded-full ${
+            className={`font-medium text-xs px-4 py-1.5 transition-all duration-300 ease-out rounded-full ${
               billingCycle === 'monthly'
                 ? 'bg-[#121926] border border-[#222F44] text-[#F8FAFC] shadow-sm'
                 : 'text-[#97A0B3] hover:text-[#F8FAFC]'
@@ -34,7 +34,7 @@ export function PricingPage() {
           </button>
           <button 
             onClick={() => setBillingCycle('annual')}
-            className={`font-semibold text-xs px-4 py-1.5 rounded-full flex items-center gap-1.5 transition-colors ${
+            className={`font-semibold text-xs px-4 py-1.5 rounded-full flex items-center gap-1.5 transition-all duration-300 ease-out ${
               billingCycle === 'annual'
                 ? 'bg-[#121926] border border-[#222F44] text-[#F8FAFC] shadow-sm'
                 : 'text-[#97A0B3] hover:text-[#F8FAFC]'
@@ -65,7 +65,7 @@ export function PricingPage() {
               <div className="mb-4">
                 <div className="flex items-end gap-1">
                   <span className="text-3xl font-black text-[#F8FAFC]">
-                    {billingCycle === 'annual' ? '₹14,900' : '₹18,625'}
+                    {billingCycle === 'annual' ? '$119' : '$149'}
                   </span>
                   <span className="text-[#97A0B3] text-xs font-medium mb-1">/month</span>
                 </div>
@@ -92,7 +92,9 @@ export function PricingPage() {
                 ].map((feature, i) => (
                   <li key={i} className="flex items-start gap-3 py-1.5">
                     <div className="w-4 h-4 rounded-full bg-[#7FA0D6] text-[#050810] flex items-center justify-center shrink-0 mt-0.5">
-                      <Check size={10} strokeWidth={3} />
+                      <svg className="size-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" className="animate-[dash_0.8s_ease-out_forwards]" strokeDasharray="24" strokeDashoffset="0" />
+                      </svg>
                     </div>
                     <span className="text-xs text-[#F8FAFC] leading-snug">{feature}</span>
                   </li>
@@ -107,8 +109,12 @@ export function PricingPage() {
 
           {/* Card 2: Growth OS (Featured) */}
           <div className="bg-[#121926] border-2 border-[#7FA0D6] rounded-2xl p-6 flex flex-col justify-between relative shadow-[0_0_30px_rgba(127,160,214,0.12)]">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#7FA0D6] text-[#050810] font-bold text-[10px] tracking-wider uppercase px-3 py-0.5 rounded-full shadow-sm">
-              ★ MOST POPULAR
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#7FA0D6] text-[#050810] font-bold text-[10px] tracking-wider uppercase px-3 py-0.5 rounded-full shadow-sm flex items-center gap-1.5">
+              <span className="relative flex size-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#050810] opacity-40"></span>
+                <span className="relative inline-flex rounded-full size-2 bg-[#050810]"></span>
+              </span>
+              MOST POPULAR
             </div>
             
             <div>
@@ -125,7 +131,7 @@ export function PricingPage() {
               <div className="mb-4">
                 <div className="flex items-end gap-1">
                   <span className="text-3xl font-black text-[#F8FAFC]">
-                    {billingCycle === 'annual' ? '₹34,900' : '₹43,625'}
+                    {billingCycle === 'annual' ? '$279' : '$349'}
                   </span>
                   <span className="text-[#97A0B3] text-xs font-medium mb-1">/month</span>
                 </div>
@@ -150,13 +156,15 @@ export function PricingPage() {
                 {[
                   "Astra Living Retainer Unit Economics Ledger (41.25% Margin Tracker)",
                   "Automated Revision SLA Tickets & Auto-Assign to Leads",
-                  "Collections Pipeline engine (₹2.1L automated recovery cadence)",
+                  "Collections Pipeline engine (Automated Auto-Chase 7-Day Cadence)",
                   "Multi-pod Bottleneck Radar & Editorial Calendar tables",
                   "White-label client portal branding"
                 ].map((feature, i) => (
                   <li key={i} className="flex items-start gap-3 py-1.5">
                     <div className="w-4 h-4 rounded-full bg-[#7FA0D6] text-[#050810] flex items-center justify-center shrink-0 mt-0.5">
-                      <Check size={10} strokeWidth={3} />
+                      <svg className="size-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" className="animate-[dash_0.8s_ease-out_forwards]" strokeDasharray="24" strokeDashoffset="0" />
+                      </svg>
                     </div>
                     <span className="text-xs text-[#F8FAFC] leading-snug">{feature}</span>
                   </li>
@@ -185,7 +193,7 @@ export function PricingPage() {
               <div className="mb-4">
                 <div className="flex items-end gap-1">
                   <span className="text-3xl font-black text-[#F8FAFC]">
-                    {billingCycle === 'annual' ? '₹79,900' : '₹99,875'}
+                    {billingCycle === 'annual' ? '$649' : '$799'}
                   </span>
                   <span className="text-[#97A0B3] text-xs font-medium mb-1">/month</span>
                 </div>
@@ -216,7 +224,9 @@ export function PricingPage() {
                 ].map((feature, i) => (
                   <li key={i} className="flex items-start gap-3 py-1.5">
                     <div className="w-4 h-4 rounded-full bg-[#7FA0D6] text-[#050810] flex items-center justify-center shrink-0 mt-0.5">
-                      <Check size={10} strokeWidth={3} />
+                      <svg className="size-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" className="animate-[dash_0.8s_ease-out_forwards]" strokeDasharray="24" strokeDashoffset="0" />
+                      </svg>
                     </div>
                     <span className="text-xs text-[#F8FAFC] leading-snug">{feature}</span>
                   </li>
@@ -332,7 +342,7 @@ export function PricingPage() {
                   <span className="text-xs sm:text-sm font-semibold text-[#F8FAFC]">Collections Pipeline</span>
                 </div>
                 <div className="text-xs sm:text-sm text-[#97A0B3]">Manual Reminders</div>
-                <div className="text-xs sm:text-sm text-[#F8FAFC] font-medium">Automated Auto-Chase (₹2.1L Cadence)</div>
+                <div className="text-xs sm:text-sm text-[#F8FAFC] font-medium">Automated Auto-Chase (7-Day Cadence)</div>
                 <div className="text-xs sm:text-sm text-[#F8FAFC] font-medium">Custom ERP &amp; Payment Gateways</div>
               </div>
 
