@@ -12,7 +12,7 @@ export function ClientsPage() {
     <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen pb-20 lg:pb-24 font-sans selection:bg-[#7FA0D6]/30">
       
       {/* ── Section 1: Hero & Pipeline Monitor ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-28 lg:py-36">
+      <section className="max-w-[1240px] mx-auto px-6 pt-6 pb-16 sm:pt-8 sm:pb-20 lg:pt-10 lg:pb-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           
           {/* Left Column - Headline & Metrics */}
@@ -139,7 +139,7 @@ export function ClientsPage() {
       </section>
 
       {/* ── Section 2: Creative Workflows ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-28 lg:py-36 border-t border-[#2A3446]/50">
+      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16 border-t border-[#2A3446]/50">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
           <div>
             <h2 className="text-2xl sm:text-3xl font-black text-[#F8FAFC] mb-2">Creative Workflows</h2>
@@ -195,7 +195,7 @@ export function ClientsPage() {
       </section>
 
       {/* ── Section 3: Engineering Standards ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-28 lg:py-36 border-t border-[#2A3446]/50">
+      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16 border-t border-[#2A3446]/50">
         <div className="mb-12">
           <h2 className="text-2xl sm:text-3xl font-black text-[#F8FAFC] mb-2">Our Engineering Standards</h2>
           <p className="text-sm text-[#97A0B3]">Built for security, speed and creative freedom.</p>
@@ -233,7 +233,7 @@ export function ClientsPage() {
       </section>
 
       {/* ── Section 4: Video Deliverable Review Cockpit ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-28 lg:py-36 border-t border-[#2A3446]/50">
+      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16 border-t border-[#2A3446]/50">
         <div className="mb-12">
           <div className="text-[10px] font-bold text-[#7FA0D6] uppercase tracking-wider mb-2">CLIENT PORTAL</div>
           <h2 className="text-2xl sm:text-3xl font-black text-[#F8FAFC] mb-2">Video Deliverable Review</h2>

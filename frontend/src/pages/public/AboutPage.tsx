@@ -13,7 +13,7 @@ export function AboutPage() {
     <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen pb-20 lg:pb-24 font-sans selection:bg-[#7FA0D6]/30">
       
       {/* ── Section 1: Hero (2-Column Grid) ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-24 lg:py-32">
+      <section className="max-w-[1240px] mx-auto px-6 pt-6 pb-16 sm:pt-8 sm:pb-20 lg:pt-10 lg:pb-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           
           {/* Left Column */}
@@ -96,7 +96,7 @@ export function AboutPage() {
       </section>
 
       {/* ── Section 2: Why CREO Exists ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-24 lg:py-32 border-t border-[#2A3446]">
+      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16 border-t border-[#2A3446]">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
             ⚡ THE ORIGIN STORY
@@ -253,7 +253,7 @@ export function AboutPage() {
       </section>
 
       {/* ── Section 3: Three Principles ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-24 lg:py-32 border-t border-[#2A3446]">
+      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16 border-t border-[#2A3446]">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
             ⚡ OUR CORE PHILOSOPHY
@@ -380,7 +380,7 @@ export function AboutPage() {
       </section>
 
       {/* ── Section 4: Leadership Pods ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-24 lg:py-32 border-t border-[#2A3446]/50">
+      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16 border-t border-[#2A3446]/50">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446]/50 text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
             ⚡ THE PEOPLE BEHIND CREO

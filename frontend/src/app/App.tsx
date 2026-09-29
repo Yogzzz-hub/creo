@@ -1,6 +1,6 @@
 import { Suspense, lazy, Component, type ReactNode, type ErrorInfo, useEffect } from "react";
 import Lenis from "lenis";
-import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "../lib/auth-context";
 import { ConfirmProvider } from "../components/ui/ConfirmDialog";
@@ -11,8 +11,6 @@ import type { HealthResponse } from "../types/api";
 import { PublicLayout } from "../components/public/PublicLayout";
 import { HomePage } from "../pages/public/HomePage";
 import { PricingPage } from "../pages/public/PricingPage";
-import { PortfolioPage } from "../pages/public/PortfolioPage";
-import { ClientsPage } from "../pages/public/ClientsPage";
 import { AboutPage } from "../pages/public/AboutPage";
 import { FaqPage } from "../pages/public/FaqPage";
 import { TermsPage, PrivacyPage } from "../pages/public/TermsPrivacyPages";
@@ -269,12 +267,50 @@ function HealthPage() {
   );
 }
 
+declare global {
+  interface Window {
+    __lenis?: Lenis;
+  }
+}
+
+function ScrollToTop() {
+  const { pathname, search, hash } = useLocation();
+
+  useEffect(() => {
+    if (hash) {
+      const el = document.querySelector(hash);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+    }
+
+    // Instantly reset window and body scroll positions to the top
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    document.documentElement.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    document.body.scrollTo({ top: 0, left: 0, behavior: "instant" });
+
+    // Instantly reset Lenis smooth scroll engine position to the beginning
+    if (window.__lenis) {
+      window.__lenis.scrollTo(0, { immediate: true });
+    }
+  }, [pathname, search, hash]);
+
+  return null;
+}
+
 function LenisProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
+    // Disable automatic browser scroll restoration to ensure fresh page top on navigation
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
     const lenis = new Lenis({
       lerp: 0.05,
       smoothWheel: true,
     });
+    window.__lenis = lenis;
     
     function raf(time: number) {
       lenis.raf(time);
@@ -284,6 +320,7 @@ function LenisProvider({ children }: { children: ReactNode }) {
     requestAnimationFrame(raf);
     
     return () => {
+      delete window.__lenis;
       lenis.destroy();
     };
   }, []);
@@ -297,14 +334,15 @@ export function App() {
       <AuthProvider>
       <ConfirmProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Suspense fallback={<RouteLoading />}>
             <Routes>
               {/* 1. Public Marketing Pages (Open to All) */}
               <Route element={<PublicLayout />}>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/pricing" element={<PricingPage />} />
-                <Route path="/portfolio" element={<PortfolioPage />} />
-                <Route path="/clients" element={<ClientsPage />} />
+                <Route path="/portfolio" element={<Navigate to="/" replace />} />
+                <Route path="/clients" element={<Navigate to="/" replace />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/faq" element={<FaqPage />} />
                 <Route path="/terms" element={<TermsPage />} />

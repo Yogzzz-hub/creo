@@ -69,7 +69,7 @@ export function FaqPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#050810] pt-24 pb-20">
+    <div className="min-h-screen bg-[#050810] pt-6 sm:pt-8 lg:pt-10 pb-20">
       
       {/* Hero Header & Search */}
       <div className="max-w-4xl mx-auto px-6 text-center mb-12">

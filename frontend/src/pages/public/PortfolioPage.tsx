@@ -11,7 +11,8 @@ export function PortfolioPage() {
     <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen pb-20 lg:pb-24 font-sans selection:bg-[#7FA0D6]/30">
       
       {/* - Top Hero Section (2-Column Grid) - */}
-      <section className="max-w-[1240px] mx-auto px-6 py-28 lg:py-36 relative">\n      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+      <section className="max-w-[1240px] mx-auto px-6 pt-6 pb-16 sm:pt-8 sm:pb-20 lg:pt-10 lg:pb-24 relative">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
         <svg className="absolute w-full h-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -28,7 +29,7 @@ export function PortfolioPage() {
           
           {/* Left Hero Column */}
           <div className="pr-4 lg:pr-8">
-            <div className="inline-flex items-center gap-2 rounded-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 px-3 py-1.5 text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#7FA0D6] mb-6 shadow-sm">
+            <div className="inline-flex items-center gap-2 rounded-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 px-3 py-1.5 text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#7FA0D6] mb-6 shadow-sm">
                THE OPERATING SYSTEM IN MOTION
             </div>
             
@@ -45,29 +46,29 @@ export function PortfolioPage() {
               <Link to="/pricing" className="bg-[#BCCCE6] text-[#050810] font-semibold text-xs sm:text-sm px-6 py-3 rounded-full transition-all shadow-sm hover:shadow-[0_0_20px_rgba(188,204,230,0.25)] hover:bg-[#D5E1F2] w-full sm:w-auto text-center">
                 Deploy CREO in Your Agency &rarr;
               </Link>
-              <Link to="/faq" className="bg-transparent border border-[#2A3446]/30/30 text-[#F8FAFC] text-xs sm:text-sm px-6 py-3 rounded-full hover:bg-[#121926] transition w-full sm:w-auto text-center shadow-sm">
+              <Link to="/faq" className="bg-transparent border border-[#2A3446]/30 text-[#F8FAFC] text-xs sm:text-sm px-6 py-3 rounded-full hover:bg-[#121926] transition w-full sm:w-auto text-center shadow-sm">
                 Schedule Live Demo
               </Link>
             </div>
             
             {/* 4 Stat Pods */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 rounded-xl p-4 flex flex-col justify-center">
+              <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-xl p-4 flex flex-col justify-center">
                 <div className="text-[#97A0B3] mb-2"><BarChart3 className="size-5" /></div>
                 <div className="text-lg font-black text-[#F8FAFC] leading-none mb-1">18-Step</div>
                 <div className="text-[10px] text-[#97A0B3] font-medium leading-tight">Connected <br/>Pipeline</div>
               </div>
-              <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 rounded-xl p-4 flex flex-col justify-center">
+              <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-xl p-4 flex flex-col justify-center">
                 <div className="text-[#97A0B3] mb-2"><Clock className="size-5" /></div>
                 <div className="text-lg font-black text-[#F8FAFC] leading-none mb-1">2.4h</div>
                 <div className="text-[10px] text-[#97A0B3] font-medium leading-tight">Avg. Client <br/>Sign-Off</div>
               </div>
-              <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 rounded-xl p-4 flex flex-col justify-center">
+              <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-xl p-4 flex flex-col justify-center">
                 <div className="text-[#97A0B3] mb-2"><Users className="size-5" /></div>
                 <div className="text-lg font-black text-[#F8FAFC] leading-none mb-1">82%</div>
                 <div className="text-[10px] text-[#97A0B3] font-medium leading-tight">Optimized <br/>Team Capacity</div>
               </div>
-              <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 rounded-xl p-4 flex flex-col justify-center">
+              <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-xl p-4 flex flex-col justify-center">
                 <div className="text-[#97A0B3] mb-2"><TrendingUp className="size-5" /></div>
                 <div className="text-lg font-black text-[#F8FAFC] leading-none mb-1">41.25%</div>
                 <div className="text-[10px] text-[#97A0B3] font-medium leading-tight">Verified <br/>Retainer Margin</div>
@@ -76,9 +77,9 @@ export function PortfolioPage() {
           </div>
 
           {/* Right Hero Column - Ops Console Card */}
-          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#2A3446]/30/30 pb-4 mb-6">
+            <div className="flex items-center justify-between border-b border-[#2A3446]/30 pb-4 mb-6">
               <div className="flex items-center gap-3">
                 <div className="font-black text-[#F8FAFC] text-lg tracking-tight">creo.</div>
                 <div className="text-xs text-[#97A0B3] font-medium">Agency Operating</div>
@@ -86,7 +87,7 @@ export function PortfolioPage() {
               <div className="flex items-center gap-3">
                 <Search className="size-4 text-[#97A0B3]" />
                 <Bell className="size-4 text-[#97A0B3]" />
-                <img src="https://ui-avatars.com/api/?name=Admin&background=0B111C&color=F8FAFC" alt="Avatar" className="size-6 rounded-full border border-[#2A3446]/30/30" />
+                <img src="https://ui-avatars.com/api/?name=Admin&background=0B111C&color=F8FAFC" alt="Avatar" className="size-6 rounded-full border border-[#2A3446]/30" />
               </div>
             </div>
 
@@ -95,7 +96,7 @@ export function PortfolioPage() {
               <div className="bg-[#0B111C] border border-[#2A3446]/30 rounded-xl p-3.5">
                 <div className="text-[10px] text-[#97A0B3] font-bold uppercase mb-1">ARR</div>
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="text-2xl font-black text-[#F8FAFC]">$1,248,220</div>
+                  <div className="text-2xl font-black text-[#F8FAFC]">₹1,24,82,200</div>
                   <div className="text-[10px] text-[#7FA0D6] bg-[#7FA0D6]/10 border border-[#7FA0D6]/30 px-1.5 py-0.5 rounded font-bold">+14.2%</div>
                 </div>
                 <svg className="w-16 h-4 text-[#7FA0D6] mt-1" viewBox="0 0 50 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -200,8 +201,8 @@ export function PortfolioPage() {
       </section>
 
       {/* - Module 01 - */}
-      <section className="max-w-[1240px] mx-auto px-6 py-24 lg:py-32">
-        <div className="inline-flex items-center gap-2 rounded-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 px-3 py-1 text-[10px] font-bold tracking-widest uppercase text-[#97A0B3] mb-6">
+      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16">
+        <div className="inline-flex items-center gap-2 rounded-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 px-3 py-1 text-[10px] font-bold tracking-widest uppercase text-[#97A0B3] mb-6">
           01 &nbsp; ONBOARDING &amp; TEAM CAPACITY
         </div>
         
@@ -212,7 +213,7 @@ export function PortfolioPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left Card */}
-          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 rounded-3xl p-6 lg:p-8">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-6 lg:p-8">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-full bg-[#7FA0D6] flex items-center justify-center text-[#050810] font-bold text-sm">AL</div>
@@ -289,7 +290,7 @@ export function PortfolioPage() {
           </div>
 
           {/* Right Card */}
-          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 rounded-3xl p-6 lg:p-8 flex flex-col justify-between">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-6 lg:p-8 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-8">
                 <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC]">Live Team Utilization</div>
@@ -359,8 +360,8 @@ export function PortfolioPage() {
       </section>
 
       {/* - Module 02 - */}
-      <section className="max-w-[1240px] mx-auto px-6 py-24 lg:py-32">
-        <div className="inline-flex items-center gap-2 rounded-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 px-3 py-1 text-[10px] font-bold tracking-widest uppercase text-[#97A0B3] mb-6">
+      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16">
+        <div className="inline-flex items-center gap-2 rounded-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 px-3 py-1 text-[10px] font-bold tracking-widest uppercase text-[#97A0B3] mb-6">
           02 &nbsp; CREATIVE PRODUCTION &amp; CLIENT SIGN-OFF
         </div>
         
@@ -371,7 +372,7 @@ export function PortfolioPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left Card */}
-          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 rounded-3xl p-6 lg:p-8">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-6 lg:p-8">
             <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] mb-6">Production Cadence &amp; Editorial Calendar</div>
             
             <div className="w-full overflow-x-auto mb-8">
@@ -458,7 +459,7 @@ export function PortfolioPage() {
           </div>
 
           {/* Right Card */}
-          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 rounded-3xl p-6 lg:p-8 flex flex-col">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-6 lg:p-8 flex flex-col">
             <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] w-full text-left mb-2">Velox Studio Client Portal</div>
             <div className="text-xs text-[#97A0B3] mb-6 font-medium">Summer DTC Campaign Reel #04</div>
             
@@ -524,8 +525,8 @@ export function PortfolioPage() {
       </section>
 
       {/* - Module 03 - */}
-      <section className="max-w-[1240px] mx-auto px-6 py-24 lg:py-32">
-        <div className="inline-flex items-center gap-2 rounded-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 px-3 py-1 text-[10px] font-bold tracking-widest uppercase text-[#97A0B3] mb-6">
+      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16">
+        <div className="inline-flex items-center gap-2 rounded-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 px-3 py-1 text-[10px] font-bold tracking-widest uppercase text-[#97A0B3] mb-6">
           03 &nbsp; REAL-TIME PROFITABILITY &amp; CASH FLOW
         </div>
         
@@ -536,7 +537,7 @@ export function PortfolioPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left Card */}
-          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 rounded-3xl p-6 lg:p-8">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-6 lg:p-8">
             <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] mb-2">TechCorp Series B &bull; Monthly Creative Retainer</div>
             <div className="text-xs text-[#97A0B3] mb-8">Balance Sheet &amp; Contribution</div>
             
@@ -544,19 +545,19 @@ export function PortfolioPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center text-xs pb-3 border-b border-[#2A3446]/30">
                   <span className="text-[#97A0B3] font-medium">Retainer Revenue</span>
-                  <span className="text-[#7FA0D6] font-semibold">+$80,000</span>
+                  <span className="text-[#7FA0D6] font-semibold">+₹80,000</span>
                 </div>
                 <div className="flex justify-between items-center text-xs pb-3 border-b border-[#2A3446]/30">
                   <span className="text-[#97A0B3] font-medium">Dedicated Team Cost</span>
-                  <span className="text-[#D8BF9B] font-semibold">-$28,000</span>
+                  <span className="text-[#D8BF9B] font-semibold">-₹28,000</span>
                 </div>
                 <div className="flex justify-between items-center text-xs pb-3 border-b border-[#2A3446]/30">
                   <span className="text-[#97A0B3] font-medium">Tooling &amp; Production</span>
-                  <span className="text-[#D8BF9B] font-semibold">-$12,000</span>
+                  <span className="text-[#D8BF9B] font-semibold">-₹12,000</span>
                 </div>
                 <div className="flex justify-between items-center text-xs pb-3 border-b border-[#2A3446]/30">
                   <span className="text-[#97A0B3] font-medium">Agency overhead</span>
-                  <span className="text-[#D8BF9B] font-semibold">-$7,000</span>
+                  <span className="text-[#D8BF9B] font-semibold">-₹7,000</span>
                 </div>
               </div>
 
@@ -590,13 +591,13 @@ export function PortfolioPage() {
             <div className="flex items-center justify-between p-5 bg-[#0B111C] border border-[#7FA0D6]/40 rounded-xl">
               <div>
                 <div className="text-[10px] text-[#7FA0D6] font-bold uppercase mb-1">Project Contribution Margin</div>
-                <div className="text-2xl font-black text-[#7FA0D6]">$33,000 <span className="text-sm font-bold opacity-80">(41.25%)</span></div>
+                <div className="text-2xl font-black text-[#7FA0D6]">₹33,000 <span className="text-sm font-bold opacity-80">(41.25%)</span></div>
               </div>
             </div>
           </div>
 
           {/* Right Card */}
-          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30/30 rounded-3xl p-6 lg:p-8 flex flex-col">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-6 lg:p-8 flex flex-col">
             <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] mb-6">Cash Flow Engine &amp; Auto-Chase</div>
             
             <div className="space-y-3 mb-8">
@@ -612,7 +613,7 @@ export function PortfolioPage() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between sm:justify-end gap-4 sm:w-[60%]">
-                  <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] whitespace-nowrap">$120,000</div>
+                  <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] whitespace-nowrap">₹120,000</div>
                   {inv1 === 'Paid ✓' ? (
                     <span className="inline-flex items-center gap-1.5 bg-[#7FA0D6]/15 text-[#7FA0D6] px-2 py-1 rounded text-[10px] font-bold border border-[#7FA0D6]/20 shrink-0">
                       {inv1}
@@ -639,7 +640,7 @@ export function PortfolioPage() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between sm:justify-end gap-4 sm:w-[60%]">
-                  <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] whitespace-nowrap">$80,000</div>
+                  <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] whitespace-nowrap">₹80,000</div>
                   {inv2 === 'Paid ✓' ? (
                     <span className="inline-flex items-center gap-1.5 bg-[#7FA0D6]/15 text-[#7FA0D6] px-2 py-1 rounded text-[10px] font-bold border border-[#7FA0D6]/20 shrink-0">
                       {inv2}
@@ -660,7 +661,7 @@ export function PortfolioPage() {
                 <TrendingUp className="size-5 text-[#7FA0D6]" />
               </div>
               <div>
-                <div className="text-lg font-black text-[#F8FAFC]">$2.1L <span className="text-xs text-[#97A0B3] font-medium">In Collections Pipeline</span></div>
+                <div className="text-lg font-black text-[#F8FAFC]">₹2.1L <span className="text-xs text-[#97A0B3] font-medium">In Collections Pipeline</span></div>
                 <div className="text-[10px] text-[#97A0B3] mt-1">Automated payment follow-ups.</div>
               </div>
             </div>

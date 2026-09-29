@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { CheckCircle2, AlertCircle, ArrowRight, Layers, User, BarChart2, Database, ChevronUp, ChevronDown, Zap } from "lucide-react";
-import { useNavigate } from "react-router";
+import { PricingCards } from "../../components/public/PricingCards";
 
 
 const faqs = [
@@ -60,7 +60,7 @@ export function HomePage() {
     <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#7FA0D6]/30">
       
       {/* 1. Hero Section + Collage */}
-      <section className="max-w-[1240px] mx-auto px-6 py-28 lg:py-36">
+      <section className="max-w-[1240px] mx-auto px-6 pt-6 pb-16 sm:pt-8 sm:pb-20 lg:pt-10 lg:pb-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-start">
           
           {/* Left Hero Column */}
@@ -149,7 +149,7 @@ export function HomePage() {
       </section>
 
       {/* 2. The Studio Ledger Section */}
-      <section className="bg-[#0B111C] py-28 lg:py-36 border-y border-[#222F44]">
+      <section className="bg-[#0B111C] py-12 sm:py-16 border-y border-[#222F44]">
         <div className="max-w-[1240px] mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <div className="text-[11px] tracking-widest uppercase font-bold text-[#7FA0D6] mb-4">
@@ -200,7 +200,7 @@ export function HomePage() {
       </section>
 
       {/* 3. Horizontal 5-Step Process Rail */}
-      <section className="max-w-[1240px] mx-auto px-6 pt-20">
+      <section className="max-w-[1240px] mx-auto px-6 pt-10 sm:pt-12">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 py-8 border-b border-[#2A3446]/40">
           {[
             { step: "01", time: "Day 1: Brand DNA", desc: "Upload your assets, fonts, and guidelines." },
@@ -221,7 +221,7 @@ export function HomePage() {
       </section>
 
       {/* 4. Interactive Approval Portal Layout */}
-      <section className="max-w-[1240px] mx-auto px-6 pb-20 lg:pb-24 pt-12">
+      <section className="max-w-[1240px] mx-auto px-6 pb-12 sm:pb-16 pt-8">
         <div className="relative">
           <div className="absolute -top-4 left-6 bg-[#0A0F18] border border-[#7FA0D6]/50 text-[#7FA0D6] text-[10px] font-bold px-4 py-1.5 rounded-full z-10 shadow-lg tracking-wider">
             TRY IT â€” THIS PANEL WORKS
@@ -305,82 +305,28 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* 5. Pricing Cards */}
-      <section className="bg-[#050810] py-16">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-12">
+      {/* 5. Pricing Cards (Synchronized with Pricing Page) */}
+      <section className="bg-[#050810] py-12 sm:py-16">
+        <div className="max-w-[1240px] mx-auto px-6">
+          <div className="text-center mb-10 max-w-2xl mx-auto">
+            <div className="inline-flex items-center justify-center bg-[#121926] border border-[#222F44] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 rounded-full mb-4">
+              ⚡ PREDICTABLE AGENCY INFRASTRUCTURE
+            </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-4">
-              Priced per month. <span className="text-[#7FA0D6]">Measured per asset.</span>
+              Simple, transparent pricing that <span className="text-[#7FA0D6]">scales with your agency.</span>
             </h2>
-            <p className="text-sm text-[#97A0B3] max-w-xl mx-auto leading-relaxed">
-              The more you commit, the less each piece costs. No setup fee, pause or cancel any month.
+            <p className="text-sm text-[#97A0B3] leading-relaxed">
+              No hidden seat taxes or per-project gouging. Choose the operating tier that matches your studio cadence and reclaim your true profit margins.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto my-16">
-            {/* Starter */}
-            <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 flex flex-col justify-between">
-              <div>
-                <div className="text-xs font-bold text-[#7FA0D6] uppercase tracking-wider mb-2">Starter</div>
-                <div className="text-3xl font-black text-[#F8FAFC] mb-1">$2,500<span className="text-sm font-medium text-[#97A0B3]">/mo</span></div>
-                <div className="text-[11px] text-[#97A0B3] mb-6">($113/asset)</div>
-                
-                <ul className="space-y-3 mb-8 text-sm text-[#F8FAFC]">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 22 assets</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 1 revision round</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 3 business-day SLA</li>
-                </ul>
-              </div>
-              <Link to="/signup?intent=starter" className="w-full text-center bg-transparent border border-[#2A3446] hover:bg-[#2A3446] text-[#F8FAFC] font-bold text-xs py-3 rounded-full transition-colors mt-8">
-                Start with a free sample
-              </Link>
-            </div>
-
-            {/* Growth */}
-            <div className="bg-[#121926] border border-[#7FA0D6] rounded-2xl p-6 flex flex-col justify-between relative shadow-[0_0_20px_rgba(127,160,214,0.1)]">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0A0F18] border border-[#7FA0D6] text-[#7FA0D6] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
-                The on-time guarantee
-              </div>
-              <div>
-                <div className="text-xs font-bold text-[#7FA0D6] uppercase tracking-wider mb-2 mt-2">Growth</div>
-                <div className="text-3xl font-black text-[#F8FAFC] mb-1">$5,000<span className="text-sm font-medium text-[#97A0B3]">/mo</span></div>
-                <div className="text-[11px] text-[#97A0B3] mb-6">($104/asset)</div>
-                
-                <ul className="space-y-3 mb-8 text-sm text-[#F8FAFC]">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 48 assets</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 2 revision rounds</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 2 business-day SLA</li>
-                </ul>
-              </div>
-              <Link to="/signup?intent=growth" className="w-full text-center bg-[#BCCCE6] hover:bg-white text-[#050810] font-bold text-xs py-3 rounded-full transition-colors mt-8">
-                Start with a free sample
-              </Link>
-            </div>
-
-            {/* Scale */}
-            <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 flex flex-col justify-between">
-              <div>
-                <div className="text-xs font-bold text-[#7FA0D6] uppercase tracking-wider mb-2">Scale</div>
-                <div className="text-3xl font-black text-[#F8FAFC] mb-1">$9,500<span className="text-sm font-medium text-[#97A0B3]">/mo</span></div>
-                <div className="text-[11px] text-[#97A0B3] mb-6">($99/asset)</div>
-                
-                <ul className="space-y-3 mb-8 text-sm text-[#F8FAFC]">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 96 assets</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 3 revision rounds</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="size-4 text-[#7FA0D6]" /> 24-hour priority SLA</li>
-                </ul>
-              </div>
-              <Link to="/signup?intent=scale" className="w-full text-center bg-transparent border border-[#2A3446] hover:bg-[#2A3446] text-[#F8FAFC] font-bold text-xs py-3 rounded-full transition-colors mt-8">
-                Start with a free sample
-              </Link>
-            </div>
-          </div>
+          <PricingCards />
         </div>
       </section>
 
       
       {/* 5.5 FAQ Section */}
-      <section className="max-w-3xl mx-auto px-6 py-28 lg:py-36">
+      <section className="max-w-3xl mx-auto px-6 py-12 sm:py-16">
         <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-4">
             Common <span className="text-[#7FA0D6]">Questions</span>
@@ -432,7 +378,7 @@ export function HomePage() {
       </section>
 
       {/* 6. "Try Us Before You Pay Us" Lead Capture Section */}
-      <section className="bg-[#0B111C] py-28 lg:py-36 border-y border-[#222F44]">
+      <section className="bg-[#0B111C] py-12 sm:py-16 border-y border-[#222F44]">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-5">
             Try us before you pay us.

@@ -4,7 +4,7 @@ import { Footer } from "./Footer";
 
 export function PublicLayout() {
   return (
-    <div className="flex min-h-screen flex-col bg-white text-[#0D2137]">
+    <div className="flex min-h-screen flex-col bg-[#050810] text-[#F8FAFC]">
       <Navbar />
       <main className="flex-1">
         <Outlet />

@@ -7,9 +7,7 @@ import { getRoleHome } from "../auth/ProtectedRoute";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
-  { label: "Work", href: "/portfolio" },
   { label: "About", href: "/about" },
-  { label: "Our Clients", href: "/clients" },
   { label: "Pricing", href: "/pricing" },
   { label: "FAQ", href: "/faq" },
 ];
@@ -52,7 +50,7 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 left-0 right-0 z-40 h-20 w-full flex items-center bg-deep-surface border-b border-hairline">
+    <header className="sticky top-0 left-0 right-0 z-40 h-16 w-full flex items-center bg-deep-surface border-b border-hairline">
       <nav className="mx-auto flex w-full max-w-[1240px] h-full items-center justify-between px-6">
         <div className="flex items-center">
           <Link to="/" className="text-2xl font-black tracking-tight text-off-white flex items-baseline">
@@ -132,7 +130,7 @@ export function Navbar() {
 
       {/* Mobile Drawer */}
       {sheetOpen && (
-        <div className="absolute inset-x-0 top-20 bg-deep-surface border-b border-hairline shadow-lg p-6 lg:hidden flex flex-col gap-4 animate-page-in">
+        <div className="absolute inset-x-0 top-16 bg-deep-surface border-b border-hairline shadow-lg p-6 lg:hidden flex flex-col gap-4 animate-page-in">
           <nav className="flex flex-col gap-2">
             {NAV_LINKS.map((link) => {
               const isActive = location.pathname === link.href;
