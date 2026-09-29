@@ -11,6 +11,7 @@ export interface AuthUser {
   onboarding_stage: number;
   terms_accepted?: boolean;
   must_reset_password?: boolean;
+  company_name?: string;
 }
 
 interface AuthContextType {

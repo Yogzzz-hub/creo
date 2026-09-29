@@ -276,3 +276,144 @@ export async function fetchClientBrandProfile(
 ): Promise<ClientBrandProfile> {
   return request<ClientBrandProfile>(`/api/v1/admin/clients/${clientId}`);
 }
+
+// Pod Dashboard Types & Functions
+export interface PodMember {
+  id: string;
+  full_name: string;
+  email: string;
+  role: string;
+  craft_title: string;
+  department: string;
+  daily_capacity: number;
+  skills: string[];
+  is_accepting_work: boolean;
+  account_status: string;
+  active_wip?: number;
+}
+
+export interface PodTask {
+  id: string;
+  client_id: string;
+  client_name: string;
+  assigned_to: string | null;
+  assignee_name: string;
+  assignee_role: string | null;
+  deliverable_type: "reel" | "carousel" | "story" | "static_post" | "shoot_day" | string;
+  status: string;
+  due_date: string | null;
+  sla_due_at: string | null;
+  hours_remaining: number | null;
+  is_near_sla: boolean;
+  effort_points: number;
+  blueprint: Record<string, any>;
+  deliverable?: {
+    id: string;
+    file_url: string;
+    file_type: string;
+    status: string;
+    revision_round: number;
+    rejection_comment?: string | null;
+  } | null;
+}
+
+export interface PodNotification {
+  id: string;
+  type: "qa_review" | "sla_warning" | "leave_request" | "urgent_ticket";
+  priority: "urgent" | "high" | "medium" | "low";
+  title: string;
+  message: string;
+  task_id?: string;
+  leave_id?: string;
+  created_at: string;
+}
+
+export interface PodDashboardData {
+  pod: {
+    id: string;
+    key: string;
+    letter: string;
+    name: string;
+    color: string;
+    textColor: string;
+    badgeColor: string;
+    progressBg: string;
+    lead: {
+      id: string | null;
+      name: string;
+      email: string;
+    };
+    stats: {
+      total_tasks: number;
+      yet_to_do: number;
+      in_production: number;
+      internal_qa: number;
+      completed: number;
+      total_wip: number;
+      sla_compliance_pct: number;
+      active_clients_count: number;
+    };
+  };
+  members: PodMember[];
+  clients: {
+    id: string;
+    name: string;
+    email: string;
+    brand_summary: string;
+    brand_dna: Record<string, any>;
+    instagram?: string | null;
+  }[];
+  tasks: {
+    backlog: PodTask[];
+    in_production: PodTask[];
+    internal_qa: PodTask[];
+    client_review: PodTask[];
+    ready_to_publish: PodTask[];
+    completed: PodTask[];
+  };
+  notifications: PodNotification[];
+  available_pods: {
+    id: string;
+    key: string;
+    letter: string;
+    name: string;
+    color: string;
+    textColor: string;
+    badgeColor: string;
+    lead_name: string;
+  }[];
+  is_lead_view: boolean;
+}
+
+export async function fetchPodDashboard(podKey?: string): Promise<PodDashboardData> {
+  const param = podKey ? `?pod=${encodeURIComponent(podKey)}` : "";
+  return request<PodDashboardData>(`/api/v1/admin/pod-dashboard${param}`);
+}
+
+export async function submitPodQAReview(
+  taskId: string,
+  decision: "approve" | "reject",
+  comment?: string,
+): Promise<{ status: string; message: string; task_id: string; new_task_status: string }> {
+  return request<{ status: string; message: string; task_id: string; new_task_status: string }>(
+    `/api/v1/admin/pod-tasks/${taskId}/qa-review`,
+    {
+      method: "POST",
+      body: JSON.stringify({ decision, comment }),
+    }
+  );
+}
+
+export async function reassignPodTask(
+  taskId: string,
+  assigneeId: string,
+): Promise<{ status: string; message: string; task_id: string; assigned_to: string; assignee_name: string }> {
+  return request<{ status: string; message: string; task_id: string; assigned_to: string; assignee_name: string }>(
+    `/api/v1/admin/pod-tasks/${taskId}/reassign`,
+    {
+      method: "POST",
+      body: JSON.stringify({ assignee_id: assigneeId }),
+    }
+  );
+}
+
