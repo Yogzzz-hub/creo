@@ -154,7 +154,7 @@ export function PlanBargainCallModal({
       }}
     >
       <div
-        className="relative w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] border border-[#2A3446] max-h-[90vh] overflow-y-auto text-[#F8FAFC] m-auto animate-[zoomIn_0.2s_cubic-bezier(0.16,1,0.3,1)]"
+        className="relative w-full max-w-lg rounded-3xl bg-nebula-surface p-6 sm:p-7 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] border border-nebula-steel max-h-[90vh] overflow-y-auto text-slate-50 m-auto animate-[zoomIn_0.2s_cubic-bezier(0.16,1,0.3,1)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
@@ -163,7 +163,7 @@ export function PlanBargainCallModal({
           onClick={onClose}
           disabled={loading}
           aria-label="Close modal"
-          className="absolute top-5 right-5 size-8 rounded-full bg-[#0B111C] border border-[#2A3446] text-[#97A0B3] hover:bg-[#2A3446] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute top-5 right-5 size-8 rounded-full bg-nebula-navy border border-nebula-steel text-nebula-mist hover:bg-nebula-steel hover:text-white flex items-center justify-center transition-colors cursor-pointer"
         >
           <X className="size-4" />
         </button>
@@ -173,8 +173,8 @@ export function PlanBargainCallModal({
             <div className="size-14 rounded-full bg-emerald-950/50 border border-emerald-800/60 text-emerald-400 mx-auto flex items-center justify-center shadow-sm">
               <CheckCircle2 className="size-7" />
             </div>
-            <h3 className="text-lg font-bold text-[#F8FAFC]">Call Request Confirmed!</h3>
-            <p className="text-xs text-[#97A0B3] max-w-xs mx-auto leading-relaxed">
+            <h3 className="text-lg font-bold text-slate-50">Call Request Confirmed!</h3>
+            <p className="text-xs text-nebula-mist max-w-xs mx-auto leading-relaxed">
               Our Agency Director has received your plan negotiation request. We will connect with you at{" "}
               <strong className="text-white">{phoneNumber}</strong> ({preferredTime}).
             </p>
@@ -182,15 +182,15 @@ export function PlanBargainCallModal({
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Header */}
-            <div className="flex items-start gap-3.5 pb-3 border-b border-[#2A3446]">
-              <div className="size-10 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] flex items-center justify-center shrink-0 shadow-sm">
+            <div className="flex items-start gap-3.5 pb-3 border-b border-nebula-steel">
+              <div className="size-10 rounded-2xl bg-nebula-navy border border-nebula-steel text-nebula-glow flex items-center justify-center shrink-0 shadow-sm">
                 <PhoneCall className="size-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-[#F8FAFC] tracking-tight">
+                <h3 className="text-lg font-bold text-slate-50 tracking-tight">
                   Book a Plan Consultation Call
                 </h3>
-                <p className="text-xs text-[#97A0B3] mt-0.5">
+                <p className="text-xs text-nebula-mist mt-0.5">
                   Discuss custom video deliverables or negotiate a tailored plan with our executive team.
                 </p>
               </div>
@@ -204,16 +204,16 @@ export function PlanBargainCallModal({
 
             {/* Negotiation Topic */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-[#F8FAFC]">
+              <label className="block text-xs font-semibold text-slate-50">
                 What would you like to negotiate?
               </label>
               <select
                 value={targetTopic}
                 onChange={(e) => setTargetTopic(e.target.value)}
-                className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
+                className="w-full rounded-xl border border-nebula-steel bg-nebula-navy px-3 py-2 text-xs text-slate-50 focus:outline-none focus:border-nebula-glow focus:ring-1 focus:ring-nebula-glow"
               >
                 {TOPICS.map((topic) => (
-                  <option key={topic} value={topic} className="bg-[#0B111C] text-[#F8FAFC]">
+                  <option key={topic} value={topic} className="bg-nebula-navy text-slate-50">
                     {topic}
                   </option>
                 ))}
@@ -222,7 +222,7 @@ export function PlanBargainCallModal({
 
             {/* Proposed Budget or Offer */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-[#F8FAFC]">
+              <label className="block text-xs font-semibold text-slate-50">
                 Your Proposed Budget / Scope Target (Optional)
               </label>
               <div className="relative">
@@ -231,14 +231,14 @@ export function PlanBargainCallModal({
                   value={proposedOffer}
                   onChange={(e) => setProposedOffer(e.target.value)}
                   placeholder="e.g. Looking for 10 reels at ₹35,000/mo or 15% startup discount"
-                  className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] placeholder-[#97A0B3]/50 focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
+                  className="w-full rounded-xl border border-nebula-steel bg-nebula-navy px-3 py-2 text-xs text-slate-50 placeholder-nebula-mist/50 focus:outline-none focus:border-nebula-glow focus:ring-1 focus:ring-nebula-glow"
                 />
               </div>
             </div>
 
             {/* Phone Number */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-[#F8FAFC]">
+              <label className="block text-xs font-semibold text-slate-50">
                 Contact Phone / WhatsApp Number <span className="text-rose-400">*</span>
               </label>
               <input
@@ -247,22 +247,22 @@ export function PlanBargainCallModal({
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="e.g. +91 98765 43210"
-                className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] placeholder-[#97A0B3]/50 focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
+                className="w-full rounded-xl border border-nebula-steel bg-nebula-navy px-3 py-2 text-xs text-slate-50 placeholder-nebula-mist/50 focus:outline-none focus:border-nebula-glow focus:ring-1 focus:ring-nebula-glow"
               />
             </div>
 
             {/* Preferred Call Time */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-[#F8FAFC]">
+              <label className="block text-xs font-semibold text-slate-50">
                 Preferred Call Window
               </label>
               <select
                 value={preferredTime}
                 onChange={(e) => setPreferredTime(e.target.value)}
-                className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
+                className="w-full rounded-xl border border-nebula-steel bg-nebula-navy px-3 py-2 text-xs text-slate-50 focus:outline-none focus:border-nebula-glow focus:ring-1 focus:ring-nebula-glow"
               >
                 {TIME_SLOTS.map((slot) => (
-                  <option key={slot} value={slot} className="bg-[#0B111C] text-[#F8FAFC]">
+                  <option key={slot} value={slot} className="bg-nebula-navy text-slate-50">
                     {slot}
                   </option>
                 ))}
@@ -271,7 +271,7 @@ export function PlanBargainCallModal({
 
             {/* Notes */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-[#F8FAFC]">
+              <label className="block text-xs font-semibold text-slate-50">
                 Additional Notes / Deliverable Needs (Optional)
               </label>
               <textarea
@@ -279,7 +279,7 @@ export function PlanBargainCallModal({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Share any context about your brand cadence, team size, or turnaround needs..."
-                className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] placeholder-[#97A0B3]/50 focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6] resize-none"
+                className="w-full rounded-xl border border-nebula-steel bg-nebula-navy px-3 py-2 text-xs text-slate-50 placeholder-nebula-mist/50 focus:outline-none focus:border-nebula-glow focus:ring-1 focus:ring-nebula-glow resize-none"
               />
             </div>
 
@@ -304,19 +304,19 @@ export function PlanBargainCallModal({
             </div>
 
             {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-nebula-steel">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#97A0B3] hover:bg-[#0B111C] hover:text-white transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-nebula-mist hover:bg-nebula-navy hover:text-white transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-5 py-2 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-xs font-bold transition-all shadow-md shadow-[#BCCCE6]/20 inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-nebula-periwinkle hover:bg-white text-nebula-navy text-xs font-bold transition-all shadow-md shadow-nebula-periwinkle/20 inline-flex items-center gap-1.5 cursor-pointer"
               >
                 {loading ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
                 <span>Submit Call Request</span>

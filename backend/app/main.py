@@ -76,13 +76,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 )
                 db.add(admin)
                 await db.commit()
-            else:
-                admin.hashed_password = hash_password("Admin123!")
-                admin.role = UserRole.SUPER_ADMIN
-                admin.account_status = AccountStatus.ACTIVE
-                await db.commit()
-
-            # Ensure plan_negotiations table exists
+# Ensure plan_negotiations table exists
             await db.execute(text("""
                 CREATE TABLE IF NOT EXISTS plan_negotiations (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -106,6 +100,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 CREATE INDEX IF NOT EXISTS idx_negotiations_created_at ON plan_negotiations(created_at);
             """))
             await db.commit()
+
     except Exception as e:
         logger.warning("admin_bootstrap_warning", error=str(e))
     yield

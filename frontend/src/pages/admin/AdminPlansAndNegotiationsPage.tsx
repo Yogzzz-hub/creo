@@ -175,29 +175,29 @@ export function AdminPlansAndNegotiationsPage() {
       )}
 
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 sm:p-8 shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-nebula-surface border border-nebula-steel rounded-3xl p-6 sm:p-8 shadow-xl">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30">
+            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#7FA0D6]/20 text-nebula-glow border border-[#7FA0D6]/30">
               Commercial Desk
             </span>
-            <span className="text-xs text-[#97A0B3]">Direct Client Bargain Calls & Custom Retainers</span>
+            <span className="text-xs text-nebula-mist">Direct Client Bargain Calls & Custom Retainers</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
             Plans & Negotiations
           </h1>
-          <p className="text-xs sm:text-sm text-[#97A0B3] mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-nebula-mist mt-1 max-w-2xl leading-relaxed">
             Review custom scope and discount consultation requests. Fix authoritative agreed retainers and dynamically generate Razorpay checkout orders for client sign-off.
           </p>
         </div>
 
         {/* Quick Stats */}
         <div className="flex items-center gap-3">
-          <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl px-4 py-3 text-center min-w-[100px]">
+          <div className="bg-nebula-navy border border-nebula-steel rounded-2xl px-4 py-3 text-center min-w-[100px]">
             <span className="text-[10px] uppercase font-bold text-amber-400 block">Pending</span>
             <span className="text-xl font-black text-white">{pendingCount}</span>
           </div>
-          <div className="bg-[#0B111C] border border-[#2A3446] rounded-2xl px-4 py-3 text-center min-w-[100px]">
+          <div className="bg-nebula-navy border border-nebula-steel rounded-2xl px-4 py-3 text-center min-w-[100px]">
             <span className="text-[10px] uppercase font-bold text-emerald-400 block">Approved</span>
             <span className="text-xl font-black text-white">{approvedCount}</span>
           </div>
@@ -207,14 +207,14 @@ export function AdminPlansAndNegotiationsPage() {
       {/* Controls Bar: Search & Status Filters */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Status Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-[#161F2D] border border-[#2A3446] rounded-2xl">
+        <div className="flex items-center gap-1.5 p-1 bg-nebula-surface border border-nebula-steel rounded-2xl">
           <button
             type="button"
             onClick={() => setStatusFilter("ALL")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               statusFilter === "ALL"
                 ? "bg-[#7FA0D6] text-[#050810] shadow-sm"
-                : "text-[#97A0B3] hover:text-white"
+                : "text-nebula-mist hover:text-white"
             }`}
           >
             All Requests ({negotiationsList.length})
@@ -225,7 +225,7 @@ export function AdminPlansAndNegotiationsPage() {
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               statusFilter === "PENDING"
                 ? "bg-amber-400 text-[#050810] shadow-sm"
-                : "text-[#97A0B3] hover:text-white"
+                : "text-nebula-mist hover:text-white"
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
@@ -237,7 +237,7 @@ export function AdminPlansAndNegotiationsPage() {
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
               statusFilter === "APPROVED"
                 ? "bg-emerald-400 text-[#050810] shadow-sm"
-                : "text-[#97A0B3] hover:text-white"
+                : "text-nebula-mist hover:text-white"
             }`}
           >
             <CheckCircle2 className="w-3.5 h-3.5" />
@@ -247,30 +247,30 @@ export function AdminPlansAndNegotiationsPage() {
 
         {/* Search Input */}
         <div className="relative min-w-[280px]">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-nebula-mist" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by client name, email, phone..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium text-white placeholder:text-[#97A0B3] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]/40 shadow-inner"
+            className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-nebula-steel bg-nebula-surface text-xs font-medium text-white placeholder:text-nebula-mist focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]/40 shadow-inner"
           />
         </div>
       </div>
 
       {/* Main Content Area */}
       {isLoading ? (
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-12 text-center text-[#97A0B3] space-y-3">
-          <Loader2 className="size-7 animate-spin mx-auto text-[#7FA0D6]" />
+        <div className="bg-nebula-surface border border-nebula-steel rounded-3xl p-12 text-center text-nebula-mist space-y-3">
+          <Loader2 className="size-7 animate-spin mx-auto text-nebula-glow" />
           <p className="text-xs font-bold">Loading custom plan negotiations...</p>
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-12 text-center space-y-3 shadow-xl">
-          <div className="size-12 rounded-2xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-center mx-auto text-[#97A0B3]">
+        <div className="bg-nebula-surface border border-nebula-steel rounded-3xl p-12 text-center space-y-3 shadow-xl">
+          <div className="size-12 rounded-2xl bg-nebula-navy border border-nebula-steel flex items-center justify-center mx-auto text-nebula-mist">
             <Search className="size-5" />
           </div>
           <h3 className="text-base font-bold text-white">No negotiations found</h3>
-          <p className="text-xs text-[#97A0B3] max-w-sm mx-auto">
+          <p className="text-xs text-nebula-mist max-w-sm mx-auto">
             {searchQuery
               ? `No requests match "${searchQuery}". Try clearing search filter.`
               : "No custom call or plan consultation requests in this tab."}
@@ -278,7 +278,7 @@ export function AdminPlansAndNegotiationsPage() {
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="mt-2 text-xs font-bold text-[#7FA0D6] hover:underline"
+              className="mt-2 text-xs font-bold text-nebula-glow hover:underline"
             >
               Clear search
             </button>
@@ -297,33 +297,33 @@ export function AdminPlansAndNegotiationsPage() {
             return (
               <div
                 key={item.id}
-                className={`bg-[#161F2D] border rounded-3xl p-6 transition-all shadow-xl space-y-5 ${
+                className={`bg-nebula-surface border rounded-3xl p-6 transition-all shadow-xl space-y-5 ${
                   isHighlighted
-                    ? "border-[#7FA0D6] ring-2 ring-[#7FA0D6]/30 bg-[#161F2D]/90"
-                    : "border-[#2A3446] hover:border-[#7FA0D6]/40"
+                    ? "border-[#7FA0D6] ring-2 ring-[#7FA0D6]/30 bg-nebula-surface/90"
+                    : "border-nebula-steel hover:border-[#7FA0D6]/40"
                 }`}
               >
                 {/* Top Row: Client Info & Status Badge */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   {/* Left: Avatar & Names */}
                   <div className="flex items-start gap-4">
-                    <div className="size-12 rounded-2xl bg-gradient-to-br from-[#1F2C3F] to-[#0B111C] border border-[#2A3446] text-[#7FA0D6] font-black text-base flex items-center justify-center shrink-0 shadow-inner">
+                    <div className="size-12 rounded-2xl bg-gradient-to-br from-[#1F2C3F] to-[#0B111C] border border-nebula-steel text-nebula-glow font-black text-base flex items-center justify-center shrink-0 shadow-inner">
                       {item.client_name.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-bold text-base text-white">{item.client_name}</h3>
-                        <span className="text-xs text-[#97A0B3] font-medium flex items-center gap-1">
+                        <span className="text-xs text-nebula-mist font-medium flex items-center gap-1">
                           <Mail className="size-3" /> {item.client_email}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-[#97A0B3] flex-wrap">
+                      <div className="flex items-center gap-3 mt-1 text-xs text-nebula-mist flex-wrap">
                         <span className="flex items-center gap-1 text-[#F8FAFC]">
-                          <Phone className="size-3 text-[#7FA0D6]" /> {item.contact_phone}
+                          <Phone className="size-3 text-nebula-glow" /> {item.contact_phone}
                         </span>
                         <span>•</span>
                         <span className="flex items-center gap-1">
-                          <Clock className="size-3 text-[#7FA0D6]" /> Preferred: {item.preferred_window}
+                          <Clock className="size-3 text-nebula-glow" /> Preferred: {item.preferred_window}
                         </span>
                         {item.created_at && (
                           <>
@@ -360,9 +360,9 @@ export function AdminPlansAndNegotiationsPage() {
                 </div>
 
                 {/* Middle Row: Scope / Proposed Budget & Target Topic */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446]">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 rounded-2xl bg-nebula-navy border border-nebula-steel">
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-[#97A0B3] block mb-0.5">
+                    <span className="text-[10px] uppercase font-bold text-nebula-mist block mb-0.5">
                       Target Topic
                     </span>
                     <p className="text-xs font-semibold text-white">
@@ -371,16 +371,16 @@ export function AdminPlansAndNegotiationsPage() {
                   </div>
 
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-[#97A0B3] block mb-0.5">
+                    <span className="text-[10px] uppercase font-bold text-nebula-mist block mb-0.5">
                       Proposed Budget / Target Scope
                     </span>
-                    <p className="text-xs font-bold text-[#7FA0D6]">
+                    <p className="text-xs font-bold text-nebula-glow">
                       {item.proposed_budget || "Open for consultation"}
                     </p>
                   </div>
 
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-[#97A0B3] block mb-0.5">
+                    <span className="text-[10px] uppercase font-bold text-nebula-mist block mb-0.5">
                       Agreed Final Retainer
                     </span>
                     {item.agreed_amount ? (
@@ -395,25 +395,25 @@ export function AdminPlansAndNegotiationsPage() {
                         )}
                       </div>
                     ) : (
-                      <span className="text-xs text-[#97A0B3] italic">Pending Admin Review</span>
+                      <span className="text-xs text-nebula-mist italic">Pending Admin Review</span>
                     )}
                   </div>
                 </div>
 
                 {/* Notes if provided */}
                 {item.notes && (
-                  <p className="text-xs text-[#97A0B3] bg-[#161F2D]/50 px-4 py-2.5 rounded-xl border border-[#2A3446]/60 leading-relaxed">
+                  <p className="text-xs text-nebula-mist bg-nebula-surface/50 px-4 py-2.5 rounded-xl border border-nebula-steel/60 leading-relaxed">
                     <span className="font-bold text-[#F8FAFC]">Client Notes:</span> {item.notes}
                   </p>
                 )}
 
                 {/* Bottom Row: Actions */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-[#2A3446]/60">
-                  <div className="text-[11px] text-[#97A0B3]">
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-nebula-steel/60">
+                  <div className="text-[11px] text-nebula-mist">
                     {item.order_id ? (
                       <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
                         <CreditCard className="size-3.5" /> Razorpay Order Ready:{" "}
-                        <code className="text-[10px] text-white bg-[#0B111C] px-1.5 py-0.5 rounded border border-[#2A3446]">
+                        <code className="text-[10px] text-white bg-nebula-navy px-1.5 py-0.5 rounded border border-nebula-steel">
                           {item.order_id}
                         </code>
                       </span>
@@ -428,7 +428,7 @@ export function AdminPlansAndNegotiationsPage() {
                       onClick={() => handleOpenEditModal(item)}
                       className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-md ${
                         isApproved
-                          ? "bg-[#1F2C3F] border border-[#2A3446] text-[#BCCCE6] hover:bg-[#2A3446] hover:text-white"
+                          ? "bg-[#1F2C3F] border border-nebula-steel text-nebula-periwinkle hover:bg-[#2A3446] hover:text-white"
                           : "bg-[#BCCCE6] text-[#050810] hover:bg-white font-extrabold"
                       }`}
                     >
@@ -452,7 +452,7 @@ export function AdminPlansAndNegotiationsPage() {
           }}
         >
           <div
-            className="relative w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] border border-[#2A3446] max-h-[90vh] overflow-y-auto text-[#F8FAFC] m-auto animate-[zoomIn_0.2s_cubic-bezier(0.16,1,0.3,1)]"
+            className="relative w-full max-w-lg rounded-3xl bg-nebula-surface p-6 sm:p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] border border-nebula-steel max-h-[90vh] overflow-y-auto text-[#F8FAFC] m-auto animate-[zoomIn_0.2s_cubic-bezier(0.16,1,0.3,1)]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
@@ -460,42 +460,42 @@ export function AdminPlansAndNegotiationsPage() {
               type="button"
               onClick={() => setActiveModalItem(null)}
               disabled={approveMutation.isPending}
-              className="absolute top-5 right-5 size-8 rounded-full bg-[#0B111C] border border-[#2A3446] text-[#97A0B3] hover:bg-[#2A3446] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-5 right-5 size-8 rounded-full bg-nebula-navy border border-nebula-steel text-nebula-mist hover:bg-[#2A3446] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
             >
               <X className="size-4" />
             </button>
 
             <div className="space-y-5">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30 mb-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#7FA0D6]/20 text-nebula-glow border border-[#7FA0D6]/30 mb-2">
                   <Sparkles className="size-3" /> Authoritative Plan Agreement
                 </div>
                 <h3 className="text-xl font-bold text-white tracking-tight">
                   Edit & Set Final Amount
                 </h3>
-                <p className="text-xs text-[#97A0B3] mt-1 leading-relaxed">
+                <p className="text-xs text-nebula-mist mt-1 leading-relaxed">
                   Approve customized pricing for <span className="text-white font-bold">{activeModalItem.client_name}</span>. This dynamically provisions a live Razorpay order and sends checkout access directly to the Client Portal.
                 </p>
               </div>
 
               {/* Client Brief Box */}
-              <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-2 text-xs">
+              <div className="p-4 rounded-2xl bg-nebula-navy border border-nebula-steel space-y-2 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Client Email:</span>
+                  <span className="text-nebula-mist">Client Email:</span>
                   <span className="font-semibold text-white">{activeModalItem.client_email}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Contact WhatsApp:</span>
+                  <span className="text-nebula-mist">Contact WhatsApp:</span>
                   <span className="font-semibold text-white">{activeModalItem.contact_phone}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Proposed Scope / Offer:</span>
-                  <span className="font-bold text-[#7FA0D6]">
+                  <span className="text-nebula-mist">Proposed Scope / Offer:</span>
+                  <span className="font-bold text-nebula-glow">
                     {activeModalItem.proposed_budget || "Not specified"}
                   </span>
                 </div>
                 {activeModalItem.notes && (
-                  <div className="pt-2 border-t border-[#2A3446]/60 text-[#97A0B3]">
+                  <div className="pt-2 border-t border-nebula-steel/60 text-nebula-mist">
                     <span className="font-semibold text-[#F8FAFC]">Context:</span> {activeModalItem.notes}
                   </div>
                 )}
@@ -510,11 +510,11 @@ export function AdminPlansAndNegotiationsPage() {
 
               <form onSubmit={handleApproveSubmit} className="space-y-5">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-nebula-mist mb-2">
                     Final Negotiated Amount (₹ / Month) *
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-base text-[#7FA0D6]">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-base text-nebula-glow">
                       ₹
                     </span>
                     <input
@@ -525,13 +525,13 @@ export function AdminPlansAndNegotiationsPage() {
                       value={finalAmountInput}
                       onChange={(e) => setFinalAmountInput(e.target.value)}
                       placeholder="e.g. 35000"
-                      className="w-full pl-9 pr-4 py-3 rounded-2xl border border-[#2A3446] bg-[#050810] text-base font-bold text-white placeholder:text-[#97A0B3] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] shadow-inner"
+                      className="w-full pl-9 pr-4 py-3 rounded-2xl border border-nebula-steel bg-nebula-void text-base font-bold text-white placeholder:text-nebula-mist focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] shadow-inner"
                     />
                   </div>
 
                   {/* Quick Preset Buttons */}
                   <div className="flex items-center gap-2 mt-2.5 flex-wrap">
-                    <span className="text-[10px] text-[#97A0B3] font-bold mr-1">Quick Select:</span>
+                    <span className="text-[10px] text-nebula-mist font-bold mr-1">Quick Select:</span>
                     {[25000, 35000, 50000, 75000, 95000].map((preset) => (
                       <button
                         key={preset}
@@ -540,7 +540,7 @@ export function AdminPlansAndNegotiationsPage() {
                         className={`text-[11px] px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
                           finalAmountInput === String(preset)
                             ? "bg-[#7FA0D6] border-[#7FA0D6] text-[#050810] font-black"
-                            : "bg-[#0B111C] border-[#2A3446] text-[#97A0B3] hover:text-white"
+                            : "bg-nebula-navy border-nebula-steel text-nebula-mist hover:text-white"
                         }`}
                       >
                         ₹{(preset / 1000).toFixed(0)}k
@@ -549,8 +549,8 @@ export function AdminPlansAndNegotiationsPage() {
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-[#0B111C]/80 border border-[#2A3446] text-[11px] text-[#97A0B3] leading-relaxed flex items-start gap-2.5">
-                  <ShieldCheck className="size-4 shrink-0 text-[#7FA0D6] mt-0.5" />
+                <div className="p-3.5 rounded-2xl bg-nebula-navy/80 border border-nebula-steel text-[11px] text-nebula-mist leading-relaxed flex items-start gap-2.5">
+                  <ShieldCheck className="size-4 shrink-0 text-nebula-glow mt-0.5" />
                   <span>
                     Clicking approve will generate an authoritative Razorpay order ID for{" "}
                     <strong className="text-white">
@@ -566,7 +566,7 @@ export function AdminPlansAndNegotiationsPage() {
                     type="button"
                     onClick={() => setActiveModalItem(null)}
                     disabled={approveMutation.isPending}
-                    className="px-5 py-2.5 rounded-full text-xs font-semibold text-[#97A0B3] hover:text-white transition-colors cursor-pointer"
+                    className="px-5 py-2.5 rounded-full text-xs font-semibold text-nebula-mist hover:text-white transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>

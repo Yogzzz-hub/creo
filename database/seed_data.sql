@@ -52,7 +52,7 @@ INSERT INTO plans (
     10,
     1,
     false,
-    5,
+    0,
     '[
         "8 Static brand posters (1:1 & 4:5)",
         "4 High-impact 9:16 mobile reels",
@@ -77,7 +77,7 @@ INSERT INTO plans (
     22,
     2,
     true,
-    3,
+    0,
     '[
         "16 Static brand posters (multi-format)",
         "10 Cinematic 9:16 reels with audio sync",
@@ -103,7 +103,7 @@ INSERT INTO plans (
     44,
     3,
     true,
-    2,
+    0,
     '[
         "32 Static brand posters & custom carousel decks",
         "20 High-production 4K reels & UGC composites",

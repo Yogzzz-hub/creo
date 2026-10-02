@@ -29,14 +29,14 @@ export function PublicBottomNav() {
               to={item.href}
               className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all duration-200 min-w-[54px] ${
                 isActive
-                  ? "text-[#7FA0D6] font-bold"
+                  ? "text-nebula-glow font-bold"
                   : "text-slate-500 hover:text-slate-900 font-medium"
               }`}
             >
               <div className="relative">
                 <Icon className={`size-5 transition-transform ${isActive ? "scale-110 stroke-[2.5]" : "stroke-[1.8]"}`} />
                 {isActive && (
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full bg-[#7FA0D6]" />
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full bg-nebula-glow" />
                 )}
               </div>
               <span className="text-[10px] mt-1 tracking-tight">{item.label}</span>
@@ -48,10 +48,10 @@ export function PublicBottomNav() {
         {user ? (
           <Link
             to={userHome}
-            className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-[#7FA0D6] hover:text-[#0B111C] min-w-[54px]"
+            className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-nebula-glow hover:text-nebula-navy min-w-[54px]"
           >
             <div className="relative">
-              <LayoutDashboard className="size-5 stroke-[2] text-[#7FA0D6]" />
+              <LayoutDashboard className="size-5 stroke-[2] text-nebula-glow" />
             </div>
             <span className="text-[10px] font-bold mt-1 tracking-tight">Portal</span>
           </Link>

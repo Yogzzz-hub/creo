@@ -357,7 +357,7 @@ export function PortalWrapper({ children }: { children: React.ReactNode }) {
     : "member";
 
   return (
-    <div className="portal-dark relative min-h-screen w-full bg-[#0B111C] text-[#F1F5F9] overflow-x-hidden">
+    <div className="portal-dark relative min-h-screen w-full bg-nebula-navy text-slate-100 overflow-x-hidden">
       {shouldRender && <AntigravityBackground theme={currentTheme} />}
       <div className="relative z-10 w-full min-h-screen flex flex-col">
         {children}

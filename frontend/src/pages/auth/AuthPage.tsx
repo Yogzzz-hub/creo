@@ -206,7 +206,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
   }
 
   return (
-    <div className="fixed inset-0 h-screen max-h-screen w-screen overflow-hidden flex flex-col justify-between bg-[#050810] text-[#F8FAFC] font-sans selection:bg-[#7FA0D6]/30">
+    <div className="fixed inset-0 h-screen max-h-screen w-screen overflow-hidden flex flex-col justify-between bg-nebula-void text-[#F8FAFC] font-sans selection:bg-[#7FA0D6]/30">
       
       {/* Background Ambient Glow & Grid Matrix */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -223,13 +223,13 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
       </div>
 
       {/* ── Top Header Bar (Compact: 52px) ── */}
-      <header className="relative z-20 h-13 shrink-0 flex items-center justify-between px-6 sm:px-10 border-b border-[#222F44]/40 bg-[#050810]/70 backdrop-blur-md">
+      <header className="relative z-20 h-13 shrink-0 flex items-center justify-between px-6 sm:px-10 border-b border-nebula-steel/40 bg-nebula-void/70 backdrop-blur-md">
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center text-xl font-black tracking-tight text-[#F8FAFC] hover:opacity-90 transition">
             <span>creo</span>
-            <span className="text-[#7FA0D6] text-2xl leading-none">.</span>
+            <span className="text-nebula-glow text-2xl leading-none">.</span>
           </Link>
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#121926] border border-[#222F44] text-[10px] font-semibold text-[#7FA0D6] uppercase tracking-wider">
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-nebula-surface border border-nebula-steel text-[10px] font-semibold text-nebula-glow uppercase tracking-wider">
             <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
             Agency OS v2.6
           </div>
@@ -240,19 +240,19 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
             <button
               type="button"
               onClick={handleDemoFill}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#121926] hover:bg-[#0B111C] border border-[#7FA0D6]/40 text-[#7FA0D6] hover:text-[#F8FAFC] text-[11px] font-semibold transition shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-nebula-surface hover:bg-nebula-navy border border-[#7FA0D6]/40 text-nebula-glow hover:text-[#F8FAFC] text-[11px] font-semibold transition shadow-sm cursor-pointer"
               title="Auto-fill Executive Admin credentials"
             >
-              <Sparkles className="size-3 text-[#7FA0D6]" />
+              <Sparkles className="size-3 text-nebula-glow" />
               <span className="hidden xs:inline">Demo: </span>Auto-Fill Admin
             </button>
           )}
 
           <Link 
             to="/" 
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#222F44] bg-[#0A0F18] text-[11px] font-semibold text-[#F8FAFC] hover:bg-[#121926] hover:border-[#7FA0D6]/40 transition shadow-xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-nebula-steel bg-nebula-navy text-[11px] font-semibold text-[#F8FAFC] hover:bg-nebula-surface hover:border-[#7FA0D6]/40 transition shadow-xs"
           >
-            <ArrowLeft className="size-3 text-[#97A0B3]" /> 
+            <ArrowLeft className="size-3 text-nebula-mist" /> 
             <span>Home</span>
           </Link>
         </div>
@@ -264,73 +264,73 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
           
           {/* Left Column: Agency OS Telemetry Feature Deck (Desktop only) */}
           <div className="hidden lg:flex lg:col-span-6 flex-col justify-center space-y-4 pr-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#121926] border border-[#222F44] px-3 py-1 text-[10px] font-bold tracking-widest uppercase text-[#7FA0D6] w-fit shadow-xs">
-              <Zap className="size-3 text-[#7FA0D6]" />
+            <div className="inline-flex items-center gap-2 rounded-full bg-nebula-surface border border-nebula-steel px-3 py-1 text-[10px] font-bold tracking-widest uppercase text-nebula-glow w-fit shadow-xs">
+              <Zap className="size-3 text-nebula-glow" />
               AGENCY COMMAND TELEMETRY
             </div>
 
             <h1 className="text-3xl xl:text-4xl font-black tracking-tight leading-[1.1] text-[#F8FAFC]">
-              One operating layer for high-velocity <span className="text-[#7FA0D6]">creative agencies.</span>
+              One operating layer for high-velocity <span className="text-nebula-glow">creative agencies.</span>
             </h1>
 
-            <p className="text-xs text-[#97A0B3] leading-relaxed max-w-md">
+            <p className="text-xs text-nebula-mist leading-relaxed max-w-md">
               Replace WhatsApp silos and blind billing with live capacity meters, client approval gates, and unit margin telemetry in real time.
             </p>
 
             {/* 3 Telemetry Bento Mini Cards */}
             <div className="space-y-2.5 pt-1 max-w-md">
-              <div className="bg-[#121926]/70 backdrop-blur-md border border-[#222F44] rounded-xl p-3 flex items-center justify-between hover:border-[#7FA0D6]/30 transition-colors">
+              <div className="bg-nebula-surface/70 backdrop-blur-md border border-nebula-steel rounded-xl p-3 flex items-center justify-between hover:border-[#7FA0D6]/30 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-lg bg-[#0A0F18] border border-[#222F44] flex items-center justify-center text-[#7FA0D6] shrink-0">
+                  <div className="size-8 rounded-lg bg-nebula-navy border border-nebula-steel flex items-center justify-center text-nebula-glow shrink-0">
                     <TrendingUp className="size-4" />
                   </div>
                   <div>
                     <div className="text-xs font-bold text-[#F8FAFC]">Retainer Margin Engine</div>
-                    <div className="text-[10px] text-[#97A0B3]">Astra Living &bull; Live P&amp;L Tracker</div>
+                    <div className="text-[10px] text-nebula-mist">Astra Living &bull; Live P&amp;L Tracker</div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-mono font-bold text-[#7FA0D6]">41.25%</span>
-                  <div className="text-[9px] text-[#97A0B3]">Verified Margin</div>
+                  <span className="text-xs font-mono font-bold text-nebula-glow">41.25%</span>
+                  <div className="text-[9px] text-nebula-mist">Verified Margin</div>
                 </div>
               </div>
 
-              <div className="bg-[#121926]/70 backdrop-blur-md border border-[#222F44] rounded-xl p-3 flex items-center justify-between hover:border-[#7FA0D6]/30 transition-colors">
+              <div className="bg-nebula-surface/70 backdrop-blur-md border border-nebula-steel rounded-xl p-3 flex items-center justify-between hover:border-[#7FA0D6]/30 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-lg bg-[#0A0F18] border border-[#222F44] flex items-center justify-center text-emerald-400 shrink-0">
+                  <div className="size-8 rounded-lg bg-nebula-navy border border-nebula-steel flex items-center justify-center text-emerald-400 shrink-0">
                     <Activity className="size-4" />
                   </div>
                   <div>
                     <div className="text-xs font-bold text-[#F8FAFC]">Capacity Radar</div>
-                    <div className="text-[10px] text-[#97A0B3]">Motion Pod &bull; Zero Burnout Trigger</div>
+                    <div className="text-[10px] text-nebula-mist">Motion Pod &bull; Zero Burnout Trigger</div>
                   </div>
                 </div>
                 <div className="text-right">
                   <span className="text-xs font-mono font-bold text-emerald-400">82%</span>
-                  <div className="text-[9px] text-[#97A0B3]">Utilization Nominal</div>
+                  <div className="text-[9px] text-nebula-mist">Utilization Nominal</div>
                 </div>
               </div>
 
-              <div className="bg-[#121926]/70 backdrop-blur-md border border-[#222F44] rounded-xl p-3 flex items-center justify-between hover:border-[#7FA0D6]/30 transition-colors">
+              <div className="bg-nebula-surface/70 backdrop-blur-md border border-nebula-steel rounded-xl p-3 flex items-center justify-between hover:border-[#7FA0D6]/30 transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-lg bg-[#0A0F18] border border-[#222F44] flex items-center justify-center text-[#7FA0D6] shrink-0">
+                  <div className="size-8 rounded-lg bg-nebula-navy border border-nebula-steel flex items-center justify-center text-nebula-glow shrink-0">
                     <CheckCircle2 className="size-4" />
                   </div>
                   <div>
                     <div className="text-xs font-bold text-[#F8FAFC]">1-Click Client Sign-Off</div>
-                    <div className="text-[10px] text-[#97A0B3]">Magic-Links with Frame Annotations</div>
+                    <div className="text-[10px] text-nebula-mist">Magic-Links with Frame Annotations</div>
                   </div>
                 </div>
                 <div className="text-right">
                   <span className="text-xs font-mono font-bold text-[#F8FAFC]">2.4h SLA</span>
-                  <div className="text-[9px] text-[#97A0B3]">Turnaround Avg</div>
+                  <div className="text-[9px] text-nebula-mist">Turnaround Avg</div>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 pt-1 text-[11px] text-[#97A0B3]">
+            <div className="flex items-center gap-3 pt-1 text-[11px] text-nebula-mist">
               <span className="flex items-center gap-1.5 font-semibold text-[#F8FAFC]">
-                <ShieldCheck className="size-3.5 text-[#7FA0D6]" />
+                <ShieldCheck className="size-3.5 text-nebula-glow" />
                 SOC-2 Type II Certified
               </span>
               <span>&bull;</span>
@@ -340,10 +340,10 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
 
           {/* Right Column: Auth Console Bento Card (Fits cleanly in vertical space) */}
           <div className="col-span-12 lg:col-span-6 flex justify-center">
-            <div className="w-full max-w-[410px] bg-[#121926]/90 backdrop-blur-xl border border-[#222F44] rounded-2xl p-5 sm:p-6 shadow-[0_15px_40px_rgba(0,0,0,0.6)] flex flex-col justify-between">
+            <div className="w-full max-w-[410px] bg-nebula-surface/90 backdrop-blur-xl border border-nebula-steel rounded-2xl p-5 sm:p-6 shadow-[0_15px_40px_rgba(0,0,0,0.6)] flex flex-col justify-between">
               
               {/* Keep verification focused: account switching is unavailable until OTP succeeds. */}
-              {!registrationPending && <div className="bg-[#0A0F18] border border-[#222F44] p-1 rounded-full flex mb-4">
+              {!registrationPending && <div className="bg-nebula-navy border border-nebula-steel p-1 rounded-full flex mb-4">
                 <button 
                   type="button"
                   onClick={() => {
@@ -356,8 +356,8 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                   }}
                   className={`text-xs py-1.5 px-4 rounded-full flex-1 text-center transition font-semibold cursor-pointer ${
                     mode === "signin" 
-                      ? "bg-[#161F2D] border border-[#7FA0D6]/40 text-[#F8FAFC] shadow-xs" 
-                      : "text-[#97A0B3] hover:text-[#F8FAFC]"
+                      ? "bg-nebula-surface border border-[#7FA0D6]/40 text-[#F8FAFC] shadow-xs" 
+                      : "text-nebula-mist hover:text-[#F8FAFC]"
                   }`}
                 >
                   Sign In
@@ -372,8 +372,8 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                   }}
                   className={`text-xs py-1.5 px-4 rounded-full flex-1 text-center transition font-semibold cursor-pointer ${
                     mode === "signup" 
-                      ? "bg-[#161F2D] border border-[#7FA0D6]/40 text-[#F8FAFC] shadow-xs" 
-                      : "text-[#97A0B3] hover:text-[#F8FAFC]"
+                      ? "bg-nebula-surface border border-[#7FA0D6]/40 text-[#F8FAFC] shadow-xs" 
+                      : "text-nebula-mist hover:text-[#F8FAFC]"
                   }`}
                 >
                   Create Account
@@ -387,7 +387,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                     ? "Verify your email"
                     : mode === "signin" ? "Welcome back to CREO" : "Start operating your studio"}
                 </h2>
-                <p className="text-[11px] text-[#97A0B3] mt-0.5">
+                <p className="text-[11px] text-nebula-mist mt-0.5">
                   {registrationPending
                     ? `Enter the 6-digit code sent to ${email.trim()}.`
                     : mode === "signin"
@@ -407,11 +407,11 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
               {registrationPending ? (
                 <form onSubmit={handleVerifyRegistration} className="space-y-3">
                   <div>
-                    <label className="text-[9px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1 block text-left">
+                    <label className="text-[9px] font-bold uppercase tracking-wider text-nebula-mist mb-1 block text-left">
                       Verification Code
                     </label>
-                    <div className="relative flex items-center bg-[#0A0F18] border border-[#222F44] rounded-xl px-3 py-2.5 focus-within:border-[#7FA0D6] focus-within:ring-1 focus-within:ring-[#7FA0D6]/30 transition-all">
-                      <ShieldCheck className="text-[#97A0B3] size-4 mr-2.5 shrink-0" />
+                    <div className="relative flex items-center bg-nebula-navy border border-nebula-steel rounded-xl px-3 py-2.5 focus-within:border-[#7FA0D6] focus-within:ring-1 focus-within:ring-[#7FA0D6]/30 transition-all">
+                      <ShieldCheck className="text-nebula-mist size-4 mr-2.5 shrink-0" />
                       <input
                         type="text"
                         inputMode="numeric"
@@ -447,7 +447,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                         setError(null);
                         clearPendingRegistration();
                       }}
-                      className="text-[#97A0B3] hover:text-white transition-colors disabled:opacity-50"
+                      className="text-nebula-mist hover:text-white transition-colors disabled:opacity-50"
                     >
                       Change details
                     </button>
@@ -455,7 +455,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                       type="button"
                       disabled={loading}
                       onClick={handleResendRegistrationCode}
-                      className="text-[#7FA0D6] hover:text-white transition-colors disabled:opacity-50"
+                      className="text-nebula-glow hover:text-white transition-colors disabled:opacity-50"
                     >
                       Resend code
                     </button>
@@ -468,11 +468,11 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                 {mode === "signup" && (
                   <>
                     <div>
-                      <label className="text-[9px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1 block text-left">
+                      <label className="text-[9px] font-bold uppercase tracking-wider text-nebula-mist mb-1 block text-left">
                         Full Name
                       </label>
-                      <div className="relative flex items-center bg-[#0A0F18] border border-[#222F44] rounded-xl px-3 py-2.5 focus-within:border-[#7FA0D6] focus-within:ring-1 focus-within:ring-[#7FA0D6]/30 transition-all">
-                        <User className="text-[#97A0B3] size-4 mr-2.5 shrink-0" />
+                      <div className="relative flex items-center bg-nebula-navy border border-nebula-steel rounded-xl px-3 py-2.5 focus-within:border-[#7FA0D6] focus-within:ring-1 focus-within:ring-[#7FA0D6]/30 transition-all">
+                        <User className="text-nebula-mist size-4 mr-2.5 shrink-0" />
                         <input 
                           type="text" 
                           value={fullName}
@@ -485,11 +485,11 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                     </div>
 
                     <div>
-                      <label className="text-[9px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1 block text-left">
+                      <label className="text-[9px] font-bold uppercase tracking-wider text-nebula-mist mb-1 block text-left">
                         Business / Agency Name
                       </label>
-                      <div className="relative flex items-center bg-[#0A0F18] border border-[#222F44] rounded-xl px-3 py-2.5 focus-within:border-[#7FA0D6] focus-within:ring-1 focus-within:ring-[#7FA0D6]/30 transition-all">
-                        <Building2 className="text-[#97A0B3] size-4 mr-2.5 shrink-0" />
+                      <div className="relative flex items-center bg-nebula-navy border border-nebula-steel rounded-xl px-3 py-2.5 focus-within:border-[#7FA0D6] focus-within:ring-1 focus-within:ring-[#7FA0D6]/30 transition-all">
+                        <Building2 className="text-nebula-mist size-4 mr-2.5 shrink-0" />
                         <input 
                           type="text" 
                           value={businessName}
@@ -504,11 +504,11 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
 
                 {/* Email Field */}
                 <div>
-                  <label className="text-[9px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1 block text-left">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-nebula-mist mb-1 block text-left">
                     {mode === "signin" ? "Business Email" : "Agency / Work Email"}
                   </label>
-                  <div className="relative flex items-center bg-[#0A0F18] border border-[#222F44] rounded-xl px-3 py-2.5 focus-within:border-[#7FA0D6] focus-within:ring-1 focus-within:ring-[#7FA0D6]/30 transition-all">
-                    <Mail className="text-[#97A0B3] size-4 mr-2.5 shrink-0" />
+                  <div className="relative flex items-center bg-nebula-navy border border-nebula-steel rounded-xl px-3 py-2.5 focus-within:border-[#7FA0D6] focus-within:ring-1 focus-within:ring-[#7FA0D6]/30 transition-all">
+                    <Mail className="text-nebula-mist size-4 mr-2.5 shrink-0" />
                     <input 
                       type="email" 
                       value={email}
@@ -524,11 +524,11 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
 
                 {/* Password Field */}
                 <div>
-                  <label className="text-[9px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1 block text-left">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-nebula-mist mb-1 block text-left">
                     {mode === "signin" ? "Password" : "Create Password"}
                   </label>
-                  <div className="relative flex items-center bg-[#0A0F18] border border-[#222F44] rounded-xl px-3 py-2.5 focus-within:border-[#7FA0D6] focus-within:ring-1 focus-within:ring-[#7FA0D6]/30 transition-all">
-                    <Lock className="text-[#97A0B3] size-4 mr-2.5 shrink-0" />
+                  <div className="relative flex items-center bg-nebula-navy border border-nebula-steel rounded-xl px-3 py-2.5 focus-within:border-[#7FA0D6] focus-within:ring-1 focus-within:ring-[#7FA0D6]/30 transition-all">
+                    <Lock className="text-nebula-mist size-4 mr-2.5 shrink-0" />
                     <input 
                       type={showPassword ? "text" : "password"} 
                       value={password}
@@ -542,7 +542,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                     <button 
                       type="button" 
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-[#97A0B3] hover:text-[#F8FAFC] shrink-0 ml-2 transition-colors focus:outline-none cursor-pointer"
+                      className="text-nebula-mist hover:text-[#F8FAFC] shrink-0 ml-2 transition-colors focus:outline-none cursor-pointer"
                       aria-label={showPassword ? "Hide password" : "Show password"}
                     >
                       {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -557,20 +557,20 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                       className="flex items-center gap-2 cursor-pointer group select-none" 
                       onClick={() => setTermsAccepted(!termsAccepted)}
                     >
-                      <div className={`w-3.5 h-3.5 rounded-[4px] flex items-center justify-center shrink-0 transition-colors ${termsAccepted ? 'bg-[#7FA0D6]' : 'bg-[#0A0F18] border border-[#222F44]'}`}>
+                      <div className={`w-3.5 h-3.5 rounded-[4px] flex items-center justify-center shrink-0 transition-colors ${termsAccepted ? 'bg-[#7FA0D6]' : 'bg-nebula-navy border border-nebula-steel'}`}>
                         {termsAccepted && <Check className="size-2.5 text-[#050810]" strokeWidth={3.5} />}
                       </div>
-                      <span className="text-[#97A0B3] group-hover:text-[#F8FAFC] transition-colors">I accept the Terms & Privacy Policy</span>
+                      <span className="text-nebula-mist group-hover:text-[#F8FAFC] transition-colors">I accept the Terms & Privacy Policy</span>
                     </label>
                   ) : (
                     <label 
                       className="flex items-center gap-2 cursor-pointer group select-none" 
                       onClick={() => setRememberMe(!rememberMe)}
                     >
-                      <div className={`w-3.5 h-3.5 rounded-[4px] flex items-center justify-center shrink-0 transition-colors ${rememberMe ? 'bg-[#7FA0D6]' : 'bg-[#0A0F18] border border-[#222F44]'}`}>
+                      <div className={`w-3.5 h-3.5 rounded-[4px] flex items-center justify-center shrink-0 transition-colors ${rememberMe ? 'bg-[#7FA0D6]' : 'bg-nebula-navy border border-nebula-steel'}`}>
                         {rememberMe && <Check className="size-2.5 text-[#050810]" strokeWidth={3.5} />}
                       </div>
-                      <span className="text-[#97A0B3] group-hover:text-[#F8FAFC] transition-colors">Remember me</span>
+                      <span className="text-nebula-mist group-hover:text-[#F8FAFC] transition-colors">Remember me</span>
                     </label>
                   )}
                   
@@ -582,7 +582,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                         setForgotEmail(email);
                         setForgotStatus(null);
                       }}
-                      className="text-[#7FA0D6] hover:text-white transition focus:outline-none text-[11px] cursor-pointer"
+                      className="text-nebula-glow hover:text-white transition focus:outline-none text-[11px] cursor-pointer"
                     >
                       Forgot password?
                     </button>
@@ -610,16 +610,16 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
               {!registrationPending && mode === "signin" ? (
                 <div className="mt-3">
                   <div className="flex items-center my-2.5">
-                    <div className="flex-1 border-t border-[#222F44]/60"></div>
-                    <span className="px-2 text-[9px] text-[#97A0B3] uppercase tracking-wider font-semibold">
+                    <div className="flex-1 border-t border-nebula-steel/60"></div>
+                    <span className="px-2 text-[9px] text-nebula-mist uppercase tracking-wider font-semibold">
                       OR
                     </span>
-                    <div className="flex-1 border-t border-[#222F44]/60"></div>
+                    <div className="flex-1 border-t border-nebula-steel/60"></div>
                   </div>
 
                   <button 
                     type="button"
-                    className="w-full bg-[#0A0F18] border border-[#222F44] hover:bg-[#0B111C] hover:border-[#7FA0D6]/40 text-[#F8FAFC] text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-2.5 transition shadow-xs cursor-pointer" 
+                    className="w-full bg-nebula-navy border border-nebula-steel hover:bg-nebula-navy hover:border-[#7FA0D6]/40 text-[#F8FAFC] text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-2.5 transition shadow-xs cursor-pointer" 
                     onClick={async () => { 
                       try { 
                         setLoading(true); 
@@ -644,16 +644,16 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                   </button>
                 </div>
               ) : !registrationPending ? (
-                <div className="mt-3 pt-2 text-[10px] text-[#97A0B3] text-center border-t border-[#222F44]/50 leading-relaxed">
+                <div className="mt-3 pt-2 text-[10px] text-nebula-mist text-center border-t border-nebula-steel/50 leading-relaxed">
                   By joining, you agree to CREO's{" "}
-                  <Link to="/terms" className="text-[#7FA0D6] hover:underline">Terms</Link> and{" "}
-                  <Link to="/privacy" className="text-[#7FA0D6] hover:underline">Privacy Protocol</Link>.
+                  <Link to="/terms" className="text-nebula-glow hover:underline">Terms</Link> and{" "}
+                  <Link to="/privacy" className="text-nebula-glow hover:underline">Privacy Protocol</Link>.
                 </div>
               ) : null}
 
               {/* Bottom security micro badge */}
-              <div className="pt-2 text-center text-[10px] text-[#97A0B3]/50 flex items-center justify-center gap-1.5">
-                <ShieldCheck className="size-3 text-[#7FA0D6]" />
+              <div className="pt-2 text-center text-[10px] text-nebula-mist/50 flex items-center justify-center gap-1.5">
+                <ShieldCheck className="size-3 text-nebula-glow" />
                 <span>256-Bit Encrypted &bull; ISO/SOC-2 Standards</span>
               </div>
 
@@ -664,7 +664,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
       </main>
 
       {/* ── Slim Bottom Bar (Compact: 36px) ── */}
-      <footer className="relative z-20 h-9 shrink-0 flex items-center justify-between px-6 sm:px-10 border-t border-[#222F44]/40 bg-[#050810]/70 text-[10px] text-[#97A0B3]/60">
+      <footer className="relative z-20 h-9 shrink-0 flex items-center justify-between px-6 sm:px-10 border-t border-nebula-steel/40 bg-nebula-void/70 text-[10px] text-nebula-mist/60">
         <div>
           &copy; {new Date().getFullYear()} CREO Technologies Inc. All rights reserved.
         </div>
@@ -682,23 +682,23 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
       {/* ── Forgot Password Modal ── */}
       {forgotOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-sm bg-[#121926] border border-[#222F44] rounded-2xl p-6 shadow-2xl relative text-left">
+          <div className="w-full max-w-sm bg-nebula-surface border border-nebula-steel rounded-2xl p-6 shadow-2xl relative text-left">
             <button
               type="button"
               onClick={() => setForgotOpen(false)}
-              className="absolute top-4 right-4 text-[#97A0B3] hover:text-[#F8FAFC] transition p-1 cursor-pointer"
+              className="absolute top-4 right-4 text-nebula-mist hover:text-[#F8FAFC] transition p-1 cursor-pointer"
             >
               <X className="size-4" />
             </button>
 
             <div className="flex items-center gap-2.5 mb-2">
-              <div className="size-8 rounded-lg bg-[#0A0F18] border border-[#222F44] flex items-center justify-center text-[#7FA0D6]">
+              <div className="size-8 rounded-lg bg-nebula-navy border border-nebula-steel flex items-center justify-center text-nebula-glow">
                 <Mail className="size-4" />
               </div>
               <h3 className="text-base font-bold text-[#F8FAFC]">Reset Agency Password</h3>
             </div>
 
-            <p className="text-xs text-[#97A0B3] mb-4">
+            <p className="text-xs text-nebula-mist mb-4">
               Enter your verified business email to receive an authentication reset link.
             </p>
 
@@ -713,8 +713,8 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
             )}
 
             <form onSubmit={handleForgotPasswordSubmit} className="space-y-3">
-              <div className="relative flex items-center bg-[#0A0F18] border border-[#222F44] rounded-xl px-3 py-2.5 focus-within:border-[#7FA0D6]">
-                <Mail className="text-[#97A0B3] size-4 mr-2.5 shrink-0" />
+              <div className="relative flex items-center bg-nebula-navy border border-nebula-steel rounded-xl px-3 py-2.5 focus-within:border-[#7FA0D6]">
+                <Mail className="text-nebula-mist size-4 mr-2.5 shrink-0" />
                 <input 
                   type="email" 
                   value={forgotEmail}
@@ -729,7 +729,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                 <button
                   type="button"
                   onClick={() => setForgotOpen(false)}
-                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-[#97A0B3] hover:text-[#F8FAFC] transition cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-nebula-mist hover:text-[#F8FAFC] transition cursor-pointer"
                 >
                   Cancel
                 </button>

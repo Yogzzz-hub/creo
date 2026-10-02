@@ -26,8 +26,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import Conflict, Forbidden, NotFound
 from app.core.rbac import (
     Actor,
-    StaffActor,
-    TeamLeadActor,
+    get_staff_actor,
+    get_team_lead_actor,
 )
 from app.db.session import get_db
 from app.models.billing import Plan, Subscription
@@ -102,7 +102,7 @@ class TaskPipelineResponse(BaseModel):
 @router.get("/kanban", response_model=TaskPipelineResponse)
 async def get_kanban_board(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> TaskPipelineResponse:
     """Return task pipeline columns in ONE database query using json_agg per column."""
     where_conditions: list[str] = []
@@ -212,7 +212,7 @@ async def get_kanban_board(
 async def create_task(
     payload: TaskCreateRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> TaskResponse:
     """Create a new task with automated SLA due computation."""
     # Lookup client plan tier to compute turnaround SLA
@@ -266,7 +266,7 @@ async def assign_task(
     task_id: uuid.UUID,
     payload: TaskAssignRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> TaskResponse:
     """Assign task to a specific creative or trigger workload-aware auto-dispatch."""
     task = await db.get(Task, task_id)
@@ -309,7 +309,7 @@ async def reassign_task(
     task_id: uuid.UUID,
     payload: TaskReassignRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = TeamLeadActor,
+    actor: Actor = Depends(get_team_lead_actor),
 ) -> TaskResponse:
     """Reassign task to a different creative with audit logging."""
     task = await db.get(Task, task_id)
@@ -343,7 +343,7 @@ async def move_task(
     task_id: uuid.UUID,
     payload: TaskMoveRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> TaskResponse:
     """Move task across pipeline stages with role verification and audit log."""
     task = await db.get(Task, task_id)
@@ -391,7 +391,7 @@ async def move_task(
 async def bulk_assign_tasks(
     payload: BulkAssignRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = TeamLeadActor,
+    actor: Actor = Depends(get_team_lead_actor),
 ) -> dict[str, Any]:
     """Bulk assign or dispatch a list of tasks."""
     assigned_count = 0
@@ -429,7 +429,7 @@ async def bulk_assign_tasks(
 @router.post("/sweep-slas")
 async def trigger_sla_sweep(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = TeamLeadActor,
+    actor: Actor = Depends(get_team_lead_actor),
 ) -> dict[str, Any]:
     """Manually trigger idempotent SLA breach sweep."""
     breaches = await breach_sweep(db)

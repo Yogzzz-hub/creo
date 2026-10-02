@@ -142,17 +142,16 @@ def require_roles(*allowed_roles: UserRole) -> Callable[[Actor], Actor]:
 
 # Convenient role-level dependency aliases
 ClientActor = Depends(require_roles(UserRole.CLIENT))
-StaffActor = Depends(
-    require_roles(
-        UserRole.EDITOR,
-        UserRole.DESIGNER,
-        UserRole.TEAM_LEAD,
-        UserRole.ADMIN,
-        UserRole.SUPER_ADMIN,
-    )
+get_staff_actor = require_roles(
+    UserRole.EDITOR,
+    UserRole.DESIGNER,
+    UserRole.TEAM_LEAD,
+    UserRole.ADMIN,
+    UserRole.SUPER_ADMIN,
 )
-TeamLeadActor = Depends(require_roles(UserRole.TEAM_LEAD, UserRole.ADMIN, UserRole.SUPER_ADMIN))
-AdminActor = Depends(require_roles(UserRole.ADMIN, UserRole.SUPER_ADMIN))
-SuperAdminActor = Depends(require_roles(UserRole.SUPER_ADMIN))
-SalesActor = Depends(require_roles(UserRole.SALES, UserRole.ADMIN, UserRole.SUPER_ADMIN))
-InvestorActor = Depends(require_roles(UserRole.INVESTOR_RELATIONS, UserRole.ADMIN, UserRole.SUPER_ADMIN))
+
+get_team_lead_actor = require_roles(UserRole.TEAM_LEAD, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+get_admin_actor = require_roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+get_super_admin_actor = require_roles(UserRole.SUPER_ADMIN)
+get_sales_actor = require_roles(UserRole.SALES, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+get_investor_actor = require_roles(UserRole.INVESTOR_RELATIONS, UserRole.ADMIN, UserRole.SUPER_ADMIN)

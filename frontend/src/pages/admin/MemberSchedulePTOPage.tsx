@@ -86,7 +86,7 @@ export function MemberSchedulePTOPage() {
   };
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
+    <div data-surface="ops" className="min-h-screen bg-nebula-navy text-white font-sans flex flex-col">
       {/* Top Header Navigation matching Admin */}
       <AdminTopHeader activeTab="My Schedule & PTO" />
 
@@ -97,7 +97,7 @@ export function MemberSchedulePTOPage() {
           <div
             className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-between shadow-lg animate-fade-in ${
               toastMessage.type === "info"
-                ? "bg-[#7FA0D6]/15 border-[#7FA0D6]/30 text-blue-800"
+                ? "bg-nebula-glow/15 border-nebula-glow/30 text-blue-800"
                 : "bg-emerald-50 border-emerald-200 text-emerald-800"
             }`}
           >
@@ -112,16 +112,16 @@ export function MemberSchedulePTOPage() {
         )}
 
         {/* 1. Leave & Capacity Ledger Action Strip */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#161F2D] p-2.5 sm:px-4 sm:py-3 rounded-2xl border border-[#2A3446]/80 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-nebula-surface p-2.5 sm:px-4 sm:py-3 rounded-2xl border border-nebula-steel/80 shadow-2xs">
           <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-[#7FA0D6]" />
+            <span className="size-2 rounded-full bg-nebula-glow" />
             <span className="text-xs sm:text-sm font-black text-white tracking-tight">LEAVE & CAPACITY LEDGER</span>
-            <span className="text-xs text-[#97A0B3] font-medium hidden sm:inline">• 2026 Annual Allocation & Coverage Pairing</span>
+            <span className="text-xs text-nebula-mist font-medium hidden sm:inline">• 2026 Annual Allocation & Coverage Pairing</span>
           </div>
 
           <button
             onClick={() => setRequestPtoModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer w-full sm:w-auto"
+            className="px-3.5 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer w-full sm:w-auto"
           >
             <Plane className="size-4" />
             <span>Request Time Off / Leave</span>
@@ -136,24 +136,24 @@ export function MemberSchedulePTOPage() {
           className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3"
         >
           {/* Paid Time Off */}
-          <div className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-[#2A3446]/80 shadow-2xs hover-card-innovative flex flex-col justify-between">
+          <div className="bg-nebula-surface rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-nebula-steel/80 shadow-2xs hover-card-innovative flex flex-col justify-between">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-[#97A0B3]">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-nebula-mist">
                 PAID TIME OFF (PTO)
               </span>
-              <div className="size-7 sm:size-8 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center">
+              <div className="size-7 sm:size-8 rounded-lg bg-nebula-glow/15 text-nebula-glow flex items-center justify-center">
                 <Plane className="size-4" />
               </div>
             </div>
             <div>
               <div className="flex items-baseline gap-1.5 mb-1">
                 <span className="text-xl sm:text-2xl font-black text-white">{ptoRemaining}</span>
-                <span className="text-xs font-extrabold text-[#97A0B3]">Days Left</span>
+                <span className="text-xs font-extrabold text-nebula-mist">Days Left</span>
               </div>
-              <div className="w-full h-2 bg-[#161F2D] rounded-full overflow-hidden my-1">
+              <div className="w-full h-2 bg-nebula-surface rounded-full overflow-hidden my-1">
                 <div className="h-full bg-blue-600 rounded-full smooth-progress-fill w-[72%]" />
               </div>
-              <div className="flex items-center justify-between pt-1 border-t border-[#2A3446] text-[#97A0B3] font-semibold text-xs">
+              <div className="flex items-center justify-between pt-1 border-t border-nebula-steel text-nebula-mist font-semibold text-xs">
                 <span>Used: 5.5 d</span>
                 <span>20 d Annual</span>
               </div>
@@ -161,9 +161,9 @@ export function MemberSchedulePTOPage() {
           </div>
 
           {/* Sick & Medical */}
-          <div className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-[#2A3446]/80 shadow-2xs hover-card-innovative flex flex-col justify-between">
+          <div className="bg-nebula-surface rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-nebula-steel/80 shadow-2xs hover-card-innovative flex flex-col justify-between">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-[#97A0B3]">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-nebula-mist">
                 SICK & MEDICAL
               </span>
               <div className="size-7 sm:size-8 rounded-lg bg-indigo-500/15 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
@@ -173,18 +173,18 @@ export function MemberSchedulePTOPage() {
             <div>
               <div className="flex items-baseline gap-1.5 mb-1">
                 <span className="text-xl sm:text-2xl font-black text-white">{sickRemaining}</span>
-                <span className="text-xs font-extrabold text-[#97A0B3]">Days Available</span>
+                <span className="text-xs font-extrabold text-nebula-mist">Days Available</span>
               </div>
-              <div className="flex items-center justify-between pt-1.5 border-t border-[#2A3446]">
-                <span className="font-extrabold text-[#7FA0D6] text-xs">● 1 pending half-day</span>
+              <div className="flex items-center justify-between pt-1.5 border-t border-nebula-steel">
+                <span className="font-extrabold text-nebula-glow text-xs">● 1 pending half-day</span>
               </div>
             </div>
           </div>
 
           {/* Floating & Comp */}
-          <div className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-[#2A3446]/80 shadow-2xs hover-card-innovative flex flex-col justify-between">
+          <div className="bg-nebula-surface rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-nebula-steel/80 shadow-2xs hover-card-innovative flex flex-col justify-between">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-[#97A0B3]">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-nebula-mist">
                 FLOATING & COMP
               </span>
               <div className="size-7 sm:size-8 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
@@ -194,9 +194,9 @@ export function MemberSchedulePTOPage() {
             <div>
               <div className="flex items-baseline gap-1.5 mb-1">
                 <span className="text-xl sm:text-2xl font-black text-white">{compRemaining}</span>
-                <span className="text-xs font-extrabold text-[#97A0B3]">Days Available</span>
+                <span className="text-xs font-extrabold text-nebula-mist">Days Available</span>
               </div>
-              <div className="flex items-center justify-between pt-1.5 border-t border-[#2A3446] text-[#97A0B3] text-xs font-semibold">
+              <div className="flex items-center justify-between pt-1.5 border-t border-nebula-steel text-nebula-mist text-xs font-semibold">
                 <span>Valid until Dec 31, 2025</span>
               </div>
             </div>
@@ -213,15 +213,15 @@ export function MemberSchedulePTOPage() {
           {/* LEFT 2 COLUMNS */}
           <div className="lg:col-span-2 space-y-3.5 sm:space-y-4">
             {/* Active & Historical Leave Requests */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs hover-card-innovative space-y-3">
-              <div className="flex items-center justify-between pb-2.5 border-b border-[#2A3446]">
+            <div className="bg-nebula-surface rounded-2xl p-4 sm:p-5 border border-nebula-steel/80 shadow-2xs hover-card-innovative space-y-3">
+              <div className="flex items-center justify-between pb-2.5 border-b border-nebula-steel">
                 <div>
                   <h2 className="text-base sm:text-lg font-black text-white">Active & Historical Leave Requests</h2>
-                  <p className="text-xs text-[#97A0B3]">Automated handoff telemetry linked directly to Pod A render pipelines</p>
+                  <p className="text-xs text-nebula-mist">Automated handoff telemetry linked directly to Pod A render pipelines</p>
                 </div>
                 <button
                   onClick={() => showToast("Exported PTO Audit Log CSV report", "success")}
-                  className="text-xs font-extrabold text-[#7FA0D6] hover:underline cursor-pointer"
+                  className="text-xs font-extrabold text-nebula-glow hover:underline cursor-pointer"
                 >
                   Export Audit Log
                 </button>
@@ -230,7 +230,7 @@ export function MemberSchedulePTOPage() {
               {/* Active Requests List */}
               <div className="space-y-2.5">
                 {activeRequests.map((req) => (
-                  <div key={req.id} className="p-3 sm:p-4 rounded-xl bg-[#0B111C] border border-[#2A3446] hover-card-innovative space-y-2.5">
+                  <div key={req.id} className="p-3 sm:p-4 rounded-xl bg-nebula-navy border border-nebula-steel hover-card-innovative space-y-2.5">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                       <div className="flex items-start gap-2.5">
                         <div className="size-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 text-sm font-black shadow-md">
@@ -239,11 +239,11 @@ export function MemberSchedulePTOPage() {
                         <div>
                           <div className="flex items-center gap-2">
                             <h4 className="text-sm font-black text-white">{req.title}</h4>
-                            <span className="px-2 py-0.5 rounded-md text-xs font-extrabold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                            <span className="px-2 py-0.5 rounded-md text-xs font-extrabold bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30">
                               {req.status}
                             </span>
                           </div>
-                          <p className="text-xs text-[#97A0B3] mt-0.5 font-medium">{req.dateRange}</p>
+                          <p className="text-xs text-nebula-mist mt-0.5 font-medium">{req.dateRange}</p>
                         </div>
                       </div>
                       <span className="text-xs font-bold text-emerald-400 bg-emerald-500/15 px-2.5 py-1 rounded-md border border-emerald-500/30 self-start">
@@ -251,15 +251,15 @@ export function MemberSchedulePTOPage() {
                       </span>
                     </div>
 
-                    <div className="p-3 bg-[#161F2D] rounded-xl border border-[#2A3446] text-xs text-[#F1F5F9] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="p-3 bg-nebula-surface rounded-xl border border-nebula-steel text-xs text-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
                         <span className="font-extrabold text-white">Designated Pod Backup:</span>{" "}
-                        <span className="text-xs text-[#97A0B3] font-medium">{req.backup}</span>
+                        <span className="text-xs text-nebula-mist font-medium">{req.backup}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           onClick={() => setModifyModalOpen(true)}
-                          className="px-3 py-1.5 rounded-xl border border-[#2A3446] text-[#F1F5F9] text-xs font-bold hover:bg-[#0B111C] cursor-pointer"
+                          className="px-3 py-1.5 rounded-xl border border-nebula-steel text-slate-100 text-xs font-bold hover:bg-nebula-navy cursor-pointer"
                         >
                           Modify Request
                         </button>
@@ -275,7 +275,7 @@ export function MemberSchedulePTOPage() {
                 ))}
 
                 {activeRequests.length === 0 && (
-                  <div className="p-4 text-center text-xs text-[#97A0B3] font-semibold border-2 border-dashed border-[#2A3446] rounded-xl">
+                  <div className="p-4 text-center text-xs text-nebula-mist font-semibold border-2 border-dashed border-nebula-steel rounded-xl">
                     No pending leave requests. You are active on all upcoming sprint shifts.
                   </div>
                 )}
@@ -283,18 +283,18 @@ export function MemberSchedulePTOPage() {
 
               {/* Past Requests */}
               <div className="pt-2 space-y-2">
-                <div className="text-xs font-extrabold uppercase tracking-wider text-[#97A0B3]">
+                <div className="text-xs font-extrabold uppercase tracking-wider text-nebula-mist">
                   PAST REQUESTS (SPRINT CYCLES 07 – 09)
                 </div>
 
-                <div className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] hover-card-innovative flex items-center justify-between text-xs sm:text-sm">
+                <div className="p-3 rounded-xl bg-nebula-navy border border-nebula-steel hover-card-innovative flex items-center justify-between text-xs sm:text-sm">
                   <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-lg bg-[#161F2D] text-white flex items-center justify-center font-bold text-sm">
+                    <div className="size-8 rounded-lg bg-nebula-surface text-white flex items-center justify-center font-bold text-sm">
                       🏖️
                     </div>
                     <div>
                       <div className="font-black text-white text-xs sm:text-sm">Annual Leave – 3 Days</div>
-                      <div className="text-xs text-[#97A0B3]">Oct 12 – Oct 14, 2025 • Covered by Designated Pod Peer</div>
+                      <div className="text-xs text-nebula-mist">Oct 12 – Oct 14, 2025 • Covered by Designated Pod Peer</div>
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-extrabold text-xs">
@@ -302,14 +302,14 @@ export function MemberSchedulePTOPage() {
                   </span>
                 </div>
 
-                <div className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] hover-card-innovative flex items-center justify-between text-xs sm:text-sm">
+                <div className="p-3 rounded-xl bg-nebula-navy border border-nebula-steel hover-card-innovative flex items-center justify-between text-xs sm:text-sm">
                   <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-lg bg-[#161F2D] text-white flex items-center justify-center font-bold text-sm">
+                    <div className="size-8 rounded-lg bg-nebula-surface text-white flex items-center justify-center font-bold text-sm">
                       🎉
                     </div>
                     <div>
                       <div className="font-black text-white text-xs sm:text-sm">Floating Holiday – 1 Day</div>
-                      <div className="text-xs text-[#97A0B3]">Sep 22, 2025 • Standup asynchronous catchup</div>
+                      <div className="text-xs text-nebula-mist">Sep 22, 2025 • Standup asynchronous catchup</div>
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-extrabold text-xs">
@@ -320,28 +320,28 @@ export function MemberSchedulePTOPage() {
             </div>
 
             {/* November 2025 Calendar Grid */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs hover-card-innovative space-y-3">
-              <div className="flex items-center justify-between pb-2.5 border-b border-[#2A3446]">
+            <div className="bg-nebula-surface rounded-2xl p-4 sm:p-5 border border-nebula-steel/80 shadow-2xs hover-card-innovative space-y-3">
+              <div className="flex items-center justify-between pb-2.5 border-b border-nebula-steel">
                 <div className="flex items-center gap-2.5">
                   <h3 className="text-base font-black text-white">November 2025</h3>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30">
                     Sprint 09 / Week 45-46
                   </span>
                 </div>
 
                 <div className="flex items-center gap-1">
-                  <button className="p-1.5 rounded-lg hover:bg-[#161F2D] text-[#97A0B3] cursor-pointer">
+                  <button className="p-1.5 rounded-lg hover:bg-nebula-surface text-nebula-mist cursor-pointer">
                     <ChevronLeft className="size-4" />
                   </button>
-                  <span className="text-xs sm:text-sm font-bold text-[#F1F5F9] px-2">Nov 2025</span>
-                  <button className="p-1.5 rounded-lg hover:bg-[#161F2D] text-[#97A0B3] cursor-pointer">
+                  <span className="text-xs sm:text-sm font-bold text-slate-100 px-2">Nov 2025</span>
+                  <button className="p-1.5 rounded-lg hover:bg-nebula-surface text-nebula-mist cursor-pointer">
                     <ChevronRight className="size-4" />
                   </button>
                 </div>
               </div>
 
               {/* Legend */}
-              <div className="flex flex-wrap items-center gap-3 text-xs font-extrabold text-[#97A0B3]">
+              <div className="flex flex-wrap items-center gap-3 text-xs font-extrabold text-nebula-mist">
                 <span className="flex items-center gap-1.5">
                   <span className="size-2.5 rounded-full bg-blue-600" />
                   Duty / On-Deck
@@ -410,7 +410,7 @@ export function MemberSchedulePTOPage() {
                     key={idx}
                     className={`min-h-[56px] sm:min-h-[64px] p-1.5 rounded-xl border flex flex-col justify-between transition-colors ${
                       item.today
-                        ? "bg-[#7FA0D6]/20 border-blue-400 font-black shadow-md ring-1 ring-blue-500/30 text-white"
+                        ? "bg-nebula-glow/20 border-blue-400 font-black shadow-md ring-1 ring-blue-500/30 text-white"
                         : item.holiday
                         ? "bg-purple-500/15 border-purple-500/30 text-purple-300"
                         : item.warn
@@ -418,8 +418,8 @@ export function MemberSchedulePTOPage() {
                         : item.alert
                         ? "bg-rose-500/15 border-rose-500/30 text-rose-300"
                         : item.muted
-                        ? "bg-[#0B111C]/40 border-[#2A3446] text-slate-400"
-                        : "bg-[#161F2D] border-[#2A3446] hover:border-[#7FA0D6]/40 text-[#F1F5F9]"
+                        ? "bg-nebula-navy/40 border-nebula-steel text-slate-400"
+                        : "bg-nebula-surface border-nebula-steel hover:border-nebula-glow/40 text-slate-100"
                     }`}
                   >
                     <span className="text-xs sm:text-sm font-black text-left">{item.day}</span>
@@ -434,7 +434,7 @@ export function MemberSchedulePTOPage() {
                             ? "bg-rose-500/25 text-rose-300 border border-rose-500/40"
                             : item.holiday
                             ? "bg-purple-500/25 text-purple-300 border border-purple-500/40"
-                            : "bg-[#161F2D] text-[#F1F5F9]"
+                            : "bg-nebula-surface text-slate-100"
                         }`}
                       >
                         {item.label}
@@ -449,11 +449,11 @@ export function MemberSchedulePTOPage() {
           {/* RIGHT 1 COLUMN */}
           <div className="space-y-3.5 sm:space-y-4">
             {/* Today's Pod Schedule */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs hover-card-innovative space-y-3">
-              <div className="flex items-center justify-between pb-2.5 border-b border-[#2A3446]">
+            <div className="bg-nebula-surface rounded-2xl p-4 sm:p-5 border border-nebula-steel/80 shadow-2xs hover-card-innovative space-y-3">
+              <div className="flex items-center justify-between pb-2.5 border-b border-nebula-steel">
                 <div>
                   <h3 className="text-sm font-black text-white">Today's Pod Schedule</h3>
-                  <p className="text-xs text-[#97A0B3] font-medium">Monday, Nov 3 • Core Hours (09:00 - 18:00)</p>
+                  <p className="text-xs text-nebula-mist font-medium">Monday, Nov 3 • Core Hours (09:00 - 18:00)</p>
                 </div>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                   ● Active Shift
@@ -462,73 +462,73 @@ export function MemberSchedulePTOPage() {
 
               {/* Schedule Items */}
               <div className="space-y-2.5 text-xs sm:text-sm">
-                <div className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] hover-card-innovative space-y-1">
+                <div className="p-3 rounded-xl bg-nebula-navy border border-nebula-steel hover-card-innovative space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-[#7FA0D6] text-xs">10:00 AM – 10:30 AM</span>
+                    <span className="font-extrabold text-nebula-glow text-xs">10:00 AM – 10:30 AM</span>
                     <span className="px-2 py-0.5 rounded text-xs font-extrabold bg-blue-600 text-white uppercase">
                       Mandatory
                     </span>
                   </div>
                   <div className="font-black text-white text-xs sm:text-sm">Pod A Daily Standup</div>
-                  <div className="text-xs text-[#97A0B3]">Sprint 09 Blocker Sweep & render server allocation</div>
-                  <div className="flex items-center justify-between pt-1 border-t border-[#2A3446] text-xs">
+                  <div className="text-xs text-nebula-mist">Sprint 09 Blocker Sweep & render server allocation</div>
+                  <div className="flex items-center justify-between pt-1 border-t border-nebula-steel text-xs">
                     <button
                       onClick={() => setZoomModalOpen(true)}
-                      className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
+                      className="text-nebula-glow font-bold hover:underline cursor-pointer"
                     >
                       🔗 Join Zoom Session
                     </button>
-                    <span className="text-xs text-[#97A0B3]">5 Attendees</span>
+                    <span className="text-xs text-nebula-mist">5 Attendees</span>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446]/80 hover-card-innovative space-y-1">
+                <div className="p-3 rounded-xl bg-nebula-navy border border-nebula-steel/80 hover-card-innovative space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-[#7FA0D6] text-xs">01:30 PM – 02:15 PM</span>
-                    <span className="text-xs text-[#97A0B3]">Conf Room 3</span>
+                    <span className="font-extrabold text-nebula-glow text-xs">01:30 PM – 02:15 PM</span>
+                    <span className="text-xs text-nebula-mist">Conf Room 3</span>
                   </div>
                   <div className="font-black text-white text-xs sm:text-sm">Creative Handoff: Active Sprint Sync</div>
-                  <div className="text-xs text-[#97A0B3]">3D Renders presentation with Product Lead</div>
-                  <div className="flex items-center justify-between pt-1 border-t border-[#2A3446] text-xs text-[#97A0B3]">
+                  <div className="text-xs text-nebula-mist">3D Renders presentation with Product Lead</div>
+                  <div className="flex items-center justify-between pt-1 border-t border-nebula-steel text-xs text-nebula-mist">
                     <span>Handoff Cut v.1.0</span>
                     <span className="text-emerald-400 font-bold">Motion QA Ready</span>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446]/80 hover-card-innovative space-y-1">
+                <div className="p-3 rounded-xl bg-nebula-navy border border-nebula-steel/80 hover-card-innovative space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="font-extrabold text-[#7FA0D6] text-xs">04:00 PM – 05:00 PM</span>
-                    <span className="text-xs text-[#97A0B3]">Designated Window</span>
+                    <span className="font-extrabold text-nebula-glow text-xs">04:00 PM – 05:00 PM</span>
+                    <span className="text-xs text-nebula-mist">Designated Window</span>
                   </div>
                   <div className="font-black text-white text-xs sm:text-sm">Lead Review & Quality Sign-Off</div>
-                  <div className="text-xs text-[#97A0B3]">Synchronous review block with {leadName}</div>
+                  <div className="text-xs text-nebula-mist">Synchronous review block with {leadName}</div>
                 </div>
               </div>
             </div>
 
             {/* Pod Redundancy Partner */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs hover-card-innovative space-y-3">
-              <div className="flex items-center justify-between pb-1.5 border-b border-[#2A3446]">
+            <div className="bg-nebula-surface rounded-2xl p-4 sm:p-5 border border-nebula-steel/80 shadow-2xs hover-card-innovative space-y-3">
+              <div className="flex items-center justify-between pb-1.5 border-b border-nebula-steel">
                 <div className="flex items-center gap-1.5">
-                  <Shield className="size-4 text-[#7FA0D6]" />
+                  <Shield className="size-4 text-nebula-glow" />
                   <h3 className="text-sm font-black text-white">Pod Redundancy Partner</h3>
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446]/70 flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-nebula-navy border border-nebula-steel/70 flex items-center gap-3">
                 <div className="size-10 rounded-xl bg-teal-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-2xs">
                   {members[1]?.full_name ? members[1].full_name.slice(0, 2).toUpperCase() : "DP"}
                 </div>
                 <div>
                   <div className="font-black text-white text-xs sm:text-sm">{members[1]?.full_name || "Designated Pod Peer"}</div>
-                  <div className="text-xs text-[#97A0B3] font-medium">{members[1]?.role || "Creative Specialist"}</div>
+                  <div className="text-xs text-nebula-mist font-medium">{members[1]?.role || "Creative Specialist"}</div>
                   <span className="inline-block mt-0.5 text-xs font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-md">
                     ● Available for pairing
                   </span>
                 </div>
               </div>
 
-              <div className="text-xs text-[#97A0B3] space-y-1">
+              <div className="text-xs text-nebula-mist space-y-1">
                 <div className="font-extrabold text-white text-xs">Handoff Protocol Active:</div>
                 <p className="leading-relaxed text-xs">
                   Automatic render queue forwarding to designated peer node triggered whenever status is switched to <strong>Out of Office (Away)</strong>.
@@ -539,7 +539,7 @@ export function MemberSchedulePTOPage() {
                 onClick={() => {
                   navigate("/slack");
                 }}
-                className="w-full py-2.5 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 border border-[#7FA0D6]/30 text-[#7FA0D6] text-xs sm:text-sm font-extrabold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 rounded-xl bg-nebula-glow/15 hover:bg-nebula-glow/25 border border-nebula-glow/30 text-nebula-glow text-xs sm:text-sm font-extrabold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <MessageSquare className="size-4" />
                 Ping Chloe on Slack
@@ -547,13 +547,13 @@ export function MemberSchedulePTOPage() {
             </div>
 
             {/* Submit Quick PTO Form */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs hover-card-innovative space-y-3">
-              <div className="flex items-center justify-between pb-1.5 border-b border-[#2A3446]">
+            <div className="bg-nebula-surface rounded-2xl p-4 sm:p-5 border border-nebula-steel/80 shadow-2xs hover-card-innovative space-y-3">
+              <div className="flex items-center justify-between pb-1.5 border-b border-nebula-steel">
                 <div className="flex items-center gap-1.5">
-                  <Plane className="size-4 text-[#7FA0D6]" />
+                  <Plane className="size-4 text-nebula-glow" />
                   <h3 className="text-sm font-black text-white">Submit Quick PTO</h3>
                 </div>
-                <span className="text-xs text-[#97A0B3] font-medium">Auto-routed</span>
+                <span className="text-xs text-nebula-mist font-medium">Auto-routed</span>
               </div>
 
               <form onSubmit={handleSubmitQuickPto} className="space-y-3 text-xs sm:text-sm">
@@ -562,7 +562,7 @@ export function MemberSchedulePTOPage() {
                   <select
                     value={leaveType}
                     onChange={(e) => setLeaveType(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold bg-[#0B111C] text-xs sm:text-sm text-white"
+                    className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-semibold bg-nebula-navy text-xs sm:text-sm text-white"
                   >
                     <option value="Paid Time Off (PTO) - 14.5d avail">Paid Time Off (PTO) – 14.5d avail</option>
                     <option value="Sick & Medical Leave - 5.0d avail">Sick & Medical Leave – 5.0d avail</option>
@@ -578,7 +578,7 @@ export function MemberSchedulePTOPage() {
                       required
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded-xl border border-[#2A3446] font-bold text-xs sm:text-sm bg-[#0B111C] text-white"
+                      className="w-full px-2.5 py-1.5 rounded-xl border border-nebula-steel font-bold text-xs sm:text-sm bg-nebula-navy text-white"
                     />
                   </div>
                   <div>
@@ -588,7 +588,7 @@ export function MemberSchedulePTOPage() {
                       required
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded-xl border border-[#2A3446] font-bold text-xs sm:text-sm bg-[#0B111C] text-white"
+                      className="w-full px-2.5 py-1.5 rounded-xl border border-nebula-steel font-bold text-xs sm:text-sm bg-nebula-navy text-white"
                     />
                   </div>
                 </div>
@@ -598,7 +598,7 @@ export function MemberSchedulePTOPage() {
                   <select
                     value={designatedBackup}
                     onChange={(e) => setDesignatedBackup(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-xl border border-[#2A3446] font-semibold bg-[#161F2D] text-xs"
+                    className="w-full px-2.5 py-1.5 rounded-xl border border-nebula-steel font-semibold bg-nebula-surface text-xs"
                   >
                     {members.length > 0 ? (
                       members.map((m) => (
@@ -613,24 +613,24 @@ export function MemberSchedulePTOPage() {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1 text-[11px]">Handover & Pipeline Notes</label>
+                  <label className="block font-bold text-slate-100 mb-1 text-[11px]">Handover & Pipeline Notes</label>
                   <textarea
                     rows={2}
                     value={handoverNotes}
                     onChange={(e) => setHandoverNotes(e.target.value)}
                     placeholder="Specify render cache status, handoff link, or Figma checkpoints..."
-                    className="w-full px-2.5 py-1.5 rounded-xl border border-[#2A3446] font-medium text-xs"
+                    className="w-full px-2.5 py-1.5 rounded-xl border border-nebula-steel font-medium text-xs"
                   />
                 </div>
 
-                <div className="flex justify-between items-center text-[10.5px] font-bold text-[#97A0B3] pt-0.5">
+                <div className="flex justify-between items-center text-[10.5px] font-bold text-nebula-mist pt-0.5">
                   <span>Quota Deduction:</span>
                   <span className="text-white">{deductionDays} Working Days</span>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  className="w-full py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white font-bold shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Send className="size-3" />
                   Submit for Lead Approval
@@ -655,7 +655,7 @@ export function MemberSchedulePTOPage() {
           onClick={() => setCancelModalOpen(false)}
         >
           <div
-            className="w-full max-w-md bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up text-center"
+            className="w-full max-w-md bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4 animate-scale-up text-center"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="size-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto font-black">
@@ -663,16 +663,16 @@ export function MemberSchedulePTOPage() {
             </div>
             <div>
               <h3 className="text-base font-black text-white">Cancel Medical Leave Request?</h3>
-              <p className="text-xs text-[#97A0B3] mt-1 leading-relaxed">
+              <p className="text-xs text-nebula-mist mt-1 leading-relaxed">
                 This will withdraw your tomorrow half-day leave request, notify {leadName}, and restore 0.5d back to your medical balance.
               </p>
             </div>
 
-            <div className="flex items-center justify-center gap-2 pt-2 border-t border-[#2A3446]">
+            <div className="flex items-center justify-center gap-2 pt-2 border-t border-nebula-steel">
               <button
                 type="button"
                 onClick={() => setCancelModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-xs text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-xs text-slate-100 hover:bg-nebula-navy cursor-pointer"
               >
                 Go Back
               </button>
@@ -695,23 +695,23 @@ export function MemberSchedulePTOPage() {
           onClick={() => setModifyModalOpen(false)}
         >
           <div
-            className="w-full max-w-md bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up"
+            className="w-full max-w-md bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4 animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="size-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+                <div className="size-9 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-bold">
                   <Calendar className="size-4.5" />
                 </div>
                 <div>
                   <h3 className="text-base font-black text-white">Modify Leave Request</h3>
-                  <p className="text-xs text-[#97A0B3]">Medical Leave (Half Day) · Nov 8, 2025</p>
+                  <p className="text-xs text-nebula-mist">Medical Leave (Half Day) · Nov 8, 2025</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setModifyModalOpen(false)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer"
+                className="size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist flex items-center justify-center cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -719,34 +719,34 @@ export function MemberSchedulePTOPage() {
 
             <form onSubmit={handleConfirmModifyLeave} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Time Slot Window</label>
+                <label className="block font-bold text-slate-100 mb-1">Time Slot Window</label>
                 <input
                   type="text"
                   defaultValue="02:00 PM - 06:00 PM PST (0.5 d)"
-                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold"
+                  className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-bold"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Backup Handover Note</label>
+                <label className="block font-bold text-slate-100 mb-1">Backup Handover Note</label>
                 <textarea
                   rows={3}
                   defaultValue="Designated peer: Active render queue supervision & creative sprint handoff."
-                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-medium"
+                  className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-medium"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2A3446]">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-nebula-steel">
                 <button
                   type="button"
                   onClick={() => setModifyModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
                 >
                   Save Modifications
                 </button>
@@ -763,23 +763,23 @@ export function MemberSchedulePTOPage() {
           onClick={() => setRequestPtoModalOpen(false)}
         >
           <div
-            className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up"
+            className="w-full max-w-lg bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4 animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="size-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+                <div className="size-9 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-bold">
                   <Plane className="size-4.5" />
                 </div>
                 <div>
                   <h3 className="text-base font-black text-white">Request Time Off / Leave</h3>
-                  <p className="text-xs text-[#97A0B3]">Auto-routes to {leadName} for {podName} capacity approval</p>
+                  <p className="text-xs text-nebula-mist">Auto-routes to {leadName} for {podName} capacity approval</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setRequestPtoModalOpen(false)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer"
+                className="size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist flex items-center justify-center cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -787,11 +787,11 @@ export function MemberSchedulePTOPage() {
 
             <form onSubmit={handleSubmitQuickPto} className="space-y-3.5 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Leave Type</label>
+                <label className="block font-bold text-slate-100 mb-1">Leave Type</label>
                 <select
                   value={leaveType}
                   onChange={(e) => setLeaveType(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold bg-[#161F2D]"
+                  className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-semibold bg-nebula-surface"
                 >
                   <option value="Paid Time Off (PTO) - 14.5d avail">Paid Time Off (PTO) — 14.5d available</option>
                   <option value="Sick & Medical Leave - 5.0d avail">Sick & Medical Leave — 5.0d available</option>
@@ -802,33 +802,33 @@ export function MemberSchedulePTOPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Start Date</label>
+                  <label className="block font-bold text-slate-100 mb-1">Start Date</label>
                   <input
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-medium"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">End Date</label>
+                  <label className="block font-bold text-slate-100 mb-1">End Date</label>
                   <input
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-medium"
+                    className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-medium"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Designated Pod Backup</label>
+                <label className="block font-bold text-slate-100 mb-1">Designated Pod Backup</label>
                 <select
                   value={designatedBackup}
                   onChange={(e) => setDesignatedBackup(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold bg-[#161F2D]"
+                  className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-semibold bg-nebula-surface"
                 >
                   {members.length > 0 ? (
                     members.map((m) => (
@@ -843,33 +843,33 @@ export function MemberSchedulePTOPage() {
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Handover & Pipeline Notes</label>
+                <label className="block font-bold text-slate-100 mb-1">Handover & Pipeline Notes</label>
                 <textarea
                   rows={2}
                   value={handoverNotes}
                   onChange={(e) => setHandoverNotes(e.target.value)}
                   placeholder="Specify render cache status, Figma keyframes, handoff link, or Figma prototype checkpoints..."
-                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-medium"
+                  className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-medium"
                   required
                 />
               </div>
 
-              <div className="p-3 bg-[#7FA0D6]/15/70 rounded-2xl border border-[#7FA0D6]/30/60 flex items-center justify-between">
+              <div className="p-3 bg-nebula-glow/15/70 rounded-2xl border border-nebula-glow/30/60 flex items-center justify-between">
                 <span className="font-bold text-blue-900">Quota Deduction:</span>
-                <span className="font-black text-[#7FA0D6]">{deductionDays} Working Days</span>
+                <span className="font-black text-nebula-glow">{deductionDays} Working Days</span>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2A3446]">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-nebula-steel">
                 <button
                   type="button"
                   onClick={() => setRequestPtoModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
                 >
                   Submit for Lead Approval
                 </button>
@@ -886,24 +886,24 @@ export function MemberSchedulePTOPage() {
           onClick={() => setZoomModalOpen(false)}
         >
           <div
-            className="w-full max-w-md bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up text-center"
+            className="w-full max-w-md bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4 animate-scale-up text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="size-12 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center mx-auto font-black">
+            <div className="size-12 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center mx-auto font-black">
               📹
             </div>
             <div>
               <h3 className="text-base font-black text-white">Pod A Standup Session</h3>
-              <p className="text-xs text-[#97A0B3] mt-1">Host: {leadName} ({podName} Lead)</p>
+              <p className="text-xs text-nebula-mist mt-1">Host: {leadName} ({podName} Lead)</p>
             </div>
-            <div className="p-3 bg-[#0B111C] rounded-2xl border border-[#2A3446] text-xs font-mono text-[#F1F5F9]">
+            <div className="p-3 bg-nebula-navy rounded-2xl border border-nebula-steel text-xs font-mono text-slate-100">
               zoom.us/j/9814421990
             </div>
-            <div className="flex items-center justify-center gap-2 pt-2 border-t border-[#2A3446]">
+            <div className="flex items-center justify-center gap-2 pt-2 border-t border-nebula-steel">
               <button
                 type="button"
                 onClick={() => setZoomModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-xs text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-xs text-slate-100 hover:bg-nebula-navy cursor-pointer"
               >
                 Dismiss
               </button>

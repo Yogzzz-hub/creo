@@ -140,7 +140,7 @@ export function SplitText({
   delay = 0,
   as: Tag = "span",
   accent,
-  accentClassName = "text-[#7FA0D6]",
+  accentClassName = "text-nebula-glow",
   animateOnMount = false,
 }: {
   text: string;
@@ -358,7 +358,7 @@ export function ScrollProgressBar() {
   return (
     <motion.div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-gradient-to-r from-[#7FA0D6] via-[#BCCCE6] to-[#D8BF9B]"
+      className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-gradient-to-r from-nebula-glow via-nebula-periwinkle to-nebula-sand"
       style={{ scaleX }}
     />
   );

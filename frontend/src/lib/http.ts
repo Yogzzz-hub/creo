@@ -91,6 +91,9 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
       // If an existing authenticated session expired or token was revoked
       if (!path.includes("/auth/login") && !path.includes("/auth/verify-")) {
         clearAuthToken();
+        if (typeof window !== "undefined") {
+          window.location.href = "/auth/login";
+        }
       }
     }
 

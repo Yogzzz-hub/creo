@@ -68,11 +68,11 @@ interface TypeConfig {
 const DEFAULT_TYPE_CONFIG: TypeConfig = {
   label: "Poster",
   icon: ImageIcon,
-  badgeBg: "bg-[#7FA0D6]",
+  badgeBg: "bg-nebula-glow",
   badgeText: "text-white",
   border: "border-blue-200",
-  softBg: "bg-blue-50 text-[#7FA0D6] hover:bg-blue-100",
-  pillBg: "bg-blue-600/10 text-[#7FA0D6] border-blue-200",
+  softBg: "bg-blue-50 text-nebula-glow hover:bg-blue-100",
+  pillBg: "bg-blue-600/10 text-nebula-glow border-blue-200",
 };
 
 const TYPE_CONFIG: Record<string, TypeConfig> = {
@@ -351,7 +351,7 @@ export function PortalCalendarPage() {
   if (isSubLoading || isEntriesLoading) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-[#7FA0D6]" />
+        <Loader2 className="size-8 animate-spin text-nebula-glow" />
       </div>
     );
   }
@@ -361,34 +361,34 @@ export function PortalCalendarPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-[1440px] mx-auto px-4 md:px-8 pb-10 font-sans text-white bg-[#0B111C]">
+    <div className="flex flex-col gap-6 w-full max-w-[1440px] mx-auto px-4 md:px-8 pb-10 font-sans text-white bg-nebula-navy">
       {/* ── Bento Grid Layout ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
         
         {/* Left Column: Calendar View (xl:col-span-2) */}
-        <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-6 lg:p-8 flex-col">
+        <div className="flex xl:col-span-2 bg-nebula-surface border border-nebula-steel rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-6 lg:p-8 flex-col">
           {/* Calendar Header */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-3">
               <h2 className="text-[20px] font-black text-white tracking-tight">
                 {MONTH_NAMES[currentMonth]} {currentYear}
               </h2>
-              <span className="text-sm font-semibold text-[#97A0B3]">Production Horizon</span>
+              <span className="text-sm font-semibold text-nebula-mist">Production Horizon</span>
             </div>
             
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => { setSelectedDate(null); goToToday(); }}
-                className="px-4 py-1.5 text-xs font-bold text-slate-200 hover:text-white bg-[#0B111C]/80 hover:bg-[#0B111C] rounded-full border border-[#2A3446] shadow-2xs transition-all cursor-pointer"
+                className="px-4 py-1.5 text-xs font-bold text-slate-200 hover:text-white bg-nebula-navy/80 hover:bg-nebula-navy rounded-full border border-nebula-steel shadow-2xs transition-all cursor-pointer"
               >
                 Today
               </button>
-              <div className="flex items-center bg-[#0B111C]/80 border border-[#2A3446] rounded-full p-1 shadow-2xs">
+              <div className="flex items-center bg-nebula-navy/80 border border-nebula-steel rounded-full p-1 shadow-2xs">
                 <button onClick={() => { setSelectedDate(null); navigateMonth(-1); }} className="p-1.5 text-slate-400 hover:text-white rounded-full transition-all cursor-pointer" aria-label="Previous Month">
                   <ChevronLeft className="size-4" strokeWidth={2.5} />
                 </button>
-                <div className="w-[1px] h-4 bg-[#2A3446] mx-1"></div>
+                <div className="w-[1px] h-4 bg-nebula-steel mx-1"></div>
                 <button onClick={() => { setSelectedDate(null); navigateMonth(1); }} className="p-1.5 text-slate-400 hover:text-white rounded-full transition-all cursor-pointer" aria-label="Next Month">
                   <ChevronRight className="size-4" strokeWidth={2.5} />
                 </button>
@@ -401,7 +401,7 @@ export function PortalCalendarPage() {
             {/* Weekday Headers */}
             <div className="grid grid-cols-7 mb-4">
               {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day: string) => (
-                <div key={day} className="py-2 text-center text-xs font-black text-[#97A0B3] uppercase tracking-wider">
+                <div key={day} className="py-2 text-center text-xs font-black text-nebula-mist uppercase tracking-wider">
                   {day}
                 </div>
               ))}
@@ -431,41 +431,41 @@ export function PortalCalendarPage() {
                     onClick={() => setSelectedDate(day)}
                     className={`relative rounded-[1.25rem] p-3.5 sm:p-4 transition-all cursor-pointer min-h-[110px] flex flex-col justify-between border-2 group ${
                       isSelected 
-                        ? "border-blue-500 bg-[#7FA0D6]/15 ring-2 ring-blue-500/20 shadow-lg scale-[1.01] z-10"
+                        ? "border-blue-500 bg-nebula-glow/15 ring-2 ring-blue-500/20 shadow-lg scale-[1.01] z-10"
                         : isTodayCell
-                        ? "border-[#7FA0D6]/40 bg-[#161F2D] shadow-sm"
-                        : "border-[#2A3446] hover:border-[#7FA0D6]/40 bg-[#0B111C]/40 hover:bg-[#161F2D] shadow-xs"
+                        ? "border-nebula-glow/40 bg-nebula-surface shadow-sm"
+                        : "border-nebula-steel hover:border-nebula-glow/40 bg-nebula-navy/40 hover:bg-nebula-surface shadow-xs"
                     }`}
                   >
                     <span className={`text-base sm:text-lg font-black ${
-                      isSelected ? "text-white" : isTodayCell ? "text-[#7FA0D6]" : "text-slate-300 group-hover:text-white"
+                      isSelected ? "text-white" : isTodayCell ? "text-nebula-glow" : "text-slate-300 group-hover:text-white"
                     }`}>
                       {day}
                     </span>
                     
                     <div className="mt-auto flex flex-col gap-1.5 w-full">
                       {scheduled > 0 && scheduled !== approved && (
-                        <div className="w-full rounded-full bg-blue-900/40 border border-blue-500/30 text-[#BCCCE6] px-2.5 py-1 text-xs font-extrabold truncate text-left shadow-xs">
+                        <div className="w-full rounded-full bg-blue-900/40 border border-blue-500/30 text-nebula-periwinkle px-2.5 py-1 text-xs font-extrabold truncate text-left shadow-xs">
                           {scheduled} Deliverables
                         </div>
                       )}
                       {approved > 0 && (
-                        <div className="w-full rounded-full bg-blue-600/30 border border-blue-500/30 text-[#BCCCE6] px-2.5 py-1 text-xs font-extrabold truncate text-left shadow-xs">
+                        <div className="w-full rounded-full bg-blue-600/30 border border-blue-500/30 text-nebula-periwinkle px-2.5 py-1 text-xs font-extrabold truncate text-left shadow-xs">
                           {approved} Approved
                         </div>
                       )}
                       {scheduled > 0 && approved === 0 && (
-                         <div className="w-full rounded-full bg-blue-900/40 border border-blue-500/30 text-[#BCCCE6] px-2.5 py-1 text-xs font-extrabold truncate text-left">
+                         <div className="w-full rounded-full bg-blue-900/40 border border-blue-500/30 text-nebula-periwinkle px-2.5 py-1 text-xs font-extrabold truncate text-left">
                           {scheduled} Scheduled
                         </div>
                       )}
                       {dayEntries.length === 0 && day === 15 && (
-                         <div className="w-full rounded-full bg-blue-600/30 text-[#BCCCE6] px-2.5 py-0.5 text-[11px] font-black truncate text-left shadow-2xs">
+                         <div className="w-full rounded-full bg-blue-600/30 text-nebula-periwinkle px-2.5 py-0.5 text-[11px] font-black truncate text-left shadow-2xs">
                           3 Scheduled
                         </div>
                       )}
                       {dayEntries.length === 0 && isSlaReview && (
-                         <div className="w-full rounded-full bg-blue-500/20 text-[#BCCCE6] px-2.5 py-0.5 text-[11px] font-black truncate text-left shadow-2xs">
+                         <div className="w-full rounded-full bg-blue-500/20 text-nebula-periwinkle px-2.5 py-0.5 text-[11px] font-black truncate text-left shadow-2xs">
                           SLA Review
                         </div>
                       )}
@@ -478,7 +478,7 @@ export function PortalCalendarPage() {
         </div>
 
         {/* Right Column: Dispatch Queue (xl:col-span-1) */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-6 lg:p-8 flex flex-col min-h-[500px]">
+        <div className="bg-nebula-surface border border-nebula-steel rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-6 lg:p-8 flex flex-col min-h-[500px]">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-[18px] font-black text-white tracking-tight">
               {selectedDate ? `Task Queue for ${selectedDate}th` : "Today's Dispatch Queue"}
@@ -487,7 +487,7 @@ export function PortalCalendarPage() {
               const activeDay = selectedDate || (isCurrentMonth ? today.getDate() : 1);
               const tasks = getDayEntries(activeDay);
               return (
-                <span className="inline-flex items-center rounded-full bg-[#161F2D] border border-[#2A3446] px-3 py-1 text-[12px] font-bold text-[#7FA0D6]">
+                <span className="inline-flex items-center rounded-full bg-nebula-surface border border-nebula-steel px-3 py-1 text-[12px] font-bold text-nebula-glow">
                   {tasks.length > 0 ? `${tasks.length} Active` : '0 Active'}
                 </span>
               );
@@ -501,12 +501,12 @@ export function PortalCalendarPage() {
               
               if (tasks.length === 0) {
                 return (
-                  <div className="flex flex-col items-center justify-center min-h-[220px] p-8 text-[#97A0B3] text-sm font-bold bg-[#0B111C]/60 rounded-[1.5rem] border-2 border-dashed border-[#2A3446] text-center shadow-inner space-y-2">
-                    <div className="w-10 h-10 rounded-full bg-[#161F2D] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] mb-1">
+                  <div className="flex flex-col items-center justify-center min-h-[220px] p-8 text-nebula-mist text-sm font-bold bg-nebula-navy/60 rounded-[1.5rem] border-2 border-dashed border-nebula-steel text-center shadow-inner space-y-2">
+                    <div className="w-10 h-10 rounded-full bg-nebula-surface border border-nebula-steel flex items-center justify-center text-nebula-glow mb-1">
                       <Clock className="w-5 h-5" />
                     </div>
                     <span className="text-slate-200 font-bold">No deliverables scheduled.</span>
-                    <span className="text-xs text-[#97A0B3] font-normal max-w-[220px]">
+                    <span className="text-xs text-nebula-mist font-normal max-w-[220px]">
                       All clear for this date. Select another day to view or schedule content.
                     </span>
                   </div>
@@ -522,31 +522,31 @@ export function PortalCalendarPage() {
                   <div 
                     key={entry.id} 
                     onClick={() => openEntryModal(entry)}
-                    className="p-5 rounded-[1.5rem] border border-[#2A3446] hover:border-[#7FA0D6]/50 bg-[#0B111C]/70 hover:bg-[#0B111C] transition-all cursor-pointer shadow-xs group space-y-3"
+                    className="p-5 rounded-[1.5rem] border border-nebula-steel hover:border-nebula-glow/50 bg-nebula-navy/70 hover:bg-nebula-navy transition-all cursor-pointer shadow-xs group space-y-3"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black text-[#7FA0D6] uppercase tracking-wider">
+                      <span className="text-[10px] font-black text-nebula-glow uppercase tracking-wider">
                         {podLabel}
                       </span>
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${isApproved ? "bg-blue-600/30 text-[#BCCCE6] border-blue-500/30" : "bg-blue-950/80 text-blue-300 border-blue-700/50"}`}>
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${isApproved ? "bg-blue-600/30 text-nebula-periwinkle border-blue-500/30" : "bg-blue-950/80 text-blue-300 border-blue-700/50"}`}>
                          {statusLabel}
                       </span>
                     </div>
                     
-                    <h4 className="text-[14px] font-bold text-white leading-snug group-hover:text-[#7FA0D6] transition-colors">
+                    <h4 className="text-[14px] font-bold text-white leading-snug group-hover:text-nebula-glow transition-colors">
                       {entry.topic}
                     </h4>
                     
-                    <div className="flex items-center justify-between pt-2 border-t border-[#2A3446]/60 mt-auto">
+                    <div className="flex items-center justify-between pt-2 border-t border-nebula-steel/60 mt-auto">
                       <div className="flex items-center gap-2.5">
-                        <div className="size-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-[#7FA0D6]">
+                        <div className="size-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white bg-nebula-glow">
                           CP
                         </div>
                         <span className="text-[12px] font-bold text-slate-300">
                           Creative Pod
                         </span>
                       </div>
-                      <span className="text-[11px] font-black text-[#7FA0D6]">
+                      <span className="text-[11px] font-black text-nebula-glow">
                         {entry.scheduled_time || "Scheduled"}
                       </span>
                     </div>
@@ -560,15 +560,15 @@ export function PortalCalendarPage() {
       {/* ── Creative Intelligence Blueprint & Deliverable Review Modal ────── */}
       {previewEntry && (
         <div
-          className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center bg-[#0B111C]/80 backdrop-blur-md p-3 sm:p-6 overflow-y-auto"
+          className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center bg-nebula-navy/80 backdrop-blur-md p-3 sm:p-6 overflow-y-auto"
           onClick={() => setPreviewEntry(null)}
         >
           <div
-            className="w-full max-w-2xl max-h-[92vh] rounded-3xl bg-[#161F2D] border border-[#2A3446] text-white shadow-2xl overflow-y-auto animate-page-in my-auto"
+            className="w-full max-w-2xl max-h-[92vh] rounded-3xl bg-nebula-surface border border-nebula-steel text-white shadow-2xl overflow-y-auto animate-page-in my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="sticky top-0 bg-[#161F2D]/95 backdrop-blur-sm z-10 flex items-center justify-between p-4 sm:p-5 border-b border-[#2A3446]">
+            <div className="sticky top-0 bg-nebula-surface/95 backdrop-blur-sm z-10 flex items-center justify-between p-4 sm:p-5 border-b border-nebula-steel">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${
                   getTypeConfig(previewEntry.type).pillBg
@@ -581,7 +581,7 @@ export function PortalCalendarPage() {
                     ⚡ Flex Slot (30% Buffer)
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold bg-blue-50 text-[#7FA0D6] border border-blue-200">
+                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold bg-blue-50 text-nebula-glow border border-blue-200">
                     🎯 Anchor Slot (70%)
                   </span>
                 )}
@@ -686,11 +686,11 @@ export function PortalCalendarPage() {
 
               {/* Topic and Publication Details */}
               <div>
-                <h3 className="text-lg font-black text-[#0B111C]">
+                <h3 className="text-lg font-black text-nebula-navy">
                   {previewEntry.topic}
                 </h3>
                 <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-                  <Clock className="size-3.5 text-[#7FA0D6]" />
+                  <Clock className="size-3.5 text-nebula-glow" />
                   <span>Scheduled Publication: {previewEntry.date} at {previewEntry.scheduled_time || "11:00 AM"}</span>
                 </p>
               </div>
@@ -712,8 +712,8 @@ export function PortalCalendarPage() {
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-black text-[#0B111C] flex items-center gap-1.5">
-                        <Target className="size-4 text-[#7FA0D6]" />
+                      <h4 className="text-sm font-black text-nebula-navy flex items-center gap-1.5">
+                        <Target className="size-4 text-nebula-glow" />
                         <span>Select Concept Hook Angle (A / B / C)</span>
                       </h4>
                       <p className="text-[11px] text-slate-500">
@@ -725,7 +725,7 @@ export function PortalCalendarPage() {
                       type="button"
                       onClick={handleRerollConcept}
                       disabled={isConceptSubmitting}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-[#7FA0D6] hover:text-[#7FA0D6] disabled:opacity-50 cursor-pointer"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-nebula-glow hover:text-nebula-glow disabled:opacity-50 cursor-pointer"
                       title="Generate new hook angles (5 daily quota)"
                     >
                       <RotateCcw className="size-3.5" />
@@ -752,13 +752,13 @@ export function PortalCalendarPage() {
                           }}
                           className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
                             isSelected || isApprovedHook
-                              ? "border-[#7FA0D6] bg-[#161F2D] shadow-xs"
+                              ? "border-nebula-glow bg-nebula-surface shadow-xs"
                               : "border-slate-200 bg-white hover:border-slate-300"
                           }`}
                         >
                           <div className="flex items-center justify-between mb-1.5">
                             <div className="flex items-center gap-2">
-                              <span className="size-5 rounded-full flex items-center justify-center text-[10px] font-black bg-[#7FA0D6] text-white">
+                              <span className="size-5 rounded-full flex items-center justify-center text-[10px] font-black bg-nebula-glow text-white">
                                 {idx === 0 ? "A" : idx === 1 ? "B" : "C"}
                               </span>
                               <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
@@ -774,7 +774,7 @@ export function PortalCalendarPage() {
                             )}
                           </div>
 
-                          <p className="text-xs font-bold text-[#0B111C] leading-snug">
+                          <p className="text-xs font-bold text-nebula-navy leading-snug">
                             &ldquo;{hook.text}&rdquo;
                           </p>
                           <p className="text-[11px] text-slate-500 mt-1 italic">
@@ -817,14 +817,14 @@ export function PortalCalendarPage() {
               {previewEntry.blueprint?.beats && previewEntry.blueprint.beats.length > 0 && (
                 <div className="space-y-2 pt-2 border-t border-slate-100">
                   <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                    <Film className="size-3.5 text-[#7FA0D6]" />
+                    <Film className="size-3.5 text-nebula-glow" />
                     Shot-by-Shot Storyboard Beats
                   </h4>
                   <div className="space-y-2">
                     {previewEntry.blueprint.beats.map((beat, bIdx) => (
                       <div key={bIdx} className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 text-xs space-y-1">
                         <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
-                          <span className="text-[#7FA0D6] font-extrabold">Shot {bIdx + 1} ({beat.timestamp_range})</span>
+                          <span className="text-nebula-glow font-extrabold">Shot {bIdx + 1} ({beat.timestamp_range})</span>
                           <span className="px-1.5 py-0.5 rounded bg-slate-200/60 text-slate-700 font-semibold text-[10px]">
                             {beat.shot_type}
                           </span>
@@ -887,7 +887,7 @@ export function PortalCalendarPage() {
               <div className="flex gap-3 pt-2 border-t border-slate-100">
                 <Link
                   to="/portal/deliverables"
-                  className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#7FA0D6] hover:bg-[#7FA0D6] text-white font-bold text-xs shadow-xs transition-colors"
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-nebula-glow hover:bg-nebula-glow text-white font-bold text-xs shadow-xs transition-colors"
                 >
                   <span>Deliverables Dock</span>
                   <ExternalLink className="size-3.5" />
