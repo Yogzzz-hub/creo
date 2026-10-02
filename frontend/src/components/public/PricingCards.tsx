@@ -1,6 +1,6 @@
 import { ArrowRight, Check } from "lucide-react";
 import { Link } from "react-router";
-import { CountUp, Stagger, StaggerItem, TiltCard } from "../motion";
+import { Stagger, StaggerItem, TiltCard } from "../motion";
 
 interface PricingCardsProps {
   showBillingToggle?: boolean;
