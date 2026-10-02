@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../lib/auth-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchPortalDeliverables, approveDeliverable, requestChanges } from "../../lib/deliverables-api";
-import { request } from "../../lib/http";
 import { Check, Play, Loader2 } from "lucide-react";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
@@ -13,17 +12,6 @@ export function PortalDeliverablesPage() {
   const queryClient = useQueryClient();
   const gate = useOnboardingGate();
   const clientId = user?.id || "00000000-0000-0000-0000-000000000001";
-
-  const { data: subData } = useQuery<any>({
-    queryKey: ["client-subscription", user?.id],
-    queryFn: () => request<any>("/api/v1/payments/subscription"),
-    enabled: !!user?.id,
-  });
-
-  const planName = (subData?.plan?.name || subData?.subscription?.name || "").toLowerCase();
-  const maxRevisions = subData?.plan?.revision_rounds || (
-    planName.includes("starter") ? 1 : planName.includes("scale") ? 3 : 2
-  );
 
   // Query deliverables (only once the workspace is unlocked)
   const { data: deliverablesData, isLoading } = useQuery({
@@ -169,7 +157,7 @@ export function PortalDeliverablesPage() {
 
                 return (
                   <button
-                    key={`${d.id}-${idx}`}
+                    key={d.id}
                     onClick={() => setSelectedId(d.id)}
                     className={`w-full flex items-center gap-4 p-3 rounded-2xl border text-left transition-all ${
                       isSelected 
@@ -185,17 +173,17 @@ export function PortalDeliverablesPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className={`text-[13px] font-bold truncate ${isSelected ? 'text-white' : 'text-slate-50'}`}>
+                      <h4 className={`text-[13px] font-bold truncate ${isSelected ? 'text-white' : 'text-[#F8FAFC]'}`}>
                         {title}
                       </h4>
                       <p className="text-xs text-nebula-mist truncate mb-2">{meta}</p>
                       
                       {isNeedsYou ? (
-                        <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-bold bg-nebula-sand/15 text-nebula-sand">
+                        <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-bold bg-[#D8BF9B]/15 text-nebula-sand">
                           Needs you
                         </span>
                       ) : isApproved ? (
-                        <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-bold bg-nebula-glow/15 text-nebula-periwinkle">
+                        <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-bold bg-[#7FA0D6]/15 text-nebula-periwinkle">
                           Approved
                         </span>
                       ) : (
@@ -236,7 +224,7 @@ export function PortalDeliverablesPage() {
 
           <div className="flex-1 flex items-center justify-center p-8 bg-nebula-navy/30 relative">
             {selectedItem ? (
-              <div className="relative w-full max-w-[280px] aspect-[9/16] bg-black rounded-[32px] overflow-hidden shadow-2xl border-4 border-nebula-surface flex items-center justify-center">
+              <div className="relative w-full max-w-[280px] aspect-[9/16] bg-black rounded-[32px] overflow-hidden shadow-2xl border-4 border-[#161F2D] flex items-center justify-center">
                 {selectedItem.file_url && (selectedItem.file_type?.includes("video") || selectedItem.file_url.endsWith(".mp4") || selectedItem.file_url.endsWith(".webm") || selectedItem.file_url.endsWith(".mov")) ? (
                   <video
                     src={selectedItem.file_url}
@@ -301,24 +289,28 @@ export function PortalDeliverablesPage() {
               )}
 
               {/* Revision rounds */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[13px] font-bold text-white">Revision rounds</span>
-                  <span className="text-xs text-nebula-mist">
-                    {Math.min(selectedItem.revision_round || 1, maxRevisions)} of {maxRevisions} used
-                  </span>
-                </div>
-                <div className="h-1.5 w-full bg-white/[0.08] rounded-full flex gap-1">
-                  {Array.from({ length: maxRevisions }).map((_, idx) => (
-                    <div
-                      key={idx}
-                      className={`h-full flex-1 rounded-full ${
-                        (selectedItem.revision_round || 1) > idx ? "bg-nebula-glow" : ""
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
+              {(() => {
+                const planName = (String((deliverablesData as any)?.plan_name || (user as any)?.plan_id || (user as any)?.plan || "")).toLowerCase();
+                const maxRevisionRounds = planName.includes("starter") ? 1 : planName.includes("scale") || planName.includes("pro") ? 3 : 2;
+                const currentRound = selectedItem.revision_round || 1;
+
+                return (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[13px] font-bold text-white">Revision rounds</span>
+                      <span className="text-xs text-nebula-mist">{currentRound} of {maxRevisionRounds} used</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-white/[0.08] rounded-full flex gap-1">
+                      {Array.from({ length: maxRevisionRounds }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`h-full flex-1 rounded-full ${currentRound > i ? "bg-[#7FA0D6]" : "bg-white/[0.08]"}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Comments */}
               <div>
@@ -329,7 +321,7 @@ export function PortalDeliverablesPage() {
                   ) : (
                     itemComments.map((c) => (
                       <div key={c.id} className="flex gap-3">
-                        <div className="size-6 rounded-full bg-nebula-periwinkle shrink-0 flex items-center justify-center text-[11px] font-bold text-black border border-white/[0.1]">
+                        <div className="size-6 rounded-full bg-[#BCCCE6] shrink-0 flex items-center justify-center text-[11px] font-bold text-black border border-white/[0.1]">
                           1
                         </div>
                         <div className="min-w-0">
@@ -383,7 +375,7 @@ export function PortalDeliverablesPage() {
                   <button
                     onClick={handleApprove}
                     disabled={approveMutation.isPending || selectedItem.status === "approved"}
-                    className="flex-1 px-4 py-3 rounded-full bg-nebula-periwinkle text-nebula-navy text-[13px] font-bold hover:bg-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Check className="w-4 h-4" />
                     {approveMutation.isPending ? "Approving..." : "Approve"}
@@ -409,7 +401,7 @@ export function PortalDeliverablesPage() {
       {/* Toast */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-nebula-surface text-white px-5 py-3 rounded-xl shadow-2xl border border-white/[0.1] text-sm font-medium flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-nebula-periwinkle" />
+          <span className="w-2 h-2 rounded-full bg-[#BCCCE6]" />
           {toastMessage}
         </div>
       )}

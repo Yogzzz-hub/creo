@@ -41,19 +41,20 @@ Agency Pvt. Ltd. ("Agency") and the Client identified during registration.
    are assigned to Client. Agency retains the right to display the work in its
    portfolio unless Client requests otherwise in writing.
 
-4. REVISION POLICY
+4. REVISION POLICY & SLA TURNAROUNDS
    The number of revision rounds per deliverable is determined by the selected
-   plan (1 round for Starter, 2 for Growth, 3 for Scale). Revisions must
-   be requested within 5 business days of delivery.
+   plan (1 round for Starter, 2 for Growth, 3 for Scale). Standard turnarounds:
+   Starter (3 business days), Growth (2 business days), Scale (1 business day).
+   Revisions must be requested within 5 business days of delivery.
 
 5. CONFIDENTIALITY
    Both parties agree to keep confidential any proprietary information shared
    during the engagement. This obligation survives termination of this Agreement.
 
-6. TERMINATION
-   Either party may terminate this Agreement at any time. Cancellation takes
-   effect at the end of the current billing cycle. No refunds are issued for
-   the current billing cycle upon termination.
+6. TERMINATION & CANCELLATION
+   Client may cancel their subscription retainer at any time. Subscriptions are billed
+   month-to-month. Cancellation takes effect at the end of the current billing cycle.
+   No written notice requirement or cancellation fees apply.
 
 7. LIMITATION OF LIABILITY
    Agency's total liability under this Agreement shall not exceed the total fees
@@ -170,7 +171,7 @@ export function StageTerms({
         <div className="lg:col-span-4 flex flex-col">
           <div className="rounded-2xl border border-nebula-steel bg-nebula-surface p-5 shadow-xl h-full flex flex-col justify-between">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-nebula-glow/20 border border-nebula-glow/30 text-nebula-periwinkle text-[11px] font-bold uppercase tracking-wider mb-3 shadow-sm w-fit">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7FA0D6]/20 border border-[#7FA0D6]/30 text-nebula-periwinkle text-[11px] font-bold uppercase tracking-wider mb-3 shadow-sm w-fit">
                 Step 2 of 5 • Legal Agreement
               </div>
               <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight mb-2">
@@ -234,7 +235,7 @@ export function StageTerms({
                 )}
                 <div className="w-24 sm:w-28 h-2 bg-nebula-navy border border-nebula-steel rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-nebula-glow transition-all duration-200"
+                    className="h-full bg-[#7FA0D6] transition-all duration-200"
                     style={{ width: `${scrollProgress}%` }}
                   />
                 </div>
@@ -286,7 +287,7 @@ export function StageTerms({
           <button
             type="button"
             onClick={onBack}
-            className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-nebula-navy border border-nebula-steel text-xs sm:text-sm font-bold text-nebula-mist hover:text-white hover:border-nebula-glow shadow-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0"
+            className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-nebula-navy border border-nebula-steel text-xs sm:text-sm font-bold text-nebula-mist hover:text-white hover:border-[#7FA0D6] shadow-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Step 1 (Email)</span>
@@ -299,7 +300,7 @@ export function StageTerms({
             type="button"
             onClick={handleProceed}
             disabled={isSubmitting}
-            className="w-full sm:w-auto min-w-[260px] py-3 px-6 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-md bg-nebula-periwinkle text-nebula-navy hover:bg-white hover:shadow-lg shadow-nebula-periwinkle/20 cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full sm:w-auto min-w-[260px] py-3 px-6 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-md bg-[#BCCCE6] text-[#0B111C] hover:bg-white hover:shadow-lg shadow-[#BCCCE6]/20 cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             <span>

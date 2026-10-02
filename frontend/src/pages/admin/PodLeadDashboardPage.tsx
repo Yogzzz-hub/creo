@@ -156,7 +156,7 @@ export function PodLeadDashboardPage() {
     const newDeliverable = {
       id: `del-${Date.now()}`,
       client: clientName.toUpperCase(),
-      clientBadgeColor: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
+      clientBadgeColor: "bg-[#7FA0D6]/15 text-nebula-glow border-[#7FA0D6]/30",
       talent: assigneeName,
       format: assignForm.format,
       due: "Due in 24h",
@@ -190,7 +190,7 @@ export function PodLeadDashboardPage() {
     return {
       name: memberName,
       avatar: (memberName || "SP").slice(0, 2).toUpperCase(),
-      avatarBg: "bg-nebula-glow",
+      avatarBg: "bg-[#7FA0D6]",
       role: member?.role || member?.craft_title || "Specialist",
       assignment: `${member?.role || member?.craft_title || "Specialist"} · ${podName} Active`,
       tasksCount: `${tasksCount} Tasks`,
@@ -271,7 +271,7 @@ export function PodLeadDashboardPage() {
                     className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-all ${
                       (selectedPodKey === p.key || (!selectedPodKey && data.pod.id === p.id))
                         ? "bg-blue-600 text-white shadow-2xs"
-                        : "text-slate-100 hover:bg-nebula-surface"
+                        : "text-[#F1F5F9] hover:bg-nebula-surface"
                     }`}
                   >
                     {p.letter}
@@ -282,14 +282,14 @@ export function PodLeadDashboardPage() {
 
             <button
               onClick={() => setStandupModalOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-nebula-surface border border-nebula-steel/80 hover:bg-nebula-navy text-slate-100 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-nebula-surface border border-nebula-steel/80 hover:bg-nebula-navy text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
               <FileText className="size-3.5 text-nebula-mist" />
               Log Standup
             </button>
             <button
               onClick={() => setAssignModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
             >
               <Plus className="size-3.5" />
               Assign Deliverable
@@ -308,17 +308,17 @@ export function PodLeadDashboardPage() {
           >
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-nebula-mist">Active Pod Capacity</span>
-              <div className="size-6 sm:size-7 rounded-lg bg-nebula-glow/20 text-nebula-glow flex items-center justify-center">
+              <div className="size-6 sm:size-7 rounded-lg bg-[#7FA0D6]/20 text-nebula-glow flex items-center justify-center">
                 <Users className="size-3 sm:size-3.5" />
               </div>
             </div>
             <div>
               <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">4 / 4</span>
+                <span className="text-lg sm:text-xl font-black text-white">{teamRoster.length > 0 ? teamRoster.length : (data?.members?.length || 0)} / {teamRoster.length > 0 ? teamRoster.length : (data?.members?.length || 4)}</span>
                 <span className="text-[10.5px] sm:text-[11px] font-bold text-nebula-mist">Members Active</span>
               </div>
               <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-nebula-steel">
-                <span className="font-bold text-slate-100">100% Bandwidth</span>
+                <span className="font-bold text-[#F1F5F9]">100% Bandwidth</span>
                 <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-emerald-950/40 text-emerald-400 border border-emerald-500/30">
                   ● Optimal Flow
                 </span>
@@ -341,14 +341,14 @@ export function PodLeadDashboardPage() {
             </div>
             <div>
               <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">6</span>
+                <span className="text-lg sm:text-xl font-black text-white">{(data?.tasks?.internal_qa?.length) ?? deliverablesList.length}</span>
                 <span className="text-[10.5px] sm:text-[11px] font-bold text-nebula-mist">Pending Review</span>
               </div>
               <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-nebula-steel">
                 <span className="font-bold text-rose-600 flex items-center gap-1">
-                  ▲ 2 Urgent
+                  ▲ {(data?.tasks?.internal_qa?.filter((t: any) => t.is_near_sla).length) || 0} Urgent
                 </span>
-                <span className="font-bold text-nebula-mist">Avg: 38m</span>
+                <span className="font-bold text-nebula-mist">Avg: {(data as any)?.kpis?.avg_turnaround_hours ? `${Math.round((data as any).kpis.avg_turnaround_hours * 60)}m` : "38m"}</span>
               </div>
             </div>
           </motion.div>
@@ -368,11 +368,11 @@ export function PodLeadDashboardPage() {
             </div>
             <div>
               <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">0</span>
-                <span className="text-[10.5px] sm:text-[11px] font-bold text-nebula-mist">On Leave Today</span>
+                <span className="text-lg sm:text-xl font-black text-white">{pendingLeaveRequests.length}</span>
+                <span className="text-[10.5px] sm:text-[11px] font-bold text-nebula-mist">Pending Leave Requests</span>
               </div>
               <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-nebula-steel">
-                <span className="font-bold text-slate-100">1 Upcoming Tomorrow</span>
+                <span className="font-bold text-[#F1F5F9]">1 Upcoming Tomorrow</span>
                 <Link to="/lead/schedule" className="font-bold text-nebula-glow hover:underline flex items-center gap-0.5">
                   View <ChevronRight className="size-3" />
                 </Link>
@@ -389,7 +389,7 @@ export function PodLeadDashboardPage() {
             <div id="roster" className="bg-nebula-surface rounded-2xl p-4 sm:p-5 border border-nebula-steel/80 shadow-2xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-nebula-steel gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-7 rounded-lg bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-black text-xs">
+                  <div className="size-7 rounded-lg bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center font-black text-xs">
                     <Users className="size-3.5" />
                   </div>
                   <div>
@@ -421,7 +421,7 @@ export function PodLeadDashboardPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs font-black text-white">{member.name}</span>
-                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-nebula-surface text-slate-100">
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-nebula-surface text-[#F1F5F9]">
                             {member.role}
                           </span>
                         </div>
@@ -447,7 +447,7 @@ export function PodLeadDashboardPage() {
                         </div>
                       </div>
 
-                      <Link to="/lead/tasks" className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg hover:bg-nebula-surface transition-colors">
+                      <Link to="/lead/tasks" className="p-1 text-nebula-mist hover:text-[#F1F5F9] rounded-lg hover:bg-nebula-surface transition-colors">
                         <ArrowRight className="size-3.5" />
                       </Link>
                     </div>
@@ -465,7 +465,7 @@ export function PodLeadDashboardPage() {
             <div className="bg-nebula-surface rounded-2xl p-4 sm:p-5 border border-nebula-steel/80 shadow-2xs space-y-3.5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-nebula-steel gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-7 rounded-lg bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-black">
+                  <div className="size-7 rounded-lg bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center font-black">
                     <CheckCircle2 className="size-3.5" />
                   </div>
                   <div>
@@ -498,14 +498,14 @@ export function PodLeadDashboardPage() {
                   deliverablesList.map((del) => (
                     <div
                       key={del.id}
-                      className="p-3.5 rounded-xl border border-nebula-steel bg-nebula-navy hover:border-nebula-glow/30 hover:shadow-2xs transition-all space-y-2.5"
+                      className="p-3.5 rounded-xl border border-nebula-steel bg-nebula-navy hover:border-[#7FA0D6]/30 hover:shadow-2xs transition-all space-y-2.5"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-1.5">
                         <div className="flex items-center gap-1.5">
                           <span className={`px-2 py-0.2 rounded-full text-[9px] font-black tracking-wider border ${del.clientBadgeColor}`}>
                             {del.client}
                           </span>
-                          <span className="text-[11px] font-bold text-slate-100">· {del.talent}</span>
+                          <span className="text-[11px] font-bold text-[#F1F5F9]">· {del.talent}</span>
                         </div>
                         <span className={`text-[11px] font-bold flex items-center gap-1 ${del.dueUrgent ? "text-amber-600" : "text-nebula-mist"}`}>
                           <Clock className="size-3" />
@@ -517,7 +517,7 @@ export function PodLeadDashboardPage() {
                         <h3 className="text-xs font-black text-white">{del.title}</h3>
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
                           {del.tags.map((tag: string) => (
-                            <span key={tag} className="px-2 py-0.5 rounded-md bg-nebula-surface border border-nebula-steel/80 text-[10px] font-bold text-slate-100">
+                            <span key={tag} className="px-2 py-0.5 rounded-md bg-nebula-surface border border-nebula-steel/80 text-[10px] font-bold text-[#F1F5F9]">
                               {tag}
                             </span>
                           ))}
@@ -532,13 +532,13 @@ export function PodLeadDashboardPage() {
                           onClick={() => {
                             setRevisionModalItem({ id: del.id, title: del.title });
                           }}
-                          className="px-3 py-1.5 rounded-lg bg-nebula-surface border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-[11px] font-bold transition-colors cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg bg-nebula-surface border border-nebula-steel hover:bg-nebula-navy text-[#F1F5F9] text-[11px] font-bold transition-colors cursor-pointer"
                         >
                           Request Revision
                         </button>
                         <button
                           onClick={() => handleApproveDeliverable(del)}
-                          className="px-3.5 py-1.5 rounded-lg bg-nebula-glow hover:bg-blue-700 text-white text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
+                          className="px-3.5 py-1.5 rounded-lg bg-[#7FA0D6] hover:bg-blue-700 text-white text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
                         >
                           <Check className="size-3" />
                           Approve & Send
@@ -555,7 +555,7 @@ export function PodLeadDashboardPage() {
           <div className="space-y-3.5 sm:space-y-4">
             {/* 1. Client SLA Warning / Status */}
             {deliverablesList.some((d) => d.dueUrgent) ? (
-              <div className="bg-gradient-to-br from-rose-950/40 via-red-950/20 to-nebula-surface rounded-2xl p-4 border border-rose-500/30 shadow-2xs space-y-2.5">
+              <div className="bg-gradient-to-br from-rose-950/40 via-red-950/20 to-[#161F2D] rounded-2xl p-4 border border-rose-500/30 shadow-2xs space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-rose-400 font-bold text-xs uppercase tracking-wider">
                     <ShieldAlert className="size-3.5 text-rose-400" />
@@ -567,11 +567,11 @@ export function PodLeadDashboardPage() {
                 </div>
 
                 <div>
-                  <span className="text-[11px] font-bold text-slate-100 block">{deliverablesList[0]?.title}</span>
+                  <span className="text-[11px] font-bold text-[#F1F5F9] block">{deliverablesList[0]?.title}</span>
                   <div className="text-xl font-black text-rose-500 tracking-tight mt-0.5">
                     {deliverablesList[0]?.due}
                   </div>
-                  <p className="text-[11px] text-slate-100 mt-1 leading-relaxed font-medium">
+                  <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed font-medium">
                     Review required to ensure client delivery SLA is fulfilled.
                   </p>
                 </div>
@@ -595,7 +595,7 @@ export function PodLeadDashboardPage() {
                   </span>
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold text-slate-100 block">{podName} Pipeline</span>
+                  <span className="text-[11px] font-bold text-[#F1F5F9] block">{podName} Pipeline</span>
                   <div className="text-xl font-black text-emerald-400 tracking-tight mt-0.5">
                     100% On Track
                   </div>
@@ -648,8 +648,8 @@ export function PodLeadDashboardPage() {
                       <span className="text-[9px] font-bold text-nebula-mist">{leave.dates}</span>
                     </div>
 
-                    <div className="text-[10px] text-slate-100 bg-nebula-surface p-2 rounded-lg border border-nebula-steel font-medium">
-                      <span className="font-bold text-slate-100 block mb-0.5">Cover: {leave.cover}</span>
+                    <div className="text-[10px] text-[#F1F5F9] bg-nebula-surface p-2 rounded-lg border border-nebula-steel font-medium">
+                      <span className="font-bold text-[#F1F5F9] block mb-0.5">Cover: {leave.cover}</span>
                       "{leave.note}"
                     </div>
 
@@ -657,14 +657,14 @@ export function PodLeadDashboardPage() {
                       <button
                         type="button"
                         onClick={() => handleDeclineLeave(leave.id, leave.name)}
-                        className="flex-1 py-1.5 rounded-lg bg-nebula-surface border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-[10px] font-bold transition-colors cursor-pointer"
+                        className="flex-1 py-1.5 rounded-lg bg-nebula-surface border border-nebula-steel hover:bg-nebula-navy text-[#F1F5F9] text-[10px] font-bold transition-colors cursor-pointer"
                       >
                         Decline
                       </button>
                       <button
                         type="button"
                         onClick={() => handleApproveLeave(leave.id, leave.name)}
-                        className="flex-1 py-1.5 rounded-lg bg-nebula-glow hover:bg-blue-700 text-white text-[10px] font-bold transition-colors cursor-pointer shadow-2xs"
+                        className="flex-1 py-1.5 rounded-lg bg-[#7FA0D6] hover:bg-blue-700 text-white text-[10px] font-bold transition-colors cursor-pointer shadow-2xs"
                       >
                         Approve Leave
                       </button>
@@ -693,7 +693,7 @@ export function PodLeadDashboardPage() {
                   data.clients.map((c) => (
                     <div key={c.id} className="space-y-1">
                       <div className="flex justify-between text-[11px] font-bold">
-                        <span className="text-slate-100">{c.name}</span>
+                        <span className="text-[#F1F5F9]">{c.name}</span>
                         <span className="text-emerald-400">On Track</span>
                       </div>
                       <div className="h-1.5 w-full bg-nebula-surface rounded-full overflow-hidden">
@@ -720,9 +720,9 @@ export function PodLeadDashboardPage() {
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setAssignModalOpen(true)}
-                  className="p-2.5 rounded-xl bg-nebula-navy hover:bg-nebula-glow/15/70 border border-nebula-steel hover:border-nebula-glow/30 text-left transition-all cursor-pointer group"
+                  className="p-2.5 rounded-xl bg-nebula-navy hover:bg-[#7FA0D6]/15/70 border border-nebula-steel hover:border-[#7FA0D6]/30 text-left transition-all cursor-pointer group"
                 >
-                  <div className="size-6 rounded-lg bg-nebula-glow/20 text-nebula-glow flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
+                  <div className="size-6 rounded-lg bg-[#7FA0D6]/20 text-nebula-glow flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
                     <Plus className="size-3" />
                   </div>
                   <span className="text-[11px] font-black text-white block">Assign Task</span>
@@ -773,7 +773,7 @@ export function PodLeadDashboardPage() {
           <div className="w-full max-w-lg bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-black text-white">Request Revision</h3>
-              <button onClick={() => setRevisionModalItem(null)} className="text-nebula-mist hover:text-slate-100">
+              <button onClick={() => setRevisionModalItem(null)} className="text-nebula-mist hover:text-[#F1F5F9]">
                 <X className="size-5" />
               </button>
             </div>
@@ -790,7 +790,7 @@ export function PodLeadDashboardPage() {
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setRevisionModalItem(null)}
-                className="px-4 py-2 rounded-xl bg-nebula-surface text-slate-100 text-xs font-bold hover:bg-slate-200 transition"
+                className="px-4 py-2 rounded-xl bg-nebula-surface text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition"
               >
                 Cancel
               </button>
@@ -811,7 +811,7 @@ export function PodLeadDashboardPage() {
           <div className="w-full max-w-lg bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-black text-white">Log Pod A Daily Standup</h3>
-              <button onClick={() => setStandupModalOpen(false)} className="text-nebula-mist hover:text-slate-100">
+              <button onClick={() => setStandupModalOpen(false)} className="text-nebula-mist hover:text-[#F1F5F9]">
                 <X className="size-5" />
               </button>
             </div>
@@ -828,7 +828,7 @@ export function PodLeadDashboardPage() {
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setStandupModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-nebula-surface text-slate-100 text-xs font-bold hover:bg-slate-200 transition"
+                className="px-4 py-2 rounded-xl bg-nebula-surface text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition"
               >
                 Cancel
               </button>
@@ -853,13 +853,13 @@ export function PodLeadDashboardPage() {
           <div className="w-full max-w-lg bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-black text-white">Assign Deliverable / Task</h3>
-              <button onClick={() => setAssignModalOpen(false)} className="text-nebula-mist hover:text-slate-100">
+              <button onClick={() => setAssignModalOpen(false)} className="text-nebula-mist hover:text-[#F1F5F9]">
                 <X className="size-5" />
               </button>
             </div>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-slate-100 block mb-1">Task Title</label>
+                <label className="font-bold text-[#F1F5F9] block mb-1">Task Title</label>
                 <input
                   type="text"
                   value={assignForm.title}
@@ -870,7 +870,7 @@ export function PodLeadDashboardPage() {
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-slate-100 block mb-1">Format</label>
+                  <label className="font-bold text-[#F1F5F9] block mb-1">Format</label>
                   <select
                     value={assignForm.format}
                     onChange={(e) => setAssignForm({ ...assignForm, format: e.target.value })}
@@ -882,7 +882,7 @@ export function PodLeadDashboardPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-slate-100 block mb-1">Client</label>
+                  <label className="font-bold text-[#F1F5F9] block mb-1">Client</label>
                   <select
                     value={assignForm.client}
                     onChange={(e) => setAssignForm({ ...assignForm, client: e.target.value })}
@@ -898,7 +898,7 @@ export function PodLeadDashboardPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-slate-100 block mb-1">Specialist</label>
+                  <label className="font-bold text-[#F1F5F9] block mb-1">Specialist</label>
                   <select
                     value={assignForm.assignee}
                     onChange={(e) => setAssignForm({ ...assignForm, assignee: e.target.value })}
@@ -919,7 +919,7 @@ export function PodLeadDashboardPage() {
               <button
                 type="button"
                 onClick={() => setAssignModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-nebula-surface text-slate-100 text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-nebula-surface text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -954,14 +954,14 @@ export function PodLeadDashboardPage() {
                   <p className="text-xs text-nebula-mist font-medium">Escalate production blockers to Studio Operations</p>
                 </div>
               </div>
-              <button onClick={() => setBlockedModalOpen(false)} className="text-nebula-mist hover:text-slate-100 cursor-pointer">
+              <button onClick={() => setBlockedModalOpen(false)} className="text-nebula-mist hover:text-[#F1F5F9] cursor-pointer">
                 <X className="size-5" />
               </button>
             </div>
 
             <div className="space-y-3.5 text-xs">
               <div>
-                <label className="font-bold text-slate-100 block mb-1">Issue Title</label>
+                <label className="font-bold text-[#F1F5F9] block mb-1">Issue Title</label>
                 <input
                   type="text"
                   value={blockedForm.title}
@@ -973,7 +973,7 @@ export function PodLeadDashboardPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-100 block mb-1">Affected Client</label>
+                  <label className="font-bold text-[#F1F5F9] block mb-1">Affected Client</label>
                   <select
                     value={blockedForm.client}
                     onChange={(e) => setBlockedForm({ ...blockedForm, client: e.target.value })}
@@ -989,7 +989,7 @@ export function PodLeadDashboardPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-slate-100 block mb-1">Severity</label>
+                  <label className="font-bold text-[#F1F5F9] block mb-1">Severity</label>
                   <select
                     value={blockedForm.severity}
                     onChange={(e) => setBlockedForm({ ...blockedForm, severity: e.target.value })}
@@ -1003,7 +1003,7 @@ export function PodLeadDashboardPage() {
               </div>
 
               <div>
-                <label className="font-bold text-slate-100 block mb-1">Blocker Details & Action Required</label>
+                <label className="font-bold text-[#F1F5F9] block mb-1">Blocker Details & Action Required</label>
                 <textarea
                   rows={3}
                   value={blockedForm.details}
@@ -1018,7 +1018,7 @@ export function PodLeadDashboardPage() {
               <button
                 type="button"
                 onClick={() => setBlockedModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-nebula-surface text-slate-100 text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-nebula-surface text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -1059,7 +1059,7 @@ export function PodLeadDashboardPage() {
                   <p className="text-xs text-nebula-mist font-medium">Request studio capacity surge for upcoming milestones</p>
                 </div>
               </div>
-              <button onClick={() => setReinforcementsModalOpen(false)} className="text-nebula-mist hover:text-slate-100 cursor-pointer">
+              <button onClick={() => setReinforcementsModalOpen(false)} className="text-nebula-mist hover:text-[#F1F5F9] cursor-pointer">
                 <X className="size-5" />
               </button>
             </div>
@@ -1067,7 +1067,7 @@ export function PodLeadDashboardPage() {
             <div className="space-y-3.5 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-100 block mb-1">Craft Role Needed</label>
+                  <label className="font-bold text-[#F1F5F9] block mb-1">Craft Role Needed</label>
                   <select
                     value={reinforceForm.role}
                     onChange={(e) => setReinforceForm({ ...reinforceForm, role: e.target.value })}
@@ -1080,7 +1080,7 @@ export function PodLeadDashboardPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-slate-100 block mb-1">Bandwidth Surge</label>
+                  <label className="font-bold text-[#F1F5F9] block mb-1">Bandwidth Surge</label>
                   <select
                     value={reinforceForm.hours}
                     onChange={(e) => setReinforceForm({ ...reinforceForm, hours: e.target.value })}
@@ -1094,7 +1094,7 @@ export function PodLeadDashboardPage() {
               </div>
 
               <div>
-                <label className="font-bold text-slate-100 block mb-1">Required Starting</label>
+                <label className="font-bold text-[#F1F5F9] block mb-1">Required Starting</label>
                 <select
                   value={reinforceForm.urgency}
                   onChange={(e) => setReinforceForm({ ...reinforceForm, urgency: e.target.value })}
@@ -1107,7 +1107,7 @@ export function PodLeadDashboardPage() {
               </div>
 
               <div>
-                <label className="font-bold text-slate-100 block mb-1">Workload Surge Notes</label>
+                <label className="font-bold text-[#F1F5F9] block mb-1">Workload Surge Notes</label>
                 <textarea
                   rows={3}
                   value={reinforceForm.notes}
@@ -1122,7 +1122,7 @@ export function PodLeadDashboardPage() {
               <button
                 type="button"
                 onClick={() => setReinforcementsModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-nebula-surface text-slate-100 text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-nebula-surface text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
               >
                 Cancel
               </button>

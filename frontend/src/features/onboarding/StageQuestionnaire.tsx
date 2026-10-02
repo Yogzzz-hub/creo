@@ -30,41 +30,51 @@ import {
   completeOnboarding,
 } from "../../lib/onboarding-api";
 import type { AssignedTeamMember } from "../../types/api";
-import { ColorPicker, useColor, ColorService } from "react-color-palette";
-import "react-color-palette/css";
-
-function AdvancedColorPicker({ color, onChange }: { color: string, onChange: (hex: string) => void }) {
-  const [col, setCol] = useColor(color || "#0D2137");
+function AdvancedColorPicker({ color, onChange }: { color: string; onChange: (hex: string) => void }) {
+  const currentHex = color || "#0D2137";
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (color && color !== col.hex) {
-      try {
-        setCol(ColorService.convert("hex", color));
-      } catch (e) {
-        // ignore invalid hex
-      }
-    }
-  }, [color]);
-
-  const handleChange = (newCol: any) => {
-    setCol(newCol);
-    onChange(newCol.hex);
-  };
 
   return (
     <div className="relative flex items-center">
-      <div 
-        className="w-8 h-8 rounded-lg cursor-pointer border border-nebula-steel shadow-sm relative z-10" 
-        style={{ backgroundColor: col.hex }}
+      <div
+        className="w-8 h-8 rounded-lg cursor-pointer border border-nebula-steel shadow-sm relative z-10 transition-transform hover:scale-105"
+        style={{ backgroundColor: currentHex }}
         onClick={() => setOpen(!open)}
-        title="Click to open advanced color picker"
+        title="Click to open color picker"
       />
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute z-50 mt-2 top-full left-0 bg-nebula-navy p-2 rounded-xl border border-nebula-steel shadow-2xl">
-             <ColorPicker color={col} onChange={handleChange} />
+          <div className="absolute z-50 mt-2 top-full left-0 bg-nebula-navy p-3 rounded-xl border border-nebula-steel shadow-2xl space-y-2.5 min-w-[200px]">
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={currentHex.startsWith("#") ? currentHex : "#0D2137"}
+                onChange={(e) => onChange(e.target.value)}
+                className="w-10 h-10 rounded cursor-pointer bg-transparent border-0"
+              />
+              <input
+                type="text"
+                value={currentHex}
+                onChange={(e) => onChange(e.target.value)}
+                className="flex-1 bg-nebula-surface border border-nebula-steel text-white text-xs px-2.5 py-1.5 rounded-lg font-mono focus:outline-none focus:border-[#7FA0D6]"
+                placeholder="#0D2137"
+              />
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-nebula-steel">
+              {["#0D2137", "#7FA0D6", "#161F2D", "#F8FAFC", "#D8BF9B", "#E11D48", "#10B981"].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => {
+                    onChange(preset);
+                    setOpen(false);
+                  }}
+                  className="w-5 h-5 rounded-full border border-white/20 transition-transform hover:scale-110"
+                  style={{ backgroundColor: preset }}
+                />
+              ))}
+            </div>
           </div>
         </>
       )}
@@ -368,7 +378,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
 
   const [secD, setSecD] = useState({
     brand_guidelines: "none",
-    colours: [{ hex: "var(--color-nebula-navy)", label: "primary" }, { hex: "var(--color-nebula-glow)", label: "accent" }],
+    colours: [{ hex: "#0B111C", label: "primary" }, { hex: "#7FA0D6", label: "accent" }],
     fonts: "",
     logo_files: [],
     photography_product_shots: [],
@@ -901,7 +911,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             type="button"
             onClick={handleSynthesizeAndFinish}
             disabled={isSynthesizing}
-            className="px-4 py-2 bg-nebula-periwinkle text-nebula-navy hover:bg-white rounded-xl text-xs font-bold transition-all shadow-sm shrink-0 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 bg-[#BCCCE6] text-[#0B111C] hover:bg-white rounded-xl text-xs font-bold transition-all shadow-sm shrink-0 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             {isSynthesizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowRight className="w-3.5 h-3.5" />}
             <span>Allocate my creative pod</span>
@@ -923,16 +933,16 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
               onClick={() => handleSelectSectionTab(sec.key)}
               className={`flex flex-col items-start p-3 rounded-xl border text-left w-full transition-all cursor-pointer select-none ${
                 isActive
-                  ? "bg-nebula-surface border-2 border-nebula-periwinkle text-white shadow-lg ring-2 ring-nebula-periwinkle/20"
+                  ? "bg-nebula-surface border-2 border-[#BCCCE6] text-white shadow-lg ring-2 ring-[#BCCCE6]/20"
                   : isDone
-                  ? "bg-nebula-surface/90 border-nebula-glow/40 text-nebula-periwinkle hover:border-nebula-glow"
-                  : "bg-nebula-surface/60 border-nebula-steel text-nebula-mist hover:border-nebula-glow/40"
+                  ? "bg-nebula-surface/90 border-[#7FA0D6]/40 text-nebula-periwinkle hover:border-[#7FA0D6]"
+                  : "bg-nebula-surface/60 border-nebula-steel text-nebula-mist hover:border-[#7FA0D6]/40"
               }`}
             >
               <div className="flex items-center justify-between w-full mb-1">
                 <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded font-mono ${
                   isActive
-                    ? "bg-nebula-glow text-nebula-navy"
+                    ? "bg-[#7FA0D6] text-[#0B111C]"
                     : isDone
                     ? "bg-emerald-950/60 text-emerald-300 border border-emerald-800/60"
                     : "bg-nebula-navy text-nebula-mist border border-nebula-steel"
@@ -940,7 +950,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   {isDone ? `✓ ${sec.badge}` : sec.badge}
                 </span>
                 {!sec.isCore ? (
-                  <span className="text-[10px] font-bold text-nebula-sand bg-nebula-sand/10 border border-nebula-sand/30 px-1 py-0.5 rounded shrink-0">
+                  <span className="text-[10px] font-bold text-nebula-sand bg-[#D8BF9B]/10 border border-[#D8BF9B]/30 px-1 py-0.5 rounded shrink-0">
                     Optional
                   </span>
                 ) : (
@@ -984,7 +994,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
               setApiError(null);
               if (failedSection) void saveSectionInBackground(failedSection);
             }}
-            className="px-3 py-1 bg-white text-nebula-navy rounded-lg font-bold hover:bg-nebula-periwinkle transition-colors shrink-0 flex items-center gap-1"
+            className="px-3 py-1 bg-white text-[#0B111C] rounded-lg font-bold hover:bg-[#BCCCE6] transition-colors shrink-0 flex items-center gap-1"
           >
             <RefreshCw className="size-3" /> Retry
           </button>
@@ -1004,7 +1014,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-brand_name">
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   A1: Brand Name (as it appears on screen) <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <input
@@ -1015,10 +1025,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                     setSecA({ ...secA, brand_name: e.target.value });
                     clearFieldError("brand_name");
                   }}
-                  className={`w-full px-3.5 py-2.5 rounded-xl border bg-nebula-navy text-sm text-white placeholder-nebula-mist focus:outline-none transition-all ${
+                  className={`w-full px-3.5 py-2.5 rounded-xl border bg-nebula-navy text-sm text-white placeholder-[#97A0B3] focus:outline-none transition-all ${
                     fieldErrors.brand_name
                       ? "border-rose-500 bg-rose-950/10 focus:border-rose-500"
-                      : "border-nebula-steel focus:border-nebula-glow focus:ring-1 focus:ring-nebula-glow/30"
+                      : "border-nebula-steel focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/30"
                   }`}
                 />
                 {fieldErrors.brand_name && (
@@ -1029,7 +1039,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
               </div>
 
               <div id="field-instagram_handle">
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   A2: Instagram Handle <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <input
@@ -1040,10 +1050,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                     setSecA({ ...secA, instagram_handle: e.target.value });
                     clearFieldError("instagram_handle");
                   }}
-                  className={`w-full px-3.5 py-2.5 rounded-xl border bg-nebula-navy text-sm text-white placeholder-nebula-mist focus:outline-none transition-all ${
+                  className={`w-full px-3.5 py-2.5 rounded-xl border bg-nebula-navy text-sm text-white placeholder-[#97A0B3] focus:outline-none transition-all ${
                     fieldErrors.instagram_handle
                       ? "border-rose-500 bg-rose-950/10 focus:border-rose-500"
-                      : "border-nebula-steel focus:border-nebula-glow focus:ring-1 focus:ring-nebula-glow/30"
+                      : "border-nebula-steel focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/30"
                   }`}
                 />
                 {fieldErrors.instagram_handle && (
@@ -1056,7 +1066,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
 
             <div id="field-one_liner">
               <div className="flex justify-between items-center mb-1.5">
-                <label className="block text-xs font-semibold text-slate-100">
+                <label className="block text-xs font-semibold text-[#F1F5F9]">
                   A3: In one sentence, what does your brand do? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <span className="text-[11px] text-nebula-mist font-mono">
@@ -1072,10 +1082,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   setSecA({ ...secA, one_liner: e.target.value });
                   clearFieldError("one_liner");
                 }}
-                className={`w-full px-3.5 py-2.5 rounded-xl border bg-nebula-navy text-sm text-white placeholder-nebula-mist focus:outline-none transition-all ${
+                className={`w-full px-3.5 py-2.5 rounded-xl border bg-nebula-navy text-sm text-white placeholder-[#97A0B3] focus:outline-none transition-all ${
                   fieldErrors.one_liner
                     ? "border-rose-500 bg-rose-950/10 focus:border-rose-500"
-                    : "border-nebula-steel focus:border-nebula-glow focus:ring-1 focus:ring-nebula-glow/30"
+                    : "border-nebula-steel focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/30"
                 }`}
               />
               {fieldErrors.one_liner && (
@@ -1087,7 +1097,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-category">
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   A4: Primary Category <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <select
@@ -1097,7 +1107,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                     clearFieldError("category");
                   }}
                   style={{ colorScheme: "dark" }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-nebula-steel bg-nebula-navy text-sm text-white focus:border-nebula-glow focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-nebula-steel bg-nebula-navy text-sm text-white focus:border-[#7FA0D6] focus:outline-none cursor-pointer"
                 >
                   {CATEGORY_OPTIONS.map((c) => (
                     <option key={c.value} value={c.value} className="bg-nebula-navy text-white">
@@ -1113,7 +1123,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
               </div>
 
               <div id="field-primary_goal">
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   A6: Single Outcome That Matters Most <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <select
@@ -1123,7 +1133,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                     clearFieldError("primary_goal");
                   }}
                   style={{ colorScheme: "dark" }}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-nebula-steel bg-nebula-navy text-sm text-white focus:border-nebula-glow focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-nebula-steel bg-nebula-navy text-sm text-white focus:border-[#7FA0D6] focus:outline-none cursor-pointer"
                 >
                   {GOAL_OPTIONS.map((g) => (
                     <option key={g.value} value={g.value} className="bg-nebula-navy text-white">
@@ -1140,7 +1150,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             </div>
 
             <div id="field-products">
-              <label className="block text-xs font-semibold text-slate-100 mb-2">
+              <label className="block text-xs font-semibold text-[#F1F5F9] mb-2">
                 A5: Products / Services (Most important first) <span className="text-rose-400 font-bold">*</span>
               </label>
               <div className="space-y-3">
@@ -1158,7 +1168,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                         }
                         clearFieldError("products");
                       }}
-                      className="w-full sm:w-1/3 px-3 py-2 text-xs bg-nebula-surface text-white rounded-lg border border-nebula-steel placeholder-nebula-mist focus:border-nebula-glow focus:outline-none"
+                      className="w-full sm:w-1/3 px-3 py-2 text-xs bg-nebula-surface text-white rounded-lg border border-nebula-steel placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
                     />
                     <input
                       type="text"
@@ -1171,7 +1181,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                           setSecA({ ...secA, products: next });
                         }
                       }}
-                      className="w-full sm:w-1/2 px-3 py-2 text-xs bg-nebula-surface text-white rounded-lg border border-nebula-steel placeholder-nebula-mist focus:border-nebula-glow focus:outline-none"
+                      className="w-full sm:w-1/2 px-3 py-2 text-xs bg-nebula-surface text-white rounded-lg border border-nebula-steel placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
                     />
                     <select
                       value={prod.price_band}
@@ -1183,7 +1193,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                           setSecA({ ...secA, products: next });
                         }
                       }}
-                      className="px-2.5 py-2 text-xs bg-nebula-surface text-white rounded-lg border border-nebula-steel focus:border-nebula-glow focus:outline-none"
+                      className="px-2.5 py-2 text-xs bg-nebula-surface text-white rounded-lg border border-nebula-steel focus:border-[#7FA0D6] focus:outline-none"
                     >
                       <option value="budget">Budget</option>
                       <option value="mid">Mid-Tier</option>
@@ -1220,7 +1230,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+              <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                 A7: Anything else about that outcome? (Optional)
               </label>
               <textarea
@@ -1228,7 +1238,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 placeholder="Specific monthly targets, promotional events, or milestones..."
                 value={secA.goal_notes}
                 onChange={(e) => setSecA({ ...secA, goal_notes: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-nebula-mist focus:border-nebula-glow focus:outline-none"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
               />
             </div>
           </div>
@@ -1243,7 +1253,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             </div>
 
             <div id="field-ideal_customer">
-              <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+              <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                 B1: Describe your ideal customer <span className="text-rose-400 font-bold">*</span>
               </label>
               <textarea
@@ -1254,10 +1264,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   setSecB({ ...secB, ideal_customer: e.target.value });
                   clearFieldError("ideal_customer");
                 }}
-                className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-nebula-navy text-white placeholder-nebula-mist focus:outline-none transition-all ${
+                className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-nebula-navy text-white placeholder-[#97A0B3] focus:outline-none transition-all ${
                   fieldErrors.ideal_customer
                     ? "border-rose-500 bg-rose-950/10 focus:border-rose-500"
-                    : "border-nebula-steel focus:border-nebula-glow focus:ring-1 focus:ring-nebula-glow/30"
+                    : "border-nebula-steel focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/30"
                 }`}
               />
               {fieldErrors.ideal_customer && (
@@ -1269,7 +1279,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-problem">
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   B2: What core problem are they trying to solve? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <textarea
@@ -1280,10 +1290,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                     setSecB({ ...secB, problem: e.target.value });
                     clearFieldError("problem");
                   }}
-                  className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-nebula-navy text-white placeholder-nebula-mist focus:outline-none transition-all ${
+                  className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-nebula-navy text-white placeholder-[#97A0B3] focus:outline-none transition-all ${
                     fieldErrors.problem
                       ? "border-rose-500 bg-rose-950/10 focus:border-rose-500"
-                      : "border-nebula-steel focus:border-nebula-glow focus:ring-1 focus:ring-nebula-glow/30"
+                      : "border-nebula-steel focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/30"
                   }`}
                 />
                 {fieldErrors.problem && (
@@ -1294,7 +1304,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
               </div>
 
               <div id="field-why_chosen">
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   B3: Why do customers choose you over alternatives? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <textarea
@@ -1305,10 +1315,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                     setSecB({ ...secB, why_chosen: e.target.value });
                     clearFieldError("why_chosen");
                   }}
-                  className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-nebula-navy text-white placeholder-nebula-mist focus:outline-none transition-all ${
+                  className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-nebula-navy text-white placeholder-[#97A0B3] focus:outline-none transition-all ${
                     fieldErrors.why_chosen
                       ? "border-rose-500 bg-rose-950/10 focus:border-rose-500"
-                      : "border-nebula-steel focus:border-nebula-glow focus:ring-1 focus:ring-nebula-glow/30"
+                      : "border-nebula-steel focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/30"
                   }`}
                 />
                 {fieldErrors.why_chosen && (
@@ -1320,7 +1330,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             </div>
 
             {/* B4: Objections Asset Box */}
-            <div className="bg-nebula-navy border border-nebula-sand/30 rounded-xl p-4 shadow-xs">
+            <div className="bg-nebula-navy border border-[#D8BF9B]/30 rounded-xl p-4 shadow-xs">
               <div className="flex items-center gap-1.5 text-nebula-sand font-bold text-xs mb-1">
                 <Sparkles className="w-4 h-4 text-nebula-sand" />
                 <span>B4: Why might someone hesitate before buying? (Crucial Conversion Asset)</span>
@@ -1334,13 +1344,13 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 value={secB.objections}
                 onChange={(e) => setSecB({ ...secB, objections: e.target.value })}
                 style={{ colorScheme: "dark" }}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-nebula-surface border border-nebula-steel text-white placeholder-nebula-mist focus:border-nebula-glow focus:outline-none transition-all"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-nebula-surface border border-nebula-steel text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none transition-all"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-languages">
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   B6: Primary Audience Languages <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -1360,8 +1370,8 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                         }}
                         className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
                           isSelected
-                            ? "bg-nebula-glow text-nebula-navy border-nebula-glow"
-                            : "bg-nebula-navy text-nebula-periwinkle border-nebula-steel hover:border-nebula-glow/60"
+                            ? "bg-[#7FA0D6] text-[#0B111C] border-[#7FA0D6]"
+                            : "bg-nebula-navy text-nebula-periwinkle border-nebula-steel hover:border-[#7FA0D6]/60"
                         }`}
                       >
                         {lang.label}
@@ -1377,7 +1387,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
               </div>
 
               <div id="field-caption_script">
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   B7: Caption & Script Format <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <select
@@ -1387,7 +1397,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                     clearFieldError("caption_script");
                   }}
                   style={{ colorScheme: "dark" }}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white focus:border-nebula-glow focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white focus:border-[#7FA0D6] focus:outline-none cursor-pointer"
                 >
                   {SCRIPT_OPTIONS.map((s) => (
                     <option key={s.value} value={s.value} className="bg-nebula-navy text-white">
@@ -1429,7 +1439,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             {/* 4 Sliders */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div className="bg-nebula-navy p-4 rounded-xl border border-nebula-steel">
-                <div className="flex justify-between items-center text-xs font-bold text-slate-100 mb-2">
+                <div className="flex justify-between items-center text-xs font-bold text-[#F1F5F9] mb-2">
                   <span>C1: Serious</span>
                   <span className="font-mono text-nebula-glow">{secC.humour}/10</span>
                   <span>Funny</span>
@@ -1441,12 +1451,12 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   value={secC.humour}
                   onChange={(e) => setSecC({ ...secC, humour: Number(e.target.value) })}
                   style={{ colorScheme: "dark" }}
-                  className="w-full accent-nebula-glow cursor-pointer bg-transparent"
+                  className="w-full accent-[#7FA0D6] cursor-pointer bg-transparent"
                 />
               </div>
 
               <div className="bg-nebula-navy p-4 rounded-xl border border-nebula-steel">
-                <div className="flex justify-between items-center text-xs font-bold text-slate-100 mb-2">
+                <div className="flex justify-between items-center text-xs font-bold text-[#F1F5F9] mb-2">
                   <span>C2: Formal</span>
                   <span className="font-mono text-nebula-glow">{secC.formality}/10</span>
                   <span>Casual</span>
@@ -1458,12 +1468,12 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   value={secC.formality}
                   onChange={(e) => setSecC({ ...secC, formality: Number(e.target.value) })}
                   style={{ colorScheme: "dark" }}
-                  className="w-full accent-nebula-glow cursor-pointer bg-transparent"
+                  className="w-full accent-[#7FA0D6] cursor-pointer bg-transparent"
                 />
               </div>
 
               <div className="bg-nebula-navy p-4 rounded-xl border border-nebula-steel">
-                <div className="flex justify-between items-center text-xs font-bold text-slate-100 mb-2">
+                <div className="flex justify-between items-center text-xs font-bold text-[#F1F5F9] mb-2">
                   <span>C3: Respectful</span>
                   <span className="font-mono text-nebula-glow">{secC.respectfulness}/10</span>
                   <span>Irreverent</span>
@@ -1475,12 +1485,12 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   value={secC.respectfulness}
                   onChange={(e) => setSecC({ ...secC, respectfulness: Number(e.target.value) })}
                   style={{ colorScheme: "dark" }}
-                  className="w-full accent-nebula-glow cursor-pointer bg-transparent"
+                  className="w-full accent-[#7FA0D6] cursor-pointer bg-transparent"
                 />
               </div>
 
               <div className="bg-nebula-navy p-4 rounded-xl border border-nebula-steel">
-                <div className="flex justify-between items-center text-xs font-bold text-slate-100 mb-2">
+                <div className="flex justify-between items-center text-xs font-bold text-[#F1F5F9] mb-2">
                   <span>C4: Matter-of-Fact</span>
                   <span className="font-mono text-nebula-glow">{secC.energy}/10</span>
                   <span>Enthusiastic</span>
@@ -1492,7 +1502,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   value={secC.energy}
                   onChange={(e) => setSecC({ ...secC, energy: Number(e.target.value) })}
                   style={{ colorScheme: "dark" }}
-                  className="w-full accent-nebula-glow cursor-pointer bg-transparent"
+                  className="w-full accent-[#7FA0D6] cursor-pointer bg-transparent"
                 />
               </div>
             </div>
@@ -1500,7 +1510,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             {/* C5: Words that describe voice */}
             <div id="field-voice_words">
               <div className="flex justify-between items-center mb-1.5">
-                <label className="text-xs font-semibold text-slate-100">
+                <label className="text-xs font-semibold text-[#F1F5F9]">
                   C5: Pick up to 4 words that describe your voice <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <span className="text-xs text-nebula-mist font-mono">
@@ -1525,8 +1535,8 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                       }}
                       className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
                         isSelected
-                          ? "bg-nebula-glow text-nebula-navy border-nebula-glow"
-                          : "bg-nebula-navy text-nebula-periwinkle border-nebula-steel hover:border-nebula-glow/60"
+                          ? "bg-[#7FA0D6] text-[#0B111C] border-[#7FA0D6]"
+                          : "bg-nebula-navy text-nebula-periwinkle border-nebula-steel hover:border-[#7FA0D6]/60"
                       }`}
                     >
                       {word}
@@ -1587,7 +1597,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+              <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                 C7: Words, phrases or claims we must never use
               </label>
               <textarea
@@ -1595,7 +1605,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 placeholder="e.g. Miracle cure, Guaranteed 10x, Cheap, Discount, Hack..."
                 value={secC.forbidden_phrases}
                 onChange={(e) => setSecC({ ...secC, forbidden_phrases: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-nebula-mist focus:border-nebula-glow focus:outline-none"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
               />
             </div>
           </div>
@@ -1611,7 +1621,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-brand_guidelines">
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   D1: Do you have existing brand guidelines? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <select
@@ -1621,7 +1631,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                     clearFieldError("brand_guidelines");
                   }}
                   style={{ colorScheme: "dark" }}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white focus:border-nebula-glow focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white focus:border-[#7FA0D6] focus:outline-none cursor-pointer"
                 >
                   <option value="yes_will_upload">Yes, will upload full guidelines PDF</option>
                   <option value="partial">Partial (We have logo & colors only)</option>
@@ -1630,7 +1640,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   D3: Primary Brand Fonts (if any)
                 </label>
                 <input
@@ -1638,14 +1648,14 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   placeholder="e.g. Montserrat, Playfair Display, Inter"
                   value={secD.fonts}
                   onChange={(e) => setSecD({ ...secD, fonts: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-nebula-mist focus:border-nebula-glow focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
                 />
               </div>
             </div>
 
             {/* D2: Brand Colours */}
             <div id="field-colours">
-              <label className="block text-xs font-semibold text-slate-100 mb-2">
+              <label className="block text-xs font-semibold text-[#F1F5F9] mb-2">
                 D2: Brand Hex Colours <span className="text-rose-400 font-bold">*</span>
               </label>
               <div className="flex flex-wrap gap-2.5">
@@ -1706,8 +1716,8 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 ))}
                 <button
                   type="button"
-                  onClick={() => setSecD({ ...secD, colours: [...secD.colours, { hex: "var(--color-nebula-glow)", label: "accent" }] })}
-                  className="px-3.5 py-2 border border-dashed border-nebula-steel hover:border-nebula-glow rounded-xl text-xs font-bold text-nebula-glow hover:text-nebula-periwinkle flex items-center gap-1.5 cursor-pointer transition-colors"
+                  onClick={() => setSecD({ ...secD, colours: [...secD.colours, { hex: "#7FA0D6", label: "accent" }] })}
+                  className="px-3.5 py-2 border border-dashed border-nebula-steel hover:border-[#7FA0D6] rounded-xl text-xs font-bold text-nebula-glow hover:text-nebula-periwinkle flex items-center gap-1.5 cursor-pointer transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add Color
                 </button>
@@ -1722,7 +1732,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             {/* D6: Visual Direction */}
             <div id="field-visual_direction">
               <div className="flex justify-between items-center mb-1.5">
-                <label className="text-xs font-semibold text-slate-100">
+                <label className="text-xs font-semibold text-[#F1F5F9]">
                   D6: Visual Direction (Pick up to 3) <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <span className="text-xs text-nebula-mist font-mono">
@@ -1747,8 +1757,8 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                       }}
                       className={`p-3 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer ${
                         isSelected
-                          ? "bg-nebula-glow text-nebula-navy border-nebula-glow shadow-sm"
-                          : "bg-nebula-navy text-nebula-periwinkle border-nebula-steel hover:border-nebula-glow/60 hover:text-white"
+                          ? "bg-[#7FA0D6] text-[#0B111C] border-[#7FA0D6] shadow-sm"
+                          : "bg-nebula-navy text-nebula-periwinkle border-nebula-steel hover:border-[#7FA0D6]/60 hover:text-white"
                       }`}
                     >
                       {vd.label}
@@ -1764,7 +1774,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+              <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                 D7: Visual styles, colours or treatments to strictly avoid
               </label>
               <textarea
@@ -1772,7 +1782,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 placeholder="e.g. Neon gradients, loud yellow text, stock photo handshakes, chaotic fast cuts..."
                 value={secD.visual_avoid}
                 onChange={(e) => setSecD({ ...secD, visual_avoid: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-nebula-mist focus:border-nebula-glow focus:outline-none"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
               />
             </div>
           </div>
@@ -1790,14 +1800,14 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-on_camera">
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   E1: Who can appear on camera? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <div className="space-y-2">
                   {ON_CAMERA_OPTIONS.map((opt) => {
                     const isChecked = secE.on_camera?.includes(opt.value);
                     return (
-                      <label key={opt.value} className="flex items-center gap-2.5 text-xs text-nebula-periwinkle cursor-pointer p-2 rounded-lg bg-nebula-navy border border-nebula-steel hover:border-nebula-glow/40">
+                      <label key={opt.value} className="flex items-center gap-2.5 text-xs text-nebula-periwinkle cursor-pointer p-2 rounded-lg bg-nebula-navy border border-nebula-steel hover:border-[#7FA0D6]/40">
                         <input
                           type="checkbox"
                           checked={isChecked}
@@ -1809,7 +1819,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                             setSecE({ ...secE, on_camera: next });
                             clearFieldError("on_camera");
                           }}
-                          className="rounded border-nebula-steel text-nebula-glow accent-nebula-glow"
+                          className="rounded border-nebula-steel text-nebula-glow accent-[#7FA0D6]"
                         />
                         <span>{opt.label}</span>
                       </label>
@@ -1824,14 +1834,14 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   E2: Is the founder comfortable on camera? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <select
                   value={secE.founder_comfort}
                   onChange={(e) => setSecE({ ...secE, founder_comfort: e.target.value })}
                   style={{ colorScheme: "dark" }}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white focus:border-nebula-glow focus:outline-none mb-4 cursor-pointer"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white focus:border-[#7FA0D6] focus:outline-none mb-4 cursor-pointer"
                 >
                   <option value="yes_confident">Yes, confident & experienced</option>
                   <option value="yes_with_direction">Yes, with teleprompter & direction</option>
@@ -1840,14 +1850,14 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 </select>
 
                 <div id="field-shoot_locations">
-                  <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                  <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                     E3: Where can we shoot? <span className="text-rose-400 font-bold">*</span>
                   </label>
                   <div className="space-y-2 mb-4">
                     {SHOOT_LOCATION_OPTIONS.map((loc) => {
                       const isChecked = secE.shoot_locations?.includes(loc.value);
                       return (
-                        <label key={loc.value} className="flex items-center gap-2.5 text-xs text-nebula-periwinkle cursor-pointer p-2 rounded-lg bg-nebula-navy border border-nebula-steel hover:border-nebula-glow/40">
+                        <label key={loc.value} className="flex items-center gap-2.5 text-xs text-nebula-periwinkle cursor-pointer p-2 rounded-lg bg-nebula-navy border border-nebula-steel hover:border-[#7FA0D6]/40">
                           <input
                             type="checkbox"
                             checked={isChecked}
@@ -1859,7 +1869,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                               setSecE({ ...secE, shoot_locations: next });
                               clearFieldError("shoot_locations");
                             }}
-                            className="rounded border-nebula-steel text-nebula-glow accent-nebula-glow"
+                            className="rounded border-nebula-steel text-nebula-glow accent-[#7FA0D6]"
                           />
                           <span>{loc.label}</span>
                         </label>
@@ -1874,7 +1884,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 </div>
 
                 <div id="field-shoot_city">
-                  <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                  <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                     E4: City for Physical Shoots <span className="text-rose-400 font-bold">*</span>
                   </label>
                   <input
@@ -1885,10 +1895,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                       setSecE({ ...secE, shoot_city: e.target.value });
                       clearFieldError("shoot_city");
                     }}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-nebula-navy text-white placeholder-nebula-mist focus:outline-none transition-all ${
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-nebula-navy text-white placeholder-[#97A0B3] focus:outline-none transition-all ${
                       fieldErrors.shoot_city
                         ? "border-rose-500 bg-rose-950/10 focus:border-rose-500"
-                        : "border-nebula-steel focus:border-nebula-glow focus:ring-1 focus:ring-nebula-glow/30"
+                        : "border-nebula-steel focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]/30"
                     }`}
                   />
                   {fieldErrors.shoot_city && (
@@ -1902,7 +1912,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div id="field-cta_destination">
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   E8: Where should content send viewers? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <select
@@ -1912,7 +1922,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                     clearFieldError("cta_destination");
                   }}
                   style={{ colorScheme: "dark" }}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white focus:border-nebula-glow focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white focus:border-[#7FA0D6] focus:outline-none cursor-pointer"
                 >
                   {CTA_DESTINATION_OPTIONS.map((c) => (
                     <option key={c.value} value={c.value} className="bg-nebula-navy text-white">
@@ -1923,7 +1933,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   E9: CTA Target Destination URL / Number
                 </label>
                 <input
@@ -1931,7 +1941,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   placeholder="https://yourbrand.com or +919876543210"
                   value={secE.cta_target}
                   onChange={(e) => setSecE({ ...secE, cta_target: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-nebula-mist focus:border-nebula-glow focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
                 />
               </div>
             </div>
@@ -1951,20 +1961,20 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 value={secE.legal_constraints}
                 onChange={(e) => setSecE({ ...secE, legal_constraints: e.target.value })}
                 style={{ colorScheme: "dark" }}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-nebula-surface border border-rose-900/60 text-white placeholder-nebula-mist focus:border-rose-500 focus:outline-none transition-all"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-nebula-surface border border-rose-900/60 text-white placeholder-[#97A0B3] focus:border-rose-500 focus:outline-none transition-all"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   E11: Who approves content and how fast? <span className="text-rose-400 font-bold">*</span>
                 </label>
                 <select
                   value={secE.approval_speed}
                   onChange={(e) => setSecE({ ...secE, approval_speed: e.target.value })}
                   style={{ colorScheme: "dark" }}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white focus:border-nebula-glow focus:outline-none cursor-pointer"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white focus:border-[#7FA0D6] focus:outline-none cursor-pointer"
                 >
                   <option value="founder_same_day">Founder (Same Day Turnaround)</option>
                   <option value="founder_2_3_days">Founder (2–3 Days)</option>
@@ -1974,7 +1984,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   E7: Formats you do NOT want produced
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -1994,7 +2004,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                         className={`px-2.5 py-1 text-xs rounded-lg border transition-colors cursor-pointer ${
                           isExcl
                             ? "bg-rose-900/50 text-rose-300 border-rose-700 font-semibold"
-                            : "bg-nebula-navy text-nebula-periwinkle border-nebula-steel hover:border-nebula-glow/50"
+                            : "bg-nebula-navy text-nebula-periwinkle border-nebula-steel hover:border-[#7FA0D6]/50"
                         }`}
                       >
                         {f.label}
@@ -2013,7 +2023,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             <div className="border-b border-nebula-steel pb-4">
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-white">Section F: Historical Content Data</h2>
-                <span className="text-[11px] font-bold bg-nebula-sand/20 text-nebula-sand border border-nebula-sand/30 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-bold bg-[#D8BF9B]/20 text-nebula-sand border border-[#D8BF9B]/30 px-2 py-0.5 rounded-full">
                   Optional Enrichment
                 </span>
               </div>
@@ -2021,7 +2031,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+              <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                 F4: Anything that has clearly NOT worked before?
               </label>
               <textarea
@@ -2029,7 +2039,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 placeholder="Styles, topics, formats, or angles that flopped or generated negative engagement..."
                 value={secF.what_failed}
                 onChange={(e) => setSecF({ ...secF, what_failed: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-nebula-mist focus:border-nebula-glow focus:outline-none"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
               />
             </div>
           </div>
@@ -2041,7 +2051,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             <div className="border-b border-nebula-steel pb-4">
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-white">Section G: Founder Story & Long-Term Vision</h2>
-                <span className="text-[11px] font-bold bg-nebula-sand/20 text-nebula-sand border border-nebula-sand/30 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-bold bg-[#D8BF9B]/20 text-nebula-sand border border-[#D8BF9B]/30 px-2 py-0.5 rounded-full">
                   Optional Enrichment
                 </span>
               </div>
@@ -2051,7 +2061,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+              <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                 G1: Why was the brand started?
               </label>
               <textarea
@@ -2059,12 +2069,12 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 placeholder="The inciting moment, frustration with the industry, or origin story..."
                 value={secG.origin}
                 onChange={(e) => setSecG({ ...secG, origin: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-nebula-mist focus:border-nebula-glow focus:outline-none"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+              <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                 G2: What does your brand stand for today?
               </label>
               <textarea
@@ -2072,13 +2082,13 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 placeholder="Core conviction, moral stance, or uncompromising standard..."
                 value={secG.stands_for}
                 onChange={(e) => setSecG({ ...secG, stands_for: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-nebula-mist focus:border-nebula-glow focus:outline-none"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   G3: What do you want people to remember you for?
                 </label>
                 <textarea
@@ -2086,12 +2096,12 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   placeholder="The lingering feeling or reputation you want to hold..."
                   value={secG.remembered_for}
                   onChange={(e) => setSecG({ ...secG, remembered_for: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-nebula-mist focus:border-nebula-glow focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-100 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   G4: Where do you want the brand in 1–3 years?
                 </label>
                 <textarea
@@ -2099,7 +2109,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   placeholder="Market share, global reach, revenue milestone, or new product verticals..."
                   value={secG.vision}
                   onChange={(e) => setSecG({ ...secG, vision: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-nebula-mist focus:border-nebula-glow focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-nebula-steel bg-nebula-navy text-white placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
                 />
               </div>
             </div>
@@ -2112,7 +2122,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             type="button"
             onClick={handlePrevSection}
             disabled={activeSection === "a"}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-nebula-steel bg-nebula-navy text-nebula-mist text-xs font-bold hover:text-white hover:border-nebula-glow transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-nebula-steel bg-nebula-navy text-nebula-mist text-xs font-bold hover:text-white hover:border-[#7FA0D6] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Previous Section</span>
@@ -2134,7 +2144,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 }
               }}
               disabled={isSaving}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-nebula-steel bg-nebula-navy hover:bg-nebula-surface hover:border-nebula-glow text-xs font-bold text-nebula-periwinkle hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-nebula-steel bg-nebula-navy hover:bg-nebula-surface hover:border-[#7FA0D6] text-xs font-bold text-nebula-periwinkle hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
               {isSaving ? (
                 <Loader2 className="size-3.5 animate-spin text-nebula-glow" />
@@ -2149,11 +2159,11 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
               <button
                 type="button"
                 onClick={handleNextSection}
-                className="w-full sm:w-auto min-w-[200px] px-6 py-3 rounded-xl bg-nebula-periwinkle hover:bg-white text-nebula-navy text-sm font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto min-w-[200px] px-6 py-3 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-sm font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
                 {saveSuccess ? (
                   <>
-                    <Check className="w-4 h-4 text-nebula-navy" />
+                    <Check className="w-4 h-4 text-[#0B111C]" />
                     <span>Saved ✓</span>
                   </>
                 ) : (
@@ -2168,16 +2178,16 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 type="button"
                 onClick={handleSynthesizeAndFinish}
                 disabled={isSynthesizing}
-                className="w-full sm:w-auto min-w-[240px] px-6 py-2.5 rounded-xl bg-nebula-periwinkle hover:bg-white text-nebula-navy text-sm font-black transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-wait"
+                className="w-full sm:w-auto min-w-[240px] px-6 py-2.5 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-sm font-black transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-wait"
               >
                 {isSynthesizing ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-nebula-navy" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[#0B111C]" />
                     <span>{synthPhase}</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4 text-nebula-navy" />
+                    <Sparkles className="w-4 h-4 text-[#0B111C]" />
                     <span>Finish & allocate my pod</span>
                   </>
                 )}

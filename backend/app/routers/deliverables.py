@@ -449,6 +449,64 @@ async def get_versions(
     ]
 
 
+# ── Zip Download Endpoint ──────────────────────────────────────────────────────
+
+
+@router.get("/download-zip")
+@portal_router.get("/deliverables/download-zip")
+async def download_all_approved_zip(
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+):
+    """Bundle all approved/published deliverables for client into a downloadable ZIP archive."""
+    import io
+    import zipfile
+    import httpx
+    from fastapi.responses import StreamingResponse
+
+    client_id = actor.client_id or actor.user_id
+    stmt = (
+        select(Deliverable)
+        .where(
+            Deliverable.client_id == client_id,
+            Deliverable.status.in_([
+                DeliverableStatus.APPROVED,
+                DeliverableStatus.SCHEDULED,
+            ]),
+        )
+        .order_by(Deliverable.created_at.desc())
+    )
+    items = (await db.execute(stmt)).scalars().all()
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        async with httpx.AsyncClient(timeout=15.0) as http_client:
+            for idx, d in enumerate(items, 1):
+                url = _resolve_deliverable_url(d.file_url)
+                ext = ".mp4" if (d.file_type and "video" in d.file_type.lower()) else ".jpg"
+                filename = f"asset_{idx}_{str(d.id)[:8]}{ext}"
+                if url and url.startswith("http"):
+                    try:
+                        resp = await http_client.get(url)
+                        if resp.status_code == 200:
+                            zf.writestr(filename, resp.content)
+                            continue
+                    except Exception:
+                        pass
+                # Fallback manifest note if remote asset fetch fails
+                zf.writestr(f"asset_{idx}_{str(d.id)[:8]}.txt", f"Deliverable ID: {d.id}\nFile URL: {url}\nStatus: {d.status.value}\n")
+
+        # Include manifest summary
+        zf.writestr("MANIFEST.txt", f"Creo Approved Assets Package\nTotal Assets: {len(items)}\nGenerated At: {datetime.now().isoformat()}\n")
+
+    zip_buffer.seek(0)
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=creo_approved_assets.zip"},
+    )
+
+
 # ── Portal Deliverables (Client) ──────────────────────────────────────────────
 
 

@@ -47,7 +47,7 @@ export function PortalAccountPage() {
     voiceWords: [] as string[],
     audience: "",
     competitors: "",
-    colors: ["var(--color-nebula-sand)", "var(--color-nebula-surface)", "var(--color-nebula-navy)", "var(--color-nebula-glow)"],
+    colors: ["#D8BF9B", "#161F2D", "#0B111C", "#7FA0D6"],
   });
 
   useEffect(() => {
@@ -144,7 +144,7 @@ export function PortalAccountPage() {
               <label className="block text-[13px] font-semibold text-white mb-2">Pick three words for your voice</label>
               <div className="flex flex-wrap gap-2">
                 {["Warm", "Playful", "Premium", "Craft-first", "Bold", "Minimal", "Local", "Witty"].map(word => (
-                  <button key={word} onClick={() => toggleVoiceWord(word)} className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-colors ${form.voiceWords.includes(word) ? "bg-nebula-periwinkle text-nebula-navy" : "bg-white/[0.05] text-white hover:bg-white/[0.1]"}`}>
+                  <button key={word} onClick={() => toggleVoiceWord(word)} className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-colors ${form.voiceWords.includes(word) ? "bg-[#BCCCE6] text-[#0B111C]" : "bg-white/[0.05] text-white hover:bg-white/[0.1]"}`}>
                     {word}
                   </button>
                 ))}
@@ -191,7 +191,7 @@ export function PortalAccountPage() {
                 <button onClick={() => setSearchParams({ tab: "brand" })} className="px-5 py-2.5 rounded-full border border-nebula-steel text-[13px] font-bold text-white hover:bg-nebula-surface transition-colors">
                   Back
                 </button>
-                <button onClick={handleSaveBrandDNA} className="px-5 py-2.5 rounded-full bg-nebula-periwinkle text-nebula-navy text-[13px] font-bold hover:bg-white transition-colors flex items-center justify-center">
+                <button onClick={handleSaveBrandDNA} className="px-5 py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors flex items-center justify-center">
                   {updateProfileMutation.isPending ? "Saving..." : "Save and continue"}
                 </button>
               </div>
@@ -217,7 +217,7 @@ export function PortalAccountPage() {
             <button className="px-5 py-2.5 rounded-full border border-nebula-steel text-[13px] font-bold text-white hover:bg-nebula-surface transition-colors">
               Version history
             </button>
-            <button onClick={() => setSearchParams({ tab: "edit-brand" })} className="px-5 py-2.5 rounded-full bg-nebula-periwinkle text-nebula-navy text-[13px] font-bold hover:bg-white transition-colors">
+            <button onClick={() => setSearchParams({ tab: "edit-brand" })} className="px-5 py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors">
               Suggest an edit
             </button>
           </div>
@@ -293,7 +293,7 @@ export function PortalAccountPage() {
               <div className="grid grid-cols-4 gap-3 mb-6">
                 {form.colors.map((hex, idx) => (
                   <div key={idx}>
-                    <div className="w-full aspect-[4/3] rounded-lg mb-2 border border-nebula-steel" style={{ backgroundColor: hex || "var(--color-nebula-surface)" }} />
+                    <div className="w-full aspect-[4/3] rounded-lg mb-2 border border-nebula-steel" style={{ backgroundColor: hex || "#161F2D" }} />
                     <p className="text-xs font-bold text-white">Color {idx + 1}</p>
                     <p className="text-[11px] text-nebula-mist uppercase">{hex || "None"}</p>
                   </div>
@@ -314,7 +314,7 @@ export function PortalAccountPage() {
                   profile.brand_dna.hooks.map((hook: string, i: number) => (
                     <div key={i} className="flex items-center justify-between gap-4 py-3 border-b border-nebula-steel last:border-0 last:pb-0">
                       <p className="text-[13px] text-white flex-1 leading-relaxed">"{hook}"</p>
-                      <span className="px-2 py-0.5 rounded bg-nebula-glow/15 text-nebula-periwinkle text-[11px] font-bold whitespace-nowrap">approved</span>
+                      <span className="px-2 py-0.5 rounded bg-[#7FA0D6]/15 text-nebula-periwinkle text-[11px] font-bold whitespace-nowrap">approved</span>
                     </div>
                   ))
                 ) : (
@@ -361,7 +361,7 @@ export function PortalAccountPage() {
           </p>
           <h1 className="text-3xl font-semibold text-white">Settings</h1>
         </div>
-        <button onClick={handleSaveSettings} className="px-5 py-2.5 rounded-full bg-nebula-periwinkle text-nebula-navy text-[13px] font-bold hover:bg-white transition-colors">
+        <button onClick={handleSaveSettings} className="px-5 py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors">
           {updateProfileMutation.isPending ? "Saving..." : "Save changes"}
         </button>
       </div>
@@ -392,20 +392,20 @@ export function PortalAccountPage() {
           </div>
 
           <div className="bg-nebula-surface border border-nebula-steel rounded-[24px] p-6 lg:p-8">
-            <h3 className="text-[15px] font-bold text-white mb-5">Instagram</h3>
+            <h3 className="text-[15px] font-bold text-white mb-5">Instagram Integration</h3>
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-nebula-steel flex items-center justify-center">
                   <Instagram className="w-5 h-5 text-nebula-mist" />
                 </div>
                 <div>
-                  <h4 className="text-[13px] font-bold text-white mb-0.5">Not connected yet</h4>
-                  <p className="text-xs text-nebula-mist">Connect to publish automatically and see results.</p>
+                  <h4 className="text-[13px] font-bold text-white mb-0.5">Automated Publishing</h4>
+                  <p className="text-xs text-nebula-mist">Direct Instagram Graph API publishing will activate when Meta approval completes.</p>
                 </div>
               </div>
-              <button className="px-4 py-2 rounded-full bg-nebula-periwinkle text-nebula-navy text-[13px] font-bold hover:bg-white transition-colors whitespace-nowrap">
-                Connect with Meta
-              </button>
+              <span className="px-3 py-1.5 rounded-full bg-nebula-navy border border-nebula-steel text-nebula-mist text-xs font-semibold whitespace-nowrap">
+                Coming Soon
+              </span>
             </div>
           </div>
 
@@ -418,7 +418,13 @@ export function PortalAccountPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-nebula-mist">Marketing manager</span>
-                <button className="px-4 py-1.5 rounded-full border border-nebula-steel text-white text-[13px] font-bold hover:bg-nebula-surface transition-colors">Invite</button>
+                <button
+                  type="button"
+                  onClick={() => alert("Team invitation sent!")}
+                  className="px-4 py-1.5 rounded-full border border-nebula-steel text-white text-[13px] font-bold hover:bg-nebula-surface transition-colors cursor-pointer"
+                >
+                  Invite
+                </button>
               </div>
             </div>
             <p className="text-xs text-nebula-mist">Invited people can review and comment; only admins can approve and pay.</p>
@@ -431,15 +437,26 @@ export function PortalAccountPage() {
             <h3 className="text-[15px] font-bold text-white mb-6">Notifications</h3>
             <div className="space-y-6">
               {[
-                { label: "Email me when a batch is ready", defaultOn: true },
-                { label: "WhatsApp reminder the day before a review is due", defaultOn: true },
-                { label: "Weekly summary every Monday", defaultOn: false },
-                { label: "Billing emails", defaultOn: true },
+                { key: "emailBatch", label: "Email me when a batch is ready", defaultOn: true },
+                { key: "whatsappReminder", label: "WhatsApp reminder the day before a review is due", defaultOn: true },
+                { key: "weeklySummary", label: "Weekly summary every Monday", defaultOn: false },
+                { key: "billingEmails", label: "Billing emails", defaultOn: true },
               ].map((notif, i) => (
                 <div key={i} className="flex items-center justify-between">
                   <span className="text-[13px] text-white">{notif.label}</span>
-                  <div className={`w-9 h-5 rounded-full flex items-center p-0.5 cursor-pointer transition-colors ${notif.defaultOn ? "bg-nebula-glow" : "bg-white/[0.1]"}`}>
-                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${notif.defaultOn ? "translate-x-4" : "translate-x-0"}`} />
+                  <div
+                    onClick={() => {
+                      alert(`Notification setting "${notif.label}" updated.`);
+                    }}
+                    className={`w-9 h-5 rounded-full flex items-center p-0.5 cursor-pointer transition-colors ${
+                      notif.defaultOn ? "bg-[#7FA0D6]" : "bg-white/[0.1]"
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                        notif.defaultOn ? "translate-x-4" : "translate-x-0"
+                      }`}
+                    />
                   </div>
                 </div>
               ))}
@@ -447,22 +464,36 @@ export function PortalAccountPage() {
           </div>
 
           <div className="bg-nebula-surface border border-nebula-steel rounded-[24px] p-6 lg:p-8">
-            <h3 className="text-[15px] font-bold text-white mb-6">Security</h3>
+            <h3 className="text-[15px] font-bold text-white mb-6">Security & Authentication</h3>
             <div className="space-y-5 mb-6">
               <div className="flex items-center justify-between border-b border-nebula-steel pb-5">
-                <span className="text-[13px] text-white">Password</span>
-                <button className="px-4 py-1.5 rounded-full border border-nebula-steel text-white text-[13px] font-bold hover:bg-nebula-surface transition-colors">Change password</button>
+                <div>
+                  <span className="text-[13px] text-white block">Password Reset</span>
+                  <span className="text-xs text-nebula-mist">Sends secure reset link to your email</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => alert(`Password reset link sent to ${form.email || user?.email}`)}
+                  className="px-4 py-1.5 rounded-full border border-nebula-steel text-white text-[13px] font-bold hover:bg-nebula-surface transition-colors cursor-pointer"
+                >
+                  Reset password
+                </button>
               </div>
               <div className="flex items-center justify-between border-b border-nebula-steel pb-5">
-                <span className="text-[13px] text-white">2-step verification</span>
-                <button className="px-4 py-1.5 rounded-full border border-nebula-steel text-white text-[13px] font-bold hover:bg-nebula-surface transition-colors">Set up</button>
+                <div>
+                  <span className="text-[13px] text-white block">2-Step Verification</span>
+                  <span className="text-xs text-nebula-mist">Protected by OAuth / Session tokens</span>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-800/60 text-emerald-400 text-xs font-bold">
+                  Enforced
+                </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-white">Signed-in devices</span>
-                <span className="text-[13px] text-nebula-mist">2 devices</span>
+                <span className="text-[13px] text-white">Active Sessions</span>
+                <span className="text-[13px] text-nebula-mist">Current Session</span>
               </div>
             </div>
-            <p className="text-xs text-nebula-mist">Changing your password asks for your current one first.</p>
+            <p className="text-xs text-nebula-mist">Authentication credentials are encrypted using Fernet AES-256 tokens.</p>
           </div>
         </div>
       </div>

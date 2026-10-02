@@ -95,9 +95,20 @@ async def get_kpis(
     interval_str = interval_map.get(timeframe, "30 days")
 
     sql = text(f"""
+        WITH active_subs AS (
+            SELECT DISTINCT ON (s.client_id)
+                s.client_id,
+                COALESCE(s.amount * 100, p.price_minor) AS effective_mrr_minor
+            FROM subscriptions s
+            JOIN plans p ON p.id = s.plan_id
+            JOIN users u ON u.id = s.client_id
+            WHERE s.status = 'active'
+              AND u.account_status = 'active'
+            ORDER BY s.client_id, s.created_at DESC
+        )
         SELECT
-            COALESCE(SUM(p.price_minor), 0)::BIGINT AS mrr_minor,
-            COUNT(DISTINCT s.client_id) FILTER (WHERE u.account_status = 'active')::INT AS active_clients,
+            COALESCE(SUM(effective_mrr_minor), 0)::BIGINT AS mrr_minor,
+            COUNT(DISTINCT client_id)::INT AS active_clients,
             (
                 SELECT COUNT(DISTINCT sub.client_id)::INT
                 FROM subscriptions sub
@@ -113,19 +124,16 @@ async def get_kpis(
                 ),
                 0.0
             )::NUMERIC AS avg_turnaround_hours
-        FROM subscriptions s
-        JOIN plans p ON p.id = s.plan_id
-        JOIN users u ON u.id = s.client_id
-        WHERE s.status IN ('trialing', 'active');
+        FROM active_subs;
     """)
     res = await db.execute(sql)
     row = res.fetchone()
 
-    mrr_minor = row[0] if row else 0
-    active_clients = row[1] if row else 0
-    churned_last_30d = row[2] if row else 0
+    mrr_minor = int(row[0]) if row and row[0] else 0
+    active_clients = int(row[1]) if row and row[1] else 0
+    churned_last_30d = int(row[2]) if row and row[2] else 0
     avg_turnaround_hours = round(float(row[3] or 0.0), 2) if row else 0.0
-    formatted_mrr = f"₹{mrr_minor / 100:,.2f}"
+    formatted_mrr = f"₹{mrr_minor / 100:,.2f}" if mrr_minor > 0 else " — "
 
     return KPIResponse(
         refreshed_at=now_ist.isoformat(),
@@ -149,6 +157,41 @@ async def refresh_kpis(
     except Exception:
         pass
     return {"status": "ok", "message": "KPIs calculated live in real time"}
+
+
+@router.get("/export-report")
+async def export_admin_report(
+    report_type: str = "kpis",
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+):
+    """Export system metrics, client roster, or SLA data as a CSV download."""
+    from fastapi.responses import Response
+    import io, csv
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    if report_type == "clients":
+        writer.writerow(["Client ID", "Email", "Company", "Status", "Plan"])
+        res = await db.execute(text("SELECT u.id, u.email, cp.company_name, u.account_status, p.name FROM users u LEFT JOIN client_profiles cp ON cp.user_id = u.id LEFT JOIN subscriptions s ON s.client_id = u.id LEFT JOIN plans p ON p.id = s.plan_id WHERE u.role = 'client'"))
+        for row in res.fetchall():
+            writer.writerow([str(row[0]), row[1], row[2] or "N/A", row[3], row[4] or "N/A"])
+    else:
+        writer.writerow(["Metric", "Value"])
+        res = await db.execute(text("SELECT COUNT(*) FROM users WHERE role = 'client'"))
+        total_clients = res.scalar() or 0
+        res = await db.execute(text("SELECT COUNT(*) FROM tasks WHERE status != 'completed'"))
+        active_tasks = res.scalar() or 0
+        writer.writerow(["Total Clients", total_clients])
+        writer.writerow(["Active Tasks in Pipeline", active_tasks])
+
+    csv_data = output.getvalue()
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=creo_{report_type}_report.csv"},
+    )
 
 
 @router.get("/revenue-trend")
@@ -222,36 +265,38 @@ async def get_revenue_trend(
         num_points = 12
         labels = [(now - timedelta(days=30 * (11 - i))).strftime("%b %Y") for i in range(12)]
 
-    # Fetch total base revenue
+    # Fetch total base revenue from active (non-trialing) subscriptions
     total_sql = text("""
-        SELECT COALESCE(SUM(p.price_minor), 0)::BIGINT AS total_revenue,
-               COUNT(DISTINCT s.client_id)::INT AS total_clients
-        FROM subscriptions s
-        JOIN plans p ON p.id = s.plan_id
-        WHERE s.status IN ('trialing', 'active');
+        WITH active_subs AS (
+            SELECT DISTINCT ON (s.client_id)
+                s.client_id,
+                COALESCE(s.amount * 100, p.price_minor) AS effective_mrr_minor
+            FROM subscriptions s
+            JOIN plans p ON p.id = s.plan_id
+            WHERE s.status = 'active'
+            ORDER BY s.client_id, s.created_at DESC
+        )
+        SELECT COALESCE(SUM(effective_mrr_minor), 0)::BIGINT AS total_revenue,
+               COUNT(DISTINCT client_id)::INT AS total_clients
+        FROM active_subs;
     """)
     total_res = await db.execute(total_sql)
     total_row = total_res.first()
-    total_revenue = int(total_row[0]) if total_row and total_row[0] else 14500000
-    total_clients = int(total_row[1]) if total_row and total_row[1] else 2
+    total_revenue = int(total_row[0]) if total_row and total_row[0] else 0
+    total_clients = int(total_row[1]) if total_row and total_row[1] else 0
 
     # Map database bucket values if present
     db_map = {r[0].strip(): int(r[1]) for r in rows if r[0]}
 
-    base_val = total_revenue if total_revenue > 0 else 14500000
     for i, lbl in enumerate(labels):
         val = db_map.get(lbl, 0)
-        if val == 0:
-            # Generate realistic curve values around base revenue
-            factor = 0.75 + (0.25 * math.sin(i * 0.7)) + (0.05 * (i % 3))
-            val = int(base_val * factor)
         points.append({"label": lbl, "value": val})
 
     return {
         "timeframe": timeframe,
         "points": points,
         "total_revenue": total_revenue,
-        "total_revenue_formatted": f"₹{total_revenue / 100:,.2f}",
+        "total_revenue_formatted": f"₹{total_revenue / 100:,.2f}" if total_revenue > 0 else " — ",
         "total_clients": total_clients,
     }
 
@@ -384,14 +429,18 @@ async def get_dashboard(
     # 4. Staff capacity summary
     staff_res = await db.execute(
         text("""
+        WITH staff_wip AS (
+            SELECT assigned_to, COUNT(*) AS active_wip
+            FROM tasks
+            WHERE status IN ('in_production', 'internal_qa')
+            GROUP BY assigned_to
+        )
         SELECT
             COUNT(sp.user_id) AS total_staff,
             COALESCE(SUM(sp.daily_capacity), 0) AS total_capacity,
-            COALESCE(
-                COUNT(t.id) FILTER (WHERE t.status IN ('in_production', 'internal_qa')), 0
-            ) AS active_wip
+            COALESCE(SUM(w.active_wip), 0) AS active_wip
         FROM staff_profiles sp
-        LEFT JOIN tasks t ON t.assigned_to = sp.user_id;
+        LEFT JOIN staff_wip w ON w.assigned_to = sp.user_id;
     """)
     )
     staff_summary = staff_res.fetchone()
@@ -751,6 +800,17 @@ async def get_dispatch_queue(
     # 2. Staff capacity overview
     staff_res = await db.execute(
         text("""
+        WITH staff_wip AS (
+            SELECT
+                assigned_to,
+                COUNT(id) AS active_wip,
+                COUNT(id) FILTER (WHERE deliverable_type::text IN ('poster', 'post', 'static')) AS wip_posters,
+                COUNT(id) FILTER (WHERE deliverable_type::text IN ('story', 'carousel')) AS wip_stories,
+                COUNT(id) FILTER (WHERE deliverable_type::text = 'reel') AS wip_reels
+            FROM tasks
+            WHERE status IN ('in_production', 'internal_qa')
+            GROUP BY assigned_to
+        )
         SELECT
             sp.user_id,
             u.full_name,
@@ -759,7 +819,10 @@ async def get_dispatch_queue(
             sp.skills,
             sp.daily_capacity,
             sp.is_accepting_work,
-            COUNT(t.id) FILTER (WHERE t.status IN ('in_production', 'internal_qa')) AS active_wip,
+            COALESCE(w.active_wip, 0) AS active_wip,
+            COALESCE(w.wip_posters, 0) AS wip_posters,
+            COALESCE(w.wip_stories, 0) AS wip_stories,
+            COALESCE(w.wip_reels, 0) AS wip_reels,
             EXISTS(
                 SELECT 1 FROM leave_requests l
                 WHERE l.user_id = sp.user_id
@@ -768,10 +831,7 @@ async def get_dispatch_queue(
             ) AS on_leave_today
         FROM staff_profiles sp
         JOIN users u ON u.id = sp.user_id
-        LEFT JOIN tasks t ON t.assigned_to = sp.user_id
-        GROUP BY
-            sp.user_id, u.full_name, u.email, sp.department, sp.skills,
-            sp.daily_capacity, sp.is_accepting_work
+        LEFT JOIN staff_wip w ON w.assigned_to = sp.user_id
         ORDER BY active_wip DESC;
     """)
     )
@@ -785,7 +845,15 @@ async def get_dispatch_queue(
             "daily_capacity": r[5],
             "is_accepting_work": r[6],
             "active_wip": r[7],
-            "on_leave_today": r[8],
+            "wip_posters": r[8],
+            "wip_stories": r[9],
+            "wip_reels": r[10],
+            "on_leave_today": r[11],
+            "capacity_by_type": {
+                "posters": {"wip": r[8], "max": max(1, r[5])},
+                "stories": {"wip": r[9], "max": max(1, r[5] * 2)},
+                "reels": {"wip": r[10], "max": max(1, int(r[5] / 2) or 1)},
+            },
         }
         for r in staff_res.fetchall()
     ]
@@ -1579,6 +1647,17 @@ async def get_team_members(
         params["actor_id"] = actor.user_id
 
     sql = text(f"""
+        WITH staff_wip AS (
+            SELECT
+                assigned_to,
+                COUNT(id) AS active_wip,
+                COUNT(id) FILTER (WHERE deliverable_type::text IN ('poster', 'post', 'static')) AS wip_posters,
+                COUNT(id) FILTER (WHERE deliverable_type::text IN ('story', 'carousel')) AS wip_stories,
+                COUNT(id) FILTER (WHERE deliverable_type::text = 'reel') AS wip_reels
+            FROM tasks
+            WHERE status IN ('in_production', 'internal_qa')
+            GROUP BY assigned_to
+        )
         SELECT
             u.id,
             u.full_name,
@@ -1589,7 +1668,7 @@ async def get_team_members(
             COALESCE(sp.daily_capacity, 4) AS daily_capacity,
             COALESCE(sp.skills, ARRAY[]::varchar[]) AS skills,
             COALESCE(sp.is_accepting_work, true) AS is_accepting_work,
-            COUNT(t.id) FILTER (WHERE t.status IN ('in_production', 'internal_qa')) AS active_wip,
+            COALESCE(w.active_wip, 0) AS active_wip,
             EXISTS(
                 SELECT 1 FROM leave_requests l
                 WHERE l.user_id = u.id
@@ -1597,13 +1676,15 @@ async def get_team_members(
                   AND CURRENT_DATE BETWEEN l.start_date AND l.end_date
             ) AS on_leave_today,
             sp.team_lead_id,
-            tl.full_name AS team_lead_name
+            tl.full_name AS team_lead_name,
+            COALESCE(w.wip_posters, 0) AS wip_posters,
+            COALESCE(w.wip_stories, 0) AS wip_stories,
+            COALESCE(w.wip_reels, 0) AS wip_reels
         FROM users u
         LEFT JOIN staff_profiles sp ON sp.user_id = u.id
         LEFT JOIN users tl ON tl.id = sp.team_lead_id
-        LEFT JOIN tasks t ON t.assigned_to = u.id
+        LEFT JOIN staff_wip w ON w.assigned_to = u.id
         {where_clause}
-        GROUP BY u.id, u.full_name, u.email, u.role, u.account_status, sp.department, sp.daily_capacity, sp.skills, sp.is_accepting_work, sp.team_lead_id, tl.full_name
         ORDER BY u.created_at ASC;
     """)
     res = await db.execute(sql, params)
@@ -1823,15 +1904,19 @@ async def complete_admin_addon_request(
 
 # --- Escalations Endpoints ---
 
-_resolved_escalation_ids: set[str] = set()
-
-
 @router.get("/escalations")
 async def get_sla_escalations(
     db: AsyncSession = Depends(get_db),
     actor: Actor = Depends(get_team_lead_actor),
 ) -> list[dict[str, Any]]:
-    """Fetch live SLA breach escalations from active production and QA tasks."""
+    """Fetch live SLA breach escalations from active production and QA tasks using sla_service and DB persistence."""
+    from app.models.ops import EscalationState
+    from app.services import sla_service
+
+    # Fetch resolved escalation task IDs from DB
+    res_stmt = select(EscalationState.task_id).where(EscalationState.resolved.is_(True))
+    resolved_task_ids = {str(tid) for tid in (await db.execute(res_stmt)).scalars().all() if tid}
+
     stmt = (
         select(
             Task,
@@ -1849,14 +1934,14 @@ async def get_sla_escalations(
             ])
         )
         .order_by(Task.updated_at.desc())
-        .limit(20)
+        .limit(30)
     )
     rows = (await db.execute(stmt)).all()
 
     escalations: list[dict[str, Any]] = []
     for task, client_email, company_name, staff_id in rows:
         t_id = str(task.id)
-        if t_id in _resolved_escalation_ids:
+        if t_id in resolved_task_ids:
             continue
 
         deliv_type = task.deliverable_type.value.capitalize() if task.deliverable_type else "Deliverable"
@@ -1864,6 +1949,13 @@ async def get_sla_escalations(
         due_str = task.due_date.isoformat() if task.due_date else "Today"
 
         is_breached = bool(task.due_date and task.due_date < date.today())
+        # Check sla_service for breach status
+        if not is_breached and task.sla_due_at and task.sla_due_at < datetime.now(timezone.utc):
+            is_breached = True
+
+        if not is_breached and task.status != TaskStatus.INTERNAL_QA:
+            continue
+
         severity = "Critical" if is_breached else ("High" if task.status == TaskStatus.INTERNAL_QA else "Medium")
         breach_status = "Past Due" if is_breached else "At Risk"
 
@@ -1883,60 +1975,45 @@ async def get_sla_escalations(
             "status": breach_status,
         })
 
-    # Realistic mock alerts if no live tasks breached yet
-    if not escalations:
-        sample_alerts = [
-            {
-                "id": "esc-sample-001",
-                "task_id": "esc-sample-001",
-                "title": "Brand Reel QA Review Pending > 24h",
-                "task_title": "Motion Reel Production · MK Brand",
-                "client": "MK Brand",
-                "client_name": "MK Brand",
-                "deliverable_type": "Reel",
-                "assignee": "Karthik Raja (Senior Video)",
-                "assigned_to_name": "Karthik Raja (Senior Video)",
-                "due_date": date.today().isoformat(),
-                "hours_overdue": 3.5,
-                "severity": "High",
-                "status": "Past Due",
-            },
-            {
-                "id": "esc-sample-002",
-                "task_id": "esc-sample-002",
-                "title": "Static Carousel Client Review Exceeded SLA",
-                "task_title": "Product Carousel · Zenith Retail",
-                "client": "Zenith Retail",
-                "client_name": "Zenith Retail",
-                "deliverable_type": "Carousel",
-                "assignee": "Vikram Malhotra (Lead)",
-                "assigned_to_name": "Vikram Malhotra (Lead)",
-                "due_date": date.today().isoformat(),
-                "hours_overdue": 6.0,
-                "severity": "Critical",
-                "status": "Past Due",
-            },
-        ]
-        for s in sample_alerts:
-            if s["id"] not in _resolved_escalation_ids:
-                escalations.append(s)
-
     return escalations
 
 
 @router.post("/escalations/{escalation_id}/resolve")
 async def resolve_sla_escalation(
     escalation_id: str,
+    db: AsyncSession = Depends(get_db),
     actor: Actor = Depends(get_team_lead_actor),
 ) -> dict[str, str]:
-    """Resolve an SLA escalation alert."""
-    _resolved_escalation_ids.add(escalation_id)
+    """Resolve an SLA escalation alert and persist in DB."""
+    from app.models.ops import EscalationState
+    try:
+        task_uuid = uuid.UUID(escalation_id)
+        stmt = select(EscalationState).where(EscalationState.task_id == task_uuid)
+        state = (await db.execute(stmt)).scalar_one_or_none()
+        if not state:
+            state = EscalationState(task_id=task_uuid, level="resolved", resolved=True, details={"resolved_by": str(actor.user_id)})
+            db.add(state)
+        else:
+            state.resolved = True
+            state.level = "resolved"
+        await db.commit()
+    except ValueError:
+        # Non-UUID mock string fallback
+        stmt = select(EscalationState).where(EscalationState.level == f"id_{escalation_id}")
+        state = (await db.execute(stmt)).scalar_one_or_none()
+        if not state:
+            state = EscalationState(level=f"id_{escalation_id}", resolved=True, details={"resolved_by": str(actor.user_id)})
+            db.add(state)
+        else:
+            state.resolved = True
+        await db.commit()
+
     return {"status": "resolved", "id": escalation_id}
 
 
-# --- Settings Endpoints ---
+# --- Settings Endpoints (Database-backed) ---
 
-_PLATFORM_SETTINGS: dict[str, Any] = {
+DEFAULT_PLATFORM_SETTINGS: dict[str, Any] = {
     "agency_name": "Creo Studio Operations",
     "support_email": "concierge@creo.agency",
     "sla_delivery_days": 2,
@@ -1951,20 +2028,47 @@ _PLATFORM_SETTINGS: dict[str, Any] = {
 
 @router.get("/settings")
 async def get_admin_settings(
+    db: AsyncSession = Depends(get_db),
     actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
-    """Fetch agency platform configuration and gateway toggles."""
-    return _PLATFORM_SETTINGS
+    """Fetch agency platform configuration from DB."""
+    from app.models.ops import PlatformSetting
+    stmt = select(PlatformSetting).where(PlatformSetting.key == "global")
+    record = (await db.execute(stmt)).scalar_one_or_none()
+
+    if not record:
+        record = PlatformSetting(key="global", value=DEFAULT_PLATFORM_SETTINGS)
+        db.add(record)
+        await db.commit()
+        await db.refresh(record)
+
+    merged = dict(DEFAULT_PLATFORM_SETTINGS)
+    merged.update(record.value or {})
+    return merged
 
 
 @router.post("/settings")
 async def update_admin_settings(
     payload: dict[str, Any],
+    db: AsyncSession = Depends(get_db),
     actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
-    """Persist agency platform configuration."""
-    _PLATFORM_SETTINGS.update(payload)
-    return {"status": "saved", "settings": _PLATFORM_SETTINGS}
+    """Persist agency platform configuration in database platform_settings table."""
+    from app.models.ops import PlatformSetting
+    stmt = select(PlatformSetting).where(PlatformSetting.key == "global")
+    record = (await db.execute(stmt)).scalar_one_or_none()
+
+    if not record:
+        record = PlatformSetting(key="global", value=payload)
+        db.add(record)
+    else:
+        new_val = dict(record.value or {})
+        new_val.update(payload)
+        record.value = new_val
+
+    await db.commit()
+    await db.refresh(record)
+    return {"status": "saved", "settings": record.value}
 
 
 # --- Sales Pipeline Endpoints ---
@@ -2078,30 +2182,33 @@ async def get_admin_reports(
     actor: Actor = Depends(get_investor_actor),
 ) -> dict[str, Any]:
     """Provide real-time executive financial metrics, SLA compliance, and asset format breakdown."""
-    # 1. Active Clients & Subscriptions
+    # 1. Real Active Clients count (no artificial flooring)
     client_q = select(func.count(User.id)).where(User.role == UserRole.CLIENT, User.account_status == AccountStatus.ACTIVE)
     active_clients = (await db.execute(client_q)).scalar() or 0
 
-    # 2. Live MRR Calculation
-    sub_q = select(Subscription, Plan).join(Plan, Subscription.plan_id == Plan.id, isouter=True).where(
-        Subscription.status == "active"
+    # 2. Single source of truth query for MRR (Deduplicate clients, exclude trialing)
+    sub_q = (
+        select(
+            Subscription.client_id,
+            func.max(Subscription.amount).label("amount"),
+            func.max(Plan.price_minor).label("price_minor"),
+        )
+        .join(Plan, Subscription.plan_id == Plan.id, isouter=True)
+        .where(Subscription.status == SubscriptionStatus.ACTIVE)
+        .group_by(Subscription.client_id)
     )
     sub_rows = (await db.execute(sub_q)).all()
+
     mrr_total = 0
-    for sub, plan in sub_rows:
-        if plan and plan.price_minor:
-            mrr_total += plan.price_minor // 100
-        else:
-            mrr_total += 49000
+    for row in sub_rows:
+        if row.amount is not None:
+            mrr_total += int(row.amount)
+        elif row.price_minor is not None:
+            mrr_total += int(row.price_minor // 100)
 
-    if mrr_total == 0 and active_clients > 0:
-        mrr_total = active_clients * 49000
-    elif mrr_total == 0:
-        mrr_total = 145000
+    mrr_formatted = f"₹{mrr_total:,}" if mrr_total > 0 else " — "
 
-    mrr_formatted = f"₹{mrr_total:,}"
-
-    # 3. Deliverable format breakdown from Deliverable and Task tables
+    # 3. Deliverable format breakdown from Deliverable table
     deliv_q = select(Deliverable.file_type, func.count(Deliverable.id)).group_by(Deliverable.file_type)
     deliv_rows = (await db.execute(deliv_q)).all()
 
@@ -2124,33 +2231,13 @@ async def get_admin_reports(
             format_counts["Shorts & Stories"] += count
         total_assets += count
 
-    if total_assets < 4:
-        format_counts["Reels / Video"] = max(format_counts["Reels / Video"], 12)
-        format_counts["Static Carousels"] = max(format_counts["Static Carousels"], 8)
-        format_counts["Shorts & Stories"] = max(format_counts["Shorts & Stories"], 6)
-        format_counts["Motion Graphics"] = max(format_counts["Motion Graphics"], 4)
-        total_assets = sum(format_counts.values())
-
     format_distribution = [
         {
             "format": k,
             "count": v,
-            "percentage": round((v / max(1, total_assets)) * 100, 1),
+            "percentage": round((v / max(1, total_assets)) * 100, 1) if total_assets > 0 else 0,
         }
         for k, v in format_counts.items()
-    ]
-
-    sla_compliance = 96.4
-    turnaround_hours = 28.5
-
-    base_m = mrr_total
-    monthly_rev = [
-        {"month": "Apr", "revenue": int(base_m * 0.65)},
-        {"month": "May", "revenue": int(base_m * 0.72)},
-        {"month": "Jun", "revenue": int(base_m * 0.84)},
-        {"month": "Jul", "revenue": int(base_m * 0.91)},
-        {"month": "Aug", "revenue": int(base_m * 0.96)},
-        {"month": "Sep", "revenue": base_m},
     ]
 
     now_ist = datetime.now(timezone.utc).strftime("%d %b %Y, %I:%M %p IST")
@@ -2158,14 +2245,64 @@ async def get_admin_reports(
     return {
         "mrr_total": mrr_total,
         "mrr_formatted": mrr_formatted,
-        "mrr_growth_percentage": 18.4,
-        "delivery_sla_compliance": sla_compliance,
-        "active_clients_count": max(active_clients, 4),
-        "client_retention_rate": 98.2,
-        "turnaround_avg_hours": turnaround_hours,
-        "monthly_revenue_history": monthly_rev,
-        "format_distribution": format_distribution,
+        "mrr_growth_percentage": " — ",
+        "delivery_sla_compliance": " — ",
+        "active_clients_count": active_clients,
+        "client_retention_rate": " — ",
+        "turnaround_avg_hours": " — ",
+        "monthly_revenue_history": [],
+        "format_distribution": format_distribution if total_assets > 0 else [],
         "generated_at_ist": now_ist,
+    }
+
+
+# --- Team Roster & Staff Endpoints ---
+
+@router.get("/team")
+@router.get("/teams")
+async def list_admin_team_roster(
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Fetch active staff and pod members from DB."""
+    stmt = (
+        select(User, StaffProfile)
+        .join(StaffProfile, StaffProfile.user_id == User.id, isouter=True)
+        .where(User.role.in_([
+            UserRole.SUPER_ADMIN,
+            UserRole.ADMIN,
+            UserRole.TEAM_LEAD,
+            UserRole.EDITOR,
+            UserRole.DESIGNER,
+            UserRole.SALES,
+            UserRole.INVESTOR_RELATIONS,
+        ]))
+        .order_by(User.created_at.asc())
+    )
+    rows = (await db.execute(stmt)).all()
+
+    members = []
+    for user_obj, sp in rows:
+        r_str = user_obj.role.value if hasattr(user_obj.role, "value") else str(user_obj.role)
+        dept = sp.department if sp else "creative"
+        craft = sp.craft_role if sp else r_str
+        members.append({
+            "id": str(user_obj.id),
+            "name": user_obj.full_name or user_obj.email.split("@")[0].title(),
+            "email": user_obj.email,
+            "role": r_str,
+            "craft_role": craft,
+            "department": dept,
+            "account_status": user_obj.account_status.value if hasattr(user_obj.account_status, "value") else str(user_obj.account_status),
+            "daily_capacity": sp.daily_capacity if sp else 4,
+            "monthly_points": sp.monthly_points if sp else 100,
+            "is_accepting_work": sp.is_accepting_work if sp else True,
+            "skills": sp.skills if sp and sp.skills else ["Creative Production"],
+        })
+
+    return {
+        "count": len(members),
+        "members": members,
     }
 
 
@@ -2219,6 +2356,7 @@ async def upload_admin_deliverable_file(
 @router.get("/deliverables")
 async def list_admin_deliverables(
     limit: int = 100,
+    client_id: uuid.UUID | None = None,
     db: AsyncSession = Depends(get_db),
     actor: Actor = Depends(get_staff_actor),
 ) -> list[dict[str, Any]]:
@@ -2235,9 +2373,11 @@ async def list_admin_deliverables(
         .join(User, User.id == Deliverable.client_id)
         .outerjoin(ClientProfile, ClientProfile.user_id == Deliverable.client_id)
         .outerjoin(StaffUser, StaffUser.id == Deliverable.submitted_by)
-        .order_by(Deliverable.created_at.desc())
-        .limit(limit)
     )
+    if client_id:
+        stmt = stmt.where(Deliverable.client_id == client_id)
+
+    stmt = stmt.order_by(Deliverable.created_at.desc()).limit(limit)
     res = await db.execute(stmt)
     rows = res.fetchall()
 
@@ -2269,6 +2409,7 @@ async def list_admin_deliverables(
             ),
             "description": d.rejection_comment or f"High-resolution social media creative formatted for Instagram brand channel.",
             "assigned_name": assignee_name or "Creative Studio",
+            "task_id": str(d.task_id) if d.task_id else None,
             "assignee": {
                 "id": str(staff_user.id),
                 "full_name": staff_user.full_name,
@@ -2328,6 +2469,13 @@ async def create_admin_deliverable(
         scheduled_at=payload.scheduled_at,
     )
     db.add(deliverable)
+    await db.flush()
+
+    try:
+        await deliverable_state.sync_task_with_deliverable(db, deliverable, deliv_status)
+    except Exception as exc:
+        logger.warning("sync_task_with_deliverable_failed", error=str(exc))
+
     await db.commit()
     await db.refresh(deliverable)
 
@@ -3308,6 +3456,7 @@ async def create_admin_deliverable(
         "task_id": str(deliverable.task_id) if deliverable.task_id else None,
         "file_url": deliverable.file_url,
     }
+
 
 
 @router.patch("/deliverables/{deliverable_id}/status")

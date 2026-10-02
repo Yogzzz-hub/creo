@@ -116,21 +116,21 @@ export function PodDeliverablesReviewPage() {
         {/* 1. Quick Actions Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-nebula-surface p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-nebula-steel/80 shadow-2xs">
           <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-nebula-glow animate-pulse" />
-            <span className="text-xs font-bold text-slate-100">{podName} Review Hub · Frame.io Sync Gate</span>
+            <span className="size-2 rounded-full bg-[#7FA0D6] animate-pulse" />
+            <span className="text-xs font-bold text-[#F1F5F9]">{podName} Review Hub · Frame.io Sync Gate</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleExportReviewLedger}
-              className="px-3 py-1.5 rounded-xl bg-nebula-surface border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-nebula-surface border border-nebula-steel hover:bg-nebula-navy text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
               <FileText className="size-3.5 text-nebula-mist" />
               Export Report
             </button>
             <button
               onClick={() => setNewDeliverableModal(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
               <Plus className="size-3.5" />
               New Deliverable
@@ -149,18 +149,18 @@ export function PodDeliverablesReviewPage() {
           >
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-nebula-mist">Pending Lead Sign-Off</span>
-              <div className="size-6 sm:size-7 rounded-lg bg-nebula-glow/15 text-nebula-glow flex items-center justify-center">
+              <div className="size-6 sm:size-7 rounded-lg bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center">
                 <FileCheck2 className="size-3 sm:size-3.5" />
               </div>
             </div>
             <div>
               <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-lg sm:text-xl font-black text-white">6</span>
+                <span className="text-lg sm:text-xl font-black text-white">{data?.tasks?.internal_qa?.length || 0}</span>
                 <span className="text-[10.5px] sm:text-[11px] font-bold text-nebula-mist">Deliverables</span>
               </div>
               <div className="flex items-center gap-2 text-[10px] sm:text-[11px] pt-1.5 border-t border-nebula-steel">
                 <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center gap-1">
-                  ● 2 Urgent
+                  ● {(data?.tasks?.internal_qa?.filter((t) => t.is_near_sla).length) || 0} Urgent
                 </span>
                 <span className="text-nebula-mist font-medium">Within 2h SLA threshold</span>
               </div>
@@ -176,7 +176,7 @@ export function PodDeliverablesReviewPage() {
           >
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-nebula-mist">Average Turnaround Speed</span>
-              <div className="size-6 sm:size-7 rounded-lg bg-nebula-glow/15 text-nebula-glow flex items-center justify-center">
+              <div className="size-6 sm:size-7 rounded-lg bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center">
                 <Zap className="size-3 sm:size-3.5" />
               </div>
             </div>
@@ -211,7 +211,7 @@ export function PodDeliverablesReviewPage() {
               </div>
               <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-nebula-steel">
                 <span className="text-nebula-mist font-medium">Top 5% across pods</span>
-                <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30">
+                <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-[#7FA0D6]/15 text-nebula-glow border border-[#7FA0D6]/30">
                   Rank #1 Studio
                 </span>
               </div>
@@ -231,11 +231,11 @@ export function PodDeliverablesReviewPage() {
                   <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-amber-600 text-white">
                     QA Review Required
                   </span>
-                  <span className="text-xs font-bold text-slate-100">
+                  <span className="text-xs font-bold text-[#F1F5F9]">
                     {data.tasks.internal_qa[0]?.client_name || "Client"} · {data.tasks.internal_qa[0]?.deliverable_type?.toUpperCase() || "ASSET"}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-100 font-medium mt-0.5">
+                <p className="text-[11px] text-[#F1F5F9] font-medium mt-0.5">
                   Deliverable ready for QA sign-off prior to client portal sync.
                 </p>
               </div>
@@ -252,7 +252,7 @@ export function PodDeliverablesReviewPage() {
                   <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white">
                     SLA Optimal
                   </span>
-                  <span className="text-xs font-bold text-slate-100">{podName} Pipeline</span>
+                  <span className="text-xs font-bold text-[#F1F5F9]">{podName} Pipeline</span>
                 </div>
                 <p className="text-[11px] text-nebula-mist font-medium mt-0.5">
                   All sprint assets delivered and signed off. No pending SLA escalations.
@@ -381,11 +381,11 @@ export function PodDeliverablesReviewPage() {
                             onClick={() => setRubric1(!rubric1)}
                             className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
                               rubric1
-                                ? "bg-nebula-surface border-nebula-glow/50 text-white shadow-sm"
+                                ? "bg-nebula-surface border-[#7FA0D6]/50 text-white shadow-sm"
                                 : "bg-nebula-navy border-nebula-steel text-nebula-mist"
                             }`}
                           >
-                            <div className={`size-5 rounded-lg flex items-center justify-center ${rubric1 ? "bg-nebula-glow text-white" : "border border-nebula-steel"}`}>
+                            <div className={`size-5 rounded-lg flex items-center justify-center ${rubric1 ? "bg-[#7FA0D6] text-white" : "border border-nebula-steel"}`}>
                               {rubric1 && <Check className="size-3.5 stroke-[3]" />}
                             </div>
                             <span className="text-xs font-bold">Brand contrast & typography guidelines verified</span>
@@ -395,11 +395,11 @@ export function PodDeliverablesReviewPage() {
                             onClick={() => setRubric2(!rubric2)}
                             className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
                               rubric2
-                                ? "bg-nebula-surface border-nebula-glow/50 text-white shadow-sm"
+                                ? "bg-nebula-surface border-[#7FA0D6]/50 text-white shadow-sm"
                                 : "bg-nebula-navy border-nebula-steel text-nebula-mist"
                             }`}
                           >
-                            <div className={`size-5 rounded-lg flex items-center justify-center ${rubric2 ? "bg-nebula-glow text-white" : "border border-nebula-steel"}`}>
+                            <div className={`size-5 rounded-lg flex items-center justify-center ${rubric2 ? "bg-[#7FA0D6] text-white" : "border border-nebula-steel"}`}>
                               {rubric2 && <Check className="size-3.5 stroke-[3]" />}
                             </div>
                             <span className="text-xs font-bold">Sound stems & frame pacing synchronized</span>
@@ -409,11 +409,11 @@ export function PodDeliverablesReviewPage() {
                             onClick={() => setRubric3(!rubric3)}
                             className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all cursor-pointer ${
                               rubric3
-                                ? "bg-nebula-surface border-nebula-glow/50 text-white shadow-sm"
+                                ? "bg-nebula-surface border-[#7FA0D6]/50 text-white shadow-sm"
                                 : "bg-nebula-navy border-nebula-steel text-nebula-mist"
                             }`}
                           >
-                            <div className={`size-5 rounded-lg flex items-center justify-center ${rubric3 ? "bg-nebula-glow text-white" : "border border-nebula-steel"}`}>
+                            <div className={`size-5 rounded-lg flex items-center justify-center ${rubric3 ? "bg-[#7FA0D6] text-white" : "border border-nebula-steel"}`}>
                               {rubric3 && <Check className="size-3.5 stroke-[3]" />}
                             </div>
                             <span className="text-xs font-bold">Safe-zone compliance & master export verified</span>
@@ -469,7 +469,7 @@ export function PodDeliverablesReviewPage() {
                                   comment: feedbackNote || "Revisions required for QA compliance.",
                                 });
                               }}
-                              className="px-5 py-2.5 rounded-xl bg-nebula-surface border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-xs font-bold transition-colors cursor-pointer"
+                              className="px-5 py-2.5 rounded-xl bg-nebula-surface border border-nebula-steel hover:bg-nebula-navy text-[#F1F5F9] text-xs font-bold transition-colors cursor-pointer"
                             >
                               Request Revision
                             </button>
@@ -483,7 +483,7 @@ export function PodDeliverablesReviewPage() {
                                   comment: feedbackNote || "All rubric checks verified. Approved for client sync.",
                                 });
                               }}
-                              className="px-6 py-2.5 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-blue-500/20 transition-all cursor-pointer"
+                              className="px-6 py-2.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-blue-500/20 transition-all cursor-pointer"
                             >
                               <Check className="size-4" />
                               Approve & Send to Client
@@ -506,13 +506,13 @@ export function PodDeliverablesReviewPage() {
           <div className="w-full max-w-lg bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-black text-white">Create New Deliverable Stream</h3>
-              <button onClick={() => setNewDeliverableModal(false)} className="text-nebula-mist hover:text-slate-100">
+              <button onClick={() => setNewDeliverableModal(false)} className="text-nebula-mist hover:text-[#F1F5F9]">
                 <X className="size-5" />
               </button>
             </div>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-slate-100 block mb-1">Deliverable Name</label>
+                <label className="font-bold text-[#F1F5F9] block mb-1">Deliverable Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Q4 Brand Launch Story Sequence"
@@ -521,7 +521,7 @@ export function PodDeliverablesReviewPage() {
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-slate-100 block mb-1">Format</label>
+                  <label className="font-bold text-[#F1F5F9] block mb-1">Format</label>
                   <select className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium text-white">
                     <option value="Reel">Reel</option>
                     <option value="Story">Story</option>
@@ -529,7 +529,7 @@ export function PodDeliverablesReviewPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-slate-100 block mb-1">Client</label>
+                  <label className="font-bold text-[#F1F5F9] block mb-1">Client</label>
                   <select className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium text-white">
                     {(!data?.clients || data.clients.length === 0) ? (
                       <option value="">No clients assigned</option>
@@ -541,7 +541,7 @@ export function PodDeliverablesReviewPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-slate-100 block mb-1">Lead Specialist</label>
+                  <label className="font-bold text-[#F1F5F9] block mb-1">Lead Specialist</label>
                   <select className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium text-white">
                     {(!data?.members || data.members.length === 0) ? (
                       <option value="">No specialists registered</option>
@@ -557,7 +557,7 @@ export function PodDeliverablesReviewPage() {
             <div className="flex justify-end gap-3 pt-3">
               <button
                 onClick={() => setNewDeliverableModal(false)}
-                className="px-4 py-2 rounded-xl bg-nebula-surface text-slate-100 text-xs font-bold hover:bg-slate-200 transition"
+                className="px-4 py-2 rounded-xl bg-nebula-surface text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition"
               >
                 Cancel
               </button>

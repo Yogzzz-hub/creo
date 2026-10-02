@@ -13,10 +13,10 @@ import {
   AboutPage,
   AuthPage,
   ClientsPage,
+  FaqPage,
   GoogleCallbackPage,
   OnboardingView,
   PortalAccountPage,
-  PortalBrandDNAPage,
   PortalCalendarPage,
   PortalCreativePodPage,
   PortalDashboardPage,
@@ -78,11 +78,11 @@ const ClientTicketDetailPage = lazy(() =>
 const AdminRevenuePage = lazy(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminRevenuePage }))
 );
-const AdminPlansPage = lazy(() =>
-  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminPlansPage }))
-);
 const AdminSalesPage = lazy(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminSalesPage }))
+);
+const AdminPlansAndNegotiationsPage = lazy(() =>
+  import("../pages/admin/AdminPlansAndNegotiationsPage").then((m) => ({ default: m.AdminPlansAndNegotiationsPage }))
 );
 
 const AdminTeamManagementPage = lazy(() =>
@@ -152,7 +152,7 @@ class OnboardingErrorBoundary extends Component<
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="px-5 py-2.5 rounded-xl bg-nebula-glow text-white font-semibold text-xs hover:bg-nebula-glow transition-colors"
+            className="px-5 py-2.5 rounded-xl bg-[#7FA0D6] text-white font-semibold text-xs hover:bg-[#7FA0D6] transition-colors"
           >
             Reload Onboarding
           </button>
@@ -172,7 +172,7 @@ function OnboardingPageWrapper() {
   useEffect(() => whenIdle(() => preloadPortalPages()), []);
 
   return (
-    <div data-surface="review" className="bento-theme min-h-[100dvh] bg-nebula-navy text-slate-50 flex flex-col overflow-x-hidden">
+    <div data-surface="review" className="bento-theme min-h-[100dvh] bg-nebula-navy text-[#F8FAFC] flex flex-col overflow-x-hidden">
       {/* Top Header Bar */}
       <header className="sticky top-0 z-30 border-b border-nebula-steel bg-nebula-void/95 backdrop-blur-md px-4 sm:px-8 py-2.5 shadow-md shrink-0">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -208,7 +208,7 @@ function OnboardingPageWrapper() {
             </a>
             <Link
               to="/portal"
-              className="whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-nebula-surface text-nebula-periwinkle hover:bg-nebula-steel border border-nebula-steel transition-colors"
+              className="whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-nebula-surface text-nebula-periwinkle hover:bg-[#2A3446] border border-nebula-steel transition-colors"
             >
               <span className="sm:hidden">Portal →</span>
               <span className="hidden sm:inline">Go to Portal →</span>
@@ -238,14 +238,14 @@ function HealthPage() {
   });
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-nebula-periwinkle text-nebula-navy p-6 sm:p-8">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-[#BCCCE6] text-[#0B111C] p-6 sm:p-8">
       <div className="w-full max-w-md rounded-2xl border border-nebula-steel bg-white p-8 shadow-lg space-y-6">
         <div className="flex items-center gap-3 border-b border-nebula-steel pb-4">
-          <div className="size-10 rounded-xl bg-nebula-periwinkle border border-nebula-steel flex items-center justify-center text-nebula-glow font-bold">
+          <div className="size-10 rounded-xl bg-[#BCCCE6] border border-nebula-steel flex items-center justify-center text-nebula-glow font-bold">
             ⚡
           </div>
           <div>
-            <h1 className="text-lg font-bold text-nebula-navy">Creo System Status</h1>
+            <h1 className="text-lg font-bold text-[#0B111C]">Creo System Status</h1>
             <p className="text-xs text-nebula-mist mt-0.5">
               Real-time backend API & Database health
             </p>
@@ -253,18 +253,18 @@ function HealthPage() {
         </div>
 
         <div className="space-y-3 text-xs">
-          <div className="flex justify-between items-center border-b border-nebula-surface py-2">
+          <div className="flex justify-between items-center border-b border-[#161F2D] py-2">
             <span className="text-nebula-mist font-medium">API Service</span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
               {data?.status || (isLoading ? "Checking..." : "Error")}
             </span>
           </div>
-          <div className="flex justify-between items-center border-b border-nebula-surface py-2">
+          <div className="flex justify-between items-center border-b border-[#161F2D] py-2">
             <span className="text-nebula-mist font-medium">Platform Version</span>
-            <span className="font-mono text-nebula-navy font-semibold">{data?.version || "0.1.0"}</span>
+            <span className="font-mono text-[#0B111C] font-semibold">{data?.version || "0.1.0"}</span>
           </div>
-          <div className="flex justify-between items-center border-b border-nebula-surface py-2">
+          <div className="flex justify-between items-center border-b border-[#161F2D] py-2">
             <span className="text-nebula-mist font-medium">Database Engine</span>
             <span className="font-mono text-emerald-700 font-semibold">PostgreSQL (Connected)</span>
           </div>
@@ -273,13 +273,13 @@ function HealthPage() {
         <div className="flex gap-3 pt-2">
           <Link
             to="/"
-            className="flex-1 text-center rounded-xl bg-nebula-glow py-2.5 text-xs font-bold text-white hover:bg-nebula-glow transition-colors shadow-xs"
+            className="flex-1 text-center rounded-xl bg-[#7FA0D6] py-2.5 text-xs font-bold text-white hover:bg-[#7FA0D6] transition-colors shadow-xs"
           >
             Landing Page
           </Link>
           <Link
             to="/portal"
-            className="flex-1 text-center rounded-xl bg-nebula-periwinkle border border-nebula-steel py-2.5 text-xs font-bold text-nebula-glow hover:bg-nebula-surface transition-colors"
+            className="flex-1 text-center rounded-xl bg-[#BCCCE6] border border-nebula-steel py-2.5 text-xs font-bold text-nebula-glow hover:bg-nebula-surface transition-colors"
           >
             Client Portal
           </Link>
@@ -357,15 +357,17 @@ export function App() {
             <Routes>
               {/* Universal Support Redirect */}
               <Route path="/support" element={<SupportRedirect />} />
+              <Route path="/client/plans" element={<Navigate to="/portal/payments" replace />} />
 
               {/* 1. Public Marketing Pages (Open to All) */}
               <Route element={<PublicLayout />}>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/work" element={<PortfolioPage />} />
                 <Route path="/pricing" element={<PricingPage />} />
                 <Route path="/portfolio" element={<PortfolioPage />} />
                 <Route path="/clients" element={<ClientsPage />} />
                 <Route path="/about" element={<AboutPage />} />
-                <Route path="/faq" element={<Navigate to="/pricing" replace />} />
+                <Route path="/faq" element={<FaqPage />} />
                 <Route path="/terms" element={<TermsPage />} />
                 <Route path="/privacy" element={<PrivacyPage />} />
               </Route>
@@ -439,11 +441,11 @@ export function App() {
                 <Route path="creative-pod" element={<PortalCreativePodPage />} />
                 <Route path="creative_pod" element={<PortalCreativePodPage />} />
                 <Route path="payments" element={<PortalPaymentsPage />} />
+                <Route path="plans" element={<PortalPaymentsPage />} />
                 <Route path="support" element={<SimpleErrorBoundary name="Support"><PortalSupportPage /></SimpleErrorBoundary>} />
                 <Route path="support/:ticketId" element={<ClientTicketDetailPage />} />
-
                 <Route path="account" element={<PortalAccountPage />} />
-                <Route path="brand" element={<PortalBrandDNAPage />} />
+                <Route path="brand-dna" element={<Navigate to="/portal/account?tab=brand" replace />} />
                 <Route path="library" element={<PortalLibraryPage />} />
               </Route>
 
@@ -523,9 +525,6 @@ export function App() {
                 <Route path="/admin/announcements" element={<Navigate to="/admin" replace />} />
                 <Route path="/admin/reports" element={<Navigate to="/admin" replace />} />
                 <Route path="/admin/kpi" element={<Navigate to="/admin" replace />} />
-                <Route path="/admin/settings" element={<Navigate to="/admin" replace />} />
-                <Route path="/admin/escalations" element={<Navigate to="/admin" replace />} />
-                <Route path="/admin/addons" element={<Navigate to="/admin" replace />} />
                 <Route
                   path="/admin/revenue"
                   element={
@@ -535,10 +534,18 @@ export function App() {
                   }
                 />
                 <Route
+                  path="/admin/plans-and-negotiations"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "sales"]}>
+                      <AdminPlansAndNegotiationsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/admin/plans"
                   element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                      <AdminPlansPage />
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "sales"]}>
+                      <AdminPlansAndNegotiationsPage />
                     </ProtectedRoute>
                   }
                 />

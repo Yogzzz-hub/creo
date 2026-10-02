@@ -238,12 +238,15 @@ class PlanNegotiation(Base, UUIDPrimaryKeyMixin):
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
-    client_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    client_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     client_email: Mapped[str] = mapped_column(String(255), nullable=False)
-    target_topic: Mapped[str] = mapped_column(String(255), nullable=False)
+    target_topic: Mapped[str | None] = mapped_column(String(255), nullable=True)
     proposed_offer: Mapped[str | None] = mapped_column(Text, nullable=True)
-    phone_number: Mapped[str] = mapped_column(String(50), nullable=False)
-    preferred_time: Mapped[str] = mapped_column(String(255), nullable=False)
+    proposed_budget: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    phone_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    contact_phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    preferred_time: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    preferred_window: Mapped[str | None] = mapped_column(String(100), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(
         String(50), default="Pending Review", nullable=False
@@ -259,10 +262,19 @@ class PlanNegotiation(Base, UUIDPrimaryKeyMixin):
     reviewed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    agreed_amount: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    razorpay_custom_plan_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    order_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+    client: Mapped[User | None] = relationship("User", foreign_keys=[client_id], backref="negotiations")
 
     __table_args__ = (
         Index("idx_plan_neg_status", "status", "created_at"),
     )
+

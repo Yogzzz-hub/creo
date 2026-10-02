@@ -17,7 +17,6 @@ import {
   LifeBuoy,
   ShieldCheck,
   CreditCard,
-  Settings,
   ExternalLink
 } from "lucide-react";
 import { useEffect } from "react";
@@ -95,23 +94,45 @@ export function AdminSidebar() {
 
   const adminNavSections: NavSection[] = [
     {
-      label: "Admin Portal",
+      label: "Overview",
       items: [
-        { label: "Today", href: "/admin", icon: LayoutDashboard },
-        { label: "Reports", href: "/admin/reports", icon: FileText },
-        { label: "KPI", href: "/admin/kpi", icon: TrendingUp },
-        { label: "Manage Revenues", href: "/admin/revenue", icon: CreditCard },
-        { label: "Plans & Negotiations", href: "/admin/plans", icon: FileText },
+        { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+      ],
+    },
+    {
+      label: "Revenue Engine",
+      items: [
+        { label: "Manage Revenues", href: "/admin/revenue", icon: TrendingUp },
+        { label: "Plans & Negotiations", href: "/admin/plans-and-negotiations", icon: FileText },
+      ],
+    },
+    {
+      label: "Team Management",
+      items: [
         { label: "Team Management", href: "/admin/team", icon: Users },
-        { label: "Leave Requests", href: "/admin/leaves", icon: CalendarCheck },
+        { label: "Leave Requests & Approvals", href: "/admin/leaves", icon: CalendarCheck },
+      ],
+    },
+    {
+      label: "Content Engine",
+      items: [
         { label: "Deliverables Review", href: "/admin/deliverables", icon: Layers },
         { label: "Publishing Calendar", href: "/admin/calendar", icon: Calendar },
         { label: "Task Queue", href: "/admin/tasks", icon: ListTodo },
-        { label: "Client Directory", href: "/admin/clients", icon: Building2 },
-        { label: "Escalations", href: "/admin/escalations", icon: LifeBuoy },
-        { label: "Announcements", href: "/admin/announcements", icon: MessageSquare },
-        { label: "Add-ons", href: "/admin/addons", icon: Briefcase },
-        { label: "Settings", href: "/admin/settings", icon: Settings },
+      ],
+    },
+    {
+      label: "Client Details",
+      items: [
+        { label: "Client Directory & Portals", href: "/admin/clients", icon: Building2 },
+      ],
+    },
+    {
+      label: "Support & Operations",
+      items: [
+        { label: "Support Desk", href: "/admin/support", icon: LifeBuoy },
+        { label: "SLA Performance Hub", href: "/admin/support/sla", icon: ShieldCheck },
+        { label: "Slack Workspace Hub", href: "/slack", icon: MessageSquare, badge: "Chat" },
       ],
     },
   ];
@@ -221,7 +242,7 @@ export function AdminSidebar() {
           >
             creo<span className="text-nebula-glow text-2xl leading-none">.</span>
           </Link>
-          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30">
+          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-nebula-glow border border-[#7FA0D6]/30">
             {user?.role === "client"
               ? "Client Portal"
               : isMemberRole
@@ -245,11 +266,11 @@ export function AdminSidebar() {
 
       {/* Quick Return Banner for Staff/Admins inspecting Client Portal */}
       {isAdminOrSuper && location.pathname.startsWith("/portal") && (
-        <div className="p-3 bg-nebula-glow/10 border-b border-nebula-steel text-left">
+        <div className="p-3 bg-[#7FA0D6]/10 border-b border-nebula-steel text-left">
           <Link
             to="/admin"
             onClick={onItemClick}
-            className="flex items-center justify-between text-xs font-bold text-nebula-glow hover:text-white px-3 py-2 rounded-xl bg-nebula-navy border border-nebula-glow/30 hover:border-nebula-glow/60 transition-colors shadow-xs"
+            className="flex items-center justify-between text-xs font-bold text-nebula-glow hover:text-white px-3 py-2 rounded-xl bg-nebula-navy border border-[#7FA0D6]/30 hover:border-[#7FA0D6]/60 transition-colors shadow-xs"
           >
             <span>← Return to Admin Console</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -257,11 +278,11 @@ export function AdminSidebar() {
         </div>
       )}
       {isTeamLead && location.pathname.startsWith("/portal") && (
-        <div className="p-3 bg-nebula-glow/10 border-b border-nebula-steel text-left">
+        <div className="p-3 bg-[#7FA0D6]/10 border-b border-nebula-steel text-left">
           <Link
             to="/admin/pod-dashboard"
             onClick={onItemClick}
-            className="flex items-center justify-between text-xs font-bold text-nebula-glow hover:text-white px-3 py-2 rounded-xl bg-nebula-navy border border-nebula-glow/30 hover:border-nebula-glow/60 transition-colors shadow-xs"
+            className="flex items-center justify-between text-xs font-bold text-nebula-glow hover:text-white px-3 py-2 rounded-xl bg-nebula-navy border border-[#7FA0D6]/30 hover:border-[#7FA0D6]/60 transition-colors shadow-xs"
           >
             <span>← Return to Pod Dashboard</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -270,7 +291,7 @@ export function AdminSidebar() {
       )}
 
       {/* Scrollable Navigation - All menus directly visible, zero hover */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-3.5 space-y-4 text-left [scrollbar-width:thin] [scrollbar-color:#2A3446_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-nebula-steel [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-nebula-glow/50">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-3.5 space-y-4 text-left [scrollbar-width:thin] [scrollbar-color:#2A3446_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#2A3446] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#7FA0D6]/50">
         {currentNavSections.map((section) => (
           <div key={section.label} className="space-y-1">
             <div className="px-3 pb-1 text-[10px] font-black uppercase tracking-wider text-nebula-glow">
@@ -287,18 +308,18 @@ export function AdminSidebar() {
                     onClick={onItemClick}
                     className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
                       active
-                        ? "bg-nebula-periwinkle text-nebula-navy shadow-sm font-black"
+                        ? "bg-[#BCCCE6] text-[#0B111C] shadow-sm font-black"
                         : "text-nebula-mist hover:text-white hover:bg-nebula-surface"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <Icon className={`w-4 h-4 shrink-0 ${active ? "text-nebula-navy" : "text-nebula-glow"}`} />
+                      <Icon className={`w-4 h-4 shrink-0 ${active ? "text-[#0B111C]" : "text-nebula-glow"}`} />
                       <span className="truncate">{item.label}</span>
                     </div>
                     {item.badge && (
                       <span
                         className={`text-[10px] px-1.5 py-0.5 rounded font-black shrink-0 ${
-                          active ? "bg-nebula-navy/20 text-nebula-navy" : "bg-nebula-glow/20 text-nebula-glow"
+                          active ? "bg-nebula-navy/20 text-[#0B111C]" : "bg-[#7FA0D6]/20 text-nebula-glow"
                         }`}
                       >
                         {item.badge}
@@ -315,7 +336,7 @@ export function AdminSidebar() {
       {/* Footer: User Profile Card & Direct Sign Out */}
       <div className="p-3 border-t border-nebula-steel bg-nebula-navy/80 shrink-0 space-y-2 text-left">
         <div className="flex items-center gap-2.5 p-2 rounded-xl bg-nebula-surface border border-nebula-steel">
-          <div className="size-8 rounded-full bg-nebula-periwinkle text-nebula-navy font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+          <div className="size-8 rounded-full bg-[#BCCCE6] text-[#0B111C] font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
             {(user?.full_name?.[0] || user?.email?.[0] || (isClientRole ? "C" : isMemberRole ? "D" : "A")).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
@@ -337,7 +358,7 @@ export function AdminSidebar() {
               }
               navigate("/auth");
             }}
-            className="p-1.5 rounded-lg text-nebula-mist hover:text-nebula-sand hover:bg-nebula-sand/10 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-nebula-mist hover:text-nebula-sand hover:bg-[#D8BF9B]/10 transition-colors cursor-pointer"
             title="Sign Out / Log Out"
             aria-label="Sign Out"
           >

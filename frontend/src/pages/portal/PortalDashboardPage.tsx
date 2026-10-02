@@ -139,18 +139,36 @@ export function PortalDashboardPage() {
     }
   };
 
-  const handleDeclineDeliverable = async (id: string, e: React.MouseEvent) => {
+  const [declineTarget, setDeclineTarget] = useState<{ id: string; title?: string } | null>(null);
+  const [declineComment, setDeclineComment] = useState("");
+  const [submittingDecline, setSubmittingDecline] = useState(false);
+
+  const handleDeclineDeliverable = (id: string, e: React.MouseEvent, title?: string) => {
     e.preventDefault();
     e.stopPropagation();
+    setDeclineTarget({ id, title });
+    setDeclineComment("");
+  };
+
+  const submitDeclineReason = async () => {
+    if (!declineTarget || !declineComment.trim()) return;
+    setSubmittingDecline(true);
     try {
-      await request(`/api/v1/deliverables/${id}/request-changes?rejection_comment=Changes requested from dashboard`, {
-        method: "POST",
-      });
+      await request(
+        `/api/v1/deliverables/${declineTarget.id}/request-changes?rejection_comment=${encodeURIComponent(
+          declineComment.trim()
+        )}`,
+        { method: "POST" }
+      );
       queryClient.invalidateQueries({ queryKey: ["portal-dashboard-deliverables"] });
       queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] });
       showToast("Revision requested from pod");
+      setDeclineTarget(null);
+      setDeclineComment("");
     } catch {
       showToast("Change request failed");
+    } finally {
+      setSubmittingDecline(false);
     }
   };
 
@@ -182,7 +200,7 @@ export function PortalDashboardPage() {
             {!isLocked && ` · CYCLE DAY ${cycleDay} OF 30`}
           </p>
           {/* Hero Title */}
-          <h1 className="text-3xl sm:text-4xl font-normal text-slate-50 leading-tight">
+          <h1 className="text-3xl sm:text-4xl font-normal text-[#F8FAFC] leading-tight">
             {isLocked ? "Welcome" : greetingForNow()}, {companyName}.{" "}
             <span className="font-bold italic">
               {isLocked
@@ -203,7 +221,7 @@ export function PortalDashboardPage() {
           {pendingCount > 0 && (
             <Link
               to="/portal/deliverables"
-              className="px-5 py-2.5 rounded-full bg-nebula-periwinkle text-nebula-navy text-[13px] font-bold hover:bg-white transition-colors"
+              className="px-5 py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors"
             >
               Review now
             </Link>
@@ -229,8 +247,8 @@ export function PortalDashboardPage() {
                   ? "Publishing Cadence · On Track" 
                   : "Production Pipeline"}
               </h2>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-nebula-glow/10 text-nebula-glow">
-                <span className="w-1.5 h-1.5 rounded-full bg-nebula-glow" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#7FA0D6]/10 text-nebula-glow">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6]" />
                 {isLocked
                   ? "Starts after setup"
                   : pendingDeliverables.length > 0
@@ -260,7 +278,7 @@ export function PortalDashboardPage() {
                       <div
                         className={`h-1.5 w-full rounded-full mb-3 ${
                           step.completed || step.active
-                            ? "bg-nebula-glow"
+                            ? "bg-[#7FA0D6]"
                             : "bg-white/[0.08]"
                         }`}
                       />
@@ -332,14 +350,14 @@ export function PortalDashboardPage() {
                     {/* Actions */}
                     <div className="flex items-center gap-2 shrink-0">
                       <button
-                        onClick={(e) => handleDeclineDeliverable(item.id, e)}
-                        className="px-4 py-2 rounded-full border border-nebula-steel text-[13px] font-medium text-white hover:bg-nebula-surface transition-colors"
+                        onClick={(e) => handleDeclineDeliverable(item.id, e, item.title)}
+                        className="px-4 py-2 rounded-full border border-nebula-steel text-[13px] font-medium text-white hover:bg-nebula-surface transition-colors cursor-pointer"
                       >
                         Request change
                       </button>
                       <button
                         onClick={(e) => handleApproveDeliverable(item.id, e)}
-                        className="px-4 py-2 rounded-full bg-nebula-periwinkle text-nebula-navy text-[13px] font-bold hover:bg-white transition-colors"
+                        className="px-4 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors cursor-pointer"
                       >
                         Approve
                       </button>
@@ -386,9 +404,9 @@ export function PortalDashboardPage() {
                     entry.status === "changes_requested" ? "In revision" :
                     "Scheduled";
                   const badgeColor =
-                    statusLabel === "Needs you" ? "bg-nebula-sand/15 text-nebula-sand" :
-                    statusLabel === "Approved" ? "bg-nebula-glow/20 text-nebula-periwinkle" :
-                    "bg-nebula-glow/15 text-nebula-periwinkle";
+                    statusLabel === "Needs you" ? "bg-[#D8BF9B]/15 text-nebula-sand" :
+                    statusLabel === "Approved" ? "bg-[#7FA0D6]/20 text-nebula-periwinkle" :
+                    "bg-[#7FA0D6]/15 text-nebula-periwinkle";
                   return (
                     <div key={entry.id || idx} className="grid grid-cols-4 gap-4 py-3 text-sm items-center hover:bg-white/[0.02] transition-colors -mx-2 px-2 rounded-lg cursor-pointer">
                       <span className="text-nebula-mist text-[13px]">{dayStr}{timeStr}</span>
@@ -421,7 +439,7 @@ export function PortalDashboardPage() {
                 </p>
                 <Link
                   to={gate.isPaid ? "/portal/payments" : gate.resume.route}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-nebula-periwinkle text-[13px] font-bold text-nebula-navy hover:bg-white transition-colors"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[#BCCCE6] text-[13px] font-bold text-[#0B111C] hover:bg-white transition-colors"
                 >
                   {gate.isPaid ? "View plan & billing" : "Choose a plan"}
                 </Link>
@@ -469,7 +487,7 @@ export function PortalDashboardPage() {
                           </div>
                           <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-nebula-glow rounded-full transition-all duration-500"
+                              className="h-full bg-[#7FA0D6] rounded-full transition-all duration-500"
                               style={{ width: `${pct}%` }}
                             />
                           </div>
@@ -493,7 +511,7 @@ export function PortalDashboardPage() {
             <p className="text-sm text-nebula-mist mb-5 leading-relaxed">
               Connect Instagram to see reach and saves for every post we publish. Until then we show nothing here rather than guess.
             </p>
-            <Link to="/portal/account?tab=integrations" className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-nebula-periwinkle text-[13px] font-bold text-nebula-navy hover:bg-white transition-colors w-max">
+            <Link to="/portal/account?tab=integrations" className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[#BCCCE6] text-[13px] font-bold text-[#0B111C] hover:bg-white transition-colors w-max">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
@@ -528,7 +546,7 @@ export function PortalDashboardPage() {
               <div className="space-y-4">
                 {dashboard.assigned_team.slice(0, 3).map((member: any, i: number) => {
                   const initials = member.name.split(" ").filter((w: string) => w.length > 0).map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
-                  const avatarBgs = ["bg-nebula-periwinkle text-nebula-navy", "bg-white/[0.08] text-white", "bg-nebula-glow text-white"];
+                  const avatarBgs = ["bg-[#BCCCE6] text-[#0B111C]", "bg-white/[0.08] text-white", "bg-[#7FA0D6] text-white"];
                   return (
                     <div key={member.id || i} className="flex gap-3 items-center">
                       <div className={`w-8 h-8 rounded-full ${avatarBgs[i % avatarBgs.length]} flex items-center justify-center text-[11px] font-bold shrink-0`}>
@@ -552,10 +570,72 @@ export function PortalDashboardPage() {
         </div>
       </div>
 
+      {/* Revision Reason Modal Dialog */}
+      {declineTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-[fadeIn_0.15s_ease-out]">
+          <div className="bg-nebula-surface border border-nebula-steel rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-nebula-steel">
+              <h3 className="text-base font-bold text-white">
+                Request Changes on {declineTarget.title || "Deliverable"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setDeclineTarget(null)}
+                className="text-nebula-mist hover:text-white text-xs font-bold px-2 py-1 rounded-lg bg-nebula-navy"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            <p className="text-xs text-nebula-mist">
+              Select quick feedback tags or describe what the creative pod should adjust in the next version:
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              {["Less text", "Different music", "Stronger hook", "Colour feels off-brand", "Wrong product"].map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => setDeclineComment((prev) => (prev ? `${prev} · ${tag}` : tag))}
+                  className="px-3 py-1 rounded-lg bg-nebula-navy hover:bg-[#2A3446] border border-nebula-steel text-xs font-semibold text-nebula-periwinkle transition-colors"
+                >
+                  + {tag}
+                </button>
+              ))}
+            </div>
+
+            <textarea
+              value={declineComment}
+              onChange={(e) => setDeclineComment(e.target.value)}
+              placeholder="Provide clear revision instructions for your creative team..."
+              className="w-full bg-nebula-navy border border-nebula-steel rounded-xl p-3.5 text-xs text-white placeholder:text-nebula-mist focus:outline-none focus:border-[#7FA0D6] h-28 resize-none"
+            />
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeclineTarget(null)}
+                className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-nebula-mist hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitDeclineReason}
+                disabled={!declineComment.trim() || submittingDecline}
+                className="px-5 py-2 rounded-xl bg-[#BCCCE6] text-[#0B111C] text-xs font-bold hover:bg-white transition-colors disabled:opacity-50"
+              >
+                {submittingDecline ? "Submitting..." : "Submit Revision Request"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toast */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-nebula-surface text-white px-5 py-3 rounded-xl shadow-2xl border border-white/[0.1] text-sm font-medium flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-nebula-periwinkle" />
+          <span className="w-2 h-2 rounded-full bg-[#BCCCE6]" />
           {toastMessage}
         </div>
       )}

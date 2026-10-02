@@ -20,12 +20,15 @@ export function PortalLibraryPage() {
     enabled: !!user?.id && gate.isComplete,
   });
 
-  const rawItems = response?.items || [];
+  // Filter strictly to delivered/approved assets per Rule R4
+  const rawItems = (response?.items || []).filter(
+    (item: any) => item.status === "approved" || item.status === "scheduled" || item.status === "published"
+  );
   
   // Transform real items into library format
   const realAssets = rawItems.map((item: any) => ({
     id: item.id,
-    status: item.status === "pending_approval" ? "Needs you" : item.status === "approved" ? "Approved" : item.status === "in_production" ? "Scheduled" : "Published",
+    status: item.status === "approved" ? "Approved" : item.status === "scheduled" ? "Scheduled" : "Published",
     type: (item.type || (item.file_type?.includes("video") ? "reel" : "post")).toUpperCase(),
     title: item.title || `${item.type || "Asset"} Draft`,
     image: item.thumbnail_url || item.file_url || "",
@@ -59,17 +62,38 @@ export function PortalLibraryPage() {
     );
   }
 
-  const handleDownload = (id: string, url?: string) => {
+  const handleDownload = async (id: string, url?: string) => {
     setDownloading(id);
-    setTimeout(() => {
-      if (url) {
+    try {
+      if (id === "all") {
+        const res = await fetch("/api/v1/deliverables/download-zip", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = downloadUrl;
+          a.download = "creo_approved_assets.zip";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(downloadUrl);
+        }
+      } else if (url) {
         const a = document.createElement("a");
         a.href = url;
-        a.download = true.toString();
+        a.download = "asset";
+        a.target = "_blank";
+        document.body.appendChild(a);
         a.click();
+        a.remove();
       }
+    } catch {
+      // Gracefully handle download failure
+    } finally {
       setDownloading(null);
-    }, 1000);
+    }
   };
 
   if (isLoading) {

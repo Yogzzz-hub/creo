@@ -1,17 +1,19 @@
 import { useState } from "react";
-import { Download, Loader2, PauseCircle, CheckCircle2, AlertCircle, PhoneCall } from "lucide-react";
+import { Download, Loader2, PauseCircle, CheckCircle2, AlertCircle, Sparkles, CreditCard, PhoneCall } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { fetchClientNegotiations } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem } from "../../lib/ops-api";
-import { openRazorpayCheckout } from "../../lib/razorpay";
+import { openRazorpayCheckout, type RazorpayPaymentSuccess } from "../../lib/razorpay";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
 import { PausePlanModal } from "../../components/portal/PausePlanModal";
 import { ComparePlansModal } from "../../components/portal/ComparePlansModal";
 import { PlanBargainCallModal } from "../../components/portal/PlanBargainCallModal";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
+
+import { generateInvoicePDF, type InvoiceData } from "../../lib/pdf-invoice";
 
 interface SubscriptionData {
   status: string;
@@ -39,6 +41,27 @@ export function PortalPaymentsPage() {
     enabled: !!user?.id,
   });
 
+  const [subscribingCustom, setSubscribingCustom] = useState(false);
+
+  // Fetch client's custom negotiation status
+  const { data: negData } = useQuery<{
+    has_negotiation: boolean;
+    approved: {
+      id: string;
+      status: string;
+      agreed_amount: number;
+      order_id: string;
+      contact_phone: string;
+      proposed_budget: string;
+      target_topic: string;
+    } | null;
+    key_id: string;
+  }>({
+    queryKey: ["my-negotiation", user?.id],
+    queryFn: () => request<any>("/api/negotiations/my"),
+    enabled: !!user?.id,
+  });
+
   const { data: clientNegotiations } = useQuery<PlanNegotiationApiItem[]>({
     queryKey: ["client-negotiations", user?.id],
     queryFn: () => fetchClientNegotiations(),
@@ -48,6 +71,79 @@ export function PortalPaymentsPage() {
   const latestNeg = clientNegotiations && clientNegotiations.length > 0 ? clientNegotiations[0] : null;
 
   const gate = useOnboardingGate();
+
+  const handleSubscribeCustomPlan = async () => {
+    if (!negData?.approved) return;
+    const approved = negData.approved;
+    const amountInr = approved.agreed_amount || 35000;
+    const rzpKeyId =
+      negData.key_id ||
+      (import.meta.env.VITE_RAZORPAY_KEY_ID as string) ||
+      "rzp_test_TO2r0YMjDZSpuC";
+
+    try {
+      setSubscribingCustom(true);
+      setErrorNotice(null);
+
+      await openRazorpayCheckout(
+        {
+          key: rzpKeyId,
+          amount: amountInr * 100,
+          currency: "INR",
+          name: "Creo Agency",
+          description: "Your Custom Negotiated Plan",
+          order_id: approved.order_id,
+          prefill: {
+            name: user?.full_name || "",
+            email: user?.email || "",
+            contact: approved.contact_phone || "",
+          },
+          theme: {
+            color: "#7FA0D6",
+          },
+        },
+        async (response: RazorpayPaymentSuccess) => {
+          try {
+            await request("/api/negotiations/confirm-payment", {
+              method: "POST",
+              body: JSON.stringify({
+                negotiation_id: approved.id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id || approved.order_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            await queryClient.invalidateQueries({ queryKey: ["client-subscription"] });
+            await queryClient.invalidateQueries({ queryKey: ["my-negotiation"] });
+            await queryClient.invalidateQueries({ queryKey: ["client-negotiations"] });
+            await queryClient.invalidateQueries({ queryKey: ["onboarding-status"] });
+
+            setActionNotice(
+              `🎉 Payment verified! Your custom negotiated retainer at ₹${amountInr.toLocaleString(
+                "en-IN"
+              )}/mo is now active!`
+            );
+            setTimeout(() => setActionNotice(null), 6000);
+          } catch (err: unknown) {
+            const msg =
+              err instanceof Error ? err.message : "Failed to activate subscription.";
+            setErrorNotice(msg);
+          } finally {
+            setSubscribingCustom(false);
+          }
+        },
+        () => {
+          setSubscribingCustom(false);
+        }
+      );
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Failed to open Razorpay checkout.";
+      setErrorNotice(msg);
+      setSubscribingCustom(false);
+    }
+  };
 
   if (!gate.isReady || isSubLoading || !subData) {
     return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Plan & Billing" />;
@@ -63,12 +159,6 @@ export function PortalPaymentsPage() {
     : (hasActivePlan ? "NEXT BILLING CYCLE" : "INACTIVE");
 
   const isPausedNextMonth = !!(subData as any)?.is_paused_next_month;
-
-  const planLower = planName.toLowerCase();
-  const planRevisionRounds = (subData as any)?.plan?.revision_rounds || (
-    planLower.includes("starter") ? 1 : planLower.includes("scale") ? 3 : 2
-  );
-  const planTurnaroundSla = planLower.includes("starter") ? "3 business-day" : planLower.includes("scale") ? "24-hour" : "2 business-day";
 
   const addons = [
     { id: "extra_reel", name: "Extra reel", desc: "Delivered within this batch", price: 4500 },
@@ -87,9 +177,9 @@ export function PortalPaymentsPage() {
 
   const usage = (subData as any)?.quotas || (subData as any)?.usage || {};
   const usageBars = [
-    { label: "Reels", current: usage.reel?.used || 0, max: usage.reel?.quota ?? (subData as any)?.plan?.reel_quota ?? 0, color: "bg-nebula-glow" },
-    { label: "Posts", current: (usage.static_post?.used ?? usage.poster?.used) || 0, max: (usage.static_post?.quota ?? usage.poster?.quota) ?? (subData as any)?.plan?.poster_quota ?? 0, color: "bg-nebula-glow" },
-    { label: "Stories", current: usage.story?.used || 0, max: usage.story?.quota ?? (subData as any)?.plan?.story_quota ?? 0, color: "bg-nebula-glow" }
+    { label: "Reels", current: usage.reel?.used || 0, max: usage.reel?.quota ?? (subData as any)?.plan?.reel_quota ?? 0, color: "bg-[#7FA0D6]" },
+    { label: "Posts", current: (usage.static_post?.used ?? usage.poster?.used) || 0, max: (usage.static_post?.quota ?? usage.poster?.quota) ?? (subData as any)?.plan?.poster_quota ?? 0, color: "bg-[#7FA0D6]" },
+    { label: "Stories", current: usage.story?.used || 0, max: usage.story?.quota ?? (subData as any)?.plan?.story_quota ?? 0, color: "bg-[#7FA0D6]" }
   ];
 
   const totalMax = usageBars.reduce((sum, item) => sum + item.max, 0);
@@ -122,7 +212,19 @@ export function PortalPaymentsPage() {
 
   const handleDownload = (id: string) => {
     setDownloadingInv(id);
-    setTimeout(() => setDownloadingInv(null), 1200);
+    const targetInv = backendInvoices.find((i: any) => i.id === id);
+    const invToRender: InvoiceData = {
+      id: id,
+      date: targetInv?.date || new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+      amount: targetInv?.amount ? String(targetInv.amount) : `₹${planPrice.toLocaleString("en-IN")}`,
+      status: targetInv?.status || "Paid",
+      plan: planName,
+      clientName: user?.full_name || undefined,
+      clientEmail: user?.email || undefined,
+      companyName: user?.company_name || undefined,
+    };
+    generateInvoicePDF(invToRender);
+    setTimeout(() => setDownloadingInv(null), 500);
   };
 
   const handleResumePlan = async () => {
@@ -143,17 +245,118 @@ export function PortalPaymentsPage() {
     }
   };
 
-  // No plan yet: show where to resume instead of placeholder plan figures.
+  const renderCustomPlanCard = () => {
+    if (!negData?.approved) return null;
+    const approved = negData.approved;
+
+    return (
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#161F2D] via-[#161F2D] to-[#1F2C3F] border-2 border-[#7FA0D6]/60 p-6 sm:p-8 shadow-2xl shadow-[#7FA0D6]/10">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[#7FA0D6]/10 rounded-full blur-3xl pointer-events-none -z-0" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-3 max-w-xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-[#7FA0D6]/20 border border-[#7FA0D6]/40 text-nebula-glow">
+              <Sparkles className="size-3.5 fill-[#7FA0D6]" />
+              Your Custom Negotiated Plan
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+              Executive Agreement Ready
+            </h2>
+
+            <p className="text-xs sm:text-sm text-nebula-mist leading-relaxed">
+              Our Agency Director has reviewed your consultation call and approved a custom production scope tailored specifically for your brand.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2.5 pt-2 text-xs text-[#F1F5F9] font-medium">
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-nebula-navy border border-nebula-steel">
+                <CheckCircle2 className="size-3.5 text-emerald-400" /> 10 High-Impact Reels / mo
+              </span>
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-nebula-navy border border-nebula-steel">
+                <CheckCircle2 className="size-3.5 text-emerald-400" /> 12 Static Posters / mo
+              </span>
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-nebula-navy border border-nebula-steel">
+                <CheckCircle2 className="size-3.5 text-emerald-400" /> Dedicated Creative Pod Lead
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end justify-between gap-4 p-5 rounded-2xl bg-nebula-navy border border-nebula-steel shrink-0">
+            <div>
+              <span className="text-[10px] uppercase font-bold text-nebula-mist block">
+                Approved Retainer Fee
+              </span>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-3xl sm:text-4xl font-black text-white">
+                  ₹{approved.agreed_amount?.toLocaleString("en-IN") || "35,000"}
+                </span>
+                <span className="text-xs text-nebula-mist font-semibold">/ mo</span>
+              </div>
+              {approved.order_id && (
+                <span className="text-[10px] text-nebula-glow font-mono mt-1 block">
+                  Order ID: {approved.order_id}
+                </span>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSubscribeCustomPlan}
+              disabled={subscribingCustom}
+              className="w-full sm:w-auto px-7 py-3 rounded-full bg-[#BCCCE6] text-[#050810] hover:bg-white text-sm font-extrabold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {subscribingCustom ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Opening Razorpay...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="size-4" />
+                  Subscribe via Razorpay
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // No plan yet: show where to resume or custom negotiated plan card if approved.
   if (!gate.isPaid && !subData?.subscription) {
     return (
-      <div className="space-y-6 pb-12">
+      <div className="space-y-6 pb-12 animate-in fade-in duration-300">
+        {/* Action Toast / Confirmation Notice */}
+        {actionNotice && (
+          <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-700/60 text-emerald-300 text-xs font-semibold flex items-center gap-2.5 animate-[fadeIn_0.2s_ease-out]">
+            <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
+            <span>{actionNotice}</span>
+          </div>
+        )}
+
+        {/* Error Toast / Alert Notice */}
+        {errorNotice && (
+          <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs font-semibold flex items-center gap-2.5 animate-[fadeIn_0.2s_ease-out]">
+            <AlertCircle className="size-4 shrink-0 text-rose-400" />
+            <span>{errorNotice}</span>
+          </div>
+        )}
+
         <div>
-          <p className="text-xs uppercase font-bold tracking-[0.16em] text-nebula-mist mb-2">No active plan yet</p>
-          <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Plan & billing</h1>
+          <p className="text-xs uppercase font-bold tracking-[0.16em] text-nebula-mist mb-2">
+            {negData?.approved ? "Custom Retainer Ready" : "No active plan yet"}
+          </p>
+          <h1 className="text-3xl font-bold text-[#F8FAFC] tracking-tight">Plan & billing</h1>
         </div>
+
+        {/* Prominent Custom Plan Card */}
+        {renderCustomPlanCard()}
+
         <ResumeOnboardingBanner variant="hero" title="Activate your plan in a few quick steps" />
+
         <div className="bg-nebula-surface border border-nebula-steel rounded-3xl p-6 lg:p-8">
-          <h3 className="text-base font-semibold text-slate-50 mb-1.5">Invoices</h3>
+          <h3 className="text-base font-semibold text-[#F8FAFC] mb-1.5">Invoices</h3>
           <p className="text-sm text-nebula-mist leading-relaxed">
             Receipts and invoices will appear here after your first payment.
           </p>
@@ -179,6 +382,9 @@ export function PortalPaymentsPage() {
           <span>{errorNotice}</span>
         </div>
       )}
+
+      {/* Prominent Custom Plan Card if client has an approved negotiation */}
+      {renderCustomPlanCard()}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -243,7 +449,7 @@ export function PortalPaymentsPage() {
             type="button"
             onClick={handleResumePlan}
             disabled={resumingSub}
-            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-nebula-navy text-xs font-bold transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#0B111C] text-xs font-bold transition-colors shrink-0 cursor-pointer disabled:opacity-50"
           >
             {resumingSub ? "Resuming..." : "Resume Renewal"}
           </button>
@@ -263,7 +469,7 @@ export function PortalPaymentsPage() {
               ? "border-blue-500/40 bg-blue-950/25 text-blue-200"
               : latestNeg.status === "Declined"
               ? "border-rose-500/30 bg-rose-950/20 text-rose-200"
-              : "border-nebula-glow/40 bg-nebula-navy text-nebula-periwinkle"
+              : "border-[#7FA0D6]/40 bg-nebula-navy text-nebula-periwinkle"
           }`}
         >
           <div className="flex items-start sm:items-center gap-3.5">
@@ -281,7 +487,7 @@ export function PortalPaymentsPage() {
                       ? "bg-blue-500/20 text-blue-400 border border-blue-500/40"
                       : latestNeg.status === "Declined"
                       ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
-                      : "bg-nebula-glow/20 text-nebula-glow border border-nebula-glow/40"
+                      : "bg-[#7FA0D6]/20 text-nebula-glow border border-[#7FA0D6]/40"
                   }`}
                 >
                   {latestNeg.status}
@@ -344,7 +550,7 @@ export function PortalPaymentsPage() {
           </div>
 
           <p className="text-xs text-nebula-mist font-medium leading-relaxed">
-            {planRevisionRounds} revision {planRevisionRounds === 1 ? "round" : "rounds"} per asset • {planTurnaroundSla} batch SLA • dedicated account director
+            2 revision rounds per asset • 2 business-day batch SLA • dedicated account director
           </p>
         </div>
 
@@ -363,7 +569,7 @@ export function PortalPaymentsPage() {
                   <button 
                     onClick={() => handleAddon(addon)}
                     disabled={!!processingAddon}
-                    className="px-5 py-2 rounded-full bg-nebula-periwinkle text-nebula-navy text-[13px] font-bold hover:bg-white transition-colors w-20 flex items-center justify-center disabled:opacity-50 cursor-pointer"
+                    className="px-5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors w-20 flex items-center justify-center disabled:opacity-50 cursor-pointer"
                   >
                     {processingAddon === addon.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Add"}
                   </button>
@@ -401,7 +607,7 @@ export function PortalPaymentsPage() {
                       <td className="py-4 text-[13px] text-white">{inv.period}</td>
                       <td className="py-4 text-[13px] font-bold text-white">₹{inv.amount.toLocaleString('en-IN')}</td>
                       <td className="py-4">
-                        <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-nebula-glow/15 text-nebula-periwinkle text-xs font-bold">
+                        <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-[#7FA0D6]/15 text-nebula-periwinkle text-xs font-bold">
                           {inv.status}
                         </span>
                       </td>

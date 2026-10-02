@@ -193,7 +193,6 @@ async def get_calendar_entries(
 
     return calendar_list
 
-
 @router.post("/draft-month", response_model=dict[str, Any])
 @router.post("/{client_id}/draft-month", response_model=dict[str, Any])
 async def draft_calendar_month_endpoint(
@@ -203,7 +202,10 @@ async def draft_calendar_month_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Generate quota-driven draft content calendar slots spread evenly across client template days."""
-    target_id = client_id or actor.client_id or actor.user_id
+    if actor.role == "client" or actor.role == UserRole.CLIENT:
+        target_id = actor.client_id or actor.user_id
+    else:
+        target_id = client_id or actor.client_id or actor.user_id
     from app.services.dispatch_engine import draft_month_calendar
 
     month_anchor = None
@@ -234,7 +236,10 @@ async def rebalance_calendar_month_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Rebalance calendar deliverables across the month to ensure manageable daily pod workload and exact quota match."""
-    target_id = client_id or actor.client_id or actor.user_id
+    if actor.role == "client" or actor.role == UserRole.CLIENT:
+        target_id = actor.client_id or actor.user_id
+    else:
+        target_id = client_id or actor.client_id or actor.user_id
     from app.services.dispatch_engine import rebalance_month_calendar
 
     month_anchor = None
@@ -256,7 +261,6 @@ async def rebalance_calendar_month_endpoint(
     }
 
 
-
 @router.post("/approve", response_model=dict[str, Any])
 @router.post("/{client_id}/approve", response_model=dict[str, Any])
 async def approve_draft_calendar_endpoint(
@@ -265,7 +269,10 @@ async def approve_draft_calendar_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Approve draft calendar slots, lock schedule, materialize tasks, and dispatch the rolling 10-day window."""
-    target_id = client_id or actor.client_id or actor.user_id
+    if actor.role == "client" or actor.role == UserRole.CLIENT:
+        target_id = actor.client_id or actor.user_id
+    else:
+        target_id = client_id or actor.client_id or actor.user_id
     from app.services.dispatch_engine import approve_calendar_month
 
     res = await approve_calendar_month(db, target_id, actor_id=actor.user_id)

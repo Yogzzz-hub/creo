@@ -316,7 +316,7 @@ export function CountUp({
   const inView = useInView(ref, { once: true, margin: "0px 0px -10% 0px" });
   const reduce = useReducedMotion();
   const match = value.match(/^(\D*)([\d,]+(?:\.\d+)?)(.*)$/);
-  const [display, setDisplay] = useState(match && !reduce ? `${match[1]}0${match[3]}` : value);
+  const [display, setDisplay] = useState(value);
 
   useEffect(() => {
     if (!match || reduce || !inView) {

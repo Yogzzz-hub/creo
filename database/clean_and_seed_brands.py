@@ -54,7 +54,7 @@ brands = [
         "company_name": "Zenith Fitness",
         "instagram_username": "zenithfitness.club",
         "brand_summary": "High-performance athletic conditioning, Olympic lifting, and science-backed recovery gym chain.",
-        "plan_name": "pro",
+        "plan_name": "scale",
         "stage": 5,
         "quota": {"static_post": (36, 12), "reel": (20, 7), "story": (40, 19)}
     },
@@ -76,7 +76,7 @@ brands = [
         "company_name": "Heritage Looms",
         "instagram_username": "heritagelooms.india",
         "brand_summary": "Handwoven Chanderi, Banarasi silk, and sustainable luxury heritage apparel.",
-        "plan_name": "pro",
+        "plan_name": "scale",
         "stage": 5,
         "quota": {"static_post": (36, 14), "reel": (20, 9), "story": (40, 22)}
     }
@@ -109,7 +109,7 @@ for b in brands:
     """, (b["id"], b["company_name"], b["instagram_username"], b["brand_summary"]))
 
     plan_id = plan_map.get(b["plan_name"])
-    plan_amounts = {"starter": 25000.00, "growth": 50000.00, "pro": 95000.00}
+    plan_amounts = {"starter": 25000.00, "growth": 50000.00, "scale": 95000.00}
     amt = plan_amounts.get(b["plan_name"], 50000.00)
     if plan_id:
         cur.execute("""

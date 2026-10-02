@@ -95,7 +95,7 @@ const SEED_MESSAGES: Record<string, ChatMessage[]> = {
       sender: "Pod Operations Lead",
       role: "Pod Lead",
       avatar: "PL",
-      avatarBg: "bg-nebula-glow",
+      avatarBg: "bg-[#7FA0D6]",
       content: "Good morning team! Standup update: All 4 active client sprint deliverables are on track for today's review.",
       timestamp: "09:00 AM",
       reactions: [
@@ -108,7 +108,7 @@ const SEED_MESSAGES: Record<string, ChatMessage[]> = {
       sender: "Client Manager",
       role: "Operations Executive",
       avatar: "CM",
-      avatarBg: "bg-nebula-glow",
+      avatarBg: "bg-[#7FA0D6]",
       content: "Reminder: Please upload all final MP4 and Figma assets to the deliverables-handoff channel once QA approves.",
       timestamp: "09:15 AM",
       reactions: [{ emoji: "✅", count: 4, users: ["Team Lead"] }],
@@ -120,7 +120,7 @@ const SEED_MESSAGES: Record<string, ChatMessage[]> = {
       sender: "Creative Specialist",
       role: "Video Editor",
       avatar: "CS",
-      avatarBg: "bg-nebula-glow",
+      avatarBg: "bg-[#7FA0D6]",
       content: "📦 Handoff Drop: High-conversion reel assets for Apex Motion are packaged and ready for final review.",
       timestamp: "10:30 AM",
       reactions: [{ emoji: "🔥", count: 3, users: ["Lead"] }],
@@ -132,7 +132,7 @@ const SEED_MESSAGES: Record<string, ChatMessage[]> = {
       sender: "System Alert",
       role: "Automation Bot",
       avatar: "SA",
-      avatarBg: "bg-nebula-sand",
+      avatarBg: "bg-[#D8BF9B]",
       content: "⚡ SLA Monitor: Priority 1 deliverable review queue is currently empty. Excellent turnaround time!",
       timestamp: "11:00 AM",
       reactions: [{ emoji: "⭐", count: 2, users: ["Admin"] }],
@@ -328,7 +328,7 @@ export function SlackChatPage() {
         sender: m.sender_name || "Unknown",
         role: "Specialist", 
         avatar: (m.sender_name || "U").slice(0, 2).toUpperCase(),
-        avatarBg: "bg-nebula-glow",
+        avatarBg: "bg-[#7FA0D6]",
         content: m.message,
         timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         reactions: [],
@@ -393,7 +393,7 @@ export function SlackChatPage() {
       sender: currentPersona,
       role: senderRole,
       avatar: senderInitials,
-      avatarBg: "bg-nebula-glow",
+      avatarBg: "bg-[#7FA0D6]",
       content: messageText,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       reactions: [],
@@ -476,7 +476,7 @@ export function SlackChatPage() {
       sender: currentPersona,
       role: senderRole,
       avatar: senderInitials,
-      avatarBg: "bg-nebula-glow",
+      avatarBg: "bg-[#7FA0D6]",
       content: `⚡ New Task Assigned: **${resolvedTitle}** assigned to **${resolvedAssignee}** for **${resolvedClient}**!`,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       isTaskCard: true,
@@ -514,7 +514,7 @@ export function SlackChatPage() {
   ];
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-nebula-navy text-white font-sans flex flex-col">
+    <div data-surface="ops" className="h-screen max-h-screen bg-nebula-navy text-white font-sans flex flex-col overflow-hidden">
       {/* Top Header Navigation matching Admin */}
       <AdminTopHeader activeTab="Slack" />
 
@@ -523,14 +523,14 @@ export function SlackChatPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="flex-1 flex flex-col md:flex-row max-w-[1650px] w-full mx-auto px-2 sm:px-6 py-2 sm:py-4 gap-3 sm:gap-4 h-[calc(100vh-76px)] overflow-hidden pb-20 md:pb-4"
+        className="flex-1 min-h-0 flex flex-col md:flex-row max-w-[1650px] w-full mx-auto px-2 sm:px-6 py-2 sm:py-4 gap-3 sm:gap-4 overflow-hidden pb-2 md:pb-4"
       >
         {/* Toast Alert */}
         {toastMessage && (
           <div
             className={`fixed top-20 right-4 sm:right-8 z-[9999] p-4 rounded-2xl border text-xs font-bold flex items-center gap-2 shadow-2xl animate-fade-in ${
               toastMessage.type === "info"
-                ? "bg-nebula-glow/15 border-nebula-glow/30 text-blue-300"
+                ? "bg-[#7FA0D6]/15 border-[#7FA0D6]/30 text-blue-300"
                 : "bg-emerald-950/90 border-emerald-500/50 text-emerald-300"
             }`}
           >
@@ -542,17 +542,17 @@ export function SlackChatPage() {
           </div>
         )}
 
-        {/* 1. SLACK LEFT SIDEBAR */}
+        {/* 1. SLACK LEFT SIDEBAR (Compact Fixed Width & Equal Height) */}
         <aside
           className={`${
-            mobileView === "channels" ? "flex w-full" : "hidden md:flex md:w-72"
-          } bg-nebula-surface/90 backdrop-blur-xl text-slate-300 rounded-2xl sm:rounded-3xl flex-col shadow-xl border border-nebula-steel shrink-0 overflow-hidden h-full`}
+            mobileView === "channels" ? "flex w-full" : "hidden md:flex"
+          } md:w-72 lg:w-80 shrink-0 min-w-0 bg-nebula-surface text-slate-300 rounded-2xl sm:rounded-3xl flex flex-col shadow-xl border border-nebula-steel overflow-hidden h-full min-h-0`}
         >
           {/* Workspace Title & Persona Switcher */}
-          <div className="p-4 border-b border-nebula-steel bg-nebula-navy/80 space-y-2.5">
+          <div className="p-4 border-b border-nebula-steel bg-nebula-navy/80 space-y-2.5 shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="size-3 rounded-md bg-nebula-glow" />
+                <span className="size-3 rounded-md bg-[#7FA0D6]" />
                 <span className="font-black text-sm text-white tracking-tight">Creo Slack Hub</span>
               </div>
               <div className="flex items-center gap-2">
@@ -572,7 +572,7 @@ export function SlackChatPage() {
 
             {/* Authenticated User Identity (Strict - No Role Switching) */}
             <div className="p-2.5 rounded-xl bg-nebula-surface border border-nebula-steel flex items-center gap-2">
-              <div className="size-6 rounded-lg bg-nebula-glow text-white font-black text-[10px] flex items-center justify-center shrink-0">
+              <div className="size-6 rounded-lg bg-[#7FA0D6] text-white font-black text-[10px] flex items-center justify-center shrink-0">
                 {currentPersona.slice(0, 2).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
@@ -591,7 +591,7 @@ export function SlackChatPage() {
           </div>
 
           {/* Channels & DMs List */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-4 text-xs">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-4 text-xs">
             {/* Quick Task Assign Button in Sidebar */}
             <button
               onClick={() => setAssignTaskModalOpen(true)}
@@ -618,7 +618,7 @@ export function SlackChatPage() {
                   }}
                   className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl font-bold transition-all text-left cursor-pointer ${
                     activeChannel === c.id && !activeDm
-                      ? "bg-nebula-glow text-white shadow-xs font-black"
+                      ? "bg-[#7FA0D6] text-white shadow-xs font-black"
                       : "text-slate-300 hover:bg-slate-800 hover:text-white"
                   }`}
                 >
@@ -656,12 +656,12 @@ export function SlackChatPage() {
                       }}
                       className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all text-left cursor-pointer ${
                         activeDm === displayName
-                          ? "bg-nebula-glow text-white font-black"
+                          ? "bg-[#7FA0D6] text-white font-black"
                           : "text-slate-300 hover:bg-slate-800 hover:text-white"
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <div className="size-5 rounded-md bg-nebula-glow text-white font-black text-[9px] flex items-center justify-center shrink-0">
+                        <div className="size-5 rounded-md bg-[#7FA0D6] text-white font-black text-[9px] flex items-center justify-center shrink-0">
                           {displayName.slice(0, 2).toUpperCase()}
                         </div>
                         <span className="truncate text-xs">{displayName}</span>
@@ -678,8 +678,8 @@ export function SlackChatPage() {
           </div>
 
           {/* Active User Footer in Sidebar */}
-          <div className="p-3 border-t border-slate-800 bg-slate-950/60 flex items-center gap-2.5">
-            <div className="size-8 rounded-xl bg-nebula-glow text-white font-black text-xs flex items-center justify-center shadow-xs">
+          <div className="p-3 border-t border-slate-800 bg-slate-950/60 flex items-center gap-2.5 mt-auto shrink-0">
+            <div className="size-8 rounded-xl bg-[#7FA0D6] text-white font-black text-xs flex items-center justify-center shadow-xs">
               {currentPersona.slice(0, 2).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
@@ -692,27 +692,27 @@ export function SlackChatPage() {
           </div>
         </aside>
 
-        {/* 2. SLACK MAIN CHAT AREA */}
+        {/* 2. SLACK MAIN CHAT AREA (Fills Remaining Space) */}
         <section
           className={`${
-            mobileView === "chat" ? "flex flex-1" : "hidden md:flex md:flex-1"
-          } bg-nebula-surface rounded-2xl sm:rounded-3xl border border-nebula-steel shadow-xl flex-col overflow-hidden h-full`}
+            mobileView === "chat" ? "flex w-full" : "hidden md:flex"
+          } flex-1 min-w-0 bg-nebula-surface rounded-2xl sm:rounded-3xl border border-nebula-steel shadow-xl flex flex-col overflow-hidden h-full min-h-0`}
         >
           {/* Header Bar */}
-          <div className="px-3 sm:px-6 py-3 border-b border-nebula-steel flex items-center justify-between bg-nebula-surface gap-2">
+          <div className="px-3 sm:px-6 py-3 border-b border-nebula-steel flex items-center justify-between bg-nebula-surface gap-2 shrink-0">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               {/* Back button on mobile to view channel list */}
               <button
                 type="button"
                 onClick={() => setMobileView("channels")}
-                className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-nebula-surface hover:bg-slate-200 text-slate-100 font-bold text-xs shrink-0 transition-colors cursor-pointer"
+                className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-nebula-surface hover:bg-slate-200 text-[#F1F5F9] font-bold text-xs shrink-0 transition-colors cursor-pointer"
                 title="View Channels"
               >
                 <ArrowLeft className="size-3.5" />
                 <span className="hidden xs:inline">Channels</span>
               </button>
 
-              <div className="size-8 sm:size-9 rounded-xl sm:rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-black shrink-0">
+              <div className="size-8 sm:size-9 rounded-xl sm:rounded-2xl bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center font-black shrink-0">
                 {activeDm ? <User className="size-4" /> : <Hash className="size-4" />}
               </div>
               <div className="min-w-0">
@@ -720,7 +720,7 @@ export function SlackChatPage() {
                   <h2 className="text-sm sm:text-base font-black text-white truncate">
                     {activeDm ? activeDm : `#${activeChannel}`}
                   </h2>
-                  <span className="px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold bg-nebula-surface text-slate-100 shrink-0">
+                  <span className="px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold bg-nebula-surface text-[#F1F5F9] shrink-0">
                     {activeDm ? "DM" : "Channel"}
                   </span>
                 </div>
@@ -736,7 +736,7 @@ export function SlackChatPage() {
               {/* Assign Task Button in Header */}
               <button
                 onClick={() => setAssignTaskModalOpen(true)}
-                className="px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-nebula-glow/15 hover:bg-nebula-glow/20 text-nebula-glow font-bold text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer"
+                className="px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-nebula-glow font-bold text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer"
               >
                 <Sparkles className="size-3 sm:size-3.5" />
                 <span className="hidden sm:inline">Assign Task</span>
@@ -745,7 +745,7 @@ export function SlackChatPage() {
 
               <button
                 onClick={() => setCallModalOpen(true)}
-                className="size-8 sm:size-9 rounded-xl bg-nebula-surface hover:bg-slate-700 text-slate-100 flex items-center justify-center cursor-pointer transition-colors"
+                className="size-8 sm:size-9 rounded-xl bg-nebula-surface hover:bg-slate-700 text-[#F1F5F9] flex items-center justify-center cursor-pointer transition-colors"
                 title="Start Video Huddle"
               >
                 <Video className="size-3.5 sm:size-4" />
@@ -754,7 +754,7 @@ export function SlackChatPage() {
           </div>
 
           {/* Messages Feed */}
-          <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 bg-nebula-navy/90 backdrop-blur-xl flex flex-col">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 bg-nebula-navy/90 backdrop-blur-xl flex flex-col">
             {currentMessages.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-auto">
                 <div className="size-14 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-4 border border-blue-500/20">
@@ -790,22 +790,22 @@ export function SlackChatPage() {
                     </div>
 
                     {/* Message Content */}
-                    <div className="text-xs text-slate-100 leading-relaxed font-medium break-words">
+                    <div className="text-xs text-[#F1F5F9] leading-relaxed font-medium break-words">
                       {msg.content}
                     </div>
 
                     {/* Task Card Embedded in Chat */}
                     {msg.isTaskCard && msg.taskData && (
-                      <div className="mt-2.5 p-3.5 sm:p-4 rounded-2xl bg-nebula-surface border border-nebula-glow/30 shadow-sm hover-card-innovative space-y-2.5 w-full max-w-lg">
+                      <div className="mt-2.5 p-3.5 sm:p-4 rounded-2xl bg-nebula-surface border border-[#7FA0D6]/30 shadow-sm hover-card-innovative space-y-2.5 w-full max-w-lg">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-mono font-bold text-nebula-glow bg-nebula-glow/20 px-2 py-0.5 rounded">
+                          <span className="text-[10px] font-mono font-bold text-nebula-glow bg-[#7FA0D6]/20 px-2 py-0.5 rounded">
                             {msg.taskData.id}
                           </span>
                           <span
                             className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
                               msg.taskData.priority === "P1 High"
                                 ? "bg-rose-100 text-rose-700 border border-rose-200"
-                                : "bg-nebula-glow/20 text-nebula-glow"
+                                : "bg-[#7FA0D6]/20 text-nebula-glow"
                             }`}
                           >
                             {msg.taskData.priority}
@@ -814,7 +814,7 @@ export function SlackChatPage() {
 
                         <div>
                           <h4 className="text-xs font-black text-white">{msg.taskData.title}</h4>
-                          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-100 mt-1">
+                          <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#F1F5F9] mt-1">
                             <span>👤 Assignee: <strong>{msg.taskData.assignee}</strong></span>
                             <span>•</span>
                             <span>🏢 Client: <strong>{msg.taskData.client}</strong></span>
@@ -864,7 +864,7 @@ export function SlackChatPage() {
                             setPickerTargetMsgId(msg.id);
                             setShowEmojiPicker(true);
                           }}
-                          className="size-5.5 rounded-full bg-nebula-surface hover:bg-nebula-glow hover:text-white text-nebula-mist border border-nebula-steel flex items-center justify-center text-xs font-bold transition-all cursor-pointer ml-0.5"
+                          className="size-5.5 rounded-full bg-nebula-surface hover:bg-[#7FA0D6] hover:text-white text-nebula-mist border border-nebula-steel flex items-center justify-center text-xs font-bold transition-all cursor-pointer ml-0.5"
                           title="Choose any WhatsApp emoji reaction"
                         >
                           +
@@ -879,7 +879,7 @@ export function SlackChatPage() {
           </div>
 
           {/* Message Input Bar */}
-          <div className="p-3 sm:p-4 border-t border-nebula-steel bg-nebula-surface relative">
+          <div className="p-3 sm:p-4 border-t border-nebula-steel bg-nebula-surface relative shrink-0 mt-auto">
             {/* FULL WHATSAPP EMOJI PICKER POPOVER */}
             {showEmojiPicker && (
               <div className="absolute bottom-16 right-2 sm:right-4 z-50 w-[92vw] max-w-sm sm:w-96 bg-nebula-surface border border-nebula-steel rounded-3xl p-3 sm:p-4 shadow-2xl animate-in fade-in slide-in-from-bottom-2">
@@ -911,7 +911,7 @@ export function SlackChatPage() {
                     value={emojiSearch}
                     onChange={(e) => setEmojiSearch(e.target.value)}
                     placeholder="Search 200+ emojis..."
-                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-nebula-navy border border-nebula-steel rounded-xl text-white focus:outline-none focus:border-nebula-glow"
+                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-nebula-navy border border-nebula-steel rounded-xl text-white focus:outline-none focus:border-[#7FA0D6]"
                   />
                   {emojiSearch && (
                     <button
@@ -933,7 +933,7 @@ export function SlackChatPage() {
                         onClick={() => setEmojiCategory(cat.id)}
                         className={`p-1.5 rounded-xl text-sm transition-all cursor-pointer ${
                           emojiCategory === cat.id
-                            ? "bg-nebula-glow text-white shadow-xs font-bold scale-110"
+                            ? "bg-[#7FA0D6] text-white shadow-xs font-bold scale-110"
                             : "hover:bg-slate-800 text-slate-400"
                         }`}
                         title={cat.name}
@@ -987,7 +987,7 @@ export function SlackChatPage() {
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   placeholder={`Message #${activeChannel}...`}
-                  className="w-full bg-nebula-navy border border-nebula-steel rounded-2xl pl-4 pr-32 py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-nebula-glow transition-colors"
+                  className="w-full bg-nebula-navy border border-nebula-steel rounded-2xl pl-4 pr-32 py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-[#7FA0D6] transition-colors"
                 />
                 <div className="absolute right-2 flex items-center gap-1">
                   <button
@@ -1009,7 +1009,7 @@ export function SlackChatPage() {
                   <button
                     type="submit"
                     disabled={!messageText.trim()}
-                    className="p-2 rounded-xl bg-nebula-glow hover:bg-blue-600 disabled:opacity-40 text-white transition cursor-pointer"
+                    className="p-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 disabled:opacity-40 text-white transition cursor-pointer"
                   >
                     <Send className="size-4" />
                   </button>
@@ -1042,7 +1042,7 @@ export function SlackChatPage() {
 
             <form onSubmit={handleConfirmAssignTask} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Task Title</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Task Title</label>
                 <input
                   type="text"
                   required
@@ -1055,7 +1055,7 @@ export function SlackChatPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Assignee</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Assignee</label>
                   <select
                     value={taskAssignee}
                     onChange={(e) => setTaskAssignee(e.target.value)}
@@ -1077,7 +1077,7 @@ export function SlackChatPage() {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Client Pod</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Client Pod</label>
                   <select
                     value={taskClient}
                     onChange={(e) => setTaskClient(e.target.value)}
@@ -1098,7 +1098,7 @@ export function SlackChatPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Priority Level</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Priority Level</label>
                   <select
                     value={taskPriority}
                     onChange={(e) => setTaskPriority(e.target.value as any)}
@@ -1111,7 +1111,7 @@ export function SlackChatPage() {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Delivery Deadline</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Delivery Deadline</label>
                   <input
                     type="text"
                     required
@@ -1123,7 +1123,7 @@ export function SlackChatPage() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Task Scope & Delivery Notes</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Task Scope & Delivery Notes</label>
                 <textarea
                   rows={3}
                   value={taskScope}
@@ -1137,13 +1137,13 @@ export function SlackChatPage() {
                 <button
                   type="button"
                   onClick={() => setAssignTaskModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 cursor-pointer"
                 >
                   Confirm & Post Task
                 </button>
@@ -1163,7 +1163,7 @@ export function SlackChatPage() {
             className="w-full max-w-md bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4 animate-scale-up text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="size-12 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center mx-auto font-black">
+            <div className="size-12 rounded-2xl bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center mx-auto font-black">
               <Video className="size-6" />
             </div>
             <div>
@@ -1177,7 +1177,7 @@ export function SlackChatPage() {
               <button
                 type="button"
                 onClick={() => setCallModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-xs text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-xs text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer"
               >
                 Cancel
               </button>
@@ -1187,7 +1187,7 @@ export function SlackChatPage() {
                   setCallModalOpen(false);
                   showToast(`Started video huddle in #${activeChannel}!`);
                 }}
-                className="px-5 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 cursor-pointer"
               >
                 Launch Huddle
               </button>

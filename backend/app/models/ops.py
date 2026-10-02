@@ -135,3 +135,42 @@ class Notification(Base, UUIDPrimaryKeyMixin):
     )
 
     __table_args__ = (Index("idx_notif_unread", "user_id", postgresql_where=(is_read.is_(False))),)
+
+
+class SampleRequest(Base, UUIDPrimaryKeyMixin):
+    __tablename__ = "sample_requests"
+
+    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    instagram_handle: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="pending", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class PlatformSetting(Base, UUIDPrimaryKeyMixin):
+    __tablename__ = "platform_settings"
+
+    key: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
+    value: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class EscalationState(Base, UUIDPrimaryKeyMixin):
+    __tablename__ = "escalation_states"
+
+    task_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tasks.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    level: Mapped[str] = mapped_column(String(50), default="breached", nullable=False)
+    resolved: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    details: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    breached_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+

@@ -34,7 +34,7 @@ async def list_plans(
         select(Plan)
         .where(
             Plan.is_active.is_(True),
-            Plan.name.in_(["starter", "growth", "pro"]),
+            Plan.name.in_(["starter", "growth", "scale"]),
         )
         .order_by(Plan.price_minor.asc())
     )
@@ -270,8 +270,8 @@ async def get_payment_history(
             "plan_id": str(sub.plan_id),
             "plan_name": plan.display_name,
             "amount": float(sub.amount) if sub.amount else float(plan.monthly_price),
-            "status": sub.status.value,
-            "gateway": sub.gateway.value,
+            "status": sub.status.value if hasattr(sub.status, "value") else str(sub.status),
+            "gateway": sub.gateway.value if hasattr(sub.gateway, "value") else str(sub.gateway),
             "gateway_subscription_id": sub.gateway_subscription_id,
             "gateway_customer_id": sub.gateway_customer_id,
             "current_period_start": sub.current_period_start.isoformat() if sub.current_period_start else None,

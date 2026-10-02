@@ -42,6 +42,9 @@ export const ClientsPage = lazyPage(() =>
 export const AboutPage = lazyPage(() =>
   import("../pages/public/AboutPage").then((m) => m.AboutPage),
 );
+export const FaqPage = lazyPage(() =>
+  import("../pages/public/FaqPage").then((m) => m.FaqPage),
+);
 export const TermsPage = lazyPage(() =>
   import("../pages/public/TermsPrivacyPages").then((m) => m.TermsPage),
 );

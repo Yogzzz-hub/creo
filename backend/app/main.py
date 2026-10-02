@@ -28,12 +28,14 @@ from app.routers import (
     auth,
     calendar,
     deliverables,
+    negotiations,
     notifications,
     onboarding,
     payments,
     plans,
     platform,
     portal_dashboard,
+    public,
     tasks,
     tenant,
     tickets,
@@ -74,6 +76,30 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 )
                 db.add(admin)
                 await db.commit()
+# Ensure plan_negotiations table exists
+            await db.execute(text("""
+                CREATE TABLE IF NOT EXISTS plan_negotiations (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    client_email VARCHAR(255) NOT NULL,
+                    client_name VARCHAR(255),
+                    proposed_budget VARCHAR(255),
+                    contact_phone VARCHAR(50) NOT NULL,
+                    preferred_window VARCHAR(100) NOT NULL,
+                    target_topic VARCHAR(255),
+                    notes TEXT,
+                    status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+                    agreed_amount INTEGER,
+                    razorpay_custom_plan_id VARCHAR(255),
+                    order_id VARCHAR(255),
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS idx_negotiations_client_id ON plan_negotiations(client_id);
+                CREATE INDEX IF NOT EXISTS idx_negotiations_status ON plan_negotiations(status);
+                CREATE INDEX IF NOT EXISTS idx_negotiations_created_at ON plan_negotiations(created_at);
+            """))
+            await db.commit()
 
     except Exception as e:
         logger.warning("admin_bootstrap_warning", error=str(e))
@@ -274,6 +300,10 @@ app.include_router(platform.router, prefix="/api/v1")
 app.include_router(tenant.router, prefix="/api/v1")
 app.include_router(notifications.router, prefix="/api/v1")
 app.include_router(chat.router, prefix="/api/v1")
+app.include_router(public.router, prefix="/api/v1")
+app.include_router(public.router)
+app.include_router(negotiations.router, prefix="/api/negotiations")
+app.include_router(negotiations.router, prefix="/api/v1/negotiations")
 
 
 import os

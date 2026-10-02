@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams, Navigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { fetchClientRoster, fetchPlanNegotiations, updatePlanNegotiation, createPlanNegotiation, fetchPodDashboard } from "../../lib/ops-api";
+import { fetchClientRoster, fetchPlanNegotiations, updatePlanNegotiation, createPlanNegotiation, fetchPodDashboard, fetchLeaveRequests, approveLeaveRequest, rejectLeaveRequest, fetchAdminQueue } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem } from "../../lib/ops-api";
 import type { ClientRosterItem } from "../../types/ops";
 import {
@@ -192,8 +192,8 @@ export function AdminClientsPage() {
       industry: "DTC Wellness & Functional Health",
       timezone: "Client Time: IST (UTC+5:30)",
       activeSince: "Active since Jan 2024",
-      tier: "Starter Retainer",
-      tierBadge: "STARTER",
+      tier: "Starter Growth Retainer",
+      tierBadge: "STARTER GROWTH",
       status: "ACTIVE RETAINER",
       monthlyFee: 25000,
       addon: "Add-on: Creative Pod C",
@@ -226,10 +226,10 @@ export function AdminClientsPage() {
           "Energetic, holistic wellness with clean organic minimalism and modern typography. Punchy video hooks and high-contrast benefit callouts.",
         toneTags: ["Vitality", "High Energy", "Clean Aesthetics"],
         colors: [
-          { name: "Matcha Slate", hex: "var(--color-nebula-glow)" },
-          { name: "Cream Ivory", hex: "var(--color-nebula-surface)", isLight: true },
-          { name: "Core Charcoal", hex: "var(--color-nebula-navy)" },
-          { name: "Glow Amber", hex: "var(--color-nebula-sand)" },
+          { name: "Matcha Slate", hex: "#7FA0D6" },
+          { name: "Cream Ivory", hex: "#161F2D", isLight: true },
+          { name: "Core Charcoal", hex: "#0B111C" },
+          { name: "Glow Amber", hex: "#D8BF9B" },
         ],
         social: {
           handle: "@ryzesocial",
@@ -298,10 +298,10 @@ export function AdminClientsPage() {
           "Authoritative, technically rigorous cloud software communication. Architectural clarity, latency reduction metrics, and developer-first storytelling.",
         toneTags: ["High Trust", "Developer First", "Algorithmic Speed"],
         colors: [
-          { name: "Deep Obsidian", hex: "var(--color-nebula-navy)" },
-          { name: "Electric Azure", hex: "var(--color-nebula-glow)" },
-          { name: "Terminal Cyan", hex: "var(--color-nebula-glow)" },
-          { name: "Clean Slate", hex: "var(--color-slate-50)", isLight: true },
+          { name: "Deep Obsidian", hex: "#0B111C" },
+          { name: "Electric Azure", hex: "#7FA0D6" },
+          { name: "Terminal Cyan", hex: "#7FA0D6" },
+          { name: "Clean Slate", hex: "#F8FAFC", isLight: true },
         ],
         social: {
           handle: "@aravindan_dev",
@@ -336,19 +336,19 @@ export function AdminClientsPage() {
       industry: "Omnichannel E-Commerce & Retail Tech",
       timezone: "Client Time: IST (UTC+5:30)",
       activeSince: "Active since Feb 2024",
-      tier: "Growth Retainer",
-      tierBadge: "GROWTH",
+      tier: "Brand Accelerator Retainer",
+      tierBadge: "BRAND ACCELERATOR",
       status: "ACTIVE RETAINER",
       monthlyFee: 50000,
       addon: "Add-on: TikTok Growth Pod",
       nextBilling: "Oct 8, 2026",
       billingMethod: "Stripe Corporate ACH",
       totalAssetsDelivered: 0,
-      totalAssetsQuota: 48,
+      totalAssetsQuota: 43,
       postsDelivered: 0,
-      postsQuota: 18,
+      postsQuota: 15,
       reelsDelivered: 0,
-      reelsQuota: 10,
+      reelsQuota: 8,
       storiesDelivered: 0,
       storiesQuota: 20,
       sprintNumber: 44,
@@ -370,10 +370,10 @@ export function AdminClientsPage() {
           "High-conversion retail creative with dynamic pacing, kinetic typography, and bold product highlights designed for immediate customer engagement.",
         toneTags: ["Conversion First", "Punchy Edits", "High CTR"],
         colors: [
-          { name: "Vibrant Crimson", hex: "var(--color-nebula-sand)" },
-          { name: "Neon Rose", hex: "var(--color-nebula-sand)" },
+          { name: "Vibrant Crimson", hex: "#D8BF9B" },
+          { name: "Neon Rose", hex: "#D8BF9B" },
           { name: "Pure White", hex: "#FFFFFF", isLight: true },
-          { name: "Jet Slate", hex: "var(--color-nebula-navy)" },
+          { name: "Jet Slate", hex: "#0B111C" },
         ],
         social: {
           handle: "@shanmuga_growth",
@@ -408,19 +408,19 @@ export function AdminClientsPage() {
       industry: "Enterprise AI & Scaled Consumer Tech",
       timezone: "Client Time: IST (UTC+5:30)",
       activeSince: "Active since Nov 2023",
-      tier: "Scale Retainer",
-      tierBadge: "SCALE",
+      tier: "Enterprise Domination Retainer",
+      tierBadge: "ENTERPRISE DOMINATION",
       status: "ACTIVE RETAINER",
       monthlyFee: 95000,
       addon: "Add-on: 3D VFX Lead",
       nextBilling: "Oct 12, 2026",
       billingMethod: "Direct ACH Wire",
       totalAssetsDelivered: 0,
-      totalAssetsQuota: 96,
+      totalAssetsQuota: 86,
       postsDelivered: 0,
-      postsQuota: 36,
+      postsQuota: 30,
       reelsDelivered: 0,
-      reelsQuota: 20,
+      reelsQuota: 16,
       storiesDelivered: 0,
       storiesQuota: 40,
       sprintNumber: 44,
@@ -442,10 +442,10 @@ export function AdminClientsPage() {
           "Institutional prestige meets kinetic AI interfaces. Sophisticated 3D physics rendering with uncompromising geometric precision.",
         toneTags: ["Institutional", "3D Kinetic", "Global Scale"],
         colors: [
-          { name: "Galaxy Blue", hex: "var(--color-nebula-glow)" },
-          { name: "Cyan Flare", hex: "var(--color-nebula-glow)" },
-          { name: "Obsidian Core", hex: "var(--color-nebula-navy)" },
-          { name: "Pure Cloud", hex: "var(--color-slate-50)", isLight: true },
+          { name: "Galaxy Blue", hex: "#7FA0D6" },
+          { name: "Cyan Flare", hex: "#7FA0D6" },
+          { name: "Obsidian Core", hex: "#0B111C" },
+          { name: "Pure Cloud", hex: "#F8FAFC", isLight: true },
         ],
         social: {
           handle: "@luma_global",
@@ -480,21 +480,21 @@ export function AdminClientsPage() {
       industry: "Fintech & Algorithmic Infrastructure",
       timezone: "Client Time: IST (UTC+5:30)",
       activeSince: "Active since Jan 2024",
-      tier: "Growth Retainer",
-      tierBadge: "GROWTH",
+      tier: "Brand Accelerator Retainer",
+      tierBadge: "BRAND ACCELERATOR",
       status: "ACTIVE RETAINER",
       monthlyFee: 50000,
       addon: "Add-on: Motion Specialist",
       nextBilling: "Oct 15, 2026",
       billingMethod: "Stripe Corporate ACH",
       totalAssetsDelivered: 12,
-      totalAssetsQuota: 48,
+      totalAssetsQuota: 30,
       postsDelivered: 8,
-      postsQuota: 18,
+      postsQuota: 15,
       reelsDelivered: 2,
-      reelsQuota: 10,
+      reelsQuota: 5,
       storiesDelivered: 2,
-      storiesQuota: 20,
+      storiesQuota: 10,
       sprintNumber: 44,
       daysRemainingInSprint: 14,
       contact: {
@@ -513,10 +513,10 @@ export function AdminClientsPage() {
         toneSummary: "Institutional, enterprise fintech with sharp geometric clarity.",
         toneTags: ["Algorithmic", "High Trust", "Global Scope"],
         colors: [
-          { name: "Core Navy", hex: "var(--color-nebula-navy)" },
-          { name: "Accent Azure", hex: "var(--color-nebula-glow)" },
-          { name: "Cyan Highlight", hex: "var(--color-nebula-glow)" },
-          { name: "Clean Neutral", hex: "var(--color-slate-50)", isLight: true },
+          { name: "Core Navy", hex: "#0B111C" },
+          { name: "Accent Azure", hex: "#7FA0D6" },
+          { name: "Cyan Highlight", hex: "#7FA0D6" },
+          { name: "Clean Neutral", hex: "#F8FAFC", isLight: true },
         ],
         social: {
           handle: "@apexinnovations",
@@ -551,21 +551,21 @@ export function AdminClientsPage() {
       industry: "MedTech & Digital Health Platform",
       timezone: "Client Time: IST (UTC+5:30)",
       activeSince: "Active since Mar 2024",
-      tier: "Starter Retainer",
-      tierBadge: "STARTER",
+      tier: "Starter Growth Retainer",
+      tierBadge: "STARTER GROWTH",
       status: "ACTIVE RETAINER",
       monthlyFee: 25000,
       addon: "Add-on: Medical Illustrator",
       nextBilling: "Oct 18, 2026",
       billingMethod: "Stripe ACH Transfer",
       totalAssetsDelivered: 6,
-      totalAssetsQuota: 22,
+      totalAssetsQuota: 20,
       postsDelivered: 4,
-      postsQuota: 8,
+      postsQuota: 10,
       reelsDelivered: 1,
       reelsQuota: 4,
       storiesDelivered: 1,
-      storiesQuota: 10,
+      storiesQuota: 6,
       sprintNumber: 44,
       daysRemainingInSprint: 14,
       contact: {
@@ -584,10 +584,10 @@ export function AdminClientsPage() {
         toneSummary: "Empathetic, scientifically rigorous clinical communication with modern human-centric interfaces.",
         toneTags: ["Clinical Trust", "Modern Care", "Accessible"],
         colors: [
-          { name: "Care Emerald", hex: "var(--color-nebula-glow)" },
-          { name: "Teal Glow", hex: "var(--color-nebula-glow)" },
-          { name: "Soft Cyan", hex: "var(--color-nebula-surface)", isLight: true },
-          { name: "Deep Slate", hex: "var(--color-nebula-navy)" },
+          { name: "Care Emerald", hex: "#7FA0D6" },
+          { name: "Teal Glow", hex: "#7FA0D6" },
+          { name: "Soft Cyan", hex: "#161F2D", isLight: true },
+          { name: "Deep Slate", hex: "#0B111C" },
         ],
         social: {
           handle: "@nova_dynamics",
@@ -622,21 +622,21 @@ export function AdminClientsPage() {
       industry: "Clean Cosmetics & Luxury DTC",
       timezone: "Client Time: IST (UTC+5:30)",
       activeSince: "Active since Feb 2024",
-      tier: "Scale Retainer",
-      tierBadge: "SCALE",
+      tier: "Enterprise Domination Retainer",
+      tierBadge: "ENTERPRISE DOMINATION",
       status: "ACTIVE RETAINER",
       monthlyFee: 95000,
       addon: "Add-on: Senior Colorist",
       nextBilling: "Oct 22, 2026",
       billingMethod: "Direct Corporate ACH",
       totalAssetsDelivered: 14,
-      totalAssetsQuota: 96,
+      totalAssetsQuota: 60,
       postsDelivered: 8,
-      postsQuota: 36,
+      postsQuota: 25,
       reelsDelivered: 4,
-      reelsQuota: 20,
+      reelsQuota: 15,
       storiesDelivered: 2,
-      storiesQuota: 40,
+      storiesQuota: 20,
       sprintNumber: 44,
       daysRemainingInSprint: 14,
       contact: {
@@ -655,10 +655,10 @@ export function AdminClientsPage() {
         toneSummary: "Sensory, serene high-end beauty with warm editorial elegance and mindful self-care narratives.",
         toneTags: ["Mindful Luxe", "Botanical", "Warm Editorial"],
         colors: [
-          { name: "Blush Rose", hex: "var(--color-nebula-sand)" },
-          { name: "Petal Mist", hex: "var(--color-nebula-surface)", isLight: true },
-          { name: "Sage Earth", hex: "var(--color-nebula-glow)" },
-          { name: "Soft Ivory", hex: "var(--color-nebula-surface)", isLight: true },
+          { name: "Blush Rose", hex: "#D8BF9B" },
+          { name: "Petal Mist", hex: "#161F2D", isLight: true },
+          { name: "Sage Earth", hex: "#7FA0D6" },
+          { name: "Soft Ivory", hex: "#161F2D", isLight: true },
         ],
         social: {
           handle: "@solaris_beauty",
@@ -744,9 +744,9 @@ export function AdminClientsPage() {
 
     const monthlyFee = tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000;
     
-    const postsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.quota || (tier.includes("starter") ? 8 : tier.includes("growth") ? 18 : 36);
+    const postsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.quota || (tier.includes("starter") ? 8 : tier.includes("growth") ? 15 : 30);
     const postsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.used || 0;
-    const reelsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.quota || (tier.includes("starter") ? 4 : tier.includes("growth") ? 10 : 20);
+    const reelsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.quota || (tier.includes("starter") ? 4 : tier.includes("growth") ? 8 : 16);
     const reelsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.used || 0;
     const storiesQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.quota || (tier.includes("starter") ? 10 : tier.includes("growth") ? 20 : 40);
     const storiesDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.used || 0;
@@ -826,10 +826,10 @@ export function AdminClientsPage() {
           toneSummary: `Dynamic, high-impact social media creatives engineered for ${formattedName}. High-clarity typography with conversion-optimized video hooks.`,
           toneTags: ["High Conversion", "Brand Authority", "Visual Polish"],
           colors: [
-            { name: "Primary Deep Navy", hex: "var(--color-nebula-navy)" },
-            { name: "Accent Royal Blue", hex: "var(--color-nebula-glow)" },
-            { name: "Cyan Highlight", hex: "var(--color-nebula-glow)" },
-            { name: "Clean Neutral", hex: "var(--color-slate-50)", isLight: true },
+            { name: "Primary Deep Navy", hex: "#0B111C" },
+            { name: "Accent Royal Blue", hex: "#7FA0D6" },
+            { name: "Cyan Highlight", hex: "#7FA0D6" },
+            { name: "Clean Neutral", hex: "#F8FAFC", isLight: true },
           ],
           social: {
             handle: sc.instagram_username ? `@${sc.instagram_username}` : `@${emailParts[0] || "client"}`,
@@ -1015,7 +1015,7 @@ export function AdminClientsPage() {
                 <div
                   key={client.id}
                   onClick={() => setSelectedClientId(client.id)}
-                  className="bg-nebula-surface/80 backdrop-blur-xl rounded-3xl p-6 border border-nebula-steel/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-nebula-glow/40 transition-all cursor-pointer group flex flex-col justify-between"
+                  className="bg-nebula-surface/80 backdrop-blur-xl rounded-3xl p-6 border border-nebula-steel/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between"
                 >
                   <div className="space-y-4">
                     <div className="flex items-start justify-between">
@@ -1040,7 +1040,7 @@ export function AdminClientsPage() {
                       </span>
                     </div>
 
-                    <div className="p-3 bg-nebula-navy/80 rounded-2xl space-y-1.5 text-xs text-slate-100 border border-nebula-steel">
+                    <div className="p-3 bg-nebula-navy/80 rounded-2xl space-y-1.5 text-xs text-[#F1F5F9] border border-nebula-steel">
                       <div className="flex justify-between">
                         <span className="font-medium text-nebula-mist">Retainer:</span>
                         <span className="font-bold text-white">₹{client.monthlyFee.toLocaleString()}/mo</span>
@@ -1077,7 +1077,7 @@ export function AdminClientsPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedClientId(null)}
-                  className="hover:text-nebula-glow flex items-center gap-1 transition-colors cursor-pointer text-slate-100"
+                  className="hover:text-nebula-glow flex items-center gap-1 transition-colors cursor-pointer text-[#F1F5F9]"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back to Client Roster
                 </button>
@@ -1108,7 +1108,7 @@ export function AdminClientsPage() {
                         {activeClient?.name}
                       </h1>
                       <CheckCircle2 className="w-5 h-5 text-nebula-glow fill-blue-600 text-white" />
-                      <span className="px-2.5 py-0.5 rounded-full bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30 text-[10px] font-black uppercase tracking-wider">
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-nebula-glow border border-[#7FA0D6]/30 text-[10px] font-black uppercase tracking-wider">
                         {activeClient?.tierBadge}
                       </span>
                       <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
@@ -1140,28 +1140,28 @@ export function AdminClientsPage() {
                 <div className="flex items-center gap-2.5 shrink-0">
                   <Link
                     to={`/admin/clients/${activeClient?.id || "ryze"}/brand`}
-                    className="px-4 py-2.5 rounded-xl border border-nebula-glow/40 bg-nebula-glow/15 hover:bg-nebula-glow/25 text-xs font-bold text-nebula-glow flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-xs font-bold text-nebula-glow flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
                     <ExternalLink className="w-3.5 h-3.5 text-nebula-glow" /> Brand Brief & Profile
                   </Link>
                   <button
                     type="button"
                     onClick={() => setIsEditProfileOpen(true)}
-                    className="px-4 py-2.5 rounded-xl border border-nebula-steel bg-nebula-surface hover:bg-nebula-navy text-xs font-bold text-slate-100 flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel bg-nebula-surface hover:bg-nebula-navy text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
                     <Edit3 className="w-3.5 h-3.5 text-nebula-mist" /> Edit Profile
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsInvoiceModalOpen(true)}
-                    className="px-4 py-2.5 rounded-xl border border-nebula-steel bg-nebula-surface hover:bg-nebula-navy text-xs font-bold text-slate-100 flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel bg-nebula-surface hover:bg-nebula-navy text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
                     <FileText className="w-3.5 h-3.5 text-nebula-mist" /> Monthly Invoice
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsNewRequestOpen(true)}
-                    className="px-4 py-2.5 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
                   >
                     <Plus className="w-4 h-4 stroke-[3]" /> New Request
                   </button>
@@ -1185,7 +1185,7 @@ export function AdminClientsPage() {
                     <span className="text-[11px] font-extrabold text-nebula-mist uppercase tracking-wider">
                       PRIMARY CONTACT
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-nebula-surface text-slate-100 text-[10px] font-bold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-nebula-surface text-[#F1F5F9] text-[10px] font-bold">
                       Authorized Signer
                     </span>
                   </div>
@@ -1237,7 +1237,7 @@ export function AdminClientsPage() {
                     <span className="text-[11px] font-extrabold text-nebula-mist uppercase tracking-wider">
                       TIER TERMS & SCOPE
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-nebula-glow/15 text-nebula-glow text-[10px] font-bold border border-nebula-glow/30">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-nebula-glow text-[10px] font-bold border border-[#7FA0D6]/30">
                       Active Cycle
                     </span>
                   </div>
@@ -1262,7 +1262,7 @@ export function AdminClientsPage() {
                   {/* Monthly Output Burn bar */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-slate-100">Monthly Output Burn</span>
+                      <span className="text-[#F1F5F9]">Monthly Output Burn</span>
                       <span className="text-nebula-glow">
                         {activeClient?.totalAssetsDelivered} / {activeClient?.totalAssetsQuota} Assets Delivered (
                         {Math.round(((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100)}%)
@@ -1270,7 +1270,7 @@ export function AdminClientsPage() {
                     </div>
                     <div className="w-full bg-nebula-surface rounded-full h-2.5 overflow-hidden">
                       <div
-                        className="bg-nebula-glow h-full rounded-full transition-all"
+                        className="bg-[#7FA0D6] h-full rounded-full transition-all"
                         style={{
                           width: `${Math.min(
                             (((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100),
@@ -1325,7 +1325,7 @@ export function AdminClientsPage() {
                       Client Brand Ecosystem & Guidelines
                     </h2>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-nebula-surface text-slate-100 text-[10px] font-bold">
+                  <span className="px-2.5 py-0.5 rounded-full bg-nebula-surface text-[#F1F5F9] text-[10px] font-bold">
                     {activeClient?.brand.kitVersion}
                   </span>
                 </div>
@@ -1336,7 +1336,7 @@ export function AdminClientsPage() {
                     <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider block">
                       TYPOGRAPHY HIERARCHY
                     </span>
-                    <div className="space-y-1 text-slate-100">
+                    <div className="space-y-1 text-[#F1F5F9]">
                       <div className="flex justify-between">
                         <span className="text-nebula-mist">Headings:</span>
                         <span className="font-bold">{activeClient?.brand.headingsFont}</span>
@@ -1358,13 +1358,13 @@ export function AdminClientsPage() {
                       <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider block">
                         PERSONA & VOICE TONE
                       </span>
-                      <p className="text-[11px] text-slate-100 mt-1 leading-relaxed">
+                      <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed">
                         {activeClient?.brand.toneSummary}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {activeClient?.brand.toneTags.map((tag) => (
-                        <span key={tag} className="px-2 py-0.5 rounded-md bg-nebula-surface border border-nebula-steel text-[10px] font-bold text-slate-100 shadow-2xs">
+                        <span key={tag} className="px-2 py-0.5 rounded-md bg-nebula-surface border border-nebula-steel text-[10px] font-bold text-[#F1F5F9] shadow-2xs">
                           {tag}
                         </span>
                       ))}
@@ -1411,7 +1411,7 @@ export function AdminClientsPage() {
                   <button
                     type="button"
                     onClick={() => showToast(`Opening ${activeClient?.brand.social.handle} live analytics...`)}
-                    className="px-3 py-1.5 rounded-xl border border-nebula-steel bg-nebula-surface hover:bg-nebula-navy text-xs font-bold text-slate-100 shadow-2xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl border border-nebula-steel bg-nebula-surface hover:bg-nebula-navy text-xs font-bold text-[#F1F5F9] shadow-2xs cursor-pointer"
                   >
                     Launch Channel
                   </button>
@@ -1448,7 +1448,7 @@ export function AdminClientsPage() {
                         Assigned creative pod
                       </h2>
                     </div>
-                    <span className="px-2.5 py-0.5 rounded-full bg-nebula-glow/15 text-nebula-glow text-[10px] font-bold border border-nebula-glow/30">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-nebula-glow text-[10px] font-bold border border-[#7FA0D6]/30">
                       {activeClient?.pod.name}: {activeClient?.pod.tagline}
                     </span>
                   </div>
@@ -1471,7 +1471,7 @@ export function AdminClientsPage() {
                       <button
                         type="button"
                         onClick={() => showToast(`Connecting to ${activeClient?.pod.leadName} via Slack/Creo Chat...`)}
-                        className="p-2 rounded-xl bg-nebula-surface border border-nebula-steel text-slate-100 hover:text-nebula-glow shadow-2xs cursor-pointer"
+                        className="p-2 rounded-xl bg-nebula-surface border border-nebula-steel text-[#F1F5F9] hover:text-nebula-glow shadow-2xs cursor-pointer"
                         title="Chat with Pod Lead"
                       >
                         <MessageSquare className="w-4 h-4" />
@@ -1488,7 +1488,7 @@ export function AdminClientsPage() {
                       {activeClient?.pod.squad.map((member) => (
                         <div key={member.name} className="p-2.5 bg-nebula-navy/50 rounded-xl flex items-center justify-between text-xs border border-nebula-steel">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-gray-200 text-slate-100 font-bold text-[10px] flex items-center justify-center">
+                            <div className="w-7 h-7 rounded-full bg-gray-200 text-[#F1F5F9] font-bold text-[10px] flex items-center justify-center">
                               {member.avatar}
                             </div>
                             <div>
@@ -1496,7 +1496,7 @@ export function AdminClientsPage() {
                               <span className="text-[10px] text-nebula-mist">{member.role}</span>
                             </div>
                           </div>
-                          <span className="font-mono font-bold text-[11px] text-slate-100">{member.hoursPerWeek}h/wk</span>
+                          <span className="font-mono font-bold text-[11px] text-[#F1F5F9]">{member.hoursPerWeek}h/wk</span>
                         </div>
                       ))}
                     </div>
@@ -1505,14 +1505,14 @@ export function AdminClientsPage() {
                   {/* Pod Capacity Commitment */}
                   <div className="space-y-2 pt-1">
                     <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-slate-100">Pod Capacity Commitment</span>
+                      <span className="text-[#F1F5F9]">Pod Capacity Commitment</span>
                       <span className="text-nebula-glow font-mono">
                         {activeClient?.pod.capacityAllocatedHrs} hrs/week allocated
                       </span>
                     </div>
                     <div className="w-full bg-nebula-surface rounded-full h-2 overflow-hidden">
                       <div
-                        className="bg-nebula-glow h-full rounded-full transition-all"
+                        className="bg-[#7FA0D6] h-full rounded-full transition-all"
                         style={{ width: `${activeClient?.pod.bandwidthPercent}%` }}
                       />
                     </div>
@@ -1543,7 +1543,7 @@ export function AdminClientsPage() {
                 <div>
                   <div className="flex items-center gap-2.5">
                     <h2 className="text-base font-black text-white">Active Deliverables in Production</h2>
-                    <span className="px-2.5 py-0.5 rounded-full bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30 text-[10px] font-black uppercase">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-nebula-glow border border-[#7FA0D6]/30 text-[10px] font-black uppercase">
                       {filteredDeliverables.length} Items Requiring Attention
                     </span>
                   </div>
@@ -1566,7 +1566,7 @@ export function AdminClientsPage() {
                   </div>
                   <button
                     type="button"
-                    className="px-3 py-1.5 rounded-xl border border-nebula-steel bg-nebula-surface hover:bg-nebula-navy text-xs font-bold text-slate-100 flex items-center gap-1 shadow-2xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl border border-nebula-steel bg-nebula-surface hover:bg-nebula-navy text-xs font-bold text-[#F1F5F9] flex items-center gap-1 shadow-2xs cursor-pointer"
                   >
                     <Filter className="w-3.5 h-3.5 text-nebula-mist" /> Filter
                   </button>
@@ -1585,7 +1585,7 @@ export function AdminClientsPage() {
                   {filteredDeliverables.map((deliv) => (
                   <div
                     key={deliv.id}
-                    className="bg-nebula-surface rounded-3xl border border-nebula-steel shadow-[0_2px_15px_rgba(0,0,0,0.03)] p-5 space-y-4 flex flex-col justify-between hover:shadow-lg hover:border-nebula-glow/30 transition-all"
+                    className="bg-nebula-surface rounded-3xl border border-nebula-steel shadow-[0_2px_15px_rgba(0,0,0,0.03)] p-5 space-y-4 flex flex-col justify-between hover:shadow-lg hover:border-[#7FA0D6]/30 transition-all"
                   >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
@@ -1602,7 +1602,7 @@ export function AdminClientsPage() {
                         </p>
                       </div>
 
-                      <div className="p-3 bg-nebula-navy/70 rounded-2xl space-y-1.5 text-[11px] text-slate-100 border border-nebula-steel">
+                      <div className="p-3 bg-nebula-navy/70 rounded-2xl space-y-1.5 text-[11px] text-[#F1F5F9] border border-nebula-steel">
                         <div className="flex justify-between">
                           <span className="text-nebula-mist">Format:</span>
                           <span className="font-bold text-white">{deliv.format}</span>
@@ -1632,7 +1632,7 @@ export function AdminClientsPage() {
                           <button
                             type="button"
                             onClick={() => handleDeclineDeliverable(deliv.id, deliv.title)}
-                            className="w-full py-2 rounded-xl border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                            className="w-full py-2 rounded-xl border border-nebula-steel hover:bg-nebula-navy text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
                           >
                             <X className="w-3.5 h-3.5" /> Decline
                           </button>
@@ -1644,14 +1644,14 @@ export function AdminClientsPage() {
                           <button
                             type="button"
                             onClick={() => setPreviewDeliverable(deliv)}
-                            className="w-full py-2 rounded-xl bg-nebula-glow/15 hover:bg-nebula-glow/20 text-nebula-glow text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                            className="w-full py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-nebula-glow text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
                           >
                             <Eye className="w-3.5 h-3.5" /> Preview Canvas
                           </button>
                           <button
                             type="button"
                             onClick={() => showToast(`Revision request sent for "${deliv.title}".`)}
-                            className="w-full py-2 rounded-xl border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-xs font-bold cursor-pointer transition-colors"
+                            className="w-full py-2 rounded-xl border border-nebula-steel hover:bg-nebula-navy text-[#F1F5F9] text-xs font-bold cursor-pointer transition-colors"
                           >
                             Request Revisions
                           </button>
@@ -1689,7 +1689,7 @@ export function AdminClientsPage() {
                             <button
                               type="button"
                               onClick={() => showToast(`Feedback notes opened for "${deliv.title}".`)}
-                              className="w-full py-2 rounded-xl border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                              className="w-full py-2 rounded-xl border border-nebula-steel hover:bg-nebula-navy text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
                             >
                               <Edit3 className="w-3.5 h-3.5" /> Notes
                             </button>
@@ -1732,11 +1732,11 @@ export function AdminClientsPage() {
             <div className="bg-nebula-surface rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-nebula-steel">
               <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <h3 className="text-base font-black text-white">Edit Client Profile: {activeClient?.name}</h3>
-                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg">
+                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="p-1 text-nebula-mist hover:text-[#F1F5F9] rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="space-y-3 text-xs text-slate-100">
+              <div className="space-y-3 text-xs text-[#F1F5F9]">
                 <div>
                   <label className="block font-bold mb-1">Company / Brand Name</label>
                   <input type="text" defaultValue={activeClient?.name} className="w-full px-3 py-2 rounded-xl border border-nebula-steel" />
@@ -1757,7 +1757,7 @@ export function AdminClientsPage() {
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
-                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="px-4 py-2 rounded-xl border text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer">
+                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="px-4 py-2 rounded-xl border text-xs font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer">
                   Cancel
                 </button>
                 <button
@@ -1781,11 +1781,11 @@ export function AdminClientsPage() {
             <div className="bg-nebula-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-nebula-steel">
               <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <h3 className="text-base font-black text-white">Current Retainer Invoice</h3>
-                <button type="button" onClick={() => setIsInvoiceModalOpen(false)} className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg">
+                <button type="button" onClick={() => setIsInvoiceModalOpen(false)} className="p-1 text-nebula-mist hover:text-[#F1F5F9] rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="p-4 bg-nebula-navy rounded-2xl space-y-2 text-xs text-slate-100 border border-nebula-steel">
+              <div className="p-4 bg-nebula-navy rounded-2xl space-y-2 text-xs text-[#F1F5F9] border border-nebula-steel">
                 <div className="flex justify-between">
                   <span className="text-nebula-mist">Invoice ID:</span>
                   <span className="font-mono font-bold text-white">INV-2024-NL-11</span>
@@ -1832,14 +1832,14 @@ export function AdminClientsPage() {
                   <h3 className="text-base font-black text-white">New Content Request</h3>
                   <p className="text-xs text-nebula-mist">Submitting to {activeClient?.pod.name} for {activeClient?.name}</p>
                 </div>
-                <button type="button" onClick={() => setIsNewRequestOpen(false)} className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg">
+                <button type="button" onClick={() => setIsNewRequestOpen(false)} className="p-1 text-nebula-mist hover:text-[#F1F5F9] rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <form onSubmit={handleCreateRequest} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-slate-100 mb-1">Asset Title</label>
+                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Asset Title</label>
                   <input
                     type="text"
                     required
@@ -1852,7 +1852,7 @@ export function AdminClientsPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Deliverable Type</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Type</label>
                     <select
                       value={newRequestForm.type}
                       onChange={(e) => setNewRequestForm({ ...newRequestForm, type: e.target.value })}
@@ -1865,7 +1865,7 @@ export function AdminClientsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Priority</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority</label>
                     <select
                       value={newRequestForm.priority}
                       onChange={(e) => setNewRequestForm({ ...newRequestForm, priority: e.target.value })}
@@ -1879,7 +1879,7 @@ export function AdminClientsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-100 mb-1">Creative Brief Notes</label>
+                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Creative Brief Notes</label>
                   <textarea
                     rows={3}
                     placeholder="Specify key talking points, hooks, or assets to reference..."
@@ -1893,7 +1893,7 @@ export function AdminClientsPage() {
                   <button
                     type="button"
                     onClick={() => setIsNewRequestOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1918,7 +1918,7 @@ export function AdminClientsPage() {
                   <span className="text-[10px] font-mono text-nebula-mist font-bold">{previewDeliverable.code}</span>
                   <h3 className="text-base font-black text-white">{previewDeliverable.title}</h3>
                 </div>
-                <button type="button" onClick={() => setPreviewDeliverable(null)} className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg">
+                <button type="button" onClick={() => setPreviewDeliverable(null)} className="p-1 text-nebula-mist hover:text-[#F1F5F9] rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -1931,7 +1931,7 @@ export function AdminClientsPage() {
                 <span className="text-[10px] text-nebula-mist mt-0.5">Assigned Specialist: {previewDeliverable.assignedTo}</span>
               </div>
 
-              <div className="p-3.5 bg-nebula-navy rounded-2xl text-xs text-slate-100 space-y-1">
+              <div className="p-3.5 bg-nebula-navy rounded-2xl text-xs text-[#F1F5F9] space-y-1">
                 <div><strong>Creative Scope:</strong> {previewDeliverable.description}</div>
                 <div><strong>Target Delivery:</strong> {previewDeliverable.dueDate}</div>
               </div>
@@ -1940,7 +1940,7 @@ export function AdminClientsPage() {
                 <button
                   type="button"
                   onClick={() => setPreviewDeliverable(null)}
-                  className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer"
                 >
                   Close Preview
                 </button>
@@ -1968,12 +1968,12 @@ export function AdminClientsPage() {
                   <Trash2 className="w-5 h-5 text-rose-500" />
                   <h3 className="text-base font-black text-white">Cancel Plan & Remove Client</h3>
                 </div>
-                <button type="button" onClick={() => setIsCancelClientModalOpen(false)} className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg">
+                <button type="button" onClick={() => setIsCancelClientModalOpen(false)} className="p-1 text-nebula-mist hover:text-[#F1F5F9] rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="space-y-3 text-xs text-slate-100">
+              <div className="space-y-3 text-xs text-[#F1F5F9]">
                 <p className="text-nebula-mist leading-relaxed">
                   Are you sure you want to cancel the retainer plan for <strong className="text-white">{activeClient?.name}</strong>?
                 </p>
@@ -1987,7 +1987,7 @@ export function AdminClientsPage() {
                 <button
                   type="button"
                   onClick={() => setIsCancelClientModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer"
                 >
                   Keep Active
                 </button>
@@ -2019,7 +2019,7 @@ export function AdminClientsPage() {
                   <Plus className="w-5 h-5 text-nebula-glow" />
                   <h3 className="text-base font-black text-white">Onboard New Creative Pod</h3>
                 </div>
-                <button type="button" onClick={() => setIsOnboardPodModalOpen(false)} className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg">
+                <button type="button" onClick={() => setIsOnboardPodModalOpen(false)} className="p-1 text-nebula-mist hover:text-[#F1F5F9] rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -2036,7 +2036,7 @@ export function AdminClientsPage() {
                 className="space-y-3.5 text-xs"
               >
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Pod Designation / Name</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Pod Designation / Name</label>
                   <input
                     type="text"
                     required
@@ -2048,7 +2048,7 @@ export function AdminClientsPage() {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Pod Lead Name</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Pod Lead Name</label>
                   <input
                     type="text"
                     required
@@ -2063,7 +2063,7 @@ export function AdminClientsPage() {
                   <button
                     type="button"
                     onClick={() => setIsOnboardPodModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -2088,14 +2088,14 @@ export function AdminClientsPage() {
                   <Trash2 className="w-5 h-5 text-rose-500" />
                   <h3 className="text-base font-black text-white">Decommission / Remove Pod</h3>
                 </div>
-                <button type="button" onClick={() => setIsRemovePodModalOpen(false)} className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg">
+                <button type="button" onClick={() => setIsRemovePodModalOpen(false)} className="p-1 text-nebula-mist hover:text-[#F1F5F9] rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="space-y-3.5 text-xs">
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Select Pod to Remove</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Select Pod to Remove</label>
                   <select
                     value={podToRemoveInput}
                     onChange={(e) => setPodToRemoveInput(e.target.value)}
@@ -2115,7 +2115,7 @@ export function AdminClientsPage() {
                   <button
                     type="button"
                     onClick={() => setIsRemovePodModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -2296,12 +2296,12 @@ export function AdminDeliverablesPage() {
 
         {/* 4 KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="kpi-card bg-nebula-surface rounded-3xl p-5 border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-nebula-surface rounded-3xl p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">
                 MOVED TO PRODUCTION
               </span>
-              <div className="w-7 h-7 rounded-xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-bold">
+              <div className="w-7 h-7 rounded-xl bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center font-bold">
                 <Zap className="w-3.5 h-3.5" />
               </div>
             </div>
@@ -2311,7 +2311,7 @@ export function AdminDeliverablesPage() {
             </div>
           </div>
 
-          <div className="kpi-card bg-nebula-surface rounded-3xl p-5 border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-nebula-surface rounded-3xl p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">
                 PENDING REVIEW
@@ -2326,7 +2326,7 @@ export function AdminDeliverablesPage() {
             </div>
           </div>
 
-          <div className="kpi-card bg-nebula-surface rounded-3xl p-5 border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-nebula-surface rounded-3xl p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">
                 APPROVED TODAY
@@ -2341,7 +2341,7 @@ export function AdminDeliverablesPage() {
             </div>
           </div>
 
-          <div className="kpi-card bg-nebula-surface rounded-3xl p-5 border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-nebula-surface rounded-3xl p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">
                 DECLINED / REVISE
@@ -2422,7 +2422,7 @@ export function AdminDeliverablesPage() {
         {/* 3-Column Deliverables Grid or Empty State */}
         {filteredDeliverables.length === 0 ? (
           <div className="bg-nebula-surface rounded-3xl border border-nebula-steel p-12 text-center text-nebula-mist space-y-3">
-            <Layers className="w-10 h-10 text-nebula-steel mx-auto" />
+            <Layers className="w-10 h-10 text-[#2A3446] mx-auto" />
             <h3 className="text-base font-bold text-white">No deliverables in queue</h3>
             <p className="text-xs text-nebula-mist max-w-sm mx-auto">
               Creative pod sprints will automatically submit finished reels, brand assets, and creative packages here for admin review.
@@ -2495,7 +2495,7 @@ export function AdminDeliverablesPage() {
                     <span className="font-bold text-nebula-mist text-[10px] uppercase">
                       Pod:
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-nebula-glow/15 text-nebula-glow text-[11px] font-black">
+                    <span className="px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-nebula-glow text-[11px] font-black">
                       {item.pod} ({item.podLead})
                     </span>
                   </div>
@@ -2531,7 +2531,7 @@ export function AdminDeliverablesPage() {
                   <button
                     type="button"
                     onClick={() => handleDecline(item.id, item.title)}
-                    className="flex-1 py-2.5 bg-nebula-surface hover:bg-rose-50 text-slate-100 hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="flex-1 py-2.5 bg-nebula-surface hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5 stroke-[2.5]" /> Request Edit
                   </button>
@@ -2549,7 +2549,7 @@ export function AdminDeliverablesPage() {
               <div className="flex items-start justify-between border-b border-nebula-steel pb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="px-2.5 py-0.5 rounded-full bg-nebula-glow/15 text-nebula-glow text-[10px] font-black uppercase">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-nebula-glow text-[10px] font-black uppercase">
                       {previewItem.assetCode}
                     </span>
                     <span className="text-xs font-bold text-nebula-mist">
@@ -2577,7 +2577,7 @@ export function AdminDeliverablesPage() {
 
               <div className="p-4 bg-nebula-navy rounded-2xl space-y-2 text-xs">
                 <div className="font-bold text-white">Deliverable Blueprint:</div>
-                <p className="text-slate-100 leading-relaxed">{previewItem.description}</p>
+                <p className="text-[#F1F5F9] leading-relaxed">{previewItem.description}</p>
                 <div className="flex flex-wrap gap-4 pt-2 text-[11px] text-nebula-mist border-t border-nebula-steel">
                   <span><strong>Format:</strong> {previewItem.format}</span>
                   <span><strong>Pod:</strong> {previewItem.pod} ({previewItem.podLead})</span>
@@ -2592,7 +2592,7 @@ export function AdminDeliverablesPage() {
                     handleDecline(previewItem.id, previewItem.title);
                     setPreviewItem(null);
                   }}
-                  className="px-4 py-2 rounded-xl bg-nebula-surface hover:bg-rose-50 text-slate-100 hover:text-rose-600 text-xs font-bold cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-nebula-surface hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 text-xs font-bold cursor-pointer"
                 >
                   Request Revision
                 </button>
@@ -2625,7 +2625,7 @@ export function AdminDeliverablesPage() {
                 <button
                   type="button"
                   onClick={() => setCommentModalItem(null)}
-                  className="p-1 rounded-lg text-nebula-mist hover:text-slate-100 cursor-pointer"
+                  className="p-1 rounded-lg text-nebula-mist hover:text-[#F1F5F9] cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2637,16 +2637,16 @@ export function AdminDeliverablesPage() {
                     <span>David K. (Client Lead)</span>
                     <span>Today 10:45 AM</span>
                   </div>
-                  <p className="text-xs text-slate-100 leading-relaxed font-medium">
+                  <p className="text-xs text-[#F1F5F9] leading-relaxed font-medium">
                     "Typography and layout look crisp. Please ensure the hex code for brand teal matches #7FA0D6."
                   </p>
                 </div>
-                <div className="p-3 bg-nebula-glow/15/50 rounded-2xl border border-nebula-glow/30 space-y-1">
+                <div className="p-3 bg-[#7FA0D6]/15/50 rounded-2xl border border-[#7FA0D6]/30 space-y-1">
                   <div className="flex items-center justify-between text-[10px] font-bold text-nebula-glow">
                     <span>Elena Rostova (Pod A)</span>
                     <span>Today 2:15 PM</span>
                   </div>
-                  <p className="text-xs text-slate-100 leading-relaxed font-medium">
+                  <p className="text-xs text-[#F1F5F9] leading-relaxed font-medium">
                     "Updated slide shaders and color profiles. Ready for final review."
                   </p>
                 </div>
@@ -2702,14 +2702,14 @@ export function AdminTasksPage() {
       id: `task-${Date.now()}`,
       column: newTaskForm.column,
       client: newTaskForm.client,
-      clientPill: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
+      clientPill: "bg-[#7FA0D6]/15 text-nebula-glow border-[#7FA0D6]/30",
       priority: newTaskForm.priority,
       priorityPill:
         newTaskForm.priority === "Urgent"
           ? "bg-rose-600 text-white font-black"
           : newTaskForm.priority === "High"
           ? "bg-rose-50 text-rose-600 border-rose-100"
-          : "bg-nebula-surface text-slate-100 border-nebula-steel",
+          : "bg-nebula-surface text-[#F1F5F9] border-nebula-steel",
       title: newTaskForm.title.trim(),
       type: newTaskForm.category,
       avatar: newTaskForm.assignee
@@ -2774,8 +2774,8 @@ export function AdminTasksPage() {
         {/* Header Title and Search Filter Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30">
-              <span className="w-2 h-2 rounded-full bg-nebula-glow animate-pulse" />
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#7FA0D6]/15 text-nebula-glow border border-[#7FA0D6]/30">
+              <span className="w-2 h-2 rounded-full bg-[#7FA0D6] animate-pulse" />
               Live Sync
             </span>
           </div>
@@ -2817,7 +2817,7 @@ export function AdminTasksPage() {
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
             >
               <Plus className="w-4 h-4 stroke-[3]" /> Create Task
             </button>
@@ -2835,7 +2835,7 @@ export function AdminTasksPage() {
                   TO DO
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-nebula-surface text-slate-100 text-[11px] font-bold border border-nebula-steel shadow-2xs">
+              <span className="px-2 py-0.5 rounded-full bg-nebula-surface text-[#F1F5F9] text-[11px] font-bold border border-nebula-steel shadow-2xs">
                 {todoTasks.length}
               </span>
             </div>
@@ -2866,7 +2866,7 @@ export function AdminTasksPage() {
                       <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-slate-100">{task.assigneeName}</span>
+                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
                     </div>
                     <span className="font-bold text-nebula-glow font-mono">{task.sp} SP</span>
                   </div>
@@ -2879,7 +2879,7 @@ export function AdminTasksPage() {
           <div className="bg-nebula-surface/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-nebula-steel/60">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-nebula-glow/150 animate-pulse" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]/150 animate-pulse" />
                 <h3 className="text-xs font-black text-white tracking-wider uppercase">
                   IN PROGRESS
                 </h3>
@@ -2915,7 +2915,7 @@ export function AdminTasksPage() {
                       <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-slate-100">{task.assigneeName}</span>
+                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
                     </div>
                     <span className="font-bold text-rose-600">{task.due}</span>
                   </div>
@@ -2959,7 +2959,7 @@ export function AdminTasksPage() {
                       <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-slate-100">{task.assigneeName}</span>
+                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
                     </div>
                     <span className="font-bold text-amber-600">{task.pod}</span>
                   </div>
@@ -3008,7 +3008,7 @@ export function AdminTasksPage() {
                       <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-slate-100">{task.assigneeName}</span>
+                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
                     </div>
                     <span className="font-bold text-emerald-600 font-mono">Completed</span>
                   </div>
@@ -3027,7 +3027,7 @@ export function AdminTasksPage() {
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="p-1 rounded-lg text-nebula-mist hover:text-slate-100 cursor-pointer"
+                  className="p-1 rounded-lg text-nebula-mist hover:text-[#F1F5F9] cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -3035,7 +3035,7 @@ export function AdminTasksPage() {
 
               <form onSubmit={handleCreateTask} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-100 mb-1">Task Title</label>
+                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Task Title</label>
                   <input
                     type="text"
                     required
@@ -3048,7 +3048,7 @@ export function AdminTasksPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Client Brand</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Client Brand</label>
                     <select
                       value={newTaskForm.client}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, client: e.target.value })}
@@ -3058,7 +3058,7 @@ export function AdminTasksPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Creative Pod</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Creative Pod</label>
                     <select
                       value={newTaskForm.pod}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, pod: e.target.value })}
@@ -3073,7 +3073,7 @@ export function AdminTasksPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Priority</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority</label>
                     <select
                       value={newTaskForm.priority}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, priority: e.target.value })}
@@ -3085,7 +3085,7 @@ export function AdminTasksPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Story Points</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Story Points</label>
                     <input
                       type="number"
                       min="1"
@@ -3101,7 +3101,7 @@ export function AdminTasksPage() {
                   <button
                     type="button"
                     onClick={() => setIsCreateModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -3131,13 +3131,13 @@ export function AdminTasksPage() {
                 <button
                   type="button"
                   onClick={() => setPreviewTask(null)}
-                  className="p-1 rounded-lg text-nebula-mist hover:text-slate-100 cursor-pointer"
+                  className="p-1 rounded-lg text-nebula-mist hover:text-[#F1F5F9] cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="space-y-2.5 text-xs text-slate-100">
+              <div className="space-y-2.5 text-xs text-[#F1F5F9]">
                 <div className="p-3 bg-nebula-navy rounded-2xl space-y-1">
                   <div><strong>Client:</strong> {previewTask.client}</div>
                   <div><strong>Assignee:</strong> {previewTask.assigneeName}</div>
@@ -3307,7 +3307,7 @@ export function AdminCalendarPage() {
         avatar: "MV",
         avatarBg: "bg-indigo-600",
         tag: "Scheduled",
-        tagColor: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
+        tagColor: "bg-[#7FA0D6]/15 text-nebula-glow border-[#7FA0D6]/30",
         time: "5:00 PM",
       },
     ],
@@ -3363,7 +3363,7 @@ export function AdminCalendarPage() {
         avatar: "CT",
         avatarBg: "bg-teal-600",
         tag: "Drafting",
-        tagColor: "bg-nebula-surface text-slate-100 border-nebula-steel",
+        tagColor: "bg-nebula-surface text-[#F1F5F9] border-nebula-steel",
         time: "2:00 PM",
       },
     ],
@@ -3431,13 +3431,13 @@ export function AdminCalendarPage() {
   const getTypeBadge = (type: string) => {
     switch (type) {
       case "Reel":
-        return { label: "🎬 Reel", bg: "bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30" };
+        return { label: "🎬 Reel", bg: "bg-[#7FA0D6]/15 text-nebula-glow border border-[#7FA0D6]/30" };
       case "Story":
         return { label: "📲 Story", bg: "bg-rose-500/15 text-rose-400 border border-rose-500/30" };
       case "Post":
         return { label: "📄 Post", bg: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" };
       default:
-        return { label: `📌 ${type}`, bg: "bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30" };
+        return { label: `📌 ${type}`, bg: "bg-[#7FA0D6]/15 text-nebula-glow border border-[#7FA0D6]/30" };
     }
   };
 
@@ -3466,7 +3466,7 @@ export function AdminCalendarPage() {
       avatar: "ST",
       avatarBg: "bg-blue-600",
       tag: scheduleForm.tag,
-      tagColor: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
+      tagColor: "bg-[#7FA0D6]/15 text-nebula-glow border-[#7FA0D6]/30",
       time: scheduleForm.time || "4:00 PM",
     };
 
@@ -3511,7 +3511,7 @@ export function AdminCalendarPage() {
                 type="button"
                 onClick={() => setSelectedDayNumber((prev) => Math.max(1, prev - 1))}
                 aria-label="Previous Day"
-                className="p-0.5 text-nebula-mist hover:text-slate-100 cursor-pointer rounded"
+                className="p-0.5 text-nebula-mist hover:text-[#F1F5F9] cursor-pointer rounded"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -3523,7 +3523,7 @@ export function AdminCalendarPage() {
                 type="button"
                 onClick={() => setSelectedDayNumber((prev) => Math.min(30, prev + 1))}
                 aria-label="Next Day"
-                className="p-0.5 text-nebula-mist hover:text-slate-100 cursor-pointer rounded"
+                className="p-0.5 text-nebula-mist hover:text-[#F1F5F9] cursor-pointer rounded"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -3532,7 +3532,7 @@ export function AdminCalendarPage() {
               <button
                 type="button"
                 onClick={() => setSelectedDayNumber(14)}
-                className="text-xs font-bold text-nebula-glow hover:text-blue-800 bg-nebula-glow/15 px-2.5 py-1 rounded-lg border border-nebula-glow/30 cursor-pointer transition-colors"
+                className="text-xs font-bold text-nebula-glow hover:text-blue-800 bg-[#7FA0D6]/15 px-2.5 py-1 rounded-lg border border-[#7FA0D6]/30 cursor-pointer transition-colors"
               >
                 Jump to Today (14th)
               </button>
@@ -3541,7 +3541,7 @@ export function AdminCalendarPage() {
 
           <div className="flex flex-wrap items-center gap-3">
             {isTeamLead ? (
-              <div className="px-3 py-2 rounded-xl border border-nebula-glow/30 bg-nebula-glow/15/70 text-xs font-bold text-nebula-glow shadow-2xs">
+              <div className="px-3 py-2 rounded-xl border border-[#7FA0D6]/30 bg-[#7FA0D6]/15/70 text-xs font-bold text-nebula-glow shadow-2xs">
                 Pod A Schedule
               </div>
             ) : (
@@ -3586,7 +3586,7 @@ export function AdminCalendarPage() {
             <button
               type="button"
               onClick={() => handleOpenScheduleForDay(selectedDayNumber)}
-              className="px-4 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
             >
               <Plus className="w-4 h-4 stroke-[3]" /> Schedule Asset
             </button>
@@ -3608,7 +3608,7 @@ export function AdminCalendarPage() {
                 <span className="text-[11px] font-medium text-nebula-mist hidden sm:inline">
                   Click any date to view scheduled work
                 </span>
-                <span className="text-xs font-bold text-nebula-glow bg-nebula-glow/15 px-3 py-1 rounded-full">
+                <span className="text-xs font-bold text-nebula-glow bg-[#7FA0D6]/15 px-3 py-1 rounded-full">
                   14th Today
                 </span>
               </div>
@@ -3639,20 +3639,20 @@ export function AdminCalendarPage() {
                     onClick={() => setSelectedDayNumber(dayNum)}
                     className={`min-h-[92px] p-2 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer group relative ${
                       isSelected
-                        ? "bg-nebula-glow/15/90 border-blue-500 ring-2 ring-blue-600/30 shadow-md scale-[1.02] z-10"
+                        ? "bg-[#7FA0D6]/15/90 border-blue-500 ring-2 ring-blue-600/30 shadow-md scale-[1.02] z-10"
                         : isToday
-                        ? "bg-nebula-glow/15/40 border-nebula-glow/30 hover:border-blue-300"
-                        : "bg-nebula-navy/40 border-nebula-steel hover:bg-nebula-surface hover:border-nebula-glow/30 hover:shadow-2xs"
+                        ? "bg-[#7FA0D6]/15/40 border-[#7FA0D6]/30 hover:border-blue-300"
+                        : "bg-nebula-navy/40 border-nebula-steel hover:bg-nebula-surface hover:border-[#7FA0D6]/30 hover:shadow-2xs"
                     }`}
                   >
                     <div className="flex items-center justify-between w-full">
                       <span
                         className={`text-xs font-black size-6 rounded-full flex items-center justify-center text-center shrink-0 transition-colors ${
                           isSelected
-                            ? "bg-nebula-glow text-nebula-void shadow-xs"
+                            ? "bg-[#7FA0D6] text-[#050810] shadow-xs"
                             : isToday
-                            ? "bg-nebula-glow/30 text-white border border-nebula-glow/50 font-black"
-                            : "text-slate-100 group-hover:text-nebula-glow"
+                            ? "bg-[#7FA0D6]/30 text-white border border-[#7FA0D6]/50 font-black"
+                            : "text-[#F1F5F9] group-hover:text-nebula-glow"
                         }`}
                       >
                         {dayNum}
@@ -3660,7 +3660,7 @@ export function AdminCalendarPage() {
                       {dayTasks.length > 0 && (
                         <span
                           className={`text-[9px] font-black size-5 rounded-full flex items-center justify-center text-center shrink-0 ${
-                            isSelected ? "bg-nebula-glow text-nebula-void" : "bg-nebula-steel text-nebula-periwinkle"
+                            isSelected ? "bg-[#7FA0D6] text-[#050810]" : "bg-[#2A3446] text-nebula-periwinkle"
                           }`}
                         >
                           {dayTasks.length}
@@ -3714,7 +3714,7 @@ export function AdminCalendarPage() {
                   </h2>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-black text-nebula-glow bg-nebula-glow/15 px-2.5 py-1 rounded-full border border-nebula-glow/30">
+                  <span className="text-xs font-black text-nebula-glow bg-[#7FA0D6]/15 px-2.5 py-1 rounded-full border border-[#7FA0D6]/30">
                     {filteredDayTasks.length} {filteredDayTasks.length === 1 ? "Item" : "Items"}
                   </span>
                 </div>
@@ -3722,7 +3722,7 @@ export function AdminCalendarPage() {
 
               {/* Sub-bar indicator showing selected date */}
               <div className="flex items-center justify-between bg-nebula-navy/80 px-3 py-2 rounded-xl border border-nebula-steel">
-                <span className="text-xs font-semibold text-slate-100 flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-[#F1F5F9] flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-nebula-glow" />
                   Scheduled for <strong>Nov {selectedDayNumber}, 2024</strong>
                 </span>
@@ -3744,7 +3744,7 @@ export function AdminCalendarPage() {
                       <div
                         key={item.id}
                         onClick={() => setSelectedAssetModal(item)}
-                        className="p-4 rounded-2xl border border-nebula-steel hover:border-blue-300 bg-nebula-surface hover:bg-nebula-glow/15/20 shadow-2xs hover:shadow-sm transition-all cursor-pointer space-y-2.5 group"
+                        className="p-4 rounded-2xl border border-nebula-steel hover:border-blue-300 bg-nebula-surface hover:bg-[#7FA0D6]/15/20 shadow-2xs hover:shadow-sm transition-all cursor-pointer space-y-2.5 group"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-[10px] font-black text-nebula-glow uppercase font-mono tracking-wider">
@@ -3768,7 +3768,7 @@ export function AdminCalendarPage() {
                             >
                               {item.avatar}
                             </div>
-                            <span className="font-semibold text-slate-100">{item.assignee}</span>
+                            <span className="font-semibold text-[#F1F5F9]">{item.assignee}</span>
                           </div>
 
                           <div className="flex items-center gap-2">
@@ -3789,7 +3789,7 @@ export function AdminCalendarPage() {
               ) : (
                 /* Empty State when no tasks exist on selected date */
                 <div className="py-12 px-4 text-center rounded-2xl border-2 border-dashed border-nebula-steel bg-nebula-navy/50 flex flex-col items-center justify-center space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center shadow-2xs">
+                  <div className="w-12 h-12 rounded-2xl bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center shadow-2xs">
                     <Calendar className="w-6 h-6" />
                   </div>
                   <div>
@@ -3835,7 +3835,7 @@ export function AdminCalendarPage() {
                 <button
                   type="button"
                   onClick={() => setIsScheduleModalOpen(false)}
-                  className="p-1 rounded-lg text-nebula-mist hover:text-slate-100 cursor-pointer"
+                  className="p-1 rounded-lg text-nebula-mist hover:text-[#F1F5F9] cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -3843,7 +3843,7 @@ export function AdminCalendarPage() {
 
               <form onSubmit={handleScheduleSubmit} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-slate-100 mb-1">Asset Title</label>
+                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Asset Title</label>
                   <input
                     type="text"
                     required
@@ -3856,7 +3856,7 @@ export function AdminCalendarPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Deliverable Type</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Type</label>
                     <select
                       value={scheduleForm.type}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, type: e.target.value })}
@@ -3873,7 +3873,7 @@ export function AdminCalendarPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Target Client</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Target Client</label>
                     <select
                       value={scheduleForm.client}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, client: e.target.value })}
@@ -3891,7 +3891,7 @@ export function AdminCalendarPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Target Pod</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Target Pod</label>
                     <select
                       value={scheduleForm.pod}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, pod: e.target.value })}
@@ -3904,7 +3904,7 @@ export function AdminCalendarPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Day of November</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Day of November</label>
                     <select
                       value={scheduleForm.dateDay}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, dateDay: Number(e.target.value) })}
@@ -3921,7 +3921,7 @@ export function AdminCalendarPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Target Time</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Target Time</label>
                     <input
                       type="text"
                       value={scheduleForm.time}
@@ -3931,7 +3931,7 @@ export function AdminCalendarPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Initial Tag</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Initial Tag</label>
                     <input
                       type="text"
                       value={scheduleForm.tag}
@@ -3946,7 +3946,7 @@ export function AdminCalendarPage() {
                   <button
                     type="button"
                     onClick={() => setIsScheduleModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -3972,7 +3972,7 @@ export function AdminCalendarPage() {
                     <span className="text-[10px] font-bold text-nebula-glow uppercase font-mono">
                       {selectedAssetModal.pod} • {selectedAssetModal.client}
                     </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#7FA0D6]/15 text-nebula-glow border border-[#7FA0D6]/30">
                       {selectedAssetModal.type}
                     </span>
                   </div>
@@ -3981,13 +3981,13 @@ export function AdminCalendarPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedAssetModal(null)}
-                  className="p-1 rounded-lg text-nebula-mist hover:text-slate-100 cursor-pointer"
+                  className="p-1 rounded-lg text-nebula-mist hover:text-[#F1F5F9] cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="p-4 bg-nebula-navy rounded-2xl space-y-2.5 text-xs text-slate-100">
+              <div className="p-4 bg-nebula-navy rounded-2xl space-y-2.5 text-xs text-[#F1F5F9]">
                 <div className="flex justify-between">
                   <span className="font-semibold text-nebula-mist">Deliverable Type:</span>
                   <span className="font-bold text-white">{getTypeBadge(selectedAssetModal.type).label}</span>
@@ -4055,6 +4055,32 @@ export function AdminTeamManagementPage() {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  const { data: queueData } = useQuery({
+    queryKey: ["admin_queue"],
+    queryFn: () => fetchAdminQueue(),
+  });
+
+  useEffect(() => {
+    if (queueData?.staff && queueData.staff.length > 0) {
+      const mapped = queueData.staff.map((s, idx) => ({
+        id: s.user_id || `staff-${idx}`,
+        podId: idx % 3 === 0 ? "pod-a" : idx % 3 === 1 ? "pod-b" : "pod-c",
+        name: String(s.full_name || (s.email ? s.email.split("@")[0] : "Team Member")),
+        role: s.department ? `${s.department.toUpperCase()} Specialist` : "Creative Specialist",
+        category: (s.department === "lead" ? "lead" : "editor") as "editor" | "designer" | "lead" | "videographer" | "photographer",
+        isLead: s.department === "lead",
+        email: s.email || "staff@creo.agency",
+        handle: String(s.email ? `@${s.email.split("@")[0]}` : "@member"),
+        status: (s.on_leave_today ? "On Leave" : s.is_accepting_work ? "Accepting Work" : "Fully Booked") as "Pod Lead" | "Accepting Work" | "Fully Booked" | "On Leave" | "Sprint Ready",
+        statusColor: s.on_leave_today ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-emerald-50 text-emerald-700 border-emerald-200",
+        allocatedPct: Math.min(100, Math.round((s.active_wip / Math.max(1, s.daily_capacity)) * 100)),
+        projectsCount: s.active_wip,
+        capabilities: s.skills && s.skills.length > 0 ? s.skills : ["Creative Design", "Content Operations"],
+      }));
+      setMembersList(mapped);
+    }
+  }, [queueData]);
+
   const [pods, setPods] = useState([
     {
       id: "pod-a",
@@ -4070,7 +4096,7 @@ export function AdminTeamManagementPage() {
       totalHours: 120,
       color: "bg-blue-600",
       textColor: "text-nebula-glow",
-      pillBg: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
+      pillBg: "bg-[#7FA0D6]/15 text-nebula-glow border-[#7FA0D6]/30",
       squadLoad: 40,
       activeEngagements: 1,
       readyReview: 0,
@@ -4088,7 +4114,7 @@ export function AdminTeamManagementPage() {
       pendingReview: 0,
       allocatedHours: 120,
       totalHours: 120,
-      color: "bg-nebula-glow",
+      color: "bg-[#7FA0D6]",
       textColor: "text-nebula-glow",
       pillBg: "bg-sky-50 text-sky-600 border-sky-100",
       squadLoad: 40,
@@ -4130,7 +4156,7 @@ export function AdminTeamManagementPage() {
       email: "lead.alpha@creo.agency",
       handle: "@vikram",
       status: "Pod Lead",
-      statusColor: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
+      statusColor: "bg-[#7FA0D6]/15 text-nebula-glow border-[#7FA0D6]/30",
       allocatedPct: 60,
       projectsCount: 1,
       capabilities: ["Creative Direction", "Brand Systems", "Campaign Strategy"],
@@ -4175,7 +4201,7 @@ export function AdminTeamManagementPage() {
       email: "lead.beta@creo.agency",
       handle: "@sarah",
       status: "Pod Lead",
-      statusColor: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
+      statusColor: "bg-[#7FA0D6]/15 text-nebula-glow border-[#7FA0D6]/30",
       allocatedPct: 60,
       projectsCount: 1,
       capabilities: ["Campaign Architecture", "Creative Direction", "Viral Hooks"],
@@ -4220,7 +4246,7 @@ export function AdminTeamManagementPage() {
       email: "lead.gamma@creo.agency",
       handle: "@rohan",
       status: "Pod Lead",
-      statusColor: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
+      statusColor: "bg-[#7FA0D6]/15 text-nebula-glow border-[#7FA0D6]/30",
       allocatedPct: 60,
       projectsCount: 1,
       capabilities: ["Art Direction", "Minimal Aesthetics", "Design Systems"],
@@ -4286,7 +4312,7 @@ export function AdminTeamManagementPage() {
       case "photographer":
         return <Camera className="w-3.5 h-3.5 text-emerald-600" />;
       default:
-        return <Users className="w-3.5 h-3.5 text-slate-100" />;
+        return <Users className="w-3.5 h-3.5 text-[#F1F5F9]" />;
     }
   };
 
@@ -4506,74 +4532,89 @@ export function AdminTeamManagementPage() {
               <button
                 type="button"
                 onClick={() => setIsAddMemberOpen(true)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
               >
                 <Plus className="w-4 h-4" /> Add Team Pod
               </button>
             </div>
 
             {/* 3 KPI Summary Cards matching Screenshot 1 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Card 1: NO OF PODS */}
-              <div className="kpi-card bg-nebula-surface rounded-3xl p-6 border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider">
-                    NO OF PODS
-                  </span>
-                  <div className="w-9 h-9 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center">
-                    <Users className="w-5 h-5" />
-                  </div>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white tracking-tight">8 Pods</span>
-                  <span className="text-xs font-semibold text-nebula-mist">across 72 members</span>
-                </div>
-                <div className="mt-4 pt-3 border-t border-nebula-steel text-xs font-bold text-nebula-glow flex items-center gap-1">
-                  <Layers className="w-3.5 h-3.5" /> Pods A – H Active Pods
-                </div>
-              </div>
+            {(() => {
+              const totalPodsCount = pods.length;
+              const totalMembersCount = membersList.length;
+              const avgCapacityPct = Math.round(
+                membersList.reduce((acc, m) => acc + (m.allocatedPct || 0), 0) / (membersList.length || 1)
+              );
+              const activeTasksCount = membersList.reduce((acc, m) => acc + (m.projectsCount || 0), 0);
+              const firstPodLetter = pods[0]?.letter || "A";
+              const lastPodLetter = pods[pods.length - 1]?.letter || String.fromCharCode(65 + Math.max(0, pods.length - 1));
 
-              {/* Card 2: CAPACITY */}
-              <div className="kpi-card bg-nebula-surface rounded-3xl p-6 border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider">
-                    CAPACITY
-                  </span>
-                  <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <Zap className="w-5 h-5" />
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Card 1: NO OF PODS */}
+                  <div className="kpi-card bg-nebula-surface rounded-3xl p-6 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider">
+                        NO OF PODS
+                      </span>
+                      <div className="w-9 h-9 rounded-2xl bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center">
+                        <Users className="w-5 h-5" />
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black text-white tracking-tight">{totalPodsCount} Pods</span>
+                      <span className="text-xs font-semibold text-nebula-mist">across {totalMembersCount} members</span>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-nebula-steel text-xs font-bold text-nebula-glow flex items-center gap-1">
+                      <Layers className="w-3.5 h-3.5" /> Pods {firstPodLetter} – {lastPodLetter} Active Pods
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white tracking-tight">88%</span>
-                  <span className="text-xs font-semibold text-nebula-mist">optimal bandwidth</span>
-                </div>
-                <div className="mt-4 pt-3 border-t border-nebula-steel flex items-center gap-2">
-                  <div className="flex-1 bg-nebula-surface rounded-full h-2 overflow-hidden">
-                    <div className="bg-emerald-600 h-full rounded-full w-[88%]" />
-                  </div>
-                  <span className="text-xs font-bold text-emerald-600">Healthy</span>
-                </div>
-              </div>
 
-              {/* Card 3: TASKS TO BE DONE */}
-              <div className="kpi-card bg-nebula-surface rounded-3xl p-6 border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider">
-                    TASKS TO BE DONE
-                  </span>
-                  <div className="w-9 h-9 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
-                    <CheckSquare className="w-5 h-5" />
+                  {/* Card 2: CAPACITY */}
+                  <div className="kpi-card bg-nebula-surface rounded-3xl p-6 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider">
+                        CAPACITY
+                      </span>
+                      <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <Zap className="w-5 h-5" />
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black text-white tracking-tight">{avgCapacityPct}%</span>
+                      <span className="text-xs font-semibold text-nebula-mist">optimal bandwidth</span>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-nebula-steel flex items-center gap-2">
+                      <div className="flex-1 bg-nebula-surface rounded-full h-2 overflow-hidden">
+                        <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${avgCapacityPct}%` }} />
+                      </div>
+                      <span className="text-xs font-bold text-emerald-600">
+                        {avgCapacityPct > 90 ? "High Load" : "Healthy"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card 3: TASKS TO BE DONE */}
+                  <div className="kpi-card bg-nebula-surface rounded-3xl p-6 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider">
+                        TASKS TO BE DONE
+                      </span>
+                      <div className="w-9 h-9 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                        <CheckSquare className="w-5 h-5" />
+                      </div>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-black text-white tracking-tight">{activeTasksCount}</span>
+                      <span className="text-xs font-semibold text-nebula-mist">in review/progress</span>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-nebula-steel text-xs text-nebula-mist flex items-center gap-1 font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> All squad tasks live on track
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white tracking-tight">28</span>
-                  <span className="text-xs font-semibold text-nebula-mist">in review/progress</span>
-                </div>
-                <div className="mt-4 pt-3 border-t border-nebula-steel text-xs text-nebula-mist flex items-center gap-1 font-medium">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-nebula-mist" /> 142 milestones closed ahead of target
-                </div>
-              </div>
-            </div>
+              );
+            })()}
 
             {/* Team Pods Section Header */}
             <div className="flex items-center justify-between pt-2">
@@ -4602,7 +4643,7 @@ export function AdminTeamManagementPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-base text-white">{pod.name}</h4>
-                          <span className="px-2 py-0.5 rounded-full bg-nebula-surface text-slate-100 text-[10px] font-bold">
+                          <span className="px-2 py-0.5 rounded-full bg-nebula-surface text-[#F1F5F9] text-[10px] font-bold">
                             Sprint Pod
                           </span>
                         </div>
@@ -4626,19 +4667,19 @@ export function AdminTeamManagementPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-100">
+                    <div className="flex items-center gap-2 text-xs font-bold text-[#F1F5F9]">
                       <div className="flex -space-x-2">
                         <div className="w-7 h-7 rounded-full bg-slate-700 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">ER</div>
                         <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">MC</div>
                         <div className="w-7 h-7 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">LZ</div>
                       </div>
-                      <span className="text-xs font-bold text-slate-100">+{pod.membersCount - 3} Members</span>
+                      <span className="text-xs font-bold text-[#F1F5F9]">+{pod.membersCount - 3} Members</span>
                     </div>
                   </div>
 
                   {/* Velocity Bar */}
                   <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center text-slate-100 font-semibold">
+                    <div className="flex justify-between items-center text-[#F1F5F9] font-semibold">
                       <span>Sprint Velocity</span>
                       <span className="font-bold text-white">{pod.velocityPct}% on track</span>
                     </div>
@@ -4695,7 +4736,7 @@ export function AdminTeamManagementPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30">
+                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#7FA0D6]/15 text-nebula-glow border border-[#7FA0D6]/30">
                   ● Q2 Cycle Active
                 </span>
                 <span className="text-[11px] text-nebula-mist font-medium hidden sm:inline">
@@ -4704,7 +4745,7 @@ export function AdminTeamManagementPage() {
                 <button
                   type="button"
                   onClick={() => setIsAddMemberOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+                  className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all"
                 >
                   + Add Team Member
                 </button>
@@ -4723,11 +4764,11 @@ export function AdminTeamManagementPage() {
                       High Velocity
                     </span>
                   </div>
-                  <p className="text-xs text-slate-100 leading-relaxed font-medium">
+                  <p className="text-xs text-[#F1F5F9] leading-relaxed font-medium">
                     {activePod?.description}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-6 pt-2 text-xs font-bold text-slate-100">
+                  <div className="flex flex-wrap items-center gap-6 pt-2 text-xs font-bold text-[#F1F5F9]">
                     <div>
                       <span className="text-[10px] uppercase text-nebula-mist block font-extrabold tracking-wider">POD LEAD</span>
                       <span className="text-white font-black">{activePod?.lead}</span>
@@ -4782,8 +4823,8 @@ export function AdminTeamManagementPage() {
                       onClick={() => setRoleCategoryFilter(tab.key)}
                       className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                         roleCategoryFilter === tab.key
-                          ? "bg-nebula-glow text-white shadow-xs"
-                          : "text-slate-100 hover:text-white"
+                          ? "bg-[#7FA0D6] text-white shadow-xs"
+                          : "text-[#F1F5F9] hover:text-white"
                       }`}
                     >
                       {tab.label}
@@ -4804,7 +4845,7 @@ export function AdminTeamManagementPage() {
               <div className="flex items-center justify-between text-xs text-nebula-mist font-semibold border-t border-nebula-steel pt-3">
                 <span>Showing {filteredMembers.length} members assigned to {activePod?.name}</span>
                 <div className="flex items-center gap-3">
-                  <button type="button" className="hover:text-slate-100 flex items-center gap-1">
+                  <button type="button" className="hover:text-[#F1F5F9] flex items-center gap-1">
                     <SlidersHorizontal className="w-3.5 h-3.5" /> Advanced Sorting
                   </button>
                   <button
@@ -4822,7 +4863,7 @@ export function AdminTeamManagementPage() {
                       link.click();
                       document.body.removeChild(link);
                     }}
-                    className="hover:text-slate-100 flex items-center gap-1 cursor-pointer"
+                    className="hover:text-[#F1F5F9] flex items-center gap-1 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" /> Export Roster
                   </button>
@@ -4866,7 +4907,7 @@ export function AdminTeamManagementPage() {
 
                     {/* Email & Handle */}
                     <div className="p-3 bg-nebula-navy/70 rounded-2xl text-[11px] font-mono space-y-0.5 border border-nebula-steel">
-                      <div className="text-slate-100 truncate">{member.email}</div>
+                      <div className="text-[#F1F5F9] truncate">{member.email}</div>
                       <div className="text-nebula-glow font-semibold">{member.handle}</div>
                     </div>
 
@@ -4879,7 +4920,7 @@ export function AdminTeamManagementPage() {
                         {member.capabilities.map((cap) => (
                           <span
                             key={cap}
-                            className="px-2.5 py-1 rounded-lg bg-nebula-surface text-slate-100 text-[10px] font-bold border border-nebula-steel/60"
+                            className="px-2.5 py-1 rounded-lg bg-nebula-surface text-[#F1F5F9] text-[10px] font-bold border border-nebula-steel/60"
                           >
                             {cap}
                           </span>
@@ -4951,7 +4992,7 @@ export function AdminTeamManagementPage() {
               {/* Header */}
               <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-9 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-black text-sm">
+                  <div className="size-9 rounded-2xl bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center font-black text-sm">
                     <Briefcase className="size-4.5" />
                   </div>
                   <div>
@@ -4990,7 +5031,7 @@ export function AdminTeamManagementPage() {
               {/* Assignment Form */}
               <form onSubmit={handleConfirmAssignWork} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-slate-100 mb-1">Task / Deliverable Title</label>
+                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Task / Deliverable Title</label>
                   <input
                     type="text"
                     required
@@ -5011,7 +5052,7 @@ export function AdminTeamManagementPage() {
                         key={preset}
                         type="button"
                         onClick={() => setAssignForm({ ...assignForm, taskTitle: preset })}
-                        className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-nebula-surface hover:bg-slate-200 text-slate-100 transition-colors cursor-pointer"
+                        className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-nebula-surface hover:bg-slate-200 text-[#F1F5F9] transition-colors cursor-pointer"
                       >
                         + {preset}
                       </button>
@@ -5021,21 +5062,21 @@ export function AdminTeamManagementPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Client Account</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Client Account</label>
                     <select
                       value={assignForm.client}
                       onChange={(e) => setAssignForm({ ...assignForm, client: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium text-white bg-nebula-surface"
                     >
-                      <option value="Ryze">Ryze (Starter)</option>
-                      <option value="Shanmugaraj">Shanmugaraj (Growth)</option>
+                      <option value="Ryze">Ryze (Starter Growth)</option>
+                      <option value="Shanmugaraj">Shanmugaraj (Brand Accelerator)</option>
                       <option value="Aravindan">Aravindan (Custom Retainer)</option>
                       <option value="Luma">Luma Global (Enterprise)</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Priority Level</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority Level</label>
                     <select
                       value={assignForm.priority}
                       onChange={(e) => setAssignForm({ ...assignForm, priority: e.target.value })}
@@ -5051,7 +5092,7 @@ export function AdminTeamManagementPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Workload Allocation</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Workload Allocation</label>
                     <div className="grid grid-cols-4 gap-1">
                       {[10, 15, 25, 35].map((pct) => (
                         <button
@@ -5061,7 +5102,7 @@ export function AdminTeamManagementPage() {
                           className={`py-1.5 text-center text-xs font-bold rounded-lg border transition-all cursor-pointer ${
                             assignForm.allocationIncrease === pct
                               ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
-                              : "bg-nebula-navy text-slate-100 border-nebula-steel hover:bg-nebula-surface"
+                              : "bg-nebula-navy text-[#F1F5F9] border-nebula-steel hover:bg-nebula-surface"
                           }`}
                         >
                           +{pct}%
@@ -5071,7 +5112,7 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Sprint Target Deadline</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Sprint Target Deadline</label>
                     <input
                       type="text"
                       value={assignForm.deadline}
@@ -5083,7 +5124,7 @@ export function AdminTeamManagementPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-100 mb-1">Deliverable Scope & Brief</label>
+                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Scope & Brief</label>
                   <textarea
                     rows={2}
                     value={assignForm.brief}
@@ -5098,7 +5139,7 @@ export function AdminTeamManagementPage() {
                   <button
                     type="button"
                     onClick={() => setAssignModalMember(null)}
-                    className="px-4 py-2.5 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer transition-colors"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel text-xs font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer transition-colors"
                   >
                     Cancel
                   </button>
@@ -5180,14 +5221,14 @@ export function AdminTeamManagementPage() {
                 </div>
                 <div className="grid grid-cols-5 gap-2">
                   {[
-                    { day: "Mon", hours: "8.0h", task: "Ryze 3D Renders", bg: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30" },
+                    { day: "Mon", hours: "8.0h", task: "Ryze 3D Renders", bg: "bg-[#7FA0D6]/15 text-nebula-glow border-[#7FA0D6]/30" },
                     { day: "Tue", hours: "7.5h", task: "Aravindan Motion", bg: "bg-purple-50 text-purple-700 border-purple-200" },
                     { day: "Wed", hours: "8.0h", task: "Shanmugaraj Intro", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" },
                     { day: "Thu", hours: "8.0h", task: "Luma Teaser", bg: "bg-amber-50 text-amber-700 border-amber-200" },
                     { day: "Fri", hours: "6.5h", task: "Sprint Quality QA", bg: "bg-sky-50 text-sky-700 border-sky-200" },
                   ].map((item) => (
                     <div key={item.day} className="p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy flex flex-col justify-between text-center gap-1.5">
-                      <span className="text-[11px] font-black text-slate-100">{item.day}</span>
+                      <span className="text-[11px] font-black text-[#F1F5F9]">{item.day}</span>
                       <span className="text-xs font-black text-white">{item.hours}</span>
                       <span className={`text-[9px] font-bold p-1 rounded-md border truncate ${item.bg}`}>
                         {item.task}
@@ -5242,7 +5283,7 @@ export function AdminTeamManagementPage() {
                       setToast(`Notification dispatched to Pod Lead for ${scheduleModalMember.name}.`);
                       setScheduleModalMember(null);
                     }}
-                    className="px-4 py-2.5 rounded-xl border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-xs font-bold transition-colors cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel hover:bg-nebula-navy text-[#F1F5F9] text-xs font-bold transition-colors cursor-pointer"
                   >
                     Notify Lead
                   </button>
@@ -5276,7 +5317,7 @@ export function AdminTeamManagementPage() {
               <button
                 type="button"
                 onClick={() => setSuccessPopup(null)}
-                className="absolute top-4 right-4 size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist hover:text-slate-100 flex items-center justify-center transition-colors cursor-pointer"
+                className="absolute top-4 right-4 size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
                 aria-label="Close modal"
               >
                 <X className="size-4" />
@@ -5287,7 +5328,7 @@ export function AdminTeamManagementPage() {
               </div>
 
               <h3 className="text-xl font-black text-white tracking-tight">{successPopup.title}</h3>
-              <p className="text-xs sm:text-sm text-slate-100 mt-2 leading-relaxed max-w-sm">{successPopup.message}</p>
+              <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm">{successPopup.message}</p>
 
               <div className="w-full mt-6">
                 <button
@@ -5320,7 +5361,7 @@ export function AdminTeamManagementPage() {
               {/* Header */}
               <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-9 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-black text-sm">
+                  <div className="size-9 rounded-2xl bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center font-black text-sm">
                     <Users className="size-4.5" />
                   </div>
                   <div>
@@ -5345,7 +5386,7 @@ export function AdminTeamManagementPage() {
               <form onSubmit={handleCreateTeamMember} className="space-y-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Full Name *</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Full Name *</label>
                     <input
                       type="text"
                       required
@@ -5367,7 +5408,7 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Email Address</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Email Address</label>
                     <input
                       type="email"
                       required
@@ -5381,7 +5422,7 @@ export function AdminTeamManagementPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Role Title</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Role Title</label>
                     <input
                       type="text"
                       required
@@ -5393,7 +5434,7 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Slack / Agency Handle</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Slack / Agency Handle</label>
                     <input
                       type="text"
                       value={newMemberForm.handle}
@@ -5406,7 +5447,7 @@ export function AdminTeamManagementPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Role Track Category</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Role Track Category</label>
                     <select
                       value={newMemberForm.category}
                       onChange={(e) => {
@@ -5429,7 +5470,7 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Assign Sprint Pod</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Assign Sprint Pod</label>
                     <select
                       value={newMemberForm.podId}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, podId: e.target.value })}
@@ -5443,7 +5484,7 @@ export function AdminTeamManagementPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-100 mb-1">Core Capabilities (comma separated)</label>
+                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Core Capabilities (comma separated)</label>
                   <input
                     type="text"
                     value={newMemberForm.capabilities}
@@ -5458,7 +5499,7 @@ export function AdminTeamManagementPage() {
                   <button
                     type="button"
                     onClick={() => setIsAddMemberOpen(false)}
-                    className="px-4 py-2.5 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer transition-colors"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel text-xs font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer transition-colors"
                   >
                     Cancel
                   </button>
@@ -5488,12 +5529,30 @@ export function AdminLeaveApprovalsPage() {
   const [filterTab, setFilterTab] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
 
-  const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
+  const { data: dbLeaves = [], refetch } = useQuery({
+    queryKey: ["admin_leave_requests"],
+    queryFn: fetchLeaveRequests,
+  });
 
-  const handleAction = (id: string, action: "approved" | "rejected") => {
-    setLeaveRequests((prev) =>
-      prev.map((lr) => (lr.id === id ? { ...lr, status: action } : lr))
-    );
+  const [localOverrides, setLocalOverrides] = useState<Record<string, "approved" | "rejected">>({});
+
+  const leaveRequests = dbLeaves.map((lr) => ({
+    ...lr,
+    status: localOverrides[lr.id] || lr.status,
+  }));
+
+  const handleAction = async (id: string, action: "approved" | "rejected") => {
+    setLocalOverrides((prev) => ({ ...prev, [id]: action }));
+    try {
+      if (action === "approved") {
+        await approveLeaveRequest(id);
+      } else {
+        await rejectLeaveRequest(id);
+      }
+      refetch();
+    } catch {
+      // Keep optimistic UI
+    }
     setToast(`Leave request ${action} successfully.`);
     setTimeout(() => setToast(null), 3000);
   };
@@ -5503,7 +5562,7 @@ export function AdminLeaveApprovalsPage() {
   );
 
   const onLeaveCount = leaveRequests.filter((l) => l.status === "approved").length;
-  const inOfficeCount = 9 - onLeaveCount;
+  const inOfficeCount = Math.max(0, 9 - onLeaveCount);
 
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-nebula-navy flex flex-col">
@@ -5533,7 +5592,7 @@ export function AdminLeaveApprovalsPage() {
             <button
               type="button"
               onClick={() => setIsApplyModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-nebula-glow hover:bg-nebula-glow text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-[#7FA0D6] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <Plus className="w-4 h-4" /> Apply for Leave
             </button>
@@ -5547,7 +5606,7 @@ export function AdminLeaveApprovalsPage() {
               <span className="text-[10px] font-bold text-nebula-mist uppercase tracking-wider">
                 PEOPLE WORKING TODAY
               </span>
-              <div className="w-8 h-8 rounded-xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center font-bold">
                 <Users className="w-4 h-4" />
               </div>
             </div>
@@ -5568,7 +5627,7 @@ export function AdminLeaveApprovalsPage() {
               <span className="text-[10px] font-bold text-nebula-mist uppercase tracking-wider">
                 ON LEAVE TODAY
               </span>
-              <div className="w-8 h-8 rounded-xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center font-bold">
                 <Plane className="w-4 h-4" />
               </div>
             </div>
@@ -5623,14 +5682,13 @@ export function AdminLeaveApprovalsPage() {
                 filteredRequests.map((lr) => (
                 <tr key={lr.id} className="hover:bg-nebula-navy/60">
                   <td className="px-5 py-4">
-                    <div className="font-bold text-white">{lr.name}</div>
-                    <div className="text-[11px] text-nebula-mist">{lr.department} • {lr.pod}</div>
+                    <div className="font-bold text-white">{lr.user_name || (lr as any).name || "Team Member"}</div>
+                    <div className="text-[11px] text-nebula-mist">{lr.user_role || (lr as any).department || "Specialist"}</div>
                   </td>
                   <td className="px-5 py-4 font-mono text-[11px]">
-                    <div>{lr.startDate} to {lr.endDate}</div>
-                    <span className="text-nebula-mist font-sans">({lr.days} days)</span>
+                    <div>{lr.start_date || (lr as any).startDate} to {lr.end_date || (lr as any).endDate}</div>
                   </td>
-                  <td className="px-5 py-4 text-slate-100 max-w-xs">{lr.reason}</td>
+                  <td className="px-5 py-4 text-[#F1F5F9] max-w-xs">{lr.reason}</td>
                   <td className="px-5 py-4">
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
@@ -5680,7 +5738,7 @@ export function AdminLeaveApprovalsPage() {
                 <button
                   type="button"
                   onClick={() => setIsApplyModalOpen(false)}
-                  className="p-1 rounded-lg text-nebula-mist hover:text-slate-100 cursor-pointer"
+                  className="p-1 rounded-lg text-nebula-mist hover:text-[#F1F5F9] cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -5696,21 +5754,21 @@ export function AdminLeaveApprovalsPage() {
               >
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Start Date</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Start Date</label>
                     <input type="date" required className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">End Date</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">End Date</label>
                     <input type="date" required className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-100 mb-1">Reason</label>
+                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Reason</label>
                   <textarea rows={3} required placeholder="State reason for time off..." className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs resize-none" />
                 </div>
                 <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
-                  <button type="button" onClick={() => setIsApplyModalOpen(false)} className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy">Cancel</button>
-                  <button type="submit" className="px-4 py-2 rounded-xl bg-nebula-glow text-xs font-bold text-white hover:bg-nebula-glow">Submit</button>
+                  <button type="button" onClick={() => setIsApplyModalOpen(false)} className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-[#F1F5F9] hover:bg-nebula-navy">Cancel</button>
+                  <button type="submit" className="px-4 py-2 rounded-xl bg-[#7FA0D6] text-xs font-bold text-white hover:bg-[#7FA0D6]">Submit</button>
                 </div>
               </form>
             </div>
@@ -5795,8 +5853,8 @@ export function AdminRevenuePage() {
       method: newInvMethod,
       status: "Pending",
       date: "Due Net 15",
-      badgeClass: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
-      avatarBg: "bg-nebula-glow/20 text-blue-800",
+      badgeClass: "bg-[#7FA0D6]/15 text-nebula-glow border-[#7FA0D6]/30",
+      avatarBg: "bg-[#7FA0D6]/20 text-blue-800",
     };
 
     setTransactions((prev) => [newTx, ...prev]);
@@ -5872,7 +5930,7 @@ export function AdminRevenuePage() {
             <button
               type="button"
               onClick={handleExportCSV}
-              className="px-4 py-2 rounded-xl bg-nebula-surface border border-nebula-steel text-slate-100 hover:bg-nebula-navy text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-nebula-surface border border-nebula-steel text-[#F1F5F9] hover:bg-nebula-navy text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer"
             >
               <Download className="w-4 h-4 text-nebula-mist" /> Export Report
             </button>
@@ -5880,7 +5938,7 @@ export function AdminRevenuePage() {
             <button
               type="button"
               onClick={() => setIsCreateInvoiceOpen(true)}
-              className="px-4 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
             >
               <Plus className="w-4 h-4" /> Create Invoice
             </button>
@@ -5899,7 +5957,7 @@ export function AdminRevenuePage() {
               </span>
               <div className="flex items-baseline gap-3">
                 <span className="text-4xl font-black text-white tracking-tight">₹{totalMrr.toLocaleString('en-IN')}</span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30 flex items-center gap-1">
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-nebula-glow border border-[#7FA0D6]/30 flex items-center gap-1">
                   Active Retainers
                 </span>
               </div>
@@ -5907,7 +5965,7 @@ export function AdminRevenuePage() {
                 Projected ARR: <strong className="text-white font-bold">₹{projectedArr.toLocaleString('en-IN')}</strong>
               </div>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center shrink-0 border border-nebula-glow/30 font-black text-2xl">
+            <div className="w-14 h-14 rounded-2xl bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center shrink-0 border border-[#7FA0D6]/30 font-black text-2xl">
               ₹
             </div>
           </div>
@@ -5920,7 +5978,7 @@ export function AdminRevenuePage() {
               </span>
               <div className="flex items-baseline gap-3">
                 <span className="text-4xl font-black text-white tracking-tight">₹{totalCollected.toLocaleString('en-IN')}</span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30">
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-nebula-glow border border-[#7FA0D6]/30">
                   {transactions.length > 0 ? `${Math.round((transactions.filter(t => t.status === "Paid").length / transactions.length) * 100)}% Rate` : "0% Rate"}
                 </span>
               </div>
@@ -5949,17 +6007,17 @@ export function AdminRevenuePage() {
 
                 <div className="flex items-center gap-4 text-xs font-bold">
                   <span className="flex items-center gap-1.5 text-nebula-glow">
-                    <span className="w-2.5 h-2.5 rounded-full bg-nebula-glow" /> Actual Inflow
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]" /> Actual Inflow
                   </span>
                   <span className="flex items-center gap-1.5 text-nebula-mist">
-                    <span className="w-2.5 h-2.5 rounded-full bg-nebula-steel" /> Target Baseline
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#2A3446]" /> Target Baseline
                   </span>
                 </div>
               </div>
 
               {/* Peak Marker Badge */}
               <div className="flex justify-end mb-2">
-                <span className="px-3 py-1 rounded-full text-[11px] font-black bg-nebula-glow text-white shadow-md">
+                <span className="px-3 py-1 rounded-full text-[11px] font-black bg-[#7FA0D6] text-white shadow-md">
                   ₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "24,80,000"} Current MRR
                 </span>
               </div>
@@ -5981,26 +6039,26 @@ export function AdminRevenuePage() {
                   >
                     <defs>
                       <linearGradient id="revenueBarGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--color-nebula-periwinkle)" stopOpacity={1} />
-                        <stop offset="45%" stopColor="var(--color-nebula-glow)" stopOpacity={0.85} />
-                        <stop offset="100%" stopColor="var(--color-nebula-steel)" stopOpacity={0.35} />
+                        <stop offset="0%" stopColor="#BCCCE6" stopOpacity={1} />
+                        <stop offset="45%" stopColor="#7FA0D6" stopOpacity={0.85} />
+                        <stop offset="100%" stopColor="#2A3446" stopOpacity={0.35} />
                       </linearGradient>
                       <linearGradient id="revenueBarGradPeak" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#FFFFFF" stopOpacity={1} />
-                        <stop offset="35%" stopColor="var(--color-nebula-periwinkle)" stopOpacity={1} />
-                        <stop offset="100%" stopColor="var(--color-nebula-glow)" stopOpacity={0.85} />
+                        <stop offset="35%" stopColor="#BCCCE6" stopOpacity={1} />
+                        <stop offset="100%" stopColor="#7FA0D6" stopOpacity={0.85} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-nebula-steel)" opacity={0.35} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A3446" opacity={0.35} />
                     <XAxis
                       dataKey="name"
-                      tick={{ fontSize: 11, fill: "var(--color-nebula-mist)", fontWeight: 600 }}
+                      tick={{ fontSize: 11, fill: "#97A0B3", fontWeight: 600 }}
                       axisLine={false}
                       tickLine={false}
                       dy={3}
                     />
                     <YAxis
-                      tick={{ fontSize: 10, fill: "var(--color-nebula-mist)" }}
+                      tick={{ fontSize: 10, fill: "#97A0B3" }}
                       axisLine={false}
                       tickLine={false}
                       tickFormatter={(v: number) =>
@@ -6013,9 +6071,9 @@ export function AdminRevenuePage() {
                     />
                     <Tooltip
                       formatter={(val: any) => [`₹${(Number(val) / 100).toLocaleString('en-IN')}`, "Revenue"]}
-                      contentStyle={{ backgroundColor: "var(--color-nebula-navy)", borderRadius: "12px", border: "1px solid #2A3446", color: "var(--color-slate-100)", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}
-                      itemStyle={{ color: "var(--color-nebula-glow)", fontWeight: "bold" }}
-                      labelStyle={{ color: "var(--color-nebula-mist)", fontSize: "11px", fontWeight: "bold" }}
+                      contentStyle={{ backgroundColor: "#0B111C", borderRadius: "12px", border: "1px solid #2A3446", color: "#F1F5F9", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}
+                      itemStyle={{ color: "#7FA0D6", fontWeight: "bold" }}
+                      labelStyle={{ color: "#97A0B3", fontSize: "11px", fontWeight: "bold" }}
                       cursor={false}
                     />
                     <Bar dataKey="revenue" radius={[8, 8, 3, 3]} maxBarSize={28}>
@@ -6075,7 +6133,7 @@ export function AdminRevenuePage() {
                     setToast("Plan tier metrics refreshed.");
                     setTimeout(() => setToast(null), 2500);
                   }}
-                  className="p-2 rounded-xl hover:bg-nebula-surface text-nebula-mist hover:text-slate-100 cursor-pointer transition-colors"
+                  className="p-2 rounded-xl hover:bg-nebula-surface text-nebula-mist hover:text-[#F1F5F9] cursor-pointer transition-colors"
                 >
                   <RefreshCw className="w-4 h-4" />
                 </button>
@@ -6087,12 +6145,12 @@ export function AdminRevenuePage() {
                 <div className="space-y-2 p-3.5 bg-nebula-navy rounded-2xl border border-nebula-steel">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="flex items-center gap-2 text-white">
-                      <span className="w-2.5 h-2.5 rounded-full bg-nebula-glow" /> Package 1 (Scale)
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]" /> Package 1 (Enterprise Domination)
                     </span>
                     <span className="text-white font-black">₹95,000 <span className="text-[10px] font-normal text-nebula-mist">/ mo</span></span>
                   </div>
                   <div className="w-full bg-nebula-surface rounded-full h-2 overflow-hidden">
-                    <div className="bg-nebula-glow h-full rounded-full w-[46.8%]" />
+                    <div className="bg-[#7FA0D6] h-full rounded-full w-[46.8%]" />
                   </div>
                   <div className="flex justify-between text-[11px] text-nebula-mist font-semibold">
                     <span>2 Retainer Accounts</span>
@@ -6104,12 +6162,12 @@ export function AdminRevenuePage() {
                 <div className="space-y-2 p-3.5 bg-nebula-navy rounded-2xl border border-nebula-steel">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="flex items-center gap-2 text-white">
-                      <span className="w-2.5 h-2.5 rounded-full bg-nebula-periwinkle" /> Package 2 (Growth)
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#BCCCE6]" /> Package 2 (Brand Accelerator)
                     </span>
                     <span className="text-white font-black">₹50,000 <span className="text-[10px] font-normal text-nebula-mist">/ mo</span></span>
                   </div>
                   <div className="w-full bg-nebula-surface rounded-full h-2 overflow-hidden">
-                    <div className="bg-nebula-periwinkle h-full rounded-full w-[36.7%]" />
+                    <div className="bg-[#BCCCE6] h-full rounded-full w-[36.7%]" />
                   </div>
                   <div className="flex justify-between text-[11px] text-nebula-mist font-semibold">
                     <span>3 Retainer Accounts</span>
@@ -6121,12 +6179,12 @@ export function AdminRevenuePage() {
                 <div className="space-y-2 p-3.5 bg-nebula-navy rounded-2xl border border-nebula-steel">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="flex items-center gap-2 text-white">
-                      <span className="w-2.5 h-2.5 rounded-full bg-nebula-sand" /> Package 3 (Starter)
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#D8BF9B]" /> Package 3 (Starter Growth)
                     </span>
                     <span className="text-white font-black">₹25,000 <span className="text-[10px] font-normal text-nebula-mist">/ mo</span></span>
                   </div>
                   <div className="w-full bg-nebula-surface rounded-full h-2 overflow-hidden">
-                    <div className="bg-nebula-sand h-full rounded-full w-[16.5%]" />
+                    <div className="bg-[#D8BF9B] h-full rounded-full w-[16.5%]" />
                   </div>
                   <div className="flex justify-between text-[11px] text-nebula-mist font-semibold">
                     <span>2 Retainer Accounts</span>
@@ -6139,7 +6197,7 @@ export function AdminRevenuePage() {
             {/* Sub-card: Add-ons & Overages */}
             <div className="p-4 bg-nebula-navy rounded-2xl border border-nebula-steel flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30 flex items-center justify-center font-bold shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-[#7FA0D6]/15 text-nebula-glow border border-[#7FA0D6]/30 flex items-center justify-center font-bold shrink-0">
                   <Layers className="w-5 h-5" />
                 </div>
                 <div>
@@ -6193,7 +6251,7 @@ export function AdminRevenuePage() {
               <button
                 type="button"
                 onClick={handleExportCSV}
-                className="px-3.5 py-2 rounded-xl bg-nebula-glow/15 hover:bg-nebula-glow/20 text-nebula-glow text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-nebula-glow/30 transition-colors"
+                className="px-3.5 py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-nebula-glow text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-[#7FA0D6]/30 transition-colors"
               >
                 <Download className="w-3.5 h-3.5" /> Export CSV
               </button>
@@ -6235,17 +6293,17 @@ export function AdminRevenuePage() {
                       </div>
                     </td>
 
-                    <td className="px-5 py-4 font-mono font-bold text-slate-100">{tx.id}</td>
+                    <td className="px-5 py-4 font-mono font-bold text-[#F1F5F9]">{tx.id}</td>
 
                     <td className="px-5 py-4 font-black text-sm text-white">
                       ₹{tx.amount.toLocaleString('en-IN')}
                     </td>
 
-                    <td className="px-5 py-4 text-slate-100 font-medium">{tx.method}</td>
+                    <td className="px-5 py-4 text-[#F1F5F9] font-medium">{tx.method}</td>
 
                     <td className="px-5 py-4">
                       <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border flex items-center gap-1.5 w-fit ${tx.badgeClass}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-nebula-glow/150"}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]/150"}`} />
                         {tx.status} ({tx.date})
                       </span>
                     </td>
@@ -6263,7 +6321,7 @@ export function AdminRevenuePage() {
                         <button
                           type="button"
                           onClick={() => handleSendReminder(tx)}
-                          className="px-3 py-1.5 rounded-lg bg-nebula-glow/15 hover:bg-nebula-glow/20 text-nebula-glow font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-nebula-glow font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Play className="w-3 h-3 fill-current" /> Remind
                         </button>
@@ -6293,14 +6351,14 @@ export function AdminRevenuePage() {
           <div className="w-full max-w-md rounded-3xl bg-nebula-surface p-6 shadow-2xl space-y-4 border border-nebula-steel">
             <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <h3 className="text-base font-bold text-white">Create New Invoice</h3>
-              <button type="button" onClick={() => setIsCreateInvoiceOpen(false)} className="p-1 rounded-lg text-nebula-mist hover:text-slate-100">
+              <button type="button" onClick={() => setIsCreateInvoiceOpen(false)} className="p-1 rounded-lg text-nebula-mist hover:text-[#F1F5F9]">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateInvoiceSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Client Brand Name</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Client Brand Name</label>
                 <input
                   type="text"
                   required
@@ -6312,7 +6370,7 @@ export function AdminRevenuePage() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Deliverable Scope Description</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Deliverable Scope Description</label>
                 <input
                   type="text"
                   required
@@ -6325,7 +6383,7 @@ export function AdminRevenuePage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Amount (₹ INR)</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Amount (₹ INR)</label>
                   <input
                     type="number"
                     required
@@ -6336,7 +6394,7 @@ export function AdminRevenuePage() {
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Payment Method</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Payment Method</label>
                   <select
                     value={newInvMethod}
                     onChange={(e) => setNewInvMethod(e.target.value)}
@@ -6354,13 +6412,13 @@ export function AdminRevenuePage() {
                 <button
                   type="button"
                   onClick={() => setIsCreateInvoiceOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy"
+                  className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-[#F1F5F9] hover:bg-nebula-navy"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-nebula-glow text-white font-bold hover:bg-blue-700 shadow-sm"
+                  className="px-4 py-2 rounded-xl bg-[#7FA0D6] text-white font-bold hover:bg-blue-700 shadow-sm"
                 >
                   Generate Invoice
                 </button>
@@ -6381,7 +6439,7 @@ export function AdminRevenuePage() {
                 <span className="font-black text-xl text-white tracking-tight">creo.</span>
                 <span className="text-xs font-bold text-nebula-mist">Payment Receipt</span>
               </div>
-              <button type="button" onClick={() => setSelectedReceipt(null)} className="p-1 text-nebula-mist hover:text-slate-100">
+              <button type="button" onClick={() => setSelectedReceipt(null)} className="p-1 text-nebula-mist hover:text-[#F1F5F9]">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -6395,7 +6453,7 @@ export function AdminRevenuePage() {
                 <CheckCircle2 className="w-7 h-7 text-emerald-600" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-slate-100 font-medium">
+              <div className="grid grid-cols-2 gap-4 text-[#F1F5F9] font-medium">
                 <div>
                   <span className="text-nebula-mist block text-[10px] uppercase font-bold">Client</span>
                   <strong className="text-white text-sm">{selectedReceipt.client}</strong>
@@ -6432,7 +6490,7 @@ export function AdminRevenuePage() {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="flex-1 py-2.5 rounded-xl border border-nebula-steel font-bold text-xs text-slate-100 hover:bg-nebula-navy flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl border border-nebula-steel font-bold text-xs text-[#F1F5F9] hover:bg-nebula-navy flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Printer className="w-4 h-4" /> Print Receipt
               </button>
@@ -6442,7 +6500,7 @@ export function AdminRevenuePage() {
                   window.print();
                   setSelectedReceipt(null);
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-nebula-glow text-white font-bold text-xs hover:bg-blue-700 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-[#7FA0D6] text-white font-bold text-xs hover:bg-blue-700 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Download className="w-4 h-4" /> Download PDF
               </button>
@@ -6467,47 +6525,45 @@ export function AdminPlansPage() {
     {
       id: "starter",
       name: "starter",
-      display_name: "Starter",
+      display_name: "Starter Growth",
       price_monthly: 25000,
       currency: "INR",
       subscribers: 0,
       features: [
         "8 Static Posters / Month",
         "4 Short Video Reels / Month",
-        "10 Story Templates (22 assets total)",
-        "3 Business Days SLA Turnaround",
-        "1 Revision Round",
+        "10 Story Templates",
+        "Standard SLA (48h Turnaround)",
       ],
     },
     {
       id: "growth",
       name: "growth",
-      display_name: "Growth",
+      display_name: "Brand Accelerator",
       price_monthly: 50000,
       currency: "INR",
       subscribers: 0,
       features: [
-        "18 Static Posters / Month",
-        "10 Short Video Reels / Month",
-        "20 Story Templates (48 assets total)",
-        "2 Business Days SLA Turnaround",
-        "2 Revision Rounds",
+        "15 Static Posters / Month",
+        "8 Short Video Reels / Month",
+        "20 Story Templates",
+        "Priority SLA (24h Turnaround)",
         "Dedicated Creative Pod Lead",
       ],
     },
     {
       id: "scale",
       name: "scale",
-      display_name: "Scale",
+      display_name: "Enterprise Domination",
       price_monthly: 95000,
       currency: "INR",
       subscribers: 0,
       features: [
-        "36 Static Posters / Month",
-        "20 High-Production Video Reels",
-        "40 Story Templates (96 assets total)",
-        "24-Hour SLA Turnaround",
-        "3 Revision Rounds",
+        "30 Static Posters / Month",
+        "16 High-Production Video Reels",
+        "40 Story Templates",
+        "Express 12h SLA Turnaround",
+        "Unlimited Revision Iterations",
       ],
     },
   ]);
@@ -6527,8 +6583,8 @@ export function AdminPlansPage() {
   const [declineReasonInput, setDeclineReasonInput] = useState("");
 
   const [newPropClient, setNewPropClient] = useState("");
-  const [newPropCurrentPlan, setNewPropCurrentPlan] = useState("Starter (₹25,000/mo)");
-  const [newPropTargetPlan, setNewPropTargetPlan] = useState("Scale Custom Scope");
+  const [newPropCurrentPlan, setNewPropCurrentPlan] = useState("Starter Growth (₹25,000/mo)");
+  const [newPropTargetPlan, setNewPropTargetPlan] = useState("Enterprise Domination Custom Scope");
   const [newPropStandardRate, setNewPropStandardRate] = useState("95000");
   const [newPropProposedRate, setNewPropProposedRate] = useState("85000");
   const [newPropNotes, setNewPropNotes] = useState("");
@@ -6831,10 +6887,10 @@ export function AdminPlansPage() {
             TOP 4 COMMERCIAL & PLAN KPI CARDS
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="kpi-card p-6 bg-nebula-surface rounded-3xl border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-nebula-surface rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">ACTIVE RETAINERS</span>
-              <div className="w-7 h-7 rounded-xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-bold">
+              <div className="w-7 h-7 rounded-xl bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center font-bold">
                 <Briefcase className="w-3.5 h-3.5" />
               </div>
             </div>
@@ -6844,7 +6900,7 @@ export function AdminPlansPage() {
             <p className="text-xs text-nebula-glow font-bold">MRR: ₹{totalRetainerRevenue.toLocaleString("en-IN")}</p>
           </div>
 
-          <div className="kpi-card p-6 bg-nebula-surface rounded-3xl border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-nebula-surface rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">PENDING NEGOTIATIONS</span>
               <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
@@ -6855,7 +6911,7 @@ export function AdminPlansPage() {
             <p className="text-xs text-amber-600 font-bold">Requires executive review</p>
           </div>
 
-          <div className="kpi-card p-6 bg-nebula-surface rounded-3xl border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-nebula-surface rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">AVG RETAINER VALUE</span>
               <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-sm">
@@ -6866,7 +6922,7 @@ export function AdminPlansPage() {
             <p className="text-xs text-emerald-600 font-bold">High LTV retention</p>
           </div>
 
-          <div className="kpi-card p-6 bg-nebula-surface rounded-3xl border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-nebula-surface rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">WIN / CLOSING RATE</span>
               <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
@@ -6900,14 +6956,14 @@ export function AdminPlansPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-base text-white">{plan.display_name}</h4>
-                    <span className="px-2.5 py-0.5 rounded-full bg-nebula-glow/15 text-nebula-glow text-[10px] font-bold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-nebula-glow text-[10px] font-bold">
                       {plan.subscribers} Active Clients
                     </span>
                   </div>
                   <div className="text-3xl font-black text-white">
                     ₹{plan.price_monthly.toLocaleString("en-IN")} <span className="text-xs font-normal text-nebula-mist">/mo</span>
                   </div>
-                  <ul className="space-y-2 text-xs text-slate-100 pt-2 border-t border-nebula-steel/60">
+                  <ul className="space-y-2 text-xs text-[#F1F5F9] pt-2 border-t border-nebula-steel/60">
                     {plan.features.map((f, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <Check className="size-3.5 text-emerald-600 shrink-0" />
@@ -6964,7 +7020,7 @@ export function AdminPlansPage() {
 
           {/* Search and Tabs */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-nebula-steel pb-4">
-            <div className="flex items-center gap-1 bg-nebula-surface p-1 rounded-xl text-xs font-bold text-slate-100 overflow-x-auto">
+            <div className="flex items-center gap-1 bg-nebula-surface p-1 rounded-xl text-xs font-bold text-[#F1F5F9] overflow-x-auto">
               {[
                 { id: "all", label: "All Negotiations" },
                 { id: "pending", label: `Pending Review (${pendingCount})` },
@@ -7022,7 +7078,7 @@ export function AdminPlansPage() {
                           <h4 className="font-bold text-sm text-white">{item.clientName}</h4>
                           <span className="text-[10px] text-nebula-mist font-semibold">{item.requestedAt}</span>
                         </div>
-                        <p className="text-xs text-slate-100 font-medium">{item.targetTopic}</p>
+                        <p className="text-xs text-[#F1F5F9] font-medium">{item.targetTopic}</p>
                         {item.clientEmail && <p className="text-[10px] text-nebula-mist">{item.clientEmail}</p>}
                       </div>
                     </div>
@@ -7095,7 +7151,7 @@ export function AdminPlansPage() {
 
                   {/* Scope Notes */}
                   {item.notes && (
-                    <div className="p-3 bg-nebula-surface rounded-xl text-xs text-slate-100 border border-nebula-steel font-medium">
+                    <div className="p-3 bg-nebula-surface rounded-xl text-xs text-[#F1F5F9] border border-nebula-steel font-medium">
                       <strong className="text-white font-bold">Client Notes:</strong> "{item.notes}"
                     </div>
                   )}
@@ -7114,7 +7170,7 @@ export function AdminPlansPage() {
               <h3 className="text-xl font-black text-white tracking-tight">Active Sales & Retainer Pipeline</h3>
               <p className="text-xs text-nebula-mist mt-0.5">High-touch commercial prospects, contract values, and closing probabilities</p>
             </div>
-            <span className="px-3 py-1 rounded-full bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30 text-xs font-bold">
+            <span className="px-3 py-1 rounded-full bg-[#7FA0D6]/15 text-nebula-glow border border-[#7FA0D6]/30 text-xs font-bold">
               {deals.length} Active Deals
             </span>
           </div>
@@ -7136,7 +7192,7 @@ export function AdminPlansPage() {
                 {deals.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="py-10 text-center text-nebula-mist">
-                      <p className="text-xs font-bold text-slate-100">No active pipeline deals</p>
+                      <p className="text-xs font-bold text-[#F1F5F9]">No active pipeline deals</p>
                       <p className="text-[11px] text-nebula-mist mt-0.5">Real sales prospect deals will appear here once initiated.</p>
                     </td>
                   </tr>
@@ -7151,7 +7207,7 @@ export function AdminPlansPage() {
                           <span>{d.client}</span>
                         </div>
                       </td>
-                      <td className="py-4 text-slate-100 font-medium">{d.scope}</td>
+                      <td className="py-4 text-[#F1F5F9] font-medium">{d.scope}</td>
                       <td className="py-4 font-black text-white">₹{d.value.toLocaleString("en-IN")} / yr</td>
                       <td className="py-4">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${d.stageBadge}`}>
@@ -7159,7 +7215,7 @@ export function AdminPlansPage() {
                         </span>
                       </td>
                       <td className="py-4 font-bold text-emerald-600">{d.probability}</td>
-                      <td className="py-4 text-slate-100 font-medium">{d.owner}</td>
+                      <td className="py-4 text-[#F1F5F9] font-medium">{d.owner}</td>
                       <td className="py-4 text-right pr-2">
                         <button
                           type="button"
@@ -7186,14 +7242,14 @@ export function AdminPlansPage() {
           <div className="w-full max-w-md rounded-3xl bg-nebula-surface p-6 shadow-2xl space-y-4 border border-nebula-steel">
             <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <h3 className="text-base font-bold text-white">Edit Tier: {editingPlan.display_name}</h3>
-              <button type="button" onClick={() => setEditingPlan(null)} className="p-1 text-nebula-mist hover:text-slate-100">
+              <button type="button" onClick={() => setEditingPlan(null)} className="p-1 text-nebula-mist hover:text-[#F1F5F9]">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSaveTierTerms} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Monthly Retainer Price (₹ INR)</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Monthly Retainer Price (₹ INR)</label>
                 <input
                   type="number"
                   required
@@ -7204,7 +7260,7 @@ export function AdminPlansPage() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Features & Deliverables Quota (One per line)</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Features & Deliverables Quota (One per line)</label>
                 <textarea
                   rows={4}
                   required
@@ -7215,7 +7271,7 @@ export function AdminPlansPage() {
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
-                <button type="button" onClick={() => setEditingPlan(null)} className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer">
+                <button type="button" onClick={() => setEditingPlan(null)} className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer">
@@ -7235,18 +7291,18 @@ export function AdminPlansPage() {
           <div className="w-full max-w-md rounded-3xl bg-nebula-surface p-6 shadow-2xl space-y-4 border border-nebula-steel">
             <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <h3 className="text-base font-bold text-white">Decline Plan Negotiation</h3>
-              <button type="button" onClick={() => setDeclineModalItem(null)} className="p-1 text-nebula-mist hover:text-slate-100">
+              <button type="button" onClick={() => setDeclineModalItem(null)} className="p-1 text-nebula-mist hover:text-[#F1F5F9]">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleConfirmDecline} className="space-y-3 text-xs">
-              <p className="text-slate-100">
+              <p className="text-[#F1F5F9]">
                 Are you sure you want to decline the proposed custom retainer for <strong>{declineModalItem.clientName}</strong>?
               </p>
 
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Reason for Rejection</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Reason for Rejection</label>
                 <textarea
                   rows={3}
                   required
@@ -7258,7 +7314,7 @@ export function AdminPlansPage() {
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
-                <button type="button" onClick={() => setDeclineModalItem(null)} className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer">
+                <button type="button" onClick={() => setDeclineModalItem(null)} className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 cursor-pointer">
@@ -7278,14 +7334,14 @@ export function AdminPlansPage() {
           <div className="w-full max-w-md rounded-3xl bg-nebula-surface p-6 shadow-2xl space-y-4 border border-nebula-steel">
             <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <h3 className="text-base font-bold text-white">Submit Counter Offer</h3>
-              <button type="button" onClick={() => setCounterModalItem(null)} className="p-1 text-nebula-mist hover:text-slate-100">
+              <button type="button" onClick={() => setCounterModalItem(null)} className="p-1 text-nebula-mist hover:text-[#F1F5F9]">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleConfirmCounter} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Counter Proposed Rate (₹ INR / mo)</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Counter Proposed Rate (₹ INR / mo)</label>
                 <input
                   type="number"
                   required
@@ -7296,7 +7352,7 @@ export function AdminPlansPage() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Counter Offer Notes / Scope Terms</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Counter Offer Notes / Scope Terms</label>
                 <textarea
                   rows={3}
                   placeholder="e.g. We can offer ₹85,000/mo with 12-month commitment."
@@ -7307,7 +7363,7 @@ export function AdminPlansPage() {
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
-                <button type="button" onClick={() => setCounterModalItem(null)} className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer">
+                <button type="button" onClick={() => setCounterModalItem(null)} className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-purple-600 text-white font-bold hover:bg-purple-700 cursor-pointer">
@@ -7327,14 +7383,14 @@ export function AdminPlansPage() {
           <div className="w-full max-w-md rounded-3xl bg-nebula-surface p-6 shadow-2xl space-y-4 border border-nebula-steel">
             <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <h3 className="text-base font-bold text-white">Initiate Custom Retainer Proposal</h3>
-              <button type="button" onClick={() => setIsNewProposalOpen(false)} className="p-1 text-nebula-mist hover:text-slate-100">
+              <button type="button" onClick={() => setIsNewProposalOpen(false)} className="p-1 text-nebula-mist hover:text-[#F1F5F9]">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateProposalSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Client Brand Name</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Client Brand Name</label>
                 <input
                   type="text"
                   required
@@ -7346,7 +7402,7 @@ export function AdminPlansPage() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Current Retainer Plan</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Current Retainer Plan</label>
                 <input
                   type="text"
                   value={newPropCurrentPlan}
@@ -7356,7 +7412,7 @@ export function AdminPlansPage() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Target Plan & Custom Scope</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Target Plan & Custom Scope</label>
                 <input
                   type="text"
                   required
@@ -7368,7 +7424,7 @@ export function AdminPlansPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Standard Rate (₹/mo)</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Standard Rate (₹/mo)</label>
                   <input
                     type="number"
                     value={newPropStandardRate}
@@ -7377,7 +7433,7 @@ export function AdminPlansPage() {
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Proposed Rate (₹/mo)</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Proposed Rate (₹/mo)</label>
                   <input
                     type="number"
                     required
@@ -7389,7 +7445,7 @@ export function AdminPlansPage() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Negotiation Scope Notes & Commitments</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Negotiation Scope Notes & Commitments</label>
                 <textarea
                   rows={3}
                   placeholder="e.g. 12-month contract lock-in with 2 dedicated creative pods."
@@ -7400,7 +7456,7 @@ export function AdminPlansPage() {
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
-                <button type="button" onClick={() => setIsNewProposalOpen(false)} className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer">
+                <button type="button" onClick={() => setIsNewProposalOpen(false)} className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer">
@@ -7464,7 +7520,7 @@ export function AdminPlansPage() {
                 className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
                   manageMode === "edit"
                     ? "bg-nebula-surface text-white shadow-xs font-black"
-                    : "text-slate-100 hover:text-white"
+                    : "text-[#F1F5F9] hover:text-white"
                 }`}
               >
                 📝 Edit Contract
@@ -7508,7 +7564,7 @@ export function AdminPlansPage() {
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-nebula-navy border border-nebula-steel text-xs space-y-2 text-slate-100">
+                <div className="p-4 rounded-2xl bg-nebula-navy border border-nebula-steel text-xs space-y-2 text-[#F1F5F9]">
                   <div className="flex justify-between">
                     <span className="font-semibold text-nebula-mist">Client:</span>
                     <strong className="text-white">{manageDealModal.client}</strong>
@@ -7527,7 +7583,7 @@ export function AdminPlansPage() {
                   <button
                     type="button"
                     onClick={() => setManageMode("edit")}
-                    className="px-4 py-2.5 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel text-xs font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer"
                   >
                     Go Back
                   </button>
@@ -7559,7 +7615,7 @@ export function AdminPlansPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Refund Amount (₹ INR)</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Refund Amount (₹ INR)</label>
                     <input
                       type="number"
                       required
@@ -7571,7 +7627,7 @@ export function AdminPlansPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-100 mb-1">Refund Method</label>
+                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Refund Method</label>
                     <select
                       value={refundMethodInput}
                       onChange={(e) => setRefundMethodInput(e.target.value)}
@@ -7585,7 +7641,7 @@ export function AdminPlansPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-100 mb-1">Reason for Refund</label>
+                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Reason for Refund</label>
                   <select
                     value={refundReasonInput}
                     onChange={(e) => setRefundReasonInput(e.target.value)}
@@ -7602,7 +7658,7 @@ export function AdminPlansPage() {
                   <button
                     type="button"
                     onClick={() => setManageMode("edit")}
-                    className="px-4 py-2.5 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel text-xs font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer"
                   >
                     Go Back
                   </button>
@@ -7636,7 +7692,7 @@ export function AdminPlansPage() {
             <button
               type="button"
               onClick={() => setDealSuccessModal(null)}
-              className="absolute top-4 right-4 size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist hover:text-slate-100 flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-4 right-4 size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Close modal"
             >
               <X className="size-4" />
@@ -7647,7 +7703,7 @@ export function AdminPlansPage() {
             </div>
 
             <h3 className="text-xl font-black text-white tracking-tight">{dealSuccessModal.title}</h3>
-            <p className="text-xs sm:text-sm text-slate-100 mt-2 leading-relaxed max-w-sm">{dealSuccessModal.message}</p>
+            <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm">{dealSuccessModal.message}</p>
 
             <div className="w-full mt-6">
               <button

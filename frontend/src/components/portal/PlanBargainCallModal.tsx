@@ -103,16 +103,30 @@ export function PlanBargainCallModal({
     try {
       setLoading(true);
       setError(null);
-      await request("/api/v1/portal/book-call", {
-        method: "POST",
-        body: JSON.stringify({
-          target_topic: targetTopic,
-          proposed_offer: proposedOffer || undefined,
-          phone_number: phoneNumber,
-          preferred_time: preferredTime,
-          notes: notes || undefined,
-        }),
-      });
+      try {
+        await request("/api/negotiations/submit", {
+          method: "POST",
+          body: JSON.stringify({
+            proposed_budget: proposedOffer || undefined,
+            contact_phone: phoneNumber,
+            preferred_window: preferredTime,
+            target_topic: targetTopic,
+            notes: notes || undefined,
+          }),
+        });
+      } catch {
+        // Fallback to legacy book-call endpoint if needed
+        await request("/api/v1/portal/book-call", {
+          method: "POST",
+          body: JSON.stringify({
+            target_topic: targetTopic,
+            proposed_offer: proposedOffer || undefined,
+            phone_number: phoneNumber,
+            preferred_time: preferredTime,
+            notes: notes || undefined,
+          }),
+        });
+      }
 
       setSubmitted(true);
       onSuccess?.();

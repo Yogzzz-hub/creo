@@ -127,6 +127,27 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
   });
 
   useEffect(() => {
+    if (plans && plans.length > 0 && !selectedPlanId) {
+      const params = new URLSearchParams(window.location.search);
+      const rawPlan = params.get("plan")?.toLowerCase() || (params.get("intent") === "sample" ? "starter" : null);
+      if (rawPlan) {
+        const targetName = rawPlan === "pro" ? "scale" : rawPlan;
+        const found = plans.find(
+          (p) => p.id.toLowerCase() === targetName || p.name.toLowerCase() === targetName
+        );
+        if (found) {
+          setSelectedPlanId(found.id);
+          return;
+        }
+      }
+      const recommended = plans.find((p) => p.is_recommended);
+      if (recommended) {
+        setSelectedPlanId(recommended.id);
+      }
+    }
+  }, [plans, selectedPlanId]);
+
+  useEffect(() => {
     if (!isAlreadyPaid) preloadRazorpay();
   }, [isAlreadyPaid]);
 

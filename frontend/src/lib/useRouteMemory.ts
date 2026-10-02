@@ -102,8 +102,8 @@ export function getPostLoginRedirect(
   redirectedFrom?: string | null,
   roleHome?: string,
 ): string {
-  // 1. Explicit redirect from URL param (highest priority)
-  if (redirectedFrom) {
+  // 1. Explicit redirect from URL param (highest priority, must be valid for role)
+  if (redirectedFrom && isRouteValidForRole(redirectedFrom, role)) {
     return redirectedFrom;
   }
 

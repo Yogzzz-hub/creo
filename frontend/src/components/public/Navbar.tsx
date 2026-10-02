@@ -8,8 +8,10 @@ import { getRoleHome } from "../auth/ProtectedRoute";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
-  { label: "About", href: "/about" },
+  { label: "Work", href: "/work" },
   { label: "Pricing", href: "/pricing" },
+  { label: "FAQ", href: "/faq" },
+  { label: "About", href: "/about" },
 ];
 
 export function Navbar() {

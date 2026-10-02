@@ -688,3 +688,31 @@ BEGIN
     END IF;
 END $$;
 
+-- 4.12 SAMPLE REQUESTS
+CREATE TABLE IF NOT EXISTS sample_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) NOT NULL,
+    instagram_handle VARCHAR(255) NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending' NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- 4.13 PLATFORM SETTINGS
+CREATE TABLE IF NOT EXISTS platform_settings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    key VARCHAR(100) UNIQUE NOT NULL,
+    value JSONB DEFAULT '{}'::jsonb NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- 4.14 ESCALATION STATES
+CREATE TABLE IF NOT EXISTS escalation_states (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
+    level VARCHAR(50) DEFAULT 'breached' NOT NULL,
+    resolved BOOLEAN DEFAULT false NOT NULL,
+    details JSONB DEFAULT '{}'::jsonb NOT NULL,
+    breached_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+
