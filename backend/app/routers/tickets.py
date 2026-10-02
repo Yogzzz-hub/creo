@@ -270,7 +270,7 @@ async def add_ticket_message(
 
     if actor.role not in (UserRole.CLIENT, "client"):
         from app.models.ops import Notification
-        from app.models.auth import User
+        from app.models.user import User
         user = await db.get(User, actor.user_id)
         sender_name = user.full_name if user else "Support"
         notif = Notification(

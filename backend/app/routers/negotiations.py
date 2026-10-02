@@ -122,7 +122,6 @@ async def submit_negotiation(
                 title=f"📞 Plan Bargain Call: {client_name}",
                 message=f"{client_name} ({client_user.email}) requested a call to bargain plan: {payload.target_topic or 'Custom Pricing'}. Contact: {phone} (Preferred: {payload.preferred_window}){offer_detail}",
                 link=redirect_url,
-                type="plan_negotiation",
             )
         )
 
@@ -288,8 +287,7 @@ async def approve_negotiation(
             user_id=neg.client_id,
             title="🎉 Custom Plan Approved!",
             message=f"Your custom negotiated plan of ₹{agreed_amt:,}/mo has been approved! You can now subscribe via Razorpay.",
-            link="/client/plans",
-            type="custom_plan_approved",
+            link="/portal/settings",
         )
     )
 

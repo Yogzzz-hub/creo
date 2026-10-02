@@ -233,8 +233,9 @@ async def confirm_order(
         return ConfirmPaymentResponse(status="active", subscription_id=sub.id)
 
     # Poll internal DB for up to 6 seconds waiting for asynchronous webhook
-    deadline = asyncio.get_event_loop().time() + 6.0
-    while asyncio.get_event_loop().time() < deadline:
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + 6.0
+    while loop.time() < deadline:
         await db.refresh(sub)
         if sub.status in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING):
             return ConfirmPaymentResponse(status="active", subscription_id=sub.id)
