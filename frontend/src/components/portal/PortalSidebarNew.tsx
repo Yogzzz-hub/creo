@@ -56,7 +56,13 @@ export function PortalSidebarNew() {
   const clientId = user?.id || "00000000-0000-0000-0000-000000000001";
   const { data: dashboardData } = useQuery({
     queryKey: ["portal", "dashboard", clientId],
-    queryFn: () => request<any>(`/api/v1/portal/dashboard?client_id=${clientId}`),
+    queryFn: async () => {
+      try {
+        return await request<any>(`/api/v1/portal/dashboard?client_id=${clientId}`);
+      } catch {
+        return null;
+      }
+    },
     staleTime: 60000,
   });
 

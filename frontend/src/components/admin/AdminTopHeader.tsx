@@ -521,17 +521,6 @@ export function AdminTopHeader({
             )}
           </div>
           
-          {/* Quick Return Button for Admins viewing Client Portal */}
-          {isAdminOrSuper && location.pathname.startsWith("/portal") && (
-            <Link
-              to="/admin"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 border border-[#7FA0D6]/30 text-[#7FA0D6] text-xs font-bold transition-all shadow-xs"
-              title="Return to Admin Ops Console"
-            >
-              <span>Admin Console</span>
-              <ExternalLink className="w-3 h-3" />
-            </Link>
-          )}
 
           {/* Profile Avatar with Interactive Dropdown Menu */}
           <div className="relative" ref={profileRef}>
