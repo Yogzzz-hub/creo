@@ -36,23 +36,6 @@ export function PortalDeliverablesPage() {
     }
   }, [deliverables, selectedId]);
 
-  if (!gate.isReady || (gate.isComplete && isLoading)) {
-    return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Deliverables Queue" />;
-  }
-
-  if (!gate.isComplete) {
-    return (
-      <div className="flex items-center justify-center py-6 sm:py-10">
-        <SubscriptionLockedState
-          title="Deliverables Queue Locked"
-          description="Your creative deliverables queue and sign-off docks will activate as soon as your workspace setup is complete."
-        />
-      </div>
-    );
-  }
-
-  const selectedItem: any = deliverables.find((d: any) => d.id === selectedId);
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
@@ -79,6 +62,23 @@ export function PortalDeliverablesPage() {
       setCommentText("");
     },
   });
+
+  if (!gate.isReady || (gate.isComplete && isLoading)) {
+    return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Deliverables Queue" />;
+  }
+
+  if (!gate.isComplete) {
+    return (
+      <div className="flex items-center justify-center py-6 sm:py-10">
+        <SubscriptionLockedState
+          title="Deliverables Queue Locked"
+          description="Your creative deliverables queue and sign-off docks will activate as soon as your workspace setup is complete."
+        />
+      </div>
+    );
+  }
+
+  const selectedItem: any = deliverables.find((d: any) => d.id === selectedId);
 
   const handleApprove = () => {
     if (selectedId) approveMutation.mutate(selectedId);

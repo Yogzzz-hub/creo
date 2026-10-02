@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
@@ -148,9 +148,11 @@ export function PortalCreativePodPage() {
   const allMembers = podLead ? [podLead, ...assignedTeam.filter((m) => m.id !== podLead.id)] : assignedTeam;
 
   // Set default active recipient to pod lead once loaded
-  if (!activeRecipientId && podLead && (podLead.id || podLead.user_id)) {
-    setActiveRecipientId(podLead.id || podLead.user_id || null);
-  }
+  useEffect(() => {
+    if (!activeRecipientId && podLead && (podLead.id || podLead.user_id)) {
+      setActiveRecipientId(podLead.id || podLead.user_id || null);
+    }
+  }, [activeRecipientId, podLead]);
 
   // Avatar color palette
   const AVATAR_COLORS = [
