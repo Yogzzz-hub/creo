@@ -103,7 +103,7 @@ export function AdminSidebar() {
       label: "Revenue Engine",
       items: [
         { label: "Manage Revenues", href: "/admin/revenue", icon: TrendingUp },
-        { label: "Plans & Negotiations", href: "/admin/plans", icon: FileText },
+        { label: "Plans & Negotiations", href: "/admin/plans-and-negotiations", icon: FileText },
       ],
     },
     {

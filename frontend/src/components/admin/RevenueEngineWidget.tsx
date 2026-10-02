@@ -261,7 +261,7 @@ export function RevenueEngineWidget({ kpis, clients: _clients }: RevenueEngineWi
           Manage Revenues & Analytics
         </Link>
         <Link
-          to="/admin/plans"
+          to="/admin/plans-and-negotiations"
           onClick={(e) => e.stopPropagation()}
           className="flex-1 text-center py-2 bg-[#7FA0D6] hover:bg-blue-600 hover:border-blue-400 hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] text-white rounded-xl text-[11px] font-bold border border-blue-500 transition-all duration-200 shadow-md"
         >

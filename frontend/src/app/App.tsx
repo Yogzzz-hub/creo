@@ -78,11 +78,11 @@ const ClientTicketDetailPage = lazy(() =>
 const AdminRevenuePage = lazy(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminRevenuePage }))
 );
-const AdminPlansPage = lazy(() =>
-  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminPlansPage }))
-);
 const AdminSalesPage = lazy(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminSalesPage }))
+);
+const AdminPlansAndNegotiationsPage = lazy(() =>
+  import("../pages/admin/AdminPlansAndNegotiationsPage").then((m) => ({ default: m.AdminPlansAndNegotiationsPage }))
 );
 
 const AdminTeamManagementPage = lazy(() =>
@@ -357,6 +357,7 @@ export function App() {
             <Routes>
               {/* Universal Support Redirect */}
               <Route path="/support" element={<SupportRedirect />} />
+              <Route path="/client/plans" element={<Navigate to="/portal/payments" replace />} />
 
               {/* 1. Public Marketing Pages (Open to All) */}
               <Route element={<PublicLayout />}>
@@ -440,9 +441,9 @@ export function App() {
                 <Route path="creative-pod" element={<PortalCreativePodPage />} />
                 <Route path="creative_pod" element={<PortalCreativePodPage />} />
                 <Route path="payments" element={<PortalPaymentsPage />} />
+                <Route path="plans" element={<PortalPaymentsPage />} />
                 <Route path="support" element={<SimpleErrorBoundary name="Support"><PortalSupportPage /></SimpleErrorBoundary>} />
                 <Route path="support/:ticketId" element={<ClientTicketDetailPage />} />
-
                 <Route path="account" element={<PortalAccountPage />} />
                 <Route path="brand-dna" element={<Navigate to="/portal/account?tab=brand" replace />} />
                 <Route path="library" element={<PortalLibraryPage />} />
@@ -533,10 +534,18 @@ export function App() {
                   }
                 />
                 <Route
+                  path="/admin/plans-and-negotiations"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "sales"]}>
+                      <AdminPlansAndNegotiationsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/admin/plans"
                   element={
-                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                      <AdminPlansPage />
+                    <ProtectedRoute allowedRoles={["admin", "super_admin", "sales"]}>
+                      <AdminPlansAndNegotiationsPage />
                     </ProtectedRoute>
                   }
                 />
