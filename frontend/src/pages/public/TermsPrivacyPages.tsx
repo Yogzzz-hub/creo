@@ -28,12 +28,12 @@ const TERMS_SECTIONS = [
   {
     id: "plans",
     title: "2. Subscription Plans and Quotas",
-    badge: "Month-to-Month Retainers",
+    badge: "30 Days' Notice Required",
     content: [
       "Creo offers three subscription tiers, each with defined content deliverable quotas:",
       "Starter Plan — Designed for small businesses beginning their digital marketing journey. Includes a fixed monthly quota of social media content pieces, one dedicated content creator, and standard turnaround times.",
       "Growth Plan — For businesses scaling their online presence. Includes an increased monthly content quota, a dedicated content team (writer + designer), priority turnaround times, and access to advanced analytics.",
-      "Pro Plan — For established brands requiring full-stack marketing. Includes the highest content quota, a dedicated brand team, priority support with guaranteed SLAs, advanced content strategy, and access to all platform features including Instagram publishing.",
+      "Scale Plan — For established brands requiring full-stack marketing. Includes the highest content quota, a dedicated brand team, priority support with guaranteed SLAs, advanced content strategy, and access to all platform features including Instagram publishing.",
       "Quota limits are enforced on a calendar-month basis. Unused content quotas do not roll over to the next month. If you exceed your plan's quota, additional content can be requested as Add-on orders (see Section 8).",
       "Plan pricing is displayed on our Pricing page and may be updated periodically. Existing subscribers are notified of pricing changes at least 30 days before they take effect.",
     ],
@@ -70,7 +70,7 @@ const TERMS_SECTIONS = [
     badge: "Strict Business SLAs",
     content: [
       "All service level agreements are measured in business days (Monday through Friday, excluding Indian public holidays):",
-      "New Content Delivery — Content deliverables are produced and submitted for client approval within the turnaround time specified by your subscription plan. Standard turnaround is 3 business days for Starter, 2 business days for Growth, and 1 business day for Pro.",
+      "New Content Delivery — Content deliverables are produced and submitted for client approval within the turnaround time specified by your subscription plan. Standard turnaround is 3 business days for Starter, 2 business days for Growth, and 24 hours for Scale.",
       "Revision Turnaround — When a client requests revisions on a submitted deliverable, the creative team will deliver the revised version within 24 business hours of the revision request.",
       "Support Ticket Response — Our support team responds to all tickets within 8 business hours during standard working hours (10:00 AM to 7:00 PM IST, Monday through Friday).",
       "Escalation Response — High-priority escalations are acknowledged within 4 business hours and resolved within 1 business day.",
@@ -79,10 +79,10 @@ const TERMS_SECTIONS = [
   {
     id: "revisions",
     title: "6. Content Approval and Revisions",
-    badge: "2 Rounds Included",
+    badge: "1-3 Rounds Included",
     content: [
       "All content deliverables are submitted through the Creo client portal for your review and approval. You have the option to approve, reject, or request revisions for each deliverable.",
-      'Revisions are limited to 2 rounds per deliverable for subscription content. If content remains unapproved after 2 rounds of revisions, the deliverable is marked as "Final" and counted against your monthly quota.',
+      'Revisions are limited per deliverable based on your subscription (1 for Starter, 2 for Growth, 3 for Scale). If content remains unapproved after all revisions are used, the deliverable is marked as "Final" and counted against your monthly quota.',
       "Content that is not reviewed within 5 business days of submission is automatically approved to maintain production cadence. You will receive a notification before auto-approval takes effect.",
       "You may reject a deliverable with mandatory feedback. Rejected deliverables are replaced at no additional cost within the standard turnaround time for your plan.",
     ],
@@ -286,63 +286,63 @@ export function TermsPage() {
   });
 
   return (
-    <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#7FA0D6]/30">
+    <div className="w-full bg-nebula-void text-slate-50 min-h-screen font-sans selection:bg-nebula-glow/30">
       {/* Hero Header */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#0B111C] via-[#050810] to-[#050810] pt-10 pb-10 sm:pt-14 sm:pb-14 border-b border-[#222F44]">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#7FA0D6]/10 rounded-full blur-3xl pointer-events-none" />
+      <section className="relative overflow-hidden bg-gradient-to-b from-nebula-navy via-nebula-void to-nebula-void pt-10 pb-10 sm:pt-14 sm:pb-14 border-b border-nebula-steel">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-nebula-glow/10 rounded-full blur-3xl pointer-events-none" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="mb-4">
             <Link
               to="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#97A0B3] hover:text-[#7FA0D6] transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-nebula-mist hover:text-nebula-glow transition-colors"
             >
               <ArrowLeft className="size-3.5" />
               <span>Back to Home</span>
             </Link>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] px-3.5 py-1 text-xs font-bold text-[#7FA0D6] border border-[#2A3446] mb-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-nebula-surface px-3.5 py-1 text-xs font-bold text-nebula-glow border border-nebula-steel mb-4">
             <ShieldCheck className="size-3.5" />
             <span>Official Legal Governance</span>
           </div>
 
-          <h1 className="text-3xl font-black tracking-tight text-[#F8FAFC] sm:text-5xl">
+          <h1 className="text-3xl font-black tracking-tight text-slate-50 sm:text-5xl">
             Terms &amp; Conditions
           </h1>
-          <p className="mt-2 text-xs sm:text-sm text-[#97A0B3] font-medium">
+          <p className="mt-2 text-xs sm:text-sm text-nebula-mist font-medium">
             Last updated: June 29, 2026 &bull; Effective for all active client retainers
           </p>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#97A0B3] sm:text-base">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-nebula-mist sm:text-base">
             Transparent, founder-friendly terms governing our monthly production retainers, guaranteed turnaround SLAs, revision cycles, and client portal access.
           </p>
 
           {/* Quick SLA Highlights */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#BCCCE6]">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446]">
-              <Clock className="size-3.5 text-[#7FA0D6]" /> 7-Day First Batch SLA
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-nebula-periwinkle">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-nebula-surface border border-nebula-steel">
+              <Clock className="size-3.5 text-nebula-glow" /> 7-Day First Batch SLA
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446]">
-              <RefreshCw className="size-3.5 text-[#7FA0D6]" /> 2 Revision Rounds Included
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-nebula-surface border border-nebula-steel">
+              <RefreshCw className="size-3.5 text-nebula-glow" /> 1–3 Revision Rounds (by Plan)
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446]">
-              <CreditCard className="size-3.5 text-emerald-400" /> Month-to-Month. Cancel Anytime.
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-nebula-surface border border-nebula-steel">
+              <CreditCard className="size-3.5 text-emerald-400" /> 30 Days' Notice Cancellation
             </span>
           </div>
 
           {/* In-Page Search */}
           <div className="mt-8 max-w-lg mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-[#97A0B3]" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-nebula-mist" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search terms, SLAs, revisions, quotas..."
-              className="w-full rounded-2xl border border-[#2A3446] bg-[#0B111C] pl-11 pr-10 py-3 text-sm text-[#F8FAFC] placeholder-[#97A0B3]/50 shadow-xs focus:ring-2 focus:ring-[#7FA0D6]/30 focus:border-[#7FA0D6] outline-none transition-all"
+              className="w-full rounded-2xl border border-nebula-steel bg-nebula-navy pl-11 pr-10 py-3 text-sm text-slate-50 placeholder-nebula-mist/50 shadow-xs focus:ring-2 focus:ring-nebula-glow/30 focus:border-nebula-glow outline-none transition-all"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-[#F8FAFC] cursor-pointer"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-nebula-mist hover:text-slate-50 cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -356,12 +356,12 @@ export function TermsPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Table of Contents Sidebar */}
-            <aside className="lg:col-span-4 sticky top-24 rounded-3xl border border-[#2A3446] bg-[#161F2D] p-6 shadow-xl hidden lg:block">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#222F44]">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#7FA0D6]">
+            <aside className="lg:col-span-4 sticky top-24 rounded-3xl border border-nebula-steel bg-nebula-surface p-6 shadow-xl hidden lg:block">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-nebula-steel">
+                <span className="text-xs font-bold uppercase tracking-wider text-nebula-glow">
                   Table of Contents
                 </span>
-                <span className="text-[11px] font-semibold text-[#97A0B3]">
+                <span className="text-[11px] font-semibold text-nebula-mist">
                   {TERMS_SECTIONS.length} Clauses
                 </span>
               </div>
@@ -373,8 +373,8 @@ export function TermsPage() {
                     onClick={() => setActiveSection(s.id)}
                     className={`block px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                       activeSection === s.id
-                        ? "bg-[#0B111C] text-[#7FA0D6] font-bold border border-[#7FA0D6]/30"
-                        : "text-[#97A0B3] hover:bg-[#0B111C]/60 hover:text-[#F8FAFC]"
+                        ? "bg-nebula-navy text-nebula-glow font-bold border border-nebula-glow/30"
+                        : "text-nebula-mist hover:bg-nebula-navy/60 hover:text-slate-50"
                     }`}
                   >
                     {s.title}
@@ -382,17 +382,17 @@ export function TermsPage() {
                 ))}
               </nav>
 
-              <div className="mt-6 pt-4 border-t border-[#222F44] flex flex-col gap-2">
+              <div className="mt-6 pt-4 border-t border-nebula-steel flex flex-col gap-2">
                 <Link
                   to="/privacy"
-                  className="inline-flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-semibold text-[#97A0B3] hover:border-[#7FA0D6]/40 hover:text-[#7FA0D6] transition-colors"
+                  className="inline-flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-nebula-navy border border-nebula-steel text-xs font-semibold text-nebula-mist hover:border-nebula-glow/40 hover:text-nebula-glow transition-colors"
                 >
                   <span>View Privacy Policy</span>
                   <ChevronRight className="size-3.5" />
                 </Link>
                 <Link
                   to="/pricing"
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#BCCCE6] text-[#050810] hover:bg-white text-xs font-bold transition-all shadow-sm"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-nebula-periwinkle text-nebula-void hover:bg-white text-xs font-bold transition-all shadow-sm"
                 >
                   <span>Explore Retainer Plans</span>
                   <ArrowRight className="size-3.5" />
@@ -403,16 +403,16 @@ export function TermsPage() {
             {/* Clauses Content */}
             <main className="lg:col-span-8 space-y-6">
               {filtered.length === 0 ? (
-                <div className="rounded-3xl border border-[#2A3446] bg-[#161F2D] p-12 text-center shadow-xl">
-                  <FileText className="size-10 text-[#97A0B3]/40 mx-auto mb-3" />
-                  <h3 className="text-base font-bold text-[#F8FAFC]">No matching clauses found</h3>
-                  <p className="text-xs text-[#97A0B3] mt-1">
+                <div className="rounded-3xl border border-nebula-steel bg-nebula-surface p-12 text-center shadow-xl">
+                  <FileText className="size-10 text-nebula-mist/40 mx-auto mb-3" />
+                  <h3 className="text-base font-bold text-slate-50">No matching clauses found</h3>
+                  <p className="text-xs text-nebula-mist mt-1">
                     Try searching with another keyword or reset the search filter.
                   </p>
                   <button
                     type="button"
                     onClick={() => setSearch("")}
-                    className="mt-4 px-4 py-2 rounded-xl bg-[#7FA0D6] text-[#050810] text-xs font-bold hover:bg-[#7FA0D6] transition-colors cursor-pointer"
+                    className="mt-4 px-4 py-2 rounded-xl bg-nebula-glow text-nebula-void text-xs font-bold hover:bg-nebula-glow transition-colors cursor-pointer"
                   >
                     Reset Search
                   </button>
@@ -422,20 +422,20 @@ export function TermsPage() {
                   <article
                     key={section.id}
                     id={section.id}
-                    className="rounded-3xl border border-[#2A3446] bg-[#161F2D] p-6 sm:p-8 shadow-xl hover:border-[#7FA0D6]/40 transition-colors"
+                    className="rounded-3xl border border-nebula-steel bg-nebula-surface p-6 sm:p-8 shadow-xl hover:border-nebula-glow/40 transition-colors"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-[#222F44]">
-                      <h2 className="text-lg sm:text-xl font-bold text-[#F8FAFC]">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-nebula-steel">
+                      <h2 className="text-lg sm:text-xl font-bold text-slate-50">
                         {section.title}
                       </h2>
                       {section.badge && (
-                        <span className="rounded-full bg-[#0B111C] border border-[#7FA0D6]/30 px-3 py-0.5 text-[10px] font-bold text-[#7FA0D6]">
+                        <span className="rounded-full bg-nebula-navy border border-nebula-glow/30 px-3 py-0.5 text-[10px] font-bold text-nebula-glow">
                           {section.badge}
                         </span>
                       )}
                     </div>
 
-                    <div className="space-y-3.5 text-xs sm:text-sm leading-relaxed text-[#97A0B3]">
+                    <div className="space-y-3.5 text-xs sm:text-sm leading-relaxed text-nebula-mist">
                       {section.content.map((p, idx) => (
                         <p key={idx}>{p}</p>
                       ))}
@@ -445,19 +445,19 @@ export function TermsPage() {
               )}
 
               {/* Bottom Support Banner */}
-              <div className="rounded-3xl border border-[#2A3446] bg-[#121926] p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
+              <div className="rounded-3xl border border-nebula-steel bg-nebula-surface p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
                 <div>
-                  <h4 className="text-base font-bold text-[#F8FAFC]">
+                  <h4 className="text-base font-bold text-slate-50">
                     Need Clarification on Our Retainer Terms?
                   </h4>
-                  <p className="text-xs text-[#97A0B3] mt-1">
+                  <p className="text-xs text-nebula-mist mt-1">
                     Our team is available to explain deliverable SLAs, revision cycles, or custom enterprise contracts.
                   </p>
                 </div>
                 <div className="flex items-center gap-2.5 shrink-0">
                   <Link
                     to="/pricing"
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-bold text-[#F8FAFC] hover:border-[#7FA0D6]/40 hover:text-[#7FA0D6] transition-colors shadow-2xs"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel bg-nebula-navy text-xs font-bold text-slate-50 hover:border-nebula-glow/40 hover:text-nebula-glow transition-colors shadow-2xs"
                   >
                     Explore Plans
                   </Link>
@@ -465,7 +465,7 @@ export function TermsPage() {
                     href="https://wa.me/919941999415"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-5 py-2.5 rounded-xl bg-[#BCCCE6] text-[#050810] hover:bg-white text-xs font-bold transition-all shadow-sm"
+                    className="px-5 py-2.5 rounded-xl bg-nebula-periwinkle text-nebula-void hover:bg-white text-xs font-bold transition-all shadow-sm"
                   >
                     Contact Legal Desk
                   </a>
@@ -490,63 +490,63 @@ export function PrivacyPage() {
   });
 
   return (
-    <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#7FA0D6]/30">
+    <div className="w-full bg-nebula-void text-slate-50 min-h-screen font-sans selection:bg-nebula-glow/30">
       {/* Hero Header */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#0B111C] via-[#050810] to-[#050810] pt-10 pb-10 sm:pt-14 sm:pb-14 border-b border-[#222F44]">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#7FA0D6]/10 rounded-full blur-3xl pointer-events-none" />
+      <section className="relative overflow-hidden bg-gradient-to-b from-nebula-navy via-nebula-void to-nebula-void pt-10 pb-10 sm:pt-14 sm:pb-14 border-b border-nebula-steel">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-nebula-glow/10 rounded-full blur-3xl pointer-events-none" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="mb-4">
             <Link
               to="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#97A0B3] hover:text-[#7FA0D6] transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-nebula-mist hover:text-nebula-glow transition-colors"
             >
               <ArrowLeft className="size-3.5" />
               <span>Back to Home</span>
             </Link>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] px-3.5 py-1 text-xs font-bold text-[#7FA0D6] border border-[#2A3446] mb-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-nebula-surface px-3.5 py-1 text-xs font-bold text-nebula-glow border border-nebula-steel mb-4">
             <Lock className="size-3.5" />
             <span>Zero-Trust Data Protection</span>
           </div>
 
-          <h1 className="text-3xl font-black tracking-tight text-[#F8FAFC] sm:text-5xl">
+          <h1 className="text-3xl font-black tracking-tight text-slate-50 sm:text-5xl">
             Privacy Policy &amp; Data Security
           </h1>
-          <p className="mt-2 text-xs sm:text-sm text-[#97A0B3] font-medium">
+          <p className="mt-2 text-xs sm:text-sm text-nebula-mist font-medium">
             Last updated: June 29, 2026 &bull; Compliant with Global Privacy Regulations
           </p>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#97A0B3] sm:text-base">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-nebula-mist sm:text-base">
             How Creo encrypts, isolates, and protects your brand assets, Instagram tokens, and financial records with multi-tenant database isolation.
           </p>
 
           {/* Quick Security Highlights */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#BCCCE6]">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446]">
-              <ShieldCheck className="size-3.5 text-[#7FA0D6]" /> PostgreSQL Row-Level Security
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-nebula-periwinkle">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-nebula-surface border border-nebula-steel">
+              <ShieldCheck className="size-3.5 text-nebula-glow" /> PostgreSQL Row-Level Security
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446]">
-              <Lock className="size-3.5 text-[#7FA0D6]" /> AES-256 Storage &amp; Fernet Tokens
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-nebula-surface border border-nebula-steel">
+              <Lock className="size-3.5 text-nebula-glow" /> AES-256 Storage &amp; Fernet Tokens
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446]">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-nebula-surface border border-nebula-steel">
               <CheckCircle2 className="size-3.5 text-emerald-400" /> Never Sold. Never Scraped.
             </span>
           </div>
 
           {/* In-Page Search */}
           <div className="mt-8 max-w-lg mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-[#97A0B3]" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-nebula-mist" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search encryption, tokens, retention, rights..."
-              className="w-full rounded-2xl border border-[#2A3446] bg-[#0B111C] pl-11 pr-10 py-3 text-sm text-[#F8FAFC] placeholder-[#97A0B3]/50 shadow-xs focus:ring-2 focus:ring-[#7FA0D6]/30 focus:border-[#7FA0D6] outline-none transition-all"
+              className="w-full rounded-2xl border border-nebula-steel bg-nebula-navy pl-11 pr-10 py-3 text-sm text-slate-50 placeholder-nebula-mist/50 shadow-xs focus:ring-2 focus:ring-nebula-glow/30 focus:border-nebula-glow outline-none transition-all"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-[#F8FAFC] cursor-pointer"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-nebula-mist hover:text-slate-50 cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -560,12 +560,12 @@ export function PrivacyPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Table of Contents Sidebar */}
-            <aside className="lg:col-span-4 sticky top-24 rounded-3xl border border-[#2A3446] bg-[#161F2D] p-6 shadow-xl hidden lg:block">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#222F44]">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#7FA0D6]">
+            <aside className="lg:col-span-4 sticky top-24 rounded-3xl border border-nebula-steel bg-nebula-surface p-6 shadow-xl hidden lg:block">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-nebula-steel">
+                <span className="text-xs font-bold uppercase tracking-wider text-nebula-glow">
                   Privacy Index
                 </span>
-                <span className="text-[11px] font-semibold text-[#97A0B3]">
+                <span className="text-[11px] font-semibold text-nebula-mist">
                   {PRIVACY_SECTIONS.length} Clauses
                 </span>
               </div>
@@ -577,8 +577,8 @@ export function PrivacyPage() {
                     onClick={() => setActiveSection(s.id)}
                     className={`block px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                       activeSection === s.id
-                        ? "bg-[#0B111C] text-[#7FA0D6] font-bold border border-[#7FA0D6]/30"
-                        : "text-[#97A0B3] hover:bg-[#0B111C]/60 hover:text-[#F8FAFC]"
+                        ? "bg-nebula-navy text-nebula-glow font-bold border border-nebula-glow/30"
+                        : "text-nebula-mist hover:bg-nebula-navy/60 hover:text-slate-50"
                     }`}
                   >
                     {s.title}
@@ -586,17 +586,17 @@ export function PrivacyPage() {
                 ))}
               </nav>
 
-              <div className="mt-6 pt-4 border-t border-[#222F44] flex flex-col gap-2">
+              <div className="mt-6 pt-4 border-t border-nebula-steel flex flex-col gap-2">
                 <Link
                   to="/terms"
-                  className="inline-flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-semibold text-[#97A0B3] hover:border-[#7FA0D6]/40 hover:text-[#7FA0D6] transition-colors"
+                  className="inline-flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-nebula-navy border border-nebula-steel text-xs font-semibold text-nebula-mist hover:border-nebula-glow/40 hover:text-nebula-glow transition-colors"
                 >
                   <span>View Terms &amp; Conditions</span>
                   <ChevronRight className="size-3.5" />
                 </Link>
                 <Link
                   to="/pricing"
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#BCCCE6] text-[#050810] hover:bg-white text-xs font-bold transition-all shadow-sm"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-nebula-periwinkle text-nebula-void hover:bg-white text-xs font-bold transition-all shadow-sm"
                 >
                   <span>Explore Retainer Plans</span>
                   <ArrowRight className="size-3.5" />
@@ -607,16 +607,16 @@ export function PrivacyPage() {
             {/* Clauses Content */}
             <main className="lg:col-span-8 space-y-6">
               {filtered.length === 0 ? (
-                <div className="rounded-3xl border border-[#2A3446] bg-[#161F2D] p-12 text-center shadow-xl">
-                  <Lock className="size-10 text-[#97A0B3]/40 mx-auto mb-3" />
-                  <h3 className="text-base font-bold text-[#F8FAFC]">No matching clauses found</h3>
-                  <p className="text-xs text-[#97A0B3] mt-1">
+                <div className="rounded-3xl border border-nebula-steel bg-nebula-surface p-12 text-center shadow-xl">
+                  <Lock className="size-10 text-nebula-mist/40 mx-auto mb-3" />
+                  <h3 className="text-base font-bold text-slate-50">No matching clauses found</h3>
+                  <p className="text-xs text-nebula-mist mt-1">
                     Try searching with another keyword or reset the search filter.
                   </p>
                   <button
                     type="button"
                     onClick={() => setSearch("")}
-                    className="mt-4 px-4 py-2 rounded-xl bg-[#7FA0D6] text-[#050810] text-xs font-bold hover:bg-[#7FA0D6] transition-colors cursor-pointer"
+                    className="mt-4 px-4 py-2 rounded-xl bg-nebula-glow text-nebula-void text-xs font-bold hover:bg-nebula-glow transition-colors cursor-pointer"
                   >
                     Reset Search
                   </button>
@@ -626,20 +626,20 @@ export function PrivacyPage() {
                   <article
                     key={section.id}
                     id={section.id}
-                    className="rounded-3xl border border-[#2A3446] bg-[#161F2D] p-6 sm:p-8 shadow-xl hover:border-[#7FA0D6]/40 transition-colors"
+                    className="rounded-3xl border border-nebula-steel bg-nebula-surface p-6 sm:p-8 shadow-xl hover:border-nebula-glow/40 transition-colors"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-[#222F44]">
-                      <h2 className="text-lg sm:text-xl font-bold text-[#F8FAFC]">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-nebula-steel">
+                      <h2 className="text-lg sm:text-xl font-bold text-slate-50">
                         {section.title}
                       </h2>
                       {section.badge && (
-                        <span className="rounded-full bg-[#0B111C] border border-[#7FA0D6]/30 px-3 py-0.5 text-[10px] font-bold text-[#7FA0D6]">
+                        <span className="rounded-full bg-nebula-navy border border-nebula-glow/30 px-3 py-0.5 text-[10px] font-bold text-nebula-glow">
                           {section.badge}
                         </span>
                       )}
                     </div>
 
-                    <div className="space-y-3.5 text-xs sm:text-sm leading-relaxed text-[#97A0B3]">
+                    <div className="space-y-3.5 text-xs sm:text-sm leading-relaxed text-nebula-mist">
                       {section.content.map((p, idx) => (
                         <p key={idx}>{p}</p>
                       ))}
@@ -649,19 +649,19 @@ export function PrivacyPage() {
               )}
 
               {/* Bottom Privacy Banner */}
-              <div className="rounded-3xl border border-[#2A3446] bg-[#121926] p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
+              <div className="rounded-3xl border border-nebula-steel bg-nebula-surface p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
                 <div>
-                  <h4 className="text-base font-bold text-[#F8FAFC]">
+                  <h4 className="text-base font-bold text-slate-50">
                     Questions Regarding Your Data or Instagram Access?
                   </h4>
-                  <p className="text-xs text-[#97A0B3] mt-1">
+                  <p className="text-xs text-nebula-mist mt-1">
                     Contact our dedicated Privacy and Security Officer for data exports, token revocations, or compliance audits.
                   </p>
                 </div>
                 <div className="flex items-center gap-2.5 shrink-0">
                   <a
                     href="mailto:privacy@getcreo.in"
-                    className="px-5 py-2.5 rounded-xl bg-[#BCCCE6] text-[#050810] hover:bg-white text-xs font-bold transition-all shadow-sm"
+                    className="px-5 py-2.5 rounded-xl bg-nebula-periwinkle text-nebula-void hover:bg-white text-xs font-bold transition-all shadow-sm"
                   >
                     Email Privacy Officer
                   </a>

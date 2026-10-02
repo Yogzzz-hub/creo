@@ -291,7 +291,7 @@ async def commit_assignment(
 
     # Determine role-aware notification link
     staff_user = await db.get(User, staff_id)
-    if staff_user and staff_user.role in [UserRole.SPECIALIST, UserRole.CREATOR]:
+    if staff_user and staff_user.role in [UserRole.EDITOR, UserRole.DESIGNER]:
         task_link = f"/workstation/tasks?selected={task.id}"
     elif staff_user and staff_user.role == UserRole.TEAM_LEAD:
         task_link = f"/lead/tasks?selected={task.id}"

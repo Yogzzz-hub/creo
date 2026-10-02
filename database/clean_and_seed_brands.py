@@ -34,7 +34,7 @@ brands = [
         "brand_summary": "Minimalist Scandinavian interior aesthetics with natural sunlight and architectural negative space.",
         "plan_name": "growth",
         "stage": 5,
-        "quota": {"static_post": (15, 6), "reel": (8, 4), "story": (20, 11)}
+        "quota": {"static_post": (18, 6), "reel": (10, 4), "story": (20, 11)}
     },
     {
         "id": "00000000-0000-0000-0000-000000000006",
@@ -56,7 +56,7 @@ brands = [
         "brand_summary": "High-performance athletic conditioning, Olympic lifting, and science-backed recovery gym chain.",
         "plan_name": "pro",
         "stage": 5,
-        "quota": {"static_post": (30, 12), "reel": (16, 7), "story": (40, 19)}
+        "quota": {"static_post": (36, 12), "reel": (20, 7), "story": (40, 19)}
     },
     {
         "id": "00000000-0000-0000-0000-000000000008",
@@ -67,7 +67,7 @@ brands = [
         "brand_summary": "Ayurvedic clinical skincare formulated with Himalayan wildcrafted active botanicals.",
         "plan_name": "growth",
         "stage": 4,
-        "quota": {"static_post": (15, 4), "reel": (8, 3), "story": (20, 8)}
+        "quota": {"static_post": (18, 4), "reel": (10, 3), "story": (20, 8)}
     },
     {
         "id": "00000000-0000-0000-0000-000000000009",
@@ -78,7 +78,7 @@ brands = [
         "brand_summary": "Handwoven Chanderi, Banarasi silk, and sustainable luxury heritage apparel.",
         "plan_name": "pro",
         "stage": 5,
-        "quota": {"static_post": (30, 14), "reel": (16, 9), "story": (40, 22)}
+        "quota": {"static_post": (36, 14), "reel": (20, 9), "story": (40, 22)}
     }
 ]
 

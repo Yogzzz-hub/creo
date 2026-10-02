@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { Outlet, useLocation } from "react-router";
 import { useRouteMemory } from "../../lib/useRouteMemory";
-import { AdminSidebar } from "../admin/AdminSidebar";
+import { PortalSidebarNew } from "./PortalSidebarNew";
 import { AdminSidebarProvider } from "../admin/AdminSidebarContext";
 import { AdminTopHeader } from "../admin/AdminTopHeader";
 import { CreoInlineLoader } from "../ui/CreoLoader";
@@ -18,16 +18,16 @@ export function PortalLayout() {
 
   return (
     <AdminSidebarProvider>
-      <div className="portal-dark bento-theme min-h-screen w-full flex bg-[#0B111C] text-[#F8FAFC]">
+      <div className="portal-dark bento-theme min-h-screen w-full flex bg-nebula-navy text-slate-50">
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[999] focus:rounded-lg focus:bg-[#BCCCE6] focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-[#0B111C] focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] focus:ring-offset-2"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[999] focus:rounded-lg focus:bg-nebula-periwinkle focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-nebula-navy focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-nebula-glow focus:ring-offset-2"
         >
           Skip to content
         </a>
 
         {/* Permanent Desktop Sidebar (Always Visible) & Mobile Drawer */}
-        <AdminSidebar />
+        <PortalSidebarNew />
 
         {/* Main Content Area: Offset on desktop to sit beside the permanent sidebar */}
         <div className="flex-1 min-w-0 md:pl-64 lg:pl-72 flex flex-col min-h-screen">

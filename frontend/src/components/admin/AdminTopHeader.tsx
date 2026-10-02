@@ -206,26 +206,26 @@ export function AdminTopHeader({
   const getNotifIcon = (type?: string) => {
     switch (type) {
       case "leave":
-        return <CalendarCheck className="w-4 h-4 text-[#7FA0D6]" />;
+        return <CalendarCheck className="w-4 h-4 text-nebula-glow" />;
       case "revenue":
-        return <DollarSign className="w-4 h-4 text-[#BCCCE6]" />;
+        return <DollarSign className="w-4 h-4 text-nebula-periwinkle" />;
       case "team":
-        return <Users className="w-4 h-4 text-[#D8BF9B]" />;
+        return <Users className="w-4 h-4 text-nebula-sand" />;
       default:
-        return <ShieldCheck className="w-4 h-4 text-[#BCCCE6]" />;
+        return <ShieldCheck className="w-4 h-4 text-nebula-periwinkle" />;
     }
   };
 
   const getNotifBadgeBg = (type?: string) => {
     switch (type) {
       case "leave":
-        return "bg-[#7FA0D6]/15 border-[#7FA0D6]/30";
+        return "bg-nebula-glow/15 border-nebula-glow/30";
       case "revenue":
-        return "bg-[#BCCCE6]/15 border-[#BCCCE6]/30";
+        return "bg-nebula-periwinkle/15 border-nebula-periwinkle/30";
       case "team":
-        return "bg-[#D8BF9B]/15 border-[#D8BF9B]/30";
+        return "bg-nebula-sand/15 border-nebula-sand/30";
       default:
-        return "bg-[#BCCCE6]/15 border-[#BCCCE6]/30";
+        return "bg-nebula-periwinkle/15 border-nebula-periwinkle/30";
     }
   };
 
@@ -296,15 +296,15 @@ export function AdminTopHeader({
       : activeTab);
 
   return (
-    <div className="sticky top-0 z-40 w-full bg-[#0B111C]/90 backdrop-blur-md pt-2 sm:pt-2.5 pb-1.5 sm:pb-2 px-3.5 sm:px-6 lg:px-8 transition-all">
-      <header className="max-w-[1500px] mx-auto bg-[#161F2D] rounded-xl sm:rounded-full border border-[#2A3446] px-3.5 sm:px-5 lg:px-6 py-1.5 sm:py-2 flex items-center justify-between shadow-[0_4px_20px_rgba(5,8,16,0.5)] min-h-[44px] sm:min-h-[48px]">
+    <div className="sticky top-0 z-40 w-full bg-nebula-navy/90 backdrop-blur-md pt-2 sm:pt-2.5 pb-1.5 sm:pb-2 px-3.5 sm:px-6 lg:px-8 transition-all">
+      <header className="max-w-[1500px] mx-auto bg-nebula-surface rounded-xl sm:rounded-full border border-nebula-steel px-3.5 sm:px-5 lg:px-6 py-1.5 sm:py-2 flex items-center justify-between shadow-[0_4px_20px_rgba(5,8,16,0.5)] min-h-[44px] sm:min-h-[48px]">
         {/* Left Section: Mobile Hamburger + Back Button + Mobile Brand Logo + Title */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {/* Mobile Hamburger Menu Toggle Button */}
           <button
             type="button"
             onClick={toggleMobile}
-            className="md:hidden size-8 rounded-full flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] transition-all cursor-pointer border border-transparent hover:border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6] shrink-0"
+            className="md:hidden size-8 rounded-full flex items-center justify-center text-nebula-mist hover:text-white hover:bg-nebula-surface transition-all cursor-pointer border border-transparent hover:border-nebula-steel focus:outline-none focus:ring-2 focus:ring-nebula-glow shrink-0"
             aria-label="Open navigation sidebar"
             title="Open navigation menu"
           >
@@ -322,7 +322,7 @@ export function AdminTopHeader({
                   ? "/workstation"
                   : "/portal"
               }
-              className="p-1 rounded-full hover:bg-[#161F2D] text-[#97A0B3] hover:text-white transition-colors shrink-0"
+              className="p-1 rounded-full hover:bg-nebula-surface text-nebula-mist hover:text-white transition-colors shrink-0"
               title="Go Back"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -343,10 +343,10 @@ export function AdminTopHeader({
             className="md:hidden flex items-center gap-0.5 font-black text-white text-sm sm:text-base tracking-tight shrink-0 px-1 hover:opacity-85 transition-opacity"
             title="creo. Home"
           >
-            creo<span className="text-[#7FA0D6] text-base sm:text-lg leading-none">.</span>
+            creo<span className="text-nebula-glow text-base sm:text-lg leading-none">.</span>
           </Link>
 
-          <span className="h-4 w-px bg-[#2A3446] mx-1 hidden sm:block shrink-0" />
+          <span className="h-4 w-px bg-nebula-steel mx-1 hidden sm:block shrink-0" />
 
           {/* Active Page Title */}
           <h1 className="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
@@ -364,14 +364,14 @@ export function AdminTopHeader({
               onClick={() => setNotificationOpen(!notificationOpen)}
               className={`size-8 sm:size-8.5 rounded-full flex items-center justify-center transition-all relative cursor-pointer ${
                 notificationOpen
-                  ? "bg-[#161F2D] text-white shadow-sm border border-[#7FA0D6]"
-                  : "text-[#97A0B3] hover:text-white hover:bg-[#161F2D]"
+                  ? "bg-nebula-surface text-white shadow-sm border border-nebula-glow"
+                  : "text-nebula-mist hover:text-white hover:bg-nebula-surface"
               }`}
               aria-label="Notifications"
             >
               <Bell className="size-4 sm:size-4.5" />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 size-3.5 sm:size-4 bg-[#7FA0D6] text-[#0B111C] rounded-full text-[9px] sm:text-[10px] font-black flex items-center justify-center border border-[#161F2D] animate-pulse">
+                <span className="absolute -top-0.5 -right-0.5 size-3.5 sm:size-4 bg-nebula-glow text-nebula-navy rounded-full text-[9px] sm:text-[10px] font-black flex items-center justify-center border border-nebula-surface animate-pulse">
                   {unreadCount}
                 </span>
               )}
@@ -379,17 +379,17 @@ export function AdminTopHeader({
 
             {/* Notification Dropdown Panel */}
             {notificationOpen && (
-              <div className="absolute right-0 mt-2 sm:mt-3 w-[calc(100vw-24px)] sm:w-96 max-w-[400px] bg-[#161F2D] rounded-3xl shadow-[0_12px_40px_rgba(5,8,16,0.7)] border border-[#2A3446] z-50 overflow-hidden animate-scale-up text-left">
+              <div className="absolute right-0 mt-2 sm:mt-3 w-[calc(100vw-24px)] sm:w-96 max-w-[400px] bg-nebula-surface rounded-3xl shadow-[0_12px_40px_rgba(5,8,16,0.7)] border border-nebula-steel z-50 overflow-hidden animate-scale-up text-left">
                 {/* Header */}
-                <div className="px-4 sm:px-5 py-3.5 border-b border-[#2A3446] flex items-center justify-between bg-[#0B111C]/60">
+                <div className="px-4 sm:px-5 py-3.5 border-b border-nebula-steel flex items-center justify-between bg-nebula-navy/60">
                   <div className="flex items-center gap-2">
                     <h3 className="text-xs sm:text-sm font-bold text-white">Notifications</h3>
                     {unreadCount > 0 ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-nebula-glow/20 text-nebula-glow border border-nebula-glow/30">
                         {unreadCount} Unread
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#161F2D] text-[#97A0B3]">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-nebula-surface text-nebula-mist">
                         All Caught Up
                       </span>
                     )}
@@ -399,7 +399,7 @@ export function AdminTopHeader({
                     {unreadCount > 0 && (
                       <button
                         onClick={handleMarkAllAsRead}
-                        className="text-[11px] font-bold text-[#7FA0D6] hover:underline flex items-center gap-1 cursor-pointer"
+                        className="text-[11px] font-bold text-nebula-glow hover:underline flex items-center gap-1 cursor-pointer"
                         title="Mark all notifications as read"
                       >
                         <CheckCheck className="w-3.5 h-3.5" /> Read
@@ -408,7 +408,7 @@ export function AdminTopHeader({
                     {notificationsList.length > 0 && (
                       <button
                         onClick={handleClearAllNotifications}
-                        className="text-[11px] font-bold text-[#97A0B3] hover:text-[#D8BF9B] flex items-center gap-1 cursor-pointer transition-colors"
+                        className="text-[11px] font-bold text-nebula-mist hover:text-nebula-sand flex items-center gap-1 cursor-pointer transition-colors"
                         title="Delete all notifications"
                       >
                         <Trash2 className="w-3.5 h-3.5" /> Clear
@@ -418,13 +418,13 @@ export function AdminTopHeader({
                 </div>
 
                 {/* Notification Items List */}
-                <div className="max-h-[340px] sm:max-h-[380px] overflow-y-auto divide-y divide-[#2A3446] scrollbar-thin">
+                <div className="max-h-[340px] sm:max-h-[380px] overflow-y-auto divide-y divide-nebula-steel scrollbar-thin">
                   {notificationsList.map((item) => (
                     <div
                       key={item.id}
                       onClick={() => handleNotificationClick(item)}
-                      className={`p-3.5 sm:p-4 transition-colors cursor-pointer flex items-start gap-3 hover:bg-[#161F2D] group relative ${
-                        !item.is_read ? "bg-[#7FA0D6]/10" : "bg-transparent opacity-85"
+                      className={`p-3.5 sm:p-4 transition-colors cursor-pointer flex items-start gap-3 hover:bg-nebula-surface group relative ${
+                        !item.is_read ? "bg-nebula-glow/10" : "bg-transparent opacity-85"
                       }`}
                     >
                       {/* Icon */}
@@ -435,18 +435,18 @@ export function AdminTopHeader({
                       {/* Content */}
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between gap-1">
-                          <h4 className={`text-xs truncate ${!item.is_read ? "font-bold text-white" : "font-medium text-[#F1F5F9]"}`}>
+                          <h4 className={`text-xs truncate ${!item.is_read ? "font-bold text-white" : "font-medium text-slate-100"}`}>
                             {item.title}
                           </h4>
                           <div className="flex items-center gap-1.5 shrink-0">
                             {!item.is_read && (
                               <>
-                                <span className="w-2 h-2 rounded-full bg-[#7FA0D6]" />
+                                <span className="w-2 h-2 rounded-full bg-nebula-glow" />
                                 <button
                                   type="button"
                                   title="Mark as read"
                                   onClick={(e) => handleMarkSingleAsRead(e, item.id)}
-                                  className="p-1 rounded-lg text-[#7FA0D6] hover:bg-[#161F2D] transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
+                                  className="p-1 rounded-lg text-nebula-glow hover:bg-nebula-surface transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
                                 >
                                   <Check className="w-3.5 h-3.5" />
                                 </button>
@@ -457,24 +457,24 @@ export function AdminTopHeader({
                               type="button"
                               title="Delete notification"
                               onClick={(e) => handleDeleteNotification(e, item.id)}
-                              className="p-1 rounded-lg text-[#97A0B3] hover:text-[#D8BF9B] hover:bg-[#161F2D] transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
+                              className="p-1 rounded-lg text-nebula-mist hover:text-nebula-sand hover:bg-nebula-surface transition-colors cursor-pointer opacity-70 group-hover:opacity-100"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
 
-                        <p className="text-[11px] text-[#97A0B3] line-clamp-2 leading-relaxed font-medium">
+                        <p className="text-[11px] text-nebula-mist line-clamp-2 leading-relaxed font-medium">
                           {item.message}
                         </p>
 
-                        <div className="flex items-center justify-between pt-1 text-[10px] text-[#97A0B3]/80 font-semibold">
+                        <div className="flex items-center justify-between pt-1 text-[10px] text-nebula-mist/80 font-semibold">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {item.created_at || "Just now"}
                           </span>
                           {item.link && (
-                            <span className="text-[#7FA0D6] font-bold flex items-center gap-0.5 hover:underline">
+                            <span className="text-nebula-glow font-bold flex items-center gap-0.5 hover:underline">
                               Open <ExternalLink className="w-2.5 h-2.5" />
                             </span>
                           )}
@@ -484,21 +484,21 @@ export function AdminTopHeader({
                   ))}
 
                   {notificationsList.length === 0 && (
-                    <div className="p-8 text-center text-[#97A0B3] space-y-2">
-                      <Bell className="w-8 h-8 text-[#2A3446] mx-auto" />
+                    <div className="p-8 text-center text-nebula-mist space-y-2">
+                      <Bell className="w-8 h-8 text-nebula-steel mx-auto" />
                       <p className="text-xs font-bold text-white">No notifications</p>
-                      <p className="text-[11px] text-[#97A0B3]">You're all caught up with your workspace alerts.</p>
+                      <p className="text-[11px] text-nebula-mist">You're all caught up with your workspace alerts.</p>
                     </div>
                   )}
                 </div>
 
                 {/* Footer */}
-                <div className="p-3 bg-[#0B111C]/60 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                  <span className="text-[11px] text-[#97A0B3] font-medium">Real-time alerts</span>
+                <div className="p-3 bg-nebula-navy/60 border-t border-nebula-steel flex items-center justify-between text-xs">
+                  <span className="text-[11px] text-nebula-mist font-medium">Real-time alerts</span>
                   <Link
                     to={isClientRole ? "/portal/deliverables" : isMemberRole ? "/workstation/schedule" : "/admin/leaves"}
                     onClick={() => setNotificationOpen(false)}
-                    className="text-[11px] font-bold text-[#7FA0D6] hover:underline"
+                    className="text-[11px] font-bold text-nebula-glow hover:underline"
                   >
                     {isClientRole ? "View Deliverables →" : isMemberRole ? "View Schedule →" : "View Approvals →"}
                   </Link>
@@ -511,7 +511,7 @@ export function AdminTopHeader({
           {isAdminOrSuper && location.pathname.startsWith("/portal") && (
             <Link
               to="/admin"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 border border-[#7FA0D6]/30 text-[#7FA0D6] text-xs font-bold transition-all shadow-xs"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-nebula-glow/15 hover:bg-nebula-glow/25 border border-nebula-glow/30 text-nebula-glow text-xs font-bold transition-all shadow-xs"
               title="Return to Admin Ops Console"
             >
               <span>Admin Console</span>
@@ -525,7 +525,7 @@ export function AdminTopHeader({
               type="button"
               title={user?.full_name || "Profile & Account"}
               onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-              className="size-8 sm:size-8.5 rounded-full bg-[#BCCCE6] hover:bg-[#BCCCE6] text-[#0B111C] font-black text-xs sm:text-sm flex items-center justify-center shadow-md shadow-[#050810]/40 cursor-pointer ml-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]"
+              className="size-8 sm:size-8.5 rounded-full bg-nebula-periwinkle hover:bg-nebula-periwinkle text-nebula-navy font-black text-xs sm:text-sm flex items-center justify-center shadow-md shadow-nebula-void/40 cursor-pointer ml-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-nebula-glow"
               aria-label="User profile menu"
             >
               {(user?.full_name?.[0] || user?.email?.[0] || (isClientRole ? "C" : isMemberRole ? "D" : "A")).toUpperCase()}
@@ -533,21 +533,21 @@ export function AdminTopHeader({
 
             {/* Profile Dropdown Menu */}
             {profileDropdownOpen && (
-              <div className="absolute right-0 mt-2 sm:mt-3 w-[calc(100vw-24px)] sm:w-72 max-w-[320px] bg-[#161F2D] rounded-3xl shadow-[0_12px_40px_rgba(5,8,16,0.7)] border border-[#2A3446] z-50 overflow-hidden animate-scale-up p-3 space-y-2 text-left">
+              <div className="absolute right-0 mt-2 sm:mt-3 w-[calc(100vw-24px)] sm:w-72 max-w-[320px] bg-nebula-surface rounded-3xl shadow-[0_12px_40px_rgba(5,8,16,0.7)] border border-nebula-steel z-50 overflow-hidden animate-scale-up p-3 space-y-2 text-left">
                 {/* User Header */}
-                <div className="p-3 bg-[#0B111C]/80 rounded-2xl border border-[#2A3446] flex items-center gap-3">
-                  <div className="size-10 rounded-full bg-[#BCCCE6] text-[#0B111C] font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
+                <div className="p-3 bg-nebula-navy/80 rounded-2xl border border-nebula-steel flex items-center gap-3">
+                  <div className="size-10 rounded-full bg-nebula-periwinkle text-nebula-navy font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
                     {(user?.full_name?.[0] || user?.email?.[0] || (isClientRole ? "C" : isMemberRole ? "D" : "A")).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
                     <h4 className="text-xs font-bold text-white truncate">
                       {user?.full_name || (isClientRole ? (user?.company_name || "Client Account") : isMemberRole ? "Team Specialist" : user?.role === "team_lead" ? "Pod Lead" : "Creo Admin")}
                     </h4>
-                    <p className="text-[11px] text-[#97A0B3] font-medium truncate">
+                    <p className="text-[11px] text-nebula-mist font-medium truncate">
                       {user?.email || (isClientRole ? "client@portal.creo" : isMemberRole ? "specialist@creo.agency" : "admin@creo.agency")}
                     </p>
                     <div className="mt-1">
-                      <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 capitalize">
+                      <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30 capitalize">
                         {isClientRole
                           ? "Client Account"
                           : isMemberRole
@@ -561,7 +561,7 @@ export function AdminTopHeader({
                 </div>
 
                 {/* Logout Button */}
-                <div className="pt-2 border-t border-[#2A3446]">
+                <div className="pt-2 border-t border-nebula-steel">
                   <button
                     type="button"
                     onClick={async () => {
@@ -573,9 +573,9 @@ export function AdminTopHeader({
                       }
                       navigate("/auth");
                     }}
-                    className="w-full flex items-center justify-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-[#D8BF9B] hover:bg-[#D8BF9B]/15 hover:border-[#D8BF9B]/30 border border-transparent transition-all cursor-pointer shadow-xs"
+                    className="w-full flex items-center justify-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-nebula-sand hover:bg-nebula-sand/15 hover:border-nebula-sand/30 border border-transparent transition-all cursor-pointer shadow-xs"
                   >
-                    <LogOut className="w-4 h-4 text-[#D8BF9B]" />
+                    <LogOut className="w-4 h-4 text-nebula-sand" />
                     <span>Sign Out / Log Out</span>
                   </button>
                 </div>

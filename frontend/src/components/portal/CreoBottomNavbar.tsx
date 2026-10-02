@@ -21,7 +21,7 @@ export function CreoBottomNavbar() {
   ];
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-[100] bg-[#161F2D]/95 backdrop-blur-md border-t border-[#2A3446] shadow-[0_-4px_24px_rgba(5,8,16,0.6)] md:hidden pb-safe">
+    <nav className="fixed bottom-0 inset-x-0 z-[100] bg-nebula-surface/95 backdrop-blur-md border-t border-nebula-steel shadow-[0_-4px_24px_rgba(5,8,16,0.6)] md:hidden pb-safe">
       <div className="flex items-center justify-around overflow-x-auto no-scrollbar px-2 py-2">
         {navItems.map((item) => {
           const isActive =
@@ -37,14 +37,14 @@ export function CreoBottomNavbar() {
               to={item.path}
               className={`flex flex-col items-center justify-center min-w-[64px] p-2 rounded-xl transition-all ${
                 isActive
-                  ? "text-[#BCCCE6]"
-                  : "text-[#97A0B3] hover:text-white hover:bg-[#0B111C]"
+                  ? "text-nebula-periwinkle"
+                  : "text-nebula-mist hover:text-white hover:bg-nebula-navy"
               }`}
             >
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full mb-1 transition-all ${isActive ? "bg-[#2A3446] text-[#BCCCE6]" : ""}`}>
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full mb-1 transition-all ${isActive ? "bg-nebula-steel text-nebula-periwinkle" : ""}`}>
                 <Icon className={`w-5 h-5 transition-transform ${isActive ? "scale-110" : ""}`} strokeWidth={isActive ? 2.5 : 2} />
               </div>
-              <span className={`text-[10px] font-bold whitespace-nowrap tracking-tight transition-colors ${isActive ? "text-[#BCCCE6]" : "text-[#97A0B3]"}`}>
+              <span className={`text-[10px] font-bold whitespace-nowrap tracking-tight transition-colors ${isActive ? "text-nebula-periwinkle" : "text-nebula-mist"}`}>
                 {item.name}
               </span>
             </Link>

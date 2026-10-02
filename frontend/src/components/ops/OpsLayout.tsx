@@ -12,7 +12,7 @@ export function OpsLayout() {
   return (
     <PortalWrapper>
       <AdminSidebarProvider>
-        <div className="min-h-screen w-full flex bg-[#0B111C]">
+        <div className="min-h-screen w-full flex bg-nebula-navy">
           {/* Permanent Desktop Sidebar (Always Visible) & Mobile Drawer */}
           <AdminSidebar />
 

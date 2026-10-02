@@ -75,7 +75,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             title: st.title || st.subject || "Support Inquiry",
             client: clientName,
             clientInitials: clientName[0].toUpperCase(),
-            avatarBg: "bg-[#0B111C]",
+            avatarBg: "bg-nebula-navy",
             priority,
             timeLog: st.time || "Logged recently",
             agent: st.assignee_name || "Support Lead",
@@ -98,7 +98,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             title: lt.issueTitle || lt.title || "Support Request",
             client: clientName,
             clientInitials: clientName[0].toUpperCase(),
-            avatarBg: lt.avatarBg || "bg-[#0B111C]",
+            avatarBg: lt.avatarBg || "bg-nebula-navy",
             priority,
             timeLog: lt.timeLog || "Logged just now",
             agent: lt.agent || "Support Lead",
@@ -199,44 +199,44 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
   const getPriorityBadge = (priority: TicketRecord["priority"]) => {
     switch (priority) {
       case "Urgent":
-        return "bg-blue-950/80 text-[#BCCCE6] border border-blue-500/60 shadow-2xs";
+        return "bg-blue-950/80 text-nebula-periwinkle border border-blue-500/60 shadow-2xs";
       case "High":
-        return "bg-blue-900/50 text-[#BCCCE6] border border-blue-600/50";
+        return "bg-blue-900/50 text-nebula-periwinkle border border-blue-600/50";
       case "Medium":
-        return "bg-blue-800/40 text-[#7FA0D6] border border-blue-700/40";
+        return "bg-blue-800/40 text-nebula-glow border border-blue-700/40";
       case "Normal":
       default:
-        return "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]";
+        return "bg-nebula-surface text-slate-100 border-nebula-steel";
     }
   };
 
   return (
     <div
       onClick={() => navigate("/admin/support")}
-      className="bg-[#161F2D] rounded-2xl border border-[#2A3446] shadow-sm hover:border-[#7FA0D6]/50 transition-all p-4 sm:p-5 flex flex-col justify-between h-full font-sans cursor-pointer group hover-card-innovative"
+      className="bg-nebula-surface rounded-2xl border border-nebula-steel shadow-sm hover:border-nebula-glow/50 transition-all p-4 sm:p-5 flex flex-col justify-between h-full font-sans cursor-pointer group hover-card-innovative"
     >
       <div>
         {/* Header Title Row */}
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <h2 className="text-[17px] font-black text-white group-hover:text-[#7FA0D6] transition-colors tracking-tight">
+            <h2 className="text-[17px] font-black text-white group-hover:text-nebula-glow transition-colors tracking-tight">
               Support Tickets
             </h2>
-            <span className="text-[9px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 py-0.5 rounded-full border border-[#7FA0D6]/30 shadow-2xs">
+            <span className="text-[9px] font-bold text-nebula-glow bg-nebula-glow/15 px-2 py-0.5 rounded-full border border-nebula-glow/30 shadow-2xs">
               {openCount} Open
             </span>
           </div>
-          <span className="px-2 py-0.5 rounded-full text-[9px] font-black text-[#BCCCE6] bg-blue-950/80 border border-blue-500/60 shadow-2xs">
+          <span className="px-2 py-0.5 rounded-full text-[9px] font-black text-nebula-periwinkle bg-blue-950/80 border border-blue-500/60 shadow-2xs">
             {urgentCount} Urgent
           </span>
         </div>
-        <p className="text-[11px] text-[#97A0B3] font-medium mb-3">
+        <p className="text-[11px] text-nebula-mist font-medium mb-3">
           Client issues, incidents & resolution queue
         </p>
 
         {/* Tab Switcher Pills */}
         <div
-          className="flex items-center gap-1 bg-[#0B111C] border border-[#2A3446]/80 rounded-xl p-0.5 mb-3 w-max shadow-2xs"
+          className="flex items-center gap-1 bg-nebula-navy border border-nebula-steel/80 rounded-xl p-0.5 mb-3 w-max shadow-2xs"
           onClick={(e) => e.stopPropagation()}
         >
           <button
@@ -247,8 +247,8 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             }}
             className={`px-3 py-1 text-[11px] rounded-lg transition-all cursor-pointer ${
               activeTab === "open"
-                ? "font-bold text-[#7FA0D6] bg-[#161F2D] shadow-2xs"
-                : "font-semibold text-[#97A0B3] hover:text-[#F1F5F9]"
+                ? "font-bold text-nebula-glow bg-nebula-surface shadow-2xs"
+                : "font-semibold text-nebula-mist hover:text-slate-100"
             }`}
           >
             Open ({openCount})
@@ -261,8 +261,8 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             }}
             className={`px-3 py-1 text-[11px] rounded-lg transition-all cursor-pointer ${
               activeTab === "pending"
-                ? "font-bold text-[#7FA0D6] bg-[#161F2D] shadow-2xs"
-                : "font-semibold text-[#97A0B3] hover:text-[#F1F5F9]"
+                ? "font-bold text-nebula-glow bg-nebula-surface shadow-2xs"
+                : "font-semibold text-nebula-mist hover:text-slate-100"
             }`}
           >
             Pending ({pendingCount})
@@ -275,8 +275,8 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             }}
             className={`px-3 py-1 text-[11px] rounded-lg transition-all cursor-pointer ${
               activeTab === "resolved"
-                ? "font-bold text-[#7FA0D6] bg-[#161F2D] shadow-2xs"
-                : "font-semibold text-[#97A0B3] hover:text-[#F1F5F9]"
+                ? "font-bold text-nebula-glow bg-nebula-surface shadow-2xs"
+                : "font-semibold text-nebula-mist hover:text-slate-100"
             }`}
           >
             Resolved ({resolvedCount})
@@ -286,7 +286,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
         {/* Ticket List Container */}
         <div className="flex flex-col gap-2">
           {currentTabTickets.length === 0 ? (
-            <div className="py-6 text-center text-xs text-[#97A0B3] font-medium bg-[#0B111C]/60 rounded-xl border border-[#2A3446]">
+            <div className="py-6 text-center text-xs text-nebula-mist font-medium bg-nebula-navy/60 rounded-xl border border-nebula-steel">
               No tickets in {activeTab} status
             </div>
           ) : (
@@ -297,7 +297,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
                 e.stopPropagation();
                 navigate(`/admin/support/tickets/${t.id}`);
               }}
-              className="flex items-center justify-between p-2.5 sm:px-3 sm:py-2.5 rounded-xl border border-[#2A3446] hover:border-[#7FA0D6]/30 hover:shadow-2xs transition-all bg-[#161F2D] cursor-pointer group/item"
+              className="flex items-center justify-between p-2.5 sm:px-3 sm:py-2.5 rounded-xl border border-nebula-steel hover:border-nebula-glow/30 hover:shadow-2xs transition-all bg-nebula-surface cursor-pointer group/item"
             >
               <div className="flex items-center gap-2.5 min-w-0 pr-2">
                 <div
@@ -307,7 +307,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-xs font-bold text-white group-hover/item:text-[#7FA0D6] transition-colors truncate max-w-[160px] sm:max-w-[200px]">
+                    <span className="text-xs font-bold text-white group-hover/item:text-nebula-glow transition-colors truncate max-w-[160px] sm:max-w-[200px]">
                       {t.title}
                     </span>
                     <span
@@ -318,14 +318,14 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
                       {t.priority}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-[10px] text-[#97A0B3] font-medium">
-                    <span className="text-[#F1F5F9] font-semibold">{t.client}</span>
+                  <div className="flex items-center gap-1 text-[10px] text-nebula-mist font-medium">
+                    <span className="text-slate-100 font-semibold">{t.client}</span>
                     <span className="text-slate-300">•</span>
-                    <span className={t.priority === "Urgent" ? "text-[#D8BF9B] font-bold" : "text-[#97A0B3]"}>
+                    <span className={t.priority === "Urgent" ? "text-nebula-sand font-bold" : "text-nebula-mist"}>
                       {t.timeLog}
                     </span>
                     <span className="text-slate-300">•</span>
-                    <span className="font-mono text-[#97A0B3]">#{t.id}</span>
+                    <span className="font-mono text-nebula-mist">#{t.id}</span>
                   </div>
                 </div>
               </div>
@@ -339,7 +339,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
                 }}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0 ${
                   t.status === "resolved"
-                    ? "bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9]"
+                    ? "bg-nebula-surface hover:bg-slate-200 text-slate-100"
                     : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20"
                 }`}
               >
@@ -363,11 +363,11 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
 
       {/* Footer Meta Row */}
       <div
-        className="mt-3 pt-3 border-t border-[#2A3446] flex items-center justify-between text-[11px] text-[#97A0B3] font-medium"
+        className="mt-3 pt-3 border-t border-nebula-steel flex items-center justify-between text-[11px] text-nebula-mist font-medium"
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="flex items-center gap-1 font-semibold text-[#F1F5F9]">
-          Avg response: <strong className="text-[#7FA0D6]">8.4m</strong> (Target &lt;15m)
+        <span className="flex items-center gap-1 font-semibold text-slate-100">
+          Avg response: <strong className="text-nebula-glow">8.4m</strong> (Target &lt;15m)
         </span>
         <button
           type="button"
@@ -375,7 +375,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             e.stopPropagation();
             navigate("/admin/support");
           }}
-          className="text-[#7FA0D6] hover:text-blue-800 font-bold hover:underline cursor-pointer flex items-center gap-1"
+          className="text-nebula-glow hover:text-blue-800 font-bold hover:underline cursor-pointer flex items-center gap-1"
         >
           View all {openCount} tickets &rarr;
         </button>
@@ -391,7 +391,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
           }}
         >
           <div
-            className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
+            className="relative w-full max-w-md rounded-3xl bg-nebula-surface p-6 sm:p-8 shadow-2xl border border-nebula-steel flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -399,7 +399,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             <button
               type="button"
               onClick={() => setAlertModal(null)}
-              className="absolute top-4 right-4 size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-4 right-4 size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist hover:text-slate-100 flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Close modal"
             >
               <X className="size-4" />
@@ -408,8 +408,8 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             <div
               className={`size-16 rounded-3xl flex items-center justify-center mb-4 ring-8 shadow-inner ${
                 alertModal.type === "success"
-                  ? "bg-blue-950/30 text-[#BCCCE6] ring-blue-500/30"
-                  : "bg-[#7FA0D6]/15 text-[#7FA0D6] ring-blue-500/30"
+                  ? "bg-blue-950/30 text-nebula-periwinkle ring-blue-500/30"
+                  : "bg-nebula-glow/15 text-nebula-glow ring-blue-500/30"
               }`}
             >
               {alertModal.type === "success" ? (
@@ -423,7 +423,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
               {alertModal.title}
             </h3>
 
-            <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm text-center">
+            <p className="text-xs sm:text-sm text-slate-100 mt-2 leading-relaxed max-w-sm text-center">
               {alertModal.message}
             </p>
 
@@ -444,7 +444,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
                     setAlertModal(null);
                     navigate(`/admin/support/tickets/${id}`);
                   }}
-                  className="px-5 py-3 rounded-2xl bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9] font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-5 py-3 rounded-2xl bg-nebula-surface hover:bg-slate-200 text-slate-100 font-bold text-xs active:scale-95 transition-all cursor-pointer"
                 >
                   View Details
                 </button>

@@ -115,18 +115,18 @@ export function PodClientAllocationsPage() {
         id: r.client_id || "",
         name,
         avatar: initials,
-        avatarBg: "bg-[#0B111C]",
+        avatarBg: "bg-nebula-navy",
         tierBadge: (r.plan_display_name || r.plan_name || "GROWTH").toUpperCase(),
-        tierBadgeColor: "bg-blue-500/15 text-[#BCCCE6] border-blue-500/30",
+        tierBadgeColor: "bg-blue-500/15 text-nebula-periwinkle border-blue-500/30",
         statusBadge: "● Active Sprint",
-        statusBadgeColor: "bg-blue-500/15 text-[#BCCCE6] border-blue-500/30",
+        statusBadgeColor: "bg-blue-500/15 text-nebula-periwinkle border-blue-500/30",
         contact: r.email || "",
         slackChannel: `#${name.toLowerCase().replace(/[^a-z0-9]/g, "")}-creo`,
         reviewAssetsCount: 0,
         deliverableTitle: `${name} Active Campaign Cadence`,
         deliverables: [
           { label: "Reels", current: reelsUsed, target: reelsQuota, percent: Math.round((reelsUsed / (reelsQuota || 1)) * 100), color: "bg-blue-600" },
-          { label: "Stories", current: storiesUsed, target: storiesQuota, percent: Math.round((storiesUsed / (storiesQuota || 1)) * 100), color: "bg-[#BCCCE6]" },
+          { label: "Stories", current: storiesUsed, target: storiesQuota, percent: Math.round((storiesUsed / (storiesQuota || 1)) * 100), color: "bg-nebula-periwinkle" },
           { label: "Posts", current: postersUsed, target: postersQuota, percent: Math.round((postersUsed / (postersQuota || 1)) * 100), color: "bg-blue-600" },
         ],
         assignees: [
@@ -214,7 +214,7 @@ export function PodClientAllocationsPage() {
           hasReviewToday: false,
           reviewAssetsCount: 0,
           statusBadge: "● QA Signed Off & Ready",
-          statusBadgeColor: "bg-blue-500/15 text-[#BCCCE6] border-blue-500/30 font-bold",
+          statusBadgeColor: "bg-blue-500/15 text-nebula-periwinkle border-blue-500/30 font-bold",
           deliverables: c.deliverables.map((d) =>
             d.percent < 100
               ? { ...d, current: d.target, percent: 100, color: "bg-blue-500", note: undefined }
@@ -257,7 +257,7 @@ export function PodClientAllocationsPage() {
     .reduce((acc, d) => acc + d.current, 0);
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
+    <div data-surface="ops" className="min-h-screen bg-nebula-navy text-white font-sans flex flex-col">
       {/* Top Header */}
       <AdminTopHeader title="Client Details" activeTab="Client Details" />
 
@@ -268,8 +268,8 @@ export function PodClientAllocationsPage() {
           <div
             className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-between shadow-lg animate-fade-in ${
               toastMessage.type === "error"
-                ? "bg-blue-500/15 border-blue-500/30 text-[#BCCCE6]"
-                : "bg-blue-500/15 border-blue-500/30 text-[#BCCCE6]"
+                ? "bg-blue-500/15 border-blue-500/30 text-nebula-periwinkle"
+                : "bg-blue-500/15 border-blue-500/30 text-nebula-periwinkle"
             }`}
           >
             <span>{toastMessage.text}</span>
@@ -283,10 +283,10 @@ export function PodClientAllocationsPage() {
         )}
 
         {/* 1. Quick Actions Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#161F2D] p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-[#2A3446]/80 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-nebula-surface p-2.5 sm:px-4 sm:py-2.5 rounded-2xl border border-nebula-steel/80 shadow-2xs">
           <div className="flex items-center gap-2">
             <span className="size-2 rounded-full bg-blue-400 animate-pulse" />
-            <span className="text-xs font-bold text-[#F1F5F9]">
+            <span className="text-xs font-bold text-slate-100">
               {podName} Creative Lead Workspace · {clients.length} Active Client Retainers
             </span>
           </div>
@@ -294,14 +294,14 @@ export function PodClientAllocationsPage() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleExportReport}
-              className="px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-nebula-surface border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
-              <FileText className="size-3.5 text-[#97A0B3]" />
+              <FileText className="size-3.5 text-nebula-mist" />
               Export Report
             </button>
             <button
               onClick={() => setReallocationModal(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
             >
               <Plus className="size-3.5" />
               Re-allocation
@@ -310,14 +310,14 @@ export function PodClientAllocationsPage() {
         </div>
 
         {/* 2. Filter Pills & Search Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-[#161F2D] p-2.5 sm:px-3 rounded-2xl border border-[#2A3446]/80 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-nebula-surface p-2.5 sm:px-3 rounded-2xl border border-nebula-steel/80 shadow-2xs">
           <div className="flex flex-wrap items-center gap-1.5">
             <button
               onClick={() => setFilterTab("all")}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 filterTab === "all"
                   ? "bg-blue-600 text-white shadow-2xs"
-                  : "bg-[#0B111C] text-[#F1F5F9] hover:bg-[#161F2D]"
+                  : "bg-nebula-navy text-slate-100 hover:bg-nebula-surface"
               }`}
             >
               All Assigned ({clients.length})
@@ -327,7 +327,7 @@ export function PodClientAllocationsPage() {
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 filterTab === "sla"
                   ? "bg-blue-600 text-white shadow-2xs"
-                  : "bg-[#0B111C] text-[#F1F5F9] hover:bg-[#161F2D]"
+                  : "bg-nebula-navy text-slate-100 hover:bg-nebula-surface"
               }`}
             >
               <span className="size-1.5 rounded-full bg-blue-500" />
@@ -338,23 +338,23 @@ export function PodClientAllocationsPage() {
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                 filterTab === "review"
                   ? "bg-blue-600 text-white shadow-2xs"
-                  : "bg-[#0B111C] text-[#F1F5F9] hover:bg-[#161F2D]"
+                  : "bg-nebula-navy text-slate-100 hover:bg-nebula-surface"
               }`}
             >
-              <span className="size-1.5 rounded-full bg-[#7FA0D6]" />
+              <span className="size-1.5 rounded-full bg-nebula-glow" />
               Review Today ({clients.filter((c) => c.hasReviewToday || c.reviewAssetsCount > 0).length})
             </button>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#97A0B3]" />
+              <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-nebula-mist" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Filter clients..."
-                className="pl-7 pr-3 py-1 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-medium w-44 sm:w-52 focus:w-60 focus:bg-[#161F2D] focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                className="pl-7 pr-3 py-1 rounded-xl bg-nebula-navy border border-nebula-steel text-xs font-medium w-44 sm:w-52 focus:w-60 focus:bg-nebula-surface focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
               />
             </div>
           </div>
@@ -367,13 +367,13 @@ export function PodClientAllocationsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.05 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
+            className="bg-nebula-surface rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-nebula-steel/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-nebula-mist">
                 Assigned Clients
               </span>
-              <div className="size-6 sm:size-7 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center">
+              <div className="size-6 sm:size-7 rounded-lg bg-nebula-glow/15 text-nebula-glow flex items-center justify-center">
                 <Briefcase className="size-3 sm:size-3.5" />
               </div>
             </div>
@@ -381,11 +381,11 @@ export function PodClientAllocationsPage() {
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-lg sm:text-xl font-black text-white">{clients.length} Active</span>
               </div>
-              <div className="pt-1.5 border-t border-[#2A3446] text-[10px] sm:text-[11px] flex justify-between items-center">
-                <span className="font-bold text-[#BCCCE6] flex items-center gap-1">
+              <div className="pt-1.5 border-t border-nebula-steel text-[10px] sm:text-[11px] flex justify-between items-center">
+                <span className="font-bold text-nebula-periwinkle flex items-center gap-1">
                   ● 100% SLA compliance
                 </span>
-                <span className="text-[9px] font-bold text-[#97A0B3]">Tier 1 Pod</span>
+                <span className="text-[9px] font-bold text-nebula-mist">Tier 1 Pod</span>
               </div>
             </div>
           </motion.div>
@@ -395,13 +395,13 @@ export function PodClientAllocationsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
+            className="bg-nebula-surface rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-nebula-steel/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-nebula-mist">
                 Monthly Asset Quota
               </span>
-              <div className="size-6 sm:size-7 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center">
+              <div className="size-6 sm:size-7 rounded-lg bg-nebula-glow/15 text-nebula-glow flex items-center justify-center">
                 <Layers className="size-3 sm:size-3.5" />
               </div>
             </div>
@@ -409,15 +409,15 @@ export function PodClientAllocationsPage() {
               <div className="flex items-baseline justify-between gap-1 mb-1">
                 <div className="flex items-baseline gap-1">
                   <span className="text-lg sm:text-xl font-black text-white">{totalBurnedAssets}</span>
-                  <span className="text-[#97A0B3] font-bold text-xs">/ 40</span>
+                  <span className="text-nebula-mist font-bold text-xs">/ 40</span>
                 </div>
-                <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-[#7FA0D6]/15 text-[#7FA0D6]">
+                <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-nebula-glow/15 text-nebula-glow">
                   {Math.round((totalBurnedAssets / 40) * 100)}% Burn
                 </span>
               </div>
-              <div className="pt-1.5 border-t border-[#2A3446] text-[10px] sm:text-[11px] flex justify-between items-center">
-                <span className="text-[#97A0B3] font-medium">Sprint burn</span>
-                <span className="font-bold text-[#BCCCE6]">On Pace</span>
+              <div className="pt-1.5 border-t border-nebula-steel text-[10px] sm:text-[11px] flex justify-between items-center">
+                <span className="text-nebula-mist font-medium">Sprint burn</span>
+                <span className="font-bold text-nebula-periwinkle">On Pace</span>
               </div>
             </div>
           </motion.div>
@@ -427,15 +427,15 @@ export function PodClientAllocationsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.15 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
+            className="bg-nebula-surface rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-nebula-steel/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-nebula-mist">
                 Lead Sign-offs
               </span>
               <div
                 className={`size-6 sm:size-7 rounded-lg flex items-center justify-center ${
-                  totalSignoffs > 0 ? "bg-blue-500/15 text-[#BCCCE6]" : "bg-blue-500/15 text-[#BCCCE6]"
+                  totalSignoffs > 0 ? "bg-blue-500/15 text-nebula-periwinkle" : "bg-blue-500/15 text-nebula-periwinkle"
                 }`}
               >
                 <FileCheck2 className="size-3 sm:size-3.5" />
@@ -445,22 +445,22 @@ export function PodClientAllocationsPage() {
               <div className="flex items-baseline justify-between gap-1 mb-1">
                 <span className="text-lg sm:text-xl font-black text-white">{totalSignoffs} Assets</span>
                 {urgentCount > 0 ? (
-                  <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-blue-500/15 text-[#BCCCE6]">
+                  <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-blue-500/15 text-nebula-periwinkle">
                     {urgentCount} SLA Alert{urgentCount > 1 ? "s" : ""}
                   </span>
                 ) : (
-                  <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-blue-500/15 text-[#BCCCE6]">
+                  <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-blue-500/15 text-nebula-periwinkle">
                     All QA Cleared
                   </span>
                 )}
               </div>
-              <div className="pt-1.5 border-t border-[#2A3446] text-[10px] sm:text-[11px]">
+              <div className="pt-1.5 border-t border-nebula-steel text-[10px] sm:text-[11px]">
                 {urgentCount > 0 ? (
-                  <span className="text-[#BCCCE6] font-bold flex items-center gap-1">
+                  <span className="text-nebula-periwinkle font-bold flex items-center gap-1">
                     ● Urgent QA awaiting
                   </span>
                 ) : (
-                  <span className="text-[#BCCCE6] font-bold flex items-center gap-1">
+                  <span className="text-nebula-periwinkle font-bold flex items-center gap-1">
                     ● All signed off
                   </span>
                 )}
@@ -473,28 +473,28 @@ export function PodClientAllocationsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
+            className="bg-nebula-surface rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-nebula-steel/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-nebula-mist">
                 Client CSAT
               </span>
-              <div className="size-6 sm:size-7 rounded-lg bg-blue-500/15 text-[#BCCCE6] flex items-center justify-center">
+              <div className="size-6 sm:size-7 rounded-lg bg-blue-500/15 text-nebula-periwinkle flex items-center justify-center">
                 <Star className="size-3 sm:size-3.5" />
               </div>
             </div>
             <div>
               <div className="flex items-baseline justify-between gap-1 mb-1">
                 <span className="text-lg sm:text-xl font-black text-white">
-                  4.9 <span className="text-[#97A0B3] font-bold text-xs">/ 5.0</span>
+                  4.9 <span className="text-nebula-mist font-bold text-xs">/ 5.0</span>
                 </span>
-                <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-blue-500/15 text-[#BCCCE6]">
+                <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-blue-500/15 text-nebula-periwinkle">
                   +0.2 MoM
                 </span>
               </div>
-              <div className="pt-1.5 border-t border-[#2A3446] text-[10px] sm:text-[11px] flex justify-between items-center">
-                <span className="text-[#97A0B3] font-medium">Last 24 ratings</span>
-                <span className="font-bold text-[#BCCCE6]">Exceptional</span>
+              <div className="pt-1.5 border-t border-nebula-steel text-[10px] sm:text-[11px] flex justify-between items-center">
+                <span className="text-nebula-mist font-medium">Last 24 ratings</span>
+                <span className="font-bold text-nebula-periwinkle">Exceptional</span>
               </div>
             </div>
           </motion.div>
@@ -505,11 +505,11 @@ export function PodClientAllocationsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h2 className="text-sm font-black text-white">{podName} Active Accounts</h2>
-              <p className="text-[11px] text-[#97A0B3] font-medium">
+              <p className="text-[11px] text-nebula-mist font-medium">
                 Contractual scopes, sprint burndown, and talent assignments
               </p>
             </div>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 self-start sm:self-auto">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30 self-start sm:self-auto">
               Sprint 42 · Active
             </span>
           </div>
@@ -517,19 +517,19 @@ export function PodClientAllocationsPage() {
           {/* Account Cards */}
           <div className="space-y-3">
             {filteredClients.length === 0 ? (
-              <div className="bg-[#161F2D] rounded-2xl p-10 border border-[#2A3446]/80 text-center space-y-2">
-                <Briefcase className="size-8 text-[#97A0B3] mx-auto opacity-50" />
+              <div className="bg-nebula-surface rounded-2xl p-10 border border-nebula-steel/80 text-center space-y-2">
+                <Briefcase className="size-8 text-nebula-mist mx-auto opacity-50" />
                 <h3 className="text-sm font-bold text-white">No Assigned Clients</h3>
-                <p className="text-xs text-[#97A0B3]">No active clients are currently allocated to this pod filter.</p>
+                <p className="text-xs text-nebula-mist">No active clients are currently allocated to this pod filter.</p>
               </div>
             ) : (
               filteredClients.map((client) => (
               <div
                 key={client.id}
-                className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs hover:border-[#7FA0D6]/30 hover:shadow-xs transition-all space-y-3.5"
+                className="bg-nebula-surface rounded-2xl p-4 sm:p-5 border border-nebula-steel/80 shadow-2xs hover:border-nebula-glow/30 hover:shadow-xs transition-all space-y-3.5"
               >
                 {/* Account Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#2A3446] gap-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-nebula-steel gap-2.5">
                   <Link
                     to={`/lead/clients/${client.id}`}
                     className="flex items-center gap-3 group cursor-pointer"
@@ -541,9 +541,9 @@ export function PodClientAllocationsPage() {
                     </div>
                     <div>
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <h3 className="text-sm font-black text-white group-hover:text-[#7FA0D6] transition-colors flex items-center gap-1">
+                        <h3 className="text-sm font-black text-white group-hover:text-nebula-glow transition-colors flex items-center gap-1">
                           {client.name}
-                          <ArrowRight className="size-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-[#7FA0D6]" />
+                          <ArrowRight className="size-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-nebula-glow" />
                         </h3>
                         <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black tracking-wider border ${client.tierBadgeColor}`}>
                           {client.tierBadge}
@@ -552,8 +552,8 @@ export function PodClientAllocationsPage() {
                           {client.statusBadge}
                         </span>
                       </div>
-                      <p className="text-[11px] text-[#97A0B3] font-medium mt-0.5">
-                        {client.contact} · <span className="text-[#7FA0D6] font-bold">{client.slackChannel}</span>
+                      <p className="text-[11px] text-nebula-mist font-medium mt-0.5">
+                        {client.contact} · <span className="text-nebula-glow font-bold">{client.slackChannel}</span>
                       </p>
                     </div>
                   </Link>
@@ -562,9 +562,9 @@ export function PodClientAllocationsPage() {
                     {/* Button 1: Client Details */}
                     <Link
                       to={`/lead/clients/${client.id}`}
-                      className="px-3 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#7FA0D6]/15/70 border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs active:scale-95 cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl bg-nebula-navy hover:bg-nebula-glow/15/70 border border-nebula-steel text-slate-100 hover:text-nebula-glow text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs active:scale-95 cursor-pointer"
                     >
-                      <Sparkles className="size-3 text-[#7FA0D6]" />
+                      <Sparkles className="size-3 text-nebula-glow" />
                       Client Details
                     </Link>
 
@@ -576,7 +576,7 @@ export function PodClientAllocationsPage() {
                         className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer ${
                           client.isUrgent
                             ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20 animate-pulse"
-                            : "bg-[#7FA0D6] hover:bg-blue-700 text-white shadow-blue-500/20"
+                            : "bg-nebula-glow hover:bg-blue-700 text-white shadow-blue-500/20"
                         }`}
                       >
                         {client.isUrgent ? (
@@ -595,9 +595,9 @@ export function PodClientAllocationsPage() {
                       <button
                         type="button"
                         onClick={() => navigate(`/lead/clients/${client.id}`)}
-                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-blue-500/15 text-[#BCCCE6] border border-blue-500/30 shadow-2xs transition-all cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-blue-500/15 text-nebula-periwinkle border border-blue-500/30 shadow-2xs transition-all cursor-pointer"
                       >
-                        <ShieldCheck className="size-3 text-[#BCCCE6]" />
+                        <ShieldCheck className="size-3 text-nebula-periwinkle" />
                         QA Cleared
                       </button>
                     )}
@@ -607,10 +607,10 @@ export function PodClientAllocationsPage() {
                 {/* Deliverables Burndown Bars */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   {client.deliverables.map((del) => (
-                    <div key={del.label} className="bg-[#0B111C] p-2.5 rounded-xl border border-[#2A3446] space-y-1">
+                    <div key={del.label} className="bg-nebula-navy p-2.5 rounded-xl border border-nebula-steel space-y-1">
                       <div className="flex justify-between text-[11px] font-bold">
-                        <span className="text-[#F1F5F9]">{del.label}</span>
-                        <span className="text-[#97A0B3]">
+                        <span className="text-slate-100">{del.label}</span>
+                        <span className="text-nebula-mist">
                           {del.current} / {del.target} ({del.percent}%)
                         </span>
                       </div>
@@ -625,14 +625,14 @@ export function PodClientAllocationsPage() {
                 </div>
 
                 {/* Assignees & Next Handoff Footer */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-[#2A3446] text-xs text-[#F1F5F9] gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-nebula-steel text-xs text-slate-100 gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-[#97A0B3]">Pod Assignees:</span>
+                    <span className="font-bold text-nebula-mist">Pod Assignees:</span>
                     <div className="flex items-center gap-1.5">
                       {client.assignees.map((assignee) => (
                         <div
                           key={assignee.name}
-                          className="flex items-center gap-1 bg-[#161F2D] px-2 py-0.5 rounded-lg border border-[#2A3446] text-[11px] font-bold"
+                          className="flex items-center gap-1 bg-nebula-surface px-2 py-0.5 rounded-lg border border-nebula-steel text-[11px] font-bold"
                         >
                           <div
                             className={`size-4 rounded-md ${assignee.bg} text-white flex items-center justify-center text-[8px] font-black`}
@@ -648,13 +648,13 @@ export function PodClientAllocationsPage() {
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <span className="font-bold text-[#F1F5F9] flex items-center gap-1 text-[11px]">
-                      <Clock className="size-3 text-[#97A0B3]" />
-                      Next Handoff: <span className="text-[#7FA0D6]">{client.nextHandoff}</span>
+                    <span className="font-bold text-slate-100 flex items-center gap-1 text-[11px]">
+                      <Clock className="size-3 text-nebula-mist" />
+                      Next Handoff: <span className="text-nebula-glow">{client.nextHandoff}</span>
                     </span>
                     <Link
                       to={`/lead/clients/${client.id}`}
-                      className="text-[11px] font-bold text-[#7FA0D6] hover:text-blue-800 hover:underline flex items-center gap-1 cursor-pointer"
+                      className="text-[11px] font-bold text-nebula-glow hover:text-blue-800 hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       View Profile →
                     </Link>
@@ -675,13 +675,13 @@ export function PodClientAllocationsPage() {
           onClick={() => setReviewModal(null)}
         >
           <div
-            className="relative w-full max-w-xl bg-[#161F2D] rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#2A3446] space-y-5 animate-in zoom-in-95 duration-150 text-left"
+            className="relative w-full max-w-xl bg-nebula-surface rounded-3xl p-6 sm:p-8 shadow-2xl border border-nebula-steel space-y-5 animate-in zoom-in-95 duration-150 text-left"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
           >
             {/* Top Header */}
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
+            <div className="flex items-center justify-between border-b border-nebula-steel pb-4">
               <div className="flex items-center gap-3">
                 <div
                   className={`size-11 rounded-2xl ${reviewModal.client.avatarBg} text-white font-black text-sm flex items-center justify-center shadow-xs`}
@@ -697,7 +697,7 @@ export function PodClientAllocationsPage() {
                       {reviewModal.client.tierBadge}
                     </span>
                   </div>
-                  <p className="text-xs text-[#97A0B3] font-medium mt-0.5">
+                  <p className="text-xs text-nebula-mist font-medium mt-0.5">
                     Creative Lead QA Sign-off Inspection
                   </p>
                 </div>
@@ -705,7 +705,7 @@ export function PodClientAllocationsPage() {
               <button
                 type="button"
                 onClick={() => setReviewModal(null)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+                className="size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist hover:text-slate-100 flex items-center justify-center transition-colors cursor-pointer"
                 aria-label="Close review dialog"
               >
                 <X className="size-4" />
@@ -713,17 +713,17 @@ export function PodClientAllocationsPage() {
             </div>
 
             {/* Asset Pending Review Card */}
-            <div className="bg-[#0B111C] p-4 rounded-2xl border border-[#2A3446]/80 space-y-2">
+            <div className="bg-nebula-navy p-4 rounded-2xl border border-nebula-steel/80 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-nebula-mist">
                   Deliverable Awaiting Lead Approval
                 </span>
                 {reviewModal.client.isUrgent ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-500/15 text-[#BCCCE6] border border-blue-500/30 animate-pulse">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-500/15 text-nebula-periwinkle border border-blue-500/30 animate-pulse">
                     ⚡ Urgent SLA: 1h 14m remaining
                   </span>
                 ) : (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30">
                     {reviewModal.client.reviewAssetsCount} Assets Queued
                   </span>
                 )}
@@ -731,11 +731,11 @@ export function PodClientAllocationsPage() {
               <h4 className="text-sm font-black text-white">
                 {reviewModal.client.deliverableTitle || "Primary Campaign Asset Package (Batch 4)"}
               </h4>
-              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[#F1F5F9] pt-1">
-                <span className="bg-[#161F2D] px-2.5 py-1 rounded-lg border border-[#2A3446] text-[11px]">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-100 pt-1">
+                <span className="bg-nebula-surface px-2.5 py-1 rounded-lg border border-nebula-steel text-[11px]">
                   Format: 9:16 Vertical Story • 1080x1920 • 60fps
                 </span>
-                <span className="bg-[#161F2D] px-2.5 py-1 rounded-lg border border-[#2A3446] text-[11px]">
+                <span className="bg-nebula-surface px-2.5 py-1 rounded-lg border border-nebula-steel text-[11px]">
                   Assigned: {reviewModal.client.assignees.map((a) => a.name).join(", ")}
                 </span>
               </div>
@@ -743,10 +743,10 @@ export function PodClientAllocationsPage() {
 
             {/* QA Verification Checklist */}
             <div className="space-y-2.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] block">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-nebula-mist block">
                 Lead Sign-off Verification Checklist:
               </span>
-              <div className="space-y-2 text-xs font-semibold text-[#F1F5F9]">
+              <div className="space-y-2 text-xs font-semibold text-slate-100">
                 {[
                   {
                     id: "brand",
@@ -763,12 +763,12 @@ export function PodClientAllocationsPage() {
                 ].map((item) => (
                   <label
                     key={item.id}
-                    className="flex items-center gap-3 p-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] cursor-pointer transition-colors"
+                    className="flex items-center gap-3 p-2.5 rounded-xl border border-nebula-steel bg-nebula-surface hover:bg-nebula-navy cursor-pointer transition-colors"
                   >
                     <input
                       type="checkbox"
                       defaultChecked
-                      className="size-4 rounded text-[#7FA0D6] focus:ring-blue-500 border-[#2A3446]"
+                      className="size-4 rounded text-nebula-glow focus:ring-blue-500 border-nebula-steel"
                     />
                     <span>{item.label}</span>
                   </label>
@@ -777,11 +777,11 @@ export function PodClientAllocationsPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-3 border-t border-[#2A3446]">
+            <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-3 border-t border-nebula-steel">
               <button
                 type="button"
                 onClick={() => setReviewModal(null)}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#2A3446] text-[#F1F5F9] text-xs font-bold hover:bg-[#161F2D] active:scale-95 transition-all cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-nebula-steel text-slate-100 text-xs font-bold hover:bg-nebula-surface active:scale-95 transition-all cursor-pointer"
               >
                 Cancel
               </button>
@@ -791,7 +791,7 @@ export function PodClientAllocationsPage() {
                   setReviewModal(null);
                   navigate("/lead/deliverables");
                 }}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9] text-xs font-bold active:scale-95 transition-all cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-nebula-surface hover:bg-slate-200 text-slate-100 text-xs font-bold active:scale-95 transition-all cursor-pointer"
               >
                 Open Review Studio →
               </button>
@@ -817,7 +817,7 @@ export function PodClientAllocationsPage() {
           onClick={() => setAlertModal(null)}
         >
           <div
-            className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150 text-left"
+            className="relative w-full max-w-md rounded-3xl bg-nebula-surface p-6 sm:p-8 shadow-2xl border border-nebula-steel flex flex-col items-center text-center animate-in zoom-in-95 duration-150 text-left"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -826,14 +826,14 @@ export function PodClientAllocationsPage() {
             <button
               type="button"
               onClick={() => setAlertModal(null)}
-              className="absolute top-4 right-4 size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-4 right-4 size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist hover:text-slate-100 flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Close modal"
             >
               <X className="size-4" />
             </button>
 
             {/* Tone Icon Badge */}
-            <div className="size-16 rounded-3xl flex items-center justify-center mb-4 ring-8 shadow-inner bg-blue-500/20 text-[#BCCCE6] ring-blue-500/30">
+            <div className="size-16 rounded-3xl flex items-center justify-center mb-4 ring-8 shadow-inner bg-blue-500/20 text-nebula-periwinkle ring-blue-500/30">
               <CheckCircle2 className="size-8" />
             </div>
 
@@ -843,7 +843,7 @@ export function PodClientAllocationsPage() {
             </h3>
 
             {/* Message */}
-            <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm text-center">
+            <p className="text-xs sm:text-sm text-slate-100 mt-2 leading-relaxed max-w-sm text-center">
               {alertModal.message}
             </p>
 
@@ -865,7 +865,7 @@ export function PodClientAllocationsPage() {
                     setAlertModal(null);
                     navigate(`/lead/clients/${id}`);
                   }}
-                  className="px-5 py-3 rounded-2xl bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9] font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-5 py-3 rounded-2xl bg-nebula-surface hover:bg-slate-200 text-slate-100 font-bold text-xs active:scale-95 transition-all cursor-pointer"
                 >
                   View Client Profile
                 </button>
@@ -884,28 +884,28 @@ export function PodClientAllocationsPage() {
           onClick={() => setReallocationModal(false)}
         >
           <div
-            className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-in zoom-in-95 duration-150 text-left"
+            className="w-full max-w-lg bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4 animate-in zoom-in-95 duration-150 text-left"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
           >
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <h3 className="text-base font-black text-white">Request Pod Re-allocation</h3>
               <button
                 type="button"
                 onClick={() => setReallocationModal(false)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+                className="size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist hover:text-slate-100 flex items-center justify-center transition-colors cursor-pointer"
               >
                 <X className="size-4" />
               </button>
             </div>
-            <p className="text-xs text-[#97A0B3]">
+            <p className="text-xs text-nebula-mist">
               Submit workload balancing request to Studio Director:
             </p>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Target Account</label>
-                <select className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white">
+                <label className="font-bold text-slate-100 block mb-1">Target Account</label>
+                <select className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium text-white">
                   {clients.length > 0 ? (
                     clients.map((c) => (
                       <option key={c.id} value={c.name}>{c.name}</option>
@@ -916,19 +916,19 @@ export function PodClientAllocationsPage() {
                 </select>
               </div>
               <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Resource Needed</label>
-                <select className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium">
+                <label className="font-bold text-slate-100 block mb-1">Resource Needed</label>
+                <select className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium">
                   <option>Additional 3D Motion Specialist Support</option>
                   <option>Copywriting surge capacity</option>
                   <option>Senior Visual Designer QA backup</option>
                 </select>
               </div>
             </div>
-            <div className="flex justify-end gap-3 pt-3 border-t border-[#2A3446]">
+            <div className="flex justify-end gap-3 pt-3 border-t border-nebula-steel">
               <button
                 type="button"
                 onClick={() => setReallocationModal(false)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-nebula-surface text-slate-100 text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
               >
                 Cancel
               </button>

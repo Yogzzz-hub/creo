@@ -12,7 +12,7 @@ export function DialogOverlay({ className, ...props }: RadixDialog.DialogOverlay
   return (
     <RadixDialog.Overlay
       className={clsx(
-        "fixed inset-0 w-screen h-screen z-[99999] bg-[#0B111C]/80 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "fixed inset-0 w-screen h-screen z-[99999] bg-nebula-navy/80 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         className,
       )}
       {...props}

@@ -30,9 +30,9 @@ import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
     active: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    trialing: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+    trialing: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
     expired: "bg-rose-50 text-rose-700 border-rose-200",
-    canceled: "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
+    canceled: "bg-nebula-surface text-slate-100 border-nebula-steel",
   };
   return (
     <span
@@ -59,10 +59,10 @@ function SectionCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-[#2A3446]/80 bg-[#161F2D] shadow-sm overflow-hidden hover-card-innovative ${className}`}
+      className={`rounded-2xl border border-nebula-steel/80 bg-nebula-surface shadow-sm overflow-hidden hover-card-innovative ${className}`}
     >
-      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-[#2A3446] bg-[#0B111C]/50">
-        <div className="size-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
+      <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-nebula-steel bg-nebula-navy/50">
+        <div className="size-7 rounded-lg bg-nebula-glow/15 border border-nebula-steel flex items-center justify-center text-nebula-glow">
           <Icon className="size-3.5" />
         </div>
         <h3 className="text-xs font-bold uppercase tracking-wider text-white">
@@ -82,11 +82,11 @@ function TagBadge({
   color?: "blue" | "red" | "green" | "amber" | "slate";
 }) {
   const colors = {
-    blue: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+    blue: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
     red: "bg-rose-50 text-rose-700 border-rose-200",
     green: "bg-emerald-50 text-emerald-700 border-emerald-200",
     amber: "bg-amber-50 text-amber-700 border-amber-200",
-    slate: "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
+    slate: "bg-nebula-surface text-slate-100 border-nebula-steel",
   };
   return (
     <span
@@ -100,12 +100,12 @@ function TagBadge({
 function ColorSwatch({ color }: { color: string }) {
   const isValid = typeof color === "string" && color.startsWith("#");
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-[#2A3446] bg-[#0B111C] px-2.5 py-1.5">
+    <div className="flex items-center gap-2 rounded-lg border border-nebula-steel bg-nebula-navy px-2.5 py-1.5">
       <div
-        className="size-5 rounded-md border border-[#2A3446] shadow-inner"
-        style={{ backgroundColor: isValid ? color : "#7FA0D6" }}
+        className="size-5 rounded-md border border-nebula-steel shadow-inner"
+        style={{ backgroundColor: isValid ? color : "var(--color-nebula-glow)" }}
       />
-      <span className="font-mono text-[11px] font-bold text-[#F1F5F9]">
+      <span className="font-mono text-[11px] font-bold text-slate-100">
         {color}
       </span>
     </div>
@@ -176,7 +176,7 @@ export function AdminClientBrandPage() {
   };
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-nebula-navy flex flex-col">
       <AdminTopHeader activeTab="Client Details" />
       <motion.main 
         initial={{ opacity: 0, y: 15 }}
@@ -195,24 +195,24 @@ export function AdminClientBrandPage() {
                 window.location.assign("/lead/clients");
               }
             }}
-            className="inline-flex items-center gap-1.5 text-[#97A0B3] hover:text-[#7FA0D6] font-semibold transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-nebula-mist hover:text-nebula-glow font-semibold transition-colors cursor-pointer"
           >
             <ArrowLeft className="size-3.5" />
             Back to Client Directory
           </button>
           <span className="text-slate-300">/</span>
-          <span className="text-[#97A0B3]">{client.company_name || client.full_name || "Client"} Brand Brief & Profile</span>
+          <span className="text-nebula-mist">{client.company_name || client.full_name || "Client"} Brand Brief & Profile</span>
         </div>
 
       {/* ── Client Header Hero ─────────────────────────────── */}
-      <div className="rounded-2xl border border-[#2A3446]/80 bg-gradient-to-br from-[#0B111C] to-[#7FA0D6] p-6 sm:p-8 text-white relative overflow-hidden">
+      <div className="rounded-2xl border border-nebula-steel/80 bg-gradient-to-br from-nebula-navy to-nebula-glow p-6 sm:p-8 text-white relative overflow-hidden">
         {/* Ambient glow */}
         <div className="pointer-events-none absolute -top-20 -right-20 size-56 rounded-full bg-sky-400/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 size-44 rounded-full bg-[#7FA0D6]/150/15 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 size-44 rounded-full bg-nebula-glow/150/15 blur-2xl" />
 
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-start gap-5">
           {/* Avatar */}
-          <div className="size-16 sm:size-20 rounded-2xl bg-gradient-to-br from-[#7FA0D6] to-[#7FA0D6] border-2 border-white/30 flex items-center justify-center text-2xl sm:text-3xl font-black shadow-lg shadow-blue-500/30 shrink-0">
+          <div className="size-16 sm:size-20 rounded-2xl bg-gradient-to-br from-nebula-glow to-nebula-glow border-2 border-white/30 flex items-center justify-center text-2xl sm:text-3xl font-black shadow-lg shadow-blue-500/30 shrink-0">
             {(client.full_name?.[0] || "C").toUpperCase()}
           </div>
 
@@ -287,7 +287,7 @@ export function AdminClientBrandPage() {
             ].map((s) => (
               <div
                 key={s.label}
-                className="text-center px-3 py-2 rounded-xl bg-[#161F2D]/10 border border-white/15 backdrop-blur-sm"
+                className="text-center px-3 py-2 rounded-xl bg-nebula-surface/10 border border-white/15 backdrop-blur-sm"
               >
                 <s.icon className="size-4 mx-auto mb-1 text-cyan-300" />
                 <p className="text-lg font-black">{s.value}</p>
@@ -303,19 +303,19 @@ export function AdminClientBrandPage() {
         <div className="relative z-10 flex flex-wrap gap-2 mt-5 pt-4 border-t border-white/15">
           <Link
             to="/admin/tasks"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#161F2D]/15 hover:bg-[#161F2D]/25 text-white text-[11px] font-bold border border-white/20 transition-all"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-nebula-surface/15 hover:bg-nebula-surface/25 text-white text-[11px] font-bold border border-white/20 transition-all"
           >
             <CheckSquare className="size-3" /> View Tasks
           </Link>
           <Link
             to="/admin/calendar"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#161F2D]/15 hover:bg-[#161F2D]/25 text-white text-[11px] font-bold border border-white/20 transition-all"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-nebula-surface/15 hover:bg-nebula-surface/25 text-white text-[11px] font-bold border border-white/20 transition-all"
           >
             <CalendarDays className="size-3" /> Content Calendar
           </Link>
           <Link
             to="/admin/deliverables"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#161F2D]/15 hover:bg-[#161F2D]/25 text-white text-[11px] font-bold border border-white/20 transition-all"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-nebula-surface/15 hover:bg-nebula-surface/25 text-white text-[11px] font-bold border border-white/20 transition-all"
           >
             <FileStack className="size-3" /> Deliverables
           </Link>
@@ -329,7 +329,7 @@ export function AdminClientBrandPage() {
           <div className="space-y-4">
             {voiceWords.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2 flex items-center gap-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-nebula-mist mb-2 flex items-center gap-1.5">
                   <Eye className="size-3" /> Voice Words
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -341,7 +341,7 @@ export function AdminClientBrandPage() {
             )}
             {antiVoice.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2 flex items-center gap-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-nebula-mist mb-2 flex items-center gap-1.5">
                   <EyeOff className="size-3" /> Anti-Voice (Avoid)
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -353,14 +353,14 @@ export function AdminClientBrandPage() {
             )}
             {writingRules.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-nebula-mist mb-2">
                   Writing Rules
                 </p>
                 <ul className="space-y-1.5">
                   {writingRules.map((r, i) => (
                     <li
                       key={i}
-                      className="text-xs text-[#F1F5F9] pl-3 relative before:content-[''] before:absolute before:left-0 before:top-1.5 before:size-1.5 before:rounded-full before:bg-[#7FA0D6]"
+                      className="text-xs text-slate-100 pl-3 relative before:content-[''] before:absolute before:left-0 before:top-1.5 before:size-1.5 before:rounded-full before:bg-nebula-glow"
                     >
                       {r}
                     </li>
@@ -371,7 +371,7 @@ export function AdminClientBrandPage() {
             {voiceWords.length === 0 &&
               antiVoice.length === 0 &&
               writingRules.length === 0 && (
-                <p className="text-xs text-[#97A0B3] italic">
+                <p className="text-xs text-nebula-mist italic">
                   No tone data available yet. Brand DNA will be generated once
                   the client completes the questionnaire.
                 </p>
@@ -384,7 +384,7 @@ export function AdminClientBrandPage() {
           <div className="space-y-4">
             {palette.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-nebula-mist mb-2">
                   Brand Color Palette
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -396,7 +396,7 @@ export function AdminClientBrandPage() {
             )}
             {visualStyles.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-nebula-mist mb-2">
                   Visual Styles
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -407,7 +407,7 @@ export function AdminClientBrandPage() {
               </div>
             )}
             {palette.length === 0 && visualStyles.length === 0 && (
-              <p className="text-xs text-[#97A0B3] italic">
+              <p className="text-xs text-nebula-mist italic">
                 No visual direction data available yet.
               </p>
             )}
@@ -421,7 +421,7 @@ export function AdminClientBrandPage() {
               {audiences.map((a: any, i: number) => (
                 <div
                   key={i}
-                  className="rounded-xl border border-[#2A3446] bg-[#0B111C]/50 p-3.5"
+                  className="rounded-xl border border-nebula-steel bg-nebula-navy/50 p-3.5"
                 >
                   <p className="text-xs font-bold text-white">
                     {typeof a === "string"
@@ -429,7 +429,7 @@ export function AdminClientBrandPage() {
                       : a.name || "Audience Segment"}
                   </p>
                   {typeof a === "object" && a.description && (
-                    <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed">
+                    <p className="text-[11px] text-slate-100 mt-1 leading-relaxed">
                       {a.description}
                     </p>
                   )}
@@ -442,7 +442,7 @@ export function AdminClientBrandPage() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-[#97A0B3] italic">
+            <p className="text-xs text-nebula-mist italic">
               No audience segment data available.
             </p>
           )}
@@ -455,7 +455,7 @@ export function AdminClientBrandPage() {
               {pillars.map((p: any, i: number) => (
                 <div
                   key={i}
-                  className="rounded-xl border border-[#2A3446] bg-[#0B111C]/50 p-3.5"
+                  className="rounded-xl border border-nebula-steel bg-nebula-navy/50 p-3.5"
                 >
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <p className="text-xs font-bold text-white">
@@ -474,7 +474,7 @@ export function AdminClientBrandPage() {
                     )}
                   </div>
                   {typeof p === "object" && p.rationale && (
-                    <p className="text-[11px] text-[#F1F5F9] leading-relaxed">
+                    <p className="text-[11px] text-slate-100 leading-relaxed">
                       {p.rationale}
                     </p>
                   )}
@@ -491,7 +491,7 @@ export function AdminClientBrandPage() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-[#97A0B3] italic">
+            <p className="text-xs text-nebula-mist italic">
               No content pillar data available.
             </p>
           )}
@@ -517,7 +517,7 @@ export function AdminClientBrandPage() {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-[#97A0B3] italic">
+            <p className="text-xs text-nebula-mist italic">
               No &quot;do not&quot; rules specified.
             </p>
           )}
@@ -528,7 +528,7 @@ export function AdminClientBrandPage() {
           <div className="space-y-4">
             {formats.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-nebula-mist mb-2">
                   Feasible Formats
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -539,7 +539,7 @@ export function AdminClientBrandPage() {
               </div>
             )}
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-nebula-mist mb-2">
                 Default Reel Style
               </p>
               <TagBadge
@@ -551,28 +551,28 @@ export function AdminClientBrandPage() {
             {/* Quota usage */}
             {client.quota_usage.length > 0 && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-nebula-mist mb-2">
                   Monthly Quota Usage
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {client.quota_usage.map((q) => (
                     <div
                       key={q.kind}
-                      className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-3 text-center"
+                      className="rounded-xl border border-nebula-steel bg-nebula-navy p-3 text-center"
                     >
                       <p className="text-xs font-bold text-white capitalize">
                         {q.kind.replace(/_/g, " ")}
                       </p>
-                      <p className="text-lg font-black text-[#7FA0D6] mt-0.5">
+                      <p className="text-lg font-black text-nebula-glow mt-0.5">
                         {q.used}
-                        <span className="text-xs text-[#97A0B3] font-medium">
+                        <span className="text-xs text-nebula-mist font-medium">
                           {" "}
                           / {q.quota}
                         </span>
                       </p>
                       <div className="w-full h-1.5 bg-slate-200 rounded-full mt-1.5 overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-[#7FA0D6] to-[#7FA0D6] rounded-full transition-all"
+                          className="h-full bg-gradient-to-r from-nebula-glow to-nebula-glow rounded-full transition-all"
                           style={{
                             width: `${Math.min(100, q.quota > 0 ? (q.used / q.quota) * 100 : 0)}%`,
                           }}
@@ -593,7 +593,7 @@ export function AdminClientBrandPage() {
           <div className="overflow-x-auto -mx-1">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] border-b border-[#2A3446]">
+                <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-nebula-mist border-b border-nebula-steel">
                   <th className="pb-2.5 pl-1 pr-3">Team Member</th>
                   <th className="pb-2.5 pr-3">Role</th>
                   <th className="pb-2.5 pr-3">Email</th>
@@ -602,10 +602,10 @@ export function AdminClientBrandPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {client.assigned_team.map((m) => (
-                  <tr key={m.id} className="hover:bg-[#0B111C]/50 transition-colors">
+                  <tr key={m.id} className="hover:bg-nebula-navy/50 transition-colors">
                     <td className="py-3 pl-1 pr-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="size-7 rounded-lg bg-[#7FA0D6]/15 border border-[#2A3446] flex items-center justify-center text-[10px] font-bold text-[#7FA0D6]">
+                        <div className="size-7 rounded-lg bg-nebula-glow/15 border border-nebula-steel flex items-center justify-center text-[10px] font-bold text-nebula-glow">
                           {(m.name?.[0] || "?").toUpperCase()}
                         </div>
                         <span className="font-semibold text-white">
@@ -613,10 +613,10 @@ export function AdminClientBrandPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 pr-3 text-[#F1F5F9] font-medium">
+                    <td className="py-3 pr-3 text-slate-100 font-medium">
                       {m.role_label}
                     </td>
-                    <td className="py-3 pr-3 text-[#97A0B3]">{m.email}</td>
+                    <td className="py-3 pr-3 text-nebula-mist">{m.email}</td>
                     <td className="py-3 pr-1 text-center">
                       {m.is_primary && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
@@ -633,28 +633,28 @@ export function AdminClientBrandPage() {
       )}
 
       {/* ── Brand DNA Meta Footer ──────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 py-3 px-4 rounded-xl border border-[#2A3446] bg-[#0B111C]/50 text-[10px] text-[#97A0B3] font-medium">
+      <div className="flex flex-wrap items-center justify-between gap-3 py-3 px-4 rounded-xl border border-nebula-steel bg-nebula-navy/50 text-[10px] text-nebula-mist font-medium">
         <div className="flex items-center gap-4">
           <span>
             DNA Source:{" "}
-            <strong className="text-[#F1F5F9] capitalize">
+            <strong className="text-slate-100 capitalize">
               {client.brand_dna_source}
             </strong>
           </span>
           <span>
             Version:{" "}
-            <strong className="text-[#F1F5F9]">v{client.brand_dna_version}</strong>
+            <strong className="text-slate-100">v{client.brand_dna_version}</strong>
           </span>
           {client.onboarding_completed_at && (
             <span>
               Onboarded:{" "}
-              <strong className="text-[#F1F5F9]">
+              <strong className="text-slate-100">
                 {new Date(client.onboarding_completed_at).toLocaleDateString()}
               </strong>
             </span>
           )}
         </div>
-        <span className="text-[9px] uppercase tracking-wider text-[#97A0B3]">
+        <span className="text-[9px] uppercase tracking-wider text-nebula-mist">
           Client ID: {client.client_id.slice(0, 8)}
         </span>
       </div>

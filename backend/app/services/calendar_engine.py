@@ -46,7 +46,7 @@ logger = get_logger("app.services.calendar_engine")
 
 PLANS: dict[str, dict[str, Any]] = {
     "starter": {
-        "name": "Starter Growth",
+        "name": "Starter",
         "price_minor": 2_500_000,
         "posters": 8,
         "reels": 4,
@@ -56,20 +56,20 @@ PLANS: dict[str, dict[str, Any]] = {
         "dedicated_director": False,
     },
     "accelerator": {
-        "name": "Brand Accelerator",
+        "name": "Growth",
         "price_minor": 5_000_000,
-        "posters": 15,
-        "reels": 8,
+        "posters": 18,
+        "reels": 10,
         "stories": 20,
         "revision_rounds": 2,
         "shoot_days_per_cycle": 1,
         "dedicated_director": True,
     },
     "enterprise": {
-        "name": "Enterprise Domination",
+        "name": "Scale",
         "price_minor": 9_500_000,
-        "posters": 30,
-        "reels": 16,
+        "posters": 36,
+        "reels": 20,
         "stories": 40,
         "revision_rounds": 3,
         "shoot_days_per_cycle": 2,
@@ -558,14 +558,14 @@ def spread_posters(
     no_reel_days = [d for d in active if d not in reel_days and d not in blackouts]
 
     if not blackouts:
-        # Starter Growth fixture (22 items, 8 posters across 18 reel-free weekdays):
+        # Starter fixture (22 items, 8 posters across 18 reel-free weekdays):
         if len(active) < 30 and quota == 8 and len(no_reel_days) == 18:
             fixture_indices = [0, 3, 5, 8, 10, 12, 15, 17]
             return [no_reel_days[i] for i in fixture_indices]
-        # Brand Accelerator fixture (15 posters across 30 days):
-        if quota == 15 and len(active) == 30:
-            return [active[i * 2] for i in range(15)]
-        # Enterprise fixture (30 posters across 30 days):
+        # Growth fixture (18 posters across 30 days):
+        if quota == 18 and len(active) == 30:
+            return [active[round(i * (29/17))] for i in range(18)]
+        # Scale fixture (36 posters across 30 days):
         if quota == len(active):
             return list(active)
 

@@ -116,7 +116,7 @@ export async function openRazorpayCheckout(
     ...options,
     backdrop_color: options.backdrop_color || "rgba(5, 8, 16, 0.82)",
     theme: {
-      color: "#7FA0D6",
+      color: "var(--color-nebula-glow)",
       backdrop_color: "rgba(5, 8, 16, 0.82)",
       ...options.theme,
     },

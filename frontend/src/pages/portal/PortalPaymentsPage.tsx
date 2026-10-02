@@ -64,6 +64,12 @@ export function PortalPaymentsPage() {
 
   const isPausedNextMonth = !!(subData as any)?.is_paused_next_month;
 
+  const planLower = planName.toLowerCase();
+  const planRevisionRounds = (subData as any)?.plan?.revision_rounds || (
+    planLower.includes("starter") ? 1 : planLower.includes("scale") ? 3 : 2
+  );
+  const planTurnaroundSla = planLower.includes("starter") ? "3 business-day" : planLower.includes("scale") ? "24-hour" : "2 business-day";
+
   const addons = [
     { id: "extra_reel", name: "Extra reel", desc: "Delivered within this batch", price: 4500 },
     { id: "rush", name: "Rush delivery", desc: "24-hour turnaround on one asset", price: 6000 },
@@ -81,9 +87,9 @@ export function PortalPaymentsPage() {
 
   const usage = (subData as any)?.quotas || (subData as any)?.usage || {};
   const usageBars = [
-    { label: "Reels", current: usage.reel?.used || 0, max: usage.reel?.quota ?? (subData as any)?.plan?.reel_quota ?? 0, color: "bg-[#7FA0D6]" },
-    { label: "Posts", current: (usage.static_post?.used ?? usage.poster?.used) || 0, max: (usage.static_post?.quota ?? usage.poster?.quota) ?? (subData as any)?.plan?.poster_quota ?? 0, color: "bg-[#7FA0D6]" },
-    { label: "Stories", current: usage.story?.used || 0, max: usage.story?.quota ?? (subData as any)?.plan?.story_quota ?? 0, color: "bg-[#7FA0D6]" }
+    { label: "Reels", current: usage.reel?.used || 0, max: usage.reel?.quota ?? (subData as any)?.plan?.reel_quota ?? 0, color: "bg-nebula-glow" },
+    { label: "Posts", current: (usage.static_post?.used ?? usage.poster?.used) || 0, max: (usage.static_post?.quota ?? usage.poster?.quota) ?? (subData as any)?.plan?.poster_quota ?? 0, color: "bg-nebula-glow" },
+    { label: "Stories", current: usage.story?.used || 0, max: usage.story?.quota ?? (subData as any)?.plan?.story_quota ?? 0, color: "bg-nebula-glow" }
   ];
 
   const totalMax = usageBars.reduce((sum, item) => sum + item.max, 0);
@@ -142,13 +148,13 @@ export function PortalPaymentsPage() {
     return (
       <div className="space-y-6 pb-12">
         <div>
-          <p className="text-xs uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-2">No active plan yet</p>
-          <h1 className="text-3xl font-bold text-[#F8FAFC] tracking-tight">Plan & billing</h1>
+          <p className="text-xs uppercase font-bold tracking-[0.16em] text-nebula-mist mb-2">No active plan yet</p>
+          <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Plan & billing</h1>
         </div>
         <ResumeOnboardingBanner variant="hero" title="Activate your plan in a few quick steps" />
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 lg:p-8">
-          <h3 className="text-base font-semibold text-[#F8FAFC] mb-1.5">Invoices</h3>
-          <p className="text-sm text-[#97A0B3] leading-relaxed">
+        <div className="bg-nebula-surface border border-nebula-steel rounded-3xl p-6 lg:p-8">
+          <h3 className="text-base font-semibold text-slate-50 mb-1.5">Invoices</h3>
+          <p className="text-sm text-nebula-mist leading-relaxed">
             Receipts and invoices will appear here after your first payment.
           </p>
         </div>
@@ -177,7 +183,7 @@ export function PortalPaymentsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-2">
+          <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-nebula-mist mb-2">
             {planName} PLAN • RENEWS {renewalDate}
           </p>
           <h1 className="text-3xl font-bold text-white tracking-tight">Plan & billing</h1>
@@ -186,7 +192,7 @@ export function PortalPaymentsPage() {
           <button 
             type="button"
             onClick={() => setCompareModalOpen(true)}
-            className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
+            className="px-5 py-2.5 rounded-full border border-nebula-steel text-[13px] font-bold text-white hover:bg-nebula-surface transition-colors cursor-pointer"
           >
             Compare plans
           </button>
@@ -209,7 +215,7 @@ export function PortalPaymentsPage() {
             <button 
               type="button"
               onClick={() => setPauseModalOpen(true)}
-              className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] hover:border-amber-500/40 transition-colors cursor-pointer"
+              className="px-5 py-2.5 rounded-full border border-nebula-steel text-[13px] font-bold text-white hover:bg-nebula-surface hover:border-amber-500/40 transition-colors cursor-pointer"
             >
               Pause next month
             </button>
@@ -237,7 +243,7 @@ export function PortalPaymentsPage() {
             type="button"
             onClick={handleResumePlan}
             disabled={resumingSub}
-            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-[#0B111C] text-xs font-bold transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-nebula-navy text-xs font-bold transition-colors shrink-0 cursor-pointer disabled:opacity-50"
           >
             {resumingSub ? "Resuming..." : "Resume Renewal"}
           </button>
@@ -257,16 +263,16 @@ export function PortalPaymentsPage() {
               ? "border-blue-500/40 bg-blue-950/25 text-blue-200"
               : latestNeg.status === "Declined"
               ? "border-rose-500/30 bg-rose-950/20 text-rose-200"
-              : "border-[#7FA0D6]/40 bg-[#0B111C] text-[#BCCCE6]"
+              : "border-nebula-glow/40 bg-nebula-navy text-nebula-periwinkle"
           }`}
         >
           <div className="flex items-start sm:items-center gap-3.5">
-            <div className="size-9 rounded-xl bg-[#161F2D] border border-[#2A3446] flex items-center justify-center shrink-0 text-[#7FA0D6]">
+            <div className="size-9 rounded-xl bg-nebula-surface border border-nebula-steel flex items-center justify-center shrink-0 text-nebula-glow">
               <PhoneCall className="size-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">Plan Negotiation</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-nebula-mist">Plan Negotiation</span>
                 <span
                   className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
                     latestNeg.status === "Accepted"
@@ -275,7 +281,7 @@ export function PortalPaymentsPage() {
                       ? "bg-blue-500/20 text-blue-400 border border-blue-500/40"
                       : latestNeg.status === "Declined"
                       ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
-                      : "bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/40"
+                      : "bg-nebula-glow/20 text-nebula-glow border border-nebula-glow/40"
                   }`}
                 >
                   {latestNeg.status}
@@ -297,7 +303,7 @@ export function PortalPaymentsPage() {
                 </p>
               )}
               {latestNeg.status === "Pending Review" && (
-                <p className="text-xs text-[#97A0B3] mt-0.5">
+                <p className="text-xs text-nebula-mist mt-0.5">
                   Our Agency Director will call you at {latestNeg.phoneNumber} ({latestNeg.preferredTime}).
                 </p>
               )}
@@ -309,17 +315,17 @@ export function PortalPaymentsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Top Left: Current Plan */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8 flex flex-col justify-between">
+        <div className="bg-nebula-surface border border-nebula-steel rounded-[24px] p-6 lg:p-8 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-10">
             <div>
-              <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-1">
+              <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-nebula-mist mb-1">
                 CURRENT PLAN
               </p>
               <h2 className="text-3xl font-bold text-white">{planName}</h2>
             </div>
             <div className="text-right">
               <h2 className="text-3xl font-bold text-white">₹{planPrice.toLocaleString('en-IN')}</h2>
-              <p className="text-xs text-[#97A0B3] mt-1">per month • ₹{costPerAsset.toLocaleString('en-IN')} per asset</p>
+              <p className="text-xs text-nebula-mist mt-1">per month • ₹{costPerAsset.toLocaleString('en-IN')} per asset</p>
             </div>
           </div>
 
@@ -328,7 +334,7 @@ export function PortalPaymentsPage() {
               <div key={item.label}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[13px] font-bold text-white">{item.label}</span>
-                  <span className="text-[13px] font-medium text-[#97A0B3]">{item.current} / {item.max}</span>
+                  <span className="text-[13px] font-medium text-nebula-mist">{item.current} / {item.max}</span>
                 </div>
                 <div className="h-1.5 w-full bg-white/[0.05] rounded-full overflow-hidden">
                   <div className={`h-full ${item.color} rounded-full`} style={{ width: `${(item.current / item.max) * 100}%` }} />
@@ -337,27 +343,27 @@ export function PortalPaymentsPage() {
             ))}
           </div>
 
-          <p className="text-xs text-[#97A0B3] font-medium leading-relaxed">
-            2 revision rounds per asset • 2 business-day batch SLA • dedicated account director
+          <p className="text-xs text-nebula-mist font-medium leading-relaxed">
+            {planRevisionRounds} revision {planRevisionRounds === 1 ? "round" : "rounds"} per asset • {planTurnaroundSla} batch SLA • dedicated account director
           </p>
         </div>
 
         {/* Top Right: Add to this cycle */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
+        <div className="bg-nebula-surface border border-nebula-steel rounded-[24px] p-6 lg:p-8">
           <h3 className="text-sm font-bold text-white mb-6">Add to this cycle</h3>
           <div className="divide-y divide-white/[0.05]">
             {addons.map(addon => (
               <div key={addon.id} className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h4 className="text-[13px] font-bold text-white mb-1">{addon.name}</h4>
-                  <p className="text-xs text-[#97A0B3]">{addon.desc}</p>
+                  <p className="text-xs text-nebula-mist">{addon.desc}</p>
                 </div>
                 <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0">
                   <span className="text-[13px] font-bold text-white">₹{addon.price.toLocaleString('en-IN')}</span>
                   <button 
                     onClick={() => handleAddon(addon)}
                     disabled={!!processingAddon}
-                    className="px-5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors w-20 flex items-center justify-center disabled:opacity-50 cursor-pointer"
+                    className="px-5 py-2 rounded-full bg-nebula-periwinkle text-nebula-navy text-[13px] font-bold hover:bg-white transition-colors w-20 flex items-center justify-center disabled:opacity-50 cursor-pointer"
                   >
                     {processingAddon === addon.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Add"}
                   </button>
@@ -368,41 +374,41 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Bottom Left: Invoices */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
+        <div className="bg-nebula-surface border border-nebula-steel rounded-[24px] p-6 lg:p-8">
           <h3 className="text-sm font-bold text-white mb-6">Invoices</h3>
           <div className="overflow-x-auto scrollbar-hide">
             <table className="w-full min-w-[500px]">
               <thead>
-                <tr className="border-b border-[#2A3446]">
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Invoice</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Period</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Amount</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Status</th>
+                <tr className="border-b border-nebula-steel">
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-nebula-mist pb-3 font-mono">Invoice</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-nebula-mist pb-3 font-mono">Period</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-nebula-mist pb-3 font-mono">Amount</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-nebula-mist pb-3 font-mono">Status</th>
                   <th className="pb-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.05]">
                 {invoices.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-sm text-[#97A0B3]">
+                    <td colSpan={5} className="py-8 text-center text-sm text-nebula-mist">
                       No invoices generated yet.
                     </td>
                   </tr>
                 ) : (
                   invoices.map((inv: any) => (
                     <tr key={inv.id}>
-                      <td className="py-4 text-[13px] font-medium text-[#97A0B3] font-mono">{inv.id}</td>
+                      <td className="py-4 text-[13px] font-medium text-nebula-mist font-mono">{inv.id}</td>
                       <td className="py-4 text-[13px] text-white">{inv.period}</td>
                       <td className="py-4 text-[13px] font-bold text-white">₹{inv.amount.toLocaleString('en-IN')}</td>
                       <td className="py-4">
-                        <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-[#7FA0D6]/15 text-[#BCCCE6] text-xs font-bold">
+                        <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-nebula-glow/15 text-nebula-periwinkle text-xs font-bold">
                           {inv.status}
                         </span>
                       </td>
                       <td className="py-4 text-right">
                         <button 
                           onClick={() => handleDownload(inv.id)}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-nebula-steel text-[13px] font-bold text-white hover:bg-nebula-surface transition-colors cursor-pointer"
                         >
                           {downloadingInv === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <Download className="w-3.5 h-3.5" />}
                           GST invoice
@@ -417,21 +423,21 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Bottom Right: Payment method */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8 flex flex-col justify-between">
+        <div className="bg-nebula-surface border border-nebula-steel rounded-[24px] p-6 lg:p-8 flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-white mb-6">Payment method</h3>
             
             <div className="space-y-4 mb-8">
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-[#97A0B3]">Method</span>
+                <span className="text-[13px] text-nebula-mist">Method</span>
                 <span className="text-[13px] font-bold text-white">UPI AutoPay • Razorpay</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-[#97A0B3]">Next charge</span>
+                <span className="text-[13px] text-nebula-mist">Next charge</span>
                 <span className="text-[13px] font-bold text-white">₹{planPrice.toLocaleString('en-IN')} • {renewalDate}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-[#97A0B3]">GSTIN on invoices</span>
+                <span className="text-[13px] text-nebula-mist">GSTIN on invoices</span>
                 <span className="text-[13px] font-bold text-white">Added</span>
               </div>
             </div>
@@ -455,7 +461,7 @@ export function PortalPaymentsPage() {
                 () => {}
               );
             }}
-            className="w-full py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors mt-auto cursor-pointer"
+            className="w-full py-3 rounded-full border border-nebula-steel text-[13px] font-bold text-white hover:bg-nebula-surface transition-colors mt-auto cursor-pointer"
           >
             Change payment method
           </button>

@@ -39,8 +39,8 @@ const FAQ_ITEMS = [
   { q: "How do I request changes on an approved asset?", a: "Once an asset is approved, it moves to the Scheduled queue. If you need a last-minute change, please open a Support ticket with the priority 'High' and mention the asset ID." },
   { q: "What happens if I miss a review deadline?", a: "Assets auto-approve after the SLA timer expires to ensure your delivery pipeline stays on schedule. You can still request a revision via support, but it may eat into your monthly quota." },
   { q: "Can I add more reels to my plan mid-cycle?", a: "Yes! You can purchase Add-on packs from the Plan & billing page. They apply immediately and do not affect your recurring billing cycle." },
-  { q: "How do revision rounds work?", a: "Each asset includes 2 free revision rounds. When reviewing, select 'Request Changes' and leave detailed comments. The pod will submit a v2 within 24-48 hours." },
-  { q: "What's included in the Growth plan?", a: "The Growth plan includes a dedicated creative pod, 8 Reels, 4 Posts, and 8 Stories per cycle, with a 2-hour response SLA." },
+  { q: "How do revision rounds work?", a: "Your included revision rounds depend on your plan (1 for Starter, 2 for Growth, 3 for Scale). When reviewing, select 'Request Changes' and leave detailed comments. The pod will submit a v2 within 24-48 hours." },
+  { q: "What's included in the Growth plan?", a: "The Growth plan includes a dedicated creative pod, 10 Reels, 18 Posts, and 20 Stories per cycle, with a 2 business days batch SLA." },
 ];
 
 export function PortalSupportPage() {
@@ -154,7 +154,7 @@ export function PortalSupportPage() {
             </div>
             <div>
               <h4 className="text-sm font-bold text-white">Retainer Subscription Inactive or Expired</h4>
-              <p className="text-xs text-[#97A0B3] mt-0.5">
+              <p className="text-xs text-nebula-mist mt-0.5">
                 Deliverable pipelines and asset reviews are currently paused. Our support desk is 100% active to assist you with renewal, custom quota arrangements, or billing questions.
               </p>
             </div>
@@ -163,14 +163,14 @@ export function PortalSupportPage() {
             <button
               type="button"
               onClick={() => setBargainModalOpen(true)}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] hover:text-white hover:border-[#7FA0D6]/50 text-xs font-bold transition-colors cursor-pointer"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-nebula-navy border border-nebula-steel text-nebula-glow hover:text-white hover:border-nebula-glow/50 text-xs font-bold transition-colors cursor-pointer"
             >
               <PhoneCall className="size-3.5" />
               <span>Call & Bargain</span>
             </button>
             <Link
               to="/portal/payments"
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-xs font-bold transition-colors shadow-xs cursor-pointer"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-nebula-periwinkle hover:bg-white text-nebula-navy text-xs font-bold transition-colors shadow-xs cursor-pointer"
             >
               <span>Renew Retainer</span>
               <ArrowRight className="size-3.5" />
@@ -182,13 +182,13 @@ export function PortalSupportPage() {
       {/* ── Main Help Section ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ── Left Column: Ask your pod (Form) ── */}
-        <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
+        <div className="bg-nebula-surface rounded-2xl p-6 border border-nebula-steel">
           <h3 className="text-base font-semibold text-white mb-5">Ask your pod</h3>
 
           <form onSubmit={handleFormSubmit} className="space-y-5">
             {/* Category Pills */}
             <div>
-              <label className="block text-sm text-[#97A0B3] mb-2">What is it about?</label>
+              <label className="block text-sm text-nebula-mist mb-2">What is it about?</label>
               <div className="flex flex-wrap gap-2">
                 {CATEGORIES.map((cat) => (
                   <button
@@ -197,8 +197,8 @@ export function PortalSupportPage() {
                     onClick={() => setSelectedCategory(cat)}
                     className={`px-4 py-2 rounded-full text-[13px] font-medium transition-colors ${
                       selectedCategory === cat
-                        ? "bg-[#BCCCE6] text-[#0B111C]"
-                        : "bg-transparent border border-[#2A3446] text-white hover:bg-[#161F2D]"
+                        ? "bg-nebula-periwinkle text-nebula-navy"
+                        : "bg-transparent border border-nebula-steel text-white hover:bg-nebula-surface"
                     }`}
                   >
                     {cat}
@@ -209,25 +209,25 @@ export function PortalSupportPage() {
 
             {/* Subject Input */}
             <div>
-              <label className="block text-sm text-[#97A0B3] mb-2">Subject</label>
+              <label className="block text-sm text-nebula-mist mb-2">Subject</label>
               <input
                 type="text"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Briefly summarize your request..."
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-lg p-3 text-sm text-white placeholder-[#97A0B3] focus:outline-none focus:border-white/[0.2] transition-colors"
+                className="w-full bg-nebula-navy border border-nebula-steel rounded-lg p-3 text-sm text-white placeholder-nebula-mist focus:outline-none focus:border-white/[0.2] transition-colors"
               />
             </div>
 
             {/* Message */}
             <div>
-              <label className="block text-sm text-[#97A0B3] mb-2">Message</label>
+              <label className="block text-sm text-nebula-mist mb-2">Message</label>
               <textarea
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe your issue or request..."
-                className="w-full bg-[#0B111C] border border-[#2A3446] rounded-lg p-3 text-sm text-white placeholder-[#97A0B3] focus:outline-none focus:border-white/[0.2] resize-none transition-colors"
+                className="w-full bg-nebula-navy border border-nebula-steel rounded-lg p-3 text-sm text-white placeholder-nebula-mist focus:outline-none focus:border-white/[0.2] resize-none transition-colors"
               />
             </div>
 
@@ -237,7 +237,7 @@ export function PortalSupportPage() {
                 type="submit"
                 onClick={handleFormSubmit}
                 disabled={createTicketMutation.isPending || !subject.trim() || !description.trim()}
-                className="w-10 h-10 rounded-full bg-[#BCCCE6] text-[#0B111C] flex items-center justify-center hover:bg-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-10 h-10 rounded-full bg-nebula-periwinkle text-nebula-navy flex items-center justify-center hover:bg-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {createTicketMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -252,20 +252,20 @@ export function PortalSupportPage() {
         {/* ── Right Column: Your requests + Common questions ── */}
         <div className="space-y-6">
           {/* Your Requests */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
+          <div className="bg-nebula-surface rounded-2xl p-6 border border-nebula-steel">
             <h3 className="text-base font-semibold text-white mb-4">Your requests</h3>
 
             {ticketsList.length === 0 ? (
-              <p className="text-sm text-[#97A0B3] py-6 text-center">No tickets yet. Need help? Raise a Ticket</p>
+              <p className="text-sm text-nebula-mist py-6 text-center">No tickets yet. Need help? Raise a Ticket</p>
             ) : (
               <div className="space-y-3">
                 {ticketsList.slice(0, 5).map((t) => (
-                  <Link key={t.id} to={`/portal/support/${t.rawId}`} className="block p-4 bg-[#0B111C] rounded-xl border border-white/[0.04] hover:border-[#7FA0D6]/30 transition-colors">
+                  <Link key={t.id} to={`/portal/support/${t.rawId}`} className="block p-4 bg-nebula-navy rounded-xl border border-white/[0.04] hover:border-nebula-glow/30 transition-colors">
                     {/* Top row */}
                     <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-xs font-mono text-[#97A0B3]">{t.id}</span>
-                      <span className="text-xs text-[#97A0B3]">· {t.category}</span>
-                      <span className="text-xs text-[#97A0B3] ml-auto">{t.timeAgo}</span>
+                      <span className="text-xs font-mono text-nebula-mist">{t.id}</span>
+                      <span className="text-xs text-nebula-mist">· {t.category}</span>
+                      <span className="text-xs text-nebula-mist ml-auto">{t.timeAgo}</span>
                     </div>
                     {/* Title */}
                     <p className="text-sm font-medium text-white mb-2">{t.title}</p>
@@ -273,10 +273,10 @@ export function PortalSupportPage() {
                     <span
                       className={`inline-flex px-2.5 py-0.5 rounded text-xs font-medium ${
                         t.status === "resolved"
-                          ? "bg-[#7FA0D6]/10 text-[#7FA0D6]"
+                          ? "bg-nebula-glow/10 text-nebula-glow"
                           : t.status === "in_progress"
-                          ? "bg-[#D8BF9B]/10 text-[#D8BF9B]"
-                          : "bg-white/[0.05] text-[#97A0B3]"
+                          ? "bg-nebula-sand/10 text-nebula-sand"
+                          : "bg-white/[0.05] text-nebula-mist"
                       }`}
                     >
                       {t.status === "resolved"
@@ -292,7 +292,7 @@ export function PortalSupportPage() {
           </div>
 
           {/* Common Questions (Accordion) */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
+          <div className="bg-nebula-surface rounded-2xl p-6 border border-nebula-steel">
             <h3 className="text-base font-semibold text-white mb-4">Common questions</h3>
 
             <div className="divide-y divide-white/[0.05]">
@@ -303,15 +303,15 @@ export function PortalSupportPage() {
                     onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
                     className="w-full flex items-center justify-between py-4 text-left group"
                   >
-                    <span className="text-sm text-[#97A0B3] group-hover:text-white transition-colors pr-4">{item.q}</span>
+                    <span className="text-sm text-nebula-mist group-hover:text-white transition-colors pr-4">{item.q}</span>
                     <Plus
-                      className={`w-4 h-4 text-[#97A0B3] shrink-0 transition-transform duration-200 ${
+                      className={`w-4 h-4 text-nebula-mist shrink-0 transition-transform duration-200 ${
                         expandedFaq === i ? "rotate-45" : ""
                       }`}
                     />
                   </button>
                   {expandedFaq === i && (
-                    <div className="pb-4 text-sm text-[#97A0B3] animate-in fade-in slide-in-from-top-2">
+                    <div className="pb-4 text-sm text-nebula-mist animate-in fade-in slide-in-from-top-2">
                       {item.a}
                     </div>
                   )}
@@ -324,10 +324,10 @@ export function PortalSupportPage() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#161F2D] text-white px-5 py-3 rounded-xl shadow-2xl border border-white/[0.1] text-sm font-medium flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#BCCCE6]" />
+        <div className="fixed bottom-6 right-6 z-50 bg-nebula-surface text-white px-5 py-3 rounded-xl shadow-2xl border border-white/[0.1] text-sm font-medium flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-nebula-periwinkle" />
           {toastMessage}
-          <button type="button" onClick={() => setToastMessage(null)} className="ml-2 text-[#97A0B3] hover:text-white cursor-pointer">
+          <button type="button" onClick={() => setToastMessage(null)} className="ml-2 text-nebula-mist hover:text-white cursor-pointer">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>

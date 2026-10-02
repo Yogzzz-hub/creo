@@ -192,8 +192,8 @@ export function AdminClientsPage() {
       industry: "DTC Wellness & Functional Health",
       timezone: "Client Time: IST (UTC+5:30)",
       activeSince: "Active since Jan 2024",
-      tier: "Starter Growth Retainer",
-      tierBadge: "STARTER GROWTH",
+      tier: "Starter Retainer",
+      tierBadge: "STARTER",
       status: "ACTIVE RETAINER",
       monthlyFee: 25000,
       addon: "Add-on: Creative Pod C",
@@ -226,10 +226,10 @@ export function AdminClientsPage() {
           "Energetic, holistic wellness with clean organic minimalism and modern typography. Punchy video hooks and high-contrast benefit callouts.",
         toneTags: ["Vitality", "High Energy", "Clean Aesthetics"],
         colors: [
-          { name: "Matcha Slate", hex: "#7FA0D6" },
-          { name: "Cream Ivory", hex: "#161F2D", isLight: true },
-          { name: "Core Charcoal", hex: "#0B111C" },
-          { name: "Glow Amber", hex: "#D8BF9B" },
+          { name: "Matcha Slate", hex: "var(--color-nebula-glow)" },
+          { name: "Cream Ivory", hex: "var(--color-nebula-surface)", isLight: true },
+          { name: "Core Charcoal", hex: "var(--color-nebula-navy)" },
+          { name: "Glow Amber", hex: "var(--color-nebula-sand)" },
         ],
         social: {
           handle: "@ryzesocial",
@@ -298,10 +298,10 @@ export function AdminClientsPage() {
           "Authoritative, technically rigorous cloud software communication. Architectural clarity, latency reduction metrics, and developer-first storytelling.",
         toneTags: ["High Trust", "Developer First", "Algorithmic Speed"],
         colors: [
-          { name: "Deep Obsidian", hex: "#0B111C" },
-          { name: "Electric Azure", hex: "#7FA0D6" },
-          { name: "Terminal Cyan", hex: "#7FA0D6" },
-          { name: "Clean Slate", hex: "#F8FAFC", isLight: true },
+          { name: "Deep Obsidian", hex: "var(--color-nebula-navy)" },
+          { name: "Electric Azure", hex: "var(--color-nebula-glow)" },
+          { name: "Terminal Cyan", hex: "var(--color-nebula-glow)" },
+          { name: "Clean Slate", hex: "var(--color-slate-50)", isLight: true },
         ],
         social: {
           handle: "@aravindan_dev",
@@ -336,19 +336,19 @@ export function AdminClientsPage() {
       industry: "Omnichannel E-Commerce & Retail Tech",
       timezone: "Client Time: IST (UTC+5:30)",
       activeSince: "Active since Feb 2024",
-      tier: "Brand Accelerator Retainer",
-      tierBadge: "BRAND ACCELERATOR",
+      tier: "Growth Retainer",
+      tierBadge: "GROWTH",
       status: "ACTIVE RETAINER",
       monthlyFee: 50000,
       addon: "Add-on: TikTok Growth Pod",
       nextBilling: "Oct 8, 2026",
       billingMethod: "Stripe Corporate ACH",
       totalAssetsDelivered: 0,
-      totalAssetsQuota: 43,
+      totalAssetsQuota: 48,
       postsDelivered: 0,
-      postsQuota: 15,
+      postsQuota: 18,
       reelsDelivered: 0,
-      reelsQuota: 8,
+      reelsQuota: 10,
       storiesDelivered: 0,
       storiesQuota: 20,
       sprintNumber: 44,
@@ -370,10 +370,10 @@ export function AdminClientsPage() {
           "High-conversion retail creative with dynamic pacing, kinetic typography, and bold product highlights designed for immediate customer engagement.",
         toneTags: ["Conversion First", "Punchy Edits", "High CTR"],
         colors: [
-          { name: "Vibrant Crimson", hex: "#D8BF9B" },
-          { name: "Neon Rose", hex: "#D8BF9B" },
+          { name: "Vibrant Crimson", hex: "var(--color-nebula-sand)" },
+          { name: "Neon Rose", hex: "var(--color-nebula-sand)" },
           { name: "Pure White", hex: "#FFFFFF", isLight: true },
-          { name: "Jet Slate", hex: "#0B111C" },
+          { name: "Jet Slate", hex: "var(--color-nebula-navy)" },
         ],
         social: {
           handle: "@shanmuga_growth",
@@ -408,19 +408,19 @@ export function AdminClientsPage() {
       industry: "Enterprise AI & Scaled Consumer Tech",
       timezone: "Client Time: IST (UTC+5:30)",
       activeSince: "Active since Nov 2023",
-      tier: "Enterprise Domination Retainer",
-      tierBadge: "ENTERPRISE DOMINATION",
+      tier: "Scale Retainer",
+      tierBadge: "SCALE",
       status: "ACTIVE RETAINER",
       monthlyFee: 95000,
       addon: "Add-on: 3D VFX Lead",
       nextBilling: "Oct 12, 2026",
       billingMethod: "Direct ACH Wire",
       totalAssetsDelivered: 0,
-      totalAssetsQuota: 86,
+      totalAssetsQuota: 96,
       postsDelivered: 0,
-      postsQuota: 30,
+      postsQuota: 36,
       reelsDelivered: 0,
-      reelsQuota: 16,
+      reelsQuota: 20,
       storiesDelivered: 0,
       storiesQuota: 40,
       sprintNumber: 44,
@@ -442,10 +442,10 @@ export function AdminClientsPage() {
           "Institutional prestige meets kinetic AI interfaces. Sophisticated 3D physics rendering with uncompromising geometric precision.",
         toneTags: ["Institutional", "3D Kinetic", "Global Scale"],
         colors: [
-          { name: "Galaxy Blue", hex: "#7FA0D6" },
-          { name: "Cyan Flare", hex: "#7FA0D6" },
-          { name: "Obsidian Core", hex: "#0B111C" },
-          { name: "Pure Cloud", hex: "#F8FAFC", isLight: true },
+          { name: "Galaxy Blue", hex: "var(--color-nebula-glow)" },
+          { name: "Cyan Flare", hex: "var(--color-nebula-glow)" },
+          { name: "Obsidian Core", hex: "var(--color-nebula-navy)" },
+          { name: "Pure Cloud", hex: "var(--color-slate-50)", isLight: true },
         ],
         social: {
           handle: "@luma_global",
@@ -480,21 +480,21 @@ export function AdminClientsPage() {
       industry: "Fintech & Algorithmic Infrastructure",
       timezone: "Client Time: IST (UTC+5:30)",
       activeSince: "Active since Jan 2024",
-      tier: "Brand Accelerator Retainer",
-      tierBadge: "BRAND ACCELERATOR",
+      tier: "Growth Retainer",
+      tierBadge: "GROWTH",
       status: "ACTIVE RETAINER",
       monthlyFee: 50000,
       addon: "Add-on: Motion Specialist",
       nextBilling: "Oct 15, 2026",
       billingMethod: "Stripe Corporate ACH",
       totalAssetsDelivered: 12,
-      totalAssetsQuota: 30,
+      totalAssetsQuota: 48,
       postsDelivered: 8,
-      postsQuota: 15,
+      postsQuota: 18,
       reelsDelivered: 2,
-      reelsQuota: 5,
+      reelsQuota: 10,
       storiesDelivered: 2,
-      storiesQuota: 10,
+      storiesQuota: 20,
       sprintNumber: 44,
       daysRemainingInSprint: 14,
       contact: {
@@ -513,10 +513,10 @@ export function AdminClientsPage() {
         toneSummary: "Institutional, enterprise fintech with sharp geometric clarity.",
         toneTags: ["Algorithmic", "High Trust", "Global Scope"],
         colors: [
-          { name: "Core Navy", hex: "#0B111C" },
-          { name: "Accent Azure", hex: "#7FA0D6" },
-          { name: "Cyan Highlight", hex: "#7FA0D6" },
-          { name: "Clean Neutral", hex: "#F8FAFC", isLight: true },
+          { name: "Core Navy", hex: "var(--color-nebula-navy)" },
+          { name: "Accent Azure", hex: "var(--color-nebula-glow)" },
+          { name: "Cyan Highlight", hex: "var(--color-nebula-glow)" },
+          { name: "Clean Neutral", hex: "var(--color-slate-50)", isLight: true },
         ],
         social: {
           handle: "@apexinnovations",
@@ -551,21 +551,21 @@ export function AdminClientsPage() {
       industry: "MedTech & Digital Health Platform",
       timezone: "Client Time: IST (UTC+5:30)",
       activeSince: "Active since Mar 2024",
-      tier: "Starter Growth Retainer",
-      tierBadge: "STARTER GROWTH",
+      tier: "Starter Retainer",
+      tierBadge: "STARTER",
       status: "ACTIVE RETAINER",
       monthlyFee: 25000,
       addon: "Add-on: Medical Illustrator",
       nextBilling: "Oct 18, 2026",
       billingMethod: "Stripe ACH Transfer",
       totalAssetsDelivered: 6,
-      totalAssetsQuota: 20,
+      totalAssetsQuota: 22,
       postsDelivered: 4,
-      postsQuota: 10,
+      postsQuota: 8,
       reelsDelivered: 1,
       reelsQuota: 4,
       storiesDelivered: 1,
-      storiesQuota: 6,
+      storiesQuota: 10,
       sprintNumber: 44,
       daysRemainingInSprint: 14,
       contact: {
@@ -584,10 +584,10 @@ export function AdminClientsPage() {
         toneSummary: "Empathetic, scientifically rigorous clinical communication with modern human-centric interfaces.",
         toneTags: ["Clinical Trust", "Modern Care", "Accessible"],
         colors: [
-          { name: "Care Emerald", hex: "#7FA0D6" },
-          { name: "Teal Glow", hex: "#7FA0D6" },
-          { name: "Soft Cyan", hex: "#161F2D", isLight: true },
-          { name: "Deep Slate", hex: "#0B111C" },
+          { name: "Care Emerald", hex: "var(--color-nebula-glow)" },
+          { name: "Teal Glow", hex: "var(--color-nebula-glow)" },
+          { name: "Soft Cyan", hex: "var(--color-nebula-surface)", isLight: true },
+          { name: "Deep Slate", hex: "var(--color-nebula-navy)" },
         ],
         social: {
           handle: "@nova_dynamics",
@@ -622,21 +622,21 @@ export function AdminClientsPage() {
       industry: "Clean Cosmetics & Luxury DTC",
       timezone: "Client Time: IST (UTC+5:30)",
       activeSince: "Active since Feb 2024",
-      tier: "Enterprise Domination Retainer",
-      tierBadge: "ENTERPRISE DOMINATION",
+      tier: "Scale Retainer",
+      tierBadge: "SCALE",
       status: "ACTIVE RETAINER",
       monthlyFee: 95000,
       addon: "Add-on: Senior Colorist",
       nextBilling: "Oct 22, 2026",
       billingMethod: "Direct Corporate ACH",
       totalAssetsDelivered: 14,
-      totalAssetsQuota: 60,
+      totalAssetsQuota: 96,
       postsDelivered: 8,
-      postsQuota: 25,
+      postsQuota: 36,
       reelsDelivered: 4,
-      reelsQuota: 15,
+      reelsQuota: 20,
       storiesDelivered: 2,
-      storiesQuota: 20,
+      storiesQuota: 40,
       sprintNumber: 44,
       daysRemainingInSprint: 14,
       contact: {
@@ -655,10 +655,10 @@ export function AdminClientsPage() {
         toneSummary: "Sensory, serene high-end beauty with warm editorial elegance and mindful self-care narratives.",
         toneTags: ["Mindful Luxe", "Botanical", "Warm Editorial"],
         colors: [
-          { name: "Blush Rose", hex: "#D8BF9B" },
-          { name: "Petal Mist", hex: "#161F2D", isLight: true },
-          { name: "Sage Earth", hex: "#7FA0D6" },
-          { name: "Soft Ivory", hex: "#161F2D", isLight: true },
+          { name: "Blush Rose", hex: "var(--color-nebula-sand)" },
+          { name: "Petal Mist", hex: "var(--color-nebula-surface)", isLight: true },
+          { name: "Sage Earth", hex: "var(--color-nebula-glow)" },
+          { name: "Soft Ivory", hex: "var(--color-nebula-surface)", isLight: true },
         ],
         social: {
           handle: "@solaris_beauty",
@@ -744,9 +744,9 @@ export function AdminClientsPage() {
 
     const monthlyFee = tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000;
     
-    const postsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.quota || (tier.includes("starter") ? 8 : tier.includes("growth") ? 15 : 30);
+    const postsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.quota || (tier.includes("starter") ? 8 : tier.includes("growth") ? 18 : 36);
     const postsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.used || 0;
-    const reelsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.quota || (tier.includes("starter") ? 4 : tier.includes("growth") ? 8 : 16);
+    const reelsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.quota || (tier.includes("starter") ? 4 : tier.includes("growth") ? 10 : 20);
     const reelsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.used || 0;
     const storiesQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.quota || (tier.includes("starter") ? 10 : tier.includes("growth") ? 20 : 40);
     const storiesDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.used || 0;
@@ -826,10 +826,10 @@ export function AdminClientsPage() {
           toneSummary: `Dynamic, high-impact social media creatives engineered for ${formattedName}. High-clarity typography with conversion-optimized video hooks.`,
           toneTags: ["High Conversion", "Brand Authority", "Visual Polish"],
           colors: [
-            { name: "Primary Deep Navy", hex: "#0B111C" },
-            { name: "Accent Royal Blue", hex: "#7FA0D6" },
-            { name: "Cyan Highlight", hex: "#7FA0D6" },
-            { name: "Clean Neutral", hex: "#F8FAFC", isLight: true },
+            { name: "Primary Deep Navy", hex: "var(--color-nebula-navy)" },
+            { name: "Accent Royal Blue", hex: "var(--color-nebula-glow)" },
+            { name: "Cyan Highlight", hex: "var(--color-nebula-glow)" },
+            { name: "Clean Neutral", hex: "var(--color-slate-50)", isLight: true },
           ],
           social: {
             handle: sc.instagram_username ? `@${sc.instagram_username}` : `@${emailParts[0] || "client"}`,
@@ -937,7 +937,7 @@ export function AdminClientsPage() {
   }) || [];
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-nebula-navy flex flex-col">
       <AdminTopHeader
         title={selectedClientId && activeClient ? `${activeClient.name} • Client Details` : "Client Details"}
         activeTab="Client Details"
@@ -964,13 +964,13 @@ export function AdminClientsPage() {
             {/* Controls */}
             <div className="flex flex-col sm:flex-row items-center gap-3">
               <div className="relative flex-1 w-full">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#97A0B3]" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-nebula-mist" />
                 <input
                   type="text"
                   placeholder="Search by brand name, industry, or contact email..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-nebula-steel bg-nebula-surface text-xs font-medium text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
                 />
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
@@ -979,7 +979,7 @@ export function AdminClientsPage() {
                   {clientList.length} Active Retainers
                 </span>
                 <div className="flex items-center gap-1.5">
-                  <Filter className="size-4 text-[#97A0B3]" />
+                  <Filter className="size-4 text-nebula-mist" />
                   <CustomSelect
                     value={statusFilter}
                     onChange={setStatusFilter}
@@ -1015,22 +1015,22 @@ export function AdminClientsPage() {
                 <div
                   key={client.id}
                   onClick={() => setSelectedClientId(client.id)}
-                  className="bg-[#161F2D]/80 backdrop-blur-xl rounded-3xl p-6 border border-[#2A3446]/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between"
+                  className="bg-nebula-surface/80 backdrop-blur-xl rounded-3xl p-6 border border-nebula-steel/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-nebula-glow/40 transition-all cursor-pointer group flex flex-col justify-between"
                 >
                   <div className="space-y-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-[#0B111C] text-white font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                        <div className="w-12 h-12 rounded-2xl bg-nebula-navy text-white font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
                           {client.initials}
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <h3 className="font-bold text-base text-white group-hover:text-[#7FA0D6] transition-colors">
+                            <h3 className="font-bold text-base text-white group-hover:text-nebula-glow transition-colors">
                               {client.name}
                             </h3>
-                            <CheckCircle2 className="w-4 h-4 text-[#7FA0D6] fill-blue-600 text-white" />
+                            <CheckCircle2 className="w-4 h-4 text-nebula-glow fill-blue-600 text-white" />
                           </div>
-                          <span className="text-[11px] text-[#97A0B3] font-medium block truncate max-w-[200px]">
+                          <span className="text-[11px] text-nebula-mist font-medium block truncate max-w-[200px]">
                             {client.industry}
                           </span>
                         </div>
@@ -1040,25 +1040,25 @@ export function AdminClientsPage() {
                       </span>
                     </div>
 
-                    <div className="p-3 bg-[#0B111C]/80 rounded-2xl space-y-1.5 text-xs text-[#F1F5F9] border border-[#2A3446]">
+                    <div className="p-3 bg-nebula-navy/80 rounded-2xl space-y-1.5 text-xs text-slate-100 border border-nebula-steel">
                       <div className="flex justify-between">
-                        <span className="font-medium text-[#97A0B3]">Retainer:</span>
+                        <span className="font-medium text-nebula-mist">Retainer:</span>
                         <span className="font-bold text-white">₹{client.monthlyFee.toLocaleString()}/mo</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="font-medium text-[#97A0B3]">Assigned Pod:</span>
-                        <span className="font-bold text-[#7FA0D6]">{client.pod.name} ({client.pod.tagline})</span>
+                        <span className="font-medium text-nebula-mist">Assigned Pod:</span>
+                        <span className="font-bold text-nebula-glow">{client.pod.name} ({client.pod.tagline})</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="font-medium text-[#97A0B3]">Primary Contact:</span>
+                        <span className="font-medium text-nebula-mist">Primary Contact:</span>
                         <span className="font-semibold text-white">{client.contact.name}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                    <span className="text-[#97A0B3] font-medium">{client.deliverables.length} Deliverables Active</span>
-                    <span className="text-[#7FA0D6] font-bold group-hover:underline flex items-center gap-1">
+                  <div className="pt-3 border-t border-nebula-steel flex items-center justify-between text-xs">
+                    <span className="text-nebula-mist font-medium">{client.deliverables.length} Deliverables Active</span>
+                    <span className="text-nebula-glow font-bold group-hover:underline flex items-center gap-1">
                       View Client Detail View &rarr;
                     </span>
                   </div>
@@ -1073,22 +1073,22 @@ export function AdminClientsPage() {
           <div className="space-y-6 animate-fade-in">
             {/* Top Breadcrumb & Live Status */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#97A0B3]">
+              <div className="flex items-center gap-2 text-xs font-bold text-nebula-mist">
                 <button
                   type="button"
                   onClick={() => setSelectedClientId(null)}
-                  className="hover:text-[#7FA0D6] flex items-center gap-1 transition-colors cursor-pointer text-[#F1F5F9]"
+                  className="hover:text-nebula-glow flex items-center gap-1 transition-colors cursor-pointer text-slate-100"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back to Client Roster
                 </button>
                 <span>/</span>
-                <span className="text-[#97A0B3]">Client Details</span>
+                <span className="text-nebula-mist">Client Details</span>
                 <span>/</span>
                 <span className="text-white font-black">{activeClient?.name}</span>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#161F2D] text-white border border-[#2A3446] flex items-center gap-1.5 shadow-2xs">
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-nebula-surface text-white border border-nebula-steel flex items-center gap-1.5 shadow-2xs">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   Live Client • v2.4
                 </span>
@@ -1096,10 +1096,10 @@ export function AdminClientsPage() {
             </div>
 
             {/* Client Header Card matching Screenshot */}
-            <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-4">
+            <div className="bg-nebula-surface rounded-3xl p-6 lg:p-7 border border-nebula-steel shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-4">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 rounded-2xl bg-[#0B111C] text-white font-black text-2xl flex items-center justify-center shadow-lg shrink-0">
+                  <div className="w-16 h-16 rounded-2xl bg-nebula-navy text-white font-black text-2xl flex items-center justify-center shadow-lg shrink-0">
                     {activeClient?.initials}
                   </div>
                   <div className="space-y-1.5">
@@ -1107,8 +1107,8 @@ export function AdminClientsPage() {
                       <h1 className="text-2xl font-black text-white tracking-tight">
                         {activeClient?.name}
                       </h1>
-                      <CheckCircle2 className="w-5 h-5 text-[#7FA0D6] fill-blue-600 text-white" />
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-[10px] font-black uppercase tracking-wider">
+                      <CheckCircle2 className="w-5 h-5 text-nebula-glow fill-blue-600 text-white" />
+                      <span className="px-2.5 py-0.5 rounded-full bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30 text-[10px] font-black uppercase tracking-wider">
                         {activeClient?.tierBadge}
                       </span>
                       <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
@@ -1117,19 +1117,19 @@ export function AdminClientsPage() {
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-[#97A0B3] font-medium">
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-nebula-mist font-medium">
                       <span className="flex items-center gap-1">
-                        <Folder className="w-3.5 h-3.5 text-[#97A0B3]" />
+                        <Folder className="w-3.5 h-3.5 text-nebula-mist" />
                         {activeClient?.industry}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-[#97A0B3]" />
+                        <Clock className="w-3.5 h-3.5 text-nebula-mist" />
                         {activeClient?.timezone}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-[#97A0B3]" />
+                        <Calendar className="w-3.5 h-3.5 text-nebula-mist" />
                         {activeClient?.activeSince}
                       </span>
                     </div>
@@ -1140,28 +1140,28 @@ export function AdminClientsPage() {
                 <div className="flex items-center gap-2.5 shrink-0">
                   <Link
                     to={`/admin/clients/${activeClient?.id || "ryze"}/brand`}
-                    className="px-4 py-2.5 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-xs font-bold text-[#7FA0D6] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-glow/40 bg-nebula-glow/15 hover:bg-nebula-glow/25 text-xs font-bold text-nebula-glow flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
-                    <ExternalLink className="w-3.5 h-3.5 text-[#7FA0D6]" /> Brand Brief & Profile
+                    <ExternalLink className="w-3.5 h-3.5 text-nebula-glow" /> Brand Brief & Profile
                   </Link>
                   <button
                     type="button"
                     onClick={() => setIsEditProfileOpen(true)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel bg-nebula-surface hover:bg-nebula-navy text-xs font-bold text-slate-100 flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
-                    <Edit3 className="w-3.5 h-3.5 text-[#97A0B3]" /> Edit Profile
+                    <Edit3 className="w-3.5 h-3.5 text-nebula-mist" /> Edit Profile
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsInvoiceModalOpen(true)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel bg-nebula-surface hover:bg-nebula-navy text-xs font-bold text-slate-100 flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
-                    <FileText className="w-3.5 h-3.5 text-[#97A0B3]" /> Monthly Invoice
+                    <FileText className="w-3.5 h-3.5 text-nebula-mist" /> Monthly Invoice
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsNewRequestOpen(true)}
-                    className="px-4 py-2.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
                   >
                     <Plus className="w-4 h-4 stroke-[3]" /> New Request
                   </button>
@@ -1179,13 +1179,13 @@ export function AdminClientsPage() {
             {/* 4 Main Grid Cards matching Screenshot (2x2) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* CARD 1: PRIMARY CONTACT */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+              <div className="bg-nebula-surface rounded-3xl p-6 border border-nebula-steel shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                    <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
+                    <span className="text-[11px] font-extrabold text-nebula-mist uppercase tracking-wider">
                       PRIMARY CONTACT
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-nebula-surface text-slate-100 text-[10px] font-bold">
                       Authorized Signer
                     </span>
                   </div>
@@ -1196,24 +1196,24 @@ export function AdminClientsPage() {
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-white">{activeClient?.contact.name}</h3>
-                      <p className="text-xs text-[#97A0B3] font-medium">{activeClient?.contact.title}</p>
+                      <p className="text-xs text-nebula-mist font-medium">{activeClient?.contact.title}</p>
                     </div>
                   </div>
 
                   <div className="space-y-2 pt-2">
-                    <div className="p-3 bg-[#0B111C]/80 rounded-2xl flex items-center justify-between border border-[#2A3446] text-xs">
-                      <div className="flex items-center gap-2 text-[#97A0B3] font-medium">
-                        <Mail className="w-4 h-4 text-[#97A0B3]" />
+                    <div className="p-3 bg-nebula-navy/80 rounded-2xl flex items-center justify-between border border-nebula-steel text-xs">
+                      <div className="flex items-center gap-2 text-nebula-mist font-medium">
+                        <Mail className="w-4 h-4 text-nebula-mist" />
                         <span>Email</span>
                       </div>
-                      <a href={`mailto:${activeClient?.contact.email}`} className="text-[#7FA0D6] font-bold hover:underline">
+                      <a href={`mailto:${activeClient?.contact.email}`} className="text-nebula-glow font-bold hover:underline">
                         {activeClient?.contact.email}
                       </a>
                     </div>
 
-                    <div className="p-3 bg-[#0B111C]/80 rounded-2xl flex items-center justify-between border border-[#2A3446] text-xs">
-                      <div className="flex items-center gap-2 text-[#97A0B3] font-medium">
-                        <Phone className="w-4 h-4 text-[#97A0B3]" />
+                    <div className="p-3 bg-nebula-navy/80 rounded-2xl flex items-center justify-between border border-nebula-steel text-xs">
+                      <div className="flex items-center gap-2 text-nebula-mist font-medium">
+                        <Phone className="w-4 h-4 text-nebula-mist" />
                         <span>Direct Phone</span>
                       </div>
                       <span className="font-bold text-white font-mono">{activeClient?.contact.phone}</span>
@@ -1221,7 +1221,7 @@ export function AdminClientsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
+                <div className="flex items-center justify-between text-xs text-nebula-mist pt-3 border-t border-nebula-steel font-medium">
                   <span className="flex items-center gap-1 text-emerald-700 font-semibold">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                     Contract renewed: {activeClient?.contact.renewedDate}
@@ -1231,13 +1231,13 @@ export function AdminClientsPage() {
               </div>
 
               {/* CARD 2: TIER TERMS & SCOPE */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+              <div className="bg-nebula-surface rounded-3xl p-6 border border-nebula-steel shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                    <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
+                    <span className="text-[11px] font-extrabold text-nebula-mist uppercase tracking-wider">
                       TIER TERMS & SCOPE
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold border border-[#7FA0D6]/30">
+                    <span className="px-2.5 py-0.5 rounded-full bg-nebula-glow/15 text-nebula-glow text-[10px] font-bold border border-nebula-glow/30">
                       Active Cycle
                     </span>
                   </div>
@@ -1245,7 +1245,7 @@ export function AdminClientsPage() {
                   <div className="flex items-baseline justify-between">
                     <div>
                       <span className="text-3xl font-black text-white">₹{activeClient?.monthlyFee.toLocaleString()}</span>
-                      <span className="text-xs font-bold text-[#97A0B3]"> /mo</span>
+                      <span className="text-xs font-bold text-nebula-mist"> /mo</span>
                     </div>
                     {activeClient?.addon && (
                       <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 flex items-center gap-1">
@@ -1255,22 +1255,22 @@ export function AdminClientsPage() {
                     )}
                   </div>
 
-                  <p className="text-xs text-[#97A0B3]">
+                  <p className="text-xs text-nebula-mist">
                     Next billing scheduled for {activeClient?.nextBilling} via {activeClient?.billingMethod}.
                   </p>
 
                   {/* Monthly Output Burn bar */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-[#F1F5F9]">Monthly Output Burn</span>
-                      <span className="text-[#7FA0D6]">
+                      <span className="text-slate-100">Monthly Output Burn</span>
+                      <span className="text-nebula-glow">
                         {activeClient?.totalAssetsDelivered} / {activeClient?.totalAssetsQuota} Assets Delivered (
                         {Math.round(((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100)}%)
                       </span>
                     </div>
-                    <div className="w-full bg-[#161F2D] rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-nebula-surface rounded-full h-2.5 overflow-hidden">
                       <div
-                        className="bg-[#7FA0D6] h-full rounded-full transition-all"
+                        className="bg-nebula-glow h-full rounded-full transition-all"
                         style={{
                           width: `${Math.min(
                             (((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100),
@@ -1283,33 +1283,33 @@ export function AdminClientsPage() {
 
                   {/* 3 Metric Counters matching Screenshot */}
                   <div className="grid grid-cols-3 gap-3 pt-1">
-                    <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
+                    <div className="p-3 bg-nebula-navy rounded-2xl text-center space-y-0.5 border border-nebula-steel">
                       <span className="text-sm font-black text-white">
                         {activeClient?.postsDelivered}/{activeClient?.postsQuota}
                       </span>
-                      <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">POSTS</span>
+                      <span className="text-[10px] font-bold text-nebula-mist block uppercase">POSTS</span>
                     </div>
-                    <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
+                    <div className="p-3 bg-nebula-navy rounded-2xl text-center space-y-0.5 border border-nebula-steel">
                       <span className="text-sm font-black text-white">
                         {activeClient?.reelsDelivered}/{activeClient?.reelsQuota}
                       </span>
-                      <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">REELS</span>
+                      <span className="text-[10px] font-bold text-nebula-mist block uppercase">REELS</span>
                     </div>
-                    <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
+                    <div className="p-3 bg-nebula-navy rounded-2xl text-center space-y-0.5 border border-nebula-steel">
                       <span className="text-sm font-black text-white">
                         {activeClient?.storiesDelivered}/{activeClient?.storiesQuota}
                       </span>
-                      <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">STORIES</span>
+                      <span className="text-[10px] font-bold text-nebula-mist block uppercase">STORIES</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
+                <div className="flex items-center justify-between text-xs text-nebula-mist pt-3 border-t border-nebula-steel font-medium">
                   <span>Sprint {activeClient?.sprintNumber}: {activeClient?.daysRemainingInSprint} days remaining</span>
                   <button
                     type="button"
                     onClick={() => showToast("Opening Client Quota Ledger...")}
-                    className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
+                    className="text-nebula-glow font-bold hover:underline cursor-pointer"
                   >
                     View Quota Log
                   </button>
@@ -1317,54 +1317,54 @@ export function AdminClientsPage() {
               </div>
 
               {/* CARD 3: CLIENT BRAND ECOSYSTEM & GUIDELINES */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5">
-                <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+              <div className="bg-nebula-surface rounded-3xl p-6 border border-nebula-steel shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5">
+                <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                   <div className="flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-[#7FA0D6]" />
+                    <Palette className="w-4 h-4 text-nebula-glow" />
                     <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
                       Client Brand Ecosystem & Guidelines
                     </h2>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold">
+                  <span className="px-2.5 py-0.5 rounded-full bg-nebula-surface text-slate-100 text-[10px] font-bold">
                     {activeClient?.brand.kitVersion}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Typography */}
-                  <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs">
-                    <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                  <div className="p-3.5 bg-nebula-navy/70 rounded-2xl space-y-2 border border-nebula-steel text-xs">
+                    <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider block">
                       TYPOGRAPHY HIERARCHY
                     </span>
-                    <div className="space-y-1 text-[#F1F5F9]">
+                    <div className="space-y-1 text-slate-100">
                       <div className="flex justify-between">
-                        <span className="text-[#97A0B3]">Headings:</span>
+                        <span className="text-nebula-mist">Headings:</span>
                         <span className="font-bold">{activeClient?.brand.headingsFont}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-[#97A0B3]">Body & Data:</span>
+                        <span className="text-nebula-mist">Body & Data:</span>
                         <span className="font-medium">{activeClient?.brand.bodyFont}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-[#97A0B3]">Monospace:</span>
+                        <span className="text-nebula-mist">Monospace:</span>
                         <span className="font-mono">{activeClient?.brand.monoFont}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Persona & Voice Tone */}
-                  <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs flex flex-col justify-between">
+                  <div className="p-3.5 bg-nebula-navy/70 rounded-2xl space-y-2 border border-nebula-steel text-xs flex flex-col justify-between">
                     <div>
-                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                      <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider block">
                         PERSONA & VOICE TONE
                       </span>
-                      <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed">
+                      <p className="text-[11px] text-slate-100 mt-1 leading-relaxed">
                         {activeClient?.brand.toneSummary}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {activeClient?.brand.toneTags.map((tag) => (
-                        <span key={tag} className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[10px] font-bold text-[#F1F5F9] shadow-2xs">
+                        <span key={tag} className="px-2 py-0.5 rounded-md bg-nebula-surface border border-nebula-steel text-[10px] font-bold text-slate-100 shadow-2xs">
                           {tag}
                         </span>
                       ))}
@@ -1374,16 +1374,16 @@ export function AdminClientsPage() {
 
                 {/* Approved Color Spectrum */}
                 <div className="space-y-2">
-                  <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                  <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider block">
                     APPROVED COLOR SPECTRUM
                   </span>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     {activeClient?.brand.colors.map((c) => (
-                      <div key={c.hex} className="rounded-2xl border border-[#2A3446] overflow-hidden bg-[#161F2D] shadow-2xs space-y-1.5 pb-2">
+                      <div key={c.hex} className="rounded-2xl border border-nebula-steel overflow-hidden bg-nebula-surface shadow-2xs space-y-1.5 pb-2">
                         <div className="h-10 w-full" style={{ backgroundColor: c.hex }} />
                         <div className="px-2.5">
                           <span className="text-[11px] font-bold text-white block truncate">{c.name}</span>
-                          <span className="text-[10px] font-mono text-[#97A0B3]">{c.hex}</span>
+                          <span className="text-[10px] font-mono text-nebula-mist">{c.hex}</span>
                         </div>
                       </div>
                     ))}
@@ -1391,7 +1391,7 @@ export function AdminClientsPage() {
                 </div>
 
                 {/* Social Channel */}
-                <div className="p-3.5 bg-[#0B111C]/80 rounded-2xl border border-[#2A3446] flex items-center justify-between">
+                <div className="p-3.5 bg-nebula-navy/80 rounded-2xl border border-nebula-steel flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center shadow-xs">
                       <Instagram className="w-5 h-5" />
@@ -1403,7 +1403,7 @@ export function AdminClientsPage() {
                           {activeClient?.brand.social.status}
                         </span>
                       </div>
-                      <span className="text-[11px] text-[#97A0B3]">
+                      <span className="text-[11px] text-nebula-mist">
                         {activeClient?.brand.social.followers} • Live Sync active ({activeClient?.brand.social.syncInterval})
                       </span>
                     </div>
@@ -1411,14 +1411,14 @@ export function AdminClientsPage() {
                   <button
                     type="button"
                     onClick={() => showToast(`Opening ${activeClient?.brand.social.handle} live analytics...`)}
-                    className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] shadow-2xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl border border-nebula-steel bg-nebula-surface hover:bg-nebula-navy text-xs font-bold text-slate-100 shadow-2xs cursor-pointer"
                   >
                     Launch Channel
                   </button>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between text-xs text-[#97A0B3] font-medium pt-3 border-t border-[#2A3446] gap-2">
-                  <div className="flex items-center gap-3 text-[#7FA0D6] font-bold">
+                <div className="flex flex-wrap items-center justify-between text-xs text-nebula-mist font-medium pt-3 border-t border-nebula-steel gap-2">
+                  <div className="flex items-center gap-3 text-nebula-glow font-bold">
                     <span className="cursor-pointer hover:underline flex items-center gap-1">
                       <Folder className="w-3.5 h-3.5" /> {activeClient?.brand.brandVaultLink}
                     </span>
@@ -1429,7 +1429,7 @@ export function AdminClientsPage() {
                     <span>•</span>
                     <Link
                       to={`/admin/clients/${activeClient?.id || "ryze"}/brand`}
-                      className="cursor-pointer hover:underline flex items-center gap-1 text-[#7FA0D6]"
+                      className="cursor-pointer hover:underline flex items-center gap-1 text-nebula-glow"
                     >
                       Brand DNA & Brief →
                     </Link>
@@ -1439,39 +1439,39 @@ export function AdminClientsPage() {
               </div>
 
               {/* CARD 4: ASSIGNED CREATIVE POD */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+              <div className="bg-nebula-surface rounded-3xl p-6 border border-nebula-steel shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                  <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-[#7FA0D6]" />
+                      <Users className="w-4 h-4 text-nebula-glow" />
                       <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
                         Assigned creative pod
                       </h2>
                     </div>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold border border-[#7FA0D6]/30">
+                    <span className="px-2.5 py-0.5 rounded-full bg-nebula-glow/15 text-nebula-glow text-[10px] font-bold border border-nebula-glow/30">
                       {activeClient?.pod.name}: {activeClient?.pod.tagline}
                     </span>
                   </div>
 
                   {/* Pod Lead */}
                   <div className="space-y-2">
-                    <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                    <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider block">
                       POD LEAD & CREATIVE DIRECTOR
                     </span>
-                    <div className="p-3 bg-[#0B111C]/70 rounded-2xl flex items-center justify-between border border-[#2A3446]">
+                    <div className="p-3 bg-nebula-navy/70 rounded-2xl flex items-center justify-between border border-nebula-steel">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
                           {activeClient?.pod.leadAvatar}
                         </div>
                         <div>
                           <h4 className="text-xs font-bold text-white">{activeClient?.pod.leadName}</h4>
-                          <span className="text-[11px] text-[#97A0B3]">{activeClient?.pod.leadTitle}</span>
+                          <span className="text-[11px] text-nebula-mist">{activeClient?.pod.leadTitle}</span>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => showToast(`Connecting to ${activeClient?.pod.leadName} via Slack/Creo Chat...`)}
-                        className="p-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] shadow-2xs cursor-pointer"
+                        className="p-2 rounded-xl bg-nebula-surface border border-nebula-steel text-slate-100 hover:text-nebula-glow shadow-2xs cursor-pointer"
                         title="Chat with Pod Lead"
                       >
                         <MessageSquare className="w-4 h-4" />
@@ -1481,22 +1481,22 @@ export function AdminClientsPage() {
 
                   {/* Squad Members */}
                   <div className="space-y-2">
-                    <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                    <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider block">
                       SQUAD MEMBERS
                     </span>
                     <div className="space-y-1.5">
                       {activeClient?.pod.squad.map((member) => (
-                        <div key={member.name} className="p-2.5 bg-[#0B111C]/50 rounded-xl flex items-center justify-between text-xs border border-[#2A3446]">
+                        <div key={member.name} className="p-2.5 bg-nebula-navy/50 rounded-xl flex items-center justify-between text-xs border border-nebula-steel">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-gray-200 text-[#F1F5F9] font-bold text-[10px] flex items-center justify-center">
+                            <div className="w-7 h-7 rounded-full bg-gray-200 text-slate-100 font-bold text-[10px] flex items-center justify-center">
                               {member.avatar}
                             </div>
                             <div>
                               <span className="font-bold text-white block leading-tight">{member.name}</span>
-                              <span className="text-[10px] text-[#97A0B3]">{member.role}</span>
+                              <span className="text-[10px] text-nebula-mist">{member.role}</span>
                             </div>
                           </div>
-                          <span className="font-mono font-bold text-[11px] text-[#F1F5F9]">{member.hoursPerWeek}h/wk</span>
+                          <span className="font-mono font-bold text-[11px] text-slate-100">{member.hoursPerWeek}h/wk</span>
                         </div>
                       ))}
                     </div>
@@ -1505,29 +1505,29 @@ export function AdminClientsPage() {
                   {/* Pod Capacity Commitment */}
                   <div className="space-y-2 pt-1">
                     <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-[#F1F5F9]">Pod Capacity Commitment</span>
-                      <span className="text-[#7FA0D6] font-mono">
+                      <span className="text-slate-100">Pod Capacity Commitment</span>
+                      <span className="text-nebula-glow font-mono">
                         {activeClient?.pod.capacityAllocatedHrs} hrs/week allocated
                       </span>
                     </div>
-                    <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-nebula-surface rounded-full h-2 overflow-hidden">
                       <div
-                        className="bg-[#7FA0D6] h-full rounded-full transition-all"
+                        className="bg-nebula-glow h-full rounded-full transition-all"
                         style={{ width: `${activeClient?.pod.bandwidthPercent}%` }}
                       />
                     </div>
-                    <span className="text-[11px] text-[#97A0B3] font-medium block">
+                    <span className="text-[11px] text-nebula-mist font-medium block">
                       Sprint {activeClient?.sprintNumber} • {activeClient?.pod.bandwidthPercent}% bandwidth filled
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
+                <div className="flex items-center justify-between text-xs text-nebula-mist pt-3 border-t border-nebula-steel font-medium">
                   <span>Daily Sync: {activeClient?.pod.dailySyncTime}</span>
                   <button
                     type="button"
                     onClick={() => showToast(`Opening Pod Reallocation Studio for ${activeClient?.pod.name}...`)}
-                    className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
+                    className="text-nebula-glow font-bold hover:underline cursor-pointer"
                   >
                     Reallocate Pod Hours
                   </button>
@@ -1538,16 +1538,16 @@ export function AdminClientsPage() {
             {/* ═════════════════════════════════════════════════════════════════
                 BOTTOM SECTION: ACTIVE DELIVERABLES IN PRODUCTION
             ═════════════════════════════════════════════════════════════════ */}
-            <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
+            <div className="bg-nebula-surface rounded-3xl p-6 lg:p-7 border border-nebula-steel shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-nebula-steel pb-4">
                 <div>
                   <div className="flex items-center gap-2.5">
                     <h2 className="text-base font-black text-white">Active Deliverables in Production</h2>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-[10px] font-black uppercase">
+                    <span className="px-2.5 py-0.5 rounded-full bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30 text-[10px] font-black uppercase">
                       {filteredDeliverables.length} Items Requiring Attention
                     </span>
                   </div>
-                  <p className="text-xs text-[#97A0B3] mt-0.5">
+                  <p className="text-xs text-nebula-mist mt-0.5">
                     Manage approvals, review video renders, and coordinate asset distribution across all client pipelines.
                   </p>
                 </div>
@@ -1555,71 +1555,71 @@ export function AdminClientsPage() {
                 {/* Filter Controls */}
                 <div className="flex items-center gap-2">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#97A0B3]" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-nebula-mist" />
                     <input
                       type="text"
                       placeholder="Filter deliverable..."
                       value={deliverableSearch}
                       onChange={(e) => setDeliverableSearch(e.target.value)}
-                      className="pl-8 pr-3 py-1.5 rounded-xl border border-[#2A3446] text-xs bg-[#0B111C] focus:bg-[#161F2D] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="pl-8 pr-3 py-1.5 rounded-xl border border-nebula-steel text-xs bg-nebula-navy focus:bg-nebula-surface focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                   <button
                     type="button"
-                    className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1 shadow-2xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl border border-nebula-steel bg-nebula-surface hover:bg-nebula-navy text-xs font-bold text-slate-100 flex items-center gap-1 shadow-2xs cursor-pointer"
                   >
-                    <Filter className="w-3.5 h-3.5 text-[#97A0B3]" /> Filter
+                    <Filter className="w-3.5 h-3.5 text-nebula-mist" /> Filter
                   </button>
                 </div>
               </div>
 
               {/* Deliverable Cards Grid with Empty State */}
               {filteredDeliverables.length === 0 ? (
-                <div className="py-12 border border-dashed border-[#2A3446] rounded-2xl text-center space-y-2">
-                  <CheckCircle2 className="size-8 text-[#97A0B3] mx-auto opacity-40" />
+                <div className="py-12 border border-dashed border-nebula-steel rounded-2xl text-center space-y-2">
+                  <CheckCircle2 className="size-8 text-nebula-mist mx-auto opacity-40" />
                   <p className="text-sm font-bold text-white">No Deliverables in Queue</p>
-                  <p className="text-xs text-[#97A0B3]">No active deliverables requiring attention for this client.</p>
+                  <p className="text-xs text-nebula-mist">No active deliverables requiring attention for this client.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                   {filteredDeliverables.map((deliv) => (
                   <div
                     key={deliv.id}
-                    className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_2px_15px_rgba(0,0,0,0.03)] p-5 space-y-4 flex flex-col justify-between hover:shadow-lg hover:border-[#7FA0D6]/30 transition-all"
+                    className="bg-nebula-surface rounded-3xl border border-nebula-steel shadow-[0_2px_15px_rgba(0,0,0,0.03)] p-5 space-y-4 flex flex-col justify-between hover:shadow-lg hover:border-nebula-glow/30 transition-all"
                   >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${deliv.statusColor}`}>
                           {deliv.status}
                         </span>
-                        <span className="text-[10px] font-mono text-[#97A0B3] font-bold">{deliv.code}</span>
+                        <span className="text-[10px] font-mono text-nebula-mist font-bold">{deliv.code}</span>
                       </div>
 
                       <div>
                         <h4 className="text-sm font-black text-white leading-snug">{deliv.title}</h4>
-                        <p className="text-[11px] text-[#97A0B3] mt-1 line-clamp-2 leading-relaxed">
+                        <p className="text-[11px] text-nebula-mist mt-1 line-clamp-2 leading-relaxed">
                           {deliv.description}
                         </p>
                       </div>
 
-                      <div className="p-3 bg-[#0B111C]/70 rounded-2xl space-y-1.5 text-[11px] text-[#F1F5F9] border border-[#2A3446]">
+                      <div className="p-3 bg-nebula-navy/70 rounded-2xl space-y-1.5 text-[11px] text-slate-100 border border-nebula-steel">
                         <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Format:</span>
+                          <span className="text-nebula-mist">Format:</span>
                           <span className="font-bold text-white">{deliv.format}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Due Date:</span>
+                          <span className="text-nebula-mist">Due Date:</span>
                           <span className="font-bold text-rose-600">{deliv.dueDate}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Assigned:</span>
+                          <span className="text-nebula-mist">Assigned:</span>
                           <span className="font-semibold text-white">{deliv.assignedTo}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="space-y-2 pt-2 border-t border-[#2A3446]">
+                    <div className="space-y-2 pt-2 border-t border-nebula-steel">
                       {deliv.status === "IN REVIEW" && (
                         <div className="grid grid-cols-2 gap-2">
                           <button
@@ -1632,7 +1632,7 @@ export function AdminClientsPage() {
                           <button
                             type="button"
                             onClick={() => handleDeclineDeliverable(deliv.id, deliv.title)}
-                            className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                            className="w-full py-2 rounded-xl border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
                           >
                             <X className="w-3.5 h-3.5" /> Decline
                           </button>
@@ -1644,14 +1644,14 @@ export function AdminClientsPage() {
                           <button
                             type="button"
                             onClick={() => setPreviewDeliverable(deliv)}
-                            className="w-full py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                            className="w-full py-2 rounded-xl bg-nebula-glow/15 hover:bg-nebula-glow/20 text-nebula-glow text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
                           >
                             <Eye className="w-3.5 h-3.5" /> Preview Canvas
                           </button>
                           <button
                             type="button"
                             onClick={() => showToast(`Revision request sent for "${deliv.title}".`)}
-                            className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold cursor-pointer transition-colors"
+                            className="w-full py-2 rounded-xl border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-xs font-bold cursor-pointer transition-colors"
                           >
                             Request Revisions
                           </button>
@@ -1669,7 +1669,7 @@ export function AdminClientsPage() {
                           <button
                             type="button"
                             onClick={() => showToast("Viewing scheduled metadata...")}
-                            className="w-full py-1.5 text-center text-[11px] font-bold text-[#97A0B3] hover:text-white cursor-pointer"
+                            className="w-full py-1.5 text-center text-[11px] font-bold text-nebula-mist hover:text-white cursor-pointer"
                           >
                             View Scheduled Meta
                           </button>
@@ -1689,7 +1689,7 @@ export function AdminClientsPage() {
                             <button
                               type="button"
                               onClick={() => showToast(`Feedback notes opened for "${deliv.title}".`)}
-                              className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                              className="w-full py-2 rounded-xl border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
                             >
                               <Edit3 className="w-3.5 h-3.5" /> Notes
                             </button>
@@ -1697,7 +1697,7 @@ export function AdminClientsPage() {
                           <button
                             type="button"
                             onClick={() => setPreviewDeliverable(deliv)}
-                            className="w-full py-1.5 text-center text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer flex items-center justify-center gap-1"
+                            className="w-full py-1.5 text-center text-[11px] font-bold text-nebula-glow hover:underline cursor-pointer flex items-center justify-center gap-1"
                           >
                             <FileText className="w-3.5 h-3.5" /> Open Full Presentation
                           </button>
@@ -1708,7 +1708,7 @@ export function AdminClientsPage() {
                         <button
                           type="button"
                           onClick={() => setPreviewDeliverable(deliv)}
-                          className="w-full py-1.5 text-center text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer flex items-center justify-center gap-1"
+                          className="w-full py-1.5 text-center text-[11px] font-bold text-nebula-glow hover:underline cursor-pointer flex items-center justify-center gap-1"
                         >
                           <Play className="w-3 h-3 fill-blue-600" /> Preview Video Draft (0:45)
                         </button>
@@ -1729,35 +1729,35 @@ export function AdminClientsPage() {
         {/* 1. Edit Profile Modal */}
         {isEditProfileOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-nebula-surface rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-nebula-steel">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <h3 className="text-base font-black text-white">Edit Client Profile: {activeClient?.name}</h3>
-                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="space-y-3 text-xs text-[#F1F5F9]">
+              <div className="space-y-3 text-xs text-slate-100">
                 <div>
                   <label className="block font-bold mb-1">Company / Brand Name</label>
-                  <input type="text" defaultValue={activeClient?.name} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
+                  <input type="text" defaultValue={activeClient?.name} className="w-full px-3 py-2 rounded-xl border border-nebula-steel" />
                 </div>
                 <div>
                   <label className="block font-bold mb-1">Industry / Category</label>
-                  <input type="text" defaultValue={activeClient?.industry} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
+                  <input type="text" defaultValue={activeClient?.industry} className="w-full px-3 py-2 rounded-xl border border-nebula-steel" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block font-bold mb-1">Primary Signer</label>
-                    <input type="text" defaultValue={activeClient?.contact.name} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
+                    <input type="text" defaultValue={activeClient?.contact.name} className="w-full px-3 py-2 rounded-xl border border-nebula-steel" />
                   </div>
                   <div>
                     <label className="block font-bold mb-1">Signer Email</label>
-                    <input type="email" defaultValue={activeClient?.contact.email} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
+                    <input type="email" defaultValue={activeClient?.contact.email} className="w-full px-3 py-2 rounded-xl border border-nebula-steel" />
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="px-4 py-2 rounded-xl border text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
+                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="px-4 py-2 rounded-xl border text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer">
                   Cancel
                 </button>
                 <button
@@ -1778,35 +1778,35 @@ export function AdminClientsPage() {
         {/* 2. Monthly Invoice Modal */}
         {isInvoiceModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-nebula-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-nebula-steel">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <h3 className="text-base font-black text-white">Current Retainer Invoice</h3>
-                <button type="button" onClick={() => setIsInvoiceModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setIsInvoiceModalOpen(false)} className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="p-4 bg-[#0B111C] rounded-2xl space-y-2 text-xs text-[#F1F5F9] border border-[#2A3446]">
+              <div className="p-4 bg-nebula-navy rounded-2xl space-y-2 text-xs text-slate-100 border border-nebula-steel">
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Invoice ID:</span>
+                  <span className="text-nebula-mist">Invoice ID:</span>
                   <span className="font-mono font-bold text-white">INV-2024-NL-11</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Client:</span>
+                  <span className="text-nebula-mist">Client:</span>
                   <span className="font-bold text-white">{activeClient?.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Billing Cycle:</span>
+                  <span className="text-nebula-mist">Billing Cycle:</span>
                   <span className="font-medium text-white">Nov 1 – Nov 30, 2024</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#97A0B3]">Payment Status:</span>
+                  <span className="text-nebula-mist">Payment Status:</span>
                   <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">
                     PAID (ACH)
                   </span>
                 </div>
-                <div className="flex justify-between pt-2 border-t border-[#2A3446] font-black text-sm">
+                <div className="flex justify-between pt-2 border-t border-nebula-steel font-black text-sm">
                   <span>Total Amount:</span>
-                  <span className="text-[#7FA0D6]">₹{activeClient?.monthlyFee.toLocaleString()}.00</span>
+                  <span className="text-nebula-glow">₹{activeClient?.monthlyFee.toLocaleString()}.00</span>
                 </div>
               </div>
               <button
@@ -1826,37 +1826,37 @@ export function AdminClientsPage() {
         {/* 3. New Request Modal */}
         {isNewRequestOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-nebula-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-nebula-steel">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <div>
                   <h3 className="text-base font-black text-white">New Content Request</h3>
-                  <p className="text-xs text-[#97A0B3]">Submitting to {activeClient?.pod.name} for {activeClient?.name}</p>
+                  <p className="text-xs text-nebula-mist">Submitting to {activeClient?.pod.name} for {activeClient?.name}</p>
                 </div>
-                <button type="button" onClick={() => setIsNewRequestOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setIsNewRequestOpen(false)} className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <form onSubmit={handleCreateRequest} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Asset Title</label>
+                  <label className="block text-xs font-bold text-slate-100 mb-1">Asset Title</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Q4 Executive Product Video Hook"
                     value={newRequestForm.title}
                     onChange={(e) => setNewRequestForm({ ...newRequestForm, title: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Type</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Deliverable Type</label>
                     <select
                       value={newRequestForm.type}
                       onChange={(e) => setNewRequestForm({ ...newRequestForm, type: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium"
                     >
                       <option value="Reel">🎬 Reel / Short</option>
                       <option value="Carousel">🎨 Carousel (3-5 slides)</option>
@@ -1865,11 +1865,11 @@ export function AdminClientsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Priority</label>
                     <select
                       value={newRequestForm.priority}
                       onChange={(e) => setNewRequestForm({ ...newRequestForm, priority: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium"
                     >
                       <option value="Standard">Standard (3-4 Days)</option>
                       <option value="Expedited">Expedited (48 Hours)</option>
@@ -1879,21 +1879,21 @@ export function AdminClientsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Creative Brief Notes</label>
+                  <label className="block text-xs font-bold text-slate-100 mb-1">Creative Brief Notes</label>
                   <textarea
                     rows={3}
                     placeholder="Specify key talking points, hooks, or assets to reference..."
                     value={newRequestForm.notes}
                     onChange={(e) => setNewRequestForm({ ...newRequestForm, notes: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none"
+                    className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs focus:outline-none"
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
                   <button
                     type="button"
                     onClick={() => setIsNewRequestOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1912,26 +1912,26 @@ export function AdminClientsPage() {
         {/* 4. Preview Canvas / Video Modal */}
         {previewDeliverable && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-nebula-surface rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-nebula-steel">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <div>
-                  <span className="text-[10px] font-mono text-[#97A0B3] font-bold">{previewDeliverable.code}</span>
+                  <span className="text-[10px] font-mono text-nebula-mist font-bold">{previewDeliverable.code}</span>
                   <h3 className="text-base font-black text-white">{previewDeliverable.title}</h3>
                 </div>
-                <button type="button" onClick={() => setPreviewDeliverable(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setPreviewDeliverable(null)} className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="aspect-video bg-[#0B111C] rounded-2xl flex flex-col items-center justify-center text-white p-6 relative overflow-hidden shadow-inner">
-                <div className="w-14 h-14 rounded-full bg-[#161F2D]/20 backdrop-blur-md flex items-center justify-center text-white mb-2 cursor-pointer hover:scale-110 transition-transform">
+              <div className="aspect-video bg-nebula-navy rounded-2xl flex flex-col items-center justify-center text-white p-6 relative overflow-hidden shadow-inner">
+                <div className="w-14 h-14 rounded-full bg-nebula-surface/20 backdrop-blur-md flex items-center justify-center text-white mb-2 cursor-pointer hover:scale-110 transition-transform">
                   <Play className="w-6 h-6 fill-white ml-0.5" />
                 </div>
                 <span className="text-xs font-bold text-gray-200">{previewDeliverable.format} Preview</span>
-                <span className="text-[10px] text-[#97A0B3] mt-0.5">Assigned Specialist: {previewDeliverable.assignedTo}</span>
+                <span className="text-[10px] text-nebula-mist mt-0.5">Assigned Specialist: {previewDeliverable.assignedTo}</span>
               </div>
 
-              <div className="p-3.5 bg-[#0B111C] rounded-2xl text-xs text-[#F1F5F9] space-y-1">
+              <div className="p-3.5 bg-nebula-navy rounded-2xl text-xs text-slate-100 space-y-1">
                 <div><strong>Creative Scope:</strong> {previewDeliverable.description}</div>
                 <div><strong>Target Delivery:</strong> {previewDeliverable.dueDate}</div>
               </div>
@@ -1940,7 +1940,7 @@ export function AdminClientsPage() {
                 <button
                   type="button"
                   onClick={() => setPreviewDeliverable(null)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
                 >
                   Close Preview
                 </button>
@@ -1962,19 +1962,19 @@ export function AdminClientsPage() {
         {/* 5. Cancel Client Plan & Remove Retainer Modal */}
         {isCancelClientModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-rose-500/40">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-nebula-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-rose-500/40">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <div className="flex items-center gap-2">
                   <Trash2 className="w-5 h-5 text-rose-500" />
                   <h3 className="text-base font-black text-white">Cancel Plan & Remove Client</h3>
                 </div>
-                <button type="button" onClick={() => setIsCancelClientModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setIsCancelClientModalOpen(false)} className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="space-y-3 text-xs text-[#F1F5F9]">
-                <p className="text-[#97A0B3] leading-relaxed">
+              <div className="space-y-3 text-xs text-slate-100">
+                <p className="text-nebula-mist leading-relaxed">
                   Are you sure you want to cancel the retainer plan for <strong className="text-white">{activeClient?.name}</strong>?
                 </p>
                 <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-300 font-semibold space-y-1">
@@ -1983,11 +1983,11 @@ export function AdminClientsPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+              <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
                 <button
                   type="button"
                   onClick={() => setIsCancelClientModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
                 >
                   Keep Active
                 </button>
@@ -2013,13 +2013,13 @@ export function AdminClientsPage() {
         {/* 6. Onboard New Pod Modal */}
         {isOnboardPodModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-nebula-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-nebula-steel">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <div className="flex items-center gap-2">
-                  <Plus className="w-5 h-5 text-[#7FA0D6]" />
+                  <Plus className="w-5 h-5 text-nebula-glow" />
                   <h3 className="text-base font-black text-white">Onboard New Creative Pod</h3>
                 </div>
-                <button type="button" onClick={() => setIsOnboardPodModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setIsOnboardPodModalOpen(false)} className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -2036,34 +2036,34 @@ export function AdminClientsPage() {
                 className="space-y-3.5 text-xs"
               >
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Pod Designation / Name</label>
+                  <label className="block font-bold text-slate-100 mb-1">Pod Designation / Name</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Pod D - 3D VFX & Motion"
                     value={newPodNameInput}
                     onChange={(e) => setNewPodNameInput(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white focus:outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs font-medium text-white focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Pod Lead Name</label>
+                  <label className="block font-bold text-slate-100 mb-1">Pod Lead Name</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Alex Rivera (Senior Producer)"
                     value={newPodLeadInput}
                     onChange={(e) => setNewPodLeadInput(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white focus:outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs font-medium text-white focus:outline-none"
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
                   <button
                     type="button"
                     onClick={() => setIsOnboardPodModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -2082,24 +2082,24 @@ export function AdminClientsPage() {
         {/* 7. Remove Pod from Team Modal */}
         {isRemovePodModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-rose-500/40">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-nebula-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-rose-500/40">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <div className="flex items-center gap-2">
                   <Trash2 className="w-5 h-5 text-rose-500" />
                   <h3 className="text-base font-black text-white">Decommission / Remove Pod</h3>
                 </div>
-                <button type="button" onClick={() => setIsRemovePodModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setIsRemovePodModalOpen(false)} className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="space-y-3.5 text-xs">
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Select Pod to Remove</label>
+                  <label className="block font-bold text-slate-100 mb-1">Select Pod to Remove</label>
                   <select
                     value={podToRemoveInput}
                     onChange={(e) => setPodToRemoveInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#161F2D] text-white"
+                    className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-bold bg-nebula-surface text-white"
                   >
                     <option value="Pod A">Pod A (Creative & Brand Strategy)</option>
                     <option value="Pod B">Pod B (Performance & Video Ops)</option>
@@ -2107,15 +2107,15 @@ export function AdminClientsPage() {
                   </select>
                 </div>
 
-                <p className="text-[#97A0B3] text-[11px] leading-relaxed">
+                <p className="text-nebula-mist text-[11px] leading-relaxed">
                   Decommissioning <strong className="text-white">{podToRemoveInput}</strong> will release active specialists back into the main talent pool for reallocation.
                 </p>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
                   <button
                     type="button"
                     onClick={() => setIsRemovePodModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -2224,7 +2224,7 @@ export function AdminDeliverablesPage() {
         pod: t.pod_name || "Pod Alpha",
         status: t.status,
         statusLabel: (t.status || "").replace("_", " ").toUpperCase(),
-        statusBadge: "bg-[#161F2D] text-[#7FA0D6] border-[#2A3446]",
+        statusBadge: "bg-nebula-surface text-nebula-glow border-nebula-steel",
         formatType: t.type || "Reels",
         formatLabel: t.type || "Reels",
         previewUrl: t.file_url || null,
@@ -2283,12 +2283,12 @@ export function AdminDeliverablesPage() {
   });
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-nebula-navy flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
       <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
         {/* Toast Notification */}
         {toastMessage && (
-          <div className="fixed top-24 right-8 z-50 bg-[#0B111C] text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2.5 animate-bounce">
+          <div className="fixed top-24 right-8 z-50 bg-nebula-navy text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2.5 animate-bounce">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             <span>{toastMessage}</span>
           </div>
@@ -2296,12 +2296,12 @@ export function AdminDeliverablesPage() {
 
         {/* 4 KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-nebula-surface rounded-3xl p-5 border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">
                 MOVED TO PRODUCTION
               </span>
-              <div className="w-7 h-7 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+              <div className="w-7 h-7 rounded-xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-bold">
                 <Zap className="w-3.5 h-3.5" />
               </div>
             </div>
@@ -2311,9 +2311,9 @@ export function AdminDeliverablesPage() {
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-nebula-surface rounded-3xl p-5 border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">
                 PENDING REVIEW
               </span>
               <div className="w-7 h-7 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-bold">
@@ -2326,9 +2326,9 @@ export function AdminDeliverablesPage() {
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-nebula-surface rounded-3xl p-5 border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">
                 APPROVED TODAY
               </span>
               <div className="w-7 h-7 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold">
@@ -2341,9 +2341,9 @@ export function AdminDeliverablesPage() {
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-nebula-surface rounded-3xl p-5 border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">
                 DECLINED / REVISE
               </span>
               <div className="w-7 h-7 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center font-bold">
@@ -2358,16 +2358,16 @@ export function AdminDeliverablesPage() {
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446] shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-nebula-surface rounded-2xl p-4 border border-nebula-steel shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-nebula-mist" />
               <input
                 type="text"
                 placeholder="Search deliverables, code, tags..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-72 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                className="pl-10 pr-4 py-2 w-72 rounded-xl border border-nebula-steel bg-nebula-surface text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
               />
             </div>
 
@@ -2413,7 +2413,7 @@ export function AdminDeliverablesPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-[#97A0B3]">
+            <span className="text-xs font-bold text-nebula-mist">
               Showing {filteredDeliverables.length} deliverables
             </span>
           </div>
@@ -2421,10 +2421,10 @@ export function AdminDeliverablesPage() {
 
         {/* 3-Column Deliverables Grid or Empty State */}
         {filteredDeliverables.length === 0 ? (
-          <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] p-12 text-center text-[#97A0B3] space-y-3">
-            <Layers className="w-10 h-10 text-[#2A3446] mx-auto" />
+          <div className="bg-nebula-surface rounded-3xl border border-nebula-steel p-12 text-center text-nebula-mist space-y-3">
+            <Layers className="w-10 h-10 text-nebula-steel mx-auto" />
             <h3 className="text-base font-bold text-white">No deliverables in queue</h3>
-            <p className="text-xs text-[#97A0B3] max-w-sm mx-auto">
+            <p className="text-xs text-nebula-mist max-w-sm mx-auto">
               Creative pod sprints will automatically submit finished reels, brand assets, and creative packages here for admin review.
             </p>
           </div>
@@ -2433,7 +2433,7 @@ export function AdminDeliverablesPage() {
           {filteredDeliverables.map((item) => (
             <div
               key={item.id}
-              className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all overflow-hidden flex flex-col justify-between"
+              className="bg-nebula-surface rounded-3xl border border-nebula-steel shadow-[0_4px_25px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all overflow-hidden flex flex-col justify-between"
             >
               {/* Card Header */}
               <div className="p-5 pb-3">
@@ -2448,7 +2448,7 @@ export function AdminDeliverablesPage() {
                       <div className="text-xs font-black text-white leading-tight">
                         {item.client}
                       </div>
-                      <div className="text-[10px] font-bold text-[#97A0B3]">
+                      <div className="text-[10px] font-bold text-nebula-mist">
                         {item.assetCode}
                       </div>
                     </div>
@@ -2464,8 +2464,8 @@ export function AdminDeliverablesPage() {
                 <h3 className="text-sm font-black text-white line-clamp-2 mb-1.5">
                   {item.title}
                 </h3>
-                <p className="text-[11px] font-semibold text-[#97A0B3] flex items-center gap-1.5">
-                  <Tag className="w-3 h-3 text-[#97A0B3]" />
+                <p className="text-[11px] font-semibold text-nebula-mist flex items-center gap-1.5">
+                  <Tag className="w-3 h-3 text-nebula-mist" />
                   {item.format}
                 </p>
               </div>
@@ -2481,8 +2481,8 @@ export function AdminDeliverablesPage() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="px-4 py-2 bg-[#161F2D]/90 backdrop-blur-md rounded-xl text-xs font-black text-white shadow-xl flex items-center gap-1.5">
-                    <Eye className="w-3.5 h-3.5 text-[#7FA0D6]" /> Quick Preview
+                  <span className="px-4 py-2 bg-nebula-surface/90 backdrop-blur-md rounded-xl text-xs font-black text-white shadow-xl flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-nebula-glow" /> Quick Preview
                   </span>
                 </div>
               </div>
@@ -2492,27 +2492,27 @@ export function AdminDeliverablesPage() {
                 {/* Pod & Retainer Info */}
                 <div className="flex items-center justify-between text-xs pt-1 border-t border-gray-50">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-[#97A0B3] text-[10px] uppercase">
+                    <span className="font-bold text-nebula-mist text-[10px] uppercase">
                       Pod:
                     </span>
-                    <span className="px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] text-[11px] font-black">
+                    <span className="px-2 py-0.5 rounded-md bg-nebula-glow/15 text-nebula-glow text-[11px] font-black">
                       {item.pod} ({item.podLead})
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold text-[#97A0B3]">
+                  <span className="text-[11px] font-bold text-nebula-mist">
                     {item.retainer}
                   </span>
                 </div>
 
                 {/* SLA Target / Status */}
-                <div className="flex items-center justify-between text-xs bg-[#0B111C]/80 p-2.5 rounded-xl border border-[#2A3446]">
+                <div className="flex items-center justify-between text-xs bg-nebula-navy/80 p-2.5 rounded-xl border border-nebula-steel">
                   <span className={`text-[11px] ${item.slaColor}`}>
                     {item.slaText}
                   </span>
                   <button
                     type="button"
                     onClick={() => setCommentModalItem(item)}
-                    className="text-[#97A0B3] hover:text-[#7FA0D6] text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                    className="text-nebula-mist hover:text-nebula-glow text-[11px] font-bold flex items-center gap-1 cursor-pointer"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
                     {item.commentsCount} notes
@@ -2531,7 +2531,7 @@ export function AdminDeliverablesPage() {
                   <button
                     type="button"
                     onClick={() => handleDecline(item.id, item.title)}
-                    className="flex-1 py-2.5 bg-[#161F2D] hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="flex-1 py-2.5 bg-nebula-surface hover:bg-rose-50 text-slate-100 hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5 stroke-[2.5]" /> Request Edit
                   </button>
@@ -2545,14 +2545,14 @@ export function AdminDeliverablesPage() {
         {/* Media Preview Modal */}
         {previewItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-3xl w-full p-6 shadow-2xl space-y-4 border border-[#2A3446] max-h-[90vh] overflow-y-auto">
-              <div className="flex items-start justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-nebula-surface rounded-3xl max-w-3xl w-full p-6 shadow-2xl space-y-4 border border-nebula-steel max-h-[90vh] overflow-y-auto">
+              <div className="flex items-start justify-between border-b border-nebula-steel pb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-black uppercase">
+                    <span className="px-2.5 py-0.5 rounded-full bg-nebula-glow/15 text-nebula-glow text-[10px] font-black uppercase">
                       {previewItem.assetCode}
                     </span>
-                    <span className="text-xs font-bold text-[#97A0B3]">
+                    <span className="text-xs font-bold text-nebula-mist">
                       {previewItem.client}
                     </span>
                   </div>
@@ -2561,7 +2561,7 @@ export function AdminDeliverablesPage() {
                 <button
                   type="button"
                   onClick={() => setPreviewItem(null)}
-                  className="p-1.5 rounded-xl hover:bg-[#161F2D] text-[#97A0B3] hover:text-white cursor-pointer"
+                  className="p-1.5 rounded-xl hover:bg-nebula-surface text-nebula-mist hover:text-white cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -2575,10 +2575,10 @@ export function AdminDeliverablesPage() {
                 />
               </div>
 
-              <div className="p-4 bg-[#0B111C] rounded-2xl space-y-2 text-xs">
+              <div className="p-4 bg-nebula-navy rounded-2xl space-y-2 text-xs">
                 <div className="font-bold text-white">Deliverable Blueprint:</div>
-                <p className="text-[#F1F5F9] leading-relaxed">{previewItem.description}</p>
-                <div className="flex flex-wrap gap-4 pt-2 text-[11px] text-[#97A0B3] border-t border-[#2A3446]">
+                <p className="text-slate-100 leading-relaxed">{previewItem.description}</p>
+                <div className="flex flex-wrap gap-4 pt-2 text-[11px] text-nebula-mist border-t border-nebula-steel">
                   <span><strong>Format:</strong> {previewItem.format}</span>
                   <span><strong>Pod:</strong> {previewItem.pod} ({previewItem.podLead})</span>
                   <span><strong>SLA:</strong> {previewItem.slaText}</span>
@@ -2592,7 +2592,7 @@ export function AdminDeliverablesPage() {
                     handleDecline(previewItem.id, previewItem.title);
                     setPreviewItem(null);
                   }}
-                  className="px-4 py-2 rounded-xl bg-[#161F2D] hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 text-xs font-bold cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-nebula-surface hover:bg-rose-50 text-slate-100 hover:text-rose-600 text-xs font-bold cursor-pointer"
                 >
                   Request Revision
                 </button>
@@ -2614,10 +2614,10 @@ export function AdminDeliverablesPage() {
         {/* Notes & Comments Modal */}
         {commentModalItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-nebula-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-nebula-steel">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-[#7FA0D6]" />
+                  <MessageSquare className="w-4 h-4 text-nebula-glow" />
                   <h3 className="text-sm font-black text-white">
                     Production Notes & Feedback
                   </h3>
@@ -2625,28 +2625,28 @@ export function AdminDeliverablesPage() {
                 <button
                   type="button"
                   onClick={() => setCommentModalItem(null)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-nebula-mist hover:text-slate-100 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="space-y-3">
-                <div className="p-3 bg-[#0B111C] rounded-2xl border border-[#2A3446] space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3]">
+                <div className="p-3 bg-nebula-navy rounded-2xl border border-nebula-steel space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-nebula-mist">
                     <span>David K. (Client Lead)</span>
                     <span>Today 10:45 AM</span>
                   </div>
-                  <p className="text-xs text-[#F1F5F9] leading-relaxed font-medium">
+                  <p className="text-xs text-slate-100 leading-relaxed font-medium">
                     "Typography and layout look crisp. Please ensure the hex code for brand teal matches #7FA0D6."
                   </p>
                 </div>
-                <div className="p-3 bg-[#7FA0D6]/15/50 rounded-2xl border border-[#7FA0D6]/30 space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-bold text-[#7FA0D6]">
+                <div className="p-3 bg-nebula-glow/15/50 rounded-2xl border border-nebula-glow/30 space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-nebula-glow">
                     <span>Elena Rostova (Pod A)</span>
                     <span>Today 2:15 PM</span>
                   </div>
-                  <p className="text-xs text-[#F1F5F9] leading-relaxed font-medium">
+                  <p className="text-xs text-slate-100 leading-relaxed font-medium">
                     "Updated slide shaders and color profiles. Ready for final review."
                   </p>
                 </div>
@@ -2702,14 +2702,14 @@ export function AdminTasksPage() {
       id: `task-${Date.now()}`,
       column: newTaskForm.column,
       client: newTaskForm.client,
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      clientPill: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
       priority: newTaskForm.priority,
       priorityPill:
         newTaskForm.priority === "Urgent"
           ? "bg-rose-600 text-white font-black"
           : newTaskForm.priority === "High"
           ? "bg-rose-50 text-rose-600 border-rose-100"
-          : "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
+          : "bg-nebula-surface text-slate-100 border-nebula-steel",
       title: newTaskForm.title.trim(),
       type: newTaskForm.category,
       avatar: newTaskForm.assignee
@@ -2768,27 +2768,27 @@ export function AdminTasksPage() {
   const approvedTasks = filteredTasks.filter((t) => t.column === "approved");
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-nebula-navy flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
       <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
         {/* Header Title and Search Filter Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
-              <span className="w-2 h-2 rounded-full bg-[#7FA0D6] animate-pulse" />
+            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30">
+              <span className="w-2 h-2 rounded-full bg-nebula-glow animate-pulse" />
               Live Sync
             </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-nebula-mist" />
               <input
                 type="text"
                 placeholder="Filter deliverables, tags, owners..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 w-64 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                className="pl-9 pr-4 py-2 w-64 rounded-xl border border-nebula-steel bg-nebula-surface text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
               />
             </div>
 
@@ -2817,7 +2817,7 @@ export function AdminTasksPage() {
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+              className="px-4 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
             >
               <Plus className="w-4 h-4 stroke-[3]" /> Create Task
             </button>
@@ -2827,7 +2827,7 @@ export function AdminTasksPage() {
         {/* 4 Kanban Columns */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Column 1: TO DO */}
-          <div className="bg-[#161F2D]/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-[#2A3446]/60">
+          <div className="bg-nebula-surface/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-nebula-steel/60">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
@@ -2835,7 +2835,7 @@ export function AdminTasksPage() {
                   TO DO
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[11px] font-bold border border-[#2A3446] shadow-2xs">
+              <span className="px-2 py-0.5 rounded-full bg-nebula-surface text-slate-100 text-[11px] font-bold border border-nebula-steel shadow-2xs">
                 {todoTasks.length}
               </span>
             </div>
@@ -2845,7 +2845,7 @@ export function AdminTasksPage() {
                 <div
                   key={task.id}
                   onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                  className="bg-nebula-surface rounded-2xl p-4 border border-nebula-steel/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
@@ -2857,18 +2857,18 @@ export function AdminTasksPage() {
                   </div>
                   <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
                   {task.imageUrl && (
-                    <div className="h-24 rounded-xl overflow-hidden bg-[#161F2D]">
+                    <div className="h-24 rounded-xl overflow-hidden bg-nebula-surface">
                       <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
+                  <div className="flex items-center justify-between pt-2 border-t border-nebula-steel text-[11px] text-nebula-mist">
                     <div className="flex items-center gap-1.5">
                       <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
+                      <span className="font-medium text-slate-100">{task.assigneeName}</span>
                     </div>
-                    <span className="font-bold text-[#7FA0D6] font-mono">{task.sp} SP</span>
+                    <span className="font-bold text-nebula-glow font-mono">{task.sp} SP</span>
                   </div>
                 </div>
               ))}
@@ -2876,15 +2876,15 @@ export function AdminTasksPage() {
           </div>
 
           {/* Column 2: IN PROGRESS */}
-          <div className="bg-[#161F2D]/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-[#2A3446]/60">
+          <div className="bg-nebula-surface/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-nebula-steel/60">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]/150 animate-pulse" />
+                <span className="w-2.5 h-2.5 rounded-full bg-nebula-glow/150 animate-pulse" />
                 <h3 className="text-xs font-black text-white tracking-wider uppercase">
                   IN PROGRESS
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#7FA0D6] text-[11px] font-bold border border-[#2A3446] shadow-2xs">
+              <span className="px-2 py-0.5 rounded-full bg-nebula-surface text-nebula-glow text-[11px] font-bold border border-nebula-steel shadow-2xs">
                 {inProgressTasks.length}
               </span>
             </div>
@@ -2894,7 +2894,7 @@ export function AdminTasksPage() {
                 <div
                   key={task.id}
                   onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                  className="bg-nebula-surface rounded-2xl p-4 border border-nebula-steel/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
@@ -2906,16 +2906,16 @@ export function AdminTasksPage() {
                   </div>
                   <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
                   {task.imageUrl && (
-                    <div className="h-24 rounded-xl overflow-hidden bg-[#161F2D]">
+                    <div className="h-24 rounded-xl overflow-hidden bg-nebula-surface">
                       <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
+                  <div className="flex items-center justify-between pt-2 border-t border-nebula-steel text-[11px] text-nebula-mist">
                     <div className="flex items-center gap-1.5">
                       <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
+                      <span className="font-medium text-slate-100">{task.assigneeName}</span>
                     </div>
                     <span className="font-bold text-rose-600">{task.due}</span>
                   </div>
@@ -2925,7 +2925,7 @@ export function AdminTasksPage() {
           </div>
 
           {/* Column 3: UNDER REVIEW */}
-          <div className="bg-[#161F2D]/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-[#2A3446]/60">
+          <div className="bg-nebula-surface/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-nebula-steel/60">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
@@ -2933,7 +2933,7 @@ export function AdminTasksPage() {
                   UNDER REVIEW
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-amber-600 text-[11px] font-bold border border-[#2A3446] shadow-2xs">
+              <span className="px-2 py-0.5 rounded-full bg-nebula-surface text-amber-600 text-[11px] font-bold border border-nebula-steel shadow-2xs">
                 {underReviewTasks.length}
               </span>
             </div>
@@ -2943,7 +2943,7 @@ export function AdminTasksPage() {
                 <div
                   key={task.id}
                   onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                  className="bg-nebula-surface rounded-2xl p-4 border border-nebula-steel/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
@@ -2954,12 +2954,12 @@ export function AdminTasksPage() {
                     </span>
                   </div>
                   <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
+                  <div className="flex items-center justify-between pt-2 border-t border-nebula-steel text-[11px] text-nebula-mist">
                     <div className="flex items-center gap-1.5">
                       <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
+                      <span className="font-medium text-slate-100">{task.assigneeName}</span>
                     </div>
                     <span className="font-bold text-amber-600">{task.pod}</span>
                   </div>
@@ -2969,7 +2969,7 @@ export function AdminTasksPage() {
           </div>
 
           {/* Column 4: APPROVED */}
-          <div className="bg-[#161F2D]/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-[#2A3446]/60">
+          <div className="bg-nebula-surface/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-nebula-steel/60">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
@@ -2977,7 +2977,7 @@ export function AdminTasksPage() {
                   APPROVED
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-emerald-600 text-[11px] font-bold border border-[#2A3446] shadow-2xs">
+              <span className="px-2 py-0.5 rounded-full bg-nebula-surface text-emerald-600 text-[11px] font-bold border border-nebula-steel shadow-2xs">
                 {approvedTasks.length}
               </span>
             </div>
@@ -2987,7 +2987,7 @@ export function AdminTasksPage() {
                 <div
                   key={task.id}
                   onClick={() => setPreviewTask(task)}
-                  className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
+                  className="bg-nebula-surface rounded-2xl p-4 border border-nebula-steel/70 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md transition-all cursor-pointer space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
                     <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${task.clientPill}`}>
@@ -2999,16 +2999,16 @@ export function AdminTasksPage() {
                   </div>
                   <h4 className="text-xs font-bold text-white line-clamp-2">{task.title}</h4>
                   {task.imageUrl && (
-                    <div className="h-24 rounded-xl overflow-hidden bg-[#161F2D]">
+                    <div className="h-24 rounded-xl overflow-hidden bg-nebula-surface">
                       <img src={task.imageUrl} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
-                  <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[11px] text-[#97A0B3]">
+                  <div className="flex items-center justify-between pt-2 border-t border-nebula-steel text-[11px] text-nebula-mist">
                     <div className="flex items-center gap-1.5">
                       <div className={`w-5 h-5 rounded-full ${task.avatarBg} text-white font-bold text-[9px] flex items-center justify-center`}>
                         {task.avatar}
                       </div>
-                      <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
+                      <span className="font-medium text-slate-100">{task.assigneeName}</span>
                     </div>
                     <span className="font-bold text-emerald-600 font-mono">Completed</span>
                   </div>
@@ -3021,13 +3021,13 @@ export function AdminTasksPage() {
         {/* Create Task Modal */}
         {isCreateModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-nebula-surface rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-nebula-steel">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <h3 className="text-base font-black text-white">Create Production Task</h3>
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-nebula-mist hover:text-slate-100 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -3035,34 +3035,34 @@ export function AdminTasksPage() {
 
               <form onSubmit={handleCreateTask} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Task Title</label>
+                  <label className="block text-xs font-bold text-slate-100 mb-1">Task Title</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. 3D Hero Animation for Brand Launch"
                     value={newTaskForm.title}
                     onChange={(e) => setNewTaskForm({ ...newTaskForm, title: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Client Brand</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Client Brand</label>
                     <select
                       value={newTaskForm.client}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, client: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium"
                     >
                       <option value="Ryze Mushroom Coffee">Ryze Mushroom Coffee</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Creative Pod</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Creative Pod</label>
                     <select
                       value={newTaskForm.pod}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, pod: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium"
                     >
                       <option value="Pod A">Pod A (Brand Strategy)</option>
                       <option value="Pod B">Pod B (Performance &amp; Video)</option>
@@ -3073,11 +3073,11 @@ export function AdminTasksPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Priority</label>
                     <select
                       value={newTaskForm.priority}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, priority: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium"
                     >
                       <option value="Normal">Normal</option>
                       <option value="High">High</option>
@@ -3085,23 +3085,23 @@ export function AdminTasksPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Story Points</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Story Points</label>
                     <input
                       type="number"
                       min="1"
                       max="20"
                       value={newTaskForm.sp}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, sp: Number(e.target.value) })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
                   <button
                     type="button"
                     onClick={() => setIsCreateModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -3120,10 +3120,10 @@ export function AdminTasksPage() {
         {/* Task Preview Drawer */}
         {previewTask && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-nebula-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-nebula-steel">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <div>
-                  <span className="text-[10px] font-bold text-[#7FA0D6] uppercase font-mono">
+                  <span className="text-[10px] font-bold text-nebula-glow uppercase font-mono">
                     {previewTask.pod} • {previewTask.due}
                   </span>
                   <h3 className="text-base font-black text-white mt-0.5">{previewTask.title}</h3>
@@ -3131,14 +3131,14 @@ export function AdminTasksPage() {
                 <button
                   type="button"
                   onClick={() => setPreviewTask(null)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-nebula-mist hover:text-slate-100 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="space-y-2.5 text-xs text-[#F1F5F9]">
-                <div className="p-3 bg-[#0B111C] rounded-2xl space-y-1">
+              <div className="space-y-2.5 text-xs text-slate-100">
+                <div className="p-3 bg-nebula-navy rounded-2xl space-y-1">
                   <div><strong>Client:</strong> {previewTask.client}</div>
                   <div><strong>Assignee:</strong> {previewTask.assigneeName}</div>
                   <div><strong>Priority:</strong> {previewTask.priority}</div>
@@ -3195,7 +3195,7 @@ export function AdminCalendarPage() {
         type: "Reel",
         assignee: "Karthik Raja",
         avatar: "DK",
-        avatarBg: "bg-[#0B111C]",
+        avatarBg: "bg-nebula-navy",
         tag: "Approved",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "11:30 AM",
@@ -3225,7 +3225,7 @@ export function AdminCalendarPage() {
         type: "Reel",
         assignee: "Karthik Raja",
         avatar: "DK",
-        avatarBg: "bg-[#0B111C]",
+        avatarBg: "bg-nebula-navy",
         tag: "Final Polish",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "4:30 PM",
@@ -3279,7 +3279,7 @@ export function AdminCalendarPage() {
         type: "Story",
         assignee: "Karthik Raja",
         avatar: "DK",
-        avatarBg: "bg-[#0B111C]",
+        avatarBg: "bg-nebula-navy",
         tag: "Approved",
         tagColor: "bg-emerald-50 text-emerald-700 border-emerald-100",
         time: "10:00 AM",
@@ -3307,7 +3307,7 @@ export function AdminCalendarPage() {
         avatar: "MV",
         avatarBg: "bg-indigo-600",
         tag: "Scheduled",
-        tagColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+        tagColor: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
         time: "5:00 PM",
       },
     ],
@@ -3333,7 +3333,7 @@ export function AdminCalendarPage() {
         type: "Reel",
         assignee: "Karthik Raja",
         avatar: "DK",
-        avatarBg: "bg-[#0B111C]",
+        avatarBg: "bg-nebula-navy",
         tag: "Color Grading",
         tagColor: "bg-purple-50 text-purple-700 border-purple-100",
         time: "4:00 PM",
@@ -3363,7 +3363,7 @@ export function AdminCalendarPage() {
         avatar: "CT",
         avatarBg: "bg-teal-600",
         tag: "Drafting",
-        tagColor: "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
+        tagColor: "bg-nebula-surface text-slate-100 border-nebula-steel",
         time: "2:00 PM",
       },
     ],
@@ -3376,7 +3376,7 @@ export function AdminCalendarPage() {
         type: "Reel",
         assignee: "Karthik Raja",
         avatar: "DK",
-        avatarBg: "bg-[#0B111C]",
+        avatarBg: "bg-nebula-navy",
         tag: "Final Polish",
         tagColor: "bg-amber-50 text-amber-700 border-amber-100",
         time: "12:00 PM",
@@ -3419,7 +3419,7 @@ export function AdminCalendarPage() {
         type: "Reel",
         assignee: "Karthik Raja",
         avatar: "DK",
-        avatarBg: "bg-[#0B111C]",
+        avatarBg: "bg-nebula-navy",
         tag: "Final Polish",
         tagColor: "bg-amber-50 text-amber-700 border-amber-100",
         time: "5:00 PM",
@@ -3431,13 +3431,13 @@ export function AdminCalendarPage() {
   const getTypeBadge = (type: string) => {
     switch (type) {
       case "Reel":
-        return { label: "🎬 Reel", bg: "bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30" };
+        return { label: "🎬 Reel", bg: "bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30" };
       case "Story":
         return { label: "📲 Story", bg: "bg-rose-500/15 text-rose-400 border border-rose-500/30" };
       case "Post":
         return { label: "📄 Post", bg: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" };
       default:
-        return { label: `📌 ${type}`, bg: "bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30" };
+        return { label: `📌 ${type}`, bg: "bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30" };
     }
   };
 
@@ -3466,7 +3466,7 @@ export function AdminCalendarPage() {
       avatar: "ST",
       avatarBg: "bg-blue-600",
       tag: scheduleForm.tag,
-      tagColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      tagColor: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
       time: scheduleForm.time || "4:00 PM",
     };
 
@@ -3500,22 +3500,22 @@ export function AdminCalendarPage() {
   const isSelectedDateToday = selectedDayNumber === 14;
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-nebula-navy flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
       <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
         {/* Header and Controls */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-[#161F2D] border border-[#2A3446] px-3 py-1.5 rounded-xl shadow-2xs">
+            <div className="flex items-center gap-2 bg-nebula-surface border border-nebula-steel px-3 py-1.5 rounded-xl shadow-2xs">
               <button
                 type="button"
                 onClick={() => setSelectedDayNumber((prev) => Math.max(1, prev - 1))}
                 aria-label="Previous Day"
-                className="p-0.5 text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer rounded"
+                className="p-0.5 text-nebula-mist hover:text-slate-100 cursor-pointer rounded"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <Calendar className="w-4 h-4 text-[#7FA0D6]" />
+              <Calendar className="w-4 h-4 text-nebula-glow" />
               <span className="text-xs font-bold text-white">
                 November {selectedDayNumber}, 2024 {isSelectedDateToday ? "(Today)" : ""}
               </span>
@@ -3523,7 +3523,7 @@ export function AdminCalendarPage() {
                 type="button"
                 onClick={() => setSelectedDayNumber((prev) => Math.min(30, prev + 1))}
                 aria-label="Next Day"
-                className="p-0.5 text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer rounded"
+                className="p-0.5 text-nebula-mist hover:text-slate-100 cursor-pointer rounded"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -3532,7 +3532,7 @@ export function AdminCalendarPage() {
               <button
                 type="button"
                 onClick={() => setSelectedDayNumber(14)}
-                className="text-xs font-bold text-[#7FA0D6] hover:text-blue-800 bg-[#7FA0D6]/15 px-2.5 py-1 rounded-lg border border-[#7FA0D6]/30 cursor-pointer transition-colors"
+                className="text-xs font-bold text-nebula-glow hover:text-blue-800 bg-nebula-glow/15 px-2.5 py-1 rounded-lg border border-nebula-glow/30 cursor-pointer transition-colors"
               >
                 Jump to Today (14th)
               </button>
@@ -3541,7 +3541,7 @@ export function AdminCalendarPage() {
 
           <div className="flex flex-wrap items-center gap-3">
             {isTeamLead ? (
-              <div className="px-3 py-2 rounded-xl border border-[#7FA0D6]/30 bg-[#7FA0D6]/15/70 text-xs font-bold text-[#7FA0D6] shadow-2xs">
+              <div className="px-3 py-2 rounded-xl border border-nebula-glow/30 bg-nebula-glow/15/70 text-xs font-bold text-nebula-glow shadow-2xs">
                 Pod A Schedule
               </div>
             ) : (
@@ -3586,7 +3586,7 @@ export function AdminCalendarPage() {
             <button
               type="button"
               onClick={() => handleOpenScheduleForDay(selectedDayNumber)}
-              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
+              className="px-4 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
             >
               <Plus className="w-4 h-4 stroke-[3]" /> Schedule Asset
             </button>
@@ -3598,23 +3598,23 @@ export function AdminCalendarPage() {
         {/* Calendar Grid + Dynamic Selected Date Work Split */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main 7-Column Month Calendar View */}
-          <div className="lg:col-span-2 bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 space-y-4">
+          <div className="lg:col-span-2 bg-nebula-surface rounded-3xl border border-nebula-steel shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-black text-white">November 2024</h2>
-                <span className="text-xs font-bold text-[#97A0B3]">Production Horizon</span>
+                <span className="text-xs font-bold text-nebula-mist">Production Horizon</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-medium text-[#97A0B3] hidden sm:inline">
+                <span className="text-[11px] font-medium text-nebula-mist hidden sm:inline">
                   Click any date to view scheduled work
                 </span>
-                <span className="text-xs font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-3 py-1 rounded-full">
+                <span className="text-xs font-bold text-nebula-glow bg-nebula-glow/15 px-3 py-1 rounded-full">
                   14th Today
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-2 text-center text-[11px] font-bold text-[#97A0B3] pb-2 border-b border-[#2A3446]">
+            <div className="grid grid-cols-7 gap-2 text-center text-[11px] font-bold text-nebula-mist pb-2 border-b border-nebula-steel">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
                 <div key={d}>{d}</div>
               ))}
@@ -3639,20 +3639,20 @@ export function AdminCalendarPage() {
                     onClick={() => setSelectedDayNumber(dayNum)}
                     className={`min-h-[92px] p-2 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer group relative ${
                       isSelected
-                        ? "bg-[#7FA0D6]/15/90 border-blue-500 ring-2 ring-blue-600/30 shadow-md scale-[1.02] z-10"
+                        ? "bg-nebula-glow/15/90 border-blue-500 ring-2 ring-blue-600/30 shadow-md scale-[1.02] z-10"
                         : isToday
-                        ? "bg-[#7FA0D6]/15/40 border-[#7FA0D6]/30 hover:border-blue-300"
-                        : "bg-[#0B111C]/40 border-[#2A3446] hover:bg-[#161F2D] hover:border-[#7FA0D6]/30 hover:shadow-2xs"
+                        ? "bg-nebula-glow/15/40 border-nebula-glow/30 hover:border-blue-300"
+                        : "bg-nebula-navy/40 border-nebula-steel hover:bg-nebula-surface hover:border-nebula-glow/30 hover:shadow-2xs"
                     }`}
                   >
                     <div className="flex items-center justify-between w-full">
                       <span
                         className={`text-xs font-black size-6 rounded-full flex items-center justify-center text-center shrink-0 transition-colors ${
                           isSelected
-                            ? "bg-[#7FA0D6] text-[#050810] shadow-xs"
+                            ? "bg-nebula-glow text-nebula-void shadow-xs"
                             : isToday
-                            ? "bg-[#7FA0D6]/30 text-white border border-[#7FA0D6]/50 font-black"
-                            : "text-[#F1F5F9] group-hover:text-[#7FA0D6]"
+                            ? "bg-nebula-glow/30 text-white border border-nebula-glow/50 font-black"
+                            : "text-slate-100 group-hover:text-nebula-glow"
                         }`}
                       >
                         {dayNum}
@@ -3660,7 +3660,7 @@ export function AdminCalendarPage() {
                       {dayTasks.length > 0 && (
                         <span
                           className={`text-[9px] font-black size-5 rounded-full flex items-center justify-center text-center shrink-0 ${
-                            isSelected ? "bg-[#7FA0D6] text-[#050810]" : "bg-[#2A3446] text-[#BCCCE6]"
+                            isSelected ? "bg-nebula-glow text-nebula-void" : "bg-nebula-steel text-nebula-periwinkle"
                           }`}
                         >
                           {dayTasks.length}
@@ -3671,26 +3671,26 @@ export function AdminCalendarPage() {
                     {/* Day Deliverables Badges with Pencil/Line Drawings */}
                     <div className="space-y-1 mt-1.5 w-full">
                       {reelsCount > 0 && (
-                        <span className="flex items-center gap-1.5 text-[9.5px] font-bold px-2 py-1 rounded-lg bg-[#161F2D] text-[#7FA0D6] border border-[#2A3446] truncate">
-                          <Film className="size-3 text-[#7FA0D6] shrink-0 stroke-[1.75]" />
+                        <span className="flex items-center gap-1.5 text-[9.5px] font-bold px-2 py-1 rounded-lg bg-nebula-surface text-nebula-glow border border-nebula-steel truncate">
+                          <Film className="size-3 text-nebula-glow shrink-0 stroke-[1.75]" />
                           <span>{reelsCount} {reelsCount === 1 ? "Reel" : "Reels"}</span>
                         </span>
                       )}
                       {storiesCount > 0 && (
-                        <span className="flex items-center gap-1.5 text-[9.5px] font-bold px-2 py-1 rounded-lg bg-[#161F2D] text-[#BCCCE6] border border-[#2A3446] truncate">
-                          <Smartphone className="size-3 text-[#BCCCE6] shrink-0 stroke-[1.75]" />
+                        <span className="flex items-center gap-1.5 text-[9.5px] font-bold px-2 py-1 rounded-lg bg-nebula-surface text-nebula-periwinkle border border-nebula-steel truncate">
+                          <Smartphone className="size-3 text-nebula-periwinkle shrink-0 stroke-[1.75]" />
                           <span>{storiesCount} {storiesCount === 1 ? "Story" : "Stories"}</span>
                         </span>
                       )}
                       {otherCount > 0 && (
-                        <span className="flex items-center gap-1.5 text-[9.5px] font-bold px-2 py-1 rounded-lg bg-[#161F2D] text-[#D8BF9B] border border-[#2A3446] truncate">
-                          <Pin className="size-3 text-[#D8BF9B] shrink-0 stroke-[1.75]" />
+                        <span className="flex items-center gap-1.5 text-[9.5px] font-bold px-2 py-1 rounded-lg bg-nebula-surface text-nebula-sand border border-nebula-steel truncate">
+                          <Pin className="size-3 text-nebula-sand shrink-0 stroke-[1.75]" />
                           <span className="truncate">{otherCount} Deliverable{otherCount > 1 ? "s" : ""}</span>
                         </span>
                       )}
                       {dayTasks.length === 0 && (
-                        <span className="flex items-center gap-1 text-[9px] font-medium text-[#97A0B3] group-hover:text-white transition-colors pt-2">
-                          <Pencil className="size-2.5 text-[#97A0B3] stroke-[1.5]" />
+                        <span className="flex items-center gap-1 text-[9px] font-medium text-nebula-mist group-hover:text-white transition-colors pt-2">
+                          <Pencil className="size-2.5 text-nebula-mist stroke-[1.5]" />
                           <span>+ Add item</span>
                         </span>
                       )}
@@ -3702,10 +3702,10 @@ export function AdminCalendarPage() {
           </div>
 
           {/* Right Column: Dynamic Work Container for Selected Date */}
-          <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 space-y-4 flex flex-col justify-between">
+          <div className="bg-nebula-surface rounded-3xl border border-nebula-steel shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 space-y-4 flex flex-col justify-between">
             <div className="space-y-4">
               {/* Dynamic Header */}
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <div className="flex items-center gap-2">
                   <h2 className="text-base font-black text-white">
                     {isSelectedDateToday
@@ -3714,22 +3714,22 @@ export function AdminCalendarPage() {
                   </h2>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-black text-[#7FA0D6] bg-[#7FA0D6]/15 px-2.5 py-1 rounded-full border border-[#7FA0D6]/30">
+                  <span className="text-xs font-black text-nebula-glow bg-nebula-glow/15 px-2.5 py-1 rounded-full border border-nebula-glow/30">
                     {filteredDayTasks.length} {filteredDayTasks.length === 1 ? "Item" : "Items"}
                   </span>
                 </div>
               </div>
 
               {/* Sub-bar indicator showing selected date */}
-              <div className="flex items-center justify-between bg-[#0B111C]/80 px-3 py-2 rounded-xl border border-[#2A3446]">
-                <span className="text-xs font-semibold text-[#F1F5F9] flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-[#7FA0D6]" />
+              <div className="flex items-center justify-between bg-nebula-navy/80 px-3 py-2 rounded-xl border border-nebula-steel">
+                <span className="text-xs font-semibold text-slate-100 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-nebula-glow" />
                   Scheduled for <strong>Nov {selectedDayNumber}, 2024</strong>
                 </span>
                 <button
                   type="button"
                   onClick={() => handleOpenScheduleForDay(selectedDayNumber)}
-                  className="text-[11px] font-bold text-[#7FA0D6] hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+                  className="text-[11px] font-bold text-nebula-glow hover:text-blue-800 flex items-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 stroke-[3]" /> Add
                 </button>
@@ -3744,10 +3744,10 @@ export function AdminCalendarPage() {
                       <div
                         key={item.id}
                         onClick={() => setSelectedAssetModal(item)}
-                        className="p-4 rounded-2xl border border-[#2A3446] hover:border-blue-300 bg-[#161F2D] hover:bg-[#7FA0D6]/15/20 shadow-2xs hover:shadow-sm transition-all cursor-pointer space-y-2.5 group"
+                        className="p-4 rounded-2xl border border-nebula-steel hover:border-blue-300 bg-nebula-surface hover:bg-nebula-glow/15/20 shadow-2xs hover:shadow-sm transition-all cursor-pointer space-y-2.5 group"
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-black text-[#7FA0D6] uppercase font-mono tracking-wider">
+                          <span className="text-[10px] font-black text-nebula-glow uppercase font-mono tracking-wider">
                             {item.pod} • {item.client}
                           </span>
                           <span
@@ -3757,18 +3757,18 @@ export function AdminCalendarPage() {
                           </span>
                         </div>
 
-                        <h4 className="text-xs font-black text-white group-hover:text-[#7FA0D6] transition-colors leading-snug">
+                        <h4 className="text-xs font-black text-white group-hover:text-nebula-glow transition-colors leading-snug">
                           {item.title}
                         </h4>
 
-                        <div className="flex items-center justify-between text-[11px] text-[#97A0B3] pt-2 border-t border-[#2A3446]">
+                        <div className="flex items-center justify-between text-[11px] text-nebula-mist pt-2 border-t border-nebula-steel">
                           <div className="flex items-center gap-1.5">
                             <div
                               className={`size-5.5 rounded-full ${item.avatarBg} text-white font-bold text-[9px] flex items-center justify-center shadow-2xs`}
                             >
                               {item.avatar}
                             </div>
-                            <span className="font-semibold text-[#F1F5F9]">{item.assignee}</span>
+                            <span className="font-semibold text-slate-100">{item.assignee}</span>
                           </div>
 
                           <div className="flex items-center gap-2">
@@ -3788,15 +3788,15 @@ export function AdminCalendarPage() {
                 </div>
               ) : (
                 /* Empty State when no tasks exist on selected date */
-                <div className="py-12 px-4 text-center rounded-2xl border-2 border-dashed border-[#2A3446] bg-[#0B111C]/50 flex flex-col items-center justify-center space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shadow-2xs">
+                <div className="py-12 px-4 text-center rounded-2xl border-2 border-dashed border-nebula-steel bg-nebula-navy/50 flex flex-col items-center justify-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center shadow-2xs">
                     <Calendar className="w-6 h-6" />
                   </div>
                   <div>
                     <h3 className="text-sm font-black text-white">
                       No deliverables on Nov {selectedDayNumber}
                     </h3>
-                    <p className="text-xs text-[#97A0B3] mt-1 max-w-[240px] mx-auto">
+                    <p className="text-xs text-nebula-mist mt-1 max-w-[240px] mx-auto">
                       No reels, stories, or slide decks are scheduled for this date yet.
                     </p>
                   </div>
@@ -3812,7 +3812,7 @@ export function AdminCalendarPage() {
             </div>
 
             {/* Bottom Quick Action */}
-            <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs text-[#97A0B3]">
+            <div className="pt-3 border-t border-nebula-steel flex items-center justify-between text-xs text-nebula-mist">
               <span className="font-medium">Total Assets in Nov:</span>
               <span className="font-black text-white">
                 {Object.values(tasksByDay).reduce((acc, curr) => acc + curr.length, 0)} Items
@@ -3824,18 +3824,18 @@ export function AdminCalendarPage() {
         {/* Schedule Modal */}
         {isScheduleModalOpen && (
           <div className="fixed inset-0 w-screen h-screen z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4 overflow-y-auto">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-nebula-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-nebula-steel">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <div>
                   <h3 className="text-base font-black text-white">Schedule Content Asset</h3>
-                  <p className="text-xs text-[#97A0B3] mt-0.5">
+                  <p className="text-xs text-nebula-mist mt-0.5">
                     Target Date: Nov {scheduleForm.dateDay}, 2024
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsScheduleModalOpen(false)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-nebula-mist hover:text-slate-100 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -3843,24 +3843,24 @@ export function AdminCalendarPage() {
 
               <form onSubmit={handleScheduleSubmit} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Asset Title</label>
+                  <label className="block text-xs font-bold text-slate-100 mb-1">Asset Title</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Black Friday Reel Cut Batch #2"
                     value={scheduleForm.title}
                     onChange={(e) => setScheduleForm({ ...scheduleForm, title: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Type</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Deliverable Type</label>
                     <select
                       value={scheduleForm.type}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, type: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium"
                     >
                       <option value="Reel">🎬 Reel</option>
                       <option value="Story">📲 Story</option>
@@ -3873,11 +3873,11 @@ export function AdminCalendarPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Target Client</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Target Client</label>
                     <select
                       value={scheduleForm.client}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, client: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium"
                     >
                       <option value="Ryze">Ryze</option>
                       <option value="Aravindan">Aravindan</option>
@@ -3891,11 +3891,11 @@ export function AdminCalendarPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Target Pod</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Target Pod</label>
                     <select
                       value={scheduleForm.pod}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, pod: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium"
                     >
                       <option value="Pod A">Pod A</option>
                       <option value="Pod B">Pod B</option>
@@ -3904,11 +3904,11 @@ export function AdminCalendarPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Day of November</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Day of November</label>
                     <select
                       value={scheduleForm.dateDay}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, dateDay: Number(e.target.value) })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium"
                     >
                       {Array.from({ length: 30 }).map((_, idx) => (
                         <option key={idx + 1} value={idx + 1}>
@@ -3921,32 +3921,32 @@ export function AdminCalendarPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Target Time</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Target Time</label>
                     <input
                       type="text"
                       value={scheduleForm.time}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, time: e.target.value })}
                       placeholder="e.g. 4:30 PM"
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Initial Tag</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Initial Tag</label>
                     <input
                       type="text"
                       value={scheduleForm.tag}
                       onChange={(e) => setScheduleForm({ ...scheduleForm, tag: e.target.value })}
                       placeholder="e.g. Final Polish"
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium"
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
                   <button
                     type="button"
                     onClick={() => setIsScheduleModalOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -3965,14 +3965,14 @@ export function AdminCalendarPage() {
         {/* Selected Asset Details Modal */}
         {selectedAssetModal && (
           <div className="fixed inset-0 w-screen h-screen z-[9999] flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4 overflow-y-auto">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="bg-nebula-surface rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-nebula-steel">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-[#7FA0D6] uppercase font-mono">
+                    <span className="text-[10px] font-bold text-nebula-glow uppercase font-mono">
                       {selectedAssetModal.pod} • {selectedAssetModal.client}
                     </span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30">
                       {selectedAssetModal.type}
                     </span>
                   </div>
@@ -3981,27 +3981,27 @@ export function AdminCalendarPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedAssetModal(null)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-nebula-mist hover:text-slate-100 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="p-4 bg-[#0B111C] rounded-2xl space-y-2.5 text-xs text-[#F1F5F9]">
+              <div className="p-4 bg-nebula-navy rounded-2xl space-y-2.5 text-xs text-slate-100">
                 <div className="flex justify-between">
-                  <span className="font-semibold text-[#97A0B3]">Deliverable Type:</span>
+                  <span className="font-semibold text-nebula-mist">Deliverable Type:</span>
                   <span className="font-bold text-white">{getTypeBadge(selectedAssetModal.type).label}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-semibold text-[#97A0B3]">Assigned Specialist:</span>
+                  <span className="font-semibold text-nebula-mist">Assigned Specialist:</span>
                   <span className="font-bold text-white">{selectedAssetModal.assignee}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-semibold text-[#97A0B3]">Scheduled Time:</span>
+                  <span className="font-semibold text-nebula-mist">Scheduled Time:</span>
                   <span className="font-bold text-white">{selectedAssetModal.time}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-semibold text-[#97A0B3]">Pipeline Stage:</span>
+                  <span className="font-semibold text-nebula-mist">Pipeline Stage:</span>
                   <span className={`font-bold px-2 py-0.5 rounded-full text-[10px] border ${selectedAssetModal.tagColor}`}>
                     {selectedAssetModal.tag}
                   </span>
@@ -4069,8 +4069,8 @@ export function AdminTeamManagementPage() {
       allocatedHours: 120,
       totalHours: 120,
       color: "bg-blue-600",
-      textColor: "text-[#7FA0D6]",
-      pillBg: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      textColor: "text-nebula-glow",
+      pillBg: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
       squadLoad: 40,
       activeEngagements: 1,
       readyReview: 0,
@@ -4088,8 +4088,8 @@ export function AdminTeamManagementPage() {
       pendingReview: 0,
       allocatedHours: 120,
       totalHours: 120,
-      color: "bg-[#7FA0D6]",
-      textColor: "text-[#7FA0D6]",
+      color: "bg-nebula-glow",
+      textColor: "text-nebula-glow",
       pillBg: "bg-sky-50 text-sky-600 border-sky-100",
       squadLoad: 40,
       activeEngagements: 1,
@@ -4130,7 +4130,7 @@ export function AdminTeamManagementPage() {
       email: "lead.alpha@creo.agency",
       handle: "@vikram",
       status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      statusColor: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
       allocatedPct: 60,
       projectsCount: 1,
       capabilities: ["Creative Direction", "Brand Systems", "Campaign Strategy"],
@@ -4175,7 +4175,7 @@ export function AdminTeamManagementPage() {
       email: "lead.beta@creo.agency",
       handle: "@sarah",
       status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      statusColor: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
       allocatedPct: 60,
       projectsCount: 1,
       capabilities: ["Campaign Architecture", "Creative Direction", "Viral Hooks"],
@@ -4220,7 +4220,7 @@ export function AdminTeamManagementPage() {
       email: "lead.gamma@creo.agency",
       handle: "@rohan",
       status: "Pod Lead",
-      statusColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      statusColor: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
       allocatedPct: 60,
       projectsCount: 1,
       capabilities: ["Art Direction", "Minimal Aesthetics", "Design Systems"],
@@ -4276,7 +4276,7 @@ export function AdminTeamManagementPage() {
   const getRoleIcon = (cat: string) => {
     switch (cat) {
       case "lead":
-        return <UserCog className="w-3.5 h-3.5 text-[#7FA0D6]" />;
+        return <UserCog className="w-3.5 h-3.5 text-nebula-glow" />;
       case "designer":
         return <Palette className="w-3.5 h-3.5 text-purple-600" />;
       case "editor":
@@ -4286,7 +4286,7 @@ export function AdminTeamManagementPage() {
       case "photographer":
         return <Camera className="w-3.5 h-3.5 text-emerald-600" />;
       default:
-        return <Users className="w-3.5 h-3.5 text-[#F1F5F9]" />;
+        return <Users className="w-3.5 h-3.5 text-slate-100" />;
     }
   };
 
@@ -4473,7 +4473,7 @@ export function AdminTeamManagementPage() {
   };
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-nebula-navy flex flex-col">
       <AdminTopHeader
         title={activePodId && activePod ? `${activePod.name} • Team Details` : "Team Details & Management"}
         activeTab="Team Details"
@@ -4501,12 +4501,12 @@ export function AdminTeamManagementPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h3 className="text-base font-bold text-white">Sprint Pods & Resource Allocation</h3>
-                <p className="text-xs text-[#97A0B3]">Live operational capacity and roster assignments across creative pods</p>
+                <p className="text-xs text-nebula-mist">Live operational capacity and roster assignments across creative pods</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddMemberOpen(true)}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all shrink-0"
               >
                 <Plus className="w-4 h-4" /> Add Team Pod
               </button>
@@ -4515,28 +4515,28 @@ export function AdminTeamManagementPage() {
             {/* 3 KPI Summary Cards matching Screenshot 1 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Card 1: NO OF PODS */}
-              <div className="kpi-card bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+              <div className="kpi-card bg-nebula-surface rounded-3xl p-6 border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider">
                     NO OF PODS
                   </span>
-                  <div className="w-9 h-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center">
                     <Users className="w-5 h-5" />
                   </div>
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-black text-white tracking-tight">8 Pods</span>
-                  <span className="text-xs font-semibold text-[#97A0B3]">across 72 members</span>
+                  <span className="text-xs font-semibold text-nebula-mist">across 72 members</span>
                 </div>
-                <div className="mt-4 pt-3 border-t border-[#2A3446] text-xs font-bold text-[#7FA0D6] flex items-center gap-1">
+                <div className="mt-4 pt-3 border-t border-nebula-steel text-xs font-bold text-nebula-glow flex items-center gap-1">
                   <Layers className="w-3.5 h-3.5" /> Pods A – H Active Pods
                 </div>
               </div>
 
               {/* Card 2: CAPACITY */}
-              <div className="kpi-card bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+              <div className="kpi-card bg-nebula-surface rounded-3xl p-6 border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider">
                     CAPACITY
                   </span>
                   <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -4545,10 +4545,10 @@ export function AdminTeamManagementPage() {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-black text-white tracking-tight">88%</span>
-                  <span className="text-xs font-semibold text-[#97A0B3]">optimal bandwidth</span>
+                  <span className="text-xs font-semibold text-nebula-mist">optimal bandwidth</span>
                 </div>
-                <div className="mt-4 pt-3 border-t border-[#2A3446] flex items-center gap-2">
-                  <div className="flex-1 bg-[#161F2D] rounded-full h-2 overflow-hidden">
+                <div className="mt-4 pt-3 border-t border-nebula-steel flex items-center gap-2">
+                  <div className="flex-1 bg-nebula-surface rounded-full h-2 overflow-hidden">
                     <div className="bg-emerald-600 h-full rounded-full w-[88%]" />
                   </div>
                   <span className="text-xs font-bold text-emerald-600">Healthy</span>
@@ -4556,9 +4556,9 @@ export function AdminTeamManagementPage() {
               </div>
 
               {/* Card 3: TASKS TO BE DONE */}
-              <div className="kpi-card bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+              <div className="kpi-card bg-nebula-surface rounded-3xl p-6 border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+                  <span className="text-[10px] font-extrabold text-nebula-mist uppercase tracking-wider">
                     TASKS TO BE DONE
                   </span>
                   <div className="w-9 h-9 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
@@ -4567,10 +4567,10 @@ export function AdminTeamManagementPage() {
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-black text-white tracking-tight">28</span>
-                  <span className="text-xs font-semibold text-[#97A0B3]">in review/progress</span>
+                  <span className="text-xs font-semibold text-nebula-mist">in review/progress</span>
                 </div>
-                <div className="mt-4 pt-3 border-t border-[#2A3446] text-xs text-[#97A0B3] flex items-center gap-1 font-medium">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#97A0B3]" /> 142 milestones closed ahead of target
+                <div className="mt-4 pt-3 border-t border-nebula-steel text-xs text-nebula-mist flex items-center gap-1 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-nebula-mist" /> 142 milestones closed ahead of target
                 </div>
               </div>
             </div>
@@ -4579,7 +4579,7 @@ export function AdminTeamManagementPage() {
             <div className="flex items-center justify-between pt-2">
               <div>
                 <h3 className="text-lg font-bold text-white tracking-tight">Team Pods</h3>
-                <p className="text-xs text-[#97A0B3]">Real-time capacity distribution, pod leads, and task completion velocity</p>
+                <p className="text-xs text-nebula-mist">Real-time capacity distribution, pod leads, and task completion velocity</p>
               </div>
               <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Sprint Cycle 08 • 4 Days Remaining
@@ -4592,7 +4592,7 @@ export function AdminTeamManagementPage() {
                 <div
                   key={pod.id}
                   onClick={() => setActivePodId(pod.id)}
-                  className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.04)] space-y-5 hover:shadow-xl transition-all cursor-pointer group relative overflow-hidden"
+                  className="bg-nebula-surface rounded-3xl p-6 border border-nebula-steel shadow-[0_4px_25px_rgba(0,0,0,0.04)] space-y-5 hover:shadow-xl transition-all cursor-pointer group relative overflow-hidden"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -4602,11 +4602,11 @@ export function AdminTeamManagementPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-base text-white">{pod.name}</h4>
-                          <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold">
+                          <span className="px-2 py-0.5 rounded-full bg-nebula-surface text-slate-100 text-[10px] font-bold">
                             Sprint Pod
                           </span>
                         </div>
-                        <p className="text-xs text-[#97A0B3]">{pod.description.slice(0, 48)}...</p>
+                        <p className="text-xs text-nebula-mist">{pod.description.slice(0, 48)}...</p>
                       </div>
                     </div>
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
@@ -4615,45 +4615,45 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   {/* Lead Info & Member Stack */}
-                  <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl flex items-center justify-between border border-[#2A3446]">
+                  <div className="p-3.5 bg-nebula-navy/70 rounded-2xl flex items-center justify-between border border-nebula-steel">
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
                         {pod.lead[0]}
                       </div>
                       <div>
                         <div className="text-xs font-bold text-white">{pod.lead}</div>
-                        <div className="text-[10px] text-[#97A0B3] font-medium">Pod Lead</div>
+                        <div className="text-[10px] text-nebula-mist font-medium">Pod Lead</div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs font-bold text-[#F1F5F9]">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-100">
                       <div className="flex -space-x-2">
                         <div className="w-7 h-7 rounded-full bg-slate-700 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">ER</div>
                         <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">MC</div>
                         <div className="w-7 h-7 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">LZ</div>
                       </div>
-                      <span className="text-xs font-bold text-[#F1F5F9]">+{pod.membersCount - 3} Members</span>
+                      <span className="text-xs font-bold text-slate-100">+{pod.membersCount - 3} Members</span>
                     </div>
                   </div>
 
                   {/* Velocity Bar */}
                   <div className="space-y-2 text-xs">
-                    <div className="flex justify-between items-center text-[#F1F5F9] font-semibold">
+                    <div className="flex justify-between items-center text-slate-100 font-semibold">
                       <span>Sprint Velocity</span>
                       <span className="font-bold text-white">{pod.velocityPct}% on track</span>
                     </div>
-                    <div className="w-full bg-[#161F2D] rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-nebula-surface rounded-full h-2.5 overflow-hidden">
                       <div className={`h-full rounded-full ${pod.color}`} style={{ width: `${pod.velocityPct}%` }} />
                     </div>
-                    <div className="flex justify-between text-[11px] text-[#97A0B3] font-medium pt-0.5">
+                    <div className="flex justify-between text-[11px] text-nebula-mist font-medium pt-0.5">
                       <span>{pod.tasksClosed} tasks closed</span>
-                      <span className="text-[#7FA0D6] font-bold">{pod.pendingReview} pending review</span>
+                      <span className="text-nebula-glow font-bold">{pod.pendingReview} pending review</span>
                     </div>
                   </div>
 
                   {/* Card Footer Action */}
-                  <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                    <span className="text-[#97A0B3] font-medium text-[11px]">
+                  <div className="pt-3 border-t border-nebula-steel flex items-center justify-between text-xs">
+                    <span className="text-nebula-mist font-medium text-[11px]">
                       Allocated: <strong className="text-white">{pod.allocatedHours}h / {pod.totalHours}h</strong>
                     </span>
                     <button
@@ -4662,7 +4662,7 @@ export function AdminTeamManagementPage() {
                         e.stopPropagation();
                         setActivePodId(pod.id);
                       }}
-                      className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+                      className="text-nebula-glow font-bold hover:underline inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
                     >
                       View Member Directory &rarr;
                     </button>
@@ -4678,16 +4678,16 @@ export function AdminTeamManagementPage() {
           <div className="space-y-6">
             {/* Top Breadcrumb & Action Controls */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#97A0B3]">
+              <div className="flex items-center gap-2 text-xs font-bold text-nebula-mist">
                 <button
                   type="button"
                   onClick={() => setActivePodId(null)}
-                  className="hover:text-[#7FA0D6] flex items-center gap-1 transition-colors cursor-pointer"
+                  className="hover:text-nebula-glow flex items-center gap-1 transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back to Track Overview
                 </button>
                 <span>/</span>
-                <button type="button" onClick={() => setActivePodId(null)} className="hover:text-[#7FA0D6] transition-colors cursor-pointer">
+                <button type="button" onClick={() => setActivePodId(null)} className="hover:text-nebula-glow transition-colors cursor-pointer">
                   Team Management
                 </button>
                 <span>/</span>
@@ -4695,16 +4695,16 @@ export function AdminTeamManagementPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30">
                   ● Q2 Cycle Active
                 </span>
-                <span className="text-[11px] text-[#97A0B3] font-medium hidden sm:inline">
+                <span className="text-[11px] text-nebula-mist font-medium hidden sm:inline">
                   Last synchronized: Just now
                 </span>
                 <button
                   type="button"
                   onClick={() => setIsAddMemberOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+                  className="px-4 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer transition-all"
                 >
                   + Add Team Member
                 </button>
@@ -4712,7 +4712,7 @@ export function AdminTeamManagementPage() {
             </div>
 
             {/* Pod Summary Banner Card matching Screenshot 2 */}
-            <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
+            <div className="bg-nebula-surface rounded-3xl p-6 lg:p-8 border border-nebula-steel shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div className="space-y-3 max-w-3xl">
                   <div className="flex items-center gap-2">
@@ -4723,49 +4723,49 @@ export function AdminTeamManagementPage() {
                       High Velocity
                     </span>
                   </div>
-                  <p className="text-xs text-[#F1F5F9] leading-relaxed font-medium">
+                  <p className="text-xs text-slate-100 leading-relaxed font-medium">
                     {activePod?.description}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-6 pt-2 text-xs font-bold text-[#F1F5F9]">
+                  <div className="flex flex-wrap items-center gap-6 pt-2 text-xs font-bold text-slate-100">
                     <div>
-                      <span className="text-[10px] uppercase text-[#97A0B3] block font-extrabold tracking-wider">POD LEAD</span>
+                      <span className="text-[10px] uppercase text-nebula-mist block font-extrabold tracking-wider">POD LEAD</span>
                       <span className="text-white font-black">{activePod?.lead}</span>
                     </div>
                     <div className="h-6 w-px bg-gray-200" />
                     <div>
-                      <span className="text-[10px] uppercase text-[#97A0B3] block font-extrabold tracking-wider">MEMBERS</span>
+                      <span className="text-[10px] uppercase text-nebula-mist block font-extrabold tracking-wider">MEMBERS</span>
                       <span className="text-white font-black">{filteredMembers.length} Active Members</span>
                     </div>
                     <div className="h-6 w-px bg-gray-200" />
                     <div>
-                      <span className="text-[10px] uppercase text-[#97A0B3] block font-extrabold tracking-wider">VELOCITY</span>
+                      <span className="text-[10px] uppercase text-nebula-mist block font-extrabold tracking-wider">VELOCITY</span>
                       <span className="text-emerald-600 font-black">{activePod?.velocityPct}% Sprint Delivery</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Right Side Stats */}
-                <div className="flex gap-4 border-t lg:border-t-0 lg:border-l border-[#2A3446] pt-4 lg:pt-0 lg:pl-8">
-                  <div className="bg-[#0B111C] p-4 rounded-2xl border border-[#2A3446] min-w-[130px] space-y-1">
-                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase">AVG SQUAD LOAD</span>
+                <div className="flex gap-4 border-t lg:border-t-0 lg:border-l border-nebula-steel pt-4 lg:pt-0 lg:pl-8">
+                  <div className="bg-nebula-navy p-4 rounded-2xl border border-nebula-steel min-w-[130px] space-y-1">
+                    <span className="text-[10px] font-bold text-nebula-mist uppercase">AVG SQUAD LOAD</span>
                     <div className="text-2xl font-black text-white">{activePod?.squadLoad}%</div>
                     <span className="text-[10px] text-emerald-600 font-bold">↓ Optimal</span>
                   </div>
-                  <div className="bg-[#0B111C] p-4 rounded-2xl border border-[#2A3446] min-w-[130px] space-y-1">
-                    <span className="text-[10px] font-bold text-[#97A0B3] uppercase">ACTIVE ENGAGEMENTS</span>
+                  <div className="bg-nebula-navy p-4 rounded-2xl border border-nebula-steel min-w-[130px] space-y-1">
+                    <span className="text-[10px] font-bold text-nebula-mist uppercase">ACTIVE ENGAGEMENTS</span>
                     <div className="text-2xl font-black text-white">{activePod?.activeEngagements} projects</div>
-                    <span className="text-[10px] text-[#7FA0D6] font-bold">{activePod?.readyReview} ready for review</span>
+                    <span className="text-[10px] text-nebula-glow font-bold">{activePod?.readyReview} ready for review</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Role Category Filter Tabs & Action Controls */}
-            <div className="bg-[#161F2D] rounded-2xl border border-[#2A3446] p-4 shadow-sm space-y-4">
+            <div className="bg-nebula-surface rounded-2xl border border-nebula-steel p-4 shadow-sm space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 {/* Filter Pills matching Screenshot 2 */}
-                <div className="flex flex-wrap items-center gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs font-bold">
+                <div className="flex flex-wrap items-center gap-1.5 bg-nebula-surface p-1 rounded-xl text-xs font-bold">
                   {[
                     { key: "all", label: `All Members (${membersList.filter((m) => !activePodId || m.podId === activePodId).length})` },
                     { key: "lead", label: "Leads" },
@@ -4782,8 +4782,8 @@ export function AdminTeamManagementPage() {
                       onClick={() => setRoleCategoryFilter(tab.key)}
                       className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                         roleCategoryFilter === tab.key
-                          ? "bg-[#7FA0D6] text-white shadow-xs"
-                          : "text-[#F1F5F9] hover:text-white"
+                          ? "bg-nebula-glow text-white shadow-xs"
+                          : "text-slate-100 hover:text-white"
                       }`}
                     >
                       {tab.label}
@@ -4801,10 +4801,10 @@ export function AdminTeamManagementPage() {
               </div>
 
               {/* Roster Counter */}
-              <div className="flex items-center justify-between text-xs text-[#97A0B3] font-semibold border-t border-[#2A3446] pt-3">
+              <div className="flex items-center justify-between text-xs text-nebula-mist font-semibold border-t border-nebula-steel pt-3">
                 <span>Showing {filteredMembers.length} members assigned to {activePod?.name}</span>
                 <div className="flex items-center gap-3">
-                  <button type="button" className="hover:text-[#F1F5F9] flex items-center gap-1">
+                  <button type="button" className="hover:text-slate-100 flex items-center gap-1">
                     <SlidersHorizontal className="w-3.5 h-3.5" /> Advanced Sorting
                   </button>
                   <button
@@ -4822,7 +4822,7 @@ export function AdminTeamManagementPage() {
                       link.click();
                       document.body.removeChild(link);
                     }}
-                    className="hover:text-[#F1F5F9] flex items-center gap-1 cursor-pointer"
+                    className="hover:text-slate-100 flex items-center gap-1 cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" /> Export Roster
                   </button>
@@ -4835,7 +4835,7 @@ export function AdminTeamManagementPage() {
               {filteredMembers.map((member) => (
                 <div
                   key={member.id}
-                  className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-6 space-y-4 flex flex-col justify-between hover:shadow-lg transition-shadow"
+                  className="bg-nebula-surface rounded-3xl border border-nebula-steel shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-6 space-y-4 flex flex-col justify-between hover:shadow-lg transition-shadow"
                 >
                   <div className="space-y-4">
                     {/* Header: Avatar, Status Badge & Title */}
@@ -4850,9 +4850,9 @@ export function AdminTeamManagementPage() {
                         <div>
                           <h4 className="font-bold text-sm text-white flex items-center gap-1">
                             {member.name}
-                            {member.isLead && <CheckCircle2 className="w-3.5 h-3.5 text-[#7FA0D6]" />}
+                            {member.isLead && <CheckCircle2 className="w-3.5 h-3.5 text-nebula-glow" />}
                           </h4>
-                          <span className="text-[11px] text-[#97A0B3] font-medium flex items-center gap-1 mt-0.5">
+                          <span className="text-[11px] text-nebula-mist font-medium flex items-center gap-1 mt-0.5">
                             {getRoleIcon(member.category)}
                             {member.role}
                           </span>
@@ -4865,21 +4865,21 @@ export function AdminTeamManagementPage() {
                     </div>
 
                     {/* Email & Handle */}
-                    <div className="p-3 bg-[#0B111C]/70 rounded-2xl text-[11px] font-mono space-y-0.5 border border-[#2A3446]">
-                      <div className="text-[#F1F5F9] truncate">{member.email}</div>
-                      <div className="text-[#7FA0D6] font-semibold">{member.handle}</div>
+                    <div className="p-3 bg-nebula-navy/70 rounded-2xl text-[11px] font-mono space-y-0.5 border border-nebula-steel">
+                      <div className="text-slate-100 truncate">{member.email}</div>
+                      <div className="text-nebula-glow font-semibold">{member.handle}</div>
                     </div>
 
                     {/* Core Capabilities Pills */}
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#97A0B3] block">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-nebula-mist block">
                         CORE CAPABILITIES
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {member.capabilities.map((cap) => (
                           <span
                             key={cap}
-                            className="px-2.5 py-1 rounded-lg bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold border border-[#2A3446]/60"
+                            className="px-2.5 py-1 rounded-lg bg-nebula-surface text-slate-100 text-[10px] font-bold border border-nebula-steel/60"
                           >
                             {cap}
                           </span>
@@ -4889,17 +4889,17 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   {/* Footer Workload Bar & Action */}
-                  <div className="pt-4 border-t border-[#2A3446] space-y-3">
+                  <div className="pt-4 border-t border-nebula-steel space-y-3">
                     <div className="space-y-1">
                       <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-[#97A0B3] font-semibold">
+                        <span className="text-nebula-mist font-semibold">
                           Workload ({member.projectsCount} Projects)
                         </span>
                         <span className={`font-bold ${member.allocatedPct >= 90 ? "text-rose-600" : "text-emerald-600"}`}>
                           {member.allocatedPct}% {member.allocatedPct >= 90 ? "Booked" : "Allocated"}
                         </span>
                       </div>
-                      <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
+                      <div className="w-full bg-nebula-surface rounded-full h-2 overflow-hidden">
                         <div
                           className={`h-full rounded-full ${
                             member.allocatedPct >= 90 ? "bg-rose-500" : member.allocatedPct >= 70 ? "bg-blue-600" : "bg-emerald-500"
@@ -4922,7 +4922,7 @@ export function AdminTeamManagementPage() {
                             handleOpenAssignModal(member);
                           }
                         }}
-                        className="text-[#7FA0D6] hover:text-blue-800 hover:underline cursor-pointer text-[11px] font-bold"
+                        className="text-nebula-glow hover:text-blue-800 hover:underline cursor-pointer text-[11px] font-bold"
                       >
                         {member.allocatedPct >= 90 ? "View Schedule" : "Assign Work"}
                       </button>
@@ -4943,60 +4943,60 @@ export function AdminTeamManagementPage() {
             onClick={() => setAssignModalMember(null)}
           >
             <div
-              className="relative w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-[#2A3446] flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
+              className="relative w-full max-w-lg rounded-3xl bg-nebula-surface p-6 sm:p-7 shadow-2xl border border-nebula-steel flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
             >
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black text-sm">
+                  <div className="size-9 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-black text-sm">
                     <Briefcase className="size-4.5" />
                   </div>
                   <div>
                     <h3 className="text-base font-black text-white tracking-tight">Assign Sprint Task</h3>
-                    <p className="text-[11px] text-[#97A0B3] font-medium">Allocate project work & set turnaround targets</p>
+                    <p className="text-[11px] text-nebula-mist font-medium">Allocate project work & set turnaround targets</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setAssignModalMember(null)}
-                  className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                  className="size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <X className="size-4" />
                 </button>
               </div>
 
               {/* Specialist Profile Banner */}
-              <div className="bg-[#0B111C] border border-[#2A3446]/90 rounded-2xl p-3.5 flex items-center justify-between">
+              <div className="bg-nebula-navy border border-nebula-steel/90 rounded-2xl p-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="size-11 rounded-2xl bg-blue-600 text-white font-black text-sm flex items-center justify-center shadow-xs shrink-0">
                     {assignModalMember.name.split(" ").map((n) => n[0]).join("")}
                   </div>
                   <div className="min-w-0">
                     <h4 className="text-xs font-black text-white truncate">{assignModalMember.name}</h4>
-                    <p className="text-[11px] text-[#97A0B3] font-medium truncate">{assignModalMember.role}</p>
-                    <span className="text-[10px] text-[#7FA0D6] font-bold">{assignModalMember.email}</span>
+                    <p className="text-[11px] text-nebula-mist font-medium truncate">{assignModalMember.role}</p>
+                    <span className="text-[10px] text-nebula-glow font-bold">{assignModalMember.email}</span>
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <span className="text-[10px] font-bold text-[#97A0B3] block uppercase tracking-wider">CURRENT LOAD</span>
+                  <span className="text-[10px] font-bold text-nebula-mist block uppercase tracking-wider">CURRENT LOAD</span>
                   <span className="text-sm font-black text-white">{assignModalMember.allocatedPct}%</span>
-                  <span className="text-[10px] text-[#97A0B3] block font-semibold">{assignModalMember.projectsCount} Projects</span>
+                  <span className="text-[10px] text-nebula-mist block font-semibold">{assignModalMember.projectsCount} Projects</span>
                 </div>
               </div>
 
               {/* Assignment Form */}
               <form onSubmit={handleConfirmAssignWork} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Task / Deliverable Title</label>
+                  <label className="block text-xs font-bold text-slate-100 mb-1">Task / Deliverable Title</label>
                   <input
                     type="text"
                     required
                     value={assignForm.taskTitle}
                     onChange={(e) => setAssignForm({ ...assignForm, taskTitle: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-nebula-steel text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     placeholder="e.g. Q4 Brand Identity Campaign Deliverables"
                   />
                   {/* Preset Pills */}
@@ -5011,7 +5011,7 @@ export function AdminTeamManagementPage() {
                         key={preset}
                         type="button"
                         onClick={() => setAssignForm({ ...assignForm, taskTitle: preset })}
-                        className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9] transition-colors cursor-pointer"
+                        className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-nebula-surface hover:bg-slate-200 text-slate-100 transition-colors cursor-pointer"
                       >
                         + {preset}
                       </button>
@@ -5021,25 +5021,25 @@ export function AdminTeamManagementPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Client Account</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Client Account</label>
                     <select
                       value={assignForm.client}
                       onChange={(e) => setAssignForm({ ...assignForm, client: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium text-white bg-nebula-surface"
                     >
-                      <option value="Ryze">Ryze (Starter Growth)</option>
-                      <option value="Shanmugaraj">Shanmugaraj (Brand Accelerator)</option>
+                      <option value="Ryze">Ryze (Starter)</option>
+                      <option value="Shanmugaraj">Shanmugaraj (Growth)</option>
                       <option value="Aravindan">Aravindan (Custom Retainer)</option>
                       <option value="Luma">Luma Global (Enterprise)</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority Level</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Priority Level</label>
                     <select
                       value={assignForm.priority}
                       onChange={(e) => setAssignForm({ ...assignForm, priority: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium text-white bg-nebula-surface"
                     >
                       <option value="Urgent">🔥 Urgent (Within 24h)</option>
                       <option value="High">⚡ High (Sprint Priority)</option>
@@ -5051,7 +5051,7 @@ export function AdminTeamManagementPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Workload Allocation</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Workload Allocation</label>
                     <div className="grid grid-cols-4 gap-1">
                       {[10, 15, 25, 35].map((pct) => (
                         <button
@@ -5061,7 +5061,7 @@ export function AdminTeamManagementPage() {
                           className={`py-1.5 text-center text-xs font-bold rounded-lg border transition-all cursor-pointer ${
                             assignForm.allocationIncrease === pct
                               ? "bg-blue-600 text-white border-blue-600 shadow-2xs"
-                              : "bg-[#0B111C] text-[#F1F5F9] border-[#2A3446] hover:bg-[#161F2D]"
+                              : "bg-nebula-navy text-slate-100 border-nebula-steel hover:bg-nebula-surface"
                           }`}
                         >
                           +{pct}%
@@ -5071,34 +5071,34 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Sprint Target Deadline</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Sprint Target Deadline</label>
                     <input
                       type="text"
                       value={assignForm.deadline}
                       onChange={(e) => setAssignForm({ ...assignForm, deadline: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white"
+                      className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs font-medium text-white"
                       placeholder="e.g. Friday, Sprint 08"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Scope & Brief</label>
+                  <label className="block text-xs font-bold text-slate-100 mb-1">Deliverable Scope & Brief</label>
                   <textarea
                     rows={2}
                     value={assignForm.brief}
                     onChange={(e) => setAssignForm({ ...assignForm, brief: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     placeholder="Brief instructions, deliverables checklist, links to Figma/Drive..."
                   />
                 </div>
 
                 {/* Submit Row */}
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2A3446]">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-nebula-steel">
                   <button
                     type="button"
                     onClick={() => setAssignModalMember(null)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer transition-colors"
                   >
                     Cancel
                   </button>
@@ -5123,13 +5123,13 @@ export function AdminTeamManagementPage() {
             onClick={() => setScheduleModalMember(null)}
           >
             <div
-              className="relative w-full max-w-2xl rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col space-y-5 max-h-[92vh] overflow-y-auto"
+              className="relative w-full max-w-2xl rounded-3xl bg-nebula-surface p-6 sm:p-8 shadow-2xl border border-nebula-steel flex flex-col space-y-5 max-h-[92vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
             >
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-4">
                 <div className="flex items-center gap-3">
                   <div className="size-12 rounded-2xl bg-rose-500 text-white font-black text-base flex items-center justify-center shadow-md">
                     {scheduleModalMember.name.split(" ").map((n) => n[0]).join("")}
@@ -5141,13 +5141,13 @@ export function AdminTeamManagementPage() {
                         ● {scheduleModalMember.status}
                       </span>
                     </div>
-                    <p className="text-xs text-[#97A0B3] font-medium">{scheduleModalMember.role} • {scheduleModalMember.email}</p>
+                    <p className="text-xs text-nebula-mist font-medium">{scheduleModalMember.role} • {scheduleModalMember.email}</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setScheduleModalMember(null)}
-                  className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                  className="size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <X className="size-4" />
                 </button>
@@ -5155,18 +5155,18 @@ export function AdminTeamManagementPage() {
 
               {/* Capacity Overview Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="bg-[#0B111C] p-3.5 rounded-2xl border border-[#2A3446]">
-                  <span className="text-[10px] uppercase font-bold text-[#97A0B3] block tracking-wider">ALLOCATED LOAD</span>
+                <div className="bg-nebula-navy p-3.5 rounded-2xl border border-nebula-steel">
+                  <span className="text-[10px] uppercase font-bold text-nebula-mist block tracking-wider">ALLOCATED LOAD</span>
                   <div className="text-xl font-black text-white mt-0.5">{scheduleModalMember.allocatedPct}%</div>
                   <span className="text-[10px] text-rose-600 font-bold">Max Capacity</span>
                 </div>
-                <div className="bg-[#0B111C] p-3.5 rounded-2xl border border-[#2A3446]">
-                  <span className="text-[10px] uppercase font-bold text-[#97A0B3] block tracking-wider">ACTIVE ENGAGEMENTS</span>
+                <div className="bg-nebula-navy p-3.5 rounded-2xl border border-nebula-steel">
+                  <span className="text-[10px] uppercase font-bold text-nebula-mist block tracking-wider">ACTIVE ENGAGEMENTS</span>
                   <div className="text-xl font-black text-white mt-0.5">{scheduleModalMember.projectsCount} Projects</div>
-                  <span className="text-[10px] text-[#7FA0D6] font-bold">2 in Final Review</span>
+                  <span className="text-[10px] text-nebula-glow font-bold">2 in Final Review</span>
                 </div>
-                <div className="bg-[#0B111C] p-3.5 rounded-2xl border border-[#2A3446]">
-                  <span className="text-[10px] uppercase font-bold text-[#97A0B3] block tracking-wider">NEXT OPEN SLOT</span>
+                <div className="bg-nebula-navy p-3.5 rounded-2xl border border-nebula-steel">
+                  <span className="text-[10px] uppercase font-bold text-nebula-mist block tracking-wider">NEXT OPEN SLOT</span>
                   <div className="text-xl font-black text-white mt-0.5">In 4 Days</div>
                   <span className="text-[10px] text-emerald-600 font-bold">Sprint Cycle 09</span>
                 </div>
@@ -5176,18 +5176,18 @@ export function AdminTeamManagementPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-white">
                   <span>Weekly Time Allocation (Mon – Fri)</span>
-                  <span className="text-[#7FA0D6] font-semibold">38.0h Total Booked</span>
+                  <span className="text-nebula-glow font-semibold">38.0h Total Booked</span>
                 </div>
                 <div className="grid grid-cols-5 gap-2">
                   {[
-                    { day: "Mon", hours: "8.0h", task: "Ryze 3D Renders", bg: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30" },
+                    { day: "Mon", hours: "8.0h", task: "Ryze 3D Renders", bg: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30" },
                     { day: "Tue", hours: "7.5h", task: "Aravindan Motion", bg: "bg-purple-50 text-purple-700 border-purple-200" },
                     { day: "Wed", hours: "8.0h", task: "Shanmugaraj Intro", bg: "bg-emerald-50 text-emerald-700 border-emerald-200" },
                     { day: "Thu", hours: "8.0h", task: "Luma Teaser", bg: "bg-amber-50 text-amber-700 border-amber-200" },
                     { day: "Fri", hours: "6.5h", task: "Sprint Quality QA", bg: "bg-sky-50 text-sky-700 border-sky-200" },
                   ].map((item) => (
-                    <div key={item.day} className="p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] flex flex-col justify-between text-center gap-1.5">
-                      <span className="text-[11px] font-black text-[#F1F5F9]">{item.day}</span>
+                    <div key={item.day} className="p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy flex flex-col justify-between text-center gap-1.5">
+                      <span className="text-[11px] font-black text-slate-100">{item.day}</span>
                       <span className="text-xs font-black text-white">{item.hours}</span>
                       <span className={`text-[9px] font-bold p-1 rounded-md border truncate ${item.bg}`}>
                         {item.task}
@@ -5207,18 +5207,18 @@ export function AdminTeamManagementPage() {
                     { client: "Aravindan", name: "Brand Intro Animation Loop", due: "Due Next Tue", progress: 35, color: "bg-emerald-600" },
                     { client: "Shanmugaraj", name: "Product Showcase 9:16 Cut", due: "Due Next Fri", progress: 15, color: "bg-amber-600" },
                   ].map((proj) => (
-                    <div key={proj.name} className="p-3 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:border-[#2A3446] transition-colors flex items-center justify-between gap-4">
+                    <div key={proj.name} className="p-3 rounded-xl border border-nebula-steel bg-nebula-surface hover:border-nebula-steel transition-colors flex items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-white truncate">{proj.name}</span>
-                          <span className="text-[10px] font-bold text-[#97A0B3]">({proj.client})</span>
+                          <span className="text-[10px] font-bold text-nebula-mist">({proj.client})</span>
                         </div>
-                        <div className="w-full bg-[#161F2D] rounded-full h-1.5 mt-2 overflow-hidden">
+                        <div className="w-full bg-nebula-surface rounded-full h-1.5 mt-2 overflow-hidden">
                           <div className={`h-full rounded-full ${proj.color}`} style={{ width: `${proj.progress}%` }} />
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="text-[10px] font-bold text-[#97A0B3] block">{proj.due}</span>
+                        <span className="text-[10px] font-bold text-nebula-mist block">{proj.due}</span>
                         <span className="text-xs font-black text-white">{proj.progress}%</span>
                       </div>
                     </div>
@@ -5227,7 +5227,7 @@ export function AdminTeamManagementPage() {
               </div>
 
               {/* Modal Footer Controls */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#2A3446]">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-nebula-steel">
                 <button
                   type="button"
                   onClick={() => handleRebalanceWorkload(scheduleModalMember)}
@@ -5242,7 +5242,7 @@ export function AdminTeamManagementPage() {
                       setToast(`Notification dispatched to Pod Lead for ${scheduleModalMember.name}.`);
                       setScheduleModalMember(null);
                     }}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold transition-colors cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-xs font-bold transition-colors cursor-pointer"
                   >
                     Notify Lead
                   </button>
@@ -5268,7 +5268,7 @@ export function AdminTeamManagementPage() {
             onClick={() => setSuccessPopup(null)}
           >
             <div
-              className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
+              className="relative w-full max-w-md rounded-3xl bg-nebula-surface p-6 sm:p-8 shadow-2xl border border-nebula-steel flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
@@ -5276,7 +5276,7 @@ export function AdminTeamManagementPage() {
               <button
                 type="button"
                 onClick={() => setSuccessPopup(null)}
-                className="absolute top-4 right-4 size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+                className="absolute top-4 right-4 size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist hover:text-slate-100 flex items-center justify-center transition-colors cursor-pointer"
                 aria-label="Close modal"
               >
                 <X className="size-4" />
@@ -5287,7 +5287,7 @@ export function AdminTeamManagementPage() {
               </div>
 
               <h3 className="text-xl font-black text-white tracking-tight">{successPopup.title}</h3>
-              <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm">{successPopup.message}</p>
+              <p className="text-xs sm:text-sm text-slate-100 mt-2 leading-relaxed max-w-sm">{successPopup.message}</p>
 
               <div className="w-full mt-6">
                 <button
@@ -5312,22 +5312,22 @@ export function AdminTeamManagementPage() {
             onClick={() => setIsAddMemberOpen(false)}
           >
             <div
-              className="relative w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-[#2A3446] flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
+              className="relative w-full max-w-lg rounded-3xl bg-nebula-surface p-6 sm:p-7 shadow-2xl border border-nebula-steel flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
             >
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black text-sm">
+                  <div className="size-9 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-black text-sm">
                     <Users className="size-4.5" />
                   </div>
                   <div>
                     <h3 className="text-base font-black text-white tracking-tight">
                       Add Team Specialist to {activePod?.name || "Sprint Pod"}
                     </h3>
-                    <p className="text-[11px] text-[#97A0B3] font-medium">
+                    <p className="text-[11px] text-nebula-mist font-medium">
                       Provision creative talent, set role capabilities & sprint track
                     </p>
                   </div>
@@ -5335,7 +5335,7 @@ export function AdminTeamManagementPage() {
                 <button
                   type="button"
                   onClick={() => setIsAddMemberOpen(false)}
-                  className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                  className="size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist flex items-center justify-center transition-colors cursor-pointer"
                 >
                   <X className="size-4" />
                 </button>
@@ -5345,7 +5345,7 @@ export function AdminTeamManagementPage() {
               <form onSubmit={handleCreateTeamMember} className="space-y-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Full Name *</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Full Name *</label>
                     <input
                       type="text"
                       required
@@ -5362,51 +5362,51 @@ export function AdminTeamManagementPage() {
                         });
                       }}
                       placeholder="e.g. Jordan Miller"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-nebula-steel text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Email Address</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Email Address</label>
                     <input
                       type="email"
                       required
                       value={newMemberForm.email}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, email: e.target.value })}
                       placeholder="e.g. jordan.m@creo.agency"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-nebula-steel text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Role Title</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Role Title</label>
                     <input
                       type="text"
                       required
                       value={newMemberForm.role}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, role: e.target.value })}
                       placeholder="e.g. Senior Visual Designer"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-nebula-steel text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Slack / Agency Handle</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Slack / Agency Handle</label>
                     <input
                       type="text"
                       value={newMemberForm.handle}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, handle: e.target.value })}
                       placeholder="e.g. @jmiller"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-nebula-steel text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Role Track Category</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Role Track Category</label>
                     <select
                       value={newMemberForm.category}
                       onChange={(e) => {
@@ -5418,7 +5418,7 @@ export function AdminTeamManagementPage() {
                         else if (cat === "lead") defaultRole = "Sprint Pod Lead";
                         setNewMemberForm({ ...newMemberForm, category: cat, role: defaultRole });
                       }}
-                      className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
+                      className="w-full px-3 py-2.5 rounded-xl border border-nebula-steel text-xs font-medium text-white bg-nebula-surface"
                     >
                       <option value="designer">🎨 Designer (UI, 3D, Brand)</option>
                       <option value="editor">✂️ Video & Motion Editor</option>
@@ -5429,11 +5429,11 @@ export function AdminTeamManagementPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Assign Sprint Pod</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Assign Sprint Pod</label>
                     <select
                       value={newMemberForm.podId}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, podId: e.target.value })}
-                      className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
+                      className="w-full px-3 py-2.5 rounded-xl border border-nebula-steel text-xs font-medium text-white bg-nebula-surface"
                     >
                       <option value="pod-a">Pod A • Enterprise Brand & Design</option>
                       <option value="pod-b">Pod B • Performance & Video</option>
@@ -5443,22 +5443,22 @@ export function AdminTeamManagementPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Core Capabilities (comma separated)</label>
+                  <label className="block text-xs font-bold text-slate-100 mb-1">Core Capabilities (comma separated)</label>
                   <input
                     type="text"
                     value={newMemberForm.capabilities}
                     onChange={(e) => setNewMemberForm({ ...newMemberForm, capabilities: e.target.value })}
                     placeholder="e.g. Figma Tokens, Cinema 4D, Color Grading, Kinetic Typography"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-nebula-steel text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium"
                   />
                 </div>
 
                 {/* Submit Row */}
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#2A3446]">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-nebula-steel">
                   <button
                     type="button"
                     onClick={() => setIsAddMemberOpen(false)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer transition-colors"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer transition-colors"
                   >
                     Cancel
                   </button>
@@ -5506,7 +5506,7 @@ export function AdminLeaveApprovalsPage() {
   const inOfficeCount = 9 - onLeaveCount;
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-nebula-navy flex flex-col">
       <AdminTopHeader activeTab="Team Details" />
       <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
@@ -5521,19 +5521,19 @@ export function AdminLeaveApprovalsPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-nebula-steel pb-4">
 
           <div className="flex items-center gap-3">
             <Link
               to="/admin/team"
-              className="px-3.5 py-2 rounded-xl bg-[#161F2D] hover:bg-slate-200 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-nebula-surface hover:bg-slate-200 text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
             >
-              <UserCog className="w-4 h-4 text-[#97A0B3]" /> Team Roster
+              <UserCog className="w-4 h-4 text-nebula-mist" /> Team Roster
             </Link>
             <button
               type="button"
               onClick={() => setIsApplyModalOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-[#7FA0D6] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-nebula-glow hover:bg-nebula-glow text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <Plus className="w-4 h-4" /> Apply for Leave
             </button>
@@ -5542,20 +5542,20 @@ export function AdminLeaveApprovalsPage() {
 
         {/* 2 Top KPI Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+          <div className="bg-nebula-surface rounded-3xl p-6 border border-nebula-steel shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-nebula-mist uppercase tracking-wider">
                 PEOPLE WORKING TODAY
               </span>
-              <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-bold">
                 <Users className="w-4 h-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-white tracking-tight">{inOfficeCount}</span>
-              <span className="text-xs font-semibold text-[#97A0B3]">Active in Pods</span>
+              <span className="text-xs font-semibold text-nebula-mist">Active in Pods</span>
             </div>
-            <div className="mt-6 pt-4 border-t border-[#2A3446] flex items-center justify-between text-xs font-semibold text-[#97A0B3]">
+            <div className="mt-6 pt-4 border-t border-nebula-steel flex items-center justify-between text-xs font-semibold text-nebula-mist">
               <span className="flex items-center gap-1.5 text-emerald-600">
                 <span className="w-2 h-2 rounded-full bg-emerald-600" /> 9 Total Pod Specialists
               </span>
@@ -5563,37 +5563,37 @@ export function AdminLeaveApprovalsPage() {
             </div>
           </div>
 
-          <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+          <div className="bg-nebula-surface rounded-3xl p-6 border border-nebula-steel shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-nebula-mist uppercase tracking-wider">
                 ON LEAVE TODAY
               </span>
-              <div className="w-8 h-8 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-bold">
                 <Plane className="w-4 h-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-white tracking-tight">{onLeaveCount}</span>
-              <span className="text-xs font-semibold text-[#97A0B3]">Specialists Away</span>
+              <span className="text-xs font-semibold text-nebula-mist">Specialists Away</span>
             </div>
-            <div className="mt-6 pt-4 border-t border-[#2A3446] flex items-center justify-between text-xs font-semibold text-[#97A0B3]">
-              <span className="text-[#97A0B3]">Pod A, B, C Active</span>
+            <div className="mt-6 pt-4 border-t border-nebula-steel flex items-center justify-between text-xs font-semibold text-nebula-mist">
+              <span className="text-nebula-mist">Pod A, B, C Active</span>
               <span className="text-emerald-500 font-bold">{onLeaveCount === 0 ? "Full Capacity" : `${onLeaveCount} on leave`}</span>
             </div>
           </div>
         </div>
 
         {/* Requests Table */}
-        <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-[#2A3446] flex items-center justify-between bg-[#0B111C]/50">
-            <div className="flex items-center gap-1.5 bg-[#161F2D] p-1 rounded-xl text-xs">
+        <div className="rounded-2xl border border-nebula-steel bg-nebula-surface shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-nebula-steel flex items-center justify-between bg-nebula-navy/50">
+            <div className="flex items-center gap-1.5 bg-nebula-surface p-1 rounded-xl text-xs">
               {(["all", "pending", "approved", "rejected"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setFilterTab(tab)}
                   className={`px-3 py-1 rounded-lg capitalize font-bold transition-all cursor-pointer ${
-                    filterTab === tab ? "bg-[#161F2D] text-white shadow-xs" : "text-[#97A0B3]"
+                    filterTab === tab ? "bg-nebula-surface text-white shadow-xs" : "text-nebula-mist"
                   }`}
                 >
                   {tab}
@@ -5603,7 +5603,7 @@ export function AdminLeaveApprovalsPage() {
           </div>
 
           <table className="w-full text-left text-xs text-white">
-            <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
+            <thead className="bg-nebula-navy border-b border-nebula-steel text-[11px] font-bold uppercase tracking-wider text-nebula-mist">
               <tr>
                 <th className="px-5 py-3.5">Specialist</th>
                 <th className="px-5 py-3.5">Dates</th>
@@ -5615,22 +5615,22 @@ export function AdminLeaveApprovalsPage() {
             <tbody className="divide-y divide-gray-100 font-medium">
               {filteredRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
+                  <td colSpan={5} className="px-5 py-8 text-center text-nebula-mist text-xs font-medium">
                     No leave requests found
                   </td>
                 </tr>
               ) : (
                 filteredRequests.map((lr) => (
-                <tr key={lr.id} className="hover:bg-[#0B111C]/60">
+                <tr key={lr.id} className="hover:bg-nebula-navy/60">
                   <td className="px-5 py-4">
                     <div className="font-bold text-white">{lr.name}</div>
-                    <div className="text-[11px] text-[#97A0B3]">{lr.department} • {lr.pod}</div>
+                    <div className="text-[11px] text-nebula-mist">{lr.department} • {lr.pod}</div>
                   </td>
                   <td className="px-5 py-4 font-mono text-[11px]">
                     <div>{lr.startDate} to {lr.endDate}</div>
-                    <span className="text-[#97A0B3] font-sans">({lr.days} days)</span>
+                    <span className="text-nebula-mist font-sans">({lr.days} days)</span>
                   </td>
-                  <td className="px-5 py-4 text-[#F1F5F9] max-w-xs">{lr.reason}</td>
+                  <td className="px-5 py-4 text-slate-100 max-w-xs">{lr.reason}</td>
                   <td className="px-5 py-4">
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
@@ -5674,13 +5674,13 @@ export function AdminLeaveApprovalsPage() {
         {/* Apply Modal */}
         {isApplyModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-            <div className="w-full max-w-md rounded-2xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="w-full max-w-md rounded-2xl bg-nebula-surface p-6 shadow-2xl space-y-4 border border-nebula-steel">
+              <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
                 <h3 className="text-base font-bold text-white">Apply for Time Off</h3>
                 <button
                   type="button"
                   onClick={() => setIsApplyModalOpen(false)}
-                  className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer"
+                  className="p-1 rounded-lg text-nebula-mist hover:text-slate-100 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -5696,21 +5696,21 @@ export function AdminLeaveApprovalsPage() {
               >
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Start Date</label>
-                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs" />
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Start Date</label>
+                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">End Date</label>
-                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs" />
+                    <label className="block text-xs font-bold text-slate-100 mb-1">End Date</label>
+                    <input type="date" required className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Reason</label>
-                  <textarea rows={3} required placeholder="State reason for time off..." className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs resize-none" />
+                  <label className="block text-xs font-bold text-slate-100 mb-1">Reason</label>
+                  <textarea rows={3} required placeholder="State reason for time off..." className="w-full px-3 py-2 rounded-xl border border-nebula-steel text-xs resize-none" />
                 </div>
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                  <button type="button" onClick={() => setIsApplyModalOpen(false)} className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C]">Cancel</button>
-                  <button type="submit" className="px-4 py-2 rounded-xl bg-[#7FA0D6] text-xs font-bold text-white hover:bg-[#7FA0D6]">Submit</button>
+                <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
+                  <button type="button" onClick={() => setIsApplyModalOpen(false)} className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy">Cancel</button>
+                  <button type="submit" className="px-4 py-2 rounded-xl bg-nebula-glow text-xs font-bold text-white hover:bg-nebula-glow">Submit</button>
                 </div>
               </form>
             </div>
@@ -5795,8 +5795,8 @@ export function AdminRevenuePage() {
       method: newInvMethod,
       status: "Pending",
       date: "Due Net 15",
-      badgeClass: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      avatarBg: "bg-[#7FA0D6]/20 text-blue-800",
+      badgeClass: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
+      avatarBg: "bg-nebula-glow/20 text-blue-800",
     };
 
     setTransactions((prev) => [newTx, ...prev]);
@@ -5841,7 +5841,7 @@ export function AdminRevenuePage() {
   });
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-nebula-navy flex flex-col">
       <AdminTopHeader title="Revenue Engine" activeTab="Revenue" />
 
       <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
@@ -5872,15 +5872,15 @@ export function AdminRevenuePage() {
             <button
               type="button"
               onClick={handleExportCSV}
-              className="px-4 py-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:bg-[#0B111C] text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-nebula-surface border border-nebula-steel text-slate-100 hover:bg-nebula-navy text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer"
             >
-              <Download className="w-4 h-4 text-[#97A0B3]" /> Export Report
+              <Download className="w-4 h-4 text-nebula-mist" /> Export Report
             </button>
 
             <button
               type="button"
               onClick={() => setIsCreateInvoiceOpen(true)}
-              className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
+              className="px-4 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
             >
               <Plus className="w-4 h-4" /> Create Invoice
             </button>
@@ -5892,39 +5892,39 @@ export function AdminRevenuePage() {
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Metric 1: Total Revenue (MRR) */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
+          <div className="bg-nebula-surface rounded-3xl p-6 lg:p-7 border border-nebula-steel shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
             <div className="space-y-2">
-              <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[11px] font-extrabold text-nebula-mist uppercase tracking-wider">
                 Total Revenue (MRR)
               </span>
               <div className="flex items-baseline gap-3">
                 <span className="text-4xl font-black text-white tracking-tight">₹{totalMrr.toLocaleString('en-IN')}</span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center gap-1">
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30 flex items-center gap-1">
                   Active Retainers
                 </span>
               </div>
-              <div className="text-xs text-[#97A0B3] font-medium pt-1">
+              <div className="text-xs text-nebula-mist font-medium pt-1">
                 Projected ARR: <strong className="text-white font-bold">₹{projectedArr.toLocaleString('en-IN')}</strong>
               </div>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center shrink-0 border border-[#7FA0D6]/30 font-black text-2xl">
+            <div className="w-14 h-14 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center shrink-0 border border-nebula-glow/30 font-black text-2xl">
               ₹
             </div>
           </div>
 
           {/* Metric 2: Collected this Month */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
+          <div className="bg-nebula-surface rounded-3xl p-6 lg:p-7 border border-nebula-steel shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
             <div className="space-y-2">
-              <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[11px] font-extrabold text-nebula-mist uppercase tracking-wider">
                 Collected this Month
               </span>
               <div className="flex items-baseline gap-3">
                 <span className="text-4xl font-black text-white tracking-tight">₹{totalCollected.toLocaleString('en-IN')}</span>
-                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30">
                   {transactions.length > 0 ? `${Math.round((transactions.filter(t => t.status === "Paid").length / transactions.length) * 100)}% Rate` : "0% Rate"}
                 </span>
               </div>
-              <div className="text-xs text-[#97A0B3] font-medium pt-1">
+              <div className="text-xs text-nebula-mist font-medium pt-1">
                 Settlement Ratio: <strong className="text-white font-bold">{transactions.filter(t => t.status === "Paid").length} of {transactions.length} Invoices</strong>
               </div>
             </div>
@@ -5939,33 +5939,33 @@ export function AdminRevenuePage() {
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Revenue Growth & Trajectory (2 Cols - Bar Chart matching Dashboard) */}
-          <div className="lg:col-span-2 bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-xl space-y-6 flex flex-col justify-between">
+          <div className="lg:col-span-2 bg-nebula-surface rounded-3xl p-6 lg:p-8 border border-nebula-steel shadow-xl space-y-6 flex flex-col justify-between">
             <div>
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-bold text-white tracking-tight">Revenue Growth & Trajectory</h3>
-                  <p className="text-xs text-[#97A0B3]">Live cash flow across retainers & client billing</p>
+                  <p className="text-xs text-nebula-mist">Live cash flow across retainers & client billing</p>
                 </div>
 
                 <div className="flex items-center gap-4 text-xs font-bold">
-                  <span className="flex items-center gap-1.5 text-[#7FA0D6]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]" /> Actual Inflow
+                  <span className="flex items-center gap-1.5 text-nebula-glow">
+                    <span className="w-2.5 h-2.5 rounded-full bg-nebula-glow" /> Actual Inflow
                   </span>
-                  <span className="flex items-center gap-1.5 text-[#97A0B3]">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#2A3446]" /> Target Baseline
+                  <span className="flex items-center gap-1.5 text-nebula-mist">
+                    <span className="w-2.5 h-2.5 rounded-full bg-nebula-steel" /> Target Baseline
                   </span>
                 </div>
               </div>
 
               {/* Peak Marker Badge */}
               <div className="flex justify-end mb-2">
-                <span className="px-3 py-1 rounded-full text-[11px] font-black bg-[#7FA0D6] text-white shadow-md">
+                <span className="px-3 py-1 rounded-full text-[11px] font-black bg-nebula-glow text-white shadow-md">
                   ₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "24,80,000"} Current MRR
                 </span>
               </div>
 
               {/* Recharts Bar Chart (Matching Dashboard Bar Graph) */}
-              <div className="w-full h-64 bg-[#0B111C]/60 rounded-2xl p-4 border border-[#2A3446]/60">
+              <div className="w-full h-64 bg-nebula-navy/60 rounded-2xl p-4 border border-nebula-steel/60">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={[
@@ -5981,26 +5981,26 @@ export function AdminRevenuePage() {
                   >
                     <defs>
                       <linearGradient id="revenueBarGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#BCCCE6" stopOpacity={1} />
-                        <stop offset="45%" stopColor="#7FA0D6" stopOpacity={0.85} />
-                        <stop offset="100%" stopColor="#2A3446" stopOpacity={0.35} />
+                        <stop offset="0%" stopColor="var(--color-nebula-periwinkle)" stopOpacity={1} />
+                        <stop offset="45%" stopColor="var(--color-nebula-glow)" stopOpacity={0.85} />
+                        <stop offset="100%" stopColor="var(--color-nebula-steel)" stopOpacity={0.35} />
                       </linearGradient>
                       <linearGradient id="revenueBarGradPeak" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#FFFFFF" stopOpacity={1} />
-                        <stop offset="35%" stopColor="#BCCCE6" stopOpacity={1} />
-                        <stop offset="100%" stopColor="#7FA0D6" stopOpacity={0.85} />
+                        <stop offset="35%" stopColor="var(--color-nebula-periwinkle)" stopOpacity={1} />
+                        <stop offset="100%" stopColor="var(--color-nebula-glow)" stopOpacity={0.85} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2A3446" opacity={0.35} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-nebula-steel)" opacity={0.35} />
                     <XAxis
                       dataKey="name"
-                      tick={{ fontSize: 11, fill: "#97A0B3", fontWeight: 600 }}
+                      tick={{ fontSize: 11, fill: "var(--color-nebula-mist)", fontWeight: 600 }}
                       axisLine={false}
                       tickLine={false}
                       dy={3}
                     />
                     <YAxis
-                      tick={{ fontSize: 10, fill: "#97A0B3" }}
+                      tick={{ fontSize: 10, fill: "var(--color-nebula-mist)" }}
                       axisLine={false}
                       tickLine={false}
                       tickFormatter={(v: number) =>
@@ -6013,9 +6013,9 @@ export function AdminRevenuePage() {
                     />
                     <Tooltip
                       formatter={(val: any) => [`₹${(Number(val) / 100).toLocaleString('en-IN')}`, "Revenue"]}
-                      contentStyle={{ backgroundColor: "#0B111C", borderRadius: "12px", border: "1px solid #2A3446", color: "#F1F5F9", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}
-                      itemStyle={{ color: "#7FA0D6", fontWeight: "bold" }}
-                      labelStyle={{ color: "#97A0B3", fontSize: "11px", fontWeight: "bold" }}
+                      contentStyle={{ backgroundColor: "var(--color-nebula-navy)", borderRadius: "12px", border: "1px solid #2A3446", color: "var(--color-slate-100)", boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }}
+                      itemStyle={{ color: "var(--color-nebula-glow)", fontWeight: "bold" }}
+                      labelStyle={{ color: "var(--color-nebula-mist)", fontSize: "11px", fontWeight: "bold" }}
                       cursor={false}
                     />
                     <Bar dataKey="revenue" radius={[8, 8, 3, 3]} maxBarSize={28}>
@@ -6040,33 +6040,33 @@ export function AdminRevenuePage() {
             </div>
 
             {/* Bottom Metrics Bar */}
-            <div className="pt-4 border-t border-[#2A3446] grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-              <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Invoiced</span>
+            <div className="pt-4 border-t border-nebula-steel grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+              <div className="bg-nebula-navy p-3 rounded-2xl border border-nebula-steel">
+                <span className="text-[10px] font-bold text-nebula-mist uppercase">Invoiced</span>
                 <div className="text-sm font-black text-white">₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "24,80,000"}</div>
               </div>
-              <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Direct UPI / Wire</span>
+              <div className="bg-nebula-navy p-3 rounded-2xl border border-nebula-steel">
+                <span className="text-[10px] font-bold text-nebula-mist uppercase">Direct UPI / Wire</span>
                 <div className="text-sm font-black text-white">₹{totalCollected > 0 ? totalCollected.toLocaleString('en-IN') : "14,50,000"}</div>
               </div>
-              <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Cards / Razorpay</span>
+              <div className="bg-nebula-navy p-3 rounded-2xl border border-nebula-steel">
+                <span className="text-[10px] font-bold text-nebula-mist uppercase">Cards / Razorpay</span>
                 <div className="text-sm font-black text-white">₹{totalCollected > 0 ? totalCollected.toLocaleString('en-IN') : "10,30,000"}</div>
               </div>
-              <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446]">
-                <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Disputed / Refunded</span>
+              <div className="bg-nebula-navy p-3 rounded-2xl border border-nebula-steel">
+                <span className="text-[10px] font-bold text-nebula-mist uppercase">Disputed / Refunded</span>
                 <div className="text-sm font-black text-emerald-400">₹0</div>
               </div>
             </div>
           </div>
 
           {/* Plan & Tier Distribution (1 Col - Dark Theme Aligned) */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-xl space-y-6 flex flex-col justify-between">
+          <div className="bg-nebula-surface rounded-3xl p-6 lg:p-8 border border-nebula-steel shadow-xl space-y-6 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-lg font-bold text-white tracking-tight">Plan & Tier Distribution</h3>
-                  <p className="text-xs text-[#97A0B3]">Active monthly retainers by package tier</p>
+                  <p className="text-xs text-nebula-mist">Active monthly retainers by package tier</p>
                 </div>
                 <button
                   type="button"
@@ -6075,7 +6075,7 @@ export function AdminRevenuePage() {
                     setToast("Plan tier metrics refreshed.");
                     setTimeout(() => setToast(null), 2500);
                   }}
-                  className="p-2 rounded-xl hover:bg-[#161F2D] text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer transition-colors"
+                  className="p-2 rounded-xl hover:bg-nebula-surface text-nebula-mist hover:text-slate-100 cursor-pointer transition-colors"
                 >
                   <RefreshCw className="w-4 h-4" />
                 </button>
@@ -6084,70 +6084,70 @@ export function AdminRevenuePage() {
               {/* Tiers List (Dark Ops Color Theme) */}
               <div className="space-y-4">
                 {/* Package 1 */}
-                <div className="space-y-2 p-3.5 bg-[#0B111C] rounded-2xl border border-[#2A3446]">
+                <div className="space-y-2 p-3.5 bg-nebula-navy rounded-2xl border border-nebula-steel">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="flex items-center gap-2 text-white">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]" /> Package 1 (Enterprise Domination)
+                      <span className="w-2.5 h-2.5 rounded-full bg-nebula-glow" /> Package 1 (Scale)
                     </span>
-                    <span className="text-white font-black">₹95,000 <span className="text-[10px] font-normal text-[#97A0B3]">/ mo</span></span>
+                    <span className="text-white font-black">₹95,000 <span className="text-[10px] font-normal text-nebula-mist">/ mo</span></span>
                   </div>
-                  <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
-                    <div className="bg-[#7FA0D6] h-full rounded-full w-[46.8%]" />
+                  <div className="w-full bg-nebula-surface rounded-full h-2 overflow-hidden">
+                    <div className="bg-nebula-glow h-full rounded-full w-[46.8%]" />
                   </div>
-                  <div className="flex justify-between text-[11px] text-[#97A0B3] font-semibold">
+                  <div className="flex justify-between text-[11px] text-nebula-mist font-semibold">
                     <span>2 Retainer Accounts</span>
-                    <span className="text-[#7FA0D6] font-bold">46.8% of MRR</span>
+                    <span className="text-nebula-glow font-bold">46.8% of MRR</span>
                   </div>
                 </div>
 
                 {/* Package 2 */}
-                <div className="space-y-2 p-3.5 bg-[#0B111C] rounded-2xl border border-[#2A3446]">
+                <div className="space-y-2 p-3.5 bg-nebula-navy rounded-2xl border border-nebula-steel">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="flex items-center gap-2 text-white">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#BCCCE6]" /> Package 2 (Brand Accelerator)
+                      <span className="w-2.5 h-2.5 rounded-full bg-nebula-periwinkle" /> Package 2 (Growth)
                     </span>
-                    <span className="text-white font-black">₹50,000 <span className="text-[10px] font-normal text-[#97A0B3]">/ mo</span></span>
+                    <span className="text-white font-black">₹50,000 <span className="text-[10px] font-normal text-nebula-mist">/ mo</span></span>
                   </div>
-                  <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
-                    <div className="bg-[#BCCCE6] h-full rounded-full w-[36.7%]" />
+                  <div className="w-full bg-nebula-surface rounded-full h-2 overflow-hidden">
+                    <div className="bg-nebula-periwinkle h-full rounded-full w-[36.7%]" />
                   </div>
-                  <div className="flex justify-between text-[11px] text-[#97A0B3] font-semibold">
+                  <div className="flex justify-between text-[11px] text-nebula-mist font-semibold">
                     <span>3 Retainer Accounts</span>
-                    <span className="text-[#BCCCE6] font-bold">36.7% of MRR</span>
+                    <span className="text-nebula-periwinkle font-bold">36.7% of MRR</span>
                   </div>
                 </div>
 
                 {/* Package 3 */}
-                <div className="space-y-2 p-3.5 bg-[#0B111C] rounded-2xl border border-[#2A3446]">
+                <div className="space-y-2 p-3.5 bg-nebula-navy rounded-2xl border border-nebula-steel">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="flex items-center gap-2 text-white">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#D8BF9B]" /> Package 3 (Starter Growth)
+                      <span className="w-2.5 h-2.5 rounded-full bg-nebula-sand" /> Package 3 (Starter)
                     </span>
-                    <span className="text-white font-black">₹25,000 <span className="text-[10px] font-normal text-[#97A0B3]">/ mo</span></span>
+                    <span className="text-white font-black">₹25,000 <span className="text-[10px] font-normal text-nebula-mist">/ mo</span></span>
                   </div>
-                  <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
-                    <div className="bg-[#D8BF9B] h-full rounded-full w-[16.5%]" />
+                  <div className="w-full bg-nebula-surface rounded-full h-2 overflow-hidden">
+                    <div className="bg-nebula-sand h-full rounded-full w-[16.5%]" />
                   </div>
-                  <div className="flex justify-between text-[11px] text-[#97A0B3] font-semibold">
+                  <div className="flex justify-between text-[11px] text-nebula-mist font-semibold">
                     <span>2 Retainer Accounts</span>
-                    <span className="text-[#D8BF9B] font-bold">16.5% of MRR</span>
+                    <span className="text-nebula-sand font-bold">16.5% of MRR</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Sub-card: Add-ons & Overages */}
-            <div className="p-4 bg-[#0B111C] rounded-2xl border border-[#2A3446] flex items-center justify-between">
+            <div className="p-4 bg-nebula-navy rounded-2xl border border-nebula-steel flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center justify-center font-bold shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30 flex items-center justify-center font-bold shrink-0">
                   <Layers className="w-5 h-5" />
                 </div>
                 <div>
                   <h4 className="font-bold text-xs text-white">Add-ons & Overages</h4>
-                  <p className="text-[11px] text-[#97A0B3] font-medium">3 active add-on asset packages</p>
+                  <p className="text-[11px] text-nebula-mist font-medium">3 active add-on asset packages</p>
                 </div>
               </div>
-              <span className="text-base font-black text-[#7FA0D6]">+₹45,000</span>
+              <span className="text-base font-black text-nebula-glow">+₹45,000</span>
             </div>
           </div>
         </div>
@@ -6156,32 +6156,32 @@ export function AdminRevenuePage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             RECENT TRANSACTIONS ROSTER TABLE (Matching Image 2)
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] p-6 lg:p-8 space-y-6">
+        <div className="bg-nebula-surface rounded-3xl border border-nebula-steel shadow-[0_4px_30px_rgba(0,0,0,0.04)] p-6 lg:p-8 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h3 className="text-xl font-black text-white tracking-tight">Recent Transactions</h3>
 
             <div className="flex flex-wrap items-center gap-3">
               {/* Search */}
               <div className="relative min-w-[240px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-nebula-mist" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search client or invoice..."
-                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:border-blue-500"
+                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-nebula-steel text-xs text-white focus:outline-none focus:border-blue-500"
                 />
               </div>
 
               {/* Status Filter Pills */}
-              <div className="flex items-center gap-1 bg-[#161F2D] p-1 rounded-xl text-xs font-bold">
+              <div className="flex items-center gap-1 bg-nebula-surface p-1 rounded-xl text-xs font-bold">
                 {(["all", "paid", "pending", "overdue"] as const).map((st) => (
                   <button
                     key={st}
                     type="button"
                     onClick={() => setFilter(st)}
                     className={`px-3 py-1.5 rounded-lg capitalize transition-all cursor-pointer ${
-                      filter === st ? "bg-[#161F2D] text-white shadow-xs font-black" : "text-[#97A0B3] hover:text-white"
+                      filter === st ? "bg-nebula-surface text-white shadow-xs font-black" : "text-nebula-mist hover:text-white"
                     }`}
                   >
                     {st}
@@ -6193,7 +6193,7 @@ export function AdminRevenuePage() {
               <button
                 type="button"
                 onClick={handleExportCSV}
-                className="px-3.5 py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-[#7FA0D6]/30 transition-colors"
+                className="px-3.5 py-2 rounded-xl bg-nebula-glow/15 hover:bg-nebula-glow/20 text-nebula-glow text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-nebula-glow/30 transition-colors"
               >
                 <Download className="w-3.5 h-3.5" /> Export CSV
               </button>
@@ -6203,7 +6203,7 @@ export function AdminRevenuePage() {
           {/* Table matching Image 2 */}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-white">
-              <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
+              <thead className="bg-nebula-navy border-b border-nebula-steel text-[11px] font-extrabold uppercase tracking-wider text-nebula-mist">
                 <tr>
                   <th className="px-5 py-4">CLIENT & SCOPE</th>
                   <th className="px-5 py-4">INVOICE #</th>
@@ -6216,13 +6216,13 @@ export function AdminRevenuePage() {
               <tbody className="divide-y divide-gray-100 font-medium">
                 {filteredTx.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
+                    <td colSpan={6} className="px-5 py-8 text-center text-nebula-mist text-xs font-medium">
                       No transactions recorded yet
                     </td>
                   </tr>
                 ) : (
                   filteredTx.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-[#0B111C]/70 transition-colors">
+                  <tr key={tx.id} className="hover:bg-nebula-navy/70 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-9 h-9 rounded-xl ${tx.avatarBg} font-black text-xs flex items-center justify-center shrink-0`}>
@@ -6230,22 +6230,22 @@ export function AdminRevenuePage() {
                         </div>
                         <div>
                           <div className="font-bold text-sm text-white">{tx.client}</div>
-                          <div className="text-[11px] text-[#97A0B3]">{tx.scope}</div>
+                          <div className="text-[11px] text-nebula-mist">{tx.scope}</div>
                         </div>
                       </div>
                     </td>
 
-                    <td className="px-5 py-4 font-mono font-bold text-[#F1F5F9]">{tx.id}</td>
+                    <td className="px-5 py-4 font-mono font-bold text-slate-100">{tx.id}</td>
 
                     <td className="px-5 py-4 font-black text-sm text-white">
                       ₹{tx.amount.toLocaleString('en-IN')}
                     </td>
 
-                    <td className="px-5 py-4 text-[#F1F5F9] font-medium">{tx.method}</td>
+                    <td className="px-5 py-4 text-slate-100 font-medium">{tx.method}</td>
 
                     <td className="px-5 py-4">
                       <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border flex items-center gap-1.5 w-fit ${tx.badgeClass}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]/150"}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-nebula-glow/150"}`} />
                         {tx.status} ({tx.date})
                       </span>
                     </td>
@@ -6255,7 +6255,7 @@ export function AdminRevenuePage() {
                         <button
                           type="button"
                           onClick={() => setSelectedReceipt(tx)}
-                          className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer text-xs"
+                          className="text-nebula-glow font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer text-xs"
                         >
                           Receipt <ArrowUpRight className="w-3.5 h-3.5" />
                         </button>
@@ -6263,7 +6263,7 @@ export function AdminRevenuePage() {
                         <button
                           type="button"
                           onClick={() => handleSendReminder(tx)}
-                          className="px-3 py-1.5 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg bg-nebula-glow/15 hover:bg-nebula-glow/20 text-nebula-glow font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Play className="w-3 h-3 fill-current" /> Remind
                         </button>
@@ -6277,7 +6277,7 @@ export function AdminRevenuePage() {
           </div>
 
           {/* Table Footer */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-[#2A3446] text-xs text-[#97A0B3] font-medium">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-nebula-steel text-xs text-nebula-mist font-medium">
             <span>Showing {filteredTx.length} of {transactions.length} transactions</span>
           </div>
         </div>
@@ -6290,57 +6290,57 @@ export function AdminRevenuePage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {isCreateInvoiceOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="w-full max-w-md rounded-3xl bg-nebula-surface p-6 shadow-2xl space-y-4 border border-nebula-steel">
+            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <h3 className="text-base font-bold text-white">Create New Invoice</h3>
-              <button type="button" onClick={() => setIsCreateInvoiceOpen(false)} className="p-1 rounded-lg text-[#97A0B3] hover:text-[#F1F5F9]">
+              <button type="button" onClick={() => setIsCreateInvoiceOpen(false)} className="p-1 rounded-lg text-nebula-mist hover:text-slate-100">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateInvoiceSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Client Brand Name</label>
+                <label className="block font-bold text-slate-100 mb-1">Client Brand Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Acme Corporation"
                   value={newInvClient}
                   onChange={(e) => setNewInvClient(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none"
+                  className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Deliverable Scope Description</label>
+                <label className="block font-bold text-slate-100 mb-1">Deliverable Scope Description</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Enterprise Retainer • Dec 2024"
                   value={newInvScope}
                   onChange={(e) => setNewInvScope(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none"
+                  className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Amount (₹ INR)</label>
+                  <label className="block font-bold text-slate-100 mb-1">Amount (₹ INR)</label>
                   <input
                     type="number"
                     required
                     placeholder="50000"
                     value={newInvAmount}
                     onChange={(e) => setNewInvAmount(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none"
+                    className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Payment Method</label>
+                  <label className="block font-bold text-slate-100 mb-1">Payment Method</label>
                   <select
                     value={newInvMethod}
                     onChange={(e) => setNewInvMethod(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
+                    className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs font-medium"
                   >
                     <option value="Razorpay UPI">Razorpay UPI</option>
                     <option value="Bank Wire">Bank Wire</option>
@@ -6350,17 +6350,17 @@ export function AdminRevenuePage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-[#2A3446]">
+              <div className="flex justify-end gap-2 pt-3 border-t border-nebula-steel">
                 <button
                   type="button"
                   onClick={() => setIsCreateInvoiceOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C]"
+                  className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#7FA0D6] text-white font-bold hover:bg-blue-700 shadow-sm"
+                  className="px-4 py-2 rounded-xl bg-nebula-glow text-white font-bold hover:bg-blue-700 shadow-sm"
                 >
                   Generate Invoice
                 </button>
@@ -6375,13 +6375,13 @@ export function AdminRevenuePage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {selectedReceipt && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 lg:p-8 shadow-2xl space-y-6 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
+          <div className="w-full max-w-lg rounded-3xl bg-nebula-surface p-6 lg:p-8 shadow-2xl space-y-6 border border-nebula-steel">
+            <div className="flex items-center justify-between border-b border-nebula-steel pb-4">
               <div className="flex items-center gap-2">
                 <span className="font-black text-xl text-white tracking-tight">creo.</span>
-                <span className="text-xs font-bold text-[#97A0B3]">Payment Receipt</span>
+                <span className="text-xs font-bold text-nebula-mist">Payment Receipt</span>
               </div>
-              <button type="button" onClick={() => setSelectedReceipt(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+              <button type="button" onClick={() => setSelectedReceipt(null)} className="p-1 text-nebula-mist hover:text-slate-100">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -6395,36 +6395,36 @@ export function AdminRevenuePage() {
                 <CheckCircle2 className="w-7 h-7 text-emerald-600" />
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-[#F1F5F9] font-medium">
+              <div className="grid grid-cols-2 gap-4 text-slate-100 font-medium">
                 <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Client</span>
+                  <span className="text-nebula-mist block text-[10px] uppercase font-bold">Client</span>
                   <strong className="text-white text-sm">{selectedReceipt.client}</strong>
                 </div>
                 <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Invoice Number</span>
+                  <span className="text-nebula-mist block text-[10px] uppercase font-bold">Invoice Number</span>
                   <strong className="text-white text-sm font-mono">{selectedReceipt.id}</strong>
                 </div>
                 <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Payment Method</span>
+                  <span className="text-nebula-mist block text-[10px] uppercase font-bold">Payment Method</span>
                   <span className="text-white font-bold">{selectedReceipt.method}</span>
                 </div>
                 <div>
-                  <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Settlement Date</span>
+                  <span className="text-nebula-mist block text-[10px] uppercase font-bold">Settlement Date</span>
                   <span className="text-white font-bold">{selectedReceipt.date}</span>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-[#2A3446] space-y-2">
-                <span className="text-[#97A0B3] block text-[10px] uppercase font-bold">Scope Breakdown</span>
-                <div className="p-3 bg-[#0B111C] rounded-xl flex items-center justify-between font-bold text-white">
+              <div className="pt-3 border-t border-nebula-steel space-y-2">
+                <span className="text-nebula-mist block text-[10px] uppercase font-bold">Scope Breakdown</span>
+                <div className="p-3 bg-nebula-navy rounded-xl flex items-center justify-between font-bold text-white">
                   <span>{selectedReceipt.scope}</span>
                   <span>₹{selectedReceipt.amount.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-between items-center text-sm font-black text-white border-t border-[#2A3446]">
+              <div className="pt-2 flex justify-between items-center text-sm font-black text-white border-t border-nebula-steel">
                 <span>Total Settled</span>
-                <span className="text-base text-[#7FA0D6]">₹{selectedReceipt.amount.toLocaleString('en-IN')} INR</span>
+                <span className="text-base text-nebula-glow">₹{selectedReceipt.amount.toLocaleString('en-IN')} INR</span>
               </div>
             </div>
 
@@ -6432,7 +6432,7 @@ export function AdminRevenuePage() {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="flex-1 py-2.5 rounded-xl border border-[#2A3446] font-bold text-xs text-[#F1F5F9] hover:bg-[#0B111C] flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl border border-nebula-steel font-bold text-xs text-slate-100 hover:bg-nebula-navy flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Printer className="w-4 h-4" /> Print Receipt
               </button>
@@ -6442,7 +6442,7 @@ export function AdminRevenuePage() {
                   window.print();
                   setSelectedReceipt(null);
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-[#7FA0D6] text-white font-bold text-xs hover:bg-blue-700 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-nebula-glow text-white font-bold text-xs hover:bg-blue-700 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Download className="w-4 h-4" /> Download PDF
               </button>
@@ -6467,45 +6467,47 @@ export function AdminPlansPage() {
     {
       id: "starter",
       name: "starter",
-      display_name: "Starter Growth",
+      display_name: "Starter",
       price_monthly: 25000,
       currency: "INR",
       subscribers: 0,
       features: [
         "8 Static Posters / Month",
         "4 Short Video Reels / Month",
-        "10 Story Templates",
-        "Standard SLA (48h Turnaround)",
+        "10 Story Templates (22 assets total)",
+        "3 Business Days SLA Turnaround",
+        "1 Revision Round",
       ],
     },
     {
       id: "growth",
       name: "growth",
-      display_name: "Brand Accelerator",
+      display_name: "Growth",
       price_monthly: 50000,
       currency: "INR",
       subscribers: 0,
       features: [
-        "15 Static Posters / Month",
-        "8 Short Video Reels / Month",
-        "20 Story Templates",
-        "Priority SLA (24h Turnaround)",
+        "18 Static Posters / Month",
+        "10 Short Video Reels / Month",
+        "20 Story Templates (48 assets total)",
+        "2 Business Days SLA Turnaround",
+        "2 Revision Rounds",
         "Dedicated Creative Pod Lead",
       ],
     },
     {
       id: "scale",
       name: "scale",
-      display_name: "Enterprise Domination",
+      display_name: "Scale",
       price_monthly: 95000,
       currency: "INR",
       subscribers: 0,
       features: [
-        "30 Static Posters / Month",
-        "16 High-Production Video Reels",
-        "40 Story Templates",
-        "Express 12h SLA Turnaround",
-        "Unlimited Revision Iterations",
+        "36 Static Posters / Month",
+        "20 High-Production Video Reels",
+        "40 Story Templates (96 assets total)",
+        "24-Hour SLA Turnaround",
+        "3 Revision Rounds",
       ],
     },
   ]);
@@ -6525,8 +6527,8 @@ export function AdminPlansPage() {
   const [declineReasonInput, setDeclineReasonInput] = useState("");
 
   const [newPropClient, setNewPropClient] = useState("");
-  const [newPropCurrentPlan, setNewPropCurrentPlan] = useState("Starter Growth (₹25,000/mo)");
-  const [newPropTargetPlan, setNewPropTargetPlan] = useState("Enterprise Domination Custom Scope");
+  const [newPropCurrentPlan, setNewPropCurrentPlan] = useState("Starter (₹25,000/mo)");
+  const [newPropTargetPlan, setNewPropTargetPlan] = useState("Scale Custom Scope");
   const [newPropStandardRate, setNewPropStandardRate] = useState("95000");
   const [newPropProposedRate, setNewPropProposedRate] = useState("85000");
   const [newPropNotes, setNewPropNotes] = useState("");
@@ -6810,7 +6812,7 @@ export function AdminPlansPage() {
   const totalRetainerRevenue = plans.reduce((acc, p) => acc + p.price_monthly * p.subscribers, 0);
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-nebula-navy flex flex-col">
       <AdminTopHeader activeTab="Revenue" />
       <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
@@ -6829,22 +6831,22 @@ export function AdminPlansPage() {
             TOP 4 COMMERCIAL & PLAN KPI CARDS
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-nebula-surface rounded-3xl border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">ACTIVE RETAINERS</span>
-              <div className="w-7 h-7 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+              <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">ACTIVE RETAINERS</span>
+              <div className="w-7 h-7 rounded-xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-bold">
                 <Briefcase className="w-3.5 h-3.5" />
               </div>
             </div>
             <div className="text-3xl font-black text-white">
               {plans.reduce((acc, p) => acc + p.subscribers, 0)} Active
             </div>
-            <p className="text-xs text-[#7FA0D6] font-bold">MRR: ₹{totalRetainerRevenue.toLocaleString("en-IN")}</p>
+            <p className="text-xs text-nebula-glow font-bold">MRR: ₹{totalRetainerRevenue.toLocaleString("en-IN")}</p>
           </div>
 
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-nebula-surface rounded-3xl border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">PENDING NEGOTIATIONS</span>
+              <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">PENDING NEGOTIATIONS</span>
               <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
                 <Zap className="w-3.5 h-3.5" />
               </div>
@@ -6853,9 +6855,9 @@ export function AdminPlansPage() {
             <p className="text-xs text-amber-600 font-bold">Requires executive review</p>
           </div>
 
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-nebula-surface rounded-3xl border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">AVG RETAINER VALUE</span>
+              <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">AVG RETAINER VALUE</span>
               <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-sm">
                 ₹
               </div>
@@ -6864,9 +6866,9 @@ export function AdminPlansPage() {
             <p className="text-xs text-emerald-600 font-bold">High LTV retention</p>
           </div>
 
-          <div className="kpi-card p-6 bg-[#161F2D] rounded-3xl border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card p-6 bg-nebula-surface rounded-3xl border-2 border-nebula-surface hover:border-nebula-periwinkle transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">WIN / CLOSING RATE</span>
+              <span className="text-[10px] font-black text-nebula-mist uppercase tracking-wider">WIN / CLOSING RATE</span>
               <div className="w-7 h-7 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
                 <TrendingUp className="w-3.5 h-3.5" />
               </div>
@@ -6879,11 +6881,11 @@ export function AdminPlansPage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             RETAINER TIERS & QUOTA ALLOCATION CARDS
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
+        <div className="bg-nebula-surface rounded-3xl p-6 lg:p-8 border border-nebula-steel shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-bold text-white tracking-tight">Agency Retainer Plans & Quotas</h3>
-              <p className="text-xs text-[#97A0B3] mt-0.5">
+              <p className="text-xs text-nebula-mist mt-0.5">
                 Standard monthly subscription tiers, output deliverables quota, and SLA turnarounds.
               </p>
             </div>
@@ -6893,19 +6895,19 @@ export function AdminPlansPage() {
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className="bg-[#0B111C]/70 hover:bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] hover:border-[#2A3446] shadow-2xs hover:shadow-md transition-all space-y-5 flex flex-col justify-between"
+                className="bg-nebula-navy/70 hover:bg-nebula-surface rounded-3xl p-6 border border-nebula-steel hover:border-nebula-steel shadow-2xs hover:shadow-md transition-all space-y-5 flex flex-col justify-between"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="font-bold text-base text-white">{plan.display_name}</h4>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-nebula-glow/15 text-nebula-glow text-[10px] font-bold">
                       {plan.subscribers} Active Clients
                     </span>
                   </div>
                   <div className="text-3xl font-black text-white">
-                    ₹{plan.price_monthly.toLocaleString("en-IN")} <span className="text-xs font-normal text-[#97A0B3]">/mo</span>
+                    ₹{plan.price_monthly.toLocaleString("en-IN")} <span className="text-xs font-normal text-nebula-mist">/mo</span>
                   </div>
-                  <ul className="space-y-2 text-xs text-[#F1F5F9] pt-2 border-t border-[#2A3446]/60">
+                  <ul className="space-y-2 text-xs text-slate-100 pt-2 border-t border-nebula-steel/60">
                     {plan.features.map((f, i) => (
                       <li key={i} className="flex items-center gap-2">
                         <Check className="size-3.5 text-emerald-600 shrink-0" />
@@ -6922,7 +6924,7 @@ export function AdminPlansPage() {
                     setEditPriceInput(String(plan.price_monthly));
                     setEditFeaturesInput(plan.features.join("\n"));
                   }}
-                  className="w-full py-2.5 rounded-xl bg-[#161F2D] hover:bg-[#161F2D] text-white text-xs font-bold border border-[#2A3446] transition-colors cursor-pointer shadow-2xs"
+                  className="w-full py-2.5 rounded-xl bg-nebula-surface hover:bg-nebula-surface text-white text-xs font-bold border border-nebula-steel transition-colors cursor-pointer shadow-2xs"
                 >
                   Edit Tier Terms
                 </button>
@@ -6934,7 +6936,7 @@ export function AdminPlansPage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             CLIENT PLAN NEGOTIATIONS SECTION
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
+        <div className="bg-nebula-surface rounded-3xl p-6 lg:p-8 border border-nebula-steel shadow-[0_4px_30px_rgba(0,0,0,0.04)] space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
@@ -6946,7 +6948,7 @@ export function AdminPlansPage() {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#97A0B3] mt-0.5">
+              <p className="text-xs text-nebula-mist mt-0.5">
                 Review custom retainer proposals, client discount counter-offers, and multi-month contract terms.
               </p>
             </div>
@@ -6961,8 +6963,8 @@ export function AdminPlansPage() {
           </div>
 
           {/* Search and Tabs */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
-            <div className="flex items-center gap-1 bg-[#161F2D] p-1 rounded-xl text-xs font-bold text-[#F1F5F9] overflow-x-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-nebula-steel pb-4">
+            <div className="flex items-center gap-1 bg-nebula-surface p-1 rounded-xl text-xs font-bold text-slate-100 overflow-x-auto">
               {[
                 { id: "all", label: "All Negotiations" },
                 { id: "pending", label: `Pending Review (${pendingCount})` },
@@ -6976,7 +6978,7 @@ export function AdminPlansPage() {
                   onClick={() => setFilterTab(tab.id as any)}
                   className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                     filterTab === tab.id
-                      ? "bg-[#161F2D] text-[#7FA0D6] shadow-xs font-black"
+                      ? "bg-nebula-surface text-nebula-glow shadow-xs font-black"
                       : "hover:text-white"
                   }`}
                 >
@@ -6986,13 +6988,13 @@ export function AdminPlansPage() {
             </div>
 
             <div className="relative min-w-[240px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-nebula-mist" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search negotiations by client, scope..."
-                className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                className="w-full pl-9 pr-4 py-2 rounded-xl border border-nebula-steel bg-nebula-surface text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
               />
             </div>
           </div>
@@ -7000,14 +7002,14 @@ export function AdminPlansPage() {
           {/* Proposals List */}
           <div className="space-y-4">
             {filteredNegotiations.length === 0 ? (
-              <div className="p-8 text-center text-[#97A0B3] bg-[#0B111C]/50 rounded-2xl border border-dashed border-[#2A3446]">
+              <div className="p-8 text-center text-nebula-mist bg-nebula-navy/50 rounded-2xl border border-dashed border-nebula-steel">
                 <p className="text-xs font-bold">No plan negotiations found in this filter.</p>
               </div>
             ) : (
               filteredNegotiations.map((item) => (
                 <div
                   key={item.id}
-                  className="p-5 rounded-2xl border border-[#2A3446] bg-[#0B111C]/50 hover:bg-[#161F2D] hover:border-[#2A3446] transition-all shadow-2xs space-y-4"
+                  className="p-5 rounded-2xl border border-nebula-steel bg-nebula-navy/50 hover:bg-nebula-surface hover:border-nebula-steel transition-all shadow-2xs space-y-4"
                 >
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     {/* Client Info */}
@@ -7018,27 +7020,27 @@ export function AdminPlansPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-bold text-sm text-white">{item.clientName}</h4>
-                          <span className="text-[10px] text-[#97A0B3] font-semibold">{item.requestedAt}</span>
+                          <span className="text-[10px] text-nebula-mist font-semibold">{item.requestedAt}</span>
                         </div>
-                        <p className="text-xs text-[#F1F5F9] font-medium">{item.targetTopic}</p>
-                        {item.clientEmail && <p className="text-[10px] text-[#97A0B3]">{item.clientEmail}</p>}
+                        <p className="text-xs text-slate-100 font-medium">{item.targetTopic}</p>
+                        {item.clientEmail && <p className="text-[10px] text-nebula-mist">{item.clientEmail}</p>}
                       </div>
                     </div>
 
                     {/* Negotiation Details */}
-                    <div className="flex items-center gap-4 bg-[#161F2D] p-3 rounded-xl border border-[#2A3446] flex-wrap">
+                    <div className="flex items-center gap-4 bg-nebula-surface p-3 rounded-xl border border-nebula-steel flex-wrap">
                       {item.proposedOffer && (
                         <div>
-                          <span className="text-[10px] text-[#7FA0D6] uppercase block font-bold">Proposed Offer</span>
+                          <span className="text-[10px] text-nebula-glow uppercase block font-bold">Proposed Offer</span>
                           <span className="text-sm font-black text-emerald-400">{item.proposedOffer}</span>
                         </div>
                       )}
                       <div>
-                        <span className="text-[10px] text-[#97A0B3] uppercase block font-bold">Contact</span>
+                        <span className="text-[10px] text-nebula-mist uppercase block font-bold">Contact</span>
                         <span className="text-xs font-bold text-white">{item.phoneNumber}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-[#97A0B3] uppercase block font-bold">Preferred Time</span>
+                        <span className="text-[10px] text-nebula-mist uppercase block font-bold">Preferred Time</span>
                         <span className="text-xs font-bold text-white">{item.preferredTime}</span>
                       </div>
                     </div>
@@ -7082,7 +7084,7 @@ export function AdminPlansPage() {
                               setCounterModalItem(item);
                               setCounterPriceInput("");
                             }}
-                            className="px-3 py-2 rounded-xl bg-[#161F2D] hover:bg-gray-200 text-white font-bold text-xs cursor-pointer"
+                            className="px-3 py-2 rounded-xl bg-nebula-surface hover:bg-gray-200 text-white font-bold text-xs cursor-pointer"
                           >
                             Counter
                           </button>
@@ -7093,7 +7095,7 @@ export function AdminPlansPage() {
 
                   {/* Scope Notes */}
                   {item.notes && (
-                    <div className="p-3 bg-[#161F2D] rounded-xl text-xs text-[#F1F5F9] border border-[#2A3446] font-medium">
+                    <div className="p-3 bg-nebula-surface rounded-xl text-xs text-slate-100 border border-nebula-steel font-medium">
                       <strong className="text-white font-bold">Client Notes:</strong> "{item.notes}"
                     </div>
                   )}
@@ -7106,13 +7108,13 @@ export function AdminPlansPage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             ACTIVE SALES & RETAINER PIPELINE TABLE
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] p-6 lg:p-8 space-y-6">
+        <div className="bg-nebula-surface rounded-3xl border border-nebula-steel shadow-[0_4px_30px_rgba(0,0,0,0.04)] p-6 lg:p-8 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-xl font-black text-white tracking-tight">Active Sales & Retainer Pipeline</h3>
-              <p className="text-xs text-[#97A0B3] mt-0.5">High-touch commercial prospects, contract values, and closing probabilities</p>
+              <p className="text-xs text-nebula-mist mt-0.5">High-touch commercial prospects, contract values, and closing probabilities</p>
             </div>
-            <span className="px-3 py-1 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-xs font-bold">
+            <span className="px-3 py-1 rounded-full bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30 text-xs font-bold">
               {deals.length} Active Deals
             </span>
           </div>
@@ -7120,7 +7122,7 @@ export function AdminPlansPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-[#2A3446] text-[10px] font-black uppercase text-[#97A0B3] tracking-wider">
+                <tr className="border-b border-nebula-steel text-[10px] font-black uppercase text-nebula-mist tracking-wider">
                   <th className="pb-3.5 pl-2">Client Brand</th>
                   <th className="pb-3.5">Deal Scope</th>
                   <th className="pb-3.5">Contract Value</th>
@@ -7133,14 +7135,14 @@ export function AdminPlansPage() {
               <tbody className="divide-y divide-gray-50">
                 {deals.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-10 text-center text-[#97A0B3]">
-                      <p className="text-xs font-bold text-[#F1F5F9]">No active pipeline deals</p>
-                      <p className="text-[11px] text-[#97A0B3] mt-0.5">Real sales prospect deals will appear here once initiated.</p>
+                    <td colSpan={7} className="py-10 text-center text-nebula-mist">
+                      <p className="text-xs font-bold text-slate-100">No active pipeline deals</p>
+                      <p className="text-[11px] text-nebula-mist mt-0.5">Real sales prospect deals will appear here once initiated.</p>
                     </td>
                   </tr>
                 ) : (
                   deals.map((d) => (
-                    <tr key={d.id} className="hover:bg-[#0B111C]/70 transition-colors">
+                    <tr key={d.id} className="hover:bg-nebula-navy/70 transition-colors">
                       <td className="py-4 pl-2 font-bold text-white">
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-xl bg-slate-900 text-white font-black text-xs flex items-center justify-center">
@@ -7149,7 +7151,7 @@ export function AdminPlansPage() {
                           <span>{d.client}</span>
                         </div>
                       </td>
-                      <td className="py-4 text-[#F1F5F9] font-medium">{d.scope}</td>
+                      <td className="py-4 text-slate-100 font-medium">{d.scope}</td>
                       <td className="py-4 font-black text-white">₹{d.value.toLocaleString("en-IN")} / yr</td>
                       <td className="py-4">
                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border ${d.stageBadge}`}>
@@ -7157,12 +7159,12 @@ export function AdminPlansPage() {
                         </span>
                       </td>
                       <td className="py-4 font-bold text-emerald-600">{d.probability}</td>
-                      <td className="py-4 text-[#F1F5F9] font-medium">{d.owner}</td>
+                      <td className="py-4 text-slate-100 font-medium">{d.owner}</td>
                       <td className="py-4 text-right pr-2">
                         <button
                           type="button"
                           onClick={() => handleOpenManageDeal(d)}
-                          className="px-3.5 py-1.5 rounded-xl bg-[#161F2D] hover:bg-blue-600 hover:text-white text-white font-bold text-xs cursor-pointer shadow-2xs transition-all active:scale-95"
+                          className="px-3.5 py-1.5 rounded-xl bg-nebula-surface hover:bg-blue-600 hover:text-white text-white font-bold text-xs cursor-pointer shadow-2xs transition-all active:scale-95"
                         >
                           Manage
                         </button>
@@ -7181,39 +7183,39 @@ export function AdminPlansPage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {editingPlan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="w-full max-w-md rounded-3xl bg-nebula-surface p-6 shadow-2xl space-y-4 border border-nebula-steel">
+            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <h3 className="text-base font-bold text-white">Edit Tier: {editingPlan.display_name}</h3>
-              <button type="button" onClick={() => setEditingPlan(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+              <button type="button" onClick={() => setEditingPlan(null)} className="p-1 text-nebula-mist hover:text-slate-100">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSaveTierTerms} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Monthly Retainer Price (₹ INR)</label>
+                <label className="block font-bold text-slate-100 mb-1">Monthly Retainer Price (₹ INR)</label>
                 <input
                   type="number"
                   required
                   value={editPriceInput}
                   onChange={(e) => setEditPriceInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Features & Deliverables Quota (One per line)</label>
+                <label className="block font-bold text-slate-100 mb-1">Features & Deliverables Quota (One per line)</label>
                 <textarea
                   rows={4}
                   required
                   value={editFeaturesInput}
                   onChange={(e) => setEditFeaturesInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setEditingPlan(null)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
+                <button type="button" onClick={() => setEditingPlan(null)} className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer">
@@ -7230,33 +7232,33 @@ export function AdminPlansPage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {declineModalItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="w-full max-w-md rounded-3xl bg-nebula-surface p-6 shadow-2xl space-y-4 border border-nebula-steel">
+            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <h3 className="text-base font-bold text-white">Decline Plan Negotiation</h3>
-              <button type="button" onClick={() => setDeclineModalItem(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+              <button type="button" onClick={() => setDeclineModalItem(null)} className="p-1 text-nebula-mist hover:text-slate-100">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleConfirmDecline} className="space-y-3 text-xs">
-              <p className="text-[#F1F5F9]">
+              <p className="text-slate-100">
                 Are you sure you want to decline the proposed custom retainer for <strong>{declineModalItem.clientName}</strong>?
               </p>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Reason for Rejection</label>
+                <label className="block font-bold text-slate-100 mb-1">Reason for Rejection</label>
                 <textarea
                   rows={3}
                   required
                   placeholder="e.g. Proposed rate falls below standard minimum margin."
                   value={declineReasonInput}
                   onChange={(e) => setDeclineReasonInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs resize-none focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs resize-none focus:outline-none focus:ring-2 focus:ring-rose-500/20"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setDeclineModalItem(null)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
+                <button type="button" onClick={() => setDeclineModalItem(null)} className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 cursor-pointer">
@@ -7273,39 +7275,39 @@ export function AdminPlansPage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {counterModalItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="w-full max-w-md rounded-3xl bg-nebula-surface p-6 shadow-2xl space-y-4 border border-nebula-steel">
+            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <h3 className="text-base font-bold text-white">Submit Counter Offer</h3>
-              <button type="button" onClick={() => setCounterModalItem(null)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+              <button type="button" onClick={() => setCounterModalItem(null)} className="p-1 text-nebula-mist hover:text-slate-100">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleConfirmCounter} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Counter Proposed Rate (₹ INR / mo)</label>
+                <label className="block font-bold text-slate-100 mb-1">Counter Proposed Rate (₹ INR / mo)</label>
                 <input
                   type="number"
                   required
                   value={counterPriceInput}
                   onChange={(e) => setCounterPriceInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Counter Offer Notes / Scope Terms</label>
+                <label className="block font-bold text-slate-100 mb-1">Counter Offer Notes / Scope Terms</label>
                 <textarea
                   rows={3}
                   placeholder="e.g. We can offer ₹85,000/mo with 12-month commitment."
                   value={counterNoteInput}
                   onChange={(e) => setCounterNoteInput(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/20"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setCounterModalItem(null)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
+                <button type="button" onClick={() => setCounterModalItem(null)} className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-purple-600 text-white font-bold hover:bg-purple-700 cursor-pointer">
@@ -7322,83 +7324,83 @@ export function AdminPlansPage() {
       ───────────────────────────────────────────────────────────────────────────── */}
       {isNewProposalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-md rounded-3xl bg-[#161F2D] p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="w-full max-w-md rounded-3xl bg-nebula-surface p-6 shadow-2xl space-y-4 border border-nebula-steel">
+            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <h3 className="text-base font-bold text-white">Initiate Custom Retainer Proposal</h3>
-              <button type="button" onClick={() => setIsNewProposalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9]">
+              <button type="button" onClick={() => setIsNewProposalOpen(false)} className="p-1 text-nebula-mist hover:text-slate-100">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleCreateProposalSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Client Brand Name</label>
+                <label className="block font-bold text-slate-100 mb-1">Client Brand Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Apex Media or Stellar Corp"
                   value={newPropClient}
                   onChange={(e) => setNewPropClient(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Current Retainer Plan</label>
+                <label className="block font-bold text-slate-100 mb-1">Current Retainer Plan</label>
                 <input
                   type="text"
                   value={newPropCurrentPlan}
                   onChange={(e) => setNewPropCurrentPlan(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Target Plan & Custom Scope</label>
+                <label className="block font-bold text-slate-100 mb-1">Target Plan & Custom Scope</label>
                 <input
                   type="text"
                   required
                   value={newPropTargetPlan}
                   onChange={(e) => setNewPropTargetPlan(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Standard Rate (₹/mo)</label>
+                  <label className="block font-bold text-slate-100 mb-1">Standard Rate (₹/mo)</label>
                   <input
                     type="number"
                     value={newPropStandardRate}
                     onChange={(e) => setNewPropStandardRate(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Proposed Rate (₹/mo)</label>
+                  <label className="block font-bold text-slate-100 mb-1">Proposed Rate (₹/mo)</label>
                   <input
                     type="number"
                     required
                     value={newPropProposedRate}
                     onChange={(e) => setNewPropProposedRate(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Negotiation Scope Notes & Commitments</label>
+                <label className="block font-bold text-slate-100 mb-1">Negotiation Scope Notes & Commitments</label>
                 <textarea
                   rows={3}
                   placeholder="e.g. 12-month contract lock-in with 2 dedicated creative pods."
                   value={newPropNotes}
                   onChange={(e) => setNewPropNotes(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setIsNewProposalOpen(false)} className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
+              <div className="flex justify-end gap-2 pt-2 border-t border-nebula-steel">
+                <button type="button" onClick={() => setIsNewProposalOpen(false)} className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer">
                   Cancel
                 </button>
                 <button type="submit" className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 cursor-pointer">
@@ -7422,13 +7424,13 @@ export function AdminPlansPage() {
           }}
         >
           <div
-            className="relative w-full max-w-xl rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl border border-[#2A3446] flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
+            className="relative w-full max-w-xl rounded-3xl bg-nebula-surface p-6 sm:p-7 shadow-2xl border border-nebula-steel flex flex-col space-y-4 max-h-[92vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <div className="flex items-center gap-3">
                 <div className="size-11 rounded-2xl bg-slate-950 text-white font-black text-sm flex items-center justify-center shadow-xs">
                   {manageDealModal.clientLogo}
@@ -7437,7 +7439,7 @@ export function AdminPlansPage() {
                   <h3 className="text-base font-black text-white tracking-tight">
                     Manage Deal • {manageDealModal.client}
                   </h3>
-                  <p className="text-[11px] text-[#97A0B3] font-medium">
+                  <p className="text-[11px] text-nebula-mist font-medium">
                     Contract negotiation, deal stage progression & subscription controls
                   </p>
                 </div>
@@ -7448,21 +7450,21 @@ export function AdminPlansPage() {
                   setManageDealModal(null);
                   setManageMode("edit");
                 }}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center transition-colors cursor-pointer"
+                className="size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist flex items-center justify-center transition-colors cursor-pointer"
               >
                 <X className="size-4" />
               </button>
             </div>
 
             {/* Quick Action Navigation Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 p-1.5 bg-[#161F2D]/80 rounded-2xl">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 p-1.5 bg-nebula-surface/80 rounded-2xl">
               <button
                 type="button"
                 onClick={() => setManageMode("edit")}
                 className={`w-full py-2 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
                   manageMode === "edit"
-                    ? "bg-[#161F2D] text-white shadow-xs font-black"
-                    : "text-[#F1F5F9] hover:text-white"
+                    ? "bg-nebula-surface text-white shadow-xs font-black"
+                    : "text-slate-100 hover:text-white"
                 }`}
               >
                 📝 Edit Contract
@@ -7506,26 +7508,26 @@ export function AdminPlansPage() {
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] text-xs space-y-2 text-[#F1F5F9]">
+                <div className="p-4 rounded-2xl bg-nebula-navy border border-nebula-steel text-xs space-y-2 text-slate-100">
                   <div className="flex justify-between">
-                    <span className="font-semibold text-[#97A0B3]">Client:</span>
+                    <span className="font-semibold text-nebula-mist">Client:</span>
                     <strong className="text-white">{manageDealModal.client}</strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-semibold text-[#97A0B3]">Contract Value:</span>
+                    <span className="font-semibold text-nebula-mist">Contract Value:</span>
                     <strong className="text-white">₹{manageDealModal.value.toLocaleString("en-IN")} / yr</strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-semibold text-[#97A0B3]">Assigned Account Owner:</span>
+                    <span className="font-semibold text-nebula-mist">Assigned Account Owner:</span>
                     <strong className="text-white">{manageDealModal.owner}</strong>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-nebula-steel">
                   <button
                     type="button"
                     onClick={() => setManageMode("edit")}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
                   >
                     Go Back
                   </button>
@@ -7557,23 +7559,23 @@ export function AdminPlansPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Refund Amount (₹ INR)</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Refund Amount (₹ INR)</label>
                     <input
                       type="number"
                       required
                       value={refundAmountInput}
                       onChange={(e) => setRefundAmountInput(e.target.value)}
                       placeholder="e.g. 45000"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-nebula-steel text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Refund Method</label>
+                    <label className="block text-xs font-bold text-slate-100 mb-1">Refund Method</label>
                     <select
                       value={refundMethodInput}
                       onChange={(e) => setRefundMethodInput(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
+                      className="w-full px-3 py-2.5 rounded-xl border border-nebula-steel text-xs font-medium text-white bg-nebula-surface"
                     >
                       <option value="Original Payment Gateway (Stripe ACH / Card)">Original Payment Gateway (Stripe / ACH)</option>
                       <option value="Direct Bank Wire / IMPS / RTGS">Direct Bank Transfer (IMPS / RTGS)</option>
@@ -7583,11 +7585,11 @@ export function AdminPlansPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Reason for Refund</label>
+                  <label className="block text-xs font-bold text-slate-100 mb-1">Reason for Refund</label>
                   <select
                     value={refundReasonInput}
                     onChange={(e) => setRefundReasonInput(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
+                    className="w-full px-3 py-2.5 rounded-xl border border-nebula-steel text-xs font-medium text-white bg-nebula-surface"
                   >
                     <option value="Contract Cancellation / Retainer Revocation">Contract Cancellation / Retainer Revocation</option>
                     <option value="SLA Non-Compliance / Delivery Disruption">SLA Non-Compliance / Delivery Disruption</option>
@@ -7596,11 +7598,11 @@ export function AdminPlansPage() {
                   </select>
                 </div>
 
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-nebula-steel">
                   <button
                     type="button"
                     onClick={() => setManageMode("edit")}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-nebula-steel text-xs font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
                   >
                     Go Back
                   </button>
@@ -7626,7 +7628,7 @@ export function AdminPlansPage() {
           onClick={() => setDealSuccessModal(null)}
         >
           <div
-            className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
+            className="relative w-full max-w-md rounded-3xl bg-nebula-surface p-6 sm:p-8 shadow-2xl border border-nebula-steel flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -7634,7 +7636,7 @@ export function AdminPlansPage() {
             <button
               type="button"
               onClick={() => setDealSuccessModal(null)}
-              className="absolute top-4 right-4 size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-4 right-4 size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist hover:text-slate-100 flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Close modal"
             >
               <X className="size-4" />
@@ -7645,7 +7647,7 @@ export function AdminPlansPage() {
             </div>
 
             <h3 className="text-xl font-black text-white tracking-tight">{dealSuccessModal.title}</h3>
-            <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm">{dealSuccessModal.message}</p>
+            <p className="text-xs sm:text-sm text-slate-100 mt-2 leading-relaxed max-w-sm">{dealSuccessModal.message}</p>
 
             <div className="w-full mt-6">
               <button

@@ -82,6 +82,9 @@ export const PortalSupportPage = lazyPage(() =>
 export const PortalAccountPage = lazyPage(() =>
   import("../pages/portal/PortalAccountPage").then((m) => m.PortalAccountPage),
 );
+export const PortalBrandDNAPage = lazyPage(() =>
+  import("../pages/portal/PortalBrandDNAPage").then((m) => m.PortalBrandDNAPage),
+);
 export const PortalLibraryPage = lazyPage(() =>
   import("../pages/portal/PortalLibraryPage").then((m) => m.PortalLibraryPage),
 );

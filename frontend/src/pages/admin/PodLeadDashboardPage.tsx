@@ -156,7 +156,7 @@ export function PodLeadDashboardPage() {
     const newDeliverable = {
       id: `del-${Date.now()}`,
       client: clientName.toUpperCase(),
-      clientBadgeColor: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      clientBadgeColor: "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30",
       talent: assigneeName,
       format: assignForm.format,
       due: "Due in 24h",
@@ -190,7 +190,7 @@ export function PodLeadDashboardPage() {
     return {
       name: memberName,
       avatar: (memberName || "SP").slice(0, 2).toUpperCase(),
-      avatarBg: "bg-[#7FA0D6]",
+      avatarBg: "bg-nebula-glow",
       role: member?.role || member?.craft_title || "Specialist",
       assignment: `${member?.role || member?.craft_title || "Specialist"} · ${podName} Active`,
       tasksCount: `${tasksCount} Tasks`,
@@ -229,7 +229,7 @@ export function PodLeadDashboardPage() {
   }
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
+    <div data-surface="ops" className="min-h-screen bg-nebula-navy text-white font-sans flex flex-col">
       {/* Top Header Navigation */}
       <AdminTopHeader title="Team Details" activeTab="Team Details" />
 
@@ -262,8 +262,8 @@ export function PodLeadDashboardPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             {isSuperOrAdmin && data?.available_pods && (
-              <div className="flex items-center gap-1 bg-[#161F2D] border border-[#2A3446]/80 rounded-xl px-2.5 py-1 shadow-2xs text-xs font-bold">
-                <span className="text-[#97A0B3]">Pod:</span>
+              <div className="flex items-center gap-1 bg-nebula-surface border border-nebula-steel/80 rounded-xl px-2.5 py-1 shadow-2xs text-xs font-bold">
+                <span className="text-nebula-mist">Pod:</span>
                 {data.available_pods.map((p) => (
                   <button
                     key={p.id}
@@ -271,7 +271,7 @@ export function PodLeadDashboardPage() {
                     className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-all ${
                       (selectedPodKey === p.key || (!selectedPodKey && data.pod.id === p.id))
                         ? "bg-blue-600 text-white shadow-2xs"
-                        : "text-[#F1F5F9] hover:bg-[#161F2D]"
+                        : "text-slate-100 hover:bg-nebula-surface"
                     }`}
                   >
                     {p.letter}
@@ -282,14 +282,14 @@ export function PodLeadDashboardPage() {
 
             <button
               onClick={() => setStandupModalOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446]/80 hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-nebula-surface border border-nebula-steel/80 hover:bg-nebula-navy text-slate-100 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
             >
-              <FileText className="size-3.5 text-[#97A0B3]" />
+              <FileText className="size-3.5 text-nebula-mist" />
               Log Standup
             </button>
             <button
               onClick={() => setAssignModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
             >
               <Plus className="size-3.5" />
               Assign Deliverable
@@ -304,21 +304,21 @@ export function PodLeadDashboardPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.05 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
+            className="bg-nebula-surface rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-nebula-steel/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Active Pod Capacity</span>
-              <div className="size-6 sm:size-7 rounded-lg bg-[#7FA0D6]/20 text-[#7FA0D6] flex items-center justify-center">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-nebula-mist">Active Pod Capacity</span>
+              <div className="size-6 sm:size-7 rounded-lg bg-nebula-glow/20 text-nebula-glow flex items-center justify-center">
                 <Users className="size-3 sm:size-3.5" />
               </div>
             </div>
             <div>
               <div className="flex items-baseline gap-1.5 mb-1">
                 <span className="text-lg sm:text-xl font-black text-white">4 / 4</span>
-                <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">Members Active</span>
+                <span className="text-[10.5px] sm:text-[11px] font-bold text-nebula-mist">Members Active</span>
               </div>
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-[#2A3446]">
-                <span className="font-bold text-[#F1F5F9]">100% Bandwidth</span>
+              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-nebula-steel">
+                <span className="font-bold text-slate-100">100% Bandwidth</span>
                 <span className="px-1.5 py-0.2 rounded-full text-[8.5px] sm:text-[9px] font-bold bg-emerald-950/40 text-emerald-400 border border-emerald-500/30">
                   ● Optimal Flow
                 </span>
@@ -331,10 +331,10 @@ export function PodLeadDashboardPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
+            className="bg-nebula-surface rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-nebula-steel/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Today's Review Queue</span>
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-nebula-mist">Today's Review Queue</span>
               <div className="size-6 sm:size-7 rounded-lg bg-rose-950/40 text-rose-400 flex items-center justify-center">
                 <MessageSquare className="size-3 sm:size-3.5" />
               </div>
@@ -342,13 +342,13 @@ export function PodLeadDashboardPage() {
             <div>
               <div className="flex items-baseline gap-1.5 mb-1">
                 <span className="text-lg sm:text-xl font-black text-white">6</span>
-                <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">Pending Review</span>
+                <span className="text-[10.5px] sm:text-[11px] font-bold text-nebula-mist">Pending Review</span>
               </div>
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-[#2A3446]">
+              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-nebula-steel">
                 <span className="font-bold text-rose-600 flex items-center gap-1">
                   ▲ 2 Urgent
                 </span>
-                <span className="font-bold text-[#97A0B3]">Avg: 38m</span>
+                <span className="font-bold text-nebula-mist">Avg: 38m</span>
               </div>
             </div>
           </motion.div>
@@ -358,10 +358,10 @@ export function PodLeadDashboardPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.15 }}
-            className="bg-[#161F2D] rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-[#2A3446]/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
+            className="bg-nebula-surface rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-nebula-steel/80 shadow-2xs flex flex-col justify-between hover-card-innovative"
           >
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">Pod Leave & Attendance</span>
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-nebula-mist">Pod Leave & Attendance</span>
               <div className="size-6 sm:size-7 rounded-lg bg-purple-950/40 text-purple-400 flex items-center justify-center">
                 <Calendar className="size-3 sm:size-3.5" />
               </div>
@@ -369,11 +369,11 @@ export function PodLeadDashboardPage() {
             <div>
               <div className="flex items-baseline gap-1.5 mb-1">
                 <span className="text-lg sm:text-xl font-black text-white">0</span>
-                <span className="text-[10.5px] sm:text-[11px] font-bold text-[#97A0B3]">On Leave Today</span>
+                <span className="text-[10.5px] sm:text-[11px] font-bold text-nebula-mist">On Leave Today</span>
               </div>
-              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-[#2A3446]">
-                <span className="font-bold text-[#F1F5F9]">1 Upcoming Tomorrow</span>
-                <Link to="/lead/schedule" className="font-bold text-[#7FA0D6] hover:underline flex items-center gap-0.5">
+              <div className="flex items-center justify-between text-[10px] sm:text-[11px] pt-1.5 border-t border-nebula-steel">
+                <span className="font-bold text-slate-100">1 Upcoming Tomorrow</span>
+                <Link to="/lead/schedule" className="font-bold text-nebula-glow hover:underline flex items-center gap-0.5">
                   View <ChevronRight className="size-3" />
                 </Link>
               </div>
@@ -386,24 +386,24 @@ export function PodLeadDashboardPage() {
           {/* LEFT 2 COLUMNS */}
           <div className="lg:col-span-2 space-y-3.5 sm:space-y-4">
             {/* Section A: Pod Team Roster & Live Workload */}
-            <div id="roster" className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#2A3446] gap-2">
+            <div id="roster" className="bg-nebula-surface rounded-2xl p-4 sm:p-5 border border-nebula-steel/80 shadow-2xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-nebula-steel gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-7 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black text-xs">
+                  <div className="size-7 rounded-lg bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-black text-xs">
                     <Users className="size-3.5" />
                   </div>
                   <div>
                     <h2 className="text-sm font-black text-white">{podName} Team Roster & Live Workload</h2>
-                    <p className="text-[11px] text-[#97A0B3] font-medium">
+                    <p className="text-[11px] text-nebula-mist font-medium">
                       4 Core talents deployed across active sprints
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="text-[#97A0B3] font-medium text-[11px]">Updated live</span>
+                  <span className="text-nebula-mist font-medium text-[11px]">Updated live</span>
                   <button
                     onClick={() => showToast("Workload balance algorithm analyzed. Current distributions optimal.", "success")}
-                    className="font-bold text-[#7FA0D6] hover:text-blue-800 flex items-center gap-1 cursor-pointer text-xs"
+                    className="font-bold text-nebula-glow hover:text-blue-800 flex items-center gap-1 cursor-pointer text-xs"
                   >
                     Balance Loads <ArrowLeftRight className="size-3" />
                   </button>
@@ -413,7 +413,7 @@ export function PodLeadDashboardPage() {
               {/* Roster Items */}
               <div className="divide-y divide-slate-100">
                 {teamRoster.map((member) => (
-                  <div key={member.name} className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:bg-[#0B111C]/50 px-2 rounded-xl transition-colors">
+                  <div key={member.name} className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 hover:bg-nebula-navy/50 px-2 rounded-xl transition-colors">
                     <div className="flex items-center gap-2.5 min-w-0 sm:min-w-[200px]">
                       <div className={`size-8 rounded-xl ${member.avatarBg} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs`}>
                         {member.avatar}
@@ -421,11 +421,11 @@ export function PodLeadDashboardPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs font-black text-white">{member.name}</span>
-                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-[#161F2D] text-[#F1F5F9]">
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-nebula-surface text-slate-100">
                             {member.role}
                           </span>
                         </div>
-                        <p className="text-[10px] text-[#97A0B3] font-medium truncate max-w-[220px]">
+                        <p className="text-[10px] text-nebula-mist font-medium truncate max-w-[220px]">
                           {member.assignment}
                         </p>
                       </div>
@@ -436,10 +436,10 @@ export function PodLeadDashboardPage() {
 
                       {/* Workload bar */}
                       <div className="w-28 flex flex-col gap-0.5 shrink-0">
-                        <div className="flex justify-between text-[9px] font-bold text-[#97A0B3]">
+                        <div className="flex justify-between text-[9px] font-bold text-nebula-mist">
                           <span>{member.loadLabel}</span>
                         </div>
-                        <div className="w-full h-1.5 bg-[#161F2D] rounded-full overflow-hidden">
+                        <div className="w-full h-1.5 bg-nebula-surface rounded-full overflow-hidden">
                           <div
                             className={`h-full ${member.loadColor} rounded-full transition-all`}
                             style={{ width: `${member.loadPercent}%` }}
@@ -447,14 +447,14 @@ export function PodLeadDashboardPage() {
                         </div>
                       </div>
 
-                      <Link to="/lead/tasks" className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg hover:bg-[#161F2D] transition-colors">
+                      <Link to="/lead/tasks" className="p-1 text-nebula-mist hover:text-slate-100 rounded-lg hover:bg-nebula-surface transition-colors">
                         <ArrowRight className="size-3.5" />
                       </Link>
                     </div>
                   </div>
                 ))}
                 {teamRoster.length === 0 && (
-                  <div className="py-6 text-center text-xs text-[#97A0B3]">
+                  <div className="py-6 text-center text-xs text-nebula-mist">
                     No specialists currently assigned to this pod.
                   </div>
                 )}
@@ -462,10 +462,10 @@ export function PodLeadDashboardPage() {
             </div>
 
             {/* Section B: Deliverables Pending Lead Sign-off */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs space-y-3.5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#2A3446] gap-2">
+            <div className="bg-nebula-surface rounded-2xl p-4 sm:p-5 border border-nebula-steel/80 shadow-2xs space-y-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-nebula-steel gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-7 rounded-lg bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black">
+                  <div className="size-7 rounded-lg bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-black">
                     <CheckCircle2 className="size-3.5" />
                   </div>
                   <div>
@@ -479,7 +479,7 @@ export function PodLeadDashboardPage() {
                         {deliverablesList.length > 0 ? `${deliverablesList.length} Critical` : "0 Pending"}
                       </span>
                     </div>
-                    <p className="text-[11px] text-[#97A0B3] font-medium">
+                    <p className="text-[11px] text-nebula-mist font-medium">
                       Quality rubric approval required before client sync
                     </p>
                   </div>
@@ -489,25 +489,25 @@ export function PodLeadDashboardPage() {
               {/* Deliverable Action Cards */}
               <div className="space-y-2.5">
                 {deliverablesList.length === 0 ? (
-                  <div className="bg-[#0B111C] border border-dashed border-[#2A3446] rounded-2xl p-6 text-center space-y-1.5">
+                  <div className="bg-nebula-navy border border-dashed border-nebula-steel rounded-2xl p-6 text-center space-y-1.5">
                     <CheckCircle2 className="size-6 text-emerald-500 mx-auto" />
                     <p className="text-xs font-bold text-white">All deliverables signed off!</p>
-                    <p className="text-[10px] text-[#97A0B3]">Zero pending review items in today's QA queue.</p>
+                    <p className="text-[10px] text-nebula-mist">Zero pending review items in today's QA queue.</p>
                   </div>
                 ) : (
                   deliverablesList.map((del) => (
                     <div
                       key={del.id}
-                      className="p-3.5 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:border-[#7FA0D6]/30 hover:shadow-2xs transition-all space-y-2.5"
+                      className="p-3.5 rounded-xl border border-nebula-steel bg-nebula-navy hover:border-nebula-glow/30 hover:shadow-2xs transition-all space-y-2.5"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-1.5">
                         <div className="flex items-center gap-1.5">
                           <span className={`px-2 py-0.2 rounded-full text-[9px] font-black tracking-wider border ${del.clientBadgeColor}`}>
                             {del.client}
                           </span>
-                          <span className="text-[11px] font-bold text-[#F1F5F9]">· {del.talent}</span>
+                          <span className="text-[11px] font-bold text-slate-100">· {del.talent}</span>
                         </div>
-                        <span className={`text-[11px] font-bold flex items-center gap-1 ${del.dueUrgent ? "text-amber-600" : "text-[#97A0B3]"}`}>
+                        <span className={`text-[11px] font-bold flex items-center gap-1 ${del.dueUrgent ? "text-amber-600" : "text-nebula-mist"}`}>
                           <Clock className="size-3" />
                           {del.due}
                         </span>
@@ -517,28 +517,28 @@ export function PodLeadDashboardPage() {
                         <h3 className="text-xs font-black text-white">{del.title}</h3>
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
                           {del.tags.map((tag: string) => (
-                            <span key={tag} className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446]/80 text-[10px] font-bold text-[#F1F5F9]">
+                            <span key={tag} className="px-2 py-0.5 rounded-md bg-nebula-surface border border-nebula-steel/80 text-[10px] font-bold text-slate-100">
                               {tag}
                             </span>
                           ))}
                         </div>
-                        <p className="text-[11px] text-[#97A0B3] italic mt-1.5 font-medium">
+                        <p className="text-[11px] text-nebula-mist italic mt-1.5 font-medium">
                           "{del.notes}"
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2A3446]/60">
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-nebula-steel/60">
                         <button
                           onClick={() => {
                             setRevisionModalItem({ id: del.id, title: del.title });
                           }}
-                          className="px-3 py-1.5 rounded-lg bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-[11px] font-bold transition-colors cursor-pointer"
+                          className="px-3 py-1.5 rounded-lg bg-nebula-surface border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-[11px] font-bold transition-colors cursor-pointer"
                         >
                           Request Revision
                         </button>
                         <button
                           onClick={() => handleApproveDeliverable(del)}
-                          className="px-3.5 py-1.5 rounded-lg bg-[#7FA0D6] hover:bg-blue-700 text-white text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
+                          className="px-3.5 py-1.5 rounded-lg bg-nebula-glow hover:bg-blue-700 text-white text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
                         >
                           <Check className="size-3" />
                           Approve & Send
@@ -555,7 +555,7 @@ export function PodLeadDashboardPage() {
           <div className="space-y-3.5 sm:space-y-4">
             {/* 1. Client SLA Warning / Status */}
             {deliverablesList.some((d) => d.dueUrgent) ? (
-              <div className="bg-gradient-to-br from-rose-950/40 via-red-950/20 to-[#161F2D] rounded-2xl p-4 border border-rose-500/30 shadow-2xs space-y-2.5">
+              <div className="bg-gradient-to-br from-rose-950/40 via-red-950/20 to-nebula-surface rounded-2xl p-4 border border-rose-500/30 shadow-2xs space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-rose-400 font-bold text-xs uppercase tracking-wider">
                     <ShieldAlert className="size-3.5 text-rose-400" />
@@ -567,24 +567,24 @@ export function PodLeadDashboardPage() {
                 </div>
 
                 <div>
-                  <span className="text-[11px] font-bold text-[#F1F5F9] block">{deliverablesList[0]?.title}</span>
+                  <span className="text-[11px] font-bold text-slate-100 block">{deliverablesList[0]?.title}</span>
                   <div className="text-xl font-black text-rose-500 tracking-tight mt-0.5">
                     {deliverablesList[0]?.due}
                   </div>
-                  <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed font-medium">
+                  <p className="text-[11px] text-slate-100 mt-1 leading-relaxed font-medium">
                     Review required to ensure client delivery SLA is fulfilled.
                   </p>
                 </div>
 
                 <Link
                   to="/lead/deliverables"
-                  className="w-full py-2 rounded-xl bg-[#0B111C] border border-rose-500/30 text-rose-400 hover:bg-rose-950/30 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors shadow-2xs"
+                  className="w-full py-2 rounded-xl bg-nebula-navy border border-rose-500/30 text-rose-400 hover:bg-rose-950/30 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors shadow-2xs"
                 >
                   Jump to Deliverable <ArrowRight className="size-3" />
                 </Link>
               </div>
             ) : (
-              <div className="bg-[#161F2D] rounded-2xl p-4 border border-emerald-500/30 shadow-2xs space-y-2.5">
+              <div className="bg-nebula-surface rounded-2xl p-4 border border-emerald-500/30 shadow-2xs space-y-2.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-xs uppercase tracking-wider">
                     <ShieldAlert className="size-3.5 text-emerald-400" />
@@ -595,11 +595,11 @@ export function PodLeadDashboardPage() {
                   </span>
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold text-[#F1F5F9] block">{podName} Pipeline</span>
+                  <span className="text-[11px] font-bold text-slate-100 block">{podName} Pipeline</span>
                   <div className="text-xl font-black text-emerald-400 tracking-tight mt-0.5">
                     100% On Track
                   </div>
-                  <p className="text-[11px] text-[#97A0B3] mt-1 leading-relaxed font-medium">
+                  <p className="text-[11px] text-nebula-mist mt-1 leading-relaxed font-medium">
                     Zero critical escalations. All sprint deliverables are tracking within SLA bounds.
                   </p>
                 </div>
@@ -607,10 +607,10 @@ export function PodLeadDashboardPage() {
             )}
 
             {/* 2. Leave & PTO Requests */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/80 shadow-2xs space-y-3">
+            <div className="bg-nebula-surface rounded-2xl p-4 border border-nebula-steel/80 shadow-2xs space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-white font-black text-xs">
-                  <CalendarDays className="size-3.5 text-[#7FA0D6]" />
+                  <CalendarDays className="size-3.5 text-nebula-glow" />
                   Leave & PTO Requests
                 </div>
                 {pendingLeaveRequests.length > 0 ? (
@@ -630,11 +630,11 @@ export function PodLeadDashboardPage() {
                     <Check className="size-3" />
                   </div>
                   <p className="text-xs font-black text-white">All Leave Reviewed</p>
-                  <p className="text-[10px] text-[#97A0B3] font-medium">Coverage confirmed for upcoming PTO.</p>
+                  <p className="text-[10px] text-nebula-mist font-medium">Coverage confirmed for upcoming PTO.</p>
                 </div>
               ) : (
                 pendingLeaveRequests.map((leave) => (
-                  <div key={leave.id} className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-2">
+                  <div key={leave.id} className="p-3 rounded-xl bg-nebula-navy border border-nebula-steel space-y-2">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
                         <div className="size-7 rounded-lg bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">
@@ -642,14 +642,14 @@ export function PodLeadDashboardPage() {
                         </div>
                         <div>
                           <h4 className="text-xs font-black text-white">{leave.name}</h4>
-                          <span className="text-[9px] text-[#97A0B3] font-bold">{leave.type}</span>
+                          <span className="text-[9px] text-nebula-mist font-bold">{leave.type}</span>
                         </div>
                       </div>
-                      <span className="text-[9px] font-bold text-[#97A0B3]">{leave.dates}</span>
+                      <span className="text-[9px] font-bold text-nebula-mist">{leave.dates}</span>
                     </div>
 
-                    <div className="text-[10px] text-[#F1F5F9] bg-[#161F2D] p-2 rounded-lg border border-[#2A3446] font-medium">
-                      <span className="font-bold text-[#F1F5F9] block mb-0.5">Cover: {leave.cover}</span>
+                    <div className="text-[10px] text-slate-100 bg-nebula-surface p-2 rounded-lg border border-nebula-steel font-medium">
+                      <span className="font-bold text-slate-100 block mb-0.5">Cover: {leave.cover}</span>
                       "{leave.note}"
                     </div>
 
@@ -657,14 +657,14 @@ export function PodLeadDashboardPage() {
                       <button
                         type="button"
                         onClick={() => handleDeclineLeave(leave.id, leave.name)}
-                        className="flex-1 py-1.5 rounded-lg bg-[#161F2D] border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-[10px] font-bold transition-colors cursor-pointer"
+                        className="flex-1 py-1.5 rounded-lg bg-nebula-surface border border-nebula-steel hover:bg-nebula-navy text-slate-100 text-[10px] font-bold transition-colors cursor-pointer"
                       >
                         Decline
                       </button>
                       <button
                         type="button"
                         onClick={() => handleApproveLeave(leave.id, leave.name)}
-                        className="flex-1 py-1.5 rounded-lg bg-[#7FA0D6] hover:bg-blue-700 text-white text-[10px] font-bold transition-colors cursor-pointer shadow-2xs"
+                        className="flex-1 py-1.5 rounded-lg bg-nebula-glow hover:bg-blue-700 text-white text-[10px] font-bold transition-colors cursor-pointer shadow-2xs"
                       >
                         Approve Leave
                       </button>
@@ -675,28 +675,28 @@ export function PodLeadDashboardPage() {
             </div>
 
             {/* 3. Client Velocity Tracks */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/80 shadow-2xs space-y-2.5">
+            <div className="bg-nebula-surface rounded-2xl p-4 border border-nebula-steel/80 shadow-2xs space-y-2.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-white font-black text-xs">
-                  <TrendingUp className="size-3.5 text-[#7FA0D6]" />
+                  <TrendingUp className="size-3.5 text-nebula-glow" />
                   Client Velocity Tracks
                 </div>
-                <span className="text-[10px] font-bold text-[#97A0B3]">Sprint Pipeline</span>
+                <span className="text-[10px] font-bold text-nebula-mist">Sprint Pipeline</span>
               </div>
 
               <div className="space-y-2.5">
                 {(!data?.clients || data.clients.length === 0) ? (
-                  <div className="py-4 text-center text-xs text-[#97A0B3]">
+                  <div className="py-4 text-center text-xs text-nebula-mist">
                     No active clients assigned to pod
                   </div>
                 ) : (
                   data.clients.map((c) => (
                     <div key={c.id} className="space-y-1">
                       <div className="flex justify-between text-[11px] font-bold">
-                        <span className="text-[#F1F5F9]">{c.name}</span>
+                        <span className="text-slate-100">{c.name}</span>
                         <span className="text-emerald-400">On Track</span>
                       </div>
-                      <div className="h-1.5 w-full bg-[#161F2D] rounded-full overflow-hidden">
+                      <div className="h-1.5 w-full bg-nebula-surface rounded-full overflow-hidden">
                         <div className="h-full bg-emerald-500 rounded-full" style={{ width: "100%" }} />
                       </div>
                     </div>
@@ -704,62 +704,62 @@ export function PodLeadDashboardPage() {
                 )}
               </div>
 
-              <div className="pt-2 border-t border-[#2A3446] flex items-center justify-between text-[11px]">
-                <span className="font-bold text-[#97A0B3]">Target</span>
+              <div className="pt-2 border-t border-nebula-steel flex items-center justify-between text-[11px]">
+                <span className="font-bold text-nebula-mist">Target</span>
                 <span className="font-black text-white">40 Assets · 80%</span>
               </div>
             </div>
 
             {/* 4. Pod Quick Actions */}
-            <div className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/80 shadow-2xs space-y-2.5">
+            <div className="bg-nebula-surface rounded-2xl p-4 border border-nebula-steel/80 shadow-2xs space-y-2.5">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-black text-white">Pod Quick Actions</h3>
-                <span className="text-[9px] font-bold text-[#97A0B3]">Ops Shortcuts</span>
+                <span className="text-[9px] font-bold text-nebula-mist">Ops Shortcuts</span>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setAssignModalOpen(true)}
-                  className="p-2.5 rounded-xl bg-[#0B111C] hover:bg-[#7FA0D6]/15/70 border border-[#2A3446] hover:border-[#7FA0D6]/30 text-left transition-all cursor-pointer group"
+                  className="p-2.5 rounded-xl bg-nebula-navy hover:bg-nebula-glow/15/70 border border-nebula-steel hover:border-nebula-glow/30 text-left transition-all cursor-pointer group"
                 >
-                  <div className="size-6 rounded-lg bg-[#7FA0D6]/20 text-[#7FA0D6] flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
+                  <div className="size-6 rounded-lg bg-nebula-glow/20 text-nebula-glow flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
                     <Plus className="size-3" />
                   </div>
                   <span className="text-[11px] font-black text-white block">Assign Task</span>
-                  <span className="text-[9px] text-[#97A0B3] font-medium">Route to member</span>
+                  <span className="text-[9px] text-nebula-mist font-medium">Route to member</span>
                 </button>
 
                 <button
                   onClick={() => setBlockedModalOpen(true)}
-                  className="p-2.5 rounded-xl bg-[#0B111C] hover:bg-rose-50/70 border border-[#2A3446] hover:border-rose-200 text-left transition-all cursor-pointer group"
+                  className="p-2.5 rounded-xl bg-nebula-navy hover:bg-rose-50/70 border border-nebula-steel hover:border-rose-200 text-left transition-all cursor-pointer group"
                 >
                   <div className="size-6 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
                     <AlertTriangle className="size-3" />
                   </div>
                   <span className="text-[11px] font-black text-white block">Log Issue</span>
-                  <span className="text-[9px] text-[#97A0B3] font-medium">Escalate swiftly</span>
+                  <span className="text-[9px] text-nebula-mist font-medium">Escalate swiftly</span>
                 </button>
 
                 <button
                   onClick={() => setReinforcementsModalOpen(true)}
-                  className="p-2.5 rounded-xl bg-[#0B111C] hover:bg-purple-50/70 border border-[#2A3446] hover:border-purple-200 text-left transition-all cursor-pointer group"
+                  className="p-2.5 rounded-xl bg-nebula-navy hover:bg-purple-50/70 border border-nebula-steel hover:border-purple-200 text-left transition-all cursor-pointer group"
                 >
                   <div className="size-6 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
                     <Users className="size-3" />
                   </div>
                   <span className="text-[11px] font-black text-white block">Reinforce</span>
-                  <span className="text-[9px] text-[#97A0B3] font-medium">Request talent</span>
+                  <span className="text-[9px] text-nebula-mist font-medium">Request talent</span>
                 </button>
 
                 <button
                   onClick={handleExportWeeklyReport}
-                  className="p-2.5 rounded-xl bg-[#0B111C] hover:bg-emerald-50/70 border border-[#2A3446] hover:border-emerald-200 text-left transition-all cursor-pointer group"
+                  className="p-2.5 rounded-xl bg-nebula-navy hover:bg-emerald-50/70 border border-nebula-steel hover:border-emerald-200 text-left transition-all cursor-pointer group"
                 >
                   <div className="size-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
                     <FileText className="size-3" />
                   </div>
                   <span className="text-[11px] font-black text-white block">Export CSV</span>
-                  <span className="text-[9px] text-[#97A0B3] font-medium">Weekly report</span>
+                  <span className="text-[9px] text-nebula-mist font-medium">Weekly report</span>
                 </button>
               </div>
             </div>
@@ -770,14 +770,14 @@ export function PodLeadDashboardPage() {
       {/* Revision Modal */}
       {revisionModalItem && (
         <div className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4">
+          <div className="w-full max-w-lg bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-black text-white">Request Revision</h3>
-              <button onClick={() => setRevisionModalItem(null)} className="text-[#97A0B3] hover:text-[#F1F5F9]">
+              <button onClick={() => setRevisionModalItem(null)} className="text-nebula-mist hover:text-slate-100">
                 <X className="size-5" />
               </button>
             </div>
-            <p className="text-xs text-[#97A0B3]">
+            <p className="text-xs text-nebula-mist">
               Provide feedback for <span className="font-bold text-white">{revisionModalItem.title}</span>:
             </p>
             <textarea
@@ -785,12 +785,12 @@ export function PodLeadDashboardPage() {
               value={revisionFeedback}
               onChange={(e) => setRevisionFeedback(e.target.value)}
               placeholder="Specify required corrections (e.g. contrast adjustment on slide 3, fix audio sync at 0:12)..."
-              className="w-full text-xs p-3.5 rounded-2xl border border-[#2A3446] bg-[#0B111C] focus:bg-[#161F2D] focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              className="w-full text-xs p-3.5 rounded-2xl border border-nebula-steel bg-nebula-navy focus:bg-nebula-surface focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
             />
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setRevisionModalItem(null)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition"
+                className="px-4 py-2 rounded-xl bg-nebula-surface text-slate-100 text-xs font-bold hover:bg-slate-200 transition"
               >
                 Cancel
               </button>
@@ -808,14 +808,14 @@ export function PodLeadDashboardPage() {
       {/* Daily Standup Modal */}
       {standupModalOpen && (
         <div className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4">
+          <div className="w-full max-w-lg bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-black text-white">Log Pod A Daily Standup</h3>
-              <button onClick={() => setStandupModalOpen(false)} className="text-[#97A0B3] hover:text-[#F1F5F9]">
+              <button onClick={() => setStandupModalOpen(false)} className="text-nebula-mist hover:text-slate-100">
                 <X className="size-5" />
               </button>
             </div>
-            <p className="text-xs text-[#97A0B3]">
+            <p className="text-xs text-nebula-mist">
               Record attendance notes, sprint blockers, and daily velocity commitments:
             </p>
             <textarea
@@ -823,12 +823,12 @@ export function PodLeadDashboardPage() {
               value={standupNote}
               onChange={(e) => setStandupNote(e.target.value)}
               placeholder="All pod members present. Active sprint tasks in production. No critical blockers."
-              className="w-full text-xs p-3.5 rounded-2xl border border-[#2A3446] bg-[#0B111C] focus:bg-[#161F2D] focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              className="w-full text-xs p-3.5 rounded-2xl border border-nebula-steel bg-nebula-navy focus:bg-nebula-surface focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
             />
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setStandupModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition"
+                className="px-4 py-2 rounded-xl bg-nebula-surface text-slate-100 text-xs font-bold hover:bg-slate-200 transition"
               >
                 Cancel
               </button>
@@ -850,31 +850,31 @@ export function PodLeadDashboardPage() {
       {/* Assign Task Modal */}
       {assignModalOpen && (
         <div className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4">
+          <div className="w-full max-w-lg bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-black text-white">Assign Deliverable / Task</h3>
-              <button onClick={() => setAssignModalOpen(false)} className="text-[#97A0B3] hover:text-[#F1F5F9]">
+              <button onClick={() => setAssignModalOpen(false)} className="text-nebula-mist hover:text-slate-100">
                 <X className="size-5" />
               </button>
             </div>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Task Title</label>
+                <label className="font-bold text-slate-100 block mb-1">Task Title</label>
                 <input
                   type="text"
                   value={assignForm.title}
                   onChange={(e) => setAssignForm({ ...assignForm, title: e.target.value })}
                   placeholder="e.g. 3D Product Loop Animation (15s)"
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium"
+                  className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium"
                 />
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Format</label>
+                  <label className="font-bold text-slate-100 block mb-1">Format</label>
                   <select
                     value={assignForm.format}
                     onChange={(e) => setAssignForm({ ...assignForm, format: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium"
+                    className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium"
                   >
                     <option value="Reel">Reel</option>
                     <option value="Story">Story</option>
@@ -882,11 +882,11 @@ export function PodLeadDashboardPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Client</label>
+                  <label className="font-bold text-slate-100 block mb-1">Client</label>
                   <select
                     value={assignForm.client}
                     onChange={(e) => setAssignForm({ ...assignForm, client: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white"
+                    className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium text-white"
                   >
                     {(!data?.clients || data.clients.length === 0) ? (
                       <option value="">No clients assigned</option>
@@ -898,11 +898,11 @@ export function PodLeadDashboardPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Specialist</label>
+                  <label className="font-bold text-slate-100 block mb-1">Specialist</label>
                   <select
                     value={assignForm.assignee}
                     onChange={(e) => setAssignForm({ ...assignForm, assignee: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white"
+                    className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium text-white"
                   >
                     {(!data?.members || data.members.length === 0) ? (
                       <option value="">No specialists registered</option>
@@ -919,7 +919,7 @@ export function PodLeadDashboardPage() {
               <button
                 type="button"
                 onClick={() => setAssignModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-nebula-surface text-slate-100 text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -943,41 +943,41 @@ export function PodLeadDashboardPage() {
           aria-modal="true"
           className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
         >
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="w-full max-w-lg bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="size-9 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
                   <AlertTriangle className="size-4.5" />
                 </div>
                 <div>
                   <h3 className="text-base font-black text-white">Log Blocked Issue</h3>
-                  <p className="text-xs text-[#97A0B3] font-medium">Escalate production blockers to Studio Operations</p>
+                  <p className="text-xs text-nebula-mist font-medium">Escalate production blockers to Studio Operations</p>
                 </div>
               </div>
-              <button onClick={() => setBlockedModalOpen(false)} className="text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer">
+              <button onClick={() => setBlockedModalOpen(false)} className="text-nebula-mist hover:text-slate-100 cursor-pointer">
                 <X className="size-5" />
               </button>
             </div>
 
             <div className="space-y-3.5 text-xs">
               <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Issue Title</label>
+                <label className="font-bold text-slate-100 block mb-1">Issue Title</label>
                 <input
                   type="text"
                   value={blockedForm.title}
                   onChange={(e) => setBlockedForm({ ...blockedForm, title: e.target.value })}
                   placeholder="e.g. Missing 3D CAD assets from client for Holiday Drop"
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D] focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                  className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium text-white focus:bg-nebula-surface focus:ring-2 focus:ring-rose-500 focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Affected Client</label>
+                  <label className="font-bold text-slate-100 block mb-1">Affected Client</label>
                   <select
                     value={blockedForm.client}
                     onChange={(e) => setBlockedForm({ ...blockedForm, client: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
+                    className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium text-white focus:bg-nebula-surface"
                   >
                     {(!data?.clients || data.clients.length === 0) ? (
                       <option value="">No clients assigned</option>
@@ -989,11 +989,11 @@ export function PodLeadDashboardPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Severity</label>
+                  <label className="font-bold text-slate-100 block mb-1">Severity</label>
                   <select
                     value={blockedForm.severity}
                     onChange={(e) => setBlockedForm({ ...blockedForm, severity: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
+                    className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium text-white focus:bg-nebula-surface"
                   >
                     <option value="Blocker (P0)">Blocker (P0 - SLA Risk)</option>
                     <option value="High (P1)">High (P1)</option>
@@ -1003,22 +1003,22 @@ export function PodLeadDashboardPage() {
               </div>
 
               <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Blocker Details & Action Required</label>
+                <label className="font-bold text-slate-100 block mb-1">Blocker Details & Action Required</label>
                 <textarea
                   rows={3}
                   value={blockedForm.details}
                   onChange={(e) => setBlockedForm({ ...blockedForm, details: e.target.value })}
                   placeholder="Explain what is blocking the deliverable and what Ops Director intervention is needed..."
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D] focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                  className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium text-white focus:bg-nebula-surface focus:ring-2 focus:ring-rose-500 focus:outline-none"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-3 border-t border-[#2A3446]">
+            <div className="flex justify-end gap-3 pt-3 border-t border-nebula-steel">
               <button
                 type="button"
                 onClick={() => setBlockedModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-nebula-surface text-slate-100 text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -1048,18 +1048,18 @@ export function PodLeadDashboardPage() {
           aria-modal="true"
           className="fixed inset-0 w-screen h-screen z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
         >
-          <div className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+          <div className="w-full max-w-lg bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="size-9 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
                   <Users className="size-4.5" />
                 </div>
                 <div>
                   <h3 className="text-base font-black text-white">Request Specialist Reinforcements</h3>
-                  <p className="text-xs text-[#97A0B3] font-medium">Request studio capacity surge for upcoming milestones</p>
+                  <p className="text-xs text-nebula-mist font-medium">Request studio capacity surge for upcoming milestones</p>
                 </div>
               </div>
-              <button onClick={() => setReinforcementsModalOpen(false)} className="text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer">
+              <button onClick={() => setReinforcementsModalOpen(false)} className="text-nebula-mist hover:text-slate-100 cursor-pointer">
                 <X className="size-5" />
               </button>
             </div>
@@ -1067,11 +1067,11 @@ export function PodLeadDashboardPage() {
             <div className="space-y-3.5 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Craft Role Needed</label>
+                  <label className="font-bold text-slate-100 block mb-1">Craft Role Needed</label>
                   <select
                     value={reinforceForm.role}
                     onChange={(e) => setReinforceForm({ ...reinforceForm, role: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
+                    className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium text-white focus:bg-nebula-surface"
                   >
                     <option value="3D Motion Designer">3D Motion Designer</option>
                     <option value="Video Editor & Colorist">Video Editor & Colorist</option>
@@ -1080,11 +1080,11 @@ export function PodLeadDashboardPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="font-bold text-[#F1F5F9] block mb-1">Bandwidth Surge</label>
+                  <label className="font-bold text-slate-100 block mb-1">Bandwidth Surge</label>
                   <select
                     value={reinforceForm.hours}
                     onChange={(e) => setReinforceForm({ ...reinforceForm, hours: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
+                    className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium text-white focus:bg-nebula-surface"
                   >
                     <option value="+20 hrs/week">+20 hrs/week (Part-time)</option>
                     <option value="+40 hrs/week">+40 hrs/week (Dedicated Surge)</option>
@@ -1094,11 +1094,11 @@ export function PodLeadDashboardPage() {
               </div>
 
               <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Required Starting</label>
+                <label className="font-bold text-slate-100 block mb-1">Required Starting</label>
                 <select
                   value={reinforceForm.urgency}
                   onChange={(e) => setReinforceForm({ ...reinforceForm, urgency: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
+                  className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium text-white focus:bg-nebula-surface"
                 >
                   <option value="Immediate (Today)">Immediate (Today - Critical Bandwidth)</option>
                   <option value="Next Sprint Cycle">Next Sprint Cycle</option>
@@ -1107,22 +1107,22 @@ export function PodLeadDashboardPage() {
               </div>
 
               <div>
-                <label className="font-bold text-[#F1F5F9] block mb-1">Workload Surge Notes</label>
+                <label className="font-bold text-slate-100 block mb-1">Workload Surge Notes</label>
                 <textarea
                   rows={3}
                   value={reinforceForm.notes}
                   onChange={(e) => setReinforceForm({ ...reinforceForm, notes: e.target.value })}
                   placeholder="Explain reason for extra capacity (e.g. End-of-month deliverable batch surge)..."
-                  className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D] focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  className="w-full p-2.5 rounded-xl border border-nebula-steel bg-nebula-navy font-medium text-white focus:bg-nebula-surface focus:ring-2 focus:ring-purple-500 focus:outline-none"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-3 border-t border-[#2A3446]">
+            <div className="flex justify-end gap-3 pt-3 border-t border-nebula-steel">
               <button
                 type="button"
                 onClick={() => setReinforcementsModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-nebula-surface text-slate-100 text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
               >
                 Cancel
               </button>

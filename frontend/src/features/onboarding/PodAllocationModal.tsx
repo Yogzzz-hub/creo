@@ -131,15 +131,15 @@ export function PodAllocationModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-[#2A3446] bg-[#161F2D] p-6 sm:p-8 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)]"
+            className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-nebula-steel bg-nebula-surface p-6 sm:p-8 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)]"
           >
             {/* Soft radial glow */}
-            <div className="pointer-events-none absolute -top-32 left-1/2 size-80 -translate-x-1/2 rounded-full bg-[#7FA0D6]/15 blur-3xl" />
+            <div className="pointer-events-none absolute -top-32 left-1/2 size-80 -translate-x-1/2 rounded-full bg-nebula-glow/15 blur-3xl" />
 
             <div className="relative">
               {/* Header */}
               <div className="flex items-center gap-4">
-                <div className="relative flex size-12 shrink-0 items-center justify-center rounded-2xl border border-[#2A3446] bg-[#0B111C]">
+                <div className="relative flex size-12 shrink-0 items-center justify-center rounded-2xl border border-nebula-steel bg-nebula-navy">
                   <AnimatePresence mode="wait" initial={false}>
                     {status === "error" ? (
                       <motion.span
@@ -147,7 +147,7 @@ export function PodAllocationModal({
                         initial={{ scale: 0.6, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                       >
-                        <AlertCircle className="size-6 text-[#D8BF9B]" />
+                        <AlertCircle className="size-6 text-nebula-sand" />
                       </motion.span>
                     ) : showSuccess ? (
                       <motion.span
@@ -155,7 +155,7 @@ export function PodAllocationModal({
                         initial={{ scale: 0.4, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ type: "spring", stiffness: 380, damping: 18 }}
-                        className="flex size-9 items-center justify-center rounded-full bg-[#7FA0D6] text-[#0B111C] shadow-[0_0_24px_rgba(127,160,214,0.6)]"
+                        className="flex size-9 items-center justify-center rounded-full bg-nebula-glow text-nebula-navy shadow-[0_0_24px_rgba(127,160,214,0.6)]"
                       >
                         <Check className="size-5" strokeWidth={3} />
                       </motion.span>
@@ -164,19 +164,19 @@ export function PodAllocationModal({
                         key="spin"
                         className="relative flex size-6 items-center justify-center"
                       >
-                        <span className="absolute inset-0 rounded-full border-2 border-[#2A3446]" />
-                        <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-[#7FA0D6]" />
+                        <span className="absolute inset-0 rounded-full border-2 border-nebula-steel" />
+                        <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-nebula-glow" />
                       </motion.span>
                     )}
                   </AnimatePresence>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#7FA0D6]">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-nebula-glow">
                     Step 4 · Creative pod
                   </p>
                   <h2
                     id="pod-allocation-title"
-                    className="mt-1 text-lg sm:text-xl font-bold tracking-tight text-[#F8FAFC]"
+                    className="mt-1 text-lg sm:text-xl font-bold tracking-tight text-slate-50"
                   >
                     {status === "error"
                       ? "We couldn't finish allocating your pod"
@@ -189,7 +189,7 @@ export function PodAllocationModal({
 
               {status === "error" ? (
                 <div className="mt-6 space-y-5">
-                  <p className="text-sm leading-relaxed text-[#97A0B3]">
+                  <p className="text-sm leading-relaxed text-nebula-mist">
                     {errorMessage ||
                       "Something interrupted the allocation. Your answers are saved — you can safely try again."}
                   </p>
@@ -197,14 +197,14 @@ export function PodAllocationModal({
                     <button
                       type="button"
                       onClick={onRetry}
-                      className="rounded-xl bg-[#BCCCE6] px-5 py-2.5 text-sm font-bold text-[#0B111C] transition-colors hover:bg-white"
+                      className="rounded-xl bg-nebula-periwinkle px-5 py-2.5 text-sm font-bold text-nebula-navy transition-colors hover:bg-white"
                     >
                       Try again
                     </button>
                     <button
                       type="button"
                       onClick={onClose}
-                      className="rounded-xl border border-[#2A3446] px-5 py-2.5 text-sm font-semibold text-[#97A0B3] transition-colors hover:text-[#F8FAFC]"
+                      className="rounded-xl border border-nebula-steel px-5 py-2.5 text-sm font-semibold text-nebula-mist transition-colors hover:text-slate-50"
                     >
                       Back to questionnaire
                     </button>
@@ -222,18 +222,18 @@ export function PodAllocationModal({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -6 }}
                           transition={{ duration: 0.25 }}
-                          className="text-[#BCCCE6]"
+                          className="text-nebula-periwinkle"
                         >
                           {showSuccess
                             ? "Workspace generated — launching Step 5…"
                             : PHASES[activePhase]?.label}
                         </motion.span>
                       </AnimatePresence>
-                      <span className="tabular-nums text-[#97A0B3]">{Math.round(progress)}%</span>
+                      <span className="tabular-nums text-nebula-mist">{Math.round(progress)}%</span>
                     </div>
-                    <div className="relative h-2 overflow-hidden rounded-full bg-[#0B111C] ring-1 ring-[#2A3446]">
+                    <div className="relative h-2 overflow-hidden rounded-full bg-nebula-navy ring-1 ring-nebula-steel">
                       <motion.div
-                        className="h-full rounded-full bg-gradient-to-r from-[#7FA0D6] to-[#BCCCE6] shadow-[0_0_16px_rgba(127,160,214,0.7)]"
+                        className="h-full rounded-full bg-gradient-to-r from-nebula-glow to-nebula-periwinkle shadow-[0_0_16px_rgba(127,160,214,0.7)]"
                         animate={{ width: `${progress}%` }}
                         transition={{ ease: "easeOut", duration: 0.3 }}
                       />
@@ -248,11 +248,11 @@ export function PodAllocationModal({
                           <li key={p.label} className="flex flex-col gap-1.5">
                             <span
                               className={`h-1 rounded-full transition-colors duration-500 ${
-                                done ? "bg-[#7FA0D6]" : current ? "bg-[#BCCCE6]/60" : "bg-[#2A3446]"
+                                done ? "bg-nebula-glow" : current ? "bg-nebula-periwinkle/60" : "bg-nebula-steel"
                               }`}
                             />
                             <span
-                              className={`text-[11px] font-medium ${done || current ? "text-[#BCCCE6]" : "text-[#97A0B3]/70"}`}
+                              className={`text-[11px] font-medium ${done || current ? "text-nebula-periwinkle" : "text-nebula-mist/70"}`}
                             >
                               {["Brand DNA", "Benchmarks", "Matching", "Workspace"][i]}
                             </span>
@@ -275,17 +275,17 @@ export function PodAllocationModal({
                               initial={reduce ? false : { opacity: 0, y: 14, scale: 0.97 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               transition={{ type: "spring", stiffness: 320, damping: 26 }}
-                              className="flex items-center gap-3.5 rounded-xl border border-[#2A3446] bg-[#0B111C]/80 px-4 py-3"
+                              className="flex items-center gap-3.5 rounded-xl border border-nebula-steel bg-nebula-navy/80 px-4 py-3"
                             >
-                              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#7FA0D6]/30 bg-[#7FA0D6]/10 text-[#7FA0D6]">
+                              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-nebula-glow/30 bg-nebula-glow/10 text-nebula-glow">
                                 <Icon className="size-4" />
                               </span>
                               <div className="min-w-0">
-                                <p className="text-sm font-semibold text-[#F8FAFC]">{c.title}</p>
-                                <p className="text-xs leading-snug text-[#97A0B3]">{c.body}</p>
+                                <p className="text-sm font-semibold text-slate-50">{c.title}</p>
+                                <p className="text-xs leading-snug text-nebula-mist">{c.body}</p>
                               </div>
                               <Check
-                                className="ml-auto size-4 shrink-0 text-[#7FA0D6]"
+                                className="ml-auto size-4 shrink-0 text-nebula-glow"
                                 strokeWidth={3}
                               />
                             </motion.div>
@@ -294,7 +294,7 @@ export function PodAllocationModal({
                     </AnimatePresence>
                   </div>
 
-                  <p className="mt-5 text-xs leading-relaxed text-[#97A0B3]">
+                  <p className="mt-5 text-xs leading-relaxed text-nebula-mist">
                     Your full brand brief is prepared for your team lead and specialists behind the
                     scenes — you don't need to wait for it.
                   </p>

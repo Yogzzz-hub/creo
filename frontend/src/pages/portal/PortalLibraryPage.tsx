@@ -75,7 +75,7 @@ export function PortalLibraryPage() {
   if (isLoading) {
     return (
       <div className="flex h-[400px] items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[#7FA0D6] animate-spin" />
+        <Loader2 className="w-8 h-8 text-nebula-glow animate-spin" />
       </div>
     );
   }
@@ -85,25 +85,25 @@ export function PortalLibraryPage() {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-bold tracking-[0.15em] text-[#97A0B3] uppercase mb-1">
+          <p className="text-[11px] font-bold tracking-[0.15em] text-nebula-mist uppercase mb-1">
             EVERYTHING WE HAVE MADE FOR YOU
           </p>
           <h1 className="text-3xl font-semibold text-white">Library</h1>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-nebula-mist" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search posts, captions..."
-              className="w-full sm:w-[280px] pl-10 pr-4 py-2.5 bg-[#161F2D] border border-[#2A3446] rounded-xl text-sm text-white placeholder:text-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6] transition-all"
+              className="w-full sm:w-[280px] pl-10 pr-4 py-2.5 bg-nebula-surface border border-nebula-steel rounded-xl text-sm text-white placeholder:text-nebula-mist focus:outline-none focus:border-nebula-glow focus:ring-1 focus:ring-nebula-glow transition-all"
             />
           </div>
           <button 
             onClick={() => handleDownload("all")}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#161F2D] border border-[#2A3446] hover:bg-white/[0.04] transition-colors rounded-xl text-sm font-medium text-white shrink-0"
+            className="flex items-center gap-2 px-4 py-2.5 bg-nebula-surface border border-nebula-steel hover:bg-white/[0.04] transition-colors rounded-xl text-sm font-medium text-white shrink-0"
           >
             {downloading === "all" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             Download all
@@ -112,31 +112,31 @@ export function PortalLibraryPage() {
       </div>
 
       {/* Stats Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 bg-[#161F2D] border border-[#2A3446] rounded-2xl divide-y sm:divide-y-0 sm:divide-x divide-white/[0.05]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 bg-nebula-surface border border-nebula-steel rounded-2xl divide-y sm:divide-y-0 sm:divide-x divide-white/[0.05]">
         <div className="p-5 sm:p-6">
-          <p className="text-xs text-[#97A0B3] font-medium mb-1.5">Delivered since joining</p>
+          <p className="text-xs text-nebula-mist font-medium mb-1.5">Delivered since joining</p>
           <p className="text-3xl font-semibold text-white mb-1">{counts.total}</p>
-          <p className="text-xs text-[#97A0B3]">assets, all yours to keep</p>
+          <p className="text-xs text-nebula-mist">assets, all yours to keep</p>
         </div>
         <div className="p-5 sm:p-6">
-          <p className="text-xs text-[#97A0B3] font-medium mb-1.5">Published</p>
+          <p className="text-xs text-nebula-mist font-medium mb-1.5">Published</p>
           <p className="text-3xl font-semibold text-white mb-1">{assets.filter(a => a.status === "Published").length}</p>
-          <p className="text-xs text-[#97A0B3]">to your socials</p>
+          <p className="text-xs text-nebula-mist">to your socials</p>
         </div>
         <div className="p-5 sm:p-6">
-          <p className="text-xs text-[#97A0B3] font-medium mb-1.5">First-round approvals</p>
+          <p className="text-xs text-nebula-mist font-medium mb-1.5">First-round approvals</p>
           <p className="text-3xl font-semibold text-white mb-1">94%</p>
-          <p className="text-xs text-[#97A0B3]">across all batches</p>
+          <p className="text-xs text-nebula-mist">across all batches</p>
         </div>
         <div className="p-5 sm:p-6">
-          <p className="text-xs text-[#97A0B3] font-medium mb-1.5">Brand files</p>
+          <p className="text-xs text-nebula-mist font-medium mb-1.5">Brand files</p>
           <p className="text-3xl font-semibold text-white mb-1">12</p>
-          <p className="text-xs text-[#97A0B3]">logos, fonts, photos</p>
+          <p className="text-xs text-nebula-mist">logos, fonts, photos</p>
         </div>
       </div>
 
       {/* Filters & Notice */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-nebula-steel pb-4">
         <div className="flex flex-wrap items-center gap-1.5">
           {[
             { id: "All", label: `All ${counts.total}` },
@@ -151,14 +151,14 @@ export function PortalLibraryPage() {
               className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
                 filter === f.id
                   ? "bg-white/[0.08] text-white"
-                  : "text-[#97A0B3] hover:text-white hover:bg-white/[0.04]"
+                  : "text-nebula-mist hover:text-white hover:bg-white/[0.04]"
               }`}
             >
               {f.label}
             </button>
           ))}
         </div>
-        <p className="text-xs text-[#97A0B3]">
+        <p className="text-xs text-nebula-mist">
           Every file comes in full resolution with captions and hashtags.
         </p>
       </div>
@@ -166,26 +166,26 @@ export function PortalLibraryPage() {
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 min-h-[400px]">
         {filteredAssets.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center text-[#97A0B3] py-20 border border-dashed border-white/[0.1] rounded-2xl">
+          <div className="col-span-full flex flex-col items-center justify-center text-nebula-mist py-20 border border-dashed border-white/[0.1] rounded-2xl">
             <Search className="w-8 h-8 mb-4 opacity-50" />
             <p className="text-sm font-medium text-white/80">{search ? "No assets match your search" : "No deliverables in your library yet"}</p>
-            <p className="text-xs text-[#97A0B3] mt-1">{search ? "Try searching for a different keyword" : "Completed content produced by your pod will appear here."}</p>
+            <p className="text-xs text-nebula-mist mt-1">{search ? "Try searching for a different keyword" : "Completed content produced by your pod will appear here."}</p>
           </div>
         ) : (
           filteredAssets.map((asset, i) => {
-            let badgeClass = "bg-[#2A3446] text-[#F8FAFC]"; // default / Scheduled
-            if (asset.status === "Needs you") badgeClass = "bg-[#D8BF9B]/15 text-[#D8BF9B]";
-            else if (asset.status === "Approved") badgeClass = "bg-[#7FA0D6]/90 text-white";
-            else if (asset.status === "Published") badgeClass = "bg-[#7FA0D6]/15 text-[#BCCCE6]";
+            let badgeClass = "bg-nebula-steel text-slate-50"; // default / Scheduled
+            if (asset.status === "Needs you") badgeClass = "bg-nebula-sand/15 text-nebula-sand";
+            else if (asset.status === "Approved") badgeClass = "bg-nebula-glow/90 text-white";
+            else if (asset.status === "Published") badgeClass = "bg-nebula-glow/15 text-nebula-periwinkle";
 
             return (
               <div 
                 key={asset.id} 
-                className="group bg-[#161F2D] border border-[#2A3446] rounded-2xl overflow-hidden hover:border-white/[0.1] transition-all animate-in fade-in zoom-in-95 duration-500 fill-mode-both"
+                className="group bg-nebula-surface border border-nebula-steel rounded-2xl overflow-hidden hover:border-white/[0.1] transition-all animate-in fade-in zoom-in-95 duration-500 fill-mode-both"
                 style={{ animationDelay: `${i * 50}ms` }}
               >
                 {/* Image Box */}
-                <div className="relative aspect-square overflow-hidden bg-[#0B111C] flex items-center justify-center">
+                <div className="relative aspect-square overflow-hidden bg-nebula-navy flex items-center justify-center">
                   {asset.image ? (
                     <img
                       src={asset.image}
@@ -194,7 +194,7 @@ export function PortalLibraryPage() {
                     />
                   ) : (
                     <div className="text-center p-4">
-                      <span className="text-xs font-bold text-[#97A0B3] tracking-wider uppercase">{asset.type}</span>
+                      <span className="text-xs font-bold text-nebula-mist tracking-wider uppercase">{asset.type}</span>
                     </div>
                   )}
                   <div className="absolute top-3 left-3">
@@ -207,7 +207,7 @@ export function PortalLibraryPage() {
                 {/* Content Box */}
                 <div className="p-4 flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-bold tracking-wider text-[#97A0B3] uppercase mb-1">
+                    <p className="text-[11px] font-bold tracking-wider text-nebula-mist uppercase mb-1">
                       {asset.type}
                     </p>
                     <p className="text-sm font-semibold text-white truncate">
@@ -216,7 +216,7 @@ export function PortalLibraryPage() {
                   </div>
                   <button 
                     onClick={() => handleDownload(asset.id, (asset as any).fileUrl)}
-                    className="w-8 h-8 rounded-full bg-white/[0.05] flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-white/[0.1] transition-colors shrink-0"
+                    className="w-8 h-8 rounded-full bg-white/[0.05] flex items-center justify-center text-nebula-mist hover:text-white hover:bg-white/[0.1] transition-colors shrink-0"
                   >
                     {downloading === asset.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <Download className="w-3.5 h-3.5" />}
                   </button>

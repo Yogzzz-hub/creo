@@ -121,9 +121,9 @@ export default function HeroWaveScene({ className = "" }: { className?: string }
       uPointer: { value: [0, 0] as [number, number] },
       uScroll: { value: 0 },
       uPixelRatio: { value: pixelRatio },
-      uBlue: { value: new Color("#7FA0D6") },
-      uMist: { value: new Color("#BCCCE6") },
-      uGold: { value: new Color("#D8BF9B") },
+      uBlue: { value: new Color("var(--color-nebula-glow)") },
+      uMist: { value: new Color("var(--color-nebula-periwinkle)") },
+      uGold: { value: new Color("var(--color-nebula-sand)") },
     };
     const material = new ShaderMaterial({
       vertexShader: VERTEX,

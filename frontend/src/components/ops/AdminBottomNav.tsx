@@ -152,7 +152,7 @@ export function AdminBottomNav() {
     <>
       <nav
         aria-label="Admin Navigation"
-        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-[#161F2D]/95 backdrop-blur-xl border-t border-[#2A3446] px-1 pt-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-[0_-4px_25px_rgba(5,8,16,0.6)]"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-nebula-surface/95 backdrop-blur-xl border-t border-nebula-steel px-1 pt-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-[0_-4px_25px_rgba(5,8,16,0.6)]"
       >
         <div className="max-w-md mx-auto flex items-center justify-around">
           {activeItems.map((item) => {
@@ -170,14 +170,14 @@ export function AdminBottomNav() {
                 to={item.href}
                 className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-200 flex-1 min-w-0 max-w-[72px] ${
                   isActive
-                    ? "text-[#BCCCE6] font-bold"
-                    : "text-[#97A0B3] hover:text-white font-medium"
+                    ? "text-nebula-periwinkle font-bold"
+                    : "text-nebula-mist hover:text-white font-medium"
                 }`}
               >
                 <div className="relative">
                   <div
                     className={`p-1 rounded-xl transition-all ${
-                      isActive ? "bg-[#BCCCE6]/15 text-[#BCCCE6]" : ""
+                      isActive ? "bg-nebula-periwinkle/15 text-nebula-periwinkle" : ""
                     }`}
                   >
                     <Icon
@@ -187,7 +187,7 @@ export function AdminBottomNav() {
                     />
                   </div>
                   {isActive && (
-                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full bg-[#7FA0D6]" />
+                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full bg-nebula-glow" />
                   )}
                 </div>
                 <span className="text-[10px] mt-0.5 tracking-tight truncate w-full text-center">{item.label}</span>
@@ -201,14 +201,14 @@ export function AdminBottomNav() {
             onClick={() => setMoreDrawerOpen(true)}
             className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-200 flex-1 min-w-0 max-w-[72px] cursor-pointer ${
               moreDrawerOpen
-                ? "text-[#BCCCE6] font-bold"
-                : "text-[#97A0B3] hover:text-white font-medium"
+                ? "text-nebula-periwinkle font-bold"
+                : "text-nebula-mist hover:text-white font-medium"
             }`}
           >
             <div className="relative">
               <div
                 className={`p-1 rounded-xl transition-all ${
-                  moreDrawerOpen ? "bg-[#BCCCE6]/15 text-[#BCCCE6]" : ""
+                  moreDrawerOpen ? "bg-nebula-periwinkle/15 text-nebula-periwinkle" : ""
                 }`}
               >
                 <Menu className="size-4 sm:size-5 stroke-[1.8]" />
@@ -222,27 +222,27 @@ export function AdminBottomNav() {
       {/* Mobile More Sheet / Slide-up Drawer */}
       {moreDrawerOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-[99999] bg-[#050810]/75 backdrop-blur-sm flex flex-col justify-end animate-fade-in"
+          className="lg:hidden fixed inset-0 z-[99999] bg-nebula-void/75 backdrop-blur-sm flex flex-col justify-end animate-fade-in"
           onClick={() => setMoreDrawerOpen(false)}
         >
           <div
-            className="w-full bg-[#161F2D] rounded-t-3xl border-t border-[#2A3446] p-5 shadow-2xl max-h-[82vh] overflow-y-auto space-y-4 animate-slide-up text-left"
+            className="w-full bg-nebula-surface rounded-t-3xl border-t border-nebula-steel p-5 shadow-2xl max-h-[82vh] overflow-y-auto space-y-4 animate-slide-up text-left"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
               <div className="flex items-center gap-2">
-                <span className="size-8 rounded-xl bg-[#7FA0D6]/20 text-[#7FA0D6] flex items-center justify-center font-bold text-xs">
+                <span className="size-8 rounded-xl bg-nebula-glow/20 text-nebula-glow flex items-center justify-center font-bold text-xs">
                   ⚡
                 </span>
                 <div>
                   <h3 className="text-sm font-bold text-white">Workspace Navigation</h3>
-                  <p className="text-[11px] text-[#97A0B3]">Quick access to all operations hubs</p>
+                  <p className="text-[11px] text-nebula-mist">Quick access to all operations hubs</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setMoreDrawerOpen(false)}
-                className="size-8 rounded-full bg-[#161F2D] text-[#97A0B3] hover:text-white flex items-center justify-center cursor-pointer"
+                className="size-8 rounded-full bg-nebula-surface text-nebula-mist hover:text-white flex items-center justify-center cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -262,24 +262,24 @@ export function AdminBottomNav() {
                     onClick={() => setMoreDrawerOpen(false)}
                     className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
                       isActive
-                        ? "bg-[#7FA0D6]/15 border-[#7FA0D6]/40 text-[#BCCCE6]"
-                        : "bg-[#0B111C] border-[#2A3446] hover:bg-[#161F2D] text-[#F1F5F9]"
+                        ? "bg-nebula-glow/15 border-nebula-glow/40 text-nebula-periwinkle"
+                        : "bg-nebula-navy border-nebula-steel hover:bg-nebula-surface text-slate-100"
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div
                         className={`size-9 rounded-xl flex items-center justify-center ${
-                          isActive ? "bg-[#BCCCE6] text-[#0B111C]" : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446]"
+                          isActive ? "bg-nebula-periwinkle text-nebula-navy" : "bg-nebula-surface text-nebula-mist border border-nebula-steel"
                         }`}
                       >
                         <Icon className="size-4.5" />
                       </div>
                       <div className="text-left">
                         <div className="text-xs font-bold leading-tight">{link.label}</div>
-                        <div className="text-[10px] text-[#97A0B3] line-clamp-1">{link.desc}</div>
+                        <div className="text-[10px] text-nebula-mist line-clamp-1">{link.desc}</div>
                       </div>
                     </div>
-                    <ChevronRight className="size-4 text-[#97A0B3] shrink-0" />
+                    <ChevronRight className="size-4 text-nebula-mist shrink-0" />
                   </Link>
                 );
               })}

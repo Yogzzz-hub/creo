@@ -7,39 +7,16 @@
   --color-foreground: var(--foreground);
 
   /* Solid Executive Dark Bento Design Tokens */
-  --color-void: #050810;
-  --color-deep-surface: #0B111C;
-  --color-bento-surface: #121926;
-  --color-nested-surface: #0A0F18;
-  --color-hairline: #222F44;
-  --color-off-white: #F8FAFC;
-  --color-slate-mist: #97A0B3;
-  --color-glow-blue: #7FA0D6;
-  --color-live-green: #7FA0D6;
-  --color-cta-primary: #BCCCE6;
-
-  --color-brand: #7FA0D6;
-  --color-brand-dark: #0B111C;
-  --color-brand-light: #BCCCE6;
-  --color-brand-mid: #7FA0D6;
-  --color-accent: #BCCCE6;
-
-  --color-text: #F8FAFC;
-  --color-text-muted: #97A0B3;
-
-  --color-border: #2A3446;
-  --color-surface: #161F2D;
-  --color-bg: #0B111C;
-  --color-bg-internal: #161F2D;
-
-  --color-success: #7FA0D6;
-  --color-success-light: #161F2D;
-  --color-warning: #D8BF9B;
-  --color-warning-light: #161F2D;
-  --color-error: #D8BF9B;
-  --color-error-light: #161F2D;
-  --color-neutral: #97A0B3;
-  --color-neutral-light: #161F2D;
+  --color-nebula-void: #050810;
+  --color-nebula-navy: #0B111C;
+  --color-nebula-surface: #161F2D;
+  --color-nebula-steel: #2A3446;
+  --color-nebula-mist: #97A0B3;
+  --color-nebula-periwinkle: #BCCCE6;
+  --color-nebula-glow: #7FA0D6;
+  --color-nebula-sand: #D8BF9B;
+  --color-slate-100: #F1F5F9;
+  --color-slate-50: #F8FAFC;
 
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -49,7 +26,9 @@
   --shadow-card: 0 1px 3px rgba(13, 33, 55, 0.08);
   --shadow-modal: 0 8px 32px rgba(13, 33, 55, 0.16);
 
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-sans: 'Montserrat', system-ui, -apple-system, sans-serif;
+  --font-display: 'Montserrat', system-ui, -apple-system, sans-serif;
+  --font-body: 'Montserrat', system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --sidebar-width: 240px;

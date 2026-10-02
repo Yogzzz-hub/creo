@@ -276,7 +276,7 @@ export function PortalCreativePodPage() {
               <div>
                 <div className="flex items-baseline gap-1.5 mb-4 border-b border-slate-200 pb-4">
                   <span className="text-xl sm:text-2xl font-black text-[#0F172A] truncate">
-                    {dashboard.active_plan.name || "Brand Accelerator"}
+                    {dashboard.active_plan.name || "Growth"}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 font-medium">₹50,000 / month retainer</p>

@@ -29,7 +29,7 @@ from sqlalchemy.orm import aliased, selectinload
 
 from app.core.cache import invalidate_user_session
 from app.core.errors import Conflict, Forbidden, NotFound
-from app.core.rbac import Actor, AdminActor, InvestorActor, SalesActor, StaffActor, TeamLeadActor
+from app.core.rbac import Actor, get_admin_actor, get_investor_actor, get_sales_actor, get_staff_actor, get_team_lead_actor
 from app.db.session import get_db
 from app.models.billing import Plan, Subscription, UsageCounter
 from app.models.enums import (
@@ -83,7 +83,7 @@ class PlanUpdateRequest(BaseModel):
 async def get_kpis(
     timeframe: str = "30d",
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> KPIResponse:
     """Read executive analytics from mv_exec_kpis materialized view."""
     # LIVE Real-time KPIs with IST timezone
@@ -140,7 +140,7 @@ async def get_kpis(
 @router.post("/refresh-kpis")
 async def refresh_kpis(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, str]:
     """Concurrently refresh the mv_exec_kpis materialized view."""
     try:
@@ -155,7 +155,7 @@ async def refresh_kpis(
 async def get_revenue_trend(
     timeframe: str = "30d",
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Return time-series revenue data points for the revenue graph.
 
@@ -259,7 +259,7 @@ async def get_revenue_trend(
 @router.get("/plans-summary")
 async def get_plans_summary(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Return all active plans with subscriber counts, revenue contribution and share."""
     sql = text("""
@@ -306,7 +306,7 @@ async def get_plans_summary(
 async def get_dashboard(
     timeframe: str = "30d",
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Executive dashboard: Live real-time KPIs, pipeline volume, SLA breaches, staff capacity."""
     from datetime import timedelta
@@ -437,7 +437,7 @@ async def get_dashboard(
 @router.get("/clients")
 async def get_client_roster(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> list[dict[str, Any]]:
     """Roster with derived onboarding stage from v_client_onboarding, plan, and quota usage."""
     sql = text("""
@@ -512,7 +512,7 @@ async def get_client_roster(
 async def get_client_brand_profile(
     client_id: str,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, Any]:
     """Full client detail with brand DNA, subscription, team roster, and task stats.
 
@@ -688,7 +688,7 @@ async def get_client_brand_profile(
 @router.get("/queue")
 async def get_dispatch_queue(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, Any]:
     """Global dispatch queue and staff capacity breakdown."""
     # 1. Backlog and active pipeline tasks awaiting dispatch or in production
@@ -799,7 +799,7 @@ async def get_dispatch_queue(
 @router.get("/sla")
 async def get_sla_breaches(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> list[dict[str, Any]]:
     """Open SLA breaches and escalations."""
     sql = text("""
@@ -841,7 +841,7 @@ async def update_plan(
     plan_id: uuid.UUID,
     payload: PlanUpdateRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Modify scarcity slots, pricing, and active status for a plan."""
     plan = await db.get(Plan, plan_id)
@@ -903,7 +903,7 @@ async def update_plan(
 async def suspend_user(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Suspend user account, revoke token version, and invalidate Redis cache."""
     user = await db.get(User, user_id)
@@ -947,7 +947,7 @@ async def remove_client_plan(
     client_id: uuid.UUID,
     payload: RemoveClientPlanRequest | None = None,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Remove a client's plan, cancel active subscriptions, and reset deliverable quotas.
 
@@ -1021,7 +1021,7 @@ async def fix_client_plan(
     client_id: uuid.UUID,
     payload: FixClientPlanRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Admin sets or fixes one of the standard agency retainer plans or a custom negotiated package for a client.
 
@@ -1114,11 +1114,11 @@ async def fix_client_plan(
     else:
         # Normalize standard plan identifier
         raw_name = payload.plan_name.strip().lower()
-        if raw_name in ("accelerator", "brand accelerator", "growth"):
+        if raw_name in ("growth", "accelerator"):
             plan_key = "growth"
-        elif raw_name in ("enterprise", "enterprise domination", "pro"):
+        elif raw_name in ("scale", "enterprise", "pro"):
             plan_key = "pro"
-        elif raw_name in ("starter", "starter growth"):
+        elif raw_name in ("starter"):
             plan_key = "starter"
         else:
             plan_key = raw_name
@@ -1296,7 +1296,7 @@ async def admin_patch_client_plan(
     client_id: uuid.UUID,
     payload: AdminClientPlanChangeRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Change client plan: 'next_cycle' (safe default) or 'immediate' (rejects with 409 if cycle active)."""
     from app.services.calendar_engine import admin_change_client_plan
@@ -1309,7 +1309,7 @@ async def admin_patch_calendar_policy(
     client_id: uuid.UUID,
     payload: AdminPolicyOverrideRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Full L2 calendar policy override."""
     from app.services.calendar_engine import admin_set_calendar_policy
@@ -1323,7 +1323,7 @@ async def admin_patch_reel_lag(
     client_id: uuid.UUID,
     payload: AdminReelLagRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Update reel lag days (3..21) per client, affecting future cycles and shoots."""
     from app.services.calendar_engine import admin_set_reel_lag
@@ -1337,7 +1337,7 @@ async def admin_post_regenerate_cycle(
     client_id: uuid.UUID,
     cycle_number: int,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Regenerate draft cycle slots with fresh placement math."""
     from app.services.calendar_engine import admin_regenerate_cycle
@@ -1356,7 +1356,7 @@ async def admin_post_regenerate_cycle(
 async def admin_post_blackout(
     payload: AdminBlackoutRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Add a calendar blackout date (client-specific or global)."""
     from app.services.calendar_engine import admin_add_blackout
@@ -1383,7 +1383,7 @@ class AnnouncementCreateRequest(BaseModel):
 @router.get("/announcements")
 async def get_announcements(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> list[dict[str, Any]]:
     """List all agency announcements with author info and IST timestamps."""
     stmt = (
@@ -1431,7 +1431,7 @@ async def get_announcements(
 async def create_announcement(
     payload: AnnouncementCreateRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = TeamLeadActor,
+    actor: Actor = Depends(get_team_lead_actor),
 ) -> dict[str, Any]:
     """Broadcast new agency announcement to staff and clients."""
     clean_title = payload.title.strip()
@@ -1525,7 +1525,7 @@ async def create_announcement(
 async def delete_announcement(
     announcement_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = TeamLeadActor,
+    actor: Actor = Depends(get_team_lead_actor),
 ) -> dict[str, Any]:
     """Delete an announcement. Admin can delete any; Team Lead can delete their own."""
     ann = await db.get(Announcement, announcement_id)
@@ -1566,7 +1566,7 @@ class TeamMemberUpdateRequest(BaseModel):
 @router.get("/teams")
 async def get_team_members(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = TeamLeadActor,
+    actor: Actor = Depends(get_team_lead_actor),
 ) -> list[dict[str, Any]]:
     """List staff profiles and creative roster. Scoped to pod for Team Leads."""
     is_tl_only = actor.role in (UserRole.TEAM_LEAD, "team_lead")
@@ -1635,7 +1635,7 @@ async def get_team_members(
 async def create_team_member(
     payload: TeamMemberCreateRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = TeamLeadActor,
+    actor: Actor = Depends(get_team_lead_actor),
 ) -> dict[str, Any]:
     """Create new staff member with credentials and assign to team lead."""
     from app.core.security import hash_password
@@ -1703,7 +1703,7 @@ async def update_team_member(
     user_id: uuid.UUID,
     payload: TeamMemberUpdateRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = TeamLeadActor,
+    actor: Actor = Depends(get_team_lead_actor),
 ) -> dict[str, Any]:
     """Edit capacity, skills, and status for a team member."""
     sp = await db.get(StaffProfile, user_id)
@@ -1738,7 +1738,7 @@ async def update_team_member(
 async def remove_team_member(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = TeamLeadActor,
+    actor: Actor = Depends(get_team_lead_actor),
 ) -> dict[str, Any]:
     """Deactivate or remove a staff member."""
     user = await db.get(User, user_id)
@@ -1802,7 +1802,7 @@ _ADDONS_CATALOG: list[dict[str, Any]] = [
 
 @router.get("/addons")
 async def get_admin_addons(
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> list[dict[str, Any]]:
     """Return add-on catalog and pending fulfillment queue."""
     return _ADDONS_CATALOG
@@ -1811,7 +1811,7 @@ async def get_admin_addons(
 @router.post("/addons/{addon_id}/complete")
 async def complete_admin_addon_request(
     addon_id: str,
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Mark pending add-on fulfillment requests as completed."""
     for addon in _ADDONS_CATALOG:
@@ -1829,7 +1829,7 @@ _resolved_escalation_ids: set[str] = set()
 @router.get("/escalations")
 async def get_sla_escalations(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = TeamLeadActor,
+    actor: Actor = Depends(get_team_lead_actor),
 ) -> list[dict[str, Any]]:
     """Fetch live SLA breach escalations from active production and QA tasks."""
     stmt = (
@@ -1927,7 +1927,7 @@ async def get_sla_escalations(
 @router.post("/escalations/{escalation_id}/resolve")
 async def resolve_sla_escalation(
     escalation_id: str,
-    actor: Actor = TeamLeadActor,
+    actor: Actor = Depends(get_team_lead_actor),
 ) -> dict[str, str]:
     """Resolve an SLA escalation alert."""
     _resolved_escalation_ids.add(escalation_id)
@@ -1951,7 +1951,7 @@ _PLATFORM_SETTINGS: dict[str, Any] = {
 
 @router.get("/settings")
 async def get_admin_settings(
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Fetch agency platform configuration and gateway toggles."""
     return _PLATFORM_SETTINGS
@@ -1960,7 +1960,7 @@ async def get_admin_settings(
 @router.post("/settings")
 async def update_admin_settings(
     payload: dict[str, Any],
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Persist agency platform configuration."""
     _PLATFORM_SETTINGS.update(payload)
@@ -2003,7 +2003,7 @@ _CUSTOM_DEALS: list[dict[str, Any]] = [
 @router.get("/sales")
 async def get_admin_sales(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = SalesActor,
+    actor: Actor = Depends(get_sales_actor),
 ) -> dict[str, Any]:
     """Return distinct subscription tiers, active counts, slot availability, and custom enterprise deals."""
     sub_counts_q = select(Subscription.plan_id, func.count(Subscription.id)).where(Subscription.status == "active").group_by(Subscription.plan_id)
@@ -2018,7 +2018,7 @@ async def get_admin_sales(
             "display_name": "Growth Tier",
             "monthly_price": 49000,
             "active_subs": sub_counts.get(uuid.UUID("11111111-1111-1111-1111-111111111111"), 2),
-            "scarcity_slots": 2,
+            "scarcity_slots": 0,
         },
         {
             "id": "plan-scale",
@@ -2026,7 +2026,7 @@ async def get_admin_sales(
             "display_name": "Scale Tier",
             "monthly_price": 89000,
             "active_subs": sub_counts.get(uuid.UUID("22222222-2222-2222-2222-222222222222"), 3),
-            "scarcity_slots": 1,
+            "scarcity_slots": 0,
         },
         {
             "id": "plan-enterprise",
@@ -2034,7 +2034,7 @@ async def get_admin_sales(
             "display_name": "Enterprise Custom",
             "monthly_price": 149000,
             "active_subs": sub_counts.get(uuid.UUID("33333333-3333-3333-3333-333333333333"), 1),
-            "scarcity_slots": 2,
+            "scarcity_slots": 0,
         },
     ]
 
@@ -2047,7 +2047,7 @@ async def get_admin_sales(
 @router.post("/sales/deals/{deal_id}/approve")
 async def approve_custom_deal(
     deal_id: str,
-    actor: Actor = SalesActor,
+    actor: Actor = Depends(get_sales_actor),
 ) -> dict[str, Any]:
     """Approve a custom enterprise deal in the sales pipeline."""
     for deal in _CUSTOM_DEALS:
@@ -2060,7 +2060,7 @@ async def approve_custom_deal(
 @router.post("/sales/deals/{deal_id}/reject")
 async def reject_custom_deal(
     deal_id: str,
-    actor: Actor = SalesActor,
+    actor: Actor = Depends(get_sales_actor),
 ) -> dict[str, Any]:
     """Reject a custom enterprise deal in the sales pipeline."""
     for deal in _CUSTOM_DEALS:
@@ -2075,7 +2075,7 @@ async def reject_custom_deal(
 @router.get("/reports")
 async def get_admin_reports(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = InvestorActor,
+    actor: Actor = Depends(get_investor_actor),
 ) -> dict[str, Any]:
     """Provide real-time executive financial metrics, SLA compliance, and asset format breakdown."""
     # 1. Active Clients & Subscriptions
@@ -2195,7 +2195,7 @@ os.makedirs(DELIVERABLES_DIR, exist_ok=True)
 @router.post("/deliverables/upload")
 async def upload_admin_deliverable_file(
     file: UploadFile = File(...),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, str]:
     """Upload deliverable media file (MP4, MOV, PNG, JPG, WEBP) to deliverables folder."""
     ext = file.filename.split(".")[-1] if file.filename and "." in file.filename else "png"
@@ -2220,7 +2220,7 @@ async def upload_admin_deliverable_file(
 async def list_admin_deliverables(
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> list[dict[str, Any]]:
     """List all client deliverables with status, real storage URLs, and client brand profiles."""
     StaffUser = aliased(User)
@@ -2284,7 +2284,7 @@ async def list_admin_deliverables(
 async def create_admin_deliverable(
     payload: AdminDeliverableCreate,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, Any]:
     """Team Lead / Staff / Admin creates a deliverable record for a specified client."""
     client = await db.get(User, payload.client_id)
@@ -2365,7 +2365,7 @@ async def update_deliverable_status(
     deliverable_id: uuid.UUID,
     payload: DeliverableStatusUpdate,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, Any]:
     """Admin override for deliverable quality and review status with audit logging."""
     deliverable = await db.get(Deliverable, deliverable_id)
@@ -2422,7 +2422,7 @@ class AdminTicketStatusUpdate(BaseModel):
 @router.get("/support/tickets")
 async def list_admin_support_tickets(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> list[dict[str, Any]]:
     """List all client support tickets from DB with message counts and status."""
     stmt = (
@@ -2491,7 +2491,7 @@ async def list_admin_support_tickets(
 async def get_admin_ticket_messages(
     ticket_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> list[dict[str, Any]]:
     """Retrieve message history for a specific ticket."""
     stmt = (
@@ -2520,7 +2520,7 @@ async def post_admin_ticket_message(
     ticket_id: uuid.UUID,
     payload: AdminTicketReply,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, Any]:
     """Reply to a client support ticket and optionally update its status."""
     ticket = await db.get(Ticket, ticket_id)
@@ -2563,7 +2563,7 @@ async def update_ticket_status(
     ticket_id: uuid.UUID,
     payload: AdminTicketStatusUpdate,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, Any]:
     """Update support ticket status."""
     ticket = await db.get(Ticket, ticket_id)
@@ -2590,7 +2590,7 @@ class LeaveApplyRequest(BaseModel):
 @router.get("/leave")
 async def list_admin_leave_requests(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> list[dict[str, Any]]:
     """
     List staff leave requests from DB with strict hierarchical scoping:
@@ -2707,7 +2707,7 @@ async def list_admin_leave_requests(
 async def create_leave_request(
     payload: LeaveApplyRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, Any]:
     """
     Submit a time-off leave request.
@@ -2819,7 +2819,7 @@ async def create_leave_request(
 async def approve_leave_request(
     leave_id: str,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = TeamLeadActor,
+    actor: Actor = Depends(get_team_lead_actor),
 ) -> dict[str, Any]:
     """
     Approve staff leave request enforcing workflow hierarchy:
@@ -2892,7 +2892,7 @@ async def approve_leave_request(
 async def reject_leave_request(
     leave_id: str,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = TeamLeadActor,
+    actor: Actor = Depends(get_team_lead_actor),
 ) -> dict[str, Any]:
     """
     Reject staff leave request enforcing workflow hierarchy:
@@ -2965,7 +2965,7 @@ async def reject_leave_request(
 async def cancel_leave_request(
     leave_id: str,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, Any]:
     """
     Cancel/withdraw a leave request.
@@ -2996,7 +2996,7 @@ async def get_admin_calendar(
     month: int | None = None,
     year: int | None = None,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> list[dict[str, Any]]:
     """Retrieve content calendar scheduled deliverables and publication entries from DB."""
     events: list[dict[str, Any]] = []
@@ -3184,7 +3184,7 @@ class AdminDeliverableStatusUpdate(BaseModel):
 async def list_admin_deliverables(
     client_id: uuid.UUID | None = None,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> list[dict[str, Any]]:
     """List creative deliverables with client information and task links."""
     stmt = (
@@ -3239,7 +3239,7 @@ async def list_admin_deliverables(
 @router.post("/deliverables/upload")
 async def upload_admin_deliverable_file(
     file: UploadFile = File(...),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, str]:
     """Upload media file directly to local server storage."""
     import time
@@ -3264,7 +3264,7 @@ async def upload_admin_deliverable_file(
 async def create_admin_deliverable(
     payload: AdminDeliverableCreateRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, Any]:
     """Staff uploads/creates a new deliverable. Automates task pipeline progression into Internal QA."""
     # Validate target status
@@ -3315,7 +3315,7 @@ async def update_admin_deliverable_status(
     deliverable_id: uuid.UUID,
     payload: AdminDeliverableStatusUpdate,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, Any]:
     """Update deliverable status. Automatically syncs and moves the corresponding task in the pipeline."""
     deliverable = await db.get(Deliverable, deliverable_id)
@@ -3405,7 +3405,7 @@ class PodTaskReassignRequest(BaseModel):
 async def get_pod_dashboard(
     pod: str | None = None,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, Any]:
     """Retrieve complete scoped pod dashboard data for Team Leads and Admins."""
     actor_email = (actor.email or "").lower().strip()
@@ -3739,7 +3739,7 @@ async def pod_task_qa_review(
     task_id: uuid.UUID,
     payload: PodQAReviewRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, Any]:
     """Team Lead QA Approval or Rejection for a deliverable."""
     task = await db.get(Task, task_id)
@@ -3794,7 +3794,7 @@ async def pod_task_reassign(
     task_id: uuid.UUID,
     payload: PodTaskReassignRequest,
     db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
+    actor: Actor = Depends(get_staff_actor),
 ) -> dict[str, Any]:
     """Reassign task to a specialist within the pod."""
     task = await db.get(Task, task_id)
@@ -3844,7 +3844,7 @@ from app.models.billing import PlanNegotiation  # noqa: E402
 
 @router.get("/negotiations", response_model=list[dict[str, Any]])
 async def list_plan_negotiations(
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
     db: AsyncSession = Depends(get_db),
 ) -> list[dict[str, Any]]:
     """List all plan negotiation requests for admin review."""
@@ -3892,7 +3892,7 @@ class CreateNegotiationPayload(BaseModel):
 @router.post("/negotiations", response_model=dict[str, Any])
 async def create_plan_negotiation_by_admin(
     payload: CreateNegotiationPayload,
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Admin initiates a custom proposal/negotiation record."""
@@ -3931,7 +3931,7 @@ class NegotiationActionPayload(BaseModel):
 async def update_plan_negotiation(
     neg_id: uuid.UUID,
     payload: NegotiationActionPayload,
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Accept, decline, or counter-offer a plan negotiation."""

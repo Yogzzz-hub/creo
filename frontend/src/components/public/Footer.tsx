@@ -14,22 +14,22 @@ const LEGAL_LINKS = [
 
 export function Footer() {
   return (
-    <footer data-footer className="w-full bg-[#050810] text-[#F8FAFC] border-t border-[#222F44] py-10 sm:py-12 selection:bg-[#7FA0D6]/30">
+    <footer data-footer className="w-full bg-nebula-void text-slate-50 border-t border-nebula-steel py-10 sm:py-12 selection:bg-nebula-glow/30">
       <div className="mx-auto max-w-[1240px] px-6">
         
         {/* 1. Pre-Footer Conversion Bento Banner */}
-        <div className="bg-[#121926] border border-[#222F44] rounded-3xl p-6 sm:p-10 text-center mb-10 sm:mb-12 shadow-2xl relative overflow-hidden">
+        <div className="bg-nebula-surface border border-nebula-steel rounded-3xl p-6 sm:p-10 text-center mb-10 sm:mb-12 shadow-2xl relative overflow-hidden">
           <div className="relative z-10">
-            <h2 className="text-2xl sm:text-4xl font-black text-[#F8FAFC] tracking-tight">
+            <h2 className="text-2xl sm:text-4xl font-black text-slate-50 tracking-tight">
               Stop managing the chaos. Start operating the momentum.
             </h2>
-            <p className="text-xs sm:text-sm text-[#97A0B3] mt-3 mb-8 max-w-xl mx-auto font-medium leading-relaxed">
+            <p className="text-xs sm:text-sm text-nebula-mist mt-3 mb-8 max-w-xl mx-auto font-medium leading-relaxed">
               Join 50+ modern creative agencies running content production, client sign-offs, and unit economics on CREO OS.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link 
                 to="/pricing" 
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#BCCCE6] text-[#050810] hover:bg-white font-bold transition-all shadow-sm px-7 py-3.5 rounded-full text-xs sm:text-sm"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-nebula-periwinkle text-nebula-void hover:bg-white font-bold transition-all shadow-sm px-7 py-3.5 rounded-full text-xs sm:text-sm"
               >
                 <span>Deploy CREO in Your Agency</span>
                 <ArrowRight className="size-4" />
@@ -38,7 +38,7 @@ export function Footer() {
                 href="https://wa.me/919941999415" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#0A0F18] border border-[#222F44] text-[#F8FAFC] hover:bg-[#0B111C] transition-colors px-6 py-3.5 rounded-full text-xs sm:text-sm font-semibold"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-nebula-navy border border-nebula-steel text-slate-50 hover:bg-nebula-navy transition-colors px-6 py-3.5 rounded-full text-xs sm:text-sm font-semibold"
               >
                 <MessageCircle className="size-4 text-emerald-400" />
                 <span>Schedule Live Demo</span>
@@ -48,25 +48,25 @@ export function Footer() {
         </div>
 
         {/* 2. Main 4-Column Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12 pb-12 border-b border-[#222F44]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12 pb-12 border-b border-nebula-steel">
           {/* Column 1: Brand Info (4 Cols) */}
           <div className="lg:col-span-4 space-y-4">
-            <Link to="/" className="inline-flex items-center gap-2 text-2xl font-black tracking-tight text-[#F8FAFC] flex items-baseline">
+            <Link to="/" className="inline-flex items-center gap-2 text-2xl font-black tracking-tight text-slate-50 flex items-baseline">
               <span>creo</span>
-              <span className="text-[#7FA0D6] text-3xl leading-none">.</span>
+              <span className="text-nebula-glow text-3xl leading-none">.</span>
             </Link>
-            <p className="text-xs sm:text-sm text-[#97A0B3] leading-relaxed max-w-sm">
+            <p className="text-xs sm:text-sm text-nebula-mist leading-relaxed max-w-sm">
               Your creative growth engine. High-converting reels, studio carousels, and content operations delivered on autopilot.
             </p>
-            <div className="pt-2 text-xs text-[#97A0B3] flex items-center gap-2">
-              <MapPin className="size-3.5 text-[#7FA0D6] shrink-0" />
+            <div className="pt-2 text-xs text-nebula-mist flex items-center gap-2">
+              <MapPin className="size-3.5 text-nebula-glow shrink-0" />
               <span>Bangalore, India</span>
             </div>
           </div>
 
           {/* Column 2: Quick Links (3 Cols) */}
           <div className="lg:col-span-3 space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-[#7FA0D6]">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-nebula-glow">
               Quick Links
             </h3>
             <ul className="space-y-2.5">
@@ -74,12 +74,12 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     to={link.href}
-                    className="group inline-flex items-center gap-1.5 text-xs sm:text-sm text-[#97A0B3] hover:text-[#F8FAFC] transition-colors"
+                    className="group inline-flex items-center gap-1.5 text-xs sm:text-sm text-nebula-mist hover:text-slate-50 transition-colors"
                   >
                     <span className="group-hover:translate-x-1 transition-transform duration-200">
                       {link.label}
                     </span>
-                    <ArrowUpRight className="size-3 text-[#97A0B3] opacity-0 group-hover:opacity-100 group-hover:text-[#7FA0D6] transition-all duration-200" />
+                    <ArrowUpRight className="size-3 text-nebula-mist opacity-0 group-hover:opacity-100 group-hover:text-nebula-glow transition-all duration-200" />
                   </Link>
                 </li>
               ))}
@@ -88,7 +88,7 @@ export function Footer() {
 
           {/* Column 3: Direct Contact (3 Cols) */}
           <div className="lg:col-span-3 space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-[#7FA0D6]">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-nebula-glow">
               Direct Contact
             </h3>
             <ul className="space-y-3">
@@ -97,7 +97,7 @@ export function Footer() {
                   href="https://wa.me/919941999415"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group inline-flex items-center gap-2.5 text-xs sm:text-sm text-[#F8FAFC] hover:text-emerald-400 transition-colors"
+                  className="group inline-flex items-center gap-2.5 text-xs sm:text-sm text-slate-50 hover:text-emerald-400 transition-colors"
                 >
                   <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:bg-emerald-500/20 group-hover:scale-105 transition-all">
                     <MessageCircle className="size-3.5" />
@@ -108,17 +108,17 @@ export function Footer() {
               <li>
                 <a
                   href="tel:+919941999415"
-                  className="group inline-flex items-center gap-2.5 text-xs sm:text-sm text-[#F8FAFC] hover:text-[#7FA0D6] transition-colors"
+                  className="group inline-flex items-center gap-2.5 text-xs sm:text-sm text-slate-50 hover:text-nebula-glow transition-colors"
                 >
-                  <div className="flex size-7 items-center justify-center rounded-lg bg-[#7FA0D6]/10 text-[#7FA0D6] border border-[#7FA0D6]/20 group-hover:bg-[#7FA0D6]/20 group-hover:scale-105 transition-all">
+                  <div className="flex size-7 items-center justify-center rounded-lg bg-nebula-glow/10 text-nebula-glow border border-nebula-glow/20 group-hover:bg-nebula-glow/20 group-hover:scale-105 transition-all">
                     <Phone className="size-3.5" />
                   </div>
                   <span className="font-medium">+91 9941999415</span>
                 </a>
               </li>
             </ul>
-            <div className="pt-1 text-[11px] text-[#97A0B3] leading-relaxed">
-              <span className="font-semibold text-[#F8FAFC]">Support Hours:</span>
+            <div className="pt-1 text-[11px] text-nebula-mist leading-relaxed">
+              <span className="font-semibold text-slate-50">Support Hours:</span>
               <br />
               Mon – Sat · 9:30 AM – 7:00 PM IST
             </div>
@@ -126,7 +126,7 @@ export function Footer() {
 
           {/* Column 4: Follow Us (2 Cols) */}
           <div className="lg:col-span-2 space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-[#7FA0D6]">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-nebula-glow">
               Follow Us
             </h3>
             <div className="flex flex-wrap gap-2.5">
@@ -135,7 +135,7 @@ export function Footer() {
                 href="https://www.instagram.com/creotool26?igsh=NjN0eWxwZ2VqbWJ3"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-gradient-to-tr hover:from-amber-500 hover:via-rose-500 hover:to-purple-600 hover:border-transparent transition-all shadow-xs"
+                className="flex size-9 items-center justify-center rounded-xl border border-nebula-steel bg-nebula-navy text-nebula-mist hover:text-white hover:bg-gradient-to-tr hover:from-amber-500 hover:via-rose-500 hover:to-purple-600 hover:border-transparent transition-all shadow-xs"
                 aria-label="Instagram"
                 title="Instagram"
               >
@@ -149,7 +149,7 @@ export function Footer() {
                 href="https://www.linkedin.com/in/creo-tool-3bb3b841b?utm_source=share_via&utm_content=profile&utm_medium=member_android"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-[#7FA0D6] hover:border-transparent transition-all shadow-xs"
+                className="flex size-9 items-center justify-center rounded-xl border border-nebula-steel bg-nebula-navy text-nebula-mist hover:text-white hover:bg-nebula-glow hover:border-transparent transition-all shadow-xs"
                 aria-label="LinkedIn"
                 title="LinkedIn"
               >
@@ -163,7 +163,7 @@ export function Footer() {
                 href="https://www.facebook.com/share/1GKDeenkvC/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-[#7FA0D6] hover:border-transparent transition-all shadow-xs"
+                className="flex size-9 items-center justify-center rounded-xl border border-nebula-steel bg-nebula-navy text-nebula-mist hover:text-white hover:bg-nebula-glow hover:border-transparent transition-all shadow-xs"
                 aria-label="Facebook"
                 title="Facebook"
               >
@@ -177,7 +177,7 @@ export function Footer() {
                 href="https://x.com/creotool"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-black hover:border-slate-700 transition-all shadow-xs"
+                className="flex size-9 items-center justify-center rounded-xl border border-nebula-steel bg-nebula-navy text-nebula-mist hover:text-white hover:bg-black hover:border-slate-700 transition-all shadow-xs"
                 aria-label="Twitter / X"
                 title="X (Twitter)"
               >
@@ -190,7 +190,7 @@ export function Footer() {
         </div>
 
         {/* 3. Bottom Legal Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#97A0B3]">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-nebula-mist">
           <p>
             &copy; {new Date().getFullYear()} CREO Technologies Inc. All rights reserved.
           </p>
@@ -199,7 +199,7 @@ export function Footer() {
               <li key={link.href}>
                 <Link
                   to={link.href}
-                  className="hover:text-[#F8FAFC] transition-colors"
+                  className="hover:text-slate-50 transition-colors"
                 >
                   {link.label}
                 </Link>

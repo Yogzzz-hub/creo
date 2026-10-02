@@ -110,14 +110,14 @@ export function OtpPinInput({
           const darkClasses = hasError
             ? "border-rose-500/70 bg-rose-950/20 text-rose-300 focus:ring-4 focus:ring-rose-500/20"
             : isFilled
-            ? "border-[#7FA0D6] bg-[#161F2D] text-[#F8FAFC] shadow-sm shadow-[#7FA0D6]/20"
-            : "border-[#2A3446] bg-[#0B111C] text-[#F8FAFC] hover:border-[#7FA0D6]/60 focus:border-[#BCCCE6] focus:bg-[#161F2D] focus:ring-4 focus:ring-[#BCCCE6]/20";
+            ? "border-nebula-glow bg-nebula-surface text-slate-50 shadow-sm shadow-nebula-glow/20"
+            : "border-nebula-steel bg-nebula-navy text-slate-50 hover:border-nebula-glow/60 focus:border-nebula-periwinkle focus:bg-nebula-surface focus:ring-4 focus:ring-nebula-periwinkle/20";
 
           const lightClasses = hasError
             ? "border-red-400 bg-red-50/50 text-red-600 focus:ring-4 focus:ring-red-100"
             : isFilled
-            ? "border-[#7FA0D6] bg-[#161F2D] text-[#0B111C] shadow-xs shadow-[#7FA0D6]/10"
-            : "border-slate-200 bg-slate-50/70 text-[#0B111C] hover:border-slate-300 focus:border-[#7FA0D6] focus:bg-white focus:ring-4 focus:ring-[#7FA0D6]/15";
+            ? "border-nebula-glow bg-nebula-surface text-nebula-navy shadow-xs shadow-nebula-glow/10"
+            : "border-slate-200 bg-slate-50/70 text-nebula-navy hover:border-slate-300 focus:border-nebula-glow focus:bg-white focus:ring-4 focus:ring-nebula-glow/15";
 
           return (
             <input

@@ -38,7 +38,7 @@ const TIERS: PlanTier[] = [
     reels: 4,
     posts: 8,
     stories: 10,
-    sla: "3 business-day batch SLA",
+    sla: "3 business days SLA",
     revisions: "1 revision round per asset",
     lead: "Shared account lead",
   },
@@ -46,26 +46,26 @@ const TIERS: PlanTier[] = [
     id: "growth",
     name: "Growth",
     price: "₹50,000",
-    unitCost: "₹1,042 / asset",
+    unitCost: "₹1,041 / asset",
     reels: 10,
-    posts: 16,
-    stories: 22,
-    sla: "2 business-day batch SLA",
+    posts: 18,
+    stories: 20,
+    sla: "2 business days SLA",
     revisions: "2 revision rounds per asset",
     lead: "Dedicated account director",
     badge: "Most Popular",
     isPopular: true,
   },
   {
-    id: "scale",
+    id: "pro",
     name: "Scale",
     price: "₹95,000",
-    unitCost: "₹990 / asset",
+    unitCost: "₹989 / asset",
     reels: 20,
-    posts: 32,
-    stories: 44,
-    sla: "24-48h expedited batch SLA",
-    revisions: "Unlimited revisions within scope",
+    posts: 36,
+    stories: 40,
+    sla: "24-hour priority SLA",
+    revisions: "3 revision rounds per asset",
     lead: "Executive creative director & priority pod",
     badge: "Maximum Output",
   },
@@ -108,7 +108,7 @@ export function ComparePlansModal({
       }}
     >
       <div
-        className="relative w-full max-w-4xl rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] border border-[#2A3446] max-h-[92vh] overflow-y-auto text-[#F8FAFC] m-auto animate-[zoomIn_0.2s_cubic-bezier(0.16,1,0.3,1)]"
+        className="relative w-full max-w-4xl rounded-3xl bg-nebula-surface p-6 sm:p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] border border-nebula-steel max-h-[92vh] overflow-y-auto text-slate-50 m-auto animate-[zoomIn_0.2s_cubic-bezier(0.16,1,0.3,1)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -116,21 +116,21 @@ export function ComparePlansModal({
           type="button"
           onClick={onClose}
           aria-label="Close modal"
-          className="absolute top-5 right-5 size-8 rounded-full bg-[#0B111C] border border-[#2A3446] text-[#97A0B3] hover:bg-[#2A3446] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute top-5 right-5 size-8 rounded-full bg-nebula-navy border border-nebula-steel text-nebula-mist hover:bg-nebula-steel hover:text-white flex items-center justify-center transition-colors cursor-pointer"
         >
           <X className="size-4" />
         </button>
 
         {/* Modal Header */}
         <div className="text-center max-w-xl mx-auto mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7FA0D6]/10 border border-[#7FA0D6]/30 text-[#BCCCE6] text-xs font-semibold mb-2">
-            <Sparkles className="size-3.5 text-[#7FA0D6]" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-nebula-glow/10 border border-nebula-glow/30 text-nebula-periwinkle text-xs font-semibold mb-2">
+            <Sparkles className="size-3.5 text-nebula-glow" />
             <span>Retainer Tiers & Capacity</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
             Compare Retainer Plans
           </h2>
-          <p className="text-xs text-[#97A0B3] mt-1.5 leading-relaxed">
+          <p className="text-xs text-nebula-mist mt-1.5 leading-relaxed">
             Switch plans seamlessly for your upcoming cycle or request tailored volume for your brand.
           </p>
         </div>
@@ -144,10 +144,10 @@ export function ComparePlansModal({
                 key={tier.id}
                 className={`relative flex flex-col justify-between rounded-2xl border p-5 transition-all ${
                   isCurrent
-                    ? "bg-[#0B111C] border-[#7FA0D6] shadow-[0_0_25px_rgba(127,160,214,0.15)] ring-1 ring-[#7FA0D6]"
+                    ? "bg-nebula-navy border-nebula-glow shadow-[0_0_25px_rgba(127,160,214,0.15)] ring-1 ring-nebula-glow"
                     : tier.isPopular
-                      ? "bg-[#0B111C]/60 border-[#D8BF9B]/40 hover:border-[#D8BF9B]"
-                      : "bg-[#0B111C]/40 border-[#2A3446] hover:border-[#2A3446]"
+                      ? "bg-nebula-navy/60 border-nebula-sand/40 hover:border-nebula-sand"
+                      : "bg-nebula-navy/40 border-nebula-steel hover:border-nebula-steel"
                 }`}
               >
                 {/* Header Badge */}
@@ -156,11 +156,11 @@ export function ComparePlansModal({
                     {tier.name}
                   </span>
                   {isCurrent ? (
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6] text-[#0B111C] text-[10px] font-extrabold uppercase tracking-wider">
+                    <span className="px-2.5 py-0.5 rounded-full bg-nebula-glow text-nebula-navy text-[10px] font-extrabold uppercase tracking-wider">
                       Current Plan
                     </span>
                   ) : tier.badge ? (
-                    <span className="px-2 py-0.5 rounded-full bg-[#D8BF9B]/20 border border-[#D8BF9B]/40 text-[#D8BF9B] text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded-full bg-nebula-sand/20 border border-nebula-sand/40 text-nebula-sand text-[10px] font-bold">
                       {tier.badge}
                     </span>
                   ) : null}
@@ -170,29 +170,29 @@ export function ComparePlansModal({
                 <div className="mb-4">
                   <div className="flex items-baseline gap-1">
                     <span className="text-2xl font-black text-white">{tier.price}</span>
-                    <span className="text-xs text-[#97A0B3]">/month</span>
+                    <span className="text-xs text-nebula-mist">/month</span>
                   </div>
-                  <p className="text-[11px] text-[#7FA0D6] mt-0.5 font-medium">{tier.unitCost}</p>
+                  <p className="text-[11px] text-nebula-glow mt-0.5 font-medium">{tier.unitCost}</p>
                 </div>
 
                 {/* Quotas */}
-                <div className="space-y-2 py-3 border-y border-[#2A3446]/80 text-xs mb-4">
-                  <div className="flex justify-between items-center text-[#BCCCE6]">
+                <div className="space-y-2 py-3 border-y border-nebula-steel/80 text-xs mb-4">
+                  <div className="flex justify-between items-center text-nebula-periwinkle">
                     <span>Reels / Shorts</span>
                     <span className="font-bold text-white">{tier.reels}</span>
                   </div>
-                  <div className="flex justify-between items-center text-[#BCCCE6]">
+                  <div className="flex justify-between items-center text-nebula-periwinkle">
                     <span>Static Posts / Carousels</span>
                     <span className="font-bold text-white">{tier.posts}</span>
                   </div>
-                  <div className="flex justify-between items-center text-[#BCCCE6]">
+                  <div className="flex justify-between items-center text-nebula-periwinkle">
                     <span>Stories / Slides</span>
                     <span className="font-bold text-white">{tier.stories}</span>
                   </div>
                 </div>
 
                 {/* Features */}
-                <ul className="space-y-2 text-[11px] text-[#97A0B3] mb-5 flex-1">
+                <ul className="space-y-2 text-[11px] text-nebula-mist mb-5 flex-1">
                   <li className="flex items-start gap-2">
                     <Check className="size-3.5 text-emerald-400 shrink-0 mt-0.5" />
                     <span>{tier.revisions}</span>
@@ -212,7 +212,7 @@ export function ComparePlansModal({
                   {isCurrent ? (
                     <button
                       disabled
-                      className="w-full py-2.5 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/10 text-xs font-bold text-[#BCCCE6] cursor-default text-center"
+                      className="w-full py-2.5 rounded-xl border border-nebula-glow/40 bg-nebula-glow/10 text-xs font-bold text-nebula-periwinkle cursor-default text-center"
                     >
                       Active Tier
                     </button>
@@ -223,7 +223,7 @@ export function ComparePlansModal({
                         onClose();
                         onOpenNegotiation(`Switch plan to ${tier.name}`);
                       }}
-                      className="w-full py-2.5 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full py-2.5 rounded-xl bg-nebula-periwinkle hover:bg-white text-nebula-navy text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <span>Switch to {tier.name}</span>
                     </button>
@@ -235,14 +235,14 @@ export function ComparePlansModal({
         </div>
 
         {/* Bottom Negotiation Banner */}
-        <div className="rounded-2xl border border-[#2A3446] bg-[#0B111C] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="rounded-2xl border border-nebula-steel bg-nebula-navy p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-3">
-            <div className="size-9 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] flex items-center justify-center shrink-0">
+            <div className="size-9 rounded-xl bg-nebula-surface border border-nebula-steel text-nebula-glow flex items-center justify-center shrink-0">
               <PhoneCall className="size-4" />
             </div>
             <div>
               <p className="font-semibold text-white">Need higher reel volume or custom terms?</p>
-              <p className="text-[11px] text-[#97A0B3]">
+              <p className="text-[11px] text-nebula-mist">
                 Talk with our Agency Director to customize quotas, SLA speed, or multi-brand packages.
               </p>
             </div>
@@ -253,7 +253,7 @@ export function ComparePlansModal({
               onClose();
               onOpenNegotiation("Custom Pricing / Retainer Discount");
             }}
-            className="px-4 py-2 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/10 text-[#BCCCE6] hover:bg-[#7FA0D6]/20 text-xs font-bold transition-colors shrink-0 cursor-pointer"
+            className="px-4 py-2 rounded-xl border border-nebula-glow/40 bg-nebula-glow/10 text-nebula-periwinkle hover:bg-nebula-glow/20 text-xs font-bold transition-colors shrink-0 cursor-pointer"
           >
             Negotiate Custom Plan
           </button>

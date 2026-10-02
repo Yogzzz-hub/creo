@@ -74,11 +74,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 )
                 db.add(admin)
                 await db.commit()
-            else:
-                admin.hashed_password = hash_password("Admin123!")
-                admin.role = UserRole.SUPER_ADMIN
-                admin.account_status = AccountStatus.ACTIVE
-                await db.commit()
+
     except Exception as e:
         logger.warning("admin_bootstrap_warning", error=str(e))
     yield

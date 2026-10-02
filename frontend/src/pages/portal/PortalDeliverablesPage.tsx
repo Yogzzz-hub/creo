@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../lib/auth-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchPortalDeliverables, approveDeliverable, requestChanges } from "../../lib/deliverables-api";
+import { request } from "../../lib/http";
 import { Check, Play, Loader2 } from "lucide-react";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
@@ -12,6 +13,17 @@ export function PortalDeliverablesPage() {
   const queryClient = useQueryClient();
   const gate = useOnboardingGate();
   const clientId = user?.id || "00000000-0000-0000-0000-000000000001";
+
+  const { data: subData } = useQuery<any>({
+    queryKey: ["client-subscription", user?.id],
+    queryFn: () => request<any>("/api/v1/payments/subscription"),
+    enabled: !!user?.id,
+  });
+
+  const planName = (subData?.plan?.name || subData?.subscription?.name || "").toLowerCase();
+  const maxRevisions = subData?.plan?.revision_rounds || (
+    planName.includes("starter") ? 1 : planName.includes("scale") ? 3 : 2
+  );
 
   // Query deliverables (only once the workspace is unlocked)
   const { data: deliverablesData, isLoading } = useQuery({
@@ -35,23 +47,6 @@ export function PortalDeliverablesPage() {
       setSelectedId(firstPending ? firstPending.id : (deliverables[0]?.id || null));
     }
   }, [deliverables, selectedId]);
-
-  if (!gate.isReady || (gate.isComplete && isLoading)) {
-    return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Deliverables Queue" />;
-  }
-
-  if (!gate.isComplete) {
-    return (
-      <div className="flex items-center justify-center py-6 sm:py-10">
-        <SubscriptionLockedState
-          title="Deliverables Queue Locked"
-          description="Your creative deliverables queue and sign-off docks will activate as soon as your workspace setup is complete."
-        />
-      </div>
-    );
-  }
-
-  const selectedItem: any = deliverables.find((d: any) => d.id === selectedId);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -79,6 +74,23 @@ export function PortalDeliverablesPage() {
       setCommentText("");
     },
   });
+
+  if (!gate.isReady || (gate.isComplete && isLoading)) {
+    return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Deliverables Queue" />;
+  }
+
+  if (!gate.isComplete) {
+    return (
+      <div className="flex items-center justify-center py-6 sm:py-10">
+        <SubscriptionLockedState
+          title="Deliverables Queue Locked"
+          description="Your creative deliverables queue and sign-off docks will activate as soon as your workspace setup is complete."
+        />
+      </div>
+    );
+  }
+
+  const selectedItem: any = deliverables.find((d: any) => d.id === selectedId);
 
   const handleApprove = () => {
     if (selectedId) approveMutation.mutate(selectedId);
@@ -109,7 +121,7 @@ export function PortalDeliverablesPage() {
   if (isLoading && deliverables.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#97A0B3]" />
+        <Loader2 className="w-8 h-8 animate-spin text-nebula-mist" />
       </div>
     );
   }
@@ -119,13 +131,13 @@ export function PortalDeliverablesPage() {
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-8 shrink-0">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#97A0B3] mb-2">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-nebula-mist mb-2">
             {deliverables.length > 0 ? `CYCLE DELIVERABLES · ${countAwaiting} WAITING FOR YOU` : "NO DELIVERABLES PENDING"}
           </p>
           <h1 className="text-3xl font-bold text-white">Review</h1>
         </div>
         {countAwaiting > 0 && (
-          <button onClick={handleApproveAll} className="text-[13px] text-[#97A0B3] hover:text-white transition-colors">
+          <button onClick={handleApproveAll} className="text-[13px] text-nebula-mist hover:text-white transition-colors">
             Approve everything in one tap: <span className="font-bold text-white cursor-pointer hover:underline">Approve all {countAwaiting}</span>
           </button>
         )}
@@ -135,13 +147,13 @@ export function PortalDeliverablesPage() {
       <div className="grid grid-cols-12 gap-6 flex-1 min-h-0 pb-6">
         
         {/* Left Column: Batch List */}
-        <div className="col-span-3 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-4 flex flex-col overflow-hidden">
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#97A0B3] mb-4 pl-3 pt-2">
+        <div className="col-span-3 bg-nebula-surface rounded-[24px] border border-nebula-steel p-4 flex flex-col overflow-hidden">
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-nebula-mist mb-4 pl-3 pt-2">
             THIS BATCH
           </h3>
           <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-hide">
             {deliverables.length === 0 ? (
-              <div className="p-4 text-center text-sm text-[#97A0B3]">
+              <div className="p-4 text-center text-sm text-nebula-mist">
                 No deliverables in this batch.
               </div>
             ) : (
@@ -157,37 +169,37 @@ export function PortalDeliverablesPage() {
 
                 return (
                   <button
-                    key={d.id}
+                    key={`${d.id}-${idx}`}
                     onClick={() => setSelectedId(d.id)}
                     className={`w-full flex items-center gap-4 p-3 rounded-2xl border text-left transition-all ${
                       isSelected 
-                        ? "bg-[#161F2D] border-white/[0.1] shadow-lg" 
+                        ? "bg-nebula-surface border-white/[0.1] shadow-lg" 
                         : "border-transparent hover:bg-white/[0.02]"
                     }`}
                   >
-                    <div className="w-14 h-14 rounded-xl bg-black overflow-hidden shrink-0 border border-[#2A3446] flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-xl bg-black overflow-hidden shrink-0 border border-nebula-steel flex items-center justify-center">
                       {thumb ? (
                         <img src={thumb} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <Play className="w-5 h-5 text-[#97A0B3]" />
+                        <Play className="w-5 h-5 text-nebula-mist" />
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className={`text-[13px] font-bold truncate ${isSelected ? 'text-white' : 'text-[#F8FAFC]'}`}>
+                      <h4 className={`text-[13px] font-bold truncate ${isSelected ? 'text-white' : 'text-slate-50'}`}>
                         {title}
                       </h4>
-                      <p className="text-xs text-[#97A0B3] truncate mb-2">{meta}</p>
+                      <p className="text-xs text-nebula-mist truncate mb-2">{meta}</p>
                       
                       {isNeedsYou ? (
-                        <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-bold bg-[#D8BF9B]/15 text-[#D8BF9B]">
+                        <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-bold bg-nebula-sand/15 text-nebula-sand">
                           Needs you
                         </span>
                       ) : isApproved ? (
-                        <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-bold bg-[#7FA0D6]/15 text-[#BCCCE6]">
+                        <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-bold bg-nebula-glow/15 text-nebula-periwinkle">
                           Approved
                         </span>
                       ) : (
-                        <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-bold bg-white/[0.05] text-[#97A0B3]">
+                        <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-bold bg-white/[0.05] text-nebula-mist">
                           In production
                         </span>
                       )}
@@ -200,10 +212,10 @@ export function PortalDeliverablesPage() {
         </div>
 
         {/* Middle Column: Player */}
-        <div className="col-span-5 bg-[#161F2D] rounded-[24px] border border-[#2A3446] flex flex-col relative overflow-hidden">
+        <div className="col-span-5 bg-nebula-surface rounded-[24px] border border-nebula-steel flex flex-col relative overflow-hidden">
           {/* Version Switcher */}
           {selectedItem && (
-            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 flex p-1 bg-[#0B111C]/80 backdrop-blur-md rounded-full border border-[#2A3446]">
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 flex p-1 bg-nebula-navy/80 backdrop-blur-md rounded-full border border-nebula-steel">
               {Array.from({ length: selectedItem.revision_round || 1 }).map((_, i) => {
                 const isLatest = i + 1 === (selectedItem.revision_round || 1);
                 return (
@@ -211,8 +223,8 @@ export function PortalDeliverablesPage() {
                     key={i}
                     className={`px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors ${
                       isLatest 
-                        ? "bg-[#161F2D] text-white shadow-sm border border-[#2A3446]" 
-                        : "text-[#97A0B3] hover:text-white"
+                        ? "bg-nebula-surface text-white shadow-sm border border-nebula-steel" 
+                        : "text-nebula-mist hover:text-white"
                     }`}
                   >
                     v{i + 1} {isLatest && "· latest"}
@@ -222,9 +234,9 @@ export function PortalDeliverablesPage() {
             </div>
           )}
 
-          <div className="flex-1 flex items-center justify-center p-8 bg-[#0B111C]/30 relative">
+          <div className="flex-1 flex items-center justify-center p-8 bg-nebula-navy/30 relative">
             {selectedItem ? (
-              <div className="relative w-full max-w-[280px] aspect-[9/16] bg-black rounded-[32px] overflow-hidden shadow-2xl border-4 border-[#161F2D] flex items-center justify-center">
+              <div className="relative w-full max-w-[280px] aspect-[9/16] bg-black rounded-[32px] overflow-hidden shadow-2xl border-4 border-nebula-surface flex items-center justify-center">
                 {selectedItem.file_url && (selectedItem.file_type?.includes("video") || selectedItem.file_url.endsWith(".mp4") || selectedItem.file_url.endsWith(".webm") || selectedItem.file_url.endsWith(".mov")) ? (
                   <video
                     src={selectedItem.file_url}
@@ -240,7 +252,7 @@ export function PortalDeliverablesPage() {
                 ) : (
                   <div className="text-center p-4">
                     <p className="text-white text-xs font-semibold mb-1">Asset in production</p>
-                    <p className="text-xs text-[#97A0B3]">Preview will appear once uploaded by your pod</p>
+                    <p className="text-xs text-nebula-mist">Preview will appear once uploaded by your pod</p>
                   </div>
                 )}
                 
@@ -251,28 +263,28 @@ export function PortalDeliverablesPage() {
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-[#97A0B3]">Select an asset to view</div>
+              <div className="text-sm text-nebula-mist">Select an asset to view</div>
             )}
           </div>
           
           {/* Asset Meta Bar */}
-          <div className="h-[72px] shrink-0 border-t border-[#2A3446] px-6 flex items-center justify-between bg-[#0B111C]/30">
-            <span className="text-[13px] text-[#97A0B3]">
+          <div className="h-[72px] shrink-0 border-t border-nebula-steel px-6 flex items-center justify-between bg-nebula-navy/30">
+            <span className="text-[13px] text-nebula-mist">
               {selectedItem ? `Format: ${(selectedItem.file_type || selectedItem.asset_type || "Media").toUpperCase()}` : "No asset selected"}
             </span>
-            <span className="text-xs font-medium text-[#97A0B3] tabular-nums shrink-0">
+            <span className="text-xs font-medium text-nebula-mist tabular-nums shrink-0">
               {selectedItem?.created_at ? `Created ${new Date(selectedItem.created_at).toLocaleDateString()}` : ""}
             </span>
           </div>
         </div>
 
         {/* Right Column: Details & Actions */}
-        <div className="col-span-4 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-6 flex flex-col h-full overflow-hidden">
+        <div className="col-span-4 bg-nebula-surface rounded-[24px] border border-nebula-steel p-6 flex flex-col h-full overflow-hidden">
           {selectedItem ? (
             <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide space-y-6">
               {/* Header Info */}
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#97A0B3] mb-2">
+                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-nebula-mist mb-2">
                   {(selectedItem.asset_type || selectedItem.file_type || "REEL").toUpperCase()} · {selectedItem.scheduled_at ? `PUBLISHES ${new Date(selectedItem.scheduled_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase()}` : "SCHEDULED IN CALENDAR"}
                 </p>
                 <h2 className="text-2xl font-normal text-white">{selectedItem.title || selectedItem.file_url?.split("/").pop()?.replace(/[-_.]/g, " ") || "Deliverable"}</h2>
@@ -280,9 +292,9 @@ export function PortalDeliverablesPage() {
 
               {/* What changed */}
               {(selectedItem.revision_round || 1) > 1 && (
-                <div className="bg-[#161F2D] rounded-xl p-4 border border-white/[0.03]">
+                <div className="bg-nebula-surface rounded-xl p-4 border border-white/[0.03]">
                   <h4 className="text-[13px] font-bold text-white mb-1.5">What changed in v{selectedItem.revision_round}</h4>
-                  <p className="text-[13px] text-[#97A0B3] leading-relaxed">
+                  <p className="text-[13px] text-nebula-mist leading-relaxed">
                     {selectedItem.rejection_comment || "Updated revision based on client feedback."}
                   </p>
                 </div>
@@ -292,11 +304,19 @@ export function PortalDeliverablesPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[13px] font-bold text-white">Revision rounds</span>
-                  <span className="text-xs text-[#97A0B3]">{selectedItem.revision_round || 1} of 2 used</span>
+                  <span className="text-xs text-nebula-mist">
+                    {Math.min(selectedItem.revision_round || 1, maxRevisions)} of {maxRevisions} used
+                  </span>
                 </div>
                 <div className="h-1.5 w-full bg-white/[0.08] rounded-full flex gap-1">
-                  <div className="h-full flex-1 bg-[#7FA0D6] rounded-full" />
-                  <div className={`h-full flex-1 rounded-full ${(selectedItem.revision_round || 1) > 1 ? "bg-[#7FA0D6]" : ""}`} />
+                  {Array.from({ length: maxRevisions }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`h-full flex-1 rounded-full ${
+                        (selectedItem.revision_round || 1) > idx ? "bg-nebula-glow" : ""
+                      }`}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -305,22 +325,22 @@ export function PortalDeliverablesPage() {
                 <h4 className="text-[13px] font-bold text-white mb-4">Comments</h4>
                 <div className="space-y-4">
                   {itemComments.length === 0 ? (
-                    <p className="text-[13px] text-[#97A0B3] italic">No revision comments yet for this deliverable.</p>
+                    <p className="text-[13px] text-nebula-mist italic">No revision comments yet for this deliverable.</p>
                   ) : (
                     itemComments.map((c) => (
                       <div key={c.id} className="flex gap-3">
-                        <div className="size-6 rounded-full bg-[#BCCCE6] shrink-0 flex items-center justify-center text-[11px] font-bold text-black border border-white/[0.1]">
+                        <div className="size-6 rounded-full bg-nebula-periwinkle shrink-0 flex items-center justify-center text-[11px] font-bold text-black border border-white/[0.1]">
                           1
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs text-[#97A0B3] mb-1">
+                          <p className="text-xs text-nebula-mist mb-1">
                             <span className="font-bold text-white">{c.author}</span> - {c.timestamp}
                           </p>
-                          <p className="text-[13px] text-[#97A0B3] leading-relaxed mb-1">
+                          <p className="text-[13px] text-nebula-mist leading-relaxed mb-1">
                             {c.text}
                           </p>
                           {c.fixed && (
-                            <p className="text-xs font-bold text-[#97A0B3] flex items-center gap-1">
+                            <p className="text-xs font-bold text-nebula-mist flex items-center gap-1">
                               <Check className="w-3 h-3" /> Addressed in v{selectedItem.revision_round}
                             </p>
                           )}
@@ -339,7 +359,7 @@ export function PortalDeliverablesPage() {
                     <button 
                       key={tag}
                       onClick={() => setCommentText(prev => prev ? `${prev} · ${tag}` : tag)}
-                      className="px-3 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-[#2A3446] text-xs font-bold text-[#97A0B3] transition-colors"
+                      className="px-3 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] border border-nebula-steel text-xs font-bold text-nebula-mist transition-colors"
                     >
                       {tag}
                     </button>
@@ -349,21 +369,21 @@ export function PortalDeliverablesPage() {
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   placeholder="Tell your creative pod what to change..."
-                  className="w-full bg-[#0B111C]/50 border border-[#2A3446] rounded-xl p-4 text-[13px] text-white placeholder:text-[#97A0B3] resize-none focus:outline-none focus:border-white/[0.2] transition-colors h-24 mb-4"
+                  className="w-full bg-nebula-navy/50 border border-nebula-steel rounded-xl p-4 text-[13px] text-white placeholder:text-nebula-mist resize-none focus:outline-none focus:border-white/[0.2] transition-colors h-24 mb-4"
                 />
                 
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handleRequestChange}
                     disabled={requestChangesMutation.isPending || !commentText}
-                    className="flex-1 px-4 py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 rounded-full border border-nebula-steel text-[13px] font-bold text-white hover:bg-nebula-surface transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {requestChangesMutation.isPending ? "Sending..." : "Request change"}
                   </button>
                   <button
                     onClick={handleApprove}
                     disabled={approveMutation.isPending || selectedItem.status === "approved"}
-                    className="flex-1 px-4 py-3 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 rounded-full bg-nebula-periwinkle text-nebula-navy text-[13px] font-bold hover:bg-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Check className="w-4 h-4" />
                     {approveMutation.isPending ? "Approving..." : "Approve"}
@@ -373,12 +393,12 @@ export function PortalDeliverablesPage() {
 
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-[#97A0B3]">
-              <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-[#2A3446] flex items-center justify-center mb-3">
-                <Play className="w-5 h-5 text-[#97A0B3]" />
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-nebula-mist">
+              <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-nebula-steel flex items-center justify-center mb-3">
+                <Play className="w-5 h-5 text-nebula-mist" />
               </div>
               <h3 className="text-sm font-semibold text-white mb-1">No Deliverable Selected</h3>
-              <p className="text-xs text-[#97A0B3] max-w-xs leading-relaxed">
+              <p className="text-xs text-nebula-mist max-w-xs leading-relaxed">
                 When your creative pod submits deliverables for review, select an item to inspect versions, leave timestamps or comments, and approve for scheduling.
               </p>
             </div>
@@ -388,8 +408,8 @@ export function PortalDeliverablesPage() {
 
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#161F2D] text-white px-5 py-3 rounded-xl shadow-2xl border border-white/[0.1] text-sm font-medium flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#BCCCE6]" />
+        <div className="fixed bottom-6 right-6 z-50 bg-nebula-surface text-white px-5 py-3 rounded-xl shadow-2xl border border-white/[0.1] text-sm font-medium flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-nebula-periwinkle" />
           {toastMessage}
         </div>
       )}

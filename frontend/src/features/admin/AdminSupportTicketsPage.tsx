@@ -37,7 +37,7 @@ const DEFAULT_INITIAL_TICKETS: TicketItem[] = [
     client: "Sushmitaa",
     tier: "Enterprise Acceleration",
     email: "sushmitaa1407@gmail.com",
-    avatarBg: "bg-[#0B111C]",
+    avatarBg: "bg-nebula-navy",
     issueTitle: "deliverables not received on time, checkout",
     issueDesc: "I've not received my deliverables which was scheduled yesterday",
     priority: "High",
@@ -52,9 +52,9 @@ const DEFAULT_INITIAL_TICKETS: TicketItem[] = [
   {
     id: "1042",
     client: "Ryze",
-    tier: "Starter Growth",
+    tier: "Starter",
     email: "sushmitaa1407@gmail.com",
-    avatarBg: "bg-[#0B111C]",
+    avatarBg: "bg-nebula-navy",
     issueTitle: "API Webhook Timeout on Deliverables Sync",
     issueDesc: "Payload dropped after 4 retries via US-East Gateway during automated delivery sync of 4× 4K Reels.",
     priority: "Urgent",
@@ -71,7 +71,7 @@ const DEFAULT_INITIAL_TICKETS: TicketItem[] = [
     client: "Aravindan",
     tier: "Custom Retainer",
     email: "aravindan20062006@gmail.com",
-    avatarBg: "bg-[#161F2D]",
+    avatarBg: "bg-nebula-surface",
     issueTitle: "Cloud Database Architecture Infographic Review",
     issueDesc: "Technical schematic revision for zero-latency failover cluster diagram requested by CTO.",
     priority: "High",
@@ -86,9 +86,9 @@ const DEFAULT_INITIAL_TICKETS: TicketItem[] = [
   {
     id: "1039",
     client: "Shanmugaraj",
-    tier: "Brand Accelerator",
+    tier: "Growth",
     email: "shanmugaraj2204@gmail.com",
-    avatarBg: "bg-[#0B111C]",
+    avatarBg: "bg-nebula-navy",
     issueTitle: "Asset Upload Sync Error in Reels Batch 44",
     issueDesc: "Audio sync drift of 240ms detected in final MP4 export for upcoming Instagram Reels release.",
     priority: "Medium",
@@ -162,7 +162,7 @@ export function AdminSupportTicketsPage() {
           client: clientName,
           tier: st.tier || "Active Retainer",
           email: clientEmail,
-          avatarBg: "bg-[#0B111C]",
+          avatarBg: "bg-nebula-navy",
           clientInitial,
           issueTitle: st.title || st.subject || "Support Inquiry",
           issueDesc: st.description || "",
@@ -184,7 +184,7 @@ export function AdminSupportTicketsPage() {
         client: lt.client || "Client Account",
         tier: lt.tier || "Active Retainer",
         email: lt.email || "client@creo.agency",
-        avatarBg: lt.avatarBg || "bg-[#0B111C]",
+        avatarBg: lt.avatarBg || "bg-nebula-navy",
         issueTitle: lt.issueTitle || lt.title || "Support Request",
         issueDesc: lt.issueDesc || lt.description || "",
         priority: lt.priority || "Urgent",
@@ -309,7 +309,7 @@ export function AdminSupportTicketsPage() {
   const resolvedCount = tickets.filter((t) => t.status === "Resolved").length;
 
   return (
-    <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
+    <div data-surface="ops" className="w-full min-h-screen font-sans bg-nebula-navy flex flex-col">
       <AdminTopHeader activeTab="Support" />
 
       <motion.main
@@ -321,44 +321,44 @@ export function AdminSupportTicketsPage() {
         {/* Top Summary Cards Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Open Tickets */}
-          <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-5 shadow-xs space-y-3 hover-card-innovative">
+          <div className="bg-nebula-surface border border-nebula-steel/90 rounded-2xl p-5 shadow-xs space-y-3 hover-card-innovative">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-nebula-mist">
                 ACTIVE / OPEN TICKETS
               </span>
-              <div className="size-8 rounded-xl bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 flex items-center justify-center text-[#7FA0D6]">
+              <div className="size-8 rounded-xl bg-nebula-glow/15 border border-nebula-glow/30 flex items-center justify-center text-nebula-glow">
                 <Inbox className="size-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-white">{openCount}</span>
-              <span className="text-xs font-bold text-[#7FA0D6]">active items</span>
+              <span className="text-xs font-bold text-nebula-glow">active items</span>
             </div>
             <div className="pt-1">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 text-[#BCCCE6] text-[11px] font-bold border border-blue-500/30">
-                <span className="size-1.5 rounded-full bg-[#BCCCE6] animate-pulse" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 text-nebula-periwinkle text-[11px] font-bold border border-blue-500/30">
+                <span className="size-1.5 rounded-full bg-nebula-periwinkle animate-pulse" />
                 Live SLA Monitoring
               </span>
             </div>
           </div>
 
           {/* Card 2: Resolved Today */}
-          <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-5 shadow-xs space-y-3 hover-card-innovative">
+          <div className="bg-nebula-surface border border-nebula-steel/90 rounded-2xl p-5 shadow-xs space-y-3 hover-card-innovative">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-nebula-mist">
                 RESOLVED TODAY
               </span>
-              <div className="size-8 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-[#BCCCE6]">
+              <div className="size-8 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-nebula-periwinkle">
                 <CheckCircle2 className="size-4" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-black text-white">{resolvedCount + 37}</span>
-              <span className="text-xs font-semibold text-[#97A0B3]">Tickets closed</span>
+              <span className="text-xs font-semibold text-nebula-mist">Tickets closed</span>
             </div>
             <div className="pt-1">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[11px] font-bold border border-[#7FA0D6]/30">
-                <span className="size-1.5 rounded-full bg-[#7FA0D6]" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-nebula-glow/15 text-nebula-glow text-[11px] font-bold border border-nebula-glow/30">
+                <span className="size-1.5 rounded-full bg-nebula-glow" />
                 100% SLA Compliance Rate
               </span>
             </div>
@@ -366,11 +366,11 @@ export function AdminSupportTicketsPage() {
         </div>
 
         {/* View Toggle */}
-        <div className="flex items-center gap-2 border-b border-[#2A3446] pb-2">
+        <div className="flex items-center gap-2 border-b border-nebula-steel pb-2">
           <button
             onClick={() => setStatusFilter("active")}
             className={`px-4 py-2 text-xs font-bold transition-all border-b-2 ${
-              statusFilter === "active" ? "border-[#7FA0D6] text-white" : "border-transparent text-[#97A0B3] hover:text-[#BCCCE6]"
+              statusFilter === "active" ? "border-nebula-glow text-white" : "border-transparent text-nebula-mist hover:text-nebula-periwinkle"
             }`}
           >
             Active Tickets ({openCount})
@@ -378,7 +378,7 @@ export function AdminSupportTicketsPage() {
           <button
             onClick={() => setStatusFilter("closed")}
             className={`px-4 py-2 text-xs font-bold transition-all border-b-2 ${
-              statusFilter === "closed" ? "border-[#7FA0D6] text-white" : "border-transparent text-[#97A0B3] hover:text-[#BCCCE6]"
+              statusFilter === "closed" ? "border-nebula-glow text-white" : "border-transparent text-nebula-mist hover:text-nebula-periwinkle"
             }`}
           >
             Closed Archive ({resolvedCount})
@@ -388,7 +388,7 @@ export function AdminSupportTicketsPage() {
         {/* Mobile Tickets Card List (< md) */}
         <div className="block md:hidden space-y-3">
           {filteredTickets.length === 0 ? (
-            <div className="bg-[#161F2D] rounded-2xl p-8 border border-[#2A3446] text-center text-[#97A0B3] text-xs font-bold">
+            <div className="bg-nebula-surface rounded-2xl p-8 border border-nebula-steel text-center text-nebula-mist text-xs font-bold">
               No tickets matching the selected filters.
             </div>
           ) : (
@@ -396,21 +396,21 @@ export function AdminSupportTicketsPage() {
               <div
                 key={t.id}
                 onClick={() => navigate(`/admin/support/tickets/${t.rawId || t.id}`)}
-                className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446]/90 shadow-2xs space-y-3 hover:border-blue-300 transition-all cursor-pointer active:scale-[0.99]"
+                className="bg-nebula-surface rounded-2xl p-4 border border-nebula-steel/90 shadow-2xs space-y-3 hover:border-blue-300 transition-all cursor-pointer active:scale-[0.99]"
               >
                 {/* Header: ID + Priority + Status */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-xs text-[#97A0B3]">#{t.id}</span>
+                    <span className="font-mono font-bold text-xs text-nebula-mist">#{t.id}</span>
                     <span
                       className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase ${
                         t.priority === "Urgent"
-                          ? "bg-blue-900/40 text-[#BCCCE6] border border-blue-500/30"
+                          ? "bg-blue-900/40 text-nebula-periwinkle border border-blue-500/30"
                           : t.priority === "High"
-                          ? "bg-blue-500/20 text-[#BCCCE6] border border-blue-500/30"
+                          ? "bg-blue-500/20 text-nebula-periwinkle border border-blue-500/30"
                           : t.priority === "Medium"
-                          ? "bg-[#7FA0D6]/20 text-[#7FA0D6]"
-                          : "bg-[#161F2D] text-[#F1F5F9]"
+                          ? "bg-nebula-glow/20 text-nebula-glow"
+                          : "bg-nebula-surface text-slate-100"
                       }`}
                     >
                       {t.priority}
@@ -419,12 +419,12 @@ export function AdminSupportTicketsPage() {
                   <span
                     className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                       t.status === "Open"
-                        ? "bg-blue-500/15 text-[#BCCCE6] border-blue-500/30"
+                        ? "bg-blue-500/15 text-nebula-periwinkle border-blue-500/30"
                         : t.status === "In Progress"
-                        ? "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30"
+                        ? "bg-nebula-glow/15 text-nebula-glow border-nebula-glow/30"
                         : t.status === "Pending Client"
-                        ? "bg-blue-500/20 text-[#BCCCE6] border-blue-500/30"
-                        : "bg-blue-600/15 text-[#BCCCE6] border-blue-500/30"
+                        ? "bg-blue-500/20 text-nebula-periwinkle border-blue-500/30"
+                        : "bg-blue-600/15 text-nebula-periwinkle border-blue-500/30"
                     }`}
                   >
                     {t.status}
@@ -441,27 +441,27 @@ export function AdminSupportTicketsPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="font-bold text-xs text-white truncate">{t.client}</span>
-                      <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold bg-[#7FA0D6]/20 text-[#7FA0D6] uppercase">
+                      <span className="px-1.5 py-0.2 rounded text-[8px] font-extrabold bg-nebula-glow/20 text-nebula-glow uppercase">
                         {t.tier}
                       </span>
                     </div>
-                    <div className="text-[10px] text-[#97A0B3] font-mono truncate">{t.email}</div>
+                    <div className="text-[10px] text-nebula-mist font-mono truncate">{t.email}</div>
                   </div>
                 </div>
 
                 {/* Issue Details */}
                 <div className="space-y-1">
                   <h4 className="font-bold text-xs text-white leading-snug">{t.issueTitle}</h4>
-                  <p className="text-[11px] text-[#97A0B3] line-clamp-2">{t.issueDesc}</p>
+                  <p className="text-[11px] text-nebula-mist line-clamp-2">{t.issueDesc}</p>
                 </div>
 
                 {/* Footer: Agent & Quick Actions */}
-                <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] gap-2">
+                <div className="flex items-center justify-between pt-2 border-t border-nebula-steel gap-2">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <div className="size-6 rounded-full bg-slate-800 text-white font-bold text-[9px] flex items-center justify-center shrink-0">
                       {t.agentInitials}
                     </div>
-                    <span className="text-[10px] font-bold text-[#F1F5F9] truncate">{t.agent}</span>
+                    <span className="text-[10px] font-bold text-slate-100 truncate">{t.agent}</span>
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -477,7 +477,7 @@ export function AdminSupportTicketsPage() {
                     <button
                       type="button"
                       onClick={() => navigate(`/admin/support/tickets/${t.rawId || t.id}`)}
-                      className="px-2.5 py-1 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-[11px] font-bold hover:bg-slate-200"
+                      className="px-2.5 py-1 rounded-xl bg-nebula-surface text-slate-100 text-[11px] font-bold hover:bg-slate-200"
                     >
                       {t.secondaryAction}
                     </button>
@@ -489,10 +489,10 @@ export function AdminSupportTicketsPage() {
         </div>
 
         {/* Desktop Tickets Table (hidden on md) */}
-        <div className="hidden md:block bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl shadow-xs overflow-hidden">
+        <div className="hidden md:block bg-nebula-surface border border-nebula-steel/90 rounded-2xl shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#0B111C]/80 border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
+              <thead className="bg-nebula-navy/80 border-b border-nebula-steel text-[11px] font-extrabold uppercase tracking-wider text-nebula-mist">
                 <tr>
                   <th className="px-4 py-3.5 w-12 text-center">
                     <input
@@ -500,7 +500,7 @@ export function AdminSupportTicketsPage() {
                       checked={selectedIds.length === filteredTickets.length && filteredTickets.length > 0}
                       onChange={toggleSelectAll}
                       aria-label="Select All Tickets"
-                      className="rounded border-[#2A3446] text-[#7FA0D6] focus:ring-blue-500"
+                      className="rounded border-nebula-steel text-nebula-glow focus:ring-blue-500"
                     />
                   </th>
                   <th className="px-4 py-3.5">ID</th>
@@ -514,7 +514,7 @@ export function AdminSupportTicketsPage() {
               <tbody className="divide-y divide-slate-100 font-medium">
                 {filteredTickets.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-12 text-[#97A0B3] font-medium">
+                    <td colSpan={7} className="text-center py-12 text-nebula-mist font-medium">
                       No tickets matching the selected filters.
                     </td>
                   </tr>
@@ -522,7 +522,7 @@ export function AdminSupportTicketsPage() {
                   filteredTickets.map((t) => (
                     <tr
                       key={t.id}
-                      className="hover:bg-[#0B111C]/80 transition-colors group cursor-pointer"
+                      className="hover:bg-nebula-navy/80 transition-colors group cursor-pointer"
                       onClick={() => navigate(`/admin/support/tickets/${t.rawId || t.id}`)}
                     >
                       <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
@@ -531,12 +531,12 @@ export function AdminSupportTicketsPage() {
                           checked={selectedIds.includes(t.id)}
                           onChange={() => toggleSelect(t.id)}
                           aria-label={`Select Ticket #${t.id}`}
-                          className="rounded border-[#2A3446] text-[#7FA0D6] focus:ring-blue-500"
+                          className="rounded border-nebula-steel text-nebula-glow focus:ring-blue-500"
                         />
                       </td>
 
                       {/* Ticket ID */}
-                      <td className="px-4 py-4 font-mono font-bold text-[#97A0B3] group-hover:text-[#7FA0D6] transition-colors">
+                      <td className="px-4 py-4 font-mono font-bold text-nebula-mist group-hover:text-nebula-glow transition-colors">
                         #{t.id}
                       </td>
 
@@ -550,14 +550,14 @@ export function AdminSupportTicketsPage() {
                           </div>
                           <div>
                             <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-white group-hover:text-[#7FA0D6] transition-colors">
+                              <span className="font-bold text-white group-hover:text-nebula-glow transition-colors">
                                 {t.client}
                               </span>
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 uppercase tracking-wide">
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30 uppercase tracking-wide">
                                 {t.tier}
                               </span>
                             </div>
-                            <div className="text-[11px] text-[#97A0B3] font-mono mt-0.5">{t.email}</div>
+                            <div className="text-[11px] text-nebula-mist font-mono mt-0.5">{t.email}</div>
                           </div>
                         </div>
                       </td>
@@ -569,24 +569,24 @@ export function AdminSupportTicketsPage() {
                             <span
                               className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase ${
                                 t.priority === "Urgent"
-                                  ? "bg-blue-900/40 text-[#BCCCE6] border border-blue-500/30"
+                                  ? "bg-blue-900/40 text-nebula-periwinkle border border-blue-500/30"
                                   : t.priority === "High"
-                                  ? "bg-blue-500/20 text-[#BCCCE6] border border-blue-500/30"
+                                  ? "bg-blue-500/20 text-nebula-periwinkle border border-blue-500/30"
                                   : t.priority === "Medium"
-                                  ? "bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30"
-                                  : "bg-[#161F2D] text-[#F1F5F9] border border-[#2A3446]"
+                                  ? "bg-nebula-glow/20 text-nebula-glow border border-nebula-glow/30"
+                                  : "bg-nebula-surface text-slate-100 border border-nebula-steel"
                               }`}
                             >
                               {t.priority}
                             </span>
-                            <span className="text-[11px] font-semibold text-[#BCCCE6]">
+                            <span className="text-[11px] font-semibold text-nebula-periwinkle">
                               {t.timeLog}
                             </span>
                           </div>
                           <h4 className="font-bold text-white text-xs leading-snug">
                             {t.issueTitle}
                           </h4>
-                          <p className="text-[11px] text-[#97A0B3] line-clamp-1">
+                          <p className="text-[11px] text-nebula-mist line-clamp-1">
                             {t.issueDesc}
                           </p>
                         </div>
@@ -600,7 +600,7 @@ export function AdminSupportTicketsPage() {
                           </div>
                           <div>
                             <div className="font-bold text-white text-xs">{t.agent}</div>
-                            <div className="text-[10px] text-[#97A0B3]">{t.pod}</div>
+                            <div className="text-[10px] text-nebula-mist">{t.pod}</div>
                           </div>
                         </div>
                       </td>
@@ -610,12 +610,12 @@ export function AdminSupportTicketsPage() {
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold ${
                             t.status === "Open"
-                              ? "bg-blue-500/15 text-[#BCCCE6] border border-blue-500/30"
+                              ? "bg-blue-500/15 text-nebula-periwinkle border border-blue-500/30"
                               : t.status === "In Progress"
-                              ? "bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30"
+                              ? "bg-nebula-glow/15 text-nebula-glow border border-nebula-glow/30"
                               : t.status === "Pending Client"
-                              ? "bg-blue-500/20 text-[#BCCCE6] border border-blue-500/30"
-                              : "bg-blue-600/15 text-[#BCCCE6] border border-blue-500/30"
+                              ? "bg-blue-500/20 text-nebula-periwinkle border border-blue-500/30"
+                              : "bg-blue-600/15 text-nebula-periwinkle border border-blue-500/30"
                           }`}
                         >
                           {t.status}
@@ -639,14 +639,14 @@ export function AdminSupportTicketsPage() {
                           <button
                             type="button"
                             onClick={() => navigate(`/admin/support/tickets/${t.rawId || t.id}`)}
-                            className="px-2.5 py-1 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-[11px] font-bold hover:bg-slate-200 transition-colors cursor-pointer"
+                            className="px-2.5 py-1 rounded-xl bg-nebula-surface text-slate-100 text-[11px] font-bold hover:bg-slate-200 transition-colors cursor-pointer"
                           >
                             {t.secondaryAction}
                           </button>
                           <button
                             type="button"
                             onClick={() => navigate(`/admin/support/tickets/${t.rawId || t.id}`)}
-                            className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded cursor-pointer"
+                            className="p-1 text-nebula-mist hover:text-slate-100 rounded cursor-pointer"
                             aria-label="More actions"
                           >
                             <MoreVertical className="size-4" />
@@ -669,7 +669,7 @@ export function AdminSupportTicketsPage() {
           onClick={() => setAlertModal(null)}
         >
           <div
-            className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
+            className="relative w-full max-w-md rounded-3xl bg-nebula-surface p-6 sm:p-8 shadow-2xl border border-nebula-steel flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -678,7 +678,7 @@ export function AdminSupportTicketsPage() {
             <button
               type="button"
               onClick={() => setAlertModal(null)}
-              className="absolute top-4 right-4 size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-4 right-4 size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist hover:text-slate-100 flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Close dialog"
             >
               <X className="size-4" />
@@ -689,7 +689,7 @@ export function AdminSupportTicketsPage() {
               className={`size-16 rounded-3xl flex items-center justify-center mb-4 ring-8 shadow-inner ${
                 alertModal.type === "success"
                   ? "bg-emerald-50 text-emerald-600 ring-emerald-50/60"
-                  : "bg-[#7FA0D6]/15 text-[#7FA0D6] ring-blue-50/60"
+                  : "bg-nebula-glow/15 text-nebula-glow ring-blue-50/60"
               }`}
             >
               {alertModal.type === "success" ? (
@@ -705,22 +705,22 @@ export function AdminSupportTicketsPage() {
             </h3>
 
             {/* Modal Description */}
-            <p className="text-xs sm:text-sm text-[#F1F5F9] mt-2 leading-relaxed max-w-sm">
+            <p className="text-xs sm:text-sm text-slate-100 mt-2 leading-relaxed max-w-sm">
               {alertModal.message}
             </p>
 
             {/* Ticket Context Information Box */}
             {alertModal.ticketId && (
-              <div className="w-full mt-5 p-3.5 rounded-2xl bg-[#0B111C] border border-[#2A3446]/80 flex items-center justify-between text-xs font-semibold text-[#F1F5F9]">
+              <div className="w-full mt-5 p-3.5 rounded-2xl bg-nebula-navy border border-nebula-steel/80 flex items-center justify-between text-xs font-semibold text-slate-100">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 py-0.5 rounded-md border border-[#7FA0D6]/30">
+                  <span className="font-mono font-bold text-nebula-glow bg-nebula-glow/15 px-2 py-0.5 rounded-md border border-nebula-glow/30">
                     #{alertModal.ticketId}
                   </span>
-                  <span className="text-[#97A0B3]">•</span>
+                  <span className="text-nebula-mist">•</span>
                   <span className="font-bold text-white">{alertModal.client}</span>
                 </div>
                 {alertModal.tier && (
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-[#7FA0D6]/20 text-blue-800 uppercase tracking-wide">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-nebula-glow/20 text-blue-800 uppercase tracking-wide">
                     {alertModal.tier}
                   </span>
                 )}
@@ -745,7 +745,7 @@ export function AdminSupportTicketsPage() {
                     setAlertModal(null);
                     navigate(`/admin/support/tickets/${id}`);
                   }}
-                  className="px-5 py-3 rounded-2xl bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9] font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-5 py-3 rounded-2xl bg-nebula-surface hover:bg-slate-200 text-slate-100 font-bold text-xs active:scale-95 transition-all cursor-pointer"
                 >
                   View Ticket
                 </button>
