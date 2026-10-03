@@ -170,11 +170,14 @@ export function AdminClientsPage() {
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
   const [isCancelClientModalOpen, setIsCancelClientModalOpen] = useState(false);
-  const [isOnboardPodModalOpen, setIsOnboardPodModalOpen] = useState(false);
-  const [isRemovePodModalOpen, setIsRemovePodModalOpen] = useState(false);
-  const [newPodNameInput, setNewPodNameInput] = useState("");
-  const [newPodLeadInput, setNewPodLeadInput] = useState("");
-  const [podToRemoveInput, setPodToRemoveInput] = useState("Pod C");
+  const [isOnboardClientModalOpen, setIsOnboardClientModalOpen] = useState(false);
+  const [isRemoveClientModalOpen, setIsRemoveClientModalOpen] = useState(false);
+  const [newClientNameInput, setNewClientNameInput] = useState("");
+  const [newClientIndustryInput, setNewClientIndustryInput] = useState("");
+  const [newClientPodInput, setNewClientPodInput] = useState("Pod A (Creative & Brand Strategy)");
+  const [clientToRemoveInput, setClientToRemoveInput] = useState("Ryze");
+  const [customClients, setCustomClients] = useState<Record<string, ClientDetailData>>({});
+  const [removedClientIds, setRemovedClientIds] = useState<Set<string>>(new Set());
   const [previewDeliverable, setPreviewDeliverable] = useState<any | null>(null);
 
   const [newRequestForm, setNewRequestForm] = useState({
@@ -688,7 +691,7 @@ export function AdminClientsPage() {
     },
   };
 
-  const mergedClientsData: Record<string, ClientDetailData> = { ...clientsData };
+  const mergedClientsData: Record<string, ClientDetailData> = { ...clientsData, ...customClients };
 
   serverClients.forEach((sc) => {
     const emailParts = sc.email.split("@");
@@ -865,7 +868,12 @@ export function AdminClientsPage() {
       clientMap.set(key, c);
     }
   });
-  const clientList = Array.from(clientMap.values());
+  const clientList = Array.from(clientMap.values()).filter(
+    (c) =>
+      !removedClientIds.has(c.id.toLowerCase()) &&
+      !removedClientIds.has(c.name.toLowerCase()) &&
+      !removedClientIds.has((c.contact?.email || "").toLowerCase())
+  );
 
   useEffect(() => {
     if (urlClientId) {
@@ -994,17 +1002,17 @@ export function AdminClientsPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsOnboardPodModalOpen(true)}
+                  onClick={() => setIsOnboardClientModalOpen(true)}
                   className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer transition-all shrink-0"
                 >
-                  <Plus className="w-4 h-4" /> Onboard Pod
+                  <Plus className="w-4 h-4" /> Onboard Client
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIsRemovePodModalOpen(true)}
+                  onClick={() => setIsRemoveClientModalOpen(true)}
                   className="px-3 py-2.5 rounded-xl border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Remove Pod
+                  <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Remove Client
                 </button>
               </div>
             </div>
@@ -2010,16 +2018,16 @@ export function AdminClientsPage() {
           </div>
         )}
 
-        {/* 6. Onboard New Pod Modal */}
-        {isOnboardPodModalOpen && (
+        {/* 6. Onboard New Client Modal */}
+        {isOnboardClientModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
             <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
               <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                 <div className="flex items-center gap-2">
                   <Plus className="w-5 h-5 text-[#7FA0D6]" />
-                  <h3 className="text-base font-black text-white">Onboard New Creative Pod</h3>
+                  <h3 className="text-base font-black text-white">Onboard New Client</h3>
                 </div>
-                <button type="button" onClick={() => setIsOnboardPodModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setIsOnboardClientModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -2027,42 +2035,137 @@ export function AdminClientsPage() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (!newPodNameInput.trim()) return;
-                  showToast(`Successfully onboarded "${newPodNameInput}" with Lead ${newPodLeadInput || "Assigned"}.`);
-                  setIsOnboardPodModalOpen(false);
-                  setNewPodNameInput("");
-                  setNewPodLeadInput("");
+                  const trimmedName = newClientNameInput.trim();
+                  if (!trimmedName) return;
+
+                  const newId = trimmedName.toLowerCase().replace(/[^a-z0-9]/g, "-") || `client-${Date.now()}`;
+                  const words = trimmedName.split(/\s+/).filter(Boolean);
+                  const firstLetter = words[0]?.[0] || "";
+                  const secondLetter = words[1]?.[0] || "";
+                  const initials = (firstLetter && secondLetter)
+                    ? (firstLetter + secondLetter).toUpperCase() 
+                    : trimmedName.slice(0, 2).toUpperCase();
+
+                  const newClientObj: ClientDetailData = {
+                    id: newId,
+                    name: trimmedName,
+                    initials,
+                    industry: newClientIndustryInput.trim() || "DTC E-Commerce & Retail",
+                    timezone: "Client Time: IST (UTC+5:30)",
+                    activeSince: "Active since Oct 2026",
+                    tier: "Growth Retainer",
+                    tierBadge: "GROWTH RETAINER",
+                    status: "ACTIVE RETAINER",
+                    monthlyFee: 45000,
+                    addon: "Add-on: Creative Pod",
+                    nextBilling: "Nov 1, 2026",
+                    billingMethod: "Direct ACH / Razorpay",
+                    totalAssetsDelivered: 0,
+                    totalAssetsQuota: 20,
+                    postsDelivered: 0,
+                    postsQuota: 8,
+                    reelsDelivered: 0,
+                    reelsQuota: 4,
+                    storiesDelivered: 0,
+                    storiesQuota: 8,
+                    sprintNumber: 44,
+                    daysRemainingInSprint: 14,
+                    contact: {
+                      name: `${trimmedName} Executive`,
+                      title: "Primary Account Owner",
+                      email: `${newId}@clientbrand.com`,
+                      phone: "+91 98401 99887",
+                      renewedDate: "Oct 1, 2026",
+                      termMonths: 12,
+                    },
+                    brand: {
+                      kitVersion: "Design Kit v1.0",
+                      headingsFont: "Plus Jakarta Sans",
+                      bodyFont: "Inter Sans",
+                      monoFont: "JetBrains Mono",
+                      toneSummary: `Dynamic, high-impact social media creatives engineered for ${trimmedName}. High-clarity typography with conversion-optimized video hooks.`,
+                      toneTags: ["High Conversion", "Brand Growth", "Active Retainer"],
+                      colors: [
+                        { name: "Primary Deep Navy", hex: "#0B111C" },
+                        { name: "Accent Royal Blue", hex: "#7FA0D6" },
+                        { name: "Cyan Highlight", hex: "#7FA0D6" },
+                        { name: "Clean Neutral", hex: "#F8FAFC", isLight: true },
+                      ],
+                      social: {
+                        handle: `@${newId}`,
+                        followers: "API Connected",
+                        status: "API CONNECTED",
+                        syncInterval: "15m refresh",
+                      },
+                      brandVaultLink: `${trimmedName} Brand Drive`,
+                      figmaLink: `${trimmedName} Master Design Kit`,
+                      lastAuditDate: "Just Now",
+                    },
+                    pod: {
+                      name: newClientPodInput.split(" ")[0] || "Pod A",
+                      tagline: "Creative & Brand Strategy",
+                      leadName: "Alex Rivera",
+                      leadTitle: "Lead Producer",
+                      leadAvatar: "AR",
+                      squad: [
+                        { name: "Production Squad", role: "Creative Specialist", hoursPerWeek: 32, avatar: "PS" },
+                      ],
+                      capacityAllocatedHrs: 32,
+                      bandwidthPercent: 80,
+                      dailySyncTime: "11:00 AM IST",
+                    },
+                    deliverables: [],
+                  };
+
+                  setCustomClients((prev) => ({ ...prev, [newId]: newClientObj }));
+                  showToast(`Successfully onboarded client "${trimmedName}"!`);
+                  setIsOnboardClientModalOpen(false);
+                  setNewClientNameInput("");
+                  setNewClientIndustryInput("");
                 }}
                 className="space-y-3.5 text-xs"
               >
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Pod Designation / Name</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Client / Brand Name</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Pod D - 3D VFX & Motion"
-                    value={newPodNameInput}
-                    onChange={(e) => setNewPodNameInput(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white focus:outline-none"
+                    placeholder="e.g. Acme Corp"
+                    value={newClientNameInput}
+                    onChange={(e) => setNewClientNameInput(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Pod Lead Name</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Industry / Category</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Alex Rivera (Senior Producer)"
-                    value={newPodLeadInput}
-                    onChange={(e) => setNewPodLeadInput(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white focus:outline-none"
+                    placeholder="e.g. DTC E-Commerce & Retail"
+                    value={newClientIndustryInput}
+                    onChange={(e) => setNewClientIndustryInput(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
                   />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Assigned Creative Pod</label>
+                  <select
+                    value={newClientPodInput}
+                    onChange={(e) => setNewClientPodInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
+                  >
+                    <option value="Pod A (Creative & Brand Strategy)">Pod A (Creative & Brand Strategy)</option>
+                    <option value="Pod B (Performance & Video Ops)">Pod B (Performance & Video Ops)</option>
+                    <option value="Pod C (3D Motion & Visual Design)">Pod C (3D Motion & Visual Design)</option>
+                  </select>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
                   <button
                     type="button"
-                    onClick={() => setIsOnboardPodModalOpen(false)}
+                    onClick={() => setIsOnboardClientModalOpen(false)}
                     className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
                   >
                     Cancel
@@ -2071,7 +2174,7 @@ export function AdminClientsPage() {
                     type="submit"
                     className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm cursor-pointer"
                   >
-                    Onboard Pod
+                    Onboard Client
                   </button>
                 </div>
               </form>
@@ -2079,42 +2182,44 @@ export function AdminClientsPage() {
           </div>
         )}
 
-        {/* 7. Remove Pod from Team Modal */}
-        {isRemovePodModalOpen && (
+        {/* 7. Remove Client Modal */}
+        {isRemoveClientModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
             <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-rose-500/40">
               <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                 <div className="flex items-center gap-2">
                   <Trash2 className="w-5 h-5 text-rose-500" />
-                  <h3 className="text-base font-black text-white">Decommission / Remove Pod</h3>
+                  <h3 className="text-base font-black text-white">Remove / Offboard Client</h3>
                 </div>
-                <button type="button" onClick={() => setIsRemovePodModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                <button type="button" onClick={() => setIsRemoveClientModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="space-y-3.5 text-xs">
                 <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Select Pod to Remove</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Select Client to Remove</label>
                   <select
-                    value={podToRemoveInput}
-                    onChange={(e) => setPodToRemoveInput(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#161F2D] text-white"
+                    value={clientToRemoveInput}
+                    onChange={(e) => setClientToRemoveInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
                   >
-                    <option value="Pod A">Pod A (Creative & Brand Strategy)</option>
-                    <option value="Pod B">Pod B (Performance & Video Ops)</option>
-                    <option value="Pod C">Pod C (3D Motion & Visual Design)</option>
+                    {clientList.map((client) => (
+                      <option key={client.id} value={client.name}>
+                        {client.name} ({client.industry})
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <p className="text-[#97A0B3] text-[11px] leading-relaxed">
-                  Decommissioning <strong className="text-white">{podToRemoveInput}</strong> will release active specialists back into the main talent pool for reallocation.
+                  Offboarding <strong className="text-white">{clientToRemoveInput}</strong> will archive their active retainer and release assigned pod capacity back to the roster.
                 </p>
 
                 <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
                   <button
                     type="button"
-                    onClick={() => setIsRemovePodModalOpen(false)}
+                    onClick={() => setIsRemoveClientModalOpen(false)}
                     className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
                   >
                     Cancel
@@ -2122,12 +2227,33 @@ export function AdminClientsPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      showToast(`Decommissioned ${podToRemoveInput} and reallocated squad.`);
-                      setIsRemovePodModalOpen(false);
+                      const targetName = clientToRemoveInput.trim();
+                      if (!targetName) return;
+
+                      const foundClient = clientList.find(
+                        (c) => c.name.toLowerCase() === targetName.toLowerCase() || c.id.toLowerCase() === targetName.toLowerCase()
+                      );
+
+                      const idsToRemove = foundClient 
+                        ? [foundClient.id.toLowerCase(), foundClient.name.toLowerCase(), (foundClient.contact?.email || "").toLowerCase()]
+                        : [targetName.toLowerCase()];
+
+                      setRemovedClientIds((prev) => {
+                        const next = new Set(prev);
+                        idsToRemove.forEach((id) => next.add(id));
+                        return next;
+                      });
+
+                      if (selectedClientId && foundClient && foundClient.id === selectedClientId) {
+                        setSelectedClientId(null);
+                      }
+
+                      showToast(`Successfully offboarded client "${targetName}".`);
+                      setIsRemoveClientModalOpen(false);
                     }}
                     className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md cursor-pointer"
                   >
-                    Remove Pod
+                    Remove Client
                   </button>
                 </div>
               </div>

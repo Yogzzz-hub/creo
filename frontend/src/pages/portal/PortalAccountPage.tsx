@@ -6,6 +6,7 @@ import { request } from "../../lib/http";
 import { Instagram, Upload, Palette } from "lucide-react";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
+import { useAlert } from "../../components/ui/ConfirmDialog";
 
 export function PortalAccountPage() {
   const { user } = useAuth();
@@ -23,6 +24,8 @@ export function PortalAccountPage() {
   const gate = useOnboardingGate();
   const isBrandTab = tab === "brand" || tab === "edit-brand";
 
+  const alert = useAlert();
+
   const updateProfileMutation = useMutation({
     mutationFn: async (payload: Record<string, any>) => {
       return await request("/api/v1/portal/profile", {
@@ -32,7 +35,12 @@ export function PortalAccountPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["portal-profile"] });
-      alert("Changes saved successfully!");
+      alert({
+        title: "Profile Saved",
+        description: "Your account settings and brand preferences have been successfully updated.",
+        tone: "success",
+        icon: "success",
+      });
     },
   });
 
@@ -49,6 +57,18 @@ export function PortalAccountPage() {
     competitors: "",
     colors: ["#D8BF9B", "#161F2D", "#0B111C", "#7FA0D6"],
   });
+
+  const [notifSettings, setNotifSettings] = useState<Record<string, boolean>>({
+    emailBatch: true,
+    whatsappReminder: true,
+    weeklySummary: false,
+    billingEmails: true,
+  });
+
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [teamMembers, setTeamMembers] = useState<Array<{ name: string; role: string; email: string }>>([
+    { name: "Marketing Manager", role: "Reviewer", email: "marketing@brand.com" },
+  ]);
 
   useEffect(() => {
     if (profile) {
@@ -411,23 +431,55 @@ export function PortalAccountPage() {
 
           <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
             <h3 className="text-[15px] font-bold text-white mb-5">Team access</h3>
-            <div className="space-y-4 mb-4">
+            <div className="space-y-4 mb-5">
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-white">[{form.name || "Owner name"}] · <span className="text-[#97A0B3]">owner</span></span>
+                <div>
+                  <span className="text-[13px] text-white font-bold block">{form.name || user?.full_name || "Owner Name"}</span>
+                  <span className="text-xs text-[#97A0B3]">{form.email || user?.email || "owner@brand.com"}</span>
+                </div>
                 <span className="px-3 py-1 rounded-full bg-white/[0.08] text-white text-xs font-bold">Admin</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[13px] text-[#97A0B3]">Marketing manager</span>
-                <button
-                  type="button"
-                  onClick={() => alert("Team invitation sent!")}
-                  className="px-4 py-1.5 rounded-full border border-[#2A3446] text-white text-[13px] font-bold hover:bg-[#161F2D] transition-colors cursor-pointer"
-                >
-                  Invite
-                </button>
-              </div>
+              {teamMembers.map((member, idx) => (
+                <div key={idx} className="flex items-center justify-between pt-2 border-t border-[#2A3446]">
+                  <div>
+                    <span className="text-[13px] text-white font-medium block">{member.name}</span>
+                    <span className="text-xs text-[#97A0B3]">{member.email}</span>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#0B111C] border border-[#2A3446] text-[#97A0B3] text-xs font-semibold">
+                    {member.role}
+                  </span>
+                </div>
+              ))}
             </div>
-            <p className="text-xs text-[#97A0B3]">Invited people can review and comment; only admins can approve and pay.</p>
+
+            <div className="pt-3 border-t border-[#2A3446] flex items-center gap-2">
+              <input
+                type="email"
+                placeholder="Enter colleague email..."
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                className="flex-1 px-3.5 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (!inviteEmail.trim()) return;
+                  const newEmail = inviteEmail.trim();
+                  setTeamMembers((prev) => [...prev, { name: newEmail.split("@")[0] || "Invited Colleague", role: "Reviewer", email: newEmail }]);
+                  alert({
+                    title: "Team Invitation Sent",
+                    description: `An invitation link was dispatched to ${newEmail}. They will be able to review assets and leave feedback.`,
+                    tone: "success",
+                    icon: "success",
+                  });
+                  setInviteEmail("");
+                }}
+                className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-[#688BC4] text-white text-xs font-bold transition-colors cursor-pointer shrink-0"
+              >
+                Invite
+              </button>
+            </div>
+            <p className="text-xs text-[#97A0B3] mt-3">Invited people can review and comment; only admins can approve and pay.</p>
           </div>
           
         </div>
@@ -437,29 +489,39 @@ export function PortalAccountPage() {
             <h3 className="text-[15px] font-bold text-white mb-6">Notifications</h3>
             <div className="space-y-6">
               {[
-                { key: "emailBatch", label: "Email me when a batch is ready", defaultOn: true },
-                { key: "whatsappReminder", label: "WhatsApp reminder the day before a review is due", defaultOn: true },
-                { key: "weeklySummary", label: "Weekly summary every Monday", defaultOn: false },
-                { key: "billingEmails", label: "Billing emails", defaultOn: true },
-              ].map((notif, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <span className="text-[13px] text-white">{notif.label}</span>
-                  <div
-                    onClick={() => {
-                      alert(`Notification setting "${notif.label}" updated.`);
-                    }}
-                    className={`w-9 h-5 rounded-full flex items-center p-0.5 cursor-pointer transition-colors ${
-                      notif.defaultOn ? "bg-[#7FA0D6]" : "bg-white/[0.1]"
-                    }`}
-                  >
+                { key: "emailBatch", label: "Email me when a batch is ready" },
+                { key: "whatsappReminder", label: "WhatsApp reminder the day before a review is due" },
+                { key: "weeklySummary", label: "Weekly summary every Monday" },
+                { key: "billingEmails", label: "Billing emails" },
+              ].map((notif) => {
+                const isActive = notifSettings[notif.key] ?? false;
+                return (
+                  <div key={notif.key} className="flex items-center justify-between">
+                    <span className="text-[13px] text-white">{notif.label}</span>
                     <div
-                      className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                        notif.defaultOn ? "translate-x-4" : "translate-x-0"
+                      onClick={() => {
+                        const nextVal = !isActive;
+                        setNotifSettings((prev) => ({ ...prev, [notif.key]: nextVal }));
+                        alert({
+                          title: "Notification Preferences Updated",
+                          description: `"${notif.label}" is now ${nextVal ? "enabled" : "disabled"}.`,
+                          tone: "info",
+                          icon: "info",
+                        });
+                      }}
+                      className={`w-9 h-5 rounded-full flex items-center p-0.5 cursor-pointer transition-colors ${
+                        isActive ? "bg-[#7FA0D6]" : "bg-white/[0.1]"
                       }`}
-                    />
+                    >
+                      <div
+                        className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                          isActive ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -473,7 +535,14 @@ export function PortalAccountPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => alert(`Password reset link sent to ${form.email || user?.email}`)}
+                  onClick={() =>
+                    alert({
+                      title: "Password Reset Email Sent",
+                      description: `Instructions to reset your password have been sent to ${form.email || user?.email || "your email address"}.`,
+                      tone: "info",
+                      icon: "info",
+                    })
+                  }
                   className="px-4 py-1.5 rounded-full border border-[#2A3446] text-white text-[13px] font-bold hover:bg-[#161F2D] transition-colors cursor-pointer"
                 >
                   Reset password
