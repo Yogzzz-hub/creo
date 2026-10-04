@@ -4,6 +4,7 @@ import { useAuth } from "../../lib/auth-context";
 
 export const ROLE_HOMES: Record<string, string> = {
   client: "/portal",
+  client_owner: "/portal",
   team_member: "/workstation",
   team_lead: "/admin/pod-dashboard",
   editor: "/workstation",
@@ -16,7 +17,10 @@ export const ROLE_HOMES: Record<string, string> = {
 
 export function getRoleHome(role?: string | null): string {
   if (!role) return "/portal";
-  return ROLE_HOMES[role] || "/portal";
+  const r = role.toLowerCase();
+  if (r === "admin" || r === "super_admin" || r.includes("admin")) return "/admin";
+  if (r === "client" || r === "client_owner" || r.includes("client")) return "/portal";
+  return ROLE_HOMES[r] || ROLE_HOMES[role] || "/portal";
 }
 
 interface ProtectedRouteProps {

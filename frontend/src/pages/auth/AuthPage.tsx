@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { 
   Mail, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Check, User, Building2,
-  Loader2, ShieldCheck, TrendingUp, Activity, CheckCircle2, Zap, X, Sparkles
+  Loader2, ShieldCheck, TrendingUp, Activity, CheckCircle2, Zap, X
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../../lib/auth-context";
@@ -95,13 +95,6 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
     }
   }, [location.pathname]);
 
-  const handleDemoFill = () => {
-    setMode("signin");
-    setEmail("admin@creo.agency");
-    setPassword("Admin123!");
-    setError(null);
-  };
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const cleanEmail = email.trim();
@@ -123,14 +116,18 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
       setError(null);
       if (mode === "signin") {
         const loggedInUser = await loginWithPassword(cleanEmail, cleanPass);
-        // Navigate explicitly after login to avoid relying solely on PublicOnlyRoute re-render
-        const params = new URLSearchParams(location.search);
-        const redirectedFrom = params.get("redirectedFrom");
         const { getRoleHome } = await import("../../components/auth/ProtectedRoute");
-        const { getPostLoginRedirect } = await import("../../lib/useRouteMemory");
-        const defaultHome = getRoleHome(loggedInUser.role);
-        const destination = getPostLoginRedirect(loggedInUser.role, redirectedFrom ? decodeURIComponent(redirectedFrom) : null, defaultHome);
-        navigate(destination, { replace: true });
+        const roleHome = getRoleHome(loggedInUser.role);
+
+        // Strict role routing: admins go to /admin, clients go to /portal
+        const r = (loggedInUser.role || "").toLowerCase();
+        if (r === "admin" || r === "super_admin" || r.includes("admin")) {
+          navigate("/admin", { replace: true });
+        } else if (r === "client" || r === "client_owner" || r.includes("client")) {
+          navigate("/portal", { replace: true });
+        } else {
+          navigate(roleHome, { replace: true });
+        }
       } else {
         // Move to the OTP surface immediately; delivery continues in this request.
         setRegistrationPending(true);
@@ -236,17 +233,6 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
         </div>
 
         <div className="flex items-center gap-3">
-          {mode === "signin" && (
-            <button
-              type="button"
-              onClick={handleDemoFill}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#121926] hover:bg-[#0B111C] border border-[#7FA0D6]/40 text-[#7FA0D6] hover:text-[#F8FAFC] text-[11px] font-semibold transition shadow-sm cursor-pointer"
-              title="Auto-fill Executive Admin credentials"
-            >
-              <Sparkles className="size-3 text-[#7FA0D6]" />
-              <span className="hidden xs:inline">Demo: </span>Auto-Fill Admin
-            </button>
-          )}
 
           <Link 
             to="/" 
