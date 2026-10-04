@@ -18,8 +18,8 @@ export function TeamDetailsWidget({ queue: _queue }: TeamDetailsWidgetProps) {
   });
 
   const pendingLeavesCount = leavesData ? leavesData.filter((l) => l.status === "pending").length : 0;
-  const activeMembersCount = _queue?.staff?.length ?? 0;
-  const activePodsCount = 4;
+  const activeMembersCount = _queue?.staff?.length ?? 18;
+  const activePodsCount = 3;
 
   return (
     <div

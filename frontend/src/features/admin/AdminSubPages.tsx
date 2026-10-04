@@ -6654,7 +6654,7 @@ export function AdminPlansPage() {
       display_name: "Starter Growth",
       price_monthly: 25000,
       currency: "INR",
-      subscribers: 0,
+      subscribers: 1,
       features: [
         "8 Static Posters / Month",
         "4 Short Video Reels / Month",
@@ -6681,9 +6681,9 @@ export function AdminPlansPage() {
       id: "scale",
       name: "scale",
       display_name: "Enterprise Domination",
-      price_monthly: 95000,
+      price_monthly: 120000,
       currency: "INR",
-      subscribers: 0,
+      subscribers: 1,
       features: [
         "30 Static Posters / Month",
         "16 High-Production Video Reels",
@@ -7044,7 +7044,11 @@ export function AdminPlansPage() {
                 ₹
               </div>
             </div>
-            <div className="text-3xl font-black text-white">₹50,000/mo</div>
+            <div className="text-3xl font-black text-white">
+              ₹{(plans.reduce((acc, p) => acc + p.subscribers, 0) > 0 
+                ? Math.round(totalRetainerRevenue / plans.reduce((acc, p) => acc + p.subscribers, 0))
+                : 72500).toLocaleString("en-IN")}/mo
+            </div>
             <p className="text-xs text-emerald-600 font-bold">High LTV retention</p>
           </div>
 
