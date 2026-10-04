@@ -839,7 +839,9 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
       const allSections: SectionKey[] = ["a", "b", "c", "d", "e", "f", "g"];
       const dirtySections = allSections.filter(sec => isSectionDirty(sec));
       if (dirtySections.length > 0) {
-        await Promise.all(dirtySections.map(sec => persistSection(sec)));
+        for (const sec of dirtySections) {
+          await persistSection(sec);
+        }
       }
 
       // 3. Allocate the pod and generate the workspace. This call is fast: the Gemini

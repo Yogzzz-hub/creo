@@ -518,6 +518,7 @@ async def get_client_roster(
             p.name AS plan_name,
             p.display_name AS plan_display_name,
             s.status AS subscription_status,
+            p.monthly_price AS monthly_price,
             COALESCE(
                 json_agg(
                     json_build_object(
@@ -537,7 +538,7 @@ async def get_client_roster(
         GROUP BY
             u.id, u.email, u.account_status, cp.company_name, cp.instagram_username,
             cp.onboarding_completed_at, cp.terms_accepted_at, u.email_verified_at,
-            p.name, p.display_name, s.status, s.id
+            p.name, p.display_name, p.monthly_price, s.status, s.id
         ORDER BY u.created_at DESC;
     """)
 
@@ -546,7 +547,7 @@ async def get_client_roster(
 
     clients = []
     for r in rows:
-        quota_raw = r[9]
+        quota_raw = r[10]
         if isinstance(quota_raw, str):
             quota_usage = json.loads(quota_raw)
         else:
@@ -563,6 +564,7 @@ async def get_client_roster(
                 "plan_name": r[6],
                 "plan_display_name": r[7],
                 "subscription_status": r[8],
+                "monthly_price": float(r[9]) if r[9] else 0,
                 "quota_usage": quota_usage,
             }
         )

@@ -242,7 +242,7 @@ export function AdminClientsPage() {
     const podIdx = Math.abs(formattedName.charCodeAt(0) || 0) % podConfigs.length;
     const pod = (podConfigs[podIdx] || podConfigs[0])!;
 
-    const monthlyFee = tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000;
+    const monthlyFee = sc.monthly_price || (tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000);
     
     const postsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.quota || (tier.includes("starter") ? 8 : tier.includes("growth") ? 15 : 30);
     const postsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.used || 0;
