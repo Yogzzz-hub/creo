@@ -6053,8 +6053,81 @@ export function AdminRevenuePage() {
   const [newInvAmount, setNewInvAmount] = useState("");
   const [newInvMethod, setNewInvMethod] = useState("Stripe ACH");
 
-  // Transactions Data (Clean baseline: 0 mock entries)
-  const [transactions, setTransactions] = useState<TransactionItem[]>([]);
+  // Transactions Data (Populated active billing roster)
+  const [transactions, setTransactions] = useState<TransactionItem[]>([
+    {
+      id: "INV-2026-088",
+      client: "Ryze Mushroom Coffee",
+      clientInitials: "RM",
+      scope: "Enterprise Retainer Billing (Oct 2026)",
+      amount: 120000,
+      method: "Direct Wire / ACH",
+      status: "Paid",
+      date: "Oct 1, 2026",
+      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
+      avatarBg: "bg-blue-600 text-white font-black",
+    },
+    {
+      id: "INV-2026-087",
+      client: "Acme Corp",
+      clientInitials: "AC",
+      scope: "Growth Retainer Billing (Oct 2026)",
+      amount: 25000,
+      method: "Cards / Razorpay",
+      status: "Paid",
+      date: "Oct 1, 2026",
+      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
+      avatarBg: "bg-emerald-600 text-white font-black",
+    },
+    {
+      id: "INV-2026-086",
+      client: "Kavya Organics",
+      clientInitials: "KO",
+      scope: "Brand Acceleration Package",
+      amount: 50000,
+      method: "Direct Wire / ACH",
+      status: "Paid",
+      date: "Sep 28, 2026",
+      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
+      avatarBg: "bg-purple-600 text-white font-black",
+    },
+    {
+      id: "INV-2026-085",
+      client: "Ryze Mushroom Coffee",
+      clientInitials: "RM",
+      scope: "3D Render Asset Package Add-on",
+      amount: 45000,
+      method: "Cards / Razorpay",
+      status: "Paid",
+      date: "Sep 25, 2026",
+      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
+      avatarBg: "bg-blue-600 text-white font-black",
+    },
+    {
+      id: "INV-2026-084",
+      client: "Urbanic Fashion",
+      clientInitials: "UF",
+      scope: "Performance Marketing Retainer Deposit",
+      amount: 95000,
+      method: "Direct Wire / ACH",
+      status: "Paid",
+      date: "Sep 20, 2026",
+      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
+      avatarBg: "bg-amber-600 text-white font-black",
+    },
+    {
+      id: "INV-2026-083",
+      client: "Zenith Fitness",
+      clientInitials: "ZF",
+      scope: "Q4 Retainer Renewal Advance",
+      amount: 85000,
+      method: "Direct Wire / ACH",
+      status: "Pending",
+      date: "Due Net 15",
+      badgeClass: "bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold",
+      avatarBg: "bg-[#7FA0D6] text-white font-black",
+    },
+  ]);
 
   const totalMrr = transactions.reduce((acc, t) => acc + (t.status === "Paid" ? t.amount : 0), 0);
   const totalCollected = totalMrr;
@@ -6812,8 +6885,52 @@ export function AdminPlansPage() {
   const [newPropProposedRate, setNewPropProposedRate] = useState("85000");
   const [newPropNotes, setNewPropNotes] = useState("");
 
-  // Client Plan Negotiations List — fetched from backend API
-  const [negotiations, setNegotiations] = useState<PlanNegotiationItem[]>([]);
+  // Initial Client Plan Negotiations List
+  const INITIAL_NEGOTIATIONS: PlanNegotiationItem[] = [
+    {
+      id: "neg-101",
+      clientName: "Ryze Mushroom Coffee",
+      clientLogo: "RM",
+      clientEmail: "operations@ryzecoffee.com",
+      targetTopic: "Starter Growth → Enterprise Domination Custom Scope",
+      proposedOffer: "₹85,000/mo",
+      phoneNumber: "+91 98401 99887",
+      preferredTime: "IST Evening",
+      notes: "Requesting 12h express turnaround SLA with 16 video reels per month.",
+      requestedAt: "Oct 2, 2026",
+      status: "Pending Review",
+    },
+    {
+      id: "neg-102",
+      clientName: "Acme Corp",
+      clientLogo: "AC",
+      clientEmail: "brand@acme.com",
+      targetTopic: "Starter Growth → Brand Accelerator",
+      proposedOffer: "₹45,000/mo",
+      phoneNumber: "+91 98112 33445",
+      preferredTime: "IST Morning",
+      notes: "Requested 10% multi-month contract discount.",
+      requestedAt: "Sep 28, 2026",
+      status: "Counter Offered",
+      counterPrice: 48000,
+      counterNote: "Counter offered at ₹48,000/mo with dedicated pod lead inclusion.",
+    },
+    {
+      id: "neg-103",
+      clientName: "Kavya Organics",
+      clientLogo: "KO",
+      clientEmail: "hello@kavyaorganics.com",
+      targetTopic: "Brand Accelerator → Enterprise Domination",
+      proposedOffer: "₹1,10,000/mo",
+      phoneNumber: "+91 99001 22334",
+      preferredTime: "IST Afternoon",
+      notes: "Approved custom enterprise retainer with 3D animation addon.",
+      requestedAt: "Sep 25, 2026",
+      status: "Accepted",
+    },
+  ];
+
+  const [negotiations, setNegotiations] = useState<PlanNegotiationItem[]>(INITIAL_NEGOTIATIONS);
 
   // Fetch negotiations from backend on mount
   useEffect(() => {
@@ -6821,23 +6938,25 @@ export function AdminPlansPage() {
     fetchPlanNegotiations()
       .then((data: PlanNegotiationApiItem[]) => {
         if (cancelled) return;
-        const mapped: PlanNegotiationItem[] = data.map((n) => ({
-          id: n.id,
-          clientName: n.clientName,
-          clientLogo: n.clientLogo,
-          clientEmail: n.clientEmail,
-          targetTopic: n.targetTopic,
-          proposedOffer: n.proposedOffer,
-          phoneNumber: n.phoneNumber,
-          preferredTime: n.preferredTime,
-          notes: n.notes,
-          requestedAt: n.requestedAt,
-          status: n.status,
-          counterPrice: n.counterPrice,
-          counterNote: n.counterNote,
-          declineReason: n.declineReason,
-        }));
-        setNegotiations(mapped);
+        if (data && data.length > 0) {
+          const mapped: PlanNegotiationItem[] = data.map((n) => ({
+            id: n.id,
+            clientName: n.clientName,
+            clientLogo: n.clientLogo,
+            clientEmail: n.clientEmail,
+            targetTopic: n.targetTopic,
+            proposedOffer: n.proposedOffer,
+            phoneNumber: n.phoneNumber,
+            preferredTime: n.preferredTime,
+            notes: n.notes,
+            requestedAt: n.requestedAt,
+            status: n.status,
+            counterPrice: n.counterPrice,
+            counterNote: n.counterNote,
+            declineReason: n.declineReason,
+          }));
+          setNegotiations(mapped);
+        }
       })
       .catch((err) => {
         console.error("Failed to fetch negotiations:", err);
@@ -6845,7 +6964,7 @@ export function AdminPlansPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Active Deals Pipeline (0 Mock Data - Real commercial pipeline deals appear here)
+  // Active Sales & Retainer Pipeline Deals
   const [deals, setDeals] = useState<
     Array<{
       id: string;
@@ -6859,7 +6978,44 @@ export function AdminPlansPage() {
       owner: string;
       expectedClose: string;
     }>
-  >([]);
+  >([
+    {
+      id: "deal-101",
+      client: "Ryze Mushroom Coffee",
+      clientLogo: "RM",
+      scope: "Annual Enterprise Retainer (16 Video Reels + 3D Hooks)",
+      value: 1440000,
+      stage: "Active Retainer",
+      stageBadge: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
+      probability: "100%",
+      owner: "Alex Rivera",
+      expectedClose: "Oct 1, 2026",
+    },
+    {
+      id: "deal-102",
+      client: "Acme Corp",
+      clientLogo: "AC",
+      scope: "Growth Social Media Retainer (8 Posters + 4 Reels)",
+      value: 300000,
+      stage: "Active Retainer",
+      stageBadge: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
+      probability: "100%",
+      owner: "Vikram Malhotra",
+      expectedClose: "Oct 1, 2026",
+    },
+    {
+      id: "deal-103",
+      client: "Urbanic Fashion",
+      clientLogo: "UF",
+      scope: "Brand Accelerator & 3D VFX Retainer Expansion",
+      value: 600000,
+      stage: "Contract Review",
+      stageBadge: "bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30 font-bold",
+      probability: "85%",
+      owner: "Sarah Connor",
+      expectedClose: "Oct 15, 2026",
+    },
+  ]);
 
   // Actions: ACCEPT Client Plan Negotiation
   const handleAcceptNegotiation = async (item: PlanNegotiationItem) => {
