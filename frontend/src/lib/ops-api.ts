@@ -492,3 +492,9 @@ export async function fetchClientNegotiations(): Promise<PlanNegotiationApiItem[
 }
 
 
+
+
+export async function fetchAdminDeliverables(clientId?: string): Promise<any[]> {
+  const url = clientId ? `/api/v1/admin/deliverables?client_id=${clientId}` : `/api/v1/admin/deliverables`;
+  return request<any[]>(url);
+}

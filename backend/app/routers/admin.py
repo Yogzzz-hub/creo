@@ -163,7 +163,7 @@ async def refresh_kpis(
 async def export_admin_report(
     report_type: str = "kpis",
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ):
     """Export system metrics, client roster, or SLA data as a CSV download."""
     from fastapi.responses import Response
@@ -670,9 +670,9 @@ async def get_client_brand_profile(
     task_stats_sql = text("""
         SELECT
             COUNT(*)::INT AS total,
-            COUNT(*) FILTER (WHERE status IN ('pending', 'in_progress'))::INT AS pending,
+            COUNT(*) FILTER (WHERE status IN ('backlog', 'in_production'))::INT AS pending,
             COUNT(*) FILTER (WHERE status = 'completed')::INT AS completed,
-            COUNT(*) FILTER (WHERE status = 'review')::INT AS in_review
+            COUNT(*) FILTER (WHERE status IN ('internal_qa', 'client_review'))::INT AS in_review
         FROM tasks
         WHERE client_id = :cid
     """)
@@ -2262,7 +2262,7 @@ async def get_admin_reports(
 @router.get("/teams")
 async def list_admin_team_roster(
     db: AsyncSession = Depends(get_db),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Fetch active staff and pod members from DB."""
     stmt = (

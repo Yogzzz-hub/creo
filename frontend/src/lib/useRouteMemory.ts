@@ -102,6 +102,11 @@ export function getPostLoginRedirect(
   redirectedFrom?: string | null,
   roleHome?: string,
 ): string {
+  // Prevent admin from being deep-linked to client portal on login (e.g. from bookmarks or testing)
+  if ((role === "admin" || role === "super_admin") && redirectedFrom?.startsWith("/portal")) {
+    redirectedFrom = null; // Ignore and fall back to dashboard
+  }
+
   // 1. Explicit redirect from URL param (highest priority, must be valid for role)
   if (redirectedFrom && isRouteValidForRole(redirectedFrom, role)) {
     return redirectedFrom;
@@ -110,6 +115,10 @@ export function getPostLoginRedirect(
   // 2. SessionStorage saved route (if valid for this role)
   const saved = getSavedRoute(true);
   if (saved && isRouteValidForRole(saved, role)) {
+    // Prevent stale client portal sessions from overriding admin dashboard
+    if ((role === "admin" || role === "super_admin") && saved.startsWith("/portal")) {
+      return roleHome || "/admin";
+    }
     return saved;
   }
 

@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.core.errors import Forbidden, NotFound
 from app.core.logging import get_logger
-from app.core.rbac import Actor, AdminActor, get_current_actor
+from app.core.rbac import Actor, get_admin_actor, get_current_actor
 from app.db.session import get_db
 from app.models.billing import Plan, Subscription
 from app.models.enums import AccountStatus, PaymentProvider, SubscriptionStatus, UserRole
@@ -161,7 +161,7 @@ async def submit_negotiation(
 async def approve_negotiation(
     negotiation_id: uuid.UUID,
     payload: NegotiationApproveRequest,
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Admin sets the final negotiated amount, triggers Razorpay order generation, and approves plan."""
@@ -326,7 +326,7 @@ async def approve_negotiation(
 async def list_negotiations(
     status_filter: str | None = Query(None, alias="status"),
     negotiation_id: uuid.UUID | None = Query(None, alias="id"),
-    actor: Actor = AdminActor,
+    actor: Actor = Depends(get_admin_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Admin retrieves all custom plan negotiations."""

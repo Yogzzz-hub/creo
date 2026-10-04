@@ -95,10 +95,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
                     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
                 );
-                CREATE INDEX IF NOT EXISTS idx_negotiations_client_id ON plan_negotiations(client_id);
-                CREATE INDEX IF NOT EXISTS idx_negotiations_status ON plan_negotiations(status);
-                CREATE INDEX IF NOT EXISTS idx_negotiations_created_at ON plan_negotiations(created_at);
             """))
+            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_negotiations_client_id ON plan_negotiations(client_id);"))
+            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_negotiations_status ON plan_negotiations(status);"))
+            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_negotiations_created_at ON plan_negotiations(created_at);"))
             await db.commit()
 
     except Exception as e:

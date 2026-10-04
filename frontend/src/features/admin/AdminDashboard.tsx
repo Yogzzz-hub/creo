@@ -82,7 +82,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
   return (
     <div
       data-surface="ops"
-      className="w-full min-h-screen font-sans bg-nebula-navy text-slate-100 flex flex-col"
+      className="w-full min-h-screen font-sans bg-[#0B111C] text-[#F1F5F9] flex flex-col"
     >
       {/* Top Header */}
       <AdminTopHeader
@@ -104,9 +104,9 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
               exit={{ opacity: 0, y: -10 }}
               className="mb-3.5 p-2.5 rounded-xl text-xs font-medium flex items-center gap-2"
               style={{
-                background: message.type === "error" ? "var(--color-nebula-surface)" : "var(--color-nebula-surface)",
-                border: `1px solid ${message.type === "error" ? "var(--color-nebula-sand)" : "var(--color-nebula-periwinkle)"}`,
-                color: message.type === "error" ? "var(--color-nebula-sand)" : "var(--color-nebula-glow)",
+                background: message.type === "error" ? "#161F2D" : "#161F2D",
+                border: `1px solid ${message.type === "error" ? "#D8BF9B" : "#BCCCE6"}`,
+                color: message.type === "error" ? "#D8BF9B" : "#7FA0D6",
               }}
             >
               {message.type === "error" ? (
