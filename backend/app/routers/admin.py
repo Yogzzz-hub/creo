@@ -28,8 +28,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, selectinload
 
 from app.core.cache import invalidate_user_session
-from app.core.errors import Conflict, Forbidden, NotFound
-from app.core.rbac import Actor, get_admin_actor, get_investor_actor, get_sales_actor, get_staff_actor, get_team_lead_actor
+from app.core.rbac import (
+    Actor,
+    AdminActor,
+    StaffActor,
+    TeamLeadActor,
+    SuperAdminActor,
+    SalesActor,
+    InvestorActor,
+    get_admin_actor,
+    get_investor_actor,
+    get_sales_actor,
+    get_staff_actor,
+    get_team_lead_actor,
+)
 from app.db.session import get_db
 from app.models.billing import Plan, Subscription, UsageCounter
 from app.models.enums import (
