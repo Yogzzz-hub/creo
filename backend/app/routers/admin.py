@@ -916,17 +916,24 @@ async def get_sla_breaches(
     ]
 
 
-@router.patch("/plans/{plan_id}")
+@router.patch("/plans/{plan_id_or_name}")
 async def update_plan(
-    plan_id: uuid.UUID,
+    plan_id_or_name: str,
     payload: PlanUpdateRequest,
     db: AsyncSession = Depends(get_db),
     actor: Actor = Depends(get_admin_actor),
 ) -> dict[str, Any]:
     """Modify scarcity slots, pricing, and active status for a plan."""
-    plan = await db.get(Plan, plan_id)
+    try:
+        plan_id = uuid.UUID(plan_id_or_name)
+        plan = await db.get(Plan, plan_id)
+    except ValueError:
+        # Not a UUID, search by name
+        stmt = select(Plan).where(Plan.name == plan_id_or_name.lower())
+        plan = (await db.execute(stmt)).scalar_one_or_none()
+
     if not plan:
-        raise NotFound(f"Plan {plan_id} not found", code="PLAN_NOT_FOUND")
+        raise NotFound(f"Plan {plan_id_or_name} not found", code="PLAN_NOT_FOUND")
 
     changes: dict[str, Any] = {}
     if payload.price_minor is not None:

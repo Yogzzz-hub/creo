@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams, Navigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
+import { request } from "../../lib/http";
 import { fetchClientRoster, fetchPlanNegotiations, updatePlanNegotiation, createPlanNegotiation, fetchPodDashboard, fetchLeaveRequests, approveLeaveRequest, rejectLeaveRequest, fetchAdminQueue, fetchKanbanTasks, fetchAdminDeliverables } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem } from "../../lib/ops-api";
 import type { ClientRosterItem } from "../../types/ops";
@@ -6489,7 +6490,7 @@ export function AdminPlansPage() {
   };
 
   // Actions: Save Edit Tier Terms
-  const handleSaveTierTerms = (e: React.FormEvent) => {
+  const handleSaveTierTerms = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPlan) return;
 
@@ -6498,6 +6499,19 @@ export function AdminPlansPage() {
       .split("\n")
       .map((f) => f.trim())
       .filter(Boolean);
+
+    try {
+      await request(`/api/v1/admin/plans/${editingPlan.name}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          monthly_price: newPrice,
+          price_minor: newPrice * 100, // Sync minor price too!
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to sync plan update to live backend", err);
+      // We will still update local state for fast UI feedback
+    }
 
     setPlans((prev) =>
       prev.map((p) =>
