@@ -76,6 +76,7 @@ export function GoogleCallbackPage() {
         if (res.access_token) {
           setAuthToken(res.access_token);
           setAuthenticatedUser(res.user);
+          localStorage.setItem("creo_auth_user", JSON.stringify(res.user));
           await refresh();
           setStatus("success");
           setTimeout(() => {

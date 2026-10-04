@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
       const data = await request<AuthUser & { access_token?: string }>("/api/v1/auth/me", {
@@ -120,11 +120,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { access_token: _ignored, ...profile } = data;
       setUser(profile);
     } catch (err: any) {
-      // On 401, 403, 500, or a timeout (AbortError), clear the session and force login
-      const isAuthError = err instanceof HttpError && (err.status === 401 || err.status === 403 || err.status === 500);
+      // On 401, 403, or a timeout (AbortError), clear the session and force login
+      const isAuthError = err instanceof HttpError && (err.status === 401 || err.status === 403);
       const isTimeout = err.name === "AbortError";
       
-      if (isAuthError || isTimeout || !readCachedUser()) {
+      if (isAuthError || (!isTimeout && !readCachedUser())) {
         setUser(null);
         setToken(null);
         clearAuthToken();
