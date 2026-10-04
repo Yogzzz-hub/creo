@@ -514,7 +514,7 @@ export function SlackChatPage() {
   ];
 
   return (
-    <div data-surface="ops" className="h-screen max-h-screen bg-nebula-navy text-white font-sans flex flex-col overflow-hidden">
+    <div data-surface="ops" className="h-screen max-h-screen bg-[#0B111C] text-white font-sans flex flex-col overflow-hidden">
       {/* Top Header Navigation matching Admin */}
       <AdminTopHeader activeTab="Slack" />
 
@@ -546,10 +546,10 @@ export function SlackChatPage() {
         <aside
           className={`${
             mobileView === "channels" ? "flex w-full" : "hidden md:flex"
-          } md:w-72 lg:w-80 shrink-0 min-w-0 bg-nebula-surface text-slate-300 rounded-2xl sm:rounded-3xl flex flex-col shadow-xl border border-nebula-steel overflow-hidden h-full min-h-0`}
+          } md:w-72 lg:w-80 shrink-0 min-w-0 bg-[#161F2D] text-slate-300 rounded-2xl sm:rounded-3xl flex flex-col shadow-xl border border-[#2A3446] overflow-hidden h-full min-h-0`}
         >
           {/* Workspace Title & Persona Switcher */}
-          <div className="p-4 border-b border-nebula-steel bg-nebula-navy/80 space-y-2.5 shrink-0">
+          <div className="p-4 border-b border-[#2A3446] bg-[#0B111C]/80 space-y-2.5 shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="size-3 rounded-md bg-[#7FA0D6]" />
@@ -571,13 +571,13 @@ export function SlackChatPage() {
             </div>
 
             {/* Authenticated User Identity (Strict - No Role Switching) */}
-            <div className="p-2.5 rounded-xl bg-nebula-surface border border-nebula-steel flex items-center gap-2">
+            <div className="p-2.5 rounded-xl bg-[#161F2D] border border-[#2A3446] flex items-center gap-2">
               <div className="size-6 rounded-lg bg-[#7FA0D6] text-white font-black text-[10px] flex items-center justify-center shrink-0">
                 {currentPersona.slice(0, 2).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-xs font-black text-white truncate">{currentPersona}</div>
-                <div className="text-[10px] font-bold text-nebula-glow truncate">
+                <div className="text-[10px] font-bold text-[#7FA0D6] truncate">
                   {user?.role === "admin" || user?.role === "super_admin"
                     ? "Operations Executive (Admin)"
                     : user?.role === "team_lead"
@@ -603,9 +603,9 @@ export function SlackChatPage() {
 
             {/* Channels Section */}
             <div className="space-y-1">
-              <div className="px-2 text-[10px] font-black uppercase tracking-wider text-nebula-mist flex items-center justify-between">
+              <div className="px-2 text-[10px] font-black uppercase tracking-wider text-[#97A0B3] flex items-center justify-between">
                 <span>Channels</span>
-                <span className="text-nebula-mist">{channels.length}</span>
+                <span className="text-[#97A0B3]">{channels.length}</span>
               </div>
 
               {channels.map((c: any) => (
@@ -625,7 +625,7 @@ export function SlackChatPage() {
                   <Hash className="size-3.5 opacity-70" />
                   <span className="truncate flex-1">{c.label}</span>
                   {c.badge && (
-                    <span className="px-1.5 py-0.5 rounded text-[8px] uppercase tracking-wider font-bold bg-nebula-surface/50 text-nebula-mist border border-nebula-steel">
+                    <span className="px-1.5 py-0.5 rounded text-[8px] uppercase tracking-wider font-bold bg-[#161F2D]/50 text-[#97A0B3] border border-[#2A3446]">
                       {c.badge}
                     </span>
                   )}
@@ -636,12 +636,12 @@ export function SlackChatPage() {
 
             {/* Direct Messages Section */}
             <div className="space-y-1">
-              <div className="px-2 text-[10px] font-black uppercase tracking-wider text-nebula-mist">
+              <div className="px-2 text-[10px] font-black uppercase tracking-wider text-[#97A0B3]">
                 Direct Messages
               </div>
 
               {(!podData?.members || podData.members.length === 0) ? (
-                <div className="px-3 py-2 text-[11px] text-nebula-mist">
+                <div className="px-3 py-2 text-[11px] text-[#97A0B3]">
                   No specialists in pod
                 </div>
               ) : (
@@ -668,7 +668,7 @@ export function SlackChatPage() {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="size-2 rounded-full bg-emerald-400" />
-                        <ChevronRight className="size-3.5 opacity-40 md:hidden text-nebula-mist" />
+                        <ChevronRight className="size-3.5 opacity-40 md:hidden text-[#97A0B3]" />
                       </div>
                     </button>
                   );
@@ -696,23 +696,23 @@ export function SlackChatPage() {
         <section
           className={`${
             mobileView === "chat" ? "flex w-full" : "hidden md:flex"
-          } flex-1 min-w-0 bg-nebula-surface rounded-2xl sm:rounded-3xl border border-nebula-steel shadow-xl flex flex-col overflow-hidden h-full min-h-0`}
+          } flex-1 min-w-0 bg-[#161F2D] rounded-2xl sm:rounded-3xl border border-[#2A3446] shadow-xl flex flex-col overflow-hidden h-full min-h-0`}
         >
           {/* Header Bar */}
-          <div className="px-3 sm:px-6 py-3 border-b border-nebula-steel flex items-center justify-between bg-nebula-surface gap-2 shrink-0">
+          <div className="px-3 sm:px-6 py-3 border-b border-[#2A3446] flex items-center justify-between bg-[#161F2D] gap-2 shrink-0">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               {/* Back button on mobile to view channel list */}
               <button
                 type="button"
                 onClick={() => setMobileView("channels")}
-                className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-nebula-surface hover:bg-slate-200 text-[#F1F5F9] font-bold text-xs shrink-0 transition-colors cursor-pointer"
+                className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9] font-bold text-xs shrink-0 transition-colors cursor-pointer"
                 title="View Channels"
               >
                 <ArrowLeft className="size-3.5" />
                 <span className="hidden xs:inline">Channels</span>
               </button>
 
-              <div className="size-8 sm:size-9 rounded-xl sm:rounded-2xl bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center font-black shrink-0">
+              <div className="size-8 sm:size-9 rounded-xl sm:rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black shrink-0">
                 {activeDm ? <User className="size-4" /> : <Hash className="size-4" />}
               </div>
               <div className="min-w-0">
@@ -720,11 +720,11 @@ export function SlackChatPage() {
                   <h2 className="text-sm sm:text-base font-black text-white truncate">
                     {activeDm ? activeDm : `#${activeChannel}`}
                   </h2>
-                  <span className="px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold bg-nebula-surface text-[#F1F5F9] shrink-0">
+                  <span className="px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold bg-[#161F2D] text-[#F1F5F9] shrink-0">
                     {activeDm ? "DM" : "Channel"}
                   </span>
                 </div>
-                <p className="text-[11px] sm:text-xs text-nebula-mist truncate hidden sm:block">
+                <p className="text-[11px] sm:text-xs text-[#97A0B3] truncate hidden sm:block">
                   {activeDm
                     ? `Direct communication thread with ${activeDm}`
                     : `Live sprint channel for ${podName}`}
@@ -736,7 +736,7 @@ export function SlackChatPage() {
               {/* Assign Task Button in Header */}
               <button
                 onClick={() => setAssignTaskModalOpen(true)}
-                className="px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-nebula-glow font-bold text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer"
+                className="px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer"
               >
                 <Sparkles className="size-3 sm:size-3.5" />
                 <span className="hidden sm:inline">Assign Task</span>
@@ -745,7 +745,7 @@ export function SlackChatPage() {
 
               <button
                 onClick={() => setCallModalOpen(true)}
-                className="size-8 sm:size-9 rounded-xl bg-nebula-surface hover:bg-slate-700 text-[#F1F5F9] flex items-center justify-center cursor-pointer transition-colors"
+                className="size-8 sm:size-9 rounded-xl bg-[#161F2D] hover:bg-slate-700 text-[#F1F5F9] flex items-center justify-center cursor-pointer transition-colors"
                 title="Start Video Huddle"
               >
                 <Video className="size-3.5 sm:size-4" />
@@ -754,7 +754,7 @@ export function SlackChatPage() {
           </div>
 
           {/* Messages Feed */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 bg-nebula-navy/90 backdrop-blur-xl flex flex-col">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 bg-[#0B111C]/90 backdrop-blur-xl flex flex-col">
             {currentMessages.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-auto">
                 <div className="size-14 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-4 border border-blue-500/20">
@@ -763,7 +763,7 @@ export function SlackChatPage() {
                 <h3 className="text-base font-black text-white">
                   {activeDm ? `Conversation with ${activeDm}` : `Welcome to #${activeChannel}`}
                 </h3>
-                <p className="text-xs text-nebula-mist max-w-sm mt-1">
+                <p className="text-xs text-[#97A0B3] max-w-sm mt-1">
                   {activeDm
                     ? `This is the beginning of your direct message history with ${activeDm}. Send a message or assign a task.`
                     : `This is the start of the #${activeChannel} channel for ${podName}. Post updates, drop deliverables, or assign sprint tasks.`}
@@ -773,7 +773,7 @@ export function SlackChatPage() {
               currentMessages.map((msg) => (
                 <div
                   key={msg.id}
-                  className="group relative p-3 sm:p-3.5 rounded-2xl hover:bg-nebula-surface/90 border border-transparent hover:border-nebula-steel transition-all flex items-start gap-2.5 sm:gap-3.5"
+                  className="group relative p-3 sm:p-3.5 rounded-2xl hover:bg-[#161F2D]/90 border border-transparent hover:border-[#2A3446] transition-all flex items-start gap-2.5 sm:gap-3.5"
                 >
                   {/* Avatar */}
                   <div className={`size-8 sm:size-10 rounded-xl sm:rounded-2xl ${msg.avatarBg} text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs`}>
@@ -783,10 +783,10 @@ export function SlackChatPage() {
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                       <span className="text-xs font-black text-white">{msg.sender}</span>
-                      <span className="text-[9px] sm:text-[10px] font-bold text-nebula-mist bg-nebula-surface px-1.5 sm:px-2 py-0.5 rounded-md">
+                      <span className="text-[9px] sm:text-[10px] font-bold text-[#97A0B3] bg-[#161F2D] px-1.5 sm:px-2 py-0.5 rounded-md">
                         {msg.role}
                       </span>
-                      <span className="text-[10px] text-nebula-mist ml-auto">{msg.timestamp}</span>
+                      <span className="text-[10px] text-[#97A0B3] ml-auto">{msg.timestamp}</span>
                     </div>
 
                     {/* Message Content */}
@@ -796,16 +796,16 @@ export function SlackChatPage() {
 
                     {/* Task Card Embedded in Chat */}
                     {msg.isTaskCard && msg.taskData && (
-                      <div className="mt-2.5 p-3.5 sm:p-4 rounded-2xl bg-nebula-surface border border-[#7FA0D6]/30 shadow-sm hover-card-innovative space-y-2.5 w-full max-w-lg">
+                      <div className="mt-2.5 p-3.5 sm:p-4 rounded-2xl bg-[#161F2D] border border-[#7FA0D6]/30 shadow-sm hover-card-innovative space-y-2.5 w-full max-w-lg">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-mono font-bold text-nebula-glow bg-[#7FA0D6]/20 px-2 py-0.5 rounded">
+                          <span className="text-[10px] font-mono font-bold text-[#7FA0D6] bg-[#7FA0D6]/20 px-2 py-0.5 rounded">
                             {msg.taskData.id}
                           </span>
                           <span
                             className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
                               msg.taskData.priority === "P1 High"
                                 ? "bg-rose-100 text-rose-700 border border-rose-200"
-                                : "bg-[#7FA0D6]/20 text-nebula-glow"
+                                : "bg-[#7FA0D6]/20 text-[#7FA0D6]"
                             }`}
                           >
                             {msg.taskData.priority}
@@ -821,7 +821,7 @@ export function SlackChatPage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-nebula-steel text-[10px] font-bold text-nebula-mist">
+                        <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[10px] font-bold text-[#97A0B3]">
                           <span>Due: {msg.taskData.deadline}</span>
                           <span className="text-emerald-400">● {msg.taskData.status}</span>
                         </div>
@@ -837,7 +837,7 @@ export function SlackChatPage() {
                           className={`text-[11px] px-2 py-0.5 rounded-lg border flex items-center gap-1 transition cursor-pointer ${
                             r.users.includes(currentPersona)
                               ? "bg-blue-600/20 border-blue-500 text-blue-300 font-bold"
-                              : "bg-nebula-surface border-nebula-steel text-slate-300 hover:bg-slate-800"
+                              : "bg-[#161F2D] border-[#2A3446] text-slate-300 hover:bg-slate-800"
                           }`}
                         >
                           <span>{r.emoji}</span>
@@ -846,13 +846,13 @@ export function SlackChatPage() {
                       ))}
 
                       {/* WhatsApp Floating Reaction Bar on Hover */}
-                      <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-0.5 ml-2 bg-nebula-navy border border-nebula-steel rounded-full px-1.5 py-0.5 shadow-lg">
+                      <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-0.5 ml-2 bg-[#0B111C] border border-[#2A3446] rounded-full px-1.5 py-0.5 shadow-lg">
                         {["👍", "❤️", "😂", "😮", "😢", "🙏", "🚀", "🔥"].map((emoji) => (
                           <button
                             key={emoji}
                             type="button"
                             onClick={() => handleAddReaction(msg.id, emoji)}
-                            className="size-6 rounded-full hover:bg-nebula-surface flex items-center justify-center text-xs transition-transform hover:scale-125 cursor-pointer"
+                            className="size-6 rounded-full hover:bg-[#161F2D] flex items-center justify-center text-xs transition-transform hover:scale-125 cursor-pointer"
                             title={`React with ${emoji}`}
                           >
                             {emoji}
@@ -864,7 +864,7 @@ export function SlackChatPage() {
                             setPickerTargetMsgId(msg.id);
                             setShowEmojiPicker(true);
                           }}
-                          className="size-5.5 rounded-full bg-nebula-surface hover:bg-[#7FA0D6] hover:text-white text-nebula-mist border border-nebula-steel flex items-center justify-center text-xs font-bold transition-all cursor-pointer ml-0.5"
+                          className="size-5.5 rounded-full bg-[#161F2D] hover:bg-[#7FA0D6] hover:text-white text-[#97A0B3] border border-[#2A3446] flex items-center justify-center text-xs font-bold transition-all cursor-pointer ml-0.5"
                           title="Choose any WhatsApp emoji reaction"
                         >
                           +
@@ -879,14 +879,14 @@ export function SlackChatPage() {
           </div>
 
           {/* Message Input Bar */}
-          <div className="p-3 sm:p-4 border-t border-nebula-steel bg-nebula-surface relative shrink-0 mt-auto">
+          <div className="p-3 sm:p-4 border-t border-[#2A3446] bg-[#161F2D] relative shrink-0 mt-auto">
             {/* FULL WHATSAPP EMOJI PICKER POPOVER */}
             {showEmojiPicker && (
-              <div className="absolute bottom-16 right-2 sm:right-4 z-50 w-[92vw] max-w-sm sm:w-96 bg-nebula-surface border border-nebula-steel rounded-3xl p-3 sm:p-4 shadow-2xl animate-in fade-in slide-in-from-bottom-2">
+              <div className="absolute bottom-16 right-2 sm:right-4 z-50 w-[92vw] max-w-sm sm:w-96 bg-[#161F2D] border border-[#2A3446] rounded-3xl p-3 sm:p-4 shadow-2xl animate-in fade-in slide-in-from-bottom-2">
                 {/* Header */}
-                <div className="flex items-center justify-between pb-2 mb-2 border-b border-nebula-steel">
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#2A3446]">
                   <div className="flex items-center gap-2">
-                    <Smile className="size-4 text-nebula-glow" />
+                    <Smile className="size-4 text-[#7FA0D6]" />
                     <span className="text-xs font-black text-white">
                       {pickerTargetMsgId ? "React with Emoji" : "WhatsApp Emoji Suite"}
                     </span>
@@ -897,7 +897,7 @@ export function SlackChatPage() {
                       setShowEmojiPicker(false);
                       setPickerTargetMsgId(null);
                     }}
-                    className="text-nebula-mist hover:text-white text-xs font-bold p-1 rounded hover:bg-slate-800"
+                    className="text-[#97A0B3] hover:text-white text-xs font-bold p-1 rounded hover:bg-slate-800"
                   >
                     ✕
                   </button>
@@ -905,18 +905,18 @@ export function SlackChatPage() {
 
                 {/* Emoji Search Box */}
                 <div className="relative mb-2.5">
-                  <Search className="size-3.5 absolute left-3 top-2.5 text-nebula-mist" />
+                  <Search className="size-3.5 absolute left-3 top-2.5 text-[#97A0B3]" />
                   <input
                     type="text"
                     value={emojiSearch}
                     onChange={(e) => setEmojiSearch(e.target.value)}
                     placeholder="Search 200+ emojis..."
-                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-nebula-navy border border-nebula-steel rounded-xl text-white focus:outline-none focus:border-[#7FA0D6]"
+                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#0B111C] border border-[#2A3446] rounded-xl text-white focus:outline-none focus:border-[#7FA0D6]"
                   />
                   {emojiSearch && (
                     <button
                       onClick={() => setEmojiSearch("")}
-                      className="absolute right-2.5 top-2 text-[10px] text-nebula-mist hover:text-white"
+                      className="absolute right-2.5 top-2 text-[10px] text-[#97A0B3] hover:text-white"
                     >
                       clear
                     </button>
@@ -925,7 +925,7 @@ export function SlackChatPage() {
 
                 {/* WhatsApp Category Navigation Tabs */}
                 {!emojiSearch && (
-                  <div className="flex items-center justify-between gap-1 pb-2 border-b border-nebula-steel overflow-x-auto no-scrollbar mb-2">
+                  <div className="flex items-center justify-between gap-1 pb-2 border-b border-[#2A3446] overflow-x-auto no-scrollbar mb-2">
                     {EMOJI_CATEGORIES.map((cat) => (
                       <button
                         key={cat.id}
@@ -950,7 +950,7 @@ export function SlackChatPage() {
                     ? EMOJI_CATEGORIES.flatMap((c) => c.emojis).filter((e) => e.includes(emojiSearch.trim()))
                     : (EMOJI_CATEGORIES.find((c) => c.id === emojiCategory) || EMOJI_CATEGORIES[0])!.emojis)
                   ).length === 0 ? (
-                    <div className="col-span-8 py-6 text-center text-xs text-nebula-mist">
+                    <div className="col-span-8 py-6 text-center text-xs text-[#97A0B3]">
                       No matching emojis found
                     </div>
                   ) : (
@@ -987,13 +987,13 @@ export function SlackChatPage() {
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   placeholder={`Message #${activeChannel}...`}
-                  className="w-full bg-nebula-navy border border-nebula-steel rounded-2xl pl-4 pr-32 py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-[#7FA0D6] transition-colors"
+                  className="w-full bg-[#0B111C] border border-[#2A3446] rounded-2xl pl-4 pr-32 py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-[#7FA0D6] transition-colors"
                 />
                 <div className="absolute right-2 flex items-center gap-1">
                   <button
                     type="button"
                     onClick={() => setShowEmojiPicker((prev) => !prev)}
-                    className="p-1.5 text-nebula-mist hover:text-nebula-glow rounded-lg transition-colors cursor-pointer"
+                    className="p-1.5 text-[#97A0B3] hover:text-[#7FA0D6] rounded-lg transition-colors cursor-pointer"
                     title="Add Emoji (WhatsApp)"
                   >
                     <Smile className="size-4" />
@@ -1001,7 +1001,7 @@ export function SlackChatPage() {
                   <button
                     type="button"
                     onClick={() => showToast("Attachment upload ready", "info")}
-                    className="p-1.5 text-nebula-mist hover:text-white rounded-lg transition-colors cursor-pointer"
+                    className="p-1.5 text-[#97A0B3] hover:text-white rounded-lg transition-colors cursor-pointer"
                     title="Attach file"
                   >
                     <Paperclip className="size-4" />
@@ -1027,15 +1027,15 @@ export function SlackChatPage() {
           onClick={() => setAssignTaskModalOpen(false)}
         >
           <div
-            className="w-full max-w-lg bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4 animate-scale-up"
+            className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-nebula-steel">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
               <div className="flex items-center gap-2">
-                <Sparkles className="size-5 text-nebula-glow" />
+                <Sparkles className="size-5 text-[#7FA0D6]" />
                 <h3 className="text-base font-black text-white">Assign Task in Chat</h3>
               </div>
-              <button onClick={() => setAssignTaskModalOpen(false)} className="text-nebula-mist hover:text-white">
+              <button onClick={() => setAssignTaskModalOpen(false)} className="text-[#97A0B3] hover:text-white">
                 <X className="size-5" />
               </button>
             </div>
@@ -1049,7 +1049,7 @@ export function SlackChatPage() {
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
                   placeholder="e.g. Hero Kinetic Reel Animation"
-                  className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-bold bg-nebula-navy text-white"
+                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C] text-white"
                 />
               </div>
 
@@ -1059,7 +1059,7 @@ export function SlackChatPage() {
                   <select
                     value={taskAssignee}
                     onChange={(e) => setTaskAssignee(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-semibold bg-nebula-navy text-white"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold bg-[#0B111C] text-white"
                   >
                     {(!podData?.members || podData.members.length === 0) ? (
                       <option value="">No specialists registered</option>
@@ -1081,7 +1081,7 @@ export function SlackChatPage() {
                   <select
                     value={taskClient}
                     onChange={(e) => setTaskClient(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-semibold bg-nebula-navy text-white"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold bg-[#0B111C] text-white"
                   >
                     {(!podData?.clients || podData.clients.length === 0) ? (
                       <option value="">No clients assigned</option>
@@ -1102,7 +1102,7 @@ export function SlackChatPage() {
                   <select
                     value={taskPriority}
                     onChange={(e) => setTaskPriority(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-bold bg-nebula-navy text-white"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C] text-white"
                   >
                     <option value="P1 High">P1 High (Urgent SLA)</option>
                     <option value="P2 Med">P2 Medium</option>
@@ -1117,7 +1117,7 @@ export function SlackChatPage() {
                     required
                     value={taskDeadline}
                     onChange={(e) => setTaskDeadline(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-bold bg-nebula-navy text-white"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C] text-white"
                   />
                 </div>
               </div>
@@ -1129,15 +1129,15 @@ export function SlackChatPage() {
                   value={taskScope}
                   onChange={(e) => setTaskScope(e.target.value)}
                   placeholder="Add scope details or technical requirements..."
-                  className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-medium bg-nebula-navy text-white"
+                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-medium bg-[#0B111C] text-white"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-nebula-steel">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2A3446]">
                 <button
                   type="button"
                   onClick={() => setAssignTaskModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1160,24 +1160,24 @@ export function SlackChatPage() {
           onClick={() => setCallModalOpen(false)}
         >
           <div
-            className="w-full max-w-md bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4 animate-scale-up text-center"
+            className="w-full max-w-md bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="size-12 rounded-2xl bg-[#7FA0D6]/15 text-nebula-glow flex items-center justify-center mx-auto font-black">
+            <div className="size-12 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center mx-auto font-black">
               <Video className="size-6" />
             </div>
             <div>
               <h3 className="text-base font-black text-white">Start #{activeChannel} Huddle</h3>
-              <p className="text-xs text-nebula-mist mt-1">
+              <p className="text-xs text-[#97A0B3] mt-1">
                 Instantly connect with everyone active in this channel via HD video & screen share.
               </p>
             </div>
 
-            <div className="flex items-center justify-center gap-2 pt-2 border-t border-nebula-steel">
+            <div className="flex items-center justify-center gap-2 pt-2 border-t border-[#2A3446]">
               <button
                 type="button"
                 onClick={() => setCallModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-xs text-[#F1F5F9] hover:bg-nebula-navy cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-xs text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
               >
                 Cancel
               </button>

@@ -139,6 +139,10 @@ export async function rejectLeaveRequest(leaveId: string): Promise<any> {
 // TASKS & TICKETS (QUICK ACTIONS)
 // ─────────────────────────────────────────────────────────────────────────────
 
+export async function fetchKanbanTasks(): Promise<any> {
+  return request<any>("/api/v1/tasks/kanban");
+}
+
 export async function resolveTaskSla(taskId: string): Promise<any> {
   // Assuming a generic resolution endpoint or status patch
   return request(`/api/v1/admin/deliverables/${taskId}/status`, {
@@ -492,3 +496,9 @@ export async function fetchClientNegotiations(): Promise<PlanNegotiationApiItem[
 }
 
 
+
+
+export async function fetchAdminDeliverables(clientId?: string): Promise<any[]> {
+  const url = clientId ? `/api/v1/admin/deliverables?client_id=${clientId}` : `/api/v1/admin/deliverables`;
+  return request<any[]>(url);
+}

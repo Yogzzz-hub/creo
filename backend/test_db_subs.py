@@ -1,15 +1,14 @@
 import asyncio
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 from app.config import settings
 from app.models.billing import Subscription, Plan
 from app.models.user import User
 
-async def main():
+async def main() -> None:
     engine = create_async_engine(settings.DIRECT_DATABASE_URL, echo=False, future=True)
-    async_session = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+    async_session = async_sessionmaker(bind=engine, expire_on_commit=False)
     
     async with async_session() as db:
         stmt = select(User, Subscription, Plan).join(Subscription, User.id == Subscription.client_id).join(Plan, Subscription.plan_id == Plan.id)

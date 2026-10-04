@@ -97,8 +97,8 @@ export function MemberTaskBoardPage() {
           id: t.id,
           title: t.blueprint?.concept_name || t.deliverable_type || "Sprint Task",
           client: t.client_name || "Client",
-          clientColor: "text-nebula-glow",
-          clientBadgeBg: "bg-nebula-glow/15 text-nebula-glow",
+          clientColor: "text-[#7FA0D6]",
+          clientBadgeBg: "bg-[#7FA0D6]/15 text-[#7FA0D6]",
           format: t.deliverable_type || "Format",
           estimatedHours: 4.0,
           priority: "Normal" as const,
@@ -274,8 +274,8 @@ export function MemberTaskBoardPage() {
     if (!newTitle.trim()) return;
 
     const clientStyling = {
-      color: "text-nebula-glow",
-      bg: "bg-nebula-glow/15 text-nebula-glow",
+      color: "text-[#7FA0D6]",
+      bg: "bg-[#7FA0D6]/15 text-[#7FA0D6]",
     };
 
     const parsedTags = newTagsInput
@@ -429,7 +429,7 @@ export function MemberTaskBoardPage() {
   const rubricPassedCount = Object.values(rubricState).filter(Boolean).length;
 
   return (
-    <div data-surface="ops" className="min-h-screen bg-nebula-navy text-white font-sans flex flex-col">
+    <div data-surface="ops" className="min-h-screen bg-[#0B111C] text-white font-sans flex flex-col">
       {/* Top Header Navigation matching Admin */}
       <AdminTopHeader activeTab="My Tasks" />
 
@@ -445,7 +445,7 @@ export function MemberTaskBoardPage() {
           <div
             className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-between shadow-2xs animate-fade-in ${
               toastMessage.type === "info"
-                ? "bg-nebula-glow/15 border-nebula-glow/30 text-blue-800"
+                ? "bg-[#7FA0D6]/15 border-[#7FA0D6]/30 text-blue-800"
                 : "bg-emerald-50 border-emerald-200 text-emerald-800"
             }`}
           >
@@ -460,23 +460,23 @@ export function MemberTaskBoardPage() {
         )}
 
         {/* 1. Header Filter & Action Bar */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 bg-nebula-surface sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none border sm:border-0 border-nebula-steel shadow-2xs sm:shadow-none">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-2.5 bg-[#161F2D] sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none border sm:border-0 border-[#2A3446] shadow-2xs sm:shadow-none">
           <div className="flex flex-1 items-center gap-2.5 w-full xl:max-w-xl">
             <div className="relative w-full">
-              <Search className="size-3.5 text-nebula-mist absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Search className="size-3.5 text-[#97A0B3] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Filter tasks by client, format, tag, or title..."
-                className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-nebula-surface border border-nebula-steel/80 text-xs font-medium placeholder:text-nebula-mist focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs"
+                className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[#161F2D] border border-[#2A3446]/80 text-xs font-medium placeholder:text-[#97A0B3] focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs"
               />
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             {/* Client Filter Pills */}
-            <div className="flex items-center gap-1 bg-nebula-surface p-0.5 rounded-xl border border-nebula-steel/80 shadow-2xs text-xs font-bold overflow-x-auto no-scrollbar py-0.5">
+            <div className="flex items-center gap-1 bg-[#161F2D] p-0.5 rounded-xl border border-[#2A3446]/80 shadow-2xs text-xs font-bold overflow-x-auto no-scrollbar py-0.5">
               {[
                 { label: "All Clients", value: "All Clients", count: tasks.length },
                 ...clients.map((c) => ({
@@ -491,7 +491,7 @@ export function MemberTaskBoardPage() {
                   className={`px-2.5 py-1 rounded-lg transition-all shrink-0 text-xs ${
                     selectedClient === c.value
                       ? "bg-blue-600 text-white shadow-2xs font-bold"
-                      : "text-slate-100 hover:text-white"
+                      : "text-[#F1F5F9] hover:text-white"
                   }`}
                 >
                   {c.label} ({c.count})
@@ -522,7 +522,7 @@ export function MemberTaskBoardPage() {
                 className={`flex-1 sm:flex-initial px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer ${
                   highSlaActive
                     ? "bg-rose-500 text-white border-rose-500 shadow-2xs"
-                    : "bg-nebula-surface border-rose-500/30 text-rose-400 hover:bg-rose-500/10 shadow-2xs"
+                    : "bg-[#161F2D] border-rose-500/30 text-rose-400 hover:bg-rose-500/10 shadow-2xs"
                 }`}
               >
                 <span>+ High SLA</span>
@@ -531,7 +531,7 @@ export function MemberTaskBoardPage() {
               {/* ADD DELIVERABLE PRIMARY ACTION (Single Plus Symbol) */}
               <button
                 onClick={() => setAddDeliverableModalOpen(true)}
-                className="px-3 py-1.5 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 shadow-2xs transition-all cursor-pointer whitespace-nowrap active:scale-95"
+                className="px-3 py-1.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 shadow-2xs transition-all cursor-pointer whitespace-nowrap active:scale-95"
               >
                 <Plus className="size-3.5" />
                 <span>Add Deliverable</span>
@@ -541,11 +541,11 @@ export function MemberTaskBoardPage() {
         </div>
 
         {/* Mobile Kanban Tab Selector (< md) */}
-        <div className="flex md:hidden items-center bg-nebula-surface p-1 rounded-xl border border-nebula-steel shadow-2xs text-xs font-bold overflow-x-auto no-scrollbar gap-1">
+        <div className="flex md:hidden items-center bg-[#161F2D] p-1 rounded-xl border border-[#2A3446] shadow-2xs text-xs font-bold overflow-x-auto no-scrollbar gap-1">
           <button
             onClick={() => setMobileKanbanTab("all")}
             className={`px-2.5 py-1 rounded-lg transition-all shrink-0 ${
-              mobileKanbanTab === "all" ? "bg-slate-900 text-white shadow-2xs font-bold" : "text-slate-100"
+              mobileKanbanTab === "all" ? "bg-slate-900 text-white shadow-2xs font-bold" : "text-[#F1F5F9]"
             }`}
           >
             All ({filteredTasks.length})
@@ -553,7 +553,7 @@ export function MemberTaskBoardPage() {
           <button
             onClick={() => setMobileKanbanTab("assigned")}
             className={`px-2.5 py-1 rounded-lg transition-all shrink-0 ${
-              mobileKanbanTab === "assigned" ? "bg-blue-600 text-white shadow-2xs font-bold" : "text-slate-100"
+              mobileKanbanTab === "assigned" ? "bg-blue-600 text-white shadow-2xs font-bold" : "text-[#F1F5F9]"
             }`}
           >
             Queued ({assignedTasks.length})
@@ -561,7 +561,7 @@ export function MemberTaskBoardPage() {
           <button
             onClick={() => setMobileKanbanTab("production")}
             className={`px-2.5 py-1 rounded-lg transition-all shrink-0 ${
-              mobileKanbanTab === "production" ? "bg-blue-600 text-white shadow-2xs font-bold" : "text-slate-100"
+              mobileKanbanTab === "production" ? "bg-blue-600 text-white shadow-2xs font-bold" : "text-[#F1F5F9]"
             }`}
           >
             Active ({productionTasks.length})
@@ -569,7 +569,7 @@ export function MemberTaskBoardPage() {
           <button
             onClick={() => setMobileKanbanTab("qa")}
             className={`px-2.5 py-1 rounded-lg transition-all shrink-0 ${
-              mobileKanbanTab === "qa" ? "bg-amber-500 text-white shadow-2xs font-bold" : "text-slate-100"
+              mobileKanbanTab === "qa" ? "bg-amber-500 text-white shadow-2xs font-bold" : "text-[#F1F5F9]"
             }`}
           >
             Lead QA ({qaTasks.length})
@@ -577,7 +577,7 @@ export function MemberTaskBoardPage() {
           <button
             onClick={() => setMobileKanbanTab("dispatched")}
             className={`px-2.5 py-1 rounded-lg transition-all shrink-0 ${
-              mobileKanbanTab === "dispatched" ? "bg-emerald-600 text-white shadow-2xs font-bold" : "text-slate-100"
+              mobileKanbanTab === "dispatched" ? "bg-emerald-600 text-white shadow-2xs font-bold" : "text-[#F1F5F9]"
             }`}
           >
             Dispatched ({dispatchedTasks.length})
@@ -590,12 +590,12 @@ export function MemberTaskBoardPage() {
           <div
             className={`${
               mobileKanbanTab === "all" || mobileKanbanTab === "assigned" ? "flex" : "hidden md:flex"
-            } flex-col h-full bg-nebula-surface/60 rounded-2xl p-3 border border-nebula-steel/70 space-y-2.5 min-h-0`}
+            } flex-col h-full bg-[#161F2D]/60 rounded-2xl p-3 border border-[#2A3446]/70 space-y-2.5 min-h-0`}
           >
             <div className="flex items-center justify-between px-1 pt-0.5 shrink-0">
               <div className="flex items-center gap-1.5">
                 <span className="size-2 rounded-full bg-slate-400" />
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-100">
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#F1F5F9]">
                   Assigned & Queued
                 </h3>
               </div>
@@ -605,12 +605,12 @@ export function MemberTaskBoardPage() {
                     setNewStatus("assigned");
                     setAddDeliverableModalOpen(true);
                   }}
-                  className="size-5 rounded-md bg-nebula-surface hover:bg-nebula-glow/15 text-nebula-mist hover:text-nebula-glow flex items-center justify-center border border-nebula-steel transition-colors cursor-pointer"
+                  className="size-5 rounded-md bg-[#161F2D] hover:bg-[#7FA0D6]/15 text-[#97A0B3] hover:text-[#7FA0D6] flex items-center justify-center border border-[#2A3446] transition-colors cursor-pointer"
                   title="Add Deliverable to Queue"
                 >
                   <Plus className="size-3" />
                 </button>
-                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-nebula-surface text-slate-100 border border-nebula-steel">
+                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-[#161F2D] text-[#F1F5F9] border border-[#2A3446]">
                   {assignedTasks.length}
                 </span>
               </div>
@@ -620,28 +620,28 @@ export function MemberTaskBoardPage() {
               {assignedTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="bg-nebula-surface rounded-xl p-3 border border-nebula-steel/80 shadow-2xs hover-card-innovative space-y-2"
+                  className="bg-[#161F2D] rounded-xl p-3 border border-[#2A3446]/80 shadow-2xs hover-card-innovative space-y-2"
                 >
                   <div className="flex items-center justify-between text-[10px] font-bold">
                     <span className={task.clientColor}>{task.client.toUpperCase()}</span>
-                    <span className="text-nebula-mist font-mono">⏱ {task.estimatedHours}h</span>
+                    <span className="text-[#97A0B3] font-mono">⏱ {task.estimatedHours}h</span>
                   </div>
                   <h4 className="text-xs font-black text-white leading-snug">{task.title}</h4>
-                  <p className="text-[11px] text-nebula-mist line-clamp-2">{task.description}</p>
+                  <p className="text-[11px] text-[#97A0B3] line-clamp-2">{task.description}</p>
                   <div className="flex flex-wrap items-center gap-1 text-[9px] font-bold">
-                    <span className="px-1.5 py-0.2 rounded bg-nebula-glow/15 text-nebula-glow">{task.format}</span>
+                    <span className="px-1.5 py-0.2 rounded bg-[#7FA0D6]/15 text-[#7FA0D6]">{task.format}</span>
                     {task.tags.map((tag) => (
-                      <span key={tag} className="px-1.5 py-0.2 rounded bg-nebula-surface text-slate-100">
+                      <span key={tag} className="px-1.5 py-0.2 rounded bg-[#161F2D] text-[#F1F5F9]">
                         {tag}
                       </span>
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between pt-1.5 border-t border-nebula-steel text-[10px]">
-                    <span className="text-nebula-mist font-medium">📅 {task.deadline}</span>
+                  <div className="flex items-center justify-between pt-1.5 border-t border-[#2A3446] text-[10px]">
+                    <span className="text-[#97A0B3] font-medium">📅 {task.deadline}</span>
                     <button
                       onClick={() => handleMoveStatus(task.id, "production")}
-                      className="px-2 py-0.5 rounded-md bg-nebula-glow/15 hover:bg-nebula-glow/20 text-nebula-glow font-bold text-[10px] flex items-center gap-1 transition-colors cursor-pointer"
+                      className="px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold text-[10px] flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       <span>Start</span>
                       <ArrowRight className="size-2.5" />
@@ -651,7 +651,7 @@ export function MemberTaskBoardPage() {
               ))}
 
               {assignedTasks.length === 0 && (
-                <div className="text-center py-4 text-xs text-nebula-mist font-medium bg-nebula-surface/50 rounded-xl border border-dashed border-nebula-steel">
+                <div className="text-center py-4 text-xs text-[#97A0B3] font-medium bg-[#161F2D]/50 rounded-xl border border-dashed border-[#2A3446]">
                   No queued deliverables
                 </div>
               )}
@@ -661,7 +661,7 @@ export function MemberTaskBoardPage() {
                   setNewStatus("assigned");
                   setAddDeliverableModalOpen(true);
                 }}
-                className="w-full text-center py-2 text-[10px] sm:text-xs text-nebula-mist hover:text-nebula-glow font-bold border border-dashed border-nebula-steel hover:border-blue-300 hover:bg-nebula-glow/15/40 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1"
+                className="w-full text-center py-2 text-[10px] sm:text-xs text-[#97A0B3] hover:text-[#7FA0D6] font-bold border border-dashed border-[#2A3446] hover:border-blue-300 hover:bg-[#7FA0D6]/15/40 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1"
               >
                 <Plus className="size-3.5" />
                 <span>Add to Queue</span>
@@ -673,16 +673,16 @@ export function MemberTaskBoardPage() {
           <div
             className={`${
               mobileKanbanTab === "all" || mobileKanbanTab === "production" ? "flex" : "hidden md:flex"
-            } flex-col h-full bg-nebula-surface/60 rounded-2xl p-3 border border-nebula-steel/70 space-y-2.5 min-h-0`}
+            } flex-col h-full bg-[#161F2D]/60 rounded-2xl p-3 border border-[#2A3446]/70 space-y-2.5 min-h-0`}
           >
             <div className="flex items-center justify-between px-1 pt-0.5 shrink-0">
               <div className="flex items-center gap-1.5">
                 <span className="size-2 rounded-full bg-blue-600 animate-pulse" />
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-100">
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#F1F5F9]">
                   In Production
                 </h3>
               </div>
-              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-nebula-surface text-slate-100 border border-nebula-steel">
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-[#161F2D] text-[#F1F5F9] border border-[#2A3446]">
                 {productionTasks.length}
               </span>
             </div>
@@ -691,7 +691,7 @@ export function MemberTaskBoardPage() {
               {productionTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="bg-nebula-surface rounded-xl p-3 border border-nebula-steel/80 shadow-2xs hover-card-innovative space-y-2"
+                  className="bg-[#161F2D] rounded-xl p-3 border border-[#2A3446]/80 shadow-2xs hover-card-innovative space-y-2"
                 >
                   <div className="flex items-center justify-between text-[10px] font-bold">
                     <span className={task.clientColor}>{task.client.toUpperCase()}</span>
@@ -700,12 +700,12 @@ export function MemberTaskBoardPage() {
                         ⏱ {task.deadline}
                       </span>
                     ) : (
-                      <span className="text-nebula-mist font-mono">⏱ {task.estimatedHours}h</span>
+                      <span className="text-[#97A0B3] font-mono">⏱ {task.estimatedHours}h</span>
                     )}
                   </div>
 
                   <h4 className="text-xs font-black text-white leading-snug">{task.title}</h4>
-                  <p className="text-[11px] text-nebula-mist line-clamp-2">{task.description}</p>
+                  <p className="text-[11px] text-[#97A0B3] line-clamp-2">{task.description}</p>
 
                   {/* Optional Render Graphic Preview */}
                   {task.renderInfo ? (
@@ -720,11 +720,11 @@ export function MemberTaskBoardPage() {
 
                   {/* Progress Bar */}
                   <div className="space-y-0.5">
-                    <div className="flex justify-between text-[9px] font-bold text-nebula-mist">
+                    <div className="flex justify-between text-[9px] font-bold text-[#97A0B3]">
                       <span>Progress</span>
-                      <span className="text-nebula-glow">{task.progress || 50}%</span>
+                      <span className="text-[#7FA0D6]">{task.progress || 50}%</span>
                     </div>
-                    <div className="w-full h-1 bg-nebula-surface rounded-full overflow-hidden">
+                    <div className="w-full h-1 bg-[#161F2D] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-blue-600 rounded-full transition-all"
                         style={{ width: `${task.progress || 50}%` }}
@@ -736,9 +736,9 @@ export function MemberTaskBoardPage() {
                   <div className="grid grid-cols-2 gap-1.5 pt-0.5">
                     <button
                       onClick={() => setLogTimeModalCard(task)}
-                      className="py-1 px-1.5 rounded-lg bg-nebula-navy hover:bg-nebula-surface border border-nebula-steel text-slate-100 font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer"
+                      className="py-1 px-1.5 rounded-lg bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer"
                     >
-                      <Clock className="size-2.5 text-nebula-mist" />
+                      <Clock className="size-2.5 text-[#97A0B3]" />
                       <span>Log Time</span>
                     </button>
                     <button
@@ -746,15 +746,15 @@ export function MemberTaskBoardPage() {
                         setProgressInput(task.progress || 50);
                         setUpdateProgressModalCard(task);
                       }}
-                      className="py-1 px-1.5 rounded-lg bg-nebula-navy hover:bg-nebula-surface border border-nebula-steel text-slate-100 font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer"
+                      className="py-1 px-1.5 rounded-lg bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] font-bold text-[10px] flex items-center justify-center gap-1 cursor-pointer"
                     >
-                      <Sliders className="size-2.5 text-nebula-mist" />
+                      <Sliders className="size-2.5 text-[#97A0B3]" />
                       <span>Progress</span>
                     </button>
                   </div>
 
                   {/* Primary In-Task Review Action */}
-                  <div className="pt-1.5 border-t border-nebula-steel">
+                  <div className="pt-1.5 border-t border-[#2A3446]">
                     <button
                       onClick={() => handleOpenReviewModal(task)}
                       className="w-full py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white font-bold text-[11px] flex items-center justify-center gap-1 shadow-2xs transition-all cursor-pointer active:scale-95"
@@ -767,7 +767,7 @@ export function MemberTaskBoardPage() {
               ))}
 
               {productionTasks.length === 0 && (
-                <div className="text-center py-4 text-xs text-nebula-mist font-medium bg-nebula-surface/50 rounded-xl border border-dashed border-nebula-steel">
+                <div className="text-center py-4 text-xs text-[#97A0B3] font-medium bg-[#161F2D]/50 rounded-xl border border-dashed border-[#2A3446]">
                   No deliverables in production
                 </div>
               )}
@@ -778,16 +778,16 @@ export function MemberTaskBoardPage() {
           <div
             className={`${
               mobileKanbanTab === "all" || mobileKanbanTab === "qa" ? "flex" : "hidden md:flex"
-            } flex-col h-full bg-nebula-surface/60 rounded-2xl p-3 border border-nebula-steel/70 space-y-2.5 min-h-0`}
+            } flex-col h-full bg-[#161F2D]/60 rounded-2xl p-3 border border-[#2A3446]/70 space-y-2.5 min-h-0`}
           >
             <div className="flex items-center justify-between px-1 pt-0.5 shrink-0">
               <div className="flex items-center gap-1.5">
                 <span className="size-2 rounded-full bg-amber-500" />
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-100">
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#F1F5F9]">
                   Submitted for QA
                 </h3>
               </div>
-              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-nebula-surface text-slate-100 border border-nebula-steel">
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-[#161F2D] text-[#F1F5F9] border border-[#2A3446]">
                 {qaTasks.length}
               </span>
             </div>
@@ -796,10 +796,10 @@ export function MemberTaskBoardPage() {
               {qaTasks.map((task) => (
                 <div
                   key={task.id}
-                  className={`bg-nebula-surface rounded-xl p-3 border shadow-2xs hover-card-innovative space-y-2 ${
+                  className={`bg-[#161F2D] rounded-xl p-3 border shadow-2xs hover-card-innovative space-y-2 ${
                     task.reviewData?.status === "Revision Pending"
                       ? "border-amber-300 ring-1 ring-amber-200/50"
-                      : "border-nebula-steel/80"
+                      : "border-[#2A3446]/80"
                   }`}
                 >
                   <div className="flex items-center justify-between text-[10px] font-bold">
@@ -809,23 +809,23 @@ export function MemberTaskBoardPage() {
                         Revision Pending
                       </span>
                     ) : (
-                      <span className="px-1.5 py-0.2 rounded bg-nebula-glow/15 text-nebula-glow text-[9px]">
+                      <span className="px-1.5 py-0.2 rounded bg-[#7FA0D6]/15 text-[#7FA0D6] text-[9px]">
                         Under Review
                       </span>
                     )}
                   </div>
 
                   <h4 className="text-xs font-black text-white leading-snug">{task.title}</h4>
-                  <p className="text-[11px] text-nebula-mist line-clamp-2">{task.description}</p>
+                  <p className="text-[11px] text-[#97A0B3] line-clamp-2">{task.description}</p>
 
                   {/* Reviewer Lead Badge */}
-                  <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-nebula-navy text-xs font-bold text-slate-100">
+                  <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-[#0B111C] text-xs font-bold text-[#F1F5F9]">
                     <div className="size-5 rounded-md bg-blue-600 text-white font-black text-[9px] flex items-center justify-center shrink-0">
                       {task.reviewData?.reviewerAvatar || "ML"}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[11px]">{task.reviewData?.reviewer || leadName}</div>
-                      <span className="text-[9px] text-nebula-mist block font-normal">
+                      <span className="text-[9px] text-[#97A0B3] block font-normal">
                         {task.reviewData?.reviewerRole || "Lead Reviewer"}
                       </span>
                     </div>
@@ -845,10 +845,10 @@ export function MemberTaskBoardPage() {
                   )}
 
                   {/* In-Task Review Action */}
-                  <div className="pt-1.5 border-t border-nebula-steel flex items-center gap-1.5">
+                  <div className="pt-1.5 border-t border-[#2A3446] flex items-center gap-1.5">
                     <button
                       onClick={() => handleOpenReviewModal(task)}
-                      className="flex-1 py-1 rounded-lg border border-nebula-glow/30 text-nebula-glow hover:bg-nebula-glow/15 font-bold text-[10px] flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                      className="flex-1 py-1 rounded-lg border border-[#7FA0D6]/30 text-[#7FA0D6] hover:bg-[#7FA0D6]/15 font-bold text-[10px] flex items-center justify-center gap-1 transition-colors cursor-pointer"
                     >
                       <Eye className="size-3" />
                       <span>Inspect Rubric</span>
@@ -865,7 +865,7 @@ export function MemberTaskBoardPage() {
               ))}
 
               {qaTasks.length === 0 && (
-                <div className="text-center py-4 text-xs text-nebula-mist font-medium bg-nebula-surface/50 rounded-xl border border-dashed border-nebula-steel">
+                <div className="text-center py-4 text-xs text-[#97A0B3] font-medium bg-[#161F2D]/50 rounded-xl border border-dashed border-[#2A3446]">
                   No deliverables waiting in QA
                 </div>
               )}
@@ -876,12 +876,12 @@ export function MemberTaskBoardPage() {
           <div
             className={`${
               mobileKanbanTab === "all" || mobileKanbanTab === "dispatched" ? "flex" : "hidden md:flex"
-            } flex-col h-full bg-nebula-surface/60 rounded-2xl p-3 border border-nebula-steel/70 space-y-2.5 min-h-0`}
+            } flex-col h-full bg-[#161F2D]/60 rounded-2xl p-3 border border-[#2A3446]/70 space-y-2.5 min-h-0`}
           >
             <div className="flex items-center justify-between px-1 pt-0.5 shrink-0">
               <div className="flex items-center gap-1.5">
                 <span className="size-2 rounded-full bg-emerald-500" />
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-100">
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#F1F5F9]">
                   Signed Off
                 </h3>
               </div>
@@ -894,7 +894,7 @@ export function MemberTaskBoardPage() {
               {dispatchedTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="bg-nebula-surface rounded-xl p-3 border border-nebula-steel/80 shadow-2xs hover-card-innovative space-y-2"
+                  className="bg-[#161F2D] rounded-xl p-3 border border-[#2A3446]/80 shadow-2xs hover-card-innovative space-y-2"
                 >
                   <div className="flex items-center justify-between text-[10px] font-bold">
                     <span className={task.clientColor}>{task.client.toUpperCase()}</span>
@@ -904,13 +904,13 @@ export function MemberTaskBoardPage() {
                   </div>
 
                   <h4 className="text-xs font-black text-white leading-snug">{task.title}</h4>
-                  <p className="text-[11px] text-nebula-mist line-clamp-2">{task.description}</p>
+                  <p className="text-[11px] text-[#97A0B3] line-clamp-2">{task.description}</p>
 
-                  <div className="flex items-center justify-between pt-1.5 border-t border-nebula-steel text-[10px] text-nebula-mist">
+                  <div className="flex items-center justify-between pt-1.5 border-t border-[#2A3446] text-[10px] text-[#97A0B3]">
                     <span>{task.dispatchedAt || "Today"}</span>
                     <button
                       onClick={() => handleOpenReviewModal(task)}
-                      className="font-bold text-nebula-glow hover:text-blue-800 text-[10px] cursor-pointer flex items-center gap-0.5"
+                      className="font-bold text-[#7FA0D6] hover:text-blue-800 text-[10px] cursor-pointer flex items-center gap-0.5"
                     >
                       <span>QA Ledger</span>
                       <ArrowRight className="size-2.5" />
@@ -920,7 +920,7 @@ export function MemberTaskBoardPage() {
               ))}
 
               {dispatchedTasks.length === 0 && (
-                <div className="text-center py-4 text-xs text-nebula-mist font-medium bg-nebula-surface/50 rounded-xl border border-dashed border-nebula-steel">
+                <div className="text-center py-4 text-xs text-[#97A0B3] font-medium bg-[#161F2D]/50 rounded-xl border border-dashed border-[#2A3446]">
                   No dispatched deliverables yet
                 </div>
               )}
@@ -938,23 +938,23 @@ export function MemberTaskBoardPage() {
           onClick={() => setAddDeliverableModalOpen(false)}
         >
           <div
-            className="w-full max-w-xl bg-nebula-surface rounded-3xl p-5 sm:p-7 shadow-2xl border border-nebula-steel space-y-4 animate-scale-up max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-xl bg-[#161F2D] rounded-3xl p-5 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
+            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="size-9 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-bold">
+                <div className="size-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
                   <Sparkles className="size-4.5" />
                 </div>
                 <div>
                   <h3 className="text-base font-black text-white">Add New Deliverable</h3>
-                  <p className="text-xs text-nebula-mist">Create and queue a creative asset on the board</p>
+                  <p className="text-xs text-[#97A0B3]">Create and queue a creative asset on the board</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setAddDeliverableModalOpen(false)}
-                className="size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist flex items-center justify-center cursor-pointer transition-colors"
+                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer transition-colors"
               >
                 <X className="size-4" />
               </button>
@@ -962,7 +962,7 @@ export function MemberTaskBoardPage() {
 
             <form onSubmit={handleCreateDeliverable} className="space-y-4 text-xs">
               <div>
-                <label className="block font-bold text-slate-100 mb-1">
+                <label className="block font-bold text-[#F1F5F9] mb-1">
                   Deliverable Title <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -971,17 +971,17 @@ export function MemberTaskBoardPage() {
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="e.g. 3D Hologram Logo Animation 4K"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-nebula-steel text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Client Allocation</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Client Allocation</label>
                   <select
                     value={newClient}
                     onChange={(e) => setNewClient(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-bold bg-nebula-surface"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#161F2D]"
                   >
                     {clients.length > 0 ? (
                       clients.map((c) => (
@@ -996,11 +996,11 @@ export function MemberTaskBoardPage() {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Deliverable Format / Type</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Deliverable Format / Type</label>
                   <select
                     value={newFormat}
                     onChange={(e) => setNewFormat(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-bold bg-nebula-surface"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#161F2D]"
                   >
                     <option value="9:16 Vertical Video (Reels/TikTok)">9:16 Vertical Video (Reels/TikTok)</option>
                     <option value="16:9 4K Master Render (ProRes 4444)">16:9 4K Master Render (ProRes 4444)</option>
@@ -1014,7 +1014,7 @@ export function MemberTaskBoardPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Est. Hours</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Est. Hours</label>
                   <input
                     type="number"
                     step="0.5"
@@ -1023,16 +1023,16 @@ export function MemberTaskBoardPage() {
                     required
                     value={newEstimatedHours}
                     onChange={(e) => setNewEstimatedHours(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-bold"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Sprint Priority</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Sprint Priority</label>
                   <select
                     value={newPriority}
                     onChange={(e) => setNewPriority(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-bold bg-nebula-surface"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#161F2D]"
                   >
                     <option value="High">P1 - High SLA Urgency</option>
                     <option value="Normal">P2 - Normal Sprint</option>
@@ -1041,11 +1041,11 @@ export function MemberTaskBoardPage() {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-100 mb-1">Initial Column</label>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Initial Column</label>
                   <select
                     value={newStatus}
                     onChange={(e) => setNewStatus(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-bold bg-nebula-surface"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#161F2D]"
                   >
                     <option value="assigned">Assigned & Queued</option>
                     <option value="production">In Active Production</option>
@@ -1054,49 +1054,49 @@ export function MemberTaskBoardPage() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Target Delivery Deadline</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Target Delivery Deadline</label>
                 <input
                   type="text"
                   value={newDeadline}
                   onChange={(e) => setNewDeadline(e.target.value)}
                   placeholder="e.g. Today by 06:00 PM"
-                  className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-semibold"
+                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Deliverable Scope & Brief Notes</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Deliverable Scope & Brief Notes</label>
                 <textarea
                   rows={2}
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
                   placeholder="Specific render resolution, color profile, audio loudness specs, or asset guidelines..."
-                  className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-medium resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-medium resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Tags (Comma-separated)</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Tags (Comma-separated)</label>
                 <input
                   type="text"
                   value={newTagsInput}
                   onChange={(e) => setNewTagsInput(e.target.value)}
                   placeholder="e.g. Cinema4D, Octane, 4K ProRes, MOGRT"
-                  className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-medium"
+                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-medium"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-nebula-steel">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
                 <button
                   type="button"
                   onClick={() => setAddDeliverableModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
+                  className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
                 >
                   <Plus className="size-3.5" />
                   <span>Create Deliverable</span>
@@ -1116,13 +1116,13 @@ export function MemberTaskBoardPage() {
           onClick={() => setReviewModalCard(null)}
         >
           <div
-            className="w-full max-w-2xl bg-nebula-surface rounded-3xl p-5 sm:p-7 shadow-2xl border border-nebula-steel space-y-4.5 animate-scale-up max-h-[92vh] overflow-y-auto"
+            className="w-full max-w-2xl bg-[#161F2D] rounded-3xl p-5 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4.5 animate-scale-up max-h-[92vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-start justify-between border-b border-nebula-steel pb-3 gap-2">
+            <div className="flex items-start justify-between border-b border-[#2A3446] pb-3 gap-2">
               <div className="flex items-start gap-3">
-                <div className="size-10 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-bold shrink-0 mt-0.5">
+                <div className="size-10 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold shrink-0 mt-0.5">
                   <ShieldCheck className="size-5.5" />
                 </div>
                 <div>
@@ -1130,10 +1130,10 @@ export function MemberTaskBoardPage() {
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${reviewModalCard.clientBadgeBg}`}>
                       {reviewModalCard.client}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-nebula-surface text-slate-100">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#161F2D] text-[#F1F5F9]">
                       {reviewModalCard.format}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-nebula-glow/20 text-blue-800">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#7FA0D6]/20 text-blue-800">
                       Status: {reviewModalCard.status.toUpperCase()}
                     </span>
                   </div>
@@ -1145,20 +1145,20 @@ export function MemberTaskBoardPage() {
               <button
                 type="button"
                 onClick={() => setReviewModalCard(null)}
-                className="size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist flex items-center justify-center cursor-pointer shrink-0 transition-colors"
+                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer shrink-0 transition-colors"
               >
                 <X className="size-4" />
               </button>
             </div>
 
             {/* Deliverable Creative Requirements & Specs Card */}
-            <div className="p-4 rounded-2xl bg-nebula-navy border border-nebula-steel space-y-2.5">
-              <div className="flex items-center justify-between border-b border-nebula-steel pb-2">
-                <span className="text-xs font-black text-nebula-glow uppercase tracking-wider flex items-center gap-1.5">
+            <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-2.5">
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-2">
+                <span className="text-xs font-black text-[#7FA0D6] uppercase tracking-wider flex items-center gap-1.5">
                   <Sparkles className="size-3.5" />
                   Deliverable Requirements & Creative Specifications
                 </span>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-nebula-surface text-nebula-periwinkle border border-nebula-steel">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#161F2D] text-[#BCCCE6] border border-[#2A3446]">
                   {reviewModalCard.format === "reel" || reviewModalCard.format.toLowerCase().includes("reel")
                     ? "9:16 Vertical Video (1080x1920)"
                     : reviewModalCard.format.toLowerCase().includes("story")
@@ -1168,95 +1168,95 @@ export function MemberTaskBoardPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                <div className="p-2.5 rounded-xl bg-nebula-surface border border-nebula-steel">
-                  <span className="text-[10px] font-bold text-nebula-mist block">Format & Aspect</span>
+                <div className="p-2.5 rounded-xl bg-[#161F2D] border border-[#2A3446]">
+                  <span className="text-[10px] font-bold text-[#97A0B3] block">Format & Aspect</span>
                   <span className="font-extrabold text-white">
                     {reviewModalCard.format.toUpperCase()} • 60 FPS
                   </span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-nebula-surface border border-nebula-steel">
-                  <span className="text-[10px] font-bold text-nebula-mist block">Color & Audio Spec</span>
+                <div className="p-2.5 rounded-xl bg-[#161F2D] border border-[#2A3446]">
+                  <span className="text-[10px] font-bold text-[#97A0B3] block">Color & Audio Spec</span>
                   <span className="font-extrabold text-white">
                     Rec.709 • -14 LUFS Audio
                   </span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-nebula-surface border border-nebula-steel">
-                  <span className="text-[10px] font-bold text-nebula-mist block">Client Brand Guidelines</span>
+                <div className="p-2.5 rounded-xl bg-[#161F2D] border border-[#2A3446]">
+                  <span className="text-[10px] font-bold text-[#97A0B3] block">Client Brand Guidelines</span>
                   <span className="font-extrabold text-white">
                     {reviewModalCard.client} Kit v2
                   </span>
                 </div>
               </div>
 
-              <div className="text-xs text-slate-100 font-medium leading-relaxed p-3 rounded-xl bg-nebula-surface/60 border border-nebula-steel/60">
-                <span className="font-bold text-nebula-glow block mb-0.5">Brief & Concept Notes:</span>
+              <div className="text-xs text-[#F1F5F9] font-medium leading-relaxed p-3 rounded-xl bg-[#161F2D]/60 border border-[#2A3446]/60">
+                <span className="font-bold text-[#7FA0D6] block mb-0.5">Brief & Concept Notes:</span>
                 {reviewModalCard.description || "High-conversion product showcase highlighting key features, bold kinetic typography, and smooth transitions."}
               </div>
             </div>
 
             {/* QA Quality Rubric Checklist */}
-            <div className="p-4 rounded-2xl bg-nebula-navy border border-nebula-steel/80 space-y-3">
+            <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446]/80 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="size-4 text-nebula-glow" />
+                  <ShieldCheck className="size-4 text-[#7FA0D6]" />
                   <span className="font-black text-xs text-white uppercase tracking-wider">
                     Studio QA Quality Rubric
                   </span>
                 </div>
-                <span className="text-xs font-bold text-nebula-glow bg-nebula-glow/15 px-2 py-0.5 rounded-full border border-nebula-glow/30/60">
+                <span className="text-xs font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 py-0.5 rounded-full border border-[#7FA0D6]/30/60">
                   {rubricPassedCount}/5 Passed ({Math.round((rubricPassedCount / 5) * 100)}%)
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                <label className="flex items-center gap-2.5 p-2 rounded-xl bg-nebula-surface border border-nebula-steel/80 cursor-pointer hover:bg-nebula-glow/15/50 transition-colors">
+                <label className="flex items-center gap-2.5 p-2 rounded-xl bg-[#161F2D] border border-[#2A3446]/80 cursor-pointer hover:bg-[#7FA0D6]/15/50 transition-colors">
                   <input
                     type="checkbox"
                     checked={rubricState.colorSpace}
                     onChange={(e) => setRubricState({ ...rubricState, colorSpace: e.target.checked })}
-                    className="size-4 rounded text-nebula-glow focus:ring-blue-500 cursor-pointer"
+                    className="size-4 rounded text-[#7FA0D6] focus:ring-blue-500 cursor-pointer"
                   />
-                  <span className="font-semibold text-slate-100">ACEScg / Rec.709 Color Space</span>
+                  <span className="font-semibold text-[#F1F5F9]">ACEScg / Rec.709 Color Space</span>
                 </label>
 
-                <label className="flex items-center gap-2.5 p-2 rounded-xl bg-nebula-surface border border-nebula-steel/80 cursor-pointer hover:bg-nebula-glow/15/50 transition-colors">
+                <label className="flex items-center gap-2.5 p-2 rounded-xl bg-[#161F2D] border border-[#2A3446]/80 cursor-pointer hover:bg-[#7FA0D6]/15/50 transition-colors">
                   <input
                     type="checkbox"
                     checked={rubricState.resolution}
                     onChange={(e) => setRubricState({ ...rubricState, resolution: e.target.checked })}
-                    className="size-4 rounded text-nebula-glow focus:ring-blue-500 cursor-pointer"
+                    className="size-4 rounded text-[#7FA0D6] focus:ring-blue-500 cursor-pointer"
                   />
-                  <span className="font-semibold text-slate-100">Resolution & Framerate Locked</span>
+                  <span className="font-semibold text-[#F1F5F9]">Resolution & Framerate Locked</span>
                 </label>
 
-                <label className="flex items-center gap-2.5 p-2 rounded-xl bg-nebula-surface border border-nebula-steel/80 cursor-pointer hover:bg-nebula-glow/15/50 transition-colors">
+                <label className="flex items-center gap-2.5 p-2 rounded-xl bg-[#161F2D] border border-[#2A3446]/80 cursor-pointer hover:bg-[#7FA0D6]/15/50 transition-colors">
                   <input
                     type="checkbox"
                     checked={rubricState.audioLoudness}
                     onChange={(e) => setRubricState({ ...rubricState, audioLoudness: e.target.checked })}
-                    className="size-4 rounded text-nebula-glow focus:ring-blue-500 cursor-pointer"
+                    className="size-4 rounded text-[#7FA0D6] focus:ring-blue-500 cursor-pointer"
                   />
-                  <span className="font-semibold text-slate-100">Audio -14 LUFS (No Clipping)</span>
+                  <span className="font-semibold text-[#F1F5F9]">Audio -14 LUFS (No Clipping)</span>
                 </label>
 
-                <label className="flex items-center gap-2.5 p-2 rounded-xl bg-nebula-surface border border-nebula-steel/80 cursor-pointer hover:bg-nebula-glow/15/50 transition-colors">
+                <label className="flex items-center gap-2.5 p-2 rounded-xl bg-[#161F2D] border border-[#2A3446]/80 cursor-pointer hover:bg-[#7FA0D6]/15/50 transition-colors">
                   <input
                     type="checkbox"
                     checked={rubricState.transparency}
                     onChange={(e) => setRubricState({ ...rubricState, transparency: e.target.checked })}
-                    className="size-4 rounded text-nebula-glow focus:ring-blue-500 cursor-pointer"
+                    className="size-4 rounded text-[#7FA0D6] focus:ring-blue-500 cursor-pointer"
                   />
-                  <span className="font-semibold text-slate-100">Alpha Transparency & Motion Blur</span>
+                  <span className="font-semibold text-[#F1F5F9]">Alpha Transparency & Motion Blur</span>
                 </label>
 
-                <label className="flex items-center gap-2.5 p-2 rounded-xl bg-nebula-surface border border-nebula-steel/80 cursor-pointer hover:bg-nebula-glow/15/50 transition-colors sm:col-span-2">
+                <label className="flex items-center gap-2.5 p-2 rounded-xl bg-[#161F2D] border border-[#2A3446]/80 cursor-pointer hover:bg-[#7FA0D6]/15/50 transition-colors sm:col-span-2">
                   <input
                     type="checkbox"
                     checked={rubricState.namingConvention}
                     onChange={(e) => setRubricState({ ...rubricState, namingConvention: e.target.checked })}
-                    className="size-4 rounded text-nebula-glow focus:ring-blue-500 cursor-pointer"
+                    className="size-4 rounded text-[#7FA0D6] focus:ring-blue-500 cursor-pointer"
                   />
-                  <span className="font-semibold text-slate-100">
+                  <span className="font-semibold text-[#F1F5F9]">
                     Clean Naming Convention (`{reviewModalCard.client.split(" ")[0]}_Master_v1.0.mov`)
                   </span>
                 </label>
@@ -1264,16 +1264,16 @@ export function MemberTaskBoardPage() {
             </div>
 
             {/* Direct Computer File Upload Dropzone for Deliverable (Reel, Post, Story) */}
-            <div className="p-4 rounded-2xl bg-nebula-navy border border-nebula-steel space-y-3 text-xs">
+            <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-3 text-xs">
               <div className="flex items-center justify-between">
                 <label className="font-black text-white flex items-center gap-1.5 uppercase text-[11px] tracking-wider">
-                  <Upload className="size-3.5 text-nebula-glow" />
+                  <Upload className="size-3.5 text-[#7FA0D6]" />
                   Upload Deliverable File from Computer (.mp4, .mov, .png, .jpg, .gif)
                 </label>
-                <span className="text-[10px] font-bold text-nebula-mist">Max size: 2 GB</span>
+                <span className="text-[10px] font-bold text-[#97A0B3]">Max size: 2 GB</span>
               </div>
 
-              <div className="relative border-2 border-dashed border-nebula-steel hover:border-nebula-glow bg-nebula-surface/60 hover:bg-nebula-surface rounded-2xl p-5 text-center transition-all cursor-pointer group">
+              <div className="relative border-2 border-dashed border-[#2A3446] hover:border-[#7FA0D6] bg-[#161F2D]/60 hover:bg-[#161F2D] rounded-2xl p-5 text-center transition-all cursor-pointer group">
                 <input
                   type="file"
                   accept="video/*,image/*,.mp4,.mov,.png,.jpg,.jpeg,.gif,.figma"
@@ -1287,7 +1287,7 @@ export function MemberTaskBoardPage() {
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
                 <div className="space-y-1.5 pointer-events-none">
-                  <div className="size-10 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                  <div className="size-10 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
                     <Upload className="size-5" />
                   </div>
                   <div className="font-bold text-white text-xs">
@@ -1295,7 +1295,7 @@ export function MemberTaskBoardPage() {
                       ? `Selected: ${masterUrlInput.replace("uploaded://", "")}`
                       : "Drag and drop deliverable video / image here, or click to browse files"}
                   </div>
-                  <p className="text-[10px] text-nebula-mist">
+                  <p className="text-[10px] text-[#97A0B3]">
                     Supports 9:16 Reels (MP4/MOV), 4:5 Posts (PNG/JPG), and Stories (GIF/MP4)
                   </p>
                 </div>
@@ -1307,20 +1307,20 @@ export function MemberTaskBoardPage() {
                   value={masterUrlInput}
                   onChange={(e) => setMasterUrlInput(e.target.value)}
                   placeholder="Or paste S3 / Figma / Cloud Package URL..."
-                  className="flex-1 px-3.5 py-2 rounded-xl border border-nebula-steel font-mono text-[11px] text-nebula-glow bg-nebula-navy"
+                  className="flex-1 px-3.5 py-2 rounded-xl border border-[#2A3446] font-mono text-[11px] text-[#7FA0D6] bg-[#0B111C]"
                 />
               </div>
             </div>
 
             {/* Specialist Delivery Remarks */}
             <div className="space-y-1.5 text-xs">
-              <label className="block font-bold text-slate-100">Specialist Notes for Pod Lead ({leadName})</label>
+              <label className="block font-bold text-[#F1F5F9]">Specialist Notes for Pod Lead ({leadName})</label>
               <textarea
                 rows={2}
                 value={specialistNotesInput}
                 onChange={(e) => setSpecialistNotesInput(e.target.value)}
                 placeholder="Detail any key visual decisions, alpha channels, or render layer caches..."
-                className="w-full px-3.5 py-2 rounded-xl border border-nebula-steel text-xs font-medium resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs font-medium resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
             </div>
 
@@ -1338,11 +1338,11 @@ export function MemberTaskBoardPage() {
             )}
 
             {/* Modal Actions */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-3 border-t border-nebula-steel text-xs">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 pt-3 border-t border-[#2A3446] text-xs">
               <button
                 type="button"
                 onClick={() => setReviewModalCard(null)}
-                className="w-full sm:w-auto px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
               >
                 Close Window
               </button>
@@ -1359,7 +1359,7 @@ export function MemberTaskBoardPage() {
                 <button
                   type="button"
                   onClick={() => handleSubmitToLeadQA(reviewModalCard.id)}
-                  className="flex-1 sm:flex-initial px-5 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                  className="flex-1 sm:flex-initial px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                 >
                   <Sparkles className="size-3.5" />
                   <span>Submit to Pod Lead QA</span>
@@ -1379,23 +1379,23 @@ export function MemberTaskBoardPage() {
           onClick={() => setLogTimeModalCard(null)}
         >
           <div
-            className="w-full max-w-md bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4 animate-scale-up"
+            className="w-full max-w-md bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
+            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="size-9 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-bold">
+                <div className="size-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
                   <Clock className="size-4.5" />
                 </div>
                 <div>
                   <h3 className="text-base font-black text-white">Log Task Sprint Time</h3>
-                  <p className="text-xs text-nebula-mist truncate max-w-[280px]">{logTimeModalCard.title}</p>
+                  <p className="text-xs text-[#97A0B3] truncate max-w-[280px]">{logTimeModalCard.title}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setLogTimeModalCard(null)}
-                className="size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist flex items-center justify-center cursor-pointer"
+                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -1403,28 +1403,28 @@ export function MemberTaskBoardPage() {
 
             <form onSubmit={handleConfirmLogTime} className="space-y-3.5 text-xs">
               <div>
-                <label className="block font-bold text-slate-100 mb-1">Hours to Add</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Hours to Add</label>
                 <input
                   type="number"
                   step="0.25"
                   required
                   value={logTimeInput}
                   onChange={(e) => setLogTimeInput(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-nebula-steel font-bold"
+                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-nebula-steel">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2A3446]">
                 <button
                   type="button"
                   onClick={() => setLogTimeModalCard(null)}
-                  className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
                 >
                   Confirm & Log Time
                 </button>
@@ -1443,23 +1443,23 @@ export function MemberTaskBoardPage() {
           onClick={() => setUpdateProgressModalCard(null)}
         >
           <div
-            className="w-full max-w-md bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4 animate-scale-up"
+            className="w-full max-w-md bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
+            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="size-9 rounded-2xl bg-nebula-glow/15 text-nebula-glow flex items-center justify-center font-bold">
+                <div className="size-9 rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
                   <Activity className="size-4.5" />
                 </div>
                 <div>
                   <h3 className="text-base font-black text-white">Update Render Progress</h3>
-                  <p className="text-xs text-nebula-mist truncate max-w-[280px]">{updateProgressModalCard.title}</p>
+                  <p className="text-xs text-[#97A0B3] truncate max-w-[280px]">{updateProgressModalCard.title}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setUpdateProgressModalCard(null)}
-                className="size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist flex items-center justify-center cursor-pointer"
+                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -1467,9 +1467,9 @@ export function MemberTaskBoardPage() {
 
             <form onSubmit={handleConfirmUpdateProgress} className="space-y-3.5 text-xs">
               <div>
-                <div className="flex justify-between font-bold text-slate-100 mb-1">
+                <div className="flex justify-between font-bold text-[#F1F5F9] mb-1">
                   <span>Completion Percentage</span>
-                  <span className="text-nebula-glow">{progressInput}%</span>
+                  <span className="text-[#7FA0D6]">{progressInput}%</span>
                 </div>
                 <input
                   type="range"
@@ -1477,21 +1477,21 @@ export function MemberTaskBoardPage() {
                   max="100"
                   value={progressInput}
                   onChange={(e) => setProgressInput(Number(e.target.value))}
-                  className="w-full h-2 bg-nebula-surface rounded-lg cursor-pointer accent-blue-600"
+                  className="w-full h-2 bg-[#161F2D] rounded-lg cursor-pointer accent-blue-600"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-nebula-steel">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2A3446]">
                 <button
                   type="button"
                   onClick={() => setUpdateProgressModalCard(null)}
-                  className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
                 >
                   Save Progress
                 </button>
@@ -1510,23 +1510,23 @@ export function MemberTaskBoardPage() {
           onClick={() => setRevisionModalCard(null)}
         >
           <div
-            className="w-full max-w-lg bg-nebula-surface rounded-3xl p-6 sm:p-7 shadow-2xl border border-nebula-steel space-y-4 animate-scale-up"
+            className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-nebula-steel pb-3">
+            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="size-9 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
                   <AlertTriangle className="size-4.5" />
                 </div>
                 <div>
                   <h3 className="text-base font-black text-white">Lead QA Revision Request</h3>
-                  <p className="text-xs text-nebula-mist">{leadName} · {podName} Lead</p>
+                  <p className="text-xs text-[#97A0B3]">{leadName} · {podName} Lead</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setRevisionModalCard(null)}
-                className="size-8 rounded-full bg-nebula-surface hover:bg-slate-200 text-nebula-mist flex items-center justify-center cursor-pointer"
+                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -1539,11 +1539,11 @@ export function MemberTaskBoardPage() {
               </p>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-nebula-steel">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2A3446]">
               <button
                 type="button"
                 onClick={() => setRevisionModalCard(null)}
-                className="px-4 py-2 rounded-xl border border-nebula-steel font-bold text-xs text-slate-100 hover:bg-nebula-navy cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-xs text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
               >
                 Close
               </button>
@@ -1554,7 +1554,7 @@ export function MemberTaskBoardPage() {
                   setRevisionModalCard(null);
                   handleOpenReviewModal(card);
                 }}
-                className="px-5 py-2 rounded-xl bg-nebula-glow hover:bg-blue-700 text-white font-bold text-xs shadow-xs cursor-pointer flex items-center gap-1"
+                className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold text-xs shadow-xs cursor-pointer flex items-center gap-1"
               >
                 <Eye className="size-3.5" />
                 <span>Open In-Task Review Canvas &rarr;</span>

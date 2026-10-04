@@ -256,6 +256,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearAuthToken();
       setToken(null);
       setUser(null);
+      try {
+        sessionStorage.removeItem("creo_last_route");
+      } catch (e) {}
     }
   };
 

@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { request } from "../../lib/http";
 import {
+  LayoutDashboard,
   Home,
   FileCheck,
   CalendarDays,
@@ -210,6 +211,17 @@ export function PortalSidebarNew() {
                 <LogOut className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
                 <span className="flex-1 text-left">{loggingOut ? "Signing out..." : "Log out"}</span>
               </button>
+              
+              {/* Admin Escape Hatch */}
+              {(user?.role === "admin" || user?.role === "super_admin") && (
+                <Link
+                  to="/admin"
+                  className="group w-full flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium rounded-full transition-all duration-150 mx-1 mt-2 bg-nebula-glow/10 text-nebula-glow hover:bg-nebula-glow/20 border border-nebula-glow/30 cursor-pointer"
+                >
+                  <LayoutDashboard className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
+                  <span className="flex-1 text-left">Admin Dashboard</span>
+                </Link>
+              )}
             </div>
           </div>
 
