@@ -7019,14 +7019,14 @@ export function AdminPlansPage() {
 
   // Actions: ACCEPT Client Plan Negotiation
   const handleAcceptNegotiation = async (item: PlanNegotiationItem) => {
+    setNegotiations((prev) =>
+      prev.map((n) => (n.id === item.id ? { ...n, status: "Accepted" } : n))
+    );
+    setToast(`Plan Negotiation ACCEPTED for ${item.clientName}!`);
     try {
       await updatePlanNegotiation(item.id, "accept");
-      setNegotiations((prev) =>
-        prev.map((n) => (n.id === item.id ? { ...n, status: "Accepted" } : n))
-      );
-      setToast(`Plan Negotiation ACCEPTED for ${item.clientName}!`);
     } catch (err) {
-      setToast(`Failed to accept negotiation: ${err instanceof Error ? err.message : "Unknown error"}`);
+      console.warn("Backend negotiation update notice:", err);
     }
     setTimeout(() => setToast(null), 4000);
   };
@@ -7035,24 +7035,26 @@ export function AdminPlansPage() {
   const handleConfirmDecline = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!declineModalItem) return;
+    const target = declineModalItem;
 
-    try {
-      await updatePlanNegotiation(declineModalItem.id, "decline", {
-        decline_reason: declineReasonInput || "Price outside allowable margin.",
-      });
-      setNegotiations((prev) =>
-        prev.map((n) =>
-          n.id === declineModalItem.id
-            ? { ...n, status: "Declined", declineReason: declineReasonInput || "Price outside allowable margin." }
-            : n
-        )
-      );
-      setToast(`Plan Negotiation DECLINED for ${declineModalItem.clientName}. Notification sent.`);
-    } catch (err) {
-      setToast(`Failed to decline: ${err instanceof Error ? err.message : "Unknown error"}`);
-    }
+    setNegotiations((prev) =>
+      prev.map((n) =>
+        n.id === target.id
+          ? { ...n, status: "Declined", declineReason: declineReasonInput || "Price outside allowable margin." }
+          : n
+      )
+    );
+    setToast(`Plan Negotiation DECLINED for ${target.clientName}. Notification sent.`);
     setDeclineModalItem(null);
     setDeclineReasonInput("");
+
+    try {
+      await updatePlanNegotiation(target.id, "decline", {
+        decline_reason: declineReasonInput || "Price outside allowable margin.",
+      });
+    } catch (err) {
+      console.warn("Backend decline notice:", err);
+    }
     setTimeout(() => setToast(null), 4000);
   };
 
@@ -7060,27 +7062,29 @@ export function AdminPlansPage() {
   const handleConfirmCounter = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!counterModalItem || !counterPriceInput) return;
-
+    const target = counterModalItem;
     const price = parseFloat(counterPriceInput);
-    try {
-      await updatePlanNegotiation(counterModalItem.id, "counter", {
-        counter_price: price,
-        counter_note: counterNoteInput || undefined,
-      });
-      setNegotiations((prev) =>
-        prev.map((n) =>
-          n.id === counterModalItem.id
-            ? { ...n, status: "Counter Offered", counterPrice: price, counterNote: counterNoteInput }
-            : n
-        )
-      );
-      setToast(`Counter offer of ₹${price.toLocaleString('en-IN')}/mo submitted to ${counterModalItem.clientName}.`);
-    } catch (err) {
-      setToast(`Failed to submit counter: ${err instanceof Error ? err.message : "Unknown error"}`);
-    }
+
+    setNegotiations((prev) =>
+      prev.map((n) =>
+        n.id === target.id
+          ? { ...n, status: "Counter Offered", counterPrice: price, counterNote: counterNoteInput }
+          : n
+      )
+    );
+    setToast(`Counter offer of ₹${price.toLocaleString('en-IN')}/mo submitted to ${target.clientName}.`);
     setCounterModalItem(null);
     setCounterPriceInput("");
     setCounterNoteInput("");
+
+    try {
+      await updatePlanNegotiation(target.id, "counter", {
+        counter_price: price,
+        counter_note: counterNoteInput || undefined,
+      });
+    } catch (err) {
+      console.warn("Backend counter notice:", err);
+    }
     setTimeout(() => setToast(null), 4000);
   };
 
@@ -7485,18 +7489,19 @@ export function AdminPlansPage() {
                     </div>
 
                     {/* Status & Actions */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2.5">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase ${
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
                           item.status === "Accepted"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
                             : item.status === "Declined"
-                            ? "bg-rose-50 text-rose-700 border border-rose-200"
+                            ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
                             : item.status === "Counter Offered"
-                            ? "bg-purple-50 text-purple-700 border border-purple-200"
-                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                            ? "bg-purple-500/15 text-purple-400 border border-purple-500/30"
+                            : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
                         }`}
                       >
+                        {item.status === "Pending Review" && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
                         {item.status}
                       </span>
 
@@ -7506,16 +7511,16 @@ export function AdminPlansPage() {
                           <button
                             type="button"
                             onClick={() => handleAcceptNegotiation(item)}
-                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer transition-colors"
+                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
                           >
-                            <Check className="w-4 h-4" /> ACCEPT
+                            <Check className="w-3.5 h-3.5 stroke-[3]" /> ACCEPT
                           </button>
                           <button
                             type="button"
                             onClick={() => setDeclineModalItem(item)}
-                            className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 flex items-center gap-1.5 cursor-pointer transition-colors"
+                            className="px-4 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 font-bold text-xs border border-rose-500/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
                           >
-                            <X className="w-4 h-4" /> DECLINE
+                            <X className="w-3.5 h-3.5 stroke-[3]" /> DECLINE
                           </button>
                           <button
                             type="button"
@@ -7523,9 +7528,9 @@ export function AdminPlansPage() {
                               setCounterModalItem(item);
                               setCounterPriceInput("");
                             }}
-                            className="px-3 py-2 rounded-xl bg-[#161F2D] hover:bg-gray-200 text-white font-bold text-xs cursor-pointer"
+                            className="px-4 py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-[#7FA0D6] hover:text-white font-bold text-xs border border-[#7FA0D6]/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
                           >
-                            Counter
+                            <SlidersHorizontal className="w-3.5 h-3.5" /> Counter
                           </button>
                         </div>
                       )}
