@@ -32,6 +32,7 @@ export interface ClientRosterItem {
   plan_name: string | null;
   plan_display_name: string | null;
   subscription_status: string | null;
+  monthly_price: number | null;
   quota_usage: Array<{
     kind: string;
     quota: number;
