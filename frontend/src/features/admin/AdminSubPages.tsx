@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams, Navigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { fetchClientRoster, fetchPlanNegotiations, updatePlanNegotiation, createPlanNegotiation, fetchPodDashboard, fetchLeaveRequests, approveLeaveRequest, rejectLeaveRequest, fetchAdminQueue } from "../../lib/ops-api";
+import { fetchClientRoster, fetchPlanNegotiations, updatePlanNegotiation, createPlanNegotiation, fetchPodDashboard, fetchLeaveRequests, approveLeaveRequest, rejectLeaveRequest, fetchAdminQueue, fetchKanbanTasks, fetchAdminDeliverables } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem } from "../../lib/ops-api";
 import type { ClientRosterItem } from "../../types/ops";
 import {
@@ -1221,7 +1221,7 @@ export function AdminClientsPage() {
                         </div>
                       )}
 
-                      {deliv.actions.some((a) => a.includes("Preview Video Draft")) && (
+                      {deliv.actions.some((a: string) => a.includes("Preview Video Draft")) && (
                         <button
                           type="button"
                           onClick={() => setPreviewDeliverable(deliv)}
@@ -1786,26 +1786,20 @@ export function AdminDeliverablesPage() {
   const [commentModalItem, setCommentModalItem] = useState<any | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  
-  const [liveDeliverables, setLiveDeliverables] = useState<any[]>([]);
+  const [deliverablesList, setDeliverablesList] = useState<any[]>([]);
+
   useEffect(() => {
-    if (activeClient?.id && !activeClient.id.includes('ryze')) {
-      fetchAdminDeliverables(activeClient.id)
-        .then((data) => {
-          setLiveDeliverables(data || []);
-        })
-        .catch(console.error);
-    } else {
-      setLiveDeliverables([]);
-    }
-  }, [activeClient?.id]);
+    fetchAdminDeliverables()
+      .then((data) => {
+        setDeliverablesList(data || []);
+      })
+      .catch(console.error);
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
-
-  const [deliverablesList, setDeliverablesList] = useState<any[]>([]);
 
   const handleApprove = (id: string, title: string) => {
     setDeliverablesList((prev) =>
@@ -2341,104 +2335,38 @@ export function AdminTasksPage() {
     column: "todo",
   });
 
-  const [kanbanTasks, setKanbanTasks] = useState<any[]>([
-    {
-      id: "task-101",
-      column: "in_progress",
-      client: "Ryze Mushroom Coffee",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "Urgent",
-      priorityPill: "bg-rose-600 text-white font-black",
-      title: "3D Product Render & Motion Hook (15s Reel)",
-      type: "3D Render / Blender",
-      avatar: "VM",
-      avatarBg: "bg-blue-600",
-      assigneeName: "Vikram Malhotra",
-      sp: 8,
-      due: "Today, 6:00 PM",
-      pod: "Pod A",
-    },
-    {
-      id: "task-102",
-      column: "todo",
-      client: "Ryze Mushroom Coffee",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "High",
-      priorityPill: "bg-rose-50 text-rose-600 border-rose-100",
-      title: "DTC Ad Hook Variations (15s Reel Clips)",
-      type: "Performance Editing",
-      avatar: "SC",
-      avatarBg: "bg-purple-600",
-      assigneeName: "Sarah Connor",
-      sp: 5,
-      due: "Tomorrow, 2:00 PM",
-      pod: "Pod B",
-    },
-    {
-      id: "task-103",
-      column: "under_review",
-      client: "Acme Corp",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "High",
-      priorityPill: "bg-rose-50 text-rose-600 border-rose-100",
-      title: "Instagram Story Templates (1080x1920 Figma Kit)",
-      type: "Visual Design",
-      avatar: "ER",
-      avatarBg: "bg-emerald-600",
-      assigneeName: "Elena Rostova",
-      sp: 3,
-      due: "Oct 5, 2026",
-      pod: "Pod A",
-    },
-    {
-      id: "task-104",
-      column: "approved",
-      client: "Kavya Organics",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "Normal",
-      priorityPill: "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
-      title: "Brand Guidelines & Color Palette Audit (v2.0)",
-      type: "Brand Strategy",
-      avatar: "MB",
-      avatarBg: "bg-amber-600",
-      assigneeName: "Marcus Brody",
-      sp: 4,
-      due: "Oct 3, 2026",
-      pod: "Pod C",
-    },
-    {
-      id: "task-105",
-      column: "in_progress",
-      client: "Ryze Mushroom Coffee",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "High",
-      priorityPill: "bg-rose-50 text-rose-600 border-rose-100",
-      title: "TikTok Motion Hook (Rec.709 Color Grading)",
-      type: "Color Grading",
-      avatar: "AR",
-      avatarBg: "bg-[#7FA0D6]",
-      assigneeName: "Alex Rivera",
-      sp: 6,
-      due: "Today, 8:00 PM",
-      pod: "Pod B",
-    },
-    {
-      id: "task-106",
-      column: "todo",
-      client: "Acme Corp",
-      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-      priority: "Urgent",
-      priorityPill: "bg-rose-600 text-white font-black",
-      title: "Motion Graphics Carousel Post (5 Slides)",
-      type: "Motion Graphics",
-      avatar: "VM",
-      avatarBg: "bg-blue-600",
-      assigneeName: "Vikram Malhotra",
-      sp: 4,
-      due: "Tomorrow, 11:00 AM",
-      pod: "Pod C",
-    },
-  ]);
+  const [kanbanTasks, setKanbanTasks] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchKanbanTasks()
+      .then((data) => {
+        if (!data) return;
+        const all = [
+          ...(data.backlog || []).map((t: any) => ({ ...t, column: "todo" })),
+          ...(data.in_production || []).map((t: any) => ({ ...t, column: "in_progress" })),
+          ...(data.internal_qa || []).map((t: any) => ({ ...t, column: "under_review" })),
+          ...(data.client_review || []).map((t: any) => ({ ...t, column: "under_review" })),
+          ...(data.ready_to_publish || []).map((t: any) => ({ ...t, column: "approved" })),
+        ].map((t: any) => ({
+          id: t.id,
+          column: t.column,
+          client: t.client_name || "Client",
+          clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+          priority: t.is_near_sla ? "Urgent" : (t.priority || "Normal"),
+          priorityPill: t.is_near_sla ? "bg-rose-600 text-white font-black" : "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
+          title: t.deliverable?.title || t.deliverable_type || "Design Task",
+          type: t.deliverable_type || "Design",
+          avatar: t.assignee_name ? t.assignee_name.split(" ").map((n: string) => n[0]).join("").slice(0,2).toUpperCase() : "UN",
+          avatarBg: "bg-blue-600",
+          assigneeName: t.assignee_name || "Unassigned",
+          sp: t.effort_points || 4,
+          due: t.due_date ? new Date(t.due_date).toLocaleDateString() : "No Date",
+          pod: "Pod A",
+        }));
+        setKanbanTasks(all);
+      })
+      .catch(console.error);
+  }, []);
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();

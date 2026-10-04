@@ -216,7 +216,7 @@ export function AdminSupportTicketsPage() {
 
     // Update backend if possible
     try {
-      await request(`/api/v1/admin/support/tickets/${t.id}/status`, {
+      await request(`/api/v1/tickets/${t.id}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status: newStatus.toLowerCase().replace(" ", "_") }),
       });
