@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams, Navigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { fetchClientRoster, fetchPlanNegotiations, updatePlanNegotiation, createPlanNegotiation, fetchPodDashboard, fetchLeaveRequests, approveLeaveRequest, rejectLeaveRequest, fetchAdminQueue } from "../../lib/ops-api";
-import type { PlanNegotiationApiItem } from "../../lib/ops-api";
+import { fetchClientRoster, fetchPlanNegotiations, updatePlanNegotiation, createPlanNegotiation, fetchPodDashboard, fetchLeaveRequests, approveLeaveRequest, rejectLeaveRequest, fetchAdminQueue, fetchPlansSummary } from "../../lib/ops-api";
+import type { PlanNegotiationApiItem, PlanSummaryItem } from "../../lib/ops-api";
 import type { ClientRosterItem } from "../../types/ops";
 import {
   BarChart,
@@ -702,7 +702,6 @@ export function AdminClientsPage() {
     const formattedName = rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1) : "Client Account";
     const initials = formattedName.charAt(0).toUpperCase();
     const tierName = sc.plan_display_name || sc.plan_name || "Enterprise Retainer";
-    const tier = tierName.toLowerCase();
     
     const podConfigs = [
       {
@@ -745,13 +744,13 @@ export function AdminClientsPage() {
     const podIdx = Math.abs(formattedName.charCodeAt(0) || 0) % podConfigs.length;
     const pod = (podConfigs[podIdx] || podConfigs[0])!;
 
-    const monthlyFee = tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000;
+    const monthlyFee = sc.monthly_price || 0;
     
-    const postsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.quota || (tier.includes("starter") ? 8 : tier.includes("growth") ? 15 : 30);
+    const postsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.quota || 0;
     const postsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.used || 0;
-    const reelsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.quota || (tier.includes("starter") ? 4 : tier.includes("growth") ? 8 : 16);
+    const reelsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.quota || 0;
     const reelsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.used || 0;
-    const storiesQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.quota || (tier.includes("starter") ? 10 : tier.includes("growth") ? 20 : 40);
+    const storiesQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.quota || 0;
     const storiesDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.used || 0;
 
     // Check for match with existing baseline client
@@ -6864,6 +6863,27 @@ export function AdminPlansPage() {
     },
   ]);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchPlansSummary().then(data => {
+      if (cancelled || !data || !data.plans) return;
+      setPlans(prev => prev.map(p => {
+        // "scale" is the 3rd plan (enterprise)
+        const livePlan = data.plans.find((lp: PlanSummaryItem) => lp.name === p.name || lp.id === p.name);
+        if (livePlan) {
+          return {
+            ...p,
+            price_monthly: livePlan.monthly_price || livePlan.price_minor / 100,
+            subscribers: livePlan.subscriber_count,
+            display_name: livePlan.display_name
+          };
+        }
+        return p;
+      }));
+    }).catch(console.error);
+    return () => { cancelled = true; };
+  }, []);
+
   // Modals State
   const [editingPlan, setEditingPlan] = useState<typeof plans[0] | null>(null);
   const [editPriceInput, setEditPriceInput] = useState("");
@@ -6885,52 +6905,7 @@ export function AdminPlansPage() {
   const [newPropProposedRate, setNewPropProposedRate] = useState("85000");
   const [newPropNotes, setNewPropNotes] = useState("");
 
-  // Initial Client Plan Negotiations List
-  const INITIAL_NEGOTIATIONS: PlanNegotiationItem[] = [
-    {
-      id: "neg-101",
-      clientName: "Ryze Mushroom Coffee",
-      clientLogo: "RM",
-      clientEmail: "operations@ryzecoffee.com",
-      targetTopic: "Starter Growth → Enterprise Domination Custom Scope",
-      proposedOffer: "₹85,000/mo",
-      phoneNumber: "+91 98401 99887",
-      preferredTime: "IST Evening",
-      notes: "Requesting 12h express turnaround SLA with 16 video reels per month.",
-      requestedAt: "Oct 2, 2026",
-      status: "Pending Review",
-    },
-    {
-      id: "neg-102",
-      clientName: "Acme Corp",
-      clientLogo: "AC",
-      clientEmail: "brand@acme.com",
-      targetTopic: "Starter Growth → Brand Accelerator",
-      proposedOffer: "₹45,000/mo",
-      phoneNumber: "+91 98112 33445",
-      preferredTime: "IST Morning",
-      notes: "Requested 10% multi-month contract discount.",
-      requestedAt: "Sep 28, 2026",
-      status: "Counter Offered",
-      counterPrice: 48000,
-      counterNote: "Counter offered at ₹48,000/mo with dedicated pod lead inclusion.",
-    },
-    {
-      id: "neg-103",
-      clientName: "Kavya Organics",
-      clientLogo: "KO",
-      clientEmail: "hello@kavyaorganics.com",
-      targetTopic: "Brand Accelerator → Enterprise Domination",
-      proposedOffer: "₹1,10,000/mo",
-      phoneNumber: "+91 99001 22334",
-      preferredTime: "IST Afternoon",
-      notes: "Approved custom enterprise retainer with 3D animation addon.",
-      requestedAt: "Sep 25, 2026",
-      status: "Accepted",
-    },
-  ];
-
-  const [negotiations, setNegotiations] = useState<PlanNegotiationItem[]>(INITIAL_NEGOTIATIONS);
+  const [negotiations, setNegotiations] = useState<PlanNegotiationItem[]>([]);
 
   // Fetch negotiations from backend on mount
   useEffect(() => {
@@ -6978,44 +6953,7 @@ export function AdminPlansPage() {
       owner: string;
       expectedClose: string;
     }>
-  >([
-    {
-      id: "deal-101",
-      client: "Ryze Mushroom Coffee",
-      clientLogo: "RM",
-      scope: "Annual Enterprise Retainer (16 Video Reels + 3D Hooks)",
-      value: 1440000,
-      stage: "Active Retainer",
-      stageBadge: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
-      probability: "100%",
-      owner: "Alex Rivera",
-      expectedClose: "Oct 1, 2026",
-    },
-    {
-      id: "deal-102",
-      client: "Acme Corp",
-      clientLogo: "AC",
-      scope: "Growth Social Media Retainer (8 Posters + 4 Reels)",
-      value: 300000,
-      stage: "Active Retainer",
-      stageBadge: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
-      probability: "100%",
-      owner: "Vikram Malhotra",
-      expectedClose: "Oct 1, 2026",
-    },
-    {
-      id: "deal-103",
-      client: "Urbanic Fashion",
-      clientLogo: "UF",
-      scope: "Brand Accelerator & 3D VFX Retainer Expansion",
-      value: 600000,
-      stage: "Contract Review",
-      stageBadge: "bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30 font-bold",
-      probability: "85%",
-      owner: "Sarah Connor",
-      expectedClose: "Oct 15, 2026",
-    },
-  ]);
+  >([]);
 
   // Actions: ACCEPT Client Plan Negotiation
   const handleAcceptNegotiation = async (item: PlanNegotiationItem) => {

@@ -505,6 +505,7 @@ async def get_client_roster(
             END AS derived_onboarding_stage,
             p.name AS plan_name,
             p.display_name AS plan_display_name,
+            p.monthly_price AS monthly_price,
             s.status AS subscription_status,
             COALESCE(
                 json_agg(
@@ -525,7 +526,7 @@ async def get_client_roster(
         GROUP BY
             u.id, u.email, u.account_status, cp.company_name, cp.instagram_username,
             cp.onboarding_completed_at, cp.terms_accepted_at, u.email_verified_at,
-            p.name, p.display_name, s.status, s.id
+            p.name, p.display_name, p.monthly_price, s.status, s.id
         ORDER BY u.created_at DESC;
     """)
 
@@ -550,7 +551,8 @@ async def get_client_roster(
                 "onboarding_stage": r[5],
                 "plan_name": r[6],
                 "plan_display_name": r[7],
-                "subscription_status": r[8],
+                "monthly_price": float(r[8]) if r[8] is not None else 0.0,
+                "subscription_status": r[9],
                 "quota_usage": quota_usage,
             }
         )

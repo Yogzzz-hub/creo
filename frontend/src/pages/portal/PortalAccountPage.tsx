@@ -55,7 +55,7 @@ export function PortalAccountPage() {
     voiceWords: [] as string[],
     audience: "",
     competitors: "",
-    colors: ["#D8BF9B", "#161F2D", "#0B111C", "#7FA0D6"],
+    colors: [] as string[],
   });
 
   const [notifSettings, setNotifSettings] = useState<Record<string, boolean>>({
@@ -66,9 +66,7 @@ export function PortalAccountPage() {
   });
 
   const [inviteEmail, setInviteEmail] = useState("");
-  const [teamMembers, setTeamMembers] = useState<Array<{ name: string; role: string; email: string }>>([
-    { name: "Marketing Manager", role: "Reviewer", email: "marketing@brand.com" },
-  ]);
+  const [teamMembers, setTeamMembers] = useState<Array<{ name: string; role: string; email: string }>>([]);
 
   useEffect(() => {
     if (profile) {
@@ -82,8 +80,12 @@ export function PortalAccountPage() {
         igHandle: profile.instagram_username || "",
         whatYouSell: profile.brand_dna?.summary_line || "",
         audience: profile.brand_dna?.target_audience || "",
-        voiceWords: profile.brand_dna?.tone_keywords || ["Warm", "Craft-first", "Local"],
+        voiceWords: profile.brand_dna?.tone_keywords || [],
+        colors: profile.brand_dna?.brand_colors || [],
       }));
+      if (profile.assigned_team) {
+        setTeamMembers(profile.assigned_team);
+      }
     }
   }, [profile, user]);
 
