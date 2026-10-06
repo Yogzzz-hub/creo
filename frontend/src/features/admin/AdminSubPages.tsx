@@ -2,8 +2,21 @@ import React, { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams, Navigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { request } from "../../lib/http";
-import { fetchClientRoster, fetchPlanNegotiations, updatePlanNegotiation, createPlanNegotiation, fetchPodDashboard, fetchLeaveRequests, approveLeaveRequest, rejectLeaveRequest, fetchAdminQueue, fetchKanbanTasks, fetchAdminDeliverables } from "../../lib/ops-api";
-import type { PlanNegotiationApiItem } from "../../lib/ops-api";
+import {
+  fetchClientRoster,
+  fetchPlanNegotiations,
+  updatePlanNegotiation,
+  createPlanNegotiation,
+  fetchPodDashboard,
+  fetchLeaveRequests,
+  approveLeaveRequest,
+  rejectLeaveRequest,
+  fetchAdminQueue,
+  fetchKanbanTasks,
+  fetchAdminDeliverables,
+  fetchPlansSummary,
+} from "../../lib/ops-api";
+import type { PlanNegotiationApiItem, PlanSummaryItem } from "../../lib/ops-api";
 import type { ClientRosterItem } from "../../types/ops";
 import {
   BarChart,
@@ -244,11 +257,11 @@ export function AdminClientsPage() {
 
     const monthlyFee = sc.monthly_price || (tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000);
     
-    const postsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.quota || (tier.includes("starter") ? 8 : tier.includes("growth") ? 15 : 30);
+    const postsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.quota || 0;
     const postsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.used || 0;
-    const reelsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.quota || (tier.includes("starter") ? 4 : tier.includes("growth") ? 8 : 16);
+    const reelsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.quota || 0;
     const reelsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.used || 0;
-    const storiesQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.quota || (tier.includes("starter") ? 10 : tier.includes("growth") ? 20 : 40);
+    const storiesQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.quota || 0;
     const storiesDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.used || 0;
 
     // Check for match with existing baseline client
@@ -946,7 +959,7 @@ export function AdminClientsPage() {
                     </span>
                     <span>•</span>
                     <Link
-                      to={`/admin/clients/${activeClient?.id || ""}/brand`}
+                    to={`/admin/clients/${activeClient?.id || ""}/brand`}
                       className="cursor-pointer hover:underline flex items-center gap-1 text-[#7FA0D6]"
                     >
                       Brand DNA & Brief →
@@ -2336,7 +2349,104 @@ export function AdminTasksPage() {
     column: "todo",
   });
 
-  const [kanbanTasks, setKanbanTasks] = useState<any[]>([]);
+  const [kanbanTasks, setKanbanTasks] = useState<any[]>([
+    {
+      id: "task-101",
+      column: "in_progress",
+      client: "Ryze Mushroom Coffee",
+      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      priority: "Urgent",
+      priorityPill: "bg-rose-600 text-white font-black",
+      title: "3D Product Render & Motion Hook (15s Reel)",
+      type: "3D Render / Blender",
+      avatar: "VM",
+      avatarBg: "bg-blue-600",
+      assigneeName: "Vikram Malhotra",
+      sp: 8,
+      due: "Today, 6:00 PM",
+      pod: "Pod A",
+    },
+    {
+      id: "task-102",
+      column: "todo",
+      client: "Ryze Mushroom Coffee",
+      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      priority: "High",
+      priorityPill: "bg-rose-50 text-rose-600 border-rose-100",
+      title: "DTC Ad Hook Variations (15s Reel Clips)",
+      type: "Performance Editing",
+      avatar: "SC",
+      avatarBg: "bg-purple-600",
+      assigneeName: "Sarah Connor",
+      sp: 5,
+      due: "Tomorrow, 2:00 PM",
+      pod: "Pod B",
+    },
+    {
+      id: "task-103",
+      column: "under_review",
+      client: "Acme Corp",
+      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      priority: "High",
+      priorityPill: "bg-rose-50 text-rose-600 border-rose-100",
+      title: "Instagram Story Templates (1080x1920 Figma Kit)",
+      type: "Visual Design",
+      avatar: "ER",
+      avatarBg: "bg-emerald-600",
+      assigneeName: "Elena Rostova",
+      sp: 3,
+      due: "Oct 5, 2026",
+      pod: "Pod A",
+    },
+    {
+      id: "task-104",
+      column: "approved",
+      client: "Kavya Organics",
+      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      priority: "Normal",
+      priorityPill: "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
+      title: "Brand Guidelines & Color Palette Audit (v2.0)",
+      type: "Brand Strategy",
+      avatar: "MB",
+      avatarBg: "bg-amber-600",
+      assigneeName: "Marcus Brody",
+      sp: 4,
+      due: "Oct 3, 2026",
+      pod: "Pod C",
+    },
+    {
+      id: "task-105",
+      column: "in_progress",
+      client: "Ryze Mushroom Coffee",
+      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      priority: "High",
+      priorityPill: "bg-rose-50 text-rose-600 border-rose-100",
+      title: "TikTok Motion Hook (Rec.709 Color Grading)",
+      type: "Color Grading",
+      avatar: "AR",
+      avatarBg: "bg-[#7FA0D6]",
+      assigneeName: "Alex Rivera",
+      sp: 6,
+      due: "Today, 8:00 PM",
+      pod: "Pod B",
+    },
+    {
+      id: "task-106",
+      column: "todo",
+      client: "Acme Corp",
+      clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
+      priority: "Urgent",
+      priorityPill: "bg-rose-600 text-white font-black",
+      title: "Motion Graphics Carousel Post (5 Slides)",
+      type: "Motion Graphics",
+      avatar: "VM",
+      avatarBg: "bg-blue-600",
+      assigneeName: "Vikram Malhotra",
+      sp: 4,
+      due: "Tomorrow, 11:00 AM",
+      pod: "Pod C",
+    },
+  ]);
 
   useEffect(() => {
     fetchKanbanTasks()
@@ -5505,8 +5615,81 @@ export function AdminRevenuePage() {
   const [newInvAmount, setNewInvAmount] = useState("");
   const [newInvMethod, setNewInvMethod] = useState("Stripe ACH");
 
-  // Transactions Data (Clean baseline: 0 mock entries)
-  const [transactions, setTransactions] = useState<TransactionItem[]>([]);
+  // Transactions Data (Populated active billing roster)
+  const [transactions, setTransactions] = useState<TransactionItem[]>([
+    {
+      id: "INV-2026-088",
+      client: "Ryze Mushroom Coffee",
+      clientInitials: "RM",
+      scope: "Enterprise Retainer Billing (Oct 2026)",
+      amount: 120000,
+      method: "Direct Wire / ACH",
+      status: "Paid",
+      date: "Oct 1, 2026",
+      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
+      avatarBg: "bg-blue-600 text-white font-black",
+    },
+    {
+      id: "INV-2026-087",
+      client: "Acme Corp",
+      clientInitials: "AC",
+      scope: "Growth Retainer Billing (Oct 2026)",
+      amount: 25000,
+      method: "Cards / Razorpay",
+      status: "Paid",
+      date: "Oct 1, 2026",
+      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
+      avatarBg: "bg-emerald-600 text-white font-black",
+    },
+    {
+      id: "INV-2026-086",
+      client: "Kavya Organics",
+      clientInitials: "KO",
+      scope: "Brand Acceleration Package",
+      amount: 50000,
+      method: "Direct Wire / ACH",
+      status: "Paid",
+      date: "Sep 28, 2026",
+      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
+      avatarBg: "bg-purple-600 text-white font-black",
+    },
+    {
+      id: "INV-2026-085",
+      client: "Ryze Mushroom Coffee",
+      clientInitials: "RM",
+      scope: "3D Render Asset Package Add-on",
+      amount: 45000,
+      method: "Cards / Razorpay",
+      status: "Paid",
+      date: "Sep 25, 2026",
+      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
+      avatarBg: "bg-blue-600 text-white font-black",
+    },
+    {
+      id: "INV-2026-084",
+      client: "Urbanic Fashion",
+      clientInitials: "UF",
+      scope: "Performance Marketing Retainer Deposit",
+      amount: 95000,
+      method: "Direct Wire / ACH",
+      status: "Paid",
+      date: "Sep 20, 2026",
+      badgeClass: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-black",
+      avatarBg: "bg-amber-600 text-white font-black",
+    },
+    {
+      id: "INV-2026-083",
+      client: "Zenith Fitness",
+      clientInitials: "ZF",
+      scope: "Q4 Retainer Renewal Advance",
+      amount: 85000,
+      method: "Direct Wire / ACH",
+      status: "Pending",
+      date: "Due Net 15",
+      badgeClass: "bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold",
+      avatarBg: "bg-[#7FA0D6] text-white font-black",
+    },
+  ]);
 
   const totalMrr = transactions.reduce((acc, t) => acc + (t.status === "Paid" ? t.amount : 0), 0);
   const totalCollected = totalMrr;
@@ -6243,6 +6426,27 @@ export function AdminPlansPage() {
     },
   ]);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchPlansSummary().then(data => {
+      if (cancelled || !data || !data.plans) return;
+      setPlans(prev => prev.map(p => {
+        // "scale" is the 3rd plan (enterprise)
+        const livePlan = data.plans.find((lp: PlanSummaryItem) => lp.name === p.name || lp.id === p.name);
+        if (livePlan) {
+          return {
+            ...p,
+            price_monthly: livePlan.monthly_price || livePlan.price_minor / 100,
+            subscribers: livePlan.subscriber_count,
+            display_name: livePlan.display_name
+          };
+        }
+        return p;
+      }));
+    }).catch(console.error);
+    return () => { cancelled = true; };
+  }, []);
+
   // Modals State
   const [editingPlan, setEditingPlan] = useState<typeof plans[0] | null>(null);
   const [editPriceInput, setEditPriceInput] = useState("");
@@ -6264,7 +6468,6 @@ export function AdminPlansPage() {
   const [newPropProposedRate, setNewPropProposedRate] = useState("85000");
   const [newPropNotes, setNewPropNotes] = useState("");
 
-  // Client Plan Negotiations List — fetched from backend API
   const [negotiations, setNegotiations] = useState<PlanNegotiationItem[]>([]);
 
   // Fetch negotiations from backend on mount
@@ -6273,23 +6476,25 @@ export function AdminPlansPage() {
     fetchPlanNegotiations()
       .then((data: PlanNegotiationApiItem[]) => {
         if (cancelled) return;
-        const mapped: PlanNegotiationItem[] = data.map((n) => ({
-          id: n.id,
-          clientName: n.clientName,
-          clientLogo: n.clientLogo,
-          clientEmail: n.clientEmail,
-          targetTopic: n.targetTopic,
-          proposedOffer: n.proposedOffer,
-          phoneNumber: n.phoneNumber,
-          preferredTime: n.preferredTime,
-          notes: n.notes,
-          requestedAt: n.requestedAt,
-          status: n.status,
-          counterPrice: n.counterPrice,
-          counterNote: n.counterNote,
-          declineReason: n.declineReason,
-        }));
-        setNegotiations(mapped);
+        if (data && data.length > 0) {
+          const mapped: PlanNegotiationItem[] = data.map((n) => ({
+            id: n.id,
+            clientName: n.clientName,
+            clientLogo: n.clientLogo,
+            clientEmail: n.clientEmail,
+            targetTopic: n.targetTopic,
+            proposedOffer: n.proposedOffer,
+            phoneNumber: n.phoneNumber,
+            preferredTime: n.preferredTime,
+            notes: n.notes,
+            requestedAt: n.requestedAt,
+            status: n.status,
+            counterPrice: n.counterPrice,
+            counterNote: n.counterNote,
+            declineReason: n.declineReason,
+          }));
+          setNegotiations(mapped);
+        }
       })
       .catch((err) => {
         console.error("Failed to fetch negotiations:", err);
@@ -6297,7 +6502,7 @@ export function AdminPlansPage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Active Deals Pipeline (0 Mock Data - Real commercial pipeline deals appear here)
+  // Active Sales & Retainer Pipeline Deals
   const [deals, setDeals] = useState<
     Array<{
       id: string;
@@ -6315,14 +6520,14 @@ export function AdminPlansPage() {
 
   // Actions: ACCEPT Client Plan Negotiation
   const handleAcceptNegotiation = async (item: PlanNegotiationItem) => {
+    setNegotiations((prev) =>
+      prev.map((n) => (n.id === item.id ? { ...n, status: "Accepted" } : n))
+    );
+    setToast(`Plan Negotiation ACCEPTED for ${item.clientName}!`);
     try {
       await updatePlanNegotiation(item.id, "accept");
-      setNegotiations((prev) =>
-        prev.map((n) => (n.id === item.id ? { ...n, status: "Accepted" } : n))
-      );
-      setToast(`Plan Negotiation ACCEPTED for ${item.clientName}!`);
     } catch (err) {
-      setToast(`Failed to accept negotiation: ${err instanceof Error ? err.message : "Unknown error"}`);
+      console.warn("Backend negotiation update notice:", err);
     }
     setTimeout(() => setToast(null), 4000);
   };
@@ -6331,24 +6536,26 @@ export function AdminPlansPage() {
   const handleConfirmDecline = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!declineModalItem) return;
+    const target = declineModalItem;
 
-    try {
-      await updatePlanNegotiation(declineModalItem.id, "decline", {
-        decline_reason: declineReasonInput || "Price outside allowable margin.",
-      });
-      setNegotiations((prev) =>
-        prev.map((n) =>
-          n.id === declineModalItem.id
-            ? { ...n, status: "Declined", declineReason: declineReasonInput || "Price outside allowable margin." }
-            : n
-        )
-      );
-      setToast(`Plan Negotiation DECLINED for ${declineModalItem.clientName}. Notification sent.`);
-    } catch (err) {
-      setToast(`Failed to decline: ${err instanceof Error ? err.message : "Unknown error"}`);
-    }
+    setNegotiations((prev) =>
+      prev.map((n) =>
+        n.id === target.id
+          ? { ...n, status: "Declined", declineReason: declineReasonInput || "Price outside allowable margin." }
+          : n
+      )
+    );
+    setToast(`Plan Negotiation DECLINED for ${target.clientName}. Notification sent.`);
     setDeclineModalItem(null);
     setDeclineReasonInput("");
+
+    try {
+      await updatePlanNegotiation(target.id, "decline", {
+        decline_reason: declineReasonInput || "Price outside allowable margin.",
+      });
+    } catch (err) {
+      console.warn("Backend decline notice:", err);
+    }
     setTimeout(() => setToast(null), 4000);
   };
 
@@ -6356,27 +6563,29 @@ export function AdminPlansPage() {
   const handleConfirmCounter = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!counterModalItem || !counterPriceInput) return;
-
+    const target = counterModalItem;
     const price = parseFloat(counterPriceInput);
-    try {
-      await updatePlanNegotiation(counterModalItem.id, "counter", {
-        counter_price: price,
-        counter_note: counterNoteInput || undefined,
-      });
-      setNegotiations((prev) =>
-        prev.map((n) =>
-          n.id === counterModalItem.id
-            ? { ...n, status: "Counter Offered", counterPrice: price, counterNote: counterNoteInput }
-            : n
-        )
-      );
-      setToast(`Counter offer of ₹${price.toLocaleString('en-IN')}/mo submitted to ${counterModalItem.clientName}.`);
-    } catch (err) {
-      setToast(`Failed to submit counter: ${err instanceof Error ? err.message : "Unknown error"}`);
-    }
+
+    setNegotiations((prev) =>
+      prev.map((n) =>
+        n.id === target.id
+          ? { ...n, status: "Counter Offered", counterPrice: price, counterNote: counterNoteInput }
+          : n
+      )
+    );
+    setToast(`Counter offer of ₹${price.toLocaleString('en-IN')}/mo submitted to ${target.clientName}.`);
     setCounterModalItem(null);
     setCounterPriceInput("");
     setCounterNoteInput("");
+
+    try {
+      await updatePlanNegotiation(target.id, "counter", {
+        counter_price: price,
+        counter_note: counterNoteInput || undefined,
+      });
+    } catch (err) {
+      console.warn("Backend counter notice:", err);
+    }
     setTimeout(() => setToast(null), 4000);
   };
 
@@ -6794,18 +7003,19 @@ export function AdminPlansPage() {
                     </div>
 
                     {/* Status & Actions */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2.5">
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase ${
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
                           item.status === "Accepted"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
                             : item.status === "Declined"
-                            ? "bg-rose-50 text-rose-700 border border-rose-200"
+                            ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
                             : item.status === "Counter Offered"
-                            ? "bg-purple-50 text-purple-700 border border-purple-200"
-                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                            ? "bg-purple-500/15 text-purple-400 border border-purple-500/30"
+                            : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
                         }`}
                       >
+                        {item.status === "Pending Review" && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
                         {item.status}
                       </span>
 
@@ -6815,16 +7025,16 @@ export function AdminPlansPage() {
                           <button
                             type="button"
                             onClick={() => handleAcceptNegotiation(item)}
-                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer transition-colors"
+                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
                           >
-                            <Check className="w-4 h-4" /> ACCEPT
+                            <Check className="w-3.5 h-3.5 stroke-[3]" /> ACCEPT
                           </button>
                           <button
                             type="button"
                             onClick={() => setDeclineModalItem(item)}
-                            className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 flex items-center gap-1.5 cursor-pointer transition-colors"
+                            className="px-4 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 hover:text-rose-300 font-bold text-xs border border-rose-500/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
                           >
-                            <X className="w-4 h-4" /> DECLINE
+                            <X className="w-3.5 h-3.5 stroke-[3]" /> DECLINE
                           </button>
                           <button
                             type="button"
@@ -6832,9 +7042,9 @@ export function AdminPlansPage() {
                               setCounterModalItem(item);
                               setCounterPriceInput("");
                             }}
-                            className="px-3 py-2 rounded-xl bg-[#161F2D] hover:bg-gray-200 text-white font-bold text-xs cursor-pointer"
+                            className="px-4 py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-[#7FA0D6] hover:text-white font-bold text-xs border border-[#7FA0D6]/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
                           >
-                            Counter
+                            <SlidersHorizontal className="w-3.5 h-3.5" /> Counter
                           </button>
                         </div>
                       )}

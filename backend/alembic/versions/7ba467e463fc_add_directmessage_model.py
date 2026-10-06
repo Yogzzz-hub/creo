@@ -38,7 +38,14 @@ def upgrade() -> None:
     op.create_index(op.f('ix_direct_messages_agency_id'), 'direct_messages', ['agency_id'], unique=False)
     op.create_index(op.f('ix_direct_messages_client_id'), 'direct_messages', ['client_id'], unique=False)
     op.create_index(op.f('ix_direct_messages_specialist_id'), 'direct_messages', ['specialist_id'], unique=False)
-    pass
+    op.drop_index(op.f('idx_agencies_slug'), table_name='agencies')
+    op.drop_index(op.f('idx_client_profiles_user_id'), table_name='client_profiles')
+    op.drop_index(op.f('idx_plans_name'), table_name='plans')
+    op.drop_index(op.f('idx_staff_profiles_user_id'), table_name='staff_profiles')
+    op.drop_constraint(op.f('staff_profiles_user_id_key'), 'staff_profiles', type_='unique')
+    op.drop_index(op.f('idx_team_members_unique'), table_name='team_members')
+    op.drop_index(op.f('idx_teams_agency_name'), table_name='teams')
+    op.drop_index(op.f('idx_users_email'), table_name='users')
     # ### end Alembic commands ###
 
 

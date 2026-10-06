@@ -38,7 +38,7 @@ interface PlanPreset {
 const PRESETS: PlanPreset[] = [
   {
     id: "starter",
-    name: "Starter",
+    name: "Starter Growth",
     priceNum: 25000,
     priceStr: "₹25,000 / mo",
     reels: 4,
@@ -48,7 +48,7 @@ const PRESETS: PlanPreset[] = [
   },
   {
     id: "growth",
-    name: "Growth",
+    name: "Brand Accelerator",
     priceNum: 50000,
     priceStr: "₹50,000 / mo",
     reels: 8,
@@ -59,7 +59,7 @@ const PRESETS: PlanPreset[] = [
   },
   {
     id: "pro",
-    name: "Scale",
+    name: "Enterprise Domination",
     priceNum: 95000,
     priceStr: "₹95,000 / mo",
     reels: 16,

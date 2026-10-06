@@ -75,7 +75,7 @@ export function PortalAnnouncements() {
         <button
           type="button"
           onClick={resetDismissed}
-          className="text-xs font-semibold text-nebula-glow hover:underline cursor-pointer"
+          className="text-xs font-semibold text-[#7FA0D6] hover:underline cursor-pointer"
         >
           View ({dismissedIds.length}) dismissed
         </button>
@@ -108,10 +108,10 @@ export function PortalAnnouncements() {
       case "broadcast":
       default:
         return {
-          icon: <Megaphone className="size-4 text-nebula-glow" />,
+          icon: <Megaphone className="size-4 text-[#7FA0D6]" />,
           badgeClass: "bg-sky-50 text-sky-700 border-sky-200",
-          cardBorder: "border-nebula-periwinkle/70",
-          cardBg: "from-nebula-surface/40 via-white to-white",
+          cardBorder: "border-[#BCCCE6]/70",
+          cardBg: "from-[#161F2D]/40 via-white to-white",
           label: "Broadcast",
         };
     }
@@ -121,7 +121,7 @@ export function PortalAnnouncements() {
     <div className="space-y-3">
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <span className="flex h-2 w-2 rounded-full bg-nebula-glow animate-ping" />
+          <span className="flex h-2 w-2 rounded-full bg-[#7FA0D6] animate-ping" />
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Agency Updates & Technical Bulletins
           </h2>
@@ -133,7 +133,7 @@ export function PortalAnnouncements() {
           <button
             type="button"
             onClick={() => setShowAll(!showAll)}
-            className="text-[11px] font-semibold text-nebula-glow hover:underline flex items-center gap-1 cursor-pointer"
+            className="text-[11px] font-semibold text-[#7FA0D6] hover:underline flex items-center gap-1 cursor-pointer"
           >
             {showAll ? (
               <>
@@ -194,7 +194,7 @@ export function PortalAnnouncements() {
                   )}
                 </div>
 
-                <h3 className="text-sm font-bold text-nebula-navy tracking-tight leading-snug">
+                <h3 className="text-sm font-bold text-[#0B111C] tracking-tight leading-snug">
                   {item.title}
                 </h3>
                 <p className="mt-1.5 text-xs text-slate-600 leading-relaxed">

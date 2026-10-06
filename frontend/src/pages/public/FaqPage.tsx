@@ -48,7 +48,7 @@ export function FaqPage() {
   };
 
   return (
-    <div className="w-full bg-nebula-void text-[#F8FAFC] min-h-screen py-12 sm:py-16 font-sans selection:bg-[#7FA0D6]/30">
+    <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen py-12 sm:py-16 font-sans selection:bg-[#7FA0D6]/30">
       <SEOHead
         title="Frequently Asked Questions | Creo D2C Content Pods"
         description="Learn how Creo content pods deliver weekly reels, carousels, and stories for D2C brands with transparent SLAs and clear monthly tiers."
@@ -57,7 +57,7 @@ export function FaqPage() {
 
       <div className="max-w-[900px] mx-auto px-6">
         <div className="text-center mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-nebula-surface border border-nebula-steel text-nebula-glow text-xs font-bold uppercase tracking-wider mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-xs font-bold uppercase tracking-wider mb-4">
             <HelpCircle className="size-4" />
             <span>HELP & KNOWLEDGE BASE</span>
           </div>
@@ -66,7 +66,7 @@ export function FaqPage() {
             text="Frequently Asked Questions"
             className="block text-4xl sm:text-5xl font-black tracking-tight text-white mb-4"
           />
-          <p className="text-sm sm:text-base text-nebula-mist max-w-lg mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base text-[#97A0B3] max-w-lg mx-auto leading-relaxed">
             Everything you need to know about Creo content pods, deliverable SLAs, and monthly retainer tiers for D2C brands.
           </p>
         </div>
@@ -78,7 +78,7 @@ export function FaqPage() {
               return (
                 <div
                   key={item.q}
-                  className="rounded-2xl bg-nebula-surface border border-nebula-steel overflow-hidden transition-colors hover:border-[#7FA0D6]/40"
+                  className="rounded-2xl bg-[#161F2D] border border-[#2A3446] overflow-hidden transition-colors hover:border-[#7FA0D6]/40"
                 >
                   <button
                     type="button"
@@ -89,14 +89,14 @@ export function FaqPage() {
                       {item.q}
                     </span>
                     <ChevronDown
-                      className={`size-5 text-nebula-glow shrink-0 transition-transform duration-300 ${
+                      className={`size-5 text-[#7FA0D6] shrink-0 transition-transform duration-300 ${
                         isOpen ? "rotate-180" : ""
                       }`}
                     />
                   </button>
 
                   {isOpen && (
-                    <div className="px-5 sm:px-6 pb-6 text-sm text-nebula-mist leading-relaxed border-t border-nebula-steel/50 pt-4">
+                    <div className="px-5 sm:px-6 pb-6 text-sm text-[#97A0B3] leading-relaxed border-t border-[#2A3446]/50 pt-4">
                       {item.a}
                     </div>
                   )}
@@ -106,9 +106,9 @@ export function FaqPage() {
           </div>
         </Reveal>
 
-        <div className="mt-14 text-center p-8 rounded-2xl bg-nebula-surface border border-nebula-steel shadow-xl">
+        <div className="mt-14 text-center p-8 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-xl">
           <h3 className="text-xl font-bold text-white mb-2">Have a specific question about your brand?</h3>
-          <p className="text-sm text-nebula-mist mb-6 max-w-md mx-auto">
+          <p className="text-sm text-[#97A0B3] mb-6 max-w-md mx-auto">
             Get a free custom sample batch of reels and carousels engineered specifically for your brand identity.
           </p>
           <Link

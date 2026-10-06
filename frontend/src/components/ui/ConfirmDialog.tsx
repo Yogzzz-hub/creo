@@ -209,7 +209,7 @@ export function ConfirmDialog({
       case "warning":
         return <AlertTriangle className="size-5 text-amber-600" />;
       case "info":
-        return <AlertCircle className="size-5 text-nebula-glow" />;
+        return <AlertCircle className="size-5 text-[#7FA0D6]" />;
       case "danger":
       default:
         return <AlertTriangle className="size-5 text-rose-600" />;
@@ -223,7 +223,7 @@ export function ConfirmDialog({
       case "warning":
         return "bg-amber-50 border-amber-200 text-amber-600";
       case "info":
-        return "bg-blue-50 border-blue-200 text-nebula-glow";
+        return "bg-blue-50 border-blue-200 text-[#7FA0D6]";
       case "danger":
       default:
         return "bg-rose-50 border-rose-200 text-rose-600";
@@ -237,7 +237,7 @@ export function ConfirmDialog({
       case "warning":
         return "bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white shadow-md shadow-amber-600/25";
       case "info":
-        return "bg-gradient-to-r from-nebula-glow to-nebula-glow hover:brightness-110 text-white shadow-md shadow-blue-500/25";
+        return "bg-gradient-to-r from-[#7FA0D6] to-[#7FA0D6] hover:brightness-110 text-white shadow-md shadow-blue-500/25";
       case "danger":
       default:
         return "bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white shadow-md shadow-rose-600/25";
@@ -281,7 +281,7 @@ export function ConfirmDialog({
           <div className="flex-1 pr-4">
             <h3
               id="confirm-dialog-title"
-              className="text-base sm:text-lg font-black text-nebula-navy tracking-tight leading-snug"
+              className="text-base sm:text-lg font-black text-[#0B111C] tracking-tight leading-snug"
             >
               {title}
             </h3>
@@ -321,7 +321,7 @@ export function ConfirmDialog({
                         ? "bg-amber-500"
                         : tone === "success"
                         ? "bg-emerald-500"
-                        : "bg-nebula-glow"
+                        : "bg-[#7FA0D6]"
                     }`}
                   />
                   <span className="leading-snug">{detail}</span>

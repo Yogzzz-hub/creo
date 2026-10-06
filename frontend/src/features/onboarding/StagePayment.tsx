@@ -45,41 +45,41 @@ function PlanCard({
       onClick={() => !disabled && onSelect()}
       className={`relative rounded-2xl p-6 sm:p-7 cursor-pointer transition-all flex flex-col justify-between h-full select-none ${
         selected
-          ? "border-2 border-nebula-periwinkle bg-nebula-surface shadow-xl shadow-nebula-glow/10 ring-2 ring-nebula-periwinkle/25"
-          : "border border-nebula-steel bg-nebula-surface/80 hover:border-nebula-glow/60 hover:bg-nebula-surface"
+          ? "border-2 border-[#BCCCE6] bg-[#161F2D] shadow-xl shadow-[#7FA0D6]/10 ring-2 ring-[#BCCCE6]/25"
+          : "border border-[#2A3446] bg-[#161F2D]/80 hover:border-[#7FA0D6]/60 hover:bg-[#161F2D]"
       } ${disabled ? "pointer-events-none opacity-80" : ""}`}
     >
       {/* Top Tag Slot (fixed height to ensure exact vertical alignment across all 3 cards) */}
       <div className="h-6 mb-2 flex items-center">
         {plan.is_recommended ? (
-          <span className="inline-flex items-center gap-1 bg-nebula-glow text-nebula-navy text-[11px] font-black tracking-wider uppercase px-2.5 py-0.5 rounded-full shadow-sm">
-            <Zap className="size-3 fill-nebula-navy" /> Most Popular
+          <span className="inline-flex items-center gap-1 bg-[#7FA0D6] text-[#0B111C] text-[11px] font-black tracking-wider uppercase px-2.5 py-0.5 rounded-full shadow-sm">
+            <Zap className="size-3 fill-[#0B111C]" /> Most Popular
           </span>
         ) : (
-          <span className="text-[11px] font-bold uppercase tracking-wider text-nebula-mist">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
             Monthly Retainer
           </span>
         )}
       </div>
 
       <div className="flex-1 flex flex-col">
-        <p className="text-xs font-bold tracking-wider text-nebula-glow uppercase mb-1">
+        <p className="text-xs font-bold tracking-wider text-[#7FA0D6] uppercase mb-1">
           {plan.name}
         </p>
         <h3 className="text-lg sm:text-xl font-bold font-display text-white mb-2">
           {plan.display_name}
         </h3>
 
-        <div className="my-3 pb-4 border-b border-nebula-steel flex items-baseline gap-1.5">
+        <div className="my-3 pb-4 border-b border-[#2A3446] flex items-baseline gap-1.5">
           <span className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
             {formatINR(plan.price_minor)}
           </span>
-          <span className="text-xs text-nebula-mist font-medium">/month</span>
+          <span className="text-xs text-[#97A0B3] font-medium">/month</span>
         </div>
 
         <ul className="space-y-3.5 my-4 flex-1">
           {plan.highlights.map((h) => (
-            <li key={h} className="text-xs text-nebula-periwinkle flex items-start gap-2.5 leading-relaxed font-medium">
+            <li key={h} className="text-xs text-[#BCCCE6] flex items-start gap-2.5 leading-relaxed font-medium">
               <div className="size-4 rounded-full bg-emerald-950/60 border border-emerald-800/60 flex items-center justify-center shrink-0 mt-0.5">
                 <Check className="w-2.5 h-2.5 text-emerald-400 stroke-[3]" />
               </div>
@@ -92,8 +92,8 @@ function PlanCard({
       <div
         className={`w-full mt-6 py-2.5 px-4 rounded-xl text-sm font-bold text-center transition-all flex items-center justify-center gap-1.5 ${
           selected
-            ? "bg-nebula-periwinkle text-nebula-navy shadow-md shadow-nebula-periwinkle/20"
-            : "bg-nebula-navy text-nebula-mist border border-nebula-steel hover:text-white hover:border-nebula-glow"
+            ? "bg-[#BCCCE6] text-[#0B111C] shadow-md shadow-[#BCCCE6]/20"
+            : "bg-[#0B111C] text-[#97A0B3] border border-[#2A3446] hover:text-white hover:border-[#7FA0D6]"
         }`}
       >
         {selected ? (
@@ -156,7 +156,7 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-xl mx-auto rounded-2xl border border-nebula-steel bg-nebula-surface p-6 sm:p-8 shadow-xl text-center"
+        className="max-w-xl mx-auto rounded-2xl border border-[#2A3446] bg-[#161F2D] p-6 sm:p-8 shadow-xl text-center"
       >
         <div className="size-14 rounded-2xl bg-emerald-950/40 border border-emerald-800/60 text-emerald-400 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
           <ShieldCheck className="size-8" />
@@ -167,13 +167,13 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
         <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">
           Subscription Active
         </h2>
-        <p className="text-sm text-nebula-mist mt-2 mb-6 max-w-md mx-auto leading-relaxed">
+        <p className="text-sm text-[#97A0B3] mt-2 mb-6 max-w-md mx-auto leading-relaxed">
           Your payment has already been verified and your subscription is active. You do not need to pay again.
         </p>
         <button
           type="button"
           onClick={onPaymentComplete}
-          className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-nebula-periwinkle text-nebula-navy font-bold text-sm hover:bg-white shadow-sm transition-all cursor-pointer"
+          className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-sm hover:bg-white shadow-sm transition-all cursor-pointer"
         >
           <span>Continue to Brand Discovery (Step 4)</span>
           <ArrowRight className="size-4" />
@@ -209,7 +209,7 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
             email: user?.email || undefined,
           },
           theme: {
-            color: "var(--color-nebula-glow)",
+            color: "#7FA0D6",
           },
         },
         async (response) => {
@@ -258,22 +258,22 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
       className="w-full space-y-4 sm:space-y-5"
     >
       {/* Header Card */}
-      <div className="rounded-xl border border-nebula-steel bg-nebula-surface p-4 sm:p-6 shadow-xl">
+      <div className="rounded-xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-6 shadow-xl">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-nebula-glow/20 border border-nebula-glow/30 text-nebula-periwinkle text-[11px] font-bold uppercase tracking-wider mb-3 shadow-sm">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7FA0D6]/20 border border-[#7FA0D6]/30 text-[#BCCCE6] text-[11px] font-bold uppercase tracking-wider mb-3 shadow-sm">
               Step 3 of 5
             </div>
             <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight mb-2">
               Choose Your Retainer Plan
             </h2>
-            <p className="text-sm text-nebula-mist leading-relaxed max-w-xl">
+            <p className="text-sm text-[#97A0B3] leading-relaxed max-w-xl">
               Select the subscription tier that matches your creative growth ambition. Upgrade, downgrade, or cancel anytime.
             </p>
           </div>
           
           <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-nebula-steel bg-nebula-navy text-nebula-glow text-[11px] font-bold shadow-xs">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#2A3446] bg-[#0B111C] text-[#7FA0D6] text-[11px] font-bold shadow-xs">
               <Calendar className="w-3.5 h-3.5" />
               <span>30-Day Production Cycle</span>
             </div>
@@ -292,20 +292,20 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="p-5 sm:p-6 rounded-2xl bg-nebula-navy border border-nebula-glow/50 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4"
+            className="p-5 sm:p-6 rounded-2xl bg-[#0B111C] border border-[#7FA0D6]/50 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4"
           >
             <div className="flex items-center gap-3.5">
-              <div className="size-11 rounded-xl bg-nebula-surface border border-nebula-steel flex items-center justify-center text-nebula-glow shrink-0">
-                <Loader2 className="size-5 animate-spin text-nebula-glow" />
+              <div className="size-11 rounded-xl bg-[#161F2D] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] shrink-0">
+                <Loader2 className="size-5 animate-spin text-[#7FA0D6]" />
               </div>
               <div>
                 <h4 className="text-sm font-bold text-white">Confirming your payment...</h4>
-                <p className="text-xs text-nebula-mist mt-0.5">
+                <p className="text-xs text-[#97A0B3] mt-0.5">
                   Verifying transaction with payment gateway for {selectedPlan?.display_name || "selected plan"}. Please don't close this window.
                 </p>
               </div>
             </div>
-            <div className="text-xs font-mono font-bold text-nebula-periwinkle bg-nebula-surface border border-nebula-steel px-3.5 py-1.5 rounded-lg shrink-0">
+            <div className="text-xs font-mono font-bold text-[#BCCCE6] bg-[#161F2D] border border-[#2A3446] px-3.5 py-1.5 rounded-lg shrink-0">
               Securing Retainer...
             </div>
           </motion.div>
@@ -319,7 +319,7 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
             className="p-5 sm:p-6 rounded-2xl bg-emerald-950/50 border border-emerald-800/80 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 text-emerald-200"
           >
             <div className="flex items-center gap-3.5">
-              <div className="size-11 rounded-xl bg-emerald-500 text-nebula-navy flex items-center justify-center font-black shrink-0">
+              <div className="size-11 rounded-xl bg-emerald-500 text-[#0B111C] flex items-center justify-center font-black shrink-0">
                 <Check className="size-6 stroke-[3]" />
               </div>
               <div>
@@ -347,8 +347,8 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
 
       {/* Plan Cards Grid: Equal Heights across all 3 cards */}
       {plansLoading ? (
-        <div className="rounded-2xl border border-nebula-steel bg-nebula-surface p-12 text-center text-nebula-mist">
-          <Loader2 className="size-7 border-2 border-nebula-glow border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-12 text-center text-[#97A0B3]">
+          <Loader2 className="size-7 border-2 border-[#7FA0D6] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-xs font-medium">Loading pricing plans…</p>
         </div>
       ) : (
@@ -366,13 +366,13 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
       )}
 
       {/* Footer Actions */}
-      <div className="rounded-2xl border border-nebula-steel bg-nebula-surface p-4 sm:p-5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-5 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
         {onBack ? (
           <button
             type="button"
             onClick={onBack}
             disabled={phase === "processing" || phase === "polling"}
-            className="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-nebula-navy border border-nebula-steel text-sm font-bold text-nebula-mist hover:text-white hover:border-nebula-glow shadow-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto py-2.5 px-5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-sm font-bold text-[#97A0B3] hover:text-white hover:border-[#7FA0D6] shadow-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Service Agreement</span>
@@ -386,18 +386,18 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
           disabled={!selectedPlanId || phase === "processing" || phase === "polling" || phase === "confirmed"}
           className={`w-full sm:w-auto min-w-[280px] py-3 px-8 rounded-xl font-bold text-sm transition-all shadow-md inline-flex items-center justify-center gap-2 ${
             selectedPlanId && phase === "select"
-              ? "bg-nebula-periwinkle text-nebula-navy cursor-pointer hover:bg-white shadow-nebula-periwinkle/20"
-              : "bg-nebula-surface text-nebula-mist border border-nebula-steel cursor-not-allowed shadow-none"
+              ? "bg-[#BCCCE6] text-[#0B111C] cursor-pointer hover:bg-white shadow-[#BCCCE6]/20"
+              : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446] cursor-not-allowed shadow-none"
           }`}
         >
           {phase === "processing" ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin text-nebula-navy" />
+              <Loader2 className="w-4 h-4 animate-spin text-[#0B111C]" />
               <span>Opening Secure Checkout…</span>
             </>
           ) : phase === "polling" ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin text-nebula-navy" />
+              <Loader2 className="w-4 h-4 animate-spin text-[#0B111C]" />
               <span>Verifying Payment…</span>
             </>
           ) : (

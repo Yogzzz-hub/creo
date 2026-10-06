@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Download, Loader2, PauseCircle, CheckCircle2, AlertCircle, Sparkles, CreditCard, PhoneCall } from "lucide-react";
+import { Download, Loader2, PauseCircle, CheckCircle2, AlertCircle, PhoneCall } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { fetchClientNegotiations } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem } from "../../lib/ops-api";
-import { openRazorpayCheckout, type RazorpayPaymentSuccess } from "../../lib/razorpay";
+import { openRazorpayCheckout } from "../../lib/razorpay";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
 import { PausePlanModal } from "../../components/portal/PausePlanModal";
@@ -41,27 +41,6 @@ export function PortalPaymentsPage() {
     enabled: !!user?.id,
   });
 
-  const [subscribingCustom, setSubscribingCustom] = useState(false);
-
-  // Fetch client's custom negotiation status
-  const { data: negData } = useQuery<{
-    has_negotiation: boolean;
-    approved: {
-      id: string;
-      status: string;
-      agreed_amount: number;
-      order_id: string;
-      contact_phone: string;
-      proposed_budget: string;
-      target_topic: string;
-    } | null;
-    key_id: string;
-  }>({
-    queryKey: ["my-negotiation", user?.id],
-    queryFn: () => request<any>("/api/negotiations/my"),
-    enabled: !!user?.id,
-  });
-
   const { data: clientNegotiations } = useQuery<PlanNegotiationApiItem[]>({
     queryKey: ["client-negotiations", user?.id],
     queryFn: () => fetchClientNegotiations(),
@@ -71,79 +50,6 @@ export function PortalPaymentsPage() {
   const latestNeg = clientNegotiations && clientNegotiations.length > 0 ? clientNegotiations[0] : null;
 
   const gate = useOnboardingGate();
-
-  const handleSubscribeCustomPlan = async () => {
-    if (!negData?.approved) return;
-    const approved = negData.approved;
-    const amountInr = approved.agreed_amount || 35000;
-    const rzpKeyId =
-      negData.key_id ||
-      (import.meta.env.VITE_RAZORPAY_KEY_ID as string) ||
-      "rzp_test_TO2r0YMjDZSpuC";
-
-    try {
-      setSubscribingCustom(true);
-      setErrorNotice(null);
-
-      await openRazorpayCheckout(
-        {
-          key: rzpKeyId,
-          amount: amountInr * 100,
-          currency: "INR",
-          name: "Creo Agency",
-          description: "Your Custom Negotiated Plan",
-          order_id: approved.order_id,
-          prefill: {
-            name: user?.full_name || "",
-            email: user?.email || "",
-            contact: approved.contact_phone || "",
-          },
-          theme: {
-            color: "#7FA0D6",
-          },
-        },
-        async (response: RazorpayPaymentSuccess) => {
-          try {
-            await request("/api/negotiations/confirm-payment", {
-              method: "POST",
-              body: JSON.stringify({
-                negotiation_id: approved.id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id || approved.order_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            });
-
-            await queryClient.invalidateQueries({ queryKey: ["client-subscription"] });
-            await queryClient.invalidateQueries({ queryKey: ["my-negotiation"] });
-            await queryClient.invalidateQueries({ queryKey: ["client-negotiations"] });
-            await queryClient.invalidateQueries({ queryKey: ["onboarding-status"] });
-
-            setActionNotice(
-              `🎉 Payment verified! Your custom negotiated retainer at ₹${amountInr.toLocaleString(
-                "en-IN"
-              )}/mo is now active!`
-            );
-            setTimeout(() => setActionNotice(null), 6000);
-          } catch (err: unknown) {
-            const msg =
-              err instanceof Error ? err.message : "Failed to activate subscription.";
-            setErrorNotice(msg);
-          } finally {
-            setSubscribingCustom(false);
-          }
-        },
-        () => {
-          setSubscribingCustom(false);
-        }
-      );
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Failed to open Razorpay checkout.";
-      setErrorNotice(msg);
-      setSubscribingCustom(false);
-    }
-  };
 
   if (!gate.isReady || isSubLoading || !subData) {
     return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Plan & Billing" />;
@@ -245,119 +151,18 @@ export function PortalPaymentsPage() {
     }
   };
 
-  const renderCustomPlanCard = () => {
-    if (!negData?.approved) return null;
-    const approved = negData.approved;
-
-    return (
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#161F2D] via-[#161F2D] to-[#1F2C3F] border-2 border-[#7FA0D6]/60 p-6 sm:p-8 shadow-2xl shadow-[#7FA0D6]/10">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-[#7FA0D6]/10 rounded-full blur-3xl pointer-events-none -z-0" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-3 max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-[#7FA0D6]/20 border border-[#7FA0D6]/40 text-nebula-glow">
-              <Sparkles className="size-3.5 fill-[#7FA0D6]" />
-              Your Custom Negotiated Plan
-            </div>
-
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Executive Agreement Ready
-            </h2>
-
-            <p className="text-xs sm:text-sm text-nebula-mist leading-relaxed">
-              Our Agency Director has reviewed your consultation call and approved a custom production scope tailored specifically for your brand.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-2.5 pt-2 text-xs text-[#F1F5F9] font-medium">
-              <span className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-nebula-navy border border-nebula-steel">
-                <CheckCircle2 className="size-3.5 text-emerald-400" /> 10 High-Impact Reels / mo
-              </span>
-              <span className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-nebula-navy border border-nebula-steel">
-                <CheckCircle2 className="size-3.5 text-emerald-400" /> 12 Static Posters / mo
-              </span>
-              <span className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-nebula-navy border border-nebula-steel">
-                <CheckCircle2 className="size-3.5 text-emerald-400" /> Dedicated Creative Pod Lead
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end justify-between gap-4 p-5 rounded-2xl bg-nebula-navy border border-nebula-steel shrink-0">
-            <div>
-              <span className="text-[10px] uppercase font-bold text-nebula-mist block">
-                Approved Retainer Fee
-              </span>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-3xl sm:text-4xl font-black text-white">
-                  ₹{approved.agreed_amount?.toLocaleString("en-IN") || "35,000"}
-                </span>
-                <span className="text-xs text-nebula-mist font-semibold">/ mo</span>
-              </div>
-              {approved.order_id && (
-                <span className="text-[10px] text-nebula-glow font-mono mt-1 block">
-                  Order ID: {approved.order_id}
-                </span>
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSubscribeCustomPlan}
-              disabled={subscribingCustom}
-              className="w-full sm:w-auto px-7 py-3 rounded-full bg-[#BCCCE6] text-[#050810] hover:bg-white text-sm font-extrabold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              {subscribingCustom ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Opening Razorpay...
-                </>
-              ) : (
-                <>
-                  <CreditCard className="size-4" />
-                  Subscribe via Razorpay
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // No plan yet: show where to resume or custom negotiated plan card if approved.
+  // No plan yet: show where to resume instead of placeholder plan figures.
   if (!gate.isPaid && !subData?.subscription) {
     return (
-      <div className="space-y-6 pb-12 animate-in fade-in duration-300">
-        {/* Action Toast / Confirmation Notice */}
-        {actionNotice && (
-          <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-700/60 text-emerald-300 text-xs font-semibold flex items-center gap-2.5 animate-[fadeIn_0.2s_ease-out]">
-            <CheckCircle2 className="size-4 shrink-0 text-emerald-400" />
-            <span>{actionNotice}</span>
-          </div>
-        )}
-
-        {/* Error Toast / Alert Notice */}
-        {errorNotice && (
-          <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs font-semibold flex items-center gap-2.5 animate-[fadeIn_0.2s_ease-out]">
-            <AlertCircle className="size-4 shrink-0 text-rose-400" />
-            <span>{errorNotice}</span>
-          </div>
-        )}
-
+      <div className="space-y-6 pb-12">
         <div>
-          <p className="text-xs uppercase font-bold tracking-[0.16em] text-nebula-mist mb-2">
-            {negData?.approved ? "Custom Retainer Ready" : "No active plan yet"}
-          </p>
+          <p className="text-xs uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-2">No active plan yet</p>
           <h1 className="text-3xl font-bold text-[#F8FAFC] tracking-tight">Plan & billing</h1>
         </div>
-
-        {/* Prominent Custom Plan Card */}
-        {renderCustomPlanCard()}
-
         <ResumeOnboardingBanner variant="hero" title="Activate your plan in a few quick steps" />
-
-        <div className="bg-nebula-surface border border-nebula-steel rounded-3xl p-6 lg:p-8">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-3xl p-6 lg:p-8">
           <h3 className="text-base font-semibold text-[#F8FAFC] mb-1.5">Invoices</h3>
-          <p className="text-sm text-nebula-mist leading-relaxed">
+          <p className="text-sm text-[#97A0B3] leading-relaxed">
             Receipts and invoices will appear here after your first payment.
           </p>
         </div>
@@ -383,13 +188,10 @@ export function PortalPaymentsPage() {
         </div>
       )}
 
-      {/* Prominent Custom Plan Card if client has an approved negotiation */}
-      {renderCustomPlanCard()}
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-nebula-mist mb-2">
+          <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-2">
             {planName} PLAN • RENEWS {renewalDate}
           </p>
           <h1 className="text-3xl font-bold text-white tracking-tight">Plan & billing</h1>
@@ -398,7 +200,7 @@ export function PortalPaymentsPage() {
           <button 
             type="button"
             onClick={() => setCompareModalOpen(true)}
-            className="px-5 py-2.5 rounded-full border border-nebula-steel text-[13px] font-bold text-white hover:bg-nebula-surface transition-colors cursor-pointer"
+            className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
           >
             Compare plans
           </button>
@@ -421,7 +223,7 @@ export function PortalPaymentsPage() {
             <button 
               type="button"
               onClick={() => setPauseModalOpen(true)}
-              className="px-5 py-2.5 rounded-full border border-nebula-steel text-[13px] font-bold text-white hover:bg-nebula-surface hover:border-amber-500/40 transition-colors cursor-pointer"
+              className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] hover:border-amber-500/40 transition-colors cursor-pointer"
             >
               Pause next month
             </button>
@@ -469,16 +271,16 @@ export function PortalPaymentsPage() {
               ? "border-blue-500/40 bg-blue-950/25 text-blue-200"
               : latestNeg.status === "Declined"
               ? "border-rose-500/30 bg-rose-950/20 text-rose-200"
-              : "border-[#7FA0D6]/40 bg-nebula-navy text-nebula-periwinkle"
+              : "border-[#7FA0D6]/40 bg-[#0B111C] text-[#BCCCE6]"
           }`}
         >
           <div className="flex items-start sm:items-center gap-3.5">
-            <div className="size-9 rounded-xl bg-nebula-surface border border-nebula-steel flex items-center justify-center shrink-0 text-nebula-glow">
+            <div className="size-9 rounded-xl bg-[#161F2D] border border-[#2A3446] flex items-center justify-center shrink-0 text-[#7FA0D6]">
               <PhoneCall className="size-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-nebula-mist">Plan Negotiation</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">Plan Negotiation</span>
                 <span
                   className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
                     latestNeg.status === "Accepted"
@@ -487,7 +289,7 @@ export function PortalPaymentsPage() {
                       ? "bg-blue-500/20 text-blue-400 border border-blue-500/40"
                       : latestNeg.status === "Declined"
                       ? "bg-rose-500/20 text-rose-400 border border-rose-500/40"
-                      : "bg-[#7FA0D6]/20 text-nebula-glow border border-[#7FA0D6]/40"
+                      : "bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/40"
                   }`}
                 >
                   {latestNeg.status}
@@ -509,7 +311,7 @@ export function PortalPaymentsPage() {
                 </p>
               )}
               {latestNeg.status === "Pending Review" && (
-                <p className="text-xs text-nebula-mist mt-0.5">
+                <p className="text-xs text-[#97A0B3] mt-0.5">
                   Our Agency Director will call you at {latestNeg.phoneNumber} ({latestNeg.preferredTime}).
                 </p>
               )}
@@ -521,17 +323,17 @@ export function PortalPaymentsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Top Left: Current Plan */}
-        <div className="bg-nebula-surface border border-nebula-steel rounded-[24px] p-6 lg:p-8 flex flex-col justify-between">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-10">
             <div>
-              <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-nebula-mist mb-1">
+              <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-1">
                 CURRENT PLAN
               </p>
               <h2 className="text-3xl font-bold text-white">{planName}</h2>
             </div>
             <div className="text-right">
               <h2 className="text-3xl font-bold text-white">₹{planPrice.toLocaleString('en-IN')}</h2>
-              <p className="text-xs text-nebula-mist mt-1">per month • ₹{costPerAsset.toLocaleString('en-IN')} per asset</p>
+              <p className="text-xs text-[#97A0B3] mt-1">per month • ₹{costPerAsset.toLocaleString('en-IN')} per asset</p>
             </div>
           </div>
 
@@ -540,7 +342,7 @@ export function PortalPaymentsPage() {
               <div key={item.label}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[13px] font-bold text-white">{item.label}</span>
-                  <span className="text-[13px] font-medium text-nebula-mist">{item.current} / {item.max}</span>
+                  <span className="text-[13px] font-medium text-[#97A0B3]">{item.current} / {item.max}</span>
                 </div>
                 <div className="h-1.5 w-full bg-white/[0.05] rounded-full overflow-hidden">
                   <div className={`h-full ${item.color} rounded-full`} style={{ width: `${(item.current / item.max) * 100}%` }} />
@@ -549,20 +351,20 @@ export function PortalPaymentsPage() {
             ))}
           </div>
 
-          <p className="text-xs text-nebula-mist font-medium leading-relaxed">
+          <p className="text-xs text-[#97A0B3] font-medium leading-relaxed">
             2 revision rounds per asset • 2 business-day batch SLA • dedicated account director
           </p>
         </div>
 
         {/* Top Right: Add to this cycle */}
-        <div className="bg-nebula-surface border border-nebula-steel rounded-[24px] p-6 lg:p-8">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
           <h3 className="text-sm font-bold text-white mb-6">Add to this cycle</h3>
           <div className="divide-y divide-white/[0.05]">
             {addons.map(addon => (
               <div key={addon.id} className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <h4 className="text-[13px] font-bold text-white mb-1">{addon.name}</h4>
-                  <p className="text-xs text-nebula-mist">{addon.desc}</p>
+                  <p className="text-xs text-[#97A0B3]">{addon.desc}</p>
                 </div>
                 <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0">
                   <span className="text-[13px] font-bold text-white">₹{addon.price.toLocaleString('en-IN')}</span>
@@ -580,41 +382,41 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Bottom Left: Invoices */}
-        <div className="bg-nebula-surface border border-nebula-steel rounded-[24px] p-6 lg:p-8">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
           <h3 className="text-sm font-bold text-white mb-6">Invoices</h3>
           <div className="overflow-x-auto scrollbar-hide">
             <table className="w-full min-w-[500px]">
               <thead>
-                <tr className="border-b border-nebula-steel">
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-nebula-mist pb-3 font-mono">Invoice</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-nebula-mist pb-3 font-mono">Period</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-nebula-mist pb-3 font-mono">Amount</th>
-                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-nebula-mist pb-3 font-mono">Status</th>
+                <tr className="border-b border-[#2A3446]">
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Invoice</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Period</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Amount</th>
+                  <th className="text-left text-[11px] uppercase tracking-wider font-bold text-[#97A0B3] pb-3 font-mono">Status</th>
                   <th className="pb-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.05]">
                 {invoices.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-sm text-nebula-mist">
+                    <td colSpan={5} className="py-8 text-center text-sm text-[#97A0B3]">
                       No invoices generated yet.
                     </td>
                   </tr>
                 ) : (
                   invoices.map((inv: any) => (
                     <tr key={inv.id}>
-                      <td className="py-4 text-[13px] font-medium text-nebula-mist font-mono">{inv.id}</td>
+                      <td className="py-4 text-[13px] font-medium text-[#97A0B3] font-mono">{inv.id}</td>
                       <td className="py-4 text-[13px] text-white">{inv.period}</td>
                       <td className="py-4 text-[13px] font-bold text-white">₹{inv.amount.toLocaleString('en-IN')}</td>
                       <td className="py-4">
-                        <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-[#7FA0D6]/15 text-nebula-periwinkle text-xs font-bold">
+                        <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-[#7FA0D6]/15 text-[#BCCCE6] text-xs font-bold">
                           {inv.status}
                         </span>
                       </td>
                       <td className="py-4 text-right">
                         <button 
                           onClick={() => handleDownload(inv.id)}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-nebula-steel text-[13px] font-bold text-white hover:bg-nebula-surface transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
                         >
                           {downloadingInv === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <Download className="w-3.5 h-3.5" />}
                           GST invoice
@@ -629,21 +431,21 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Bottom Right: Payment method */}
-        <div className="bg-nebula-surface border border-nebula-steel rounded-[24px] p-6 lg:p-8 flex flex-col justify-between">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8 flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-white mb-6">Payment method</h3>
             
             <div className="space-y-4 mb-8">
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-nebula-mist">Method</span>
+                <span className="text-[13px] text-[#97A0B3]">Method</span>
                 <span className="text-[13px] font-bold text-white">UPI AutoPay • Razorpay</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-nebula-mist">Next charge</span>
+                <span className="text-[13px] text-[#97A0B3]">Next charge</span>
                 <span className="text-[13px] font-bold text-white">₹{planPrice.toLocaleString('en-IN')} • {renewalDate}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[13px] text-nebula-mist">GSTIN on invoices</span>
+                <span className="text-[13px] text-[#97A0B3]">GSTIN on invoices</span>
                 <span className="text-[13px] font-bold text-white">Added</span>
               </div>
             </div>
@@ -667,7 +469,7 @@ export function PortalPaymentsPage() {
                 () => {}
               );
             }}
-            className="w-full py-3 rounded-full border border-nebula-steel text-[13px] font-bold text-white hover:bg-nebula-surface transition-colors mt-auto cursor-pointer"
+            className="w-full py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors mt-auto cursor-pointer"
           >
             Change payment method
           </button>

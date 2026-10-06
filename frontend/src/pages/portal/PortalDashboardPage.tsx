@@ -195,7 +195,7 @@ export function PortalDashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           {/* Context date */}
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-nebula-mist mb-3">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#97A0B3] mb-3">
             {dayName} {dateStr}
             {!isLocked && ` · CYCLE DAY ${cycleDay} OF 30`}
           </p>
@@ -212,7 +212,7 @@ export function PortalDashboardPage() {
           </h1>
         </div>
         <div className={`flex items-center gap-3 shrink-0 pt-1 ${isLocked ? "hidden" : ""}`}>
-          <Link to="/portal/creative-pod" className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-nebula-steel text-[13px] font-medium text-white hover:bg-nebula-surface transition-colors">
+          <Link to="/portal/creative-pod" className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
@@ -237,7 +237,7 @@ export function PortalDashboardPage() {
         {/* Left Column: Batch Status + Asset List (2/3 width) */}
         <div className="lg:col-span-2 space-y-6">
           {/* Batch Status Card */}
-          <div className="bg-nebula-surface rounded-2xl p-6 border border-nebula-steel">
+          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-base font-semibold text-white">
@@ -247,7 +247,7 @@ export function PortalDashboardPage() {
                   ? "Publishing Cadence · On Track" 
                   : "Production Pipeline"}
               </h2>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#7FA0D6]/10 text-nebula-glow">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-[#7FA0D6]/10 text-[#7FA0D6]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#7FA0D6]" />
                 {isLocked
                   ? "Starts after setup"
@@ -287,8 +287,8 @@ export function PortalDashboardPage() {
                           step.active
                             ? "text-white font-bold"
                             : step.completed
-                            ? "text-nebula-mist font-medium"
-                            : "text-nebula-mist font-medium"
+                            ? "text-[#97A0B3] font-medium"
+                            : "text-[#97A0B3] font-medium"
                         }`}
                       >
                         {step.label}
@@ -301,8 +301,8 @@ export function PortalDashboardPage() {
 
             {/* Alert Box (Only when review is needed) */}
             {pendingDeliverables.length > 0 && (
-              <div className="bg-nebula-surface rounded-xl p-4 mb-8">
-                <p className="text-[13px] text-nebula-mist leading-relaxed">
+              <div className="bg-[#161F2D] rounded-xl p-4 mb-8">
+                <p className="text-[13px] text-[#97A0B3] leading-relaxed">
                   You have <span className="text-white font-medium">{pendingDeliverables.length} {pendingDeliverables.length === 1 ? 'deliverable' : 'deliverables'}</span> awaiting your review. Approving or requesting changes keeps your batch on its delivery SLA.
                 </p>
               </div>
@@ -311,7 +311,7 @@ export function PortalDashboardPage() {
             {/* Asset List */}
             {pendingDeliverables.length === 0 ? (
               <div className="py-8 text-center">
-                <p className="text-sm text-nebula-mist">
+                <p className="text-sm text-[#97A0B3]">
                   {isLocked
                     ? "Your production pipeline activates once setup is complete. Pieces waiting for your review will show up here."
                     : "No deliverables pending review right now."}
@@ -322,7 +322,7 @@ export function PortalDashboardPage() {
                 {pendingDeliverables.slice(0, 3).map((item: any) => (
                   <div key={item.id} className="flex items-center gap-4 py-4">
                     {/* Thumbnail */}
-                    <div className="w-16 h-16 rounded-lg bg-nebula-surface overflow-hidden shrink-0 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-lg bg-[#161F2D] overflow-hidden shrink-0 flex items-center justify-center">
                       {item.thumbnail_url || item.file_url ? (
                         <img
                           src={item.thumbnail_url || item.file_url}
@@ -330,20 +330,20 @@ export function PortalDashboardPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <svg className="w-6 h-6 text-nebula-mist" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 text-[#97A0B3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
                         </svg>
                       )}
                     </div>
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs uppercase text-nebula-mist font-medium tracking-wider">
+                      <p className="text-xs uppercase text-[#97A0B3] font-medium tracking-wider">
                         {item.asset_type || "Reel"} · {item.duration || "0:30"}
                       </p>
                       <p className="text-[15px] font-medium text-white truncate mt-0.5">
                         {item.title || "Untitled"}
                       </p>
-                      <p className="text-[13px] text-nebula-mist truncate mt-0.5">
+                      <p className="text-[13px] text-[#97A0B3] truncate mt-0.5">
                         {item.description || "Ready for your review"}
                       </p>
                     </div>
@@ -351,7 +351,7 @@ export function PortalDashboardPage() {
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={(e) => handleDeclineDeliverable(item.id, e, item.title)}
-                        className="px-4 py-2 rounded-full border border-nebula-steel text-[13px] font-medium text-white hover:bg-nebula-surface transition-colors cursor-pointer"
+                        className="px-4 py-2 rounded-full border border-[#2A3446] text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
                       >
                         Request change
                       </button>
@@ -369,16 +369,16 @@ export function PortalDashboardPage() {
           </div>
 
           {/* Coming Up */}
-          <div className="bg-nebula-surface rounded-2xl p-6 border border-nebula-steel">
+          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-semibold text-white">Coming up</h3>
-              <span className="text-xs font-medium text-nebula-mist">
+              <span className="text-xs font-medium text-[#97A0B3]">
                 next 7 days
               </span>
             </div>
 
             {/* Table Header */}
-            <div className="grid grid-cols-4 gap-4 text-[11px] uppercase tracking-[0.1em] text-nebula-mist font-bold pb-2 border-b border-nebula-steel">
+            <div className="grid grid-cols-4 gap-4 text-[11px] uppercase tracking-[0.1em] text-[#97A0B3] font-bold pb-2 border-b border-[#2A3446]">
               <span>When</span>
               <span>Format</span>
               <span>Post</span>
@@ -388,7 +388,7 @@ export function PortalDashboardPage() {
             {/* Table Rows */}
             <div className="divide-y divide-white/[0.04]">
               {upcomingEntries.length === 0 ? (
-                <div className="py-8 text-center text-nebula-mist text-sm">
+                <div className="py-8 text-center text-[#97A0B3] text-sm">
                   {isLocked
                     ? "Your 30-day content calendar is generated when setup is complete."
                     : "No upcoming posts scheduled in the next 7 days."}
@@ -404,14 +404,14 @@ export function PortalDashboardPage() {
                     entry.status === "changes_requested" ? "In revision" :
                     "Scheduled";
                   const badgeColor =
-                    statusLabel === "Needs you" ? "bg-[#D8BF9B]/15 text-nebula-sand" :
-                    statusLabel === "Approved" ? "bg-[#7FA0D6]/20 text-nebula-periwinkle" :
-                    "bg-[#7FA0D6]/15 text-nebula-periwinkle";
+                    statusLabel === "Needs you" ? "bg-[#D8BF9B]/15 text-[#D8BF9B]" :
+                    statusLabel === "Approved" ? "bg-[#7FA0D6]/20 text-[#BCCCE6]" :
+                    "bg-[#7FA0D6]/15 text-[#BCCCE6]";
                   return (
                     <div key={entry.id || idx} className="grid grid-cols-4 gap-4 py-3 text-sm items-center hover:bg-white/[0.02] transition-colors -mx-2 px-2 rounded-lg cursor-pointer">
-                      <span className="text-nebula-mist text-[13px]">{dayStr}{timeStr}</span>
+                      <span className="text-[#97A0B3] text-[13px]">{dayStr}{timeStr}</span>
                       <span className="text-white text-[13px] capitalize">{entry.format_label || entry.type}</span>
-                      <span className="text-nebula-mist text-[13px] truncate">{entry.topic || entry.title || "Scheduled post"}</span>
+                      <span className="text-[#97A0B3] text-[13px] truncate">{entry.topic || entry.title || "Scheduled post"}</span>
                       <span className="text-right">
                         <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeColor}`}>
                           {statusLabel}
@@ -428,11 +428,11 @@ export function PortalDashboardPage() {
         {/* Right Column: Plan + Results + Pod */}
         <div className="space-y-6">
           {/* Your plan this cycle */}
-          <div className="bg-nebula-surface rounded-2xl p-6 border border-nebula-steel">
+          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
             <h3 className="text-base font-semibold text-white mb-5">Your plan this cycle</h3>
             {isLocked ? (
               <div className="space-y-4">
-                <p className="text-sm text-nebula-mist leading-relaxed">
+                <p className="text-sm text-[#97A0B3] leading-relaxed">
                   {gate.isPaid
                     ? "Your plan is active. Usage tracking starts with your first production cycle."
                     : "No active plan yet. Pick a plan to activate your creative pod and content pipeline."}
@@ -480,9 +480,9 @@ export function PortalDashboardPage() {
                       return (
                         <div key={item.label}>
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-sm text-nebula-mist">{item.label}</span>
+                            <span className="text-sm text-[#97A0B3]">{item.label}</span>
                             <span className="text-sm text-white font-medium">
-                              {item.used} <span className="text-nebula-mist">/ {item.total}</span>
+                              {item.used} <span className="text-[#97A0B3]">/ {item.total}</span>
                             </span>
                           </div>
                           <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden">
@@ -495,8 +495,8 @@ export function PortalDashboardPage() {
                       );
                     })}
                   </div>
-                  <div className="mt-6 pt-4 border-t border-nebula-steel">
-                    <p className="text-xs text-nebula-mist">
+                  <div className="mt-6 pt-4 border-t border-[#2A3446]">
+                    <p className="text-xs text-[#97A0B3]">
                       Renews {renewalDateStr} · <Link to="/portal/payments" className="text-white hover:underline">Add-ons available</Link>
                     </p>
                   </div>
@@ -506,9 +506,9 @@ export function PortalDashboardPage() {
           </div>
 
           {/* Results */}
-          <div className="bg-nebula-surface rounded-2xl p-6 border border-nebula-steel">
+          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
             <h3 className="text-base font-semibold text-white mb-2">Results</h3>
-            <p className="text-sm text-nebula-mist mb-5 leading-relaxed">
+            <p className="text-sm text-[#97A0B3] mb-5 leading-relaxed">
               Connect Instagram to see reach and saves for every post we publish. Until then we show nothing here rather than guess.
             </p>
             <Link to="/portal/account?tab=integrations" className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[#BCCCE6] text-[13px] font-bold text-[#0B111C] hover:bg-white transition-colors w-max">
@@ -522,13 +522,13 @@ export function PortalDashboardPage() {
           </div>
 
           {/* From your pod */}
-          <div className="bg-nebula-surface rounded-2xl p-6 border border-nebula-steel">
+          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-base font-semibold text-white">From your pod</h3>
               {!isLocked && (
                 <Link
                   to="/portal/creative-pod"
-                  className="px-4 py-1.5 rounded-full border border-nebula-steel text-[13px] font-medium text-white hover:bg-nebula-surface transition-colors"
+                  className="px-4 py-1.5 rounded-full border border-[#2A3446] text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors"
                 >
                   Open chat
                 </Link>
@@ -537,7 +537,7 @@ export function PortalDashboardPage() {
 
             {/* Real Pod Team or Empty State */}
             {(!dashboard?.assigned_team || dashboard.assigned_team.length === 0) ? (
-              <div className="py-6 text-center text-sm text-nebula-mist">
+              <div className="py-6 text-center text-sm text-[#97A0B3]">
                 {isLocked
                   ? "Your dedicated creative pod is assigned when setup is complete."
                   : "Your dedicated creative pod is being allocated."}
@@ -555,9 +555,9 @@ export function PortalDashboardPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between mb-0.5">
                           <span className="text-sm font-bold text-white truncate">{member.name}</span>
-                          <span className="text-xs text-nebula-mist">{member.is_primary ? "Lead" : "Pod"}</span>
+                          <span className="text-xs text-[#97A0B3]">{member.is_primary ? "Lead" : "Pod"}</span>
                         </div>
-                        <p className="text-[13px] text-nebula-mist truncate">
+                        <p className="text-[13px] text-[#97A0B3] truncate">
                           {member.role || "Creative execution"}
                         </p>
                       </div>
@@ -573,21 +573,21 @@ export function PortalDashboardPage() {
       {/* Revision Reason Modal Dialog */}
       {declineTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-[fadeIn_0.15s_ease-out]">
-          <div className="bg-nebula-surface border border-nebula-steel rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-nebula-steel">
+          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
               <h3 className="text-base font-bold text-white">
                 Request Changes on {declineTarget.title || "Deliverable"}
               </h3>
               <button
                 type="button"
                 onClick={() => setDeclineTarget(null)}
-                className="text-nebula-mist hover:text-white text-xs font-bold px-2 py-1 rounded-lg bg-nebula-navy"
+                className="text-[#97A0B3] hover:text-white text-xs font-bold px-2 py-1 rounded-lg bg-[#0B111C]"
               >
                 ✕ Close
               </button>
             </div>
 
-            <p className="text-xs text-nebula-mist">
+            <p className="text-xs text-[#97A0B3]">
               Select quick feedback tags or describe what the creative pod should adjust in the next version:
             </p>
 
@@ -597,7 +597,7 @@ export function PortalDashboardPage() {
                   key={tag}
                   type="button"
                   onClick={() => setDeclineComment((prev) => (prev ? `${prev} · ${tag}` : tag))}
-                  className="px-3 py-1 rounded-lg bg-nebula-navy hover:bg-[#2A3446] border border-nebula-steel text-xs font-semibold text-nebula-periwinkle transition-colors"
+                  className="px-3 py-1 rounded-lg bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-xs font-semibold text-[#BCCCE6] transition-colors"
                 >
                   + {tag}
                 </button>
@@ -608,14 +608,14 @@ export function PortalDashboardPage() {
               value={declineComment}
               onChange={(e) => setDeclineComment(e.target.value)}
               placeholder="Provide clear revision instructions for your creative team..."
-              className="w-full bg-nebula-navy border border-nebula-steel rounded-xl p-3.5 text-xs text-white placeholder:text-nebula-mist focus:outline-none focus:border-[#7FA0D6] h-28 resize-none"
+              className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl p-3.5 text-xs text-white placeholder:text-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] h-28 resize-none"
             />
 
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setDeclineTarget(null)}
-                className="px-4 py-2 rounded-xl border border-nebula-steel text-xs font-bold text-nebula-mist hover:text-white"
+                className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#97A0B3] hover:text-white"
               >
                 Cancel
               </button>
@@ -634,7 +634,7 @@ export function PortalDashboardPage() {
 
       {/* Toast */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-nebula-surface text-white px-5 py-3 rounded-xl shadow-2xl border border-white/[0.1] text-sm font-medium flex items-center gap-2">
+        <div className="fixed bottom-6 right-6 z-50 bg-[#161F2D] text-white px-5 py-3 rounded-xl shadow-2xl border border-white/[0.1] text-sm font-medium flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-[#BCCCE6]" />
           {toastMessage}
         </div>

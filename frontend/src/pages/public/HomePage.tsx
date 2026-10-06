@@ -49,7 +49,7 @@ function CollageTile({
   label?: string;
 }) {
   return (
-    <TiltCard max={9} lift={30} glow="transparent" className={`relative ${aspect} rounded-2xl border border-nebula-steel overflow-hidden bg-nebula-surface shadow-[0_18px_40px_-18px_rgba(0,0,0,0.8)]`}>
+    <TiltCard max={9} lift={30} glow="transparent" className={`relative ${aspect} rounded-2xl border border-[#222F44] overflow-hidden bg-[#121926] shadow-[0_18px_40px_-18px_rgba(0,0,0,0.8)]`}>
       <img
         src={src}
         alt={alt}
@@ -58,7 +58,7 @@ function CollageTile({
       />
       <div className="absolute inset-0 bg-gradient-to-t from-[#050810]/55 via-transparent to-transparent" />
       {label && (
-        <div className="absolute bottom-3 left-3 z-[2] bg-nebula-void/70 backdrop-blur-sm px-2.5 py-1 rounded-md text-[11px] font-medium text-white [transform:translateZ(30px)]">
+        <div className="absolute bottom-3 left-3 z-[2] bg-[#050810]/70 backdrop-blur-sm px-2.5 py-1 rounded-md text-[11px] font-medium text-white [transform:translateZ(30px)]">
           {label}
         </div>
       )}
@@ -75,7 +75,7 @@ const faqs = [
     icon: Layers,
     answer: "CREO connects content briefs directly to creative leads and client sign-offs. Your briefs trigger automated SLA revision tickets and real-time deliverables tracking—eliminating delays and fragmented communication.",
     extra: (
-      <div className="text-nebula-glow bg-nebula-navy border border-nebula-steel rounded-md px-3 py-1 text-xs inline-flex items-center gap-1.5 mt-3">
+      <div className="text-[#7FA0D6] bg-[#0A0F18] border border-[#2A3446] rounded-md px-3 py-1 text-xs inline-flex items-center gap-1.5 mt-3">
         <Zap className="size-3.5 fill-current" />
         Typical D2C brand onboarding completed in under 48 hours.
       </div>
@@ -174,7 +174,7 @@ export function HomePage() {
   };
 
   return (
-    <div className="w-full bg-nebula-void text-[#F8FAFC] min-h-screen font-sans selection:bg-[#7FA0D6]/30">
+    <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#7FA0D6]/30">
       
       {/* 1. Hero Section + Collage */}
       <section className="relative isolate overflow-hidden creo-grain">
@@ -194,7 +194,7 @@ export function HomePage() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, ease: EASE_OUT_EXPO }}
-                className="text-[11px] tracking-widest uppercase font-bold text-nebula-mist mb-5 flex items-center"
+                className="text-[11px] tracking-widest uppercase font-bold text-[#97A0B3] mb-5 flex items-center"
               >
                 <span className="relative mr-2 flex size-2">
                   <span className="absolute inset-0 rounded-full bg-[#7FA0D6] animate-ping opacity-50" />
@@ -212,11 +212,11 @@ export function HomePage() {
                   delay={0.24}
                   className="block italic font-serif font-light pr-2"
                 />
-                <SplitText text="check." animateOnMount delay={0.36} className="block" wordClassName="text-nebula-periwinkle" />
+                <SplitText text="check." animateOnMount delay={0.36} className="block" wordClassName="text-[#BCCCE6]" />
               </h1>
 
               <Reveal delay={0.45} blur>
-                <p className="text-sm sm:text-base text-nebula-mist leading-relaxed max-w-md mt-6 mb-7">
+                <p className="text-sm sm:text-base text-[#97A0B3] leading-relaxed max-w-md mt-6 mb-7">
                   A dedicated lead, editor and designer learn your brand, then deliver reels, carousels and stories to a portal where you approve them in one click.
                 </p>
               </Reveal>
@@ -234,7 +234,7 @@ export function HomePage() {
                   </Magnetic>
                   <Link
                     to="/portal"
-                    className="bg-nebula-surface/80 backdrop-blur border border-nebula-steel text-[#F8FAFC] text-sm px-7 py-3.5 rounded-full hover:border-[#7FA0D6]/60 hover:bg-nebula-navy transition-colors w-full sm:w-auto text-center"
+                    className="bg-[#121926]/80 backdrop-blur border border-[#222F44] text-[#F8FAFC] text-sm px-7 py-3.5 rounded-full hover:border-[#7FA0D6]/60 hover:bg-[#0B111C] transition-colors w-full sm:w-auto text-center"
                   >
                     Explore the portal first
                   </Link>
@@ -242,7 +242,7 @@ export function HomePage() {
               </Reveal>
 
               <Reveal delay={0.65}>
-                <div className="text-xs font-semibold text-nebula-mist mt-8 border-t border-nebula-steel pt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <div className="text-xs font-semibold text-[#97A0B3] mt-8 border-t border-[#222F44] pt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
                   <span>Month-to-month</span>
                   <span className="w-1 h-1 rounded-full bg-[#97A0B3]/50"></span>
                   <span>First batch in 7 days</span>
@@ -279,10 +279,10 @@ export function HomePage() {
       </section>
 
       {/* 1.5 What we ship — infinite marquee */}
-      <section aria-label="What we produce" className="border-y border-nebula-steel bg-nebula-navy/80 py-5">
+      <section aria-label="What we produce" className="border-y border-[#222F44] bg-[#0B111C]/80 py-5">
         <Marquee speed={42}>
           {MARQUEE_ITEMS.map((item) => (
-            <span key={item} className="flex items-center gap-10 whitespace-nowrap text-sm sm:text-base font-semibold tracking-tight text-nebula-mist">
+            <span key={item} className="flex items-center gap-10 whitespace-nowrap text-sm sm:text-base font-semibold tracking-tight text-[#97A0B3]">
               {item}
               <span className="size-1.5 rotate-45 bg-[#D8BF9B]/70" />
             </span>
@@ -291,11 +291,11 @@ export function HomePage() {
       </section>
 
       {/* 2. The Studio Ledger Section */}
-      <section className="bg-nebula-navy py-12 sm:py-16 border-y border-nebula-steel">
+      <section className="bg-[#0B111C] py-12 sm:py-16 border-y border-[#222F44]">
         <div className="max-w-[1240px] mx-auto px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <Reveal>
-              <div className="text-[11px] tracking-widest uppercase font-bold text-nebula-glow mb-4">
+              <div className="text-[11px] tracking-widest uppercase font-bold text-[#7FA0D6] mb-4">
                 THE STUDIO LEDGER
               </div>
             </Reveal>
@@ -306,15 +306,15 @@ export function HomePage() {
               className="block text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-5"
             />
             <Reveal delay={0.15}>
-              <p className="text-sm sm:text-base text-nebula-mist leading-relaxed">
+              <p className="text-sm sm:text-base text-[#97A0B3] leading-relaxed">
                 Every batch we ship is timestamped from the SLA service. Brands stay anonymous, the turnaround doesn't.
               </p>
             </Reveal>
           </div>
 
           <Reveal direction="up" blur className="max-w-4xl mx-auto">
-          <div className="backdrop-blur-md bg-nebula-surface/70 border border-nebula-steel/60 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="grid grid-cols-4 bg-nebula-navy border-b border-nebula-steel p-4 sm:p-5 items-center">
+          <div className="backdrop-blur-md bg-[#161F2D]/70 border border-[#2A3446]/60 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="grid grid-cols-4 bg-[#0A0F18] border-b border-[#2A3446] p-4 sm:p-5 items-center">
               <div className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider">Asset / Batch</div>
               <div className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider">Milestone</div>
               <div className="text-xs font-bold text-[#F8FAFC] uppercase tracking-wider">SLA Time</div>
@@ -324,12 +324,12 @@ export function HomePage() {
             {ledgerData?.has_enough ? (
               <Stagger className="divide-y divide-[#2A3446]" gap={0.07}>
                 {(ledgerData.items || []).map((row: any, i: number) => (
-                  <StaggerItem key={row.id || i} className="grid grid-cols-4 items-center p-4 sm:p-5 hover:bg-nebula-surface transition-colors">
+                  <StaggerItem key={row.id || i} className="grid grid-cols-4 items-center p-4 sm:p-5 hover:bg-[#121926] transition-colors">
                     <div className="text-sm font-semibold text-[#F8FAFC]">{row.file_type || "Content Batch"}</div>
-                    <div className="text-sm text-nebula-mist">Batch {i + 1}</div>
+                    <div className="text-sm text-[#97A0B3]">Batch {i + 1}</div>
                     <div className="text-sm font-mono text-[#F8FAFC]">SLA Verified</div>
                     <div className="text-right">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-nebula-void border border-[#7FA0D6]/50 text-nebula-glow">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-[#050810] border border-[#7FA0D6]/50 text-[#7FA0D6]">
                         {row.status}
                       </span>
                     </div>
@@ -337,7 +337,7 @@ export function HomePage() {
                 ))}
               </Stagger>
             ) : (
-              <div className="p-12 text-center font-mono text-2xl text-nebula-mist">
+              <div className="p-12 text-center font-mono text-2xl text-[#97A0B3]">
                 —
               </div>
             )}
@@ -348,7 +348,7 @@ export function HomePage() {
 
       {/* 3. Horizontal 5-Step Process Rail — the connecting line draws as you scroll */}
       <section className="max-w-[1240px] mx-auto px-6 pt-12 sm:pt-16">
-        <div ref={processRef} className="relative py-8 border-b border-nebula-steel/40">
+        <div ref={processRef} className="relative py-8 border-b border-[#2A3446]/40">
           <div className="absolute left-3.5 right-3.5 top-[3.05rem] hidden md:block h-px bg-[#2A3446]" />
           <ScrollDrawLine
             progress={processProgress}
@@ -363,11 +363,11 @@ export function HomePage() {
               { step: "05", time: "Weekly: Publish & repeat", desc: "Consistent output that scales with your growth." }
             ].map((item) => (
               <StaggerItem key={item.step} className="flex flex-col group">
-                <div className="relative w-7 h-7 rounded-full border border-nebula-steel bg-nebula-void text-nebula-glow flex items-center justify-center text-xs font-bold mb-3 transition-all duration-300 group-hover:border-[#7FA0D6] group-hover:scale-110">
+                <div className="relative w-7 h-7 rounded-full border border-[#2A3446] bg-[#050810] text-[#7FA0D6] flex items-center justify-center text-xs font-bold mb-3 transition-all duration-300 group-hover:border-[#7FA0D6] group-hover:scale-110">
                   {item.step}
                 </div>
                 <h4 className="text-sm font-bold text-[#F8FAFC] mb-1">{item.time}</h4>
-                <p className="text-[13px] text-nebula-mist leading-relaxed">{item.desc}</p>
+                <p className="text-[13px] text-[#97A0B3] leading-relaxed">{item.desc}</p>
               </StaggerItem>
             ))}
           </Stagger>
@@ -377,14 +377,14 @@ export function HomePage() {
       {/* 4. Interactive Approval Portal Layout */}
       <section className="max-w-[1240px] mx-auto px-6 pb-12 sm:pb-16 pt-10">
         <Reveal blur className="relative">
-          <div className="absolute -top-4 left-6 bg-nebula-navy border border-[#7FA0D6]/50 text-nebula-glow text-[11px] font-bold px-4 py-1.5 rounded-full z-10 shadow-lg tracking-wider">
+          <div className="absolute -top-4 left-6 bg-[#0A0F18] border border-[#7FA0D6]/50 text-[#7FA0D6] text-[11px] font-bold px-4 py-1.5 rounded-full z-10 shadow-lg tracking-wider">
             TRY IT — THIS PANEL WORKS
           </div>
           
-          <div className="backdrop-blur-md bg-nebula-surface/70 border border-nebula-steel/60 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
-            <div className="flex items-center justify-between pb-4 border-b border-nebula-steel">
+          <div className="backdrop-blur-md bg-[#161F2D]/70 border border-[#2A3446]/60 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+            <div className="flex items-center justify-between pb-4 border-b border-[#2A3446]">
               <div className="font-black text-[#F8FAFC] text-lg">Batch 04</div>
-              <div className="text-xs font-bold text-nebula-mist flex items-center gap-3">
+              <div className="text-xs font-bold text-[#97A0B3] flex items-center gap-3">
                 <span className="hidden sm:block w-24 h-1.5 rounded-full bg-[#2A3446] overflow-hidden">
                   <motion.span
                     className="block h-full rounded-full bg-[#7FA0D6]"
@@ -396,7 +396,7 @@ export function HomePage() {
                   <motion.span key={approvedCount} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="inline-block">
                     {approvedCount}
                   </motion.span>{" "}
-                  of 3 approved &bull; <span className="text-nebula-glow">On track: 2 days early</span>
+                  of 3 approved &bull; <span className="text-[#7FA0D6]">On track: 2 days early</span>
                 </span>
               </div>
             </div>
@@ -408,12 +408,12 @@ export function HomePage() {
                   layout
                   whileHover={{ y: -4 }}
                   transition={{ type: "spring", stiffness: 300, damping: 24 }}
-                  className={`group bg-nebula-navy border rounded-xl overflow-hidden flex flex-col transition-colors duration-300 ${
+                  className={`group bg-[#0A0F18] border rounded-xl overflow-hidden flex flex-col transition-colors duration-300 ${
                     asset.status === "approved"
                       ? "border-[#7FA0D6]/60 shadow-md"
                       : asset.status === "revision"
                         ? "border-[#D8BF9B]/50"
-                        : "border-nebula-steel"
+                        : "border-[#2A3446]"
                   }`}
                 >
                   {/* Thumbnail */}
@@ -425,7 +425,7 @@ export function HomePage() {
                   />
                   
                   <div className="p-4 flex-1 flex flex-col">
-                    <div className="text-[11px] font-bold text-nebula-mist uppercase tracking-wider mb-1">
+                    <div className="text-[11px] font-bold text-[#97A0B3] uppercase tracking-wider mb-1">
                       {asset.type.replace(' ', ' • ')}
                     </div>
                     <div className="text-sm font-bold text-[#F8FAFC] mb-4 flex-1">{asset.name}</div>
@@ -450,7 +450,7 @@ export function HomePage() {
                           </button>
                           <button 
                             onClick={() => updateStatus(asset.id, "revision")}
-                            className="flex-1 bg-transparent border border-nebula-steel hover:bg-[#222F44] text-[#F8FAFC] font-bold text-xs py-2 rounded-full transition-colors"
+                            className="flex-1 bg-transparent border border-[#2A3446] hover:bg-[#222F44] text-[#F8FAFC] font-bold text-xs py-2 rounded-full transition-colors"
                           >
                             Change
                           </button>
@@ -459,12 +459,12 @@ export function HomePage() {
                       
                       {asset.status === "approved" && (
                         <div className="flex items-center justify-between w-full">
-                          <div className="inline-flex items-center gap-1.5 text-nebula-glow text-[10px] font-bold">
+                          <div className="inline-flex items-center gap-1.5 text-[#7FA0D6] text-[10px] font-bold">
                             <CheckCircle2 className="size-3.5" /> Approved (queued)
                           </div>
                           <button 
                             onClick={() => updateStatus(asset.id, "awaiting")}
-                            className="bg-nebula-surface border border-nebula-steel hover:bg-[#222F44] text-[#F8FAFC] text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors"
+                            className="bg-[#161F2D] border border-[#2A3446] hover:bg-[#222F44] text-[#F8FAFC] text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors"
                           >
                             Undo
                           </button>
@@ -473,12 +473,12 @@ export function HomePage() {
 
                       {asset.status === "revision" && (
                         <div className="flex items-center justify-between w-full">
-                          <div className="inline-flex items-center gap-1.5 text-nebula-sand text-[10px] font-bold">
+                          <div className="inline-flex items-center gap-1.5 text-[#D8BF9B] text-[10px] font-bold">
                             <AlertCircle className="size-3.5" /> Revision requested
                           </div>
                           <button 
                             onClick={() => updateStatus(asset.id, "awaiting")}
-                            className="bg-nebula-surface border border-nebula-steel hover:bg-[#222F44] text-[#F8FAFC] text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors"
+                            className="bg-[#161F2D] border border-[#2A3446] hover:bg-[#222F44] text-[#F8FAFC] text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors"
                           >
                             Undo
                           </button>
@@ -496,11 +496,11 @@ export function HomePage() {
       </section>
 
       {/* 5. Pricing Cards (Synchronized with Pricing Page) */}
-      <section className="bg-nebula-void py-12 sm:py-16">
+      <section className="bg-[#050810] py-12 sm:py-16">
         <div className="max-w-[1240px] mx-auto px-6">
           <div className="text-center mb-12 max-w-2xl mx-auto">
             <Reveal>
-              <div className="inline-flex items-center justify-center bg-nebula-surface border border-nebula-steel text-nebula-glow text-[11px] font-bold px-3 py-1 rounded-full mb-4">
+              <div className="inline-flex items-center justify-center bg-[#121926] border border-[#222F44] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 rounded-full mb-4">
                 ⚡ PREDICTABLE AGENCY INFRASTRUCTURE
               </div>
             </Reveal>
@@ -511,7 +511,7 @@ export function HomePage() {
               className="block text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-4"
             />
             <Reveal delay={0.15}>
-              <p className="text-sm sm:text-base text-nebula-mist leading-relaxed">
+              <p className="text-sm sm:text-base text-[#97A0B3] leading-relaxed">
                 No hidden seat taxes or per-project gouging. Choose the operating tier that matches your studio cadence and reclaim your true profit margins.
               </p>
             </Reveal>
@@ -539,7 +539,7 @@ export function HomePage() {
             return (
               <StaggerItem
                 key={idx}
-                className={`backdrop-blur-md bg-nebula-surface/70 border ${isOpen ? 'border-[#7FA0D6] shadow-sm' : 'border-nebula-steel/60 hover:border-nebula-steel'} rounded-2xl p-5 sm:p-6 transition-all`}
+                className={`backdrop-blur-md bg-[#161F2D]/70 border ${isOpen ? 'border-[#7FA0D6] shadow-sm' : 'border-[#2A3446]/60 hover:border-[#2A3446]'} rounded-2xl p-5 sm:p-6 transition-all`}
               >
                 <button
                   type="button"
@@ -548,7 +548,7 @@ export function HomePage() {
                   onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
                 >
                   <div className="flex items-center gap-4 pr-4">
-                    <div className="w-12 h-12 rounded-xl bg-nebula-navy border border-nebula-steel flex items-center justify-center shrink-0 text-nebula-glow">
+                    <div className="w-12 h-12 rounded-xl bg-[#0A0F18] border border-[#2A3446] flex items-center justify-center shrink-0 text-[#7FA0D6]">
                       <Icon className="size-5" />
                     </div>
                     <span className="text-sm sm:text-base font-bold text-[#F8FAFC] leading-snug">
@@ -556,13 +556,13 @@ export function HomePage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <span className="hidden sm:inline-flex border border-nebula-steel text-nebula-glow text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                    <span className="hidden sm:inline-flex border border-[#2A3446] text-[#7FA0D6] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                       {faq.tag}
                     </span>
                     <motion.div
                       animate={{ rotate: isOpen ? 180 : 0 }}
                       transition={{ duration: 0.35, ease: EASE_OUT_EXPO }}
-                      className={`w-8 h-8 rounded-full border border-nebula-steel flex items-center justify-center shrink-0 transition-colors ${isOpen ? 'bg-nebula-navy text-[#F8FAFC]' : 'text-nebula-mist hover:bg-nebula-navy'}`}
+                      className={`w-8 h-8 rounded-full border border-[#2A3446] flex items-center justify-center shrink-0 transition-colors ${isOpen ? 'bg-[#0A0F18] text-[#F8FAFC]' : 'text-[#97A0B3] hover:bg-[#0A0F18]'}`}
                     >
                       <ChevronDown className="size-4" />
                     </motion.div>
@@ -580,7 +580,7 @@ export function HomePage() {
                       className="overflow-hidden"
                     >
                       <div className="pl-0 sm:pl-16 pt-4">
-                        <p className="text-sm text-nebula-mist leading-relaxed">
+                        <p className="text-sm text-[#97A0B3] leading-relaxed">
                           {faq.answer}
                         </p>
                         {faq.extra && faq.extra}
@@ -595,16 +595,16 @@ export function HomePage() {
       </section>
 
       {/* 6. "Try Us Before You Pay Us" Lead Capture Section */}
-      <section className="relative isolate overflow-hidden bg-nebula-navy py-16 sm:py-24 border-y border-nebula-steel creo-grain">
+      <section className="relative isolate overflow-hidden bg-[#0B111C] py-16 sm:py-24 border-y border-[#222F44] creo-grain">
         <Reveal className="max-w-3xl mx-auto px-6 text-center">
           <SplitText
             as="h2"
             text="Try us before you pay us."
             accent={["pay"]}
-            accentClassName="italic font-serif font-light text-nebula-periwinkle"
+            accentClassName="italic font-serif font-light text-[#BCCCE6]"
             className="block text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#F8FAFC] mb-5"
           />
-          <p className="text-sm sm:text-base text-nebula-mist leading-relaxed mb-10 max-w-xl mx-auto">
+          <p className="text-sm sm:text-base text-[#97A0B3] leading-relaxed mb-10 max-w-xl mx-auto">
             Drop your Instagram handle and email below. We'll send you a custom sample batch of reels and carousels for your brand, completely free. No credit card required.
           </p>
           
@@ -621,28 +621,28 @@ export function HomePage() {
           ) : (
             <form 
               onSubmit={handleRequestSample}
-              className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-3xl mx-auto backdrop-blur-md bg-nebula-surface/50 p-3 rounded-2xl border border-nebula-steel"
+              className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-3xl mx-auto backdrop-blur-md bg-[#161F2D]/50 p-3 rounded-2xl border border-[#2A3446]"
             >
               <div className="relative w-full sm:w-64">
-                <Instagram className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-nebula-mist" />
+                <Instagram className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#97A0B3]" />
                 <input 
                   type="text" 
                   value={sampleHandle}
                   onChange={(e) => setSampleHandle(e.target.value)}
                   placeholder="@yourbrand" 
                   required
-                  className="bg-nebula-navy border border-nebula-steel text-[#F8FAFC] rounded-xl pl-10 pr-4 py-3 text-sm focus:border-[#7FA0D6] focus:outline-none w-full transition-colors" 
+                  className="bg-[#0A0F18] border border-[#2A3446] text-[#F8FAFC] rounded-xl pl-10 pr-4 py-3 text-sm focus:border-[#7FA0D6] focus:outline-none w-full transition-colors" 
                 />
               </div>
               <div className="relative w-full sm:w-72">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-nebula-mist" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#97A0B3]" />
                 <input 
                   type="email" 
                   value={sampleEmail}
                   onChange={(e) => setSampleEmail(e.target.value)}
                   placeholder="name@brand.com" 
                   required
-                  className="bg-nebula-navy border border-nebula-steel text-[#F8FAFC] rounded-xl pl-10 pr-4 py-3 text-sm focus:border-[#7FA0D6] focus:outline-none w-full transition-colors" 
+                  className="bg-[#0A0F18] border border-[#2A3446] text-[#F8FAFC] rounded-xl pl-10 pr-4 py-3 text-sm focus:border-[#7FA0D6] focus:outline-none w-full transition-colors" 
                 />
               </div>
               <button 
@@ -660,7 +660,7 @@ export function HomePage() {
             <p className="text-xs text-rose-400 font-semibold mt-3">{sampleError}</p>
           )}
 
-          <div className="text-xs font-semibold text-nebula-mist mt-6">
+          <div className="text-xs font-semibold text-[#97A0B3] mt-6">
             No commitment required. 48-hour sample turnaround for qualified D2C brands.
           </div>
         </Reveal>

@@ -169,21 +169,21 @@ export function StageTerms({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         {/* LEFT COLUMN: Summary, Checklist & Instant Action */}
         <div className="lg:col-span-4 flex flex-col">
-          <div className="rounded-2xl border border-nebula-steel bg-nebula-surface p-5 shadow-xl h-full flex flex-col justify-between">
+          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 shadow-xl h-full flex flex-col justify-between">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7FA0D6]/20 border border-[#7FA0D6]/30 text-nebula-periwinkle text-[11px] font-bold uppercase tracking-wider mb-3 shadow-sm w-fit">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7FA0D6]/20 border border-[#7FA0D6]/30 text-[#BCCCE6] text-[11px] font-bold uppercase tracking-wider mb-3 shadow-sm w-fit">
                 Step 2 of 5 • Legal Agreement
               </div>
               <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight mb-2">
                 Master Service Agreement
               </h2>
-              <p className="text-xs sm:text-sm text-nebula-mist leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#97A0B3] leading-relaxed">
                 Review our terms of service below. You can accept by checking the confirmation box or reviewing the agreement text.
               </p>
             </div>
 
             {/* Quick Action Card inside Left Column */}
-            <div className="rounded-xl border border-nebula-steel bg-nebula-navy p-4 space-y-2 mt-2">
+            <div className="rounded-xl border border-[#2A3446] bg-[#0B111C] p-4 space-y-2 mt-2">
               <label className="flex items-start gap-2.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -192,9 +192,9 @@ export function StageTerms({
                     setAgreed(e.target.checked);
                     if (e.target.checked) setHasScrolled(true);
                   }}
-                  className="mt-0.5 size-4 rounded border-nebula-steel bg-nebula-surface text-nebula-glow focus:ring-0 cursor-pointer"
+                  className="mt-0.5 size-4 rounded border-[#2A3446] bg-[#161F2D] text-[#7FA0D6] focus:ring-0 cursor-pointer"
                 />
-                <span className="text-xs text-nebula-periwinkle leading-snug">
+                <span className="text-xs text-[#BCCCE6] leading-snug">
                   I agree to the Master Service Agreement terms and conditions.
                 </span>
               </label>
@@ -210,16 +210,16 @@ export function StageTerms({
 
         {/* RIGHT COLUMN: Document Viewer */}
         <div className="lg:col-span-8 flex flex-col">
-          <div className="rounded-2xl border border-nebula-steel bg-nebula-surface p-5 shadow-xl flex flex-col h-full relative overflow-hidden">
+          <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 shadow-xl flex flex-col h-full relative overflow-hidden">
             {/* Document Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-3 pb-3 border-b border-nebula-steel">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3 pb-3 border-b border-[#2A3446]">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-nebula-navy flex items-center justify-center text-nebula-glow shrink-0 border border-nebula-steel">
+                <div className="w-9 h-9 rounded-xl bg-[#0B111C] flex items-center justify-center text-[#7FA0D6] shrink-0 border border-[#2A3446]">
                   <FileText className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-xs sm:text-sm font-bold text-white">creo_master_agreement_2026.pdf</h3>
-                  <p className="text-[11px] text-nebula-mist font-medium">Standard Legal Retainer Terms</p>
+                  <p className="text-[11px] text-[#97A0B3] font-medium">Standard Legal Retainer Terms</p>
                 </div>
               </div>
 
@@ -228,18 +228,18 @@ export function StageTerms({
                   <button
                     type="button"
                     onClick={handleScrollToBottom}
-                    className="text-[11px] font-semibold text-nebula-glow hover:text-white bg-nebula-navy border border-nebula-steel px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                    className="text-[11px] font-semibold text-[#7FA0D6] hover:text-white bg-[#0B111C] border border-[#2A3446] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                   >
                     Jump to Bottom ↓
                   </button>
                 )}
-                <div className="w-24 sm:w-28 h-2 bg-nebula-navy border border-nebula-steel rounded-full overflow-hidden">
+                <div className="w-24 sm:w-28 h-2 bg-[#0B111C] border border-[#2A3446] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-[#7FA0D6] transition-all duration-200"
                     style={{ width: `${scrollProgress}%` }}
                   />
                 </div>
-                <span className="text-[11px] font-mono font-bold text-nebula-periwinkle w-8 text-right">
+                <span className="text-[11px] font-mono font-bold text-[#BCCCE6] w-8 text-right">
                   {scrollProgress}%
                 </span>
               </div>
@@ -249,10 +249,10 @@ export function StageTerms({
             <div
               ref={scrollContainerRef}
               onScroll={handleScroll}
-              className="h-[280px] sm:h-[340px] lg:h-[360px] overflow-y-auto bg-nebula-navy border border-nebula-steel rounded-xl p-4 sm:p-5 font-mono text-xs text-nebula-periwinkle leading-relaxed whitespace-pre-wrap select-text scroll-smooth shadow-inner"
+              className="h-[280px] sm:h-[340px] lg:h-[360px] overflow-y-auto bg-[#0B111C] border border-[#2A3446] rounded-xl p-4 sm:p-5 font-mono text-xs text-[#BCCCE6] leading-relaxed whitespace-pre-wrap select-text scroll-smooth shadow-inner"
             >
               {MSA_TEXT}
-              <div ref={sentinelRef} className="h-4 mt-6 flex items-center justify-center text-nebula-glow text-xs font-sans" aria-hidden="true">
+              <div ref={sentinelRef} className="h-4 mt-6 flex items-center justify-center text-[#7FA0D6] text-xs font-sans" aria-hidden="true">
                 ✓ Reached End of Master Service Agreement
               </div>
             </div>
@@ -265,8 +265,8 @@ export function StageTerms({
                   <span>Ready to continue to Step 3 (Payment)</span>
                 </div>
               ) : (
-                <div className="text-xs text-nebula-mist flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-nebula-sand" />
+                <div className="text-xs text-[#97A0B3] flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-[#D8BF9B]" />
                   <span>Scroll to review or check the agreement box to proceed</span>
                 </div>
               )}
@@ -282,12 +282,12 @@ export function StageTerms({
       )}
 
       {/* STICKY FOOTER ACTIONS BAR — ALWAYS VISIBLE ON SCREEN */}
-      <div className="sticky bottom-2 sm:bottom-4 z-20 rounded-2xl border border-nebula-steel bg-nebula-surface/95 backdrop-blur-md p-3.5 sm:p-4 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="sticky bottom-2 sm:bottom-4 z-20 rounded-2xl border border-[#2A3446] bg-[#161F2D]/95 backdrop-blur-md p-3.5 sm:p-4 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
         {onBack ? (
           <button
             type="button"
             onClick={onBack}
-            className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-nebula-navy border border-nebula-steel text-xs sm:text-sm font-bold text-nebula-mist hover:text-white hover:border-[#7FA0D6] shadow-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0"
+            className="w-full sm:w-auto py-2.5 px-4 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs sm:text-sm font-bold text-[#97A0B3] hover:text-white hover:border-[#7FA0D6] shadow-sm transition-colors cursor-pointer inline-flex items-center justify-center gap-2 shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Step 1 (Email)</span>

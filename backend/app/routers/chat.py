@@ -7,7 +7,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, or_, select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -54,14 +54,8 @@ async def get_messages(
             select(DirectMessage)
             .where(
                 or_(
-                    and_(
-                        DirectMessage.sender_id == current_user_id,
-                        or_(DirectMessage.client_id == other_user_id, DirectMessage.specialist_id == other_user_id),
-                    ),
-                    and_(
-                        DirectMessage.sender_id == other_user_id,
-                        or_(DirectMessage.client_id == current_user_id, DirectMessage.specialist_id == current_user_id),
-                    ),
+                    (DirectMessage.sender_id == current_user_id) & (DirectMessage.client_id == other_user_id) | (DirectMessage.specialist_id == other_user_id),
+                    (DirectMessage.sender_id == other_user_id) & (DirectMessage.client_id == current_user_id) | (DirectMessage.specialist_id == current_user_id)
                 )
             )
             .order_by(DirectMessage.created_at.asc())

@@ -13,8 +13,8 @@ from app.db.session import async_session_factory, tenant_session
 from app.workers.celery_app import celery_app
 from app.models.tenant import TeamMember
 from app.models.user import StaffProfile
-from app.models.work import ClientAssignment
-from app.models.calendar import ClientCycle
+from app.models.work import ClientAssignment, ClientCycle
+from app.models.enums import CycleStatus
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ async def rebalance_agency_async(agency_id: uuid.UUID) -> int:
                         # Check if client has an active cycle
                         cycle_stmt = select(ClientCycle).where(
                             ClientCycle.client_id == assignment.client_id,
-                            ClientCycle.status == "active"
+                            ClientCycle.status == CycleStatus.ACTIVE
                         )
                         active_cycle = (await db.execute(cycle_stmt)).scalar_one_or_none()
                         

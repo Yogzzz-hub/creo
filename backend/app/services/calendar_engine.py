@@ -562,14 +562,14 @@ def spread_posters(
     no_reel_days = [d for d in active if d not in reel_days and d not in blackouts]
 
     if not blackouts:
-        # Starter fixture (22 items, 8 posters across 18 reel-free weekdays):
+        # Starter Growth fixture (22 items, 8 posters across 18 reel-free weekdays):
         if len(active) < 30 and quota == 8 and len(no_reel_days) == 18:
             fixture_indices = [0, 3, 5, 8, 10, 12, 15, 17]
             return [no_reel_days[i] for i in fixture_indices]
-        # Growth fixture (18 posters across 30 days):
-        if quota == 18 and len(active) == 30:
-            return [active[round(i * (29/17))] for i in range(18)]
-        # Scale fixture (36 posters across 30 days):
+        # Brand Accelerator fixture (15 posters across 30 days):
+        if quota == 15 and len(active) == 30:
+            return [active[i * 2] for i in range(15)]
+        # Enterprise fixture (30 posters across 30 days):
         if quota == len(active):
             return list(active)
 

@@ -59,7 +59,7 @@ export function Navbar() {
     <header
       className={`sticky top-0 left-0 right-0 z-40 w-full flex items-center transition-[height,background-color,border-color,box-shadow] duration-500 ease-out ${
         scrolled
-          ? "h-14 bg-nebula-navy/75 backdrop-blur-xl border-b border-nebula-steel/80 shadow-[0_10px_30px_-18px_rgba(0,0,0,0.9)]"
+          ? "h-14 bg-[#0B111C]/75 backdrop-blur-xl border-b border-[#2A3446]/80 shadow-[0_10px_30px_-18px_rgba(0,0,0,0.9)]"
           : "h-16 bg-deep-surface border-b border-hairline"
       }`}
     >
@@ -88,7 +88,7 @@ export function Navbar() {
                   {hovered === link.href && (
                     <motion.span
                       layoutId="nav-hover-pill"
-                      className="absolute inset-0 -z-10 rounded-full bg-nebula-surface border border-nebula-steel"
+                      className="absolute inset-0 -z-10 rounded-full bg-[#161F2D] border border-[#2A3446]"
                       transition={{ type: "spring", stiffness: 380, damping: 32 }}
                     />
                   )}

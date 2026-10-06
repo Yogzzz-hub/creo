@@ -34,12 +34,12 @@ function ProgressStepper({
   return (
     <div className="w-full mb-4 sm:mb-5">
       {/* Stepper Card */}
-      <div className="relative bg-nebula-surface rounded-xl shadow-xl border border-nebula-steel px-2.5 sm:px-7 py-3.5 sm:py-4">
+      <div className="relative bg-[#161F2D] rounded-xl shadow-xl border border-[#2A3446] px-2.5 sm:px-7 py-3.5 sm:py-4">
         <div className="flex items-start justify-between relative">
 
           {/* Background track line - mathematically centered between step 1 (10%) and step 5 (90%) */}
           <div
-            className="absolute h-[2px] rounded-full bg-nebula-steel -translate-y-1/2"
+            className="absolute h-[2px] rounded-full bg-[#2A3446] -translate-y-1/2"
             style={{ top: "18px", left: "10%", right: "10%" }}
           />
 
@@ -50,7 +50,7 @@ function ProgressStepper({
               top: "18px",
               left: "10%",
               width: `${Math.max(0, Math.min(1, (maxUnlockedStep - 1) / (STAGES.length - 1))) * 80}%`,
-              background: "var(--color-nebula-glow)",
+              background: "#7FA0D6",
             }}
           />
 
@@ -74,10 +74,10 @@ function ProgressStepper({
                     <div
                       className={`relative size-9 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-200 shrink-0 ${
                         isDone
-                          ? "bg-nebula-glow text-nebula-navy shadow-sm"
+                          ? "bg-[#7FA0D6] text-[#0B111C] shadow-sm"
                           : isActive
-                          ? "bg-nebula-periwinkle text-nebula-navy font-black ring-4 ring-nebula-periwinkle/25 shadow-md"
-                          : "bg-nebula-navy text-nebula-mist border border-nebula-steel group-hover:border-nebula-glow/40"
+                          ? "bg-[#BCCCE6] text-[#0B111C] font-black ring-4 ring-[#BCCCE6]/25 shadow-md"
+                          : "bg-[#0B111C] text-[#97A0B3] border border-[#2A3446] group-hover:border-[#7FA0D6]/40"
                       }`}
                     >
                       {isDone ? (
@@ -93,7 +93,7 @@ function ProgressStepper({
                   {/* Step label */}
                   <div className="mt-2.5 text-center w-full">
                     <p className={`text-[11px] font-bold uppercase tracking-wider mb-0.5 ${
-                      isActive ? "text-nebula-periwinkle" : isDone ? "text-nebula-glow" : "text-nebula-mist"
+                      isActive ? "text-[#BCCCE6]" : isDone ? "text-[#7FA0D6]" : "text-[#97A0B3]"
                     }`}>
                       Step {s.step}
                     </p>
@@ -101,8 +101,8 @@ function ProgressStepper({
                       isActive
                         ? "text-white font-bold"
                         : isDone
-                        ? "text-nebula-periwinkle"
-                        : "text-nebula-mist"
+                        ? "text-[#BCCCE6]"
+                        : "text-[#97A0B3]"
                     }`}>
                       <span className="sm:hidden">{s.short}</span>
                       <span className="hidden sm:inline">{s.label}</span>
@@ -185,20 +185,20 @@ function StageVerifyEmail({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
-      className="w-full max-w-xl mx-auto rounded-xl border border-nebula-steel bg-nebula-surface p-5 sm:p-8 shadow-xl text-center"
+      className="w-full max-w-xl mx-auto rounded-xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-8 shadow-xl text-center"
     >
-      <div className="size-14 mx-auto mb-4 rounded-2xl bg-nebula-navy border border-nebula-steel flex items-center justify-center text-nebula-glow">
+      <div className="size-14 mx-auto mb-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6]">
         {verifiedSuccess ? (
           <ShieldCheck className="size-7 text-emerald-400" />
         ) : (
-          <Mail className="size-7 text-nebula-glow" />
+          <Mail className="size-7 text-[#7FA0D6]" />
         )}
       </div>
 
-      <h2 className="text-xl sm:text-2xl font-bold font-display text-slate-50 tracking-tight">
+      <h2 className="text-xl sm:text-2xl font-bold font-display text-[#F8FAFC] tracking-tight">
         {verifiedSuccess ? "Email Verified" : "Verify Your Email"}
       </h2>
-      <p className="text-sm text-nebula-mist mt-2 max-w-md mx-auto leading-relaxed">
+      <p className="text-sm text-[#97A0B3] mt-2 max-w-md mx-auto leading-relaxed">
         {verifiedSuccess
           ? "Your email address has been confirmed. You can now proceed to review and sign the Master Service Agreement."
           : "We protect your agency workspace with fast email verification. Enter your email to receive a 6-digit code."}
@@ -227,7 +227,7 @@ function StageVerifyEmail({
             <button
               type="button"
               onClick={onContinueToTerms}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-nebula-periwinkle text-nebula-navy font-bold text-sm hover:bg-white shadow-sm transition-all cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-sm hover:bg-white shadow-sm transition-all cursor-pointer"
             >
               <span>Continue to Master Service Agreement (Step 2)</span>
               <ArrowRight className="size-4" />
@@ -239,7 +239,7 @@ function StageVerifyEmail({
           {!otpSent ? (
             <form onSubmit={handleSendOtp} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-50 mb-1.5">
+                <label className="block text-xs font-semibold text-[#F8FAFC] mb-1.5">
                   Email Address
                 </label>
                 <input
@@ -248,14 +248,14 @@ function StageVerifyEmail({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@company.com"
                   required
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-nebula-steel bg-nebula-navy text-sm text-slate-50 placeholder-nebula-mist/50 focus:outline-none focus:border-nebula-glow focus:ring-2 focus:ring-nebula-glow/20 transition-all"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-sm text-[#F8FAFC] placeholder-[#97A0B3]/50 focus:outline-none focus:border-[#7FA0D6] focus:ring-2 focus:ring-[#7FA0D6]/20 transition-all"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-nebula-periwinkle text-nebula-navy font-bold text-sm hover:bg-white shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-sm hover:bg-white shadow-sm transition-all disabled:opacity-50 cursor-pointer"
               >
                 {loading && <RefreshCw className="size-4 animate-spin" />}
                 <span>Send Verification Code</span>
@@ -265,14 +265,14 @@ function StageVerifyEmail({
             <form onSubmit={handleVerifyOtp} className="space-y-5">
               <div>
                 <div className="flex justify-between items-center mb-3">
-                  <label className="text-xs font-bold uppercase tracking-wider text-nebula-mist">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#97A0B3]">
                     Enter 6-Digit Security Code
                   </label>
                   <button
                     type="button"
                     onClick={() => handleSendOtp()}
                     disabled={loading}
-                    className="text-xs font-semibold text-nebula-glow hover:text-nebula-periwinkle transition-colors"
+                    className="text-xs font-semibold text-[#7FA0D6] hover:text-[#BCCCE6] transition-colors"
                   >
                     Resend Code
                   </button>
@@ -289,7 +289,7 @@ function StageVerifyEmail({
               <button
                 type="submit"
                 disabled={loading || otpCode.length < 4}
-                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-nebula-periwinkle text-nebula-navy font-bold text-sm hover:bg-white shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-sm hover:bg-white shadow-sm transition-all disabled:opacity-50 cursor-pointer"
               >
                 {loading && <RefreshCw className="size-4 animate-spin" />}
                 <span>Verify Code & Continue</span>
@@ -297,11 +297,11 @@ function StageVerifyEmail({
             </form>
           )}
 
-          <div className="mt-4 pt-4 border-t border-nebula-steel text-center">
+          <div className="mt-4 pt-4 border-t border-[#2A3446] text-center">
             <button
               type="button"
               onClick={onContinueToTerms}
-              className="text-xs text-nebula-mist hover:text-white underline transition-colors"
+              className="text-xs text-[#97A0B3] hover:text-white underline transition-colors"
             >
               Skip verification for now and proceed to Terms →
             </button>
@@ -430,14 +430,14 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
   if (isError && !hasStage) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] p-6 text-center">
-        <div className="max-w-md w-full p-6 rounded-2xl bg-nebula-surface border border-nebula-steel shadow-xl">
+        <div className="max-w-md w-full p-6 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-xl">
           <p className="text-sm text-rose-400 font-medium mb-3">
             Unable to connect to onboarding service.
           </p>
           <button
             type="button"
             onClick={() => void refreshStatus()}
-            className="px-4 py-2 rounded-xl bg-nebula-periwinkle text-nebula-navy font-bold text-xs hover:bg-white transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#BCCCE6] text-[#0B111C] font-bold text-xs hover:bg-white transition-colors cursor-pointer"
           >
             Retry Connection
           </button>

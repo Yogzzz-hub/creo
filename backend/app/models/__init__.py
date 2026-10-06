@@ -44,8 +44,6 @@ from app.models.work import ClientAssignment, ContentCalendar, Deliverable, Task
 from app.models.chat import DirectMessage
 
 __all__ = [
-    # Negotiation
-    "PlanNegotiation",
     # Enums
     "UserRole",
     "AccountStatus",

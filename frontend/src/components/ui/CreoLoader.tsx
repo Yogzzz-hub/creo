@@ -83,20 +83,20 @@ export function CreoLoader({
 
             {/* Linear gradient for Wave 3 subtle highlights */}
             <linearGradient id="creoWave3Grad" x1="20" y1="40" x2="260" y2="40" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="var(--color-nebula-steel)" stopOpacity="0.4" />
-              <stop offset="45%" stopColor="var(--color-nebula-steel)" stopOpacity="0.5" />
-              <stop offset="55%" stopColor="var(--color-nebula-glow)" stopOpacity="0.35" />
-              <stop offset="65%" stopColor="var(--color-nebula-steel)" stopOpacity="0.5" />
-              <stop offset="100%" stopColor="var(--color-nebula-steel)" stopOpacity="0.4" />
+              <stop offset="0%" stopColor="#2A3446" stopOpacity="0.4" />
+              <stop offset="45%" stopColor="#2A3446" stopOpacity="0.5" />
+              <stop offset="55%" stopColor="#7FA0D6" stopOpacity="0.35" />
+              <stop offset="65%" stopColor="#2A3446" stopOpacity="0.5" />
+              <stop offset="100%" stopColor="#2A3446" stopOpacity="0.4" />
             </linearGradient>
 
             {/* Linear gradient for the illuminated 50px segment */}
             <linearGradient id="creoActiveLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="var(--color-nebula-glow)" stopOpacity="0.1" />
-              <stop offset="35%" stopColor="var(--color-nebula-glow)" stopOpacity="0.8" />
-              <stop offset="50%" stopColor="var(--color-nebula-periwinkle)" stopOpacity="1" />
-              <stop offset="65%" stopColor="var(--color-nebula-glow)" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="var(--color-nebula-glow)" stopOpacity="0.1" />
+              <stop offset="0%" stopColor="#7FA0D6" stopOpacity="0.1" />
+              <stop offset="35%" stopColor="#7FA0D6" stopOpacity="0.8" />
+              <stop offset="50%" stopColor="#BCCCE6" stopOpacity="1" />
+              <stop offset="65%" stopColor="#7FA0D6" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#7FA0D6" stopOpacity="0.1" />
             </linearGradient>
           </defs>
 
@@ -112,7 +112,7 @@ export function CreoLoader({
           {/* ── Wave 2: Secondary Wave (#7FA0D6, opacity ~0.55, width 1px) ── */}
           <path
             d={wave2Path}
-            stroke="var(--color-nebula-glow)"
+            stroke="#7FA0D6"
             strokeOpacity="0.55"
             strokeWidth="1"
             strokeLinecap="round"
@@ -122,7 +122,7 @@ export function CreoLoader({
           {/* ── Wave 1: Base Main Wave (dim state: #BCCCE6, opacity ~0.35, width 1.2px) ── */}
           <path
             d={wave1Path}
-            stroke="var(--color-nebula-periwinkle)"
+            stroke="#BCCCE6"
             strokeOpacity="0.35"
             strokeWidth="1.2"
             strokeLinecap="round"
@@ -153,10 +153,10 @@ export function CreoLoader({
           </path>
 
           {/* ── Small Signal Node: Left Beginning (2.4px, #7FA0D6) ── */}
-          <circle cx="20" cy="42" r="1.3" fill="var(--color-nebula-glow)" opacity="0.85" />
+          <circle cx="20" cy="42" r="1.3" fill="#7FA0D6" opacity="0.85" />
 
           {/* ── Small Signal Node: Right End (2.4px, #7FA0D6 with brief end-flash) ── */}
-          <circle cx="260" cy="38" r="1.4" fill="var(--color-nebula-glow)" className="creo-end-node">
+          <circle cx="260" cy="38" r="1.4" fill="#7FA0D6" className="creo-end-node">
             <animate
               attributeName="opacity"
               values="0.4; 0.4; 0.4; 0.95; 0.4"
@@ -178,13 +178,13 @@ export function CreoLoader({
             />
 
             {/* Soft 14px outer ambient glow */}
-            <circle r="7" fill="var(--color-nebula-glow)" opacity="0.4" filter="url(#creoPulseGlow)" />
+            <circle r="7" fill="#7FA0D6" opacity="0.4" filter="url(#creoPulseGlow)" />
 
             {/* 4px periwinkle outer core */}
-            <circle r="2.4" fill="var(--color-nebula-glow)" opacity="0.9" />
+            <circle r="2.4" fill="#7FA0D6" opacity="0.9" />
 
             {/* Inner core #BCCCE6 */}
-            <circle r="1.7" fill="var(--color-nebula-periwinkle)" />
+            <circle r="1.7" fill="#BCCCE6" />
 
             {/* Tiny crisp white epicenter center */}
             <circle r="0.8" fill="#FFFFFF" />
@@ -196,18 +196,18 @@ export function CreoLoader({
           2. PRIMARY STATUS TEXT: VERIFYING SESSION •••
       ───────────────────────────────────────────────────────────── */}
       <div className="mt-9 flex items-center justify-center text-[12px] sm:text-[12.5px] font-medium tracking-[0.30em] uppercase leading-none">
-        <span className="text-nebula-periwinkle">{label}</span>
+        <span className="text-[#BCCCE6]">{label}</span>
         {highlightWord && (
-          <span className="ml-2 text-nebula-glow font-medium tracking-[0.30em]">
+          <span className="ml-2 text-[#7FA0D6] font-medium tracking-[0.30em]">
             {highlightWord}
           </span>
         )}
 
         {/* Three very small sequential opacity dots (0.25 -> 1 -> 0.25) */}
         <span className="inline-flex items-center gap-[5px] ml-3" aria-hidden="true">
-          <span className="size-[3px] rounded-full bg-nebula-glow creo-dot-1" />
-          <span className="size-[3px] rounded-full bg-nebula-glow creo-dot-2" />
-          <span className="size-[3px] rounded-full bg-nebula-glow creo-dot-3" />
+          <span className="size-[3px] rounded-full bg-[#7FA0D6] creo-dot-1" />
+          <span className="size-[3px] rounded-full bg-[#7FA0D6] creo-dot-2" />
+          <span className="size-[3px] rounded-full bg-[#7FA0D6] creo-dot-3" />
         </span>
       </div>
 
@@ -216,7 +216,7 @@ export function CreoLoader({
       ───────────────────────────────────────────────────────────── */}
       {showProgress && (
         <div
-          className="mt-[14px] w-[210px] sm:w-[220px] max-w-[75vw] h-[1px] bg-nebula-steel relative overflow-hidden rounded-full"
+          className="mt-[14px] w-[210px] sm:w-[220px] max-w-[75vw] h-[1px] bg-[#2A3446] relative overflow-hidden rounded-full"
           aria-hidden="true"
         >
           <div
@@ -233,7 +233,7 @@ export function CreoLoader({
           4. SECONDARY TEXT: SECURE CONNECTION (~14px below line)
       ───────────────────────────────────────────────────────────── */}
       {showSecondaryText && secondaryText && (
-        <div className="mt-[14px] text-[10px] font-medium uppercase tracking-[0.34em] text-nebula-mist opacity-70 select-none leading-none">
+        <div className="mt-[14px] text-[10px] font-medium uppercase tracking-[0.34em] text-[#97A0B3] opacity-70 select-none leading-none">
           {secondaryText}
         </div>
       )}
@@ -340,7 +340,7 @@ export function CreoLoader({
       <main
         className="min-h-screen w-full flex items-center justify-center overflow-hidden relative"
         style={{
-          backgroundColor: "var(--color-nebula-void)",
+          backgroundColor: "#050810",
           backgroundImage:
             "radial-gradient(ellipse at 50% 40%, #0B111C 0%, #050810 70%), radial-gradient(circle at 50% 45%, rgba(127,160,214,0.04) 0%, transparent 60%)",
         }}

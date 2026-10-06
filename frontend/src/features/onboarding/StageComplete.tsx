@@ -68,24 +68,24 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
       {/* Success header */}
       <motion.section
         {...rise(0)}
-        className="relative overflow-hidden rounded-2xl border border-nebula-steel bg-nebula-surface p-6 sm:p-8 text-center shadow-xl"
+        className="relative overflow-hidden rounded-2xl border border-[#2A3446] bg-[#161F2D] p-6 sm:p-8 text-center shadow-xl"
       >
-        <div className="pointer-events-none absolute -top-28 left-1/2 size-72 -translate-x-1/2 rounded-full bg-nebula-glow/15 blur-3xl" />
+        <div className="pointer-events-none absolute -top-28 left-1/2 size-72 -translate-x-1/2 rounded-full bg-[#7FA0D6]/15 blur-3xl" />
         <motion.div
           initial={reduce ? false : { scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 320, damping: 18, delay: 0.1 }}
-          className="relative mx-auto flex size-14 items-center justify-center rounded-full bg-nebula-glow text-nebula-navy shadow-[0_0_32px_rgba(127,160,214,0.55)]"
+          className="relative mx-auto flex size-14 items-center justify-center rounded-full bg-[#7FA0D6] text-[#0B111C] shadow-[0_0_32px_rgba(127,160,214,0.55)]"
         >
           <Check className="size-7" strokeWidth={3} />
         </motion.div>
-        <p className="relative mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-nebula-glow">
+        <p className="relative mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-[#7FA0D6]">
           Step 5 · Launch workspace
         </p>
-        <h2 className="relative mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-slate-50">
+        <h2 className="relative mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-[#F8FAFC]">
           Your creative pod is ready
         </h2>
-        <p className="relative mx-auto mt-2 max-w-lg text-sm leading-relaxed text-nebula-mist">
+        <p className="relative mx-auto mt-2 max-w-lg text-sm leading-relaxed text-[#97A0B3]">
           Onboarding is complete. Your dedicated team is assigned and your production workspace is
           live.
         </p>
@@ -94,14 +94,14 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
       {/* Pod */}
       <motion.section
         {...rise(0.12)}
-        className="rounded-2xl border border-nebula-steel bg-nebula-surface p-5 sm:p-6 shadow-xl"
+        className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-6 shadow-xl"
       >
         <div className="mb-4 flex items-center gap-2">
-          <Users className="size-4 text-nebula-glow" />
-          <h3 className="text-sm font-bold text-slate-50">Your dedicated pod</h3>
+          <Users className="size-4 text-[#7FA0D6]" />
+          <h3 className="text-sm font-bold text-[#F8FAFC]">Your dedicated pod</h3>
         </div>
         {team.length === 0 ? (
-          <p className="text-sm text-nebula-mist">
+          <p className="text-sm text-[#97A0B3]">
             Your team lead is finalising the pod — you'll see everyone in the portal shortly.
           </p>
         ) : (
@@ -112,18 +112,18 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
                 initial={reduce ? false : { opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.08, duration: 0.45 }}
-                className="flex items-center gap-3 rounded-xl border border-nebula-steel bg-nebula-navy p-3.5"
+                className="flex items-center gap-3 rounded-xl border border-[#2A3446] bg-[#0B111C] p-3.5"
               >
                 <span
                   className={`flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                    i === 0 ? "bg-nebula-periwinkle text-nebula-navy" : "bg-nebula-steel text-slate-50"
+                    i === 0 ? "bg-[#BCCCE6] text-[#0B111C]" : "bg-[#2A3446] text-[#F8FAFC]"
                   }`}
                 >
                   {initials(member.name)}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-50">{member.name}</p>
-                  <p className="text-xs leading-snug text-nebula-mist">{member.role.replace(/\s*\(.*\)\s*/, "")}</p>
+                  <p className="truncate text-sm font-semibold text-[#F8FAFC]">{member.name}</p>
+                  <p className="text-xs leading-snug text-[#97A0B3]">{member.role.replace(/\s*\(.*\)\s*/, "")}</p>
                 </div>
               </motion.li>
             ))}
@@ -134,20 +134,20 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
       {/* What happens next */}
       <motion.section
         {...rise(0.22)}
-        className="rounded-2xl border border-nebula-steel bg-nebula-surface p-5 sm:p-6 shadow-xl"
+        className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-6 shadow-xl"
       >
-        <h3 className="mb-4 text-sm font-bold text-slate-50">What happens next</h3>
+        <h3 className="mb-4 text-sm font-bold text-[#F8FAFC]">What happens next</h3>
         <ol className="space-y-3">
           {NEXT_STEPS.map((stepItem) => {
             const Icon = stepItem.icon;
             return (
               <li key={stepItem.title} className="flex items-start gap-3.5">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-nebula-glow/30 bg-nebula-glow/10 text-nebula-glow">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#7FA0D6]/30 bg-[#7FA0D6]/10 text-[#7FA0D6]">
                   <Icon className="size-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-slate-50">{stepItem.title}</p>
-                  <p className="text-[13px] leading-relaxed text-nebula-mist">{stepItem.body}</p>
+                  <p className="text-sm font-semibold text-[#F8FAFC]">{stepItem.title}</p>
+                  <p className="text-[13px] leading-relaxed text-[#97A0B3]">{stepItem.body}</p>
                 </div>
               </li>
             );
@@ -159,7 +159,7 @@ export function StageComplete({ userId, assignedTeam, onLaunchPortal }: StageCom
         <button
           type="button"
           onClick={onLaunchPortal}
-          className="group inline-flex items-center gap-2 rounded-xl bg-nebula-periwinkle px-7 py-3.5 text-sm font-bold text-nebula-navy shadow-[0_12px_30px_-12px_rgba(188,204,230,0.6)] transition-colors hover:bg-white"
+          className="group inline-flex items-center gap-2 rounded-xl bg-[#BCCCE6] px-7 py-3.5 text-sm font-bold text-[#0B111C] shadow-[0_12px_30px_-12px_rgba(188,204,230,0.6)] transition-colors hover:bg-white"
         >
           Launch my portal
           <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />

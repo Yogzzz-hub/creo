@@ -12,7 +12,7 @@ export function PublicLayout() {
   const reduce = useReducedMotion();
 
   return (
-    <div className="flex min-h-screen flex-col bg-nebula-void text-slate-50">
+    <div className="flex min-h-screen flex-col bg-[#050810] text-[#F8FAFC]">
       <SmoothScroll />
       <ScrollProgressBar />
       <Navbar />

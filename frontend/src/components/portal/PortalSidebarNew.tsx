@@ -29,7 +29,7 @@ const MAIN_NAV = [
 
 const BRAND_NAV = [
   { label: "Your pod", href: "/portal/creative-pod", icon: Users },
-  { label: "Brand DNA", href: "/portal/brand", icon: Dna },
+  { label: "Brand DNA", href: "/portal/account?tab=brand", icon: Dna },
 ];
 
 const ACCOUNT_NAV = [
@@ -57,13 +57,7 @@ export function PortalSidebarNew() {
   const clientId = user?.id || "00000000-0000-0000-0000-000000000001";
   const { data: dashboardData } = useQuery({
     queryKey: ["portal", "dashboard", clientId],
-    queryFn: async () => {
-      try {
-        return await request<any>(`/api/v1/portal/dashboard?client_id=${clientId}`);
-      } catch {
-        return null;
-      }
-    },
+    queryFn: () => request<any>(`/api/v1/portal/dashboard?client_id=${clientId}`),
     staleTime: 60000,
   });
 
@@ -96,25 +90,25 @@ export function PortalSidebarNew() {
 
   return (
     <aside className="hidden xl:fixed xl:inset-y-0 xl:left-0 xl:z-40 xl:flex xl:w-[280px] xl:flex-col border-r border-white/[0.06]">
-      <div className="flex flex-1 flex-col bg-nebula-navy overflow-y-auto">
+      <div className="flex flex-1 flex-col bg-[#0B111C] overflow-y-auto">
         {/* Logo */}
         <div className="px-7 pt-7 pb-2">
           <Link to="/portal" className="inline-flex items-center">
             <span className="text-[22px] font-extrabold tracking-tight text-white">
-              Creo<span className="text-nebula-periwinkle">.</span>
+              Creo<span className="text-[#BCCCE6]">.</span>
             </span>
           </Link>
         </div>
 
         {/* Client Switcher Card */}
         <div className="mx-4 mt-4 mb-2">
-          <div className="flex items-center gap-3 p-3 bg-nebula-surface rounded-xl">
-            <div className="w-10 h-10 rounded-xl bg-nebula-glow flex items-center justify-center text-white text-sm font-bold shrink-0">
+          <div className="flex items-center gap-3 p-3 bg-[#161F2D] rounded-xl">
+            <div className="w-10 h-10 rounded-xl bg-[#7FA0D6] flex items-center justify-center text-white text-sm font-bold shrink-0">
               {initials}
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-white truncate">{companyName}</p>
-              <p className="text-[11px] text-nebula-mist truncate">
+              <p className="text-[11px] text-[#97A0B3] truncate">
                 {dashboardData?.active_plan?.tier ? dashboardData.active_plan.tier.charAt(0).toUpperCase() + dashboardData.active_plan.tier.slice(1) + " plan" : "Free"} · Pod {dashboardData?.assigned_team?.length ? "Assigned" : "Pending"}
               </p>
             </div>
@@ -134,14 +128,14 @@ export function PortalSidebarNew() {
                   to={item.href}
                   className={`group flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium rounded-full transition-all duration-150 mx-1 ${
                     active
-                      ? "bg-nebula-periwinkle text-nebula-navy font-semibold"
-                      : "text-nebula-mist hover:text-white hover:bg-white/[0.04]"
+                      ? "bg-[#BCCCE6] text-[#0B111C] font-semibold"
+                      : "text-[#97A0B3] hover:text-white hover:bg-white/[0.04]"
                   }`}
                 >
                   <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={active ? 2.2 : 1.8} />
                   <span className="flex-1">{item.label}</span>
                   {item.id === "review" && dashboardData?.pending_deliverable_count > 0 && (
-                    <span className="flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-nebula-glow text-white text-[11px] font-bold">
+                    <span className="flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-[#7FA0D6] text-white text-[11px] font-bold">
                       {dashboardData.pending_deliverable_count}
                     </span>
                   )}
@@ -152,7 +146,7 @@ export function PortalSidebarNew() {
 
           {/* YOUR BRAND Section */}
           <div className="mt-6">
-            <p className="px-5 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-nebula-mist">
+            <p className="px-5 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[#97A0B3]">
               Your Brand
             </p>
             <div className="space-y-0.5">
@@ -165,8 +159,8 @@ export function PortalSidebarNew() {
                     to={item.href}
                     className={`group flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium rounded-full transition-all duration-150 mx-1 ${
                       active
-                        ? "bg-nebula-periwinkle text-nebula-navy font-semibold"
-                        : "text-nebula-mist hover:text-white hover:bg-white/[0.04]"
+                        ? "bg-[#BCCCE6] text-[#0B111C] font-semibold"
+                        : "text-[#97A0B3] hover:text-white hover:bg-white/[0.04]"
                     }`}
                   >
                     <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={active ? 2.2 : 1.8} />
@@ -179,7 +173,7 @@ export function PortalSidebarNew() {
 
           {/* ACCOUNT Section */}
           <div className="mt-6">
-            <p className="px-5 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-nebula-mist">
+            <p className="px-5 py-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[#97A0B3]">
               Account
             </p>
             <div className="space-y-0.5">
@@ -192,8 +186,8 @@ export function PortalSidebarNew() {
                     to={item.href}
                     className={`group flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium rounded-full transition-all duration-150 mx-1 ${
                       active
-                        ? "bg-nebula-periwinkle text-nebula-navy font-semibold"
-                        : "text-nebula-mist hover:text-white hover:bg-white/[0.04]"
+                        ? "bg-[#BCCCE6] text-[#0B111C] font-semibold"
+                        : "text-[#97A0B3] hover:text-white hover:bg-white/[0.04]"
                     }`}
                   >
                     <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={active ? 2.2 : 1.8} />
@@ -206,7 +200,7 @@ export function PortalSidebarNew() {
               <button
                 onClick={handleLogout}
                 disabled={loggingOut}
-                className="group w-full flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium rounded-full transition-all duration-150 mx-1 text-nebula-mist hover:text-white hover:bg-white/[0.04] cursor-pointer"
+                className="group w-full flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium rounded-full transition-all duration-150 mx-1 text-[#97A0B3] hover:text-white hover:bg-white/[0.04] cursor-pointer"
               >
                 <LogOut className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
                 <span className="flex-1 text-left">{loggingOut ? "Signing out..." : "Log out"}</span>
@@ -231,13 +225,13 @@ export function PortalSidebarNew() {
           {/* Footer Card: Your Pod Lead */}
           {dashboardData?.assigned_team && dashboardData.assigned_team.length > 0 && (
             <div className="mx-1 mb-4 mt-4">
-              <div className="p-4 bg-nebula-surface rounded-xl border border-white/[0.05]">
+              <div className="p-4 bg-[#161F2D] rounded-xl border border-white/[0.05]">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-nebula-glow to-nebula-glow flex items-center justify-center text-white text-xs font-bold shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#7FA0D6] to-[#7FA0D6] flex items-center justify-center text-white text-xs font-bold shrink-0">
                     {dashboardData.assigned_team[0].name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{dashboardData.assigned_team[0].name} <span className="text-nebula-mist font-normal">· {dashboardData.assigned_team[0].role.includes("Lead") ? "your lead" : "your pod"}</span></p>
+                    <p className="text-sm font-semibold text-white truncate">{dashboardData.assigned_team[0].name} <span className="text-[#97A0B3] font-normal">· {dashboardData.assigned_team[0].role.includes("Lead") ? "your lead" : "your pod"}</span></p>
                   </div>
                 </div>
                 <Link
