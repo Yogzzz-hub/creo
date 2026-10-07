@@ -68,6 +68,13 @@ Chromium passed Review's loading transition, all four calendar labels, sidebar
 selection, and absence of overflow/page errors at 320, 1440, and 1920 pixels.
 Evidence: `calendar-review-controlled-2026-10-07.json`.
 
+Commit `aa51bae9` was pushed to main. The public calendar bundle and Singapore
+API schema both contain the new implementation markers. The deployed frontend
+also passed the same checks at all three widths with intercepted API fixtures,
+zero page errors and no document overflow. Evidence:
+`calendar-review-live-frontend-2026-10-07.json`. This verifies the shipped UI;
+it does not verify the saved data or mutations of the screenshot's client.
+
 The saved live test credentials still return HTTP 401. The `hgf` account shown
 in the screenshots requires its test login to inspect/reallocate existing pod
 ownership and repair already saved schedules. Generated production data has
