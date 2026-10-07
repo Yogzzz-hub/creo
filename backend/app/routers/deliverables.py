@@ -1,44 +1,68 @@
-"""Deliverables API router — Phase 4.
+"""Deliverables API router.
 
-All status mutations route through deliverable_state.transition() exclusively.
-No other module may assign deliverable.status.
+All status mutations route through deliverable_state.transition() exclusively,
+via app.services.deliverable_workflow.
 
-Endpoints:
-    POST /deliverables/upload-intent      — presigned S3 PUT URL
-    POST /deliverables/confirm            — HEAD-check and create Deliverable record
-    POST /deliverables/{id}/submit-qa     — in_production → pending_qa (editor/designer)
-    POST /deliverables/{id}/qa-approve    — pending_qa → pending_approval (team_lead+)
-    POST /deliverables/{id}/qa-reject     — pending_qa → qa_rejected (team_lead+)
-    POST /deliverables/{id}/approve       — pending_approval → approved (client, Idempotency-Key)
-    POST /deliverables/{id}/request-changes — pending_approval → revision_requested (client)
-    POST /deliverables/{id}/schedule      — approved → scheduled (staff)
-    GET  /portal/deliverables             — keyset paginated, filter by status (client)
-    GET  /deliverables/{id}/versions      — full root_id chain, newest first
+Team (editor / designer / team lead / admin):
+    POST /deliverables/tasks/{task_id}/start          — backlog → in_production
+    POST /deliverables/tasks/{task_id}/upload-intent  — pre-signed PUT for a direct browser upload
+    POST /deliverables/tasks/{task_id}/submit         — confirm the direct upload → new version in QA
+    POST /deliverables/tasks/{task_id}/upload         — server-side upload fallback → new version in QA
+    POST /deliverables/{id}/qa-approve                — pending_qa → pending_approval (team_lead+)
+    POST /deliverables/{id}/qa-reject                 — pending_qa → qa_rejected (team_lead+, notes required)
+    POST /deliverables/{id}/schedule                  — approved → scheduled (staff)
+
+Client:
+    POST /deliverables/{id}/approve                   — pending_approval → approved (Idempotency-Key)
+    POST /deliverables/{id}/request-changes           — pending_approval → revision_requested
+    GET  /portal/deliverables                         — client-visible deliverables, latest version each
+    GET  /portal/deliverables/download-zip            — approved files as one archive
+    GET  /portal/deliverables/{id}                    — detail with client-visible version history
+    GET  /deliverables/{id}/versions                  — version chain (clients see reviewed versions only)
 """
 
 from __future__ import annotations
 
+import asyncio
+import os
 import uuid
 from datetime import datetime
+from typing import Any
 
 import structlog
-from fastapi import APIRouter, Depends, Header, Query
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Body,
+    Depends,
+    File,
+    Form,
+    Header,
+    Query,
+    Request,
+    UploadFile,
+)
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import Conflict, Forbidden, NotFound
+from app.core.errors import AppError, Conflict, Forbidden, NotFound
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
-from app.models.enums import DeliverableStatus, DeliverableType, TaskStatus, UserRole
-from app.models.work import Deliverable
+from app.models.enums import DeliverableStatus, UserRole
+from app.models.work import Deliverable, Task
 from app.repositories.base import DeliverableRepository, TenantScope
 from app.services import deliverable_state, storage_service
+from app.services import deliverable_workflow as workflow
 from app.services.subscription_guard import check_client_subscription, require_active_subscription
 
 log = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/deliverables", tags=["Deliverables"])
 portal_router = APIRouter(prefix="/portal", tags=["Portal"])
+
+_EXTENSION_MIMES = {ext: mime for mime, ext in storage_service.ALLOWED_MIMES.items()}
+_EXTENSION_MIMES["jpeg"] = "image/jpeg"
 
 
 def _scope_from_actor(actor: Actor) -> TenantScope:
@@ -62,197 +86,211 @@ async def _get_deliverable_or_404(
     return d
 
 
-# ── Upload Intent ─────────────────────────────────────────────────────────────
-
-
-@router.post("/upload-intent")
-async def upload_intent(
-    mime_type: str,
-    file_size_bytes: int,
-    deliverable_type: DeliverableType,
-    actor: Actor = Depends(get_current_actor),
-    db: AsyncSession = Depends(get_db),
-) -> dict[str, object]:
-    """Validate MIME type + quota, then return a pre-signed S3 PUT URL.
-
-    Consumes 1 quota unit optimistically. If the upload is never confirmed,
-    the quota will be released by a background cleanup job.
-    """
-    if actor.role == UserRole.CLIENT:
-        raise Forbidden("Clients may not upload deliverables directly", code="UPLOAD_FORBIDDEN")
-
-    # Get client_id from scope (for staff uploading on behalf of a client)
-    if not actor.client_id:
-        raise Conflict("X-Client-Id header is required for staff uploads", code="MISSING_CLIENT_ID")
-    target_client_id: uuid.UUID = actor.client_id
-
-    try:
-        intent = storage_service.upload_intent(target_client_id, mime_type, file_size_bytes)
-    except storage_service.UnsupportedMimeType as exc:
-        raise Conflict(str(exc), code="UNSUPPORTED_MIME_TYPE") from exc
-    except storage_service.FileTooLarge as exc:
-        raise Conflict(str(exc), code="FILE_TOO_LARGE") from exc
-
-    return {
-        **intent,
-        "deliverable_type": deliverable_type.value,
-        "client_id": str(target_client_id),
-    }
-
-
-# ── Confirm Upload ─────────────────────────────────────────────────────────────
-
-
-@router.post("/confirm")
-async def confirm_upload(
-    storage_key: str,
-    declared_size_bytes: int,
-    deliverable_type: DeliverableType,
-    client_id: uuid.UUID,
-    task_id: uuid.UUID | None = None,
-    actor: Actor = Depends(get_current_actor),
-    db: AsyncSession = Depends(get_db),
-) -> dict[str, object]:
-    """HEAD the S3 object, then create the Deliverable row if size matches."""
-    if actor.role == UserRole.CLIENT:
-        raise Forbidden("Clients may not confirm deliverable uploads", code="UPLOAD_FORBIDDEN")
-
-    try:
-        confirm_result = storage_service.confirm_upload(storage_key, declared_size_bytes)
-    except storage_service.ObjectNotFound as exc:
-        raise Conflict(str(exc), code="OBJECT_NOT_FOUND") from exc
-    except storage_service.ContentLengthMismatch as exc:
-        raise Conflict(str(exc), code="CONTENT_LENGTH_MISMATCH") from exc
-
-    # Derive file type from storage key extension
-    file_ext = storage_key.rsplit(".", 1)[-1].upper() if "." in storage_key else "UNKNOWN"
-    raw_size = confirm_result.get("actual_size")
-    actual_size = raw_size if isinstance(raw_size, int) else declared_size_bytes
-
-    deliverable = Deliverable(
-        id=uuid.uuid4(),
-        root_id=uuid.uuid4(),
-        version=1,
-        client_id=client_id,
-        task_id=task_id,
-        submitted_by=actor.user_id,
-        file_url=storage_key,
-        file_type=file_ext,
-        file_size_bytes=actual_size,
-        status=DeliverableStatus.PENDING_QA,
-        revision_round=0,
-    )
-    db.add(deliverable)
-    await db.flush()
-
-    # Automate task pipeline progression: upload by team moves task to Internal QA
-    await deliverable_state.sync_task_with_deliverable(db, deliverable, DeliverableStatus.PENDING_QA)
-
-    await db.commit()
-    await db.refresh(deliverable)
-
-    log.info(
-        "deliverable_created",
-        deliverable_id=str(deliverable.id),
-        client_id=str(client_id),
-        storage_key=storage_key,
-    )
-    return {
-        "id": str(deliverable.id),
-        "root_id": str(deliverable.root_id),
-        "version": deliverable.version,
-        "status": deliverable.status.value,
-        "storage_key": storage_key,
-    }
-
-
-# ── Status Transition Endpoints ───────────────────────────────────────────────
-
-
-@router.post("/{deliverable_id}/submit-qa")
-async def submit_qa(
-    deliverable_id: uuid.UUID,
-    actor: Actor = Depends(get_current_actor),
-    db: AsyncSession = Depends(get_db),
-) -> dict[str, str]:
-    """Editor/designer submits deliverable to internal QA. in_production → pending_qa."""
+def _require_team(actor: Actor) -> None:
     if actor.role not in deliverable_state._STAFF_ROLES:
-        raise Forbidden("Only staff may submit to QA", code="FORBIDDEN")
-    # For staff, allow cross-client lookup by temporarily widening scope
-    wide_scope = TenantScope(agency_id=actor.agency_id, client_id=None, user_id=actor.user_id, role=actor.role)
-    d = await _get_deliverable_or_404(deliverable_id, wide_scope, db)
-    d = await deliverable_state.transition(
-        db,
-        d,
-        DeliverableStatus.PENDING_QA,
-        actor_id=actor.user_id,
-        actor_role=actor.role,
-        request_id=None,
+        raise Forbidden("Only the creative team can upload deliverables", code="UPLOAD_FORBIDDEN")
+
+
+def _storage_conflict(exc: storage_service.StorageError) -> AppError:
+    if isinstance(exc, (
+        storage_service.UnsupportedMimeType,
+        storage_service.FileTooLarge,
+        storage_service.ObjectNotFound,
+        storage_service.ContentLengthMismatch,
+    )):
+        return Conflict(exc.message, code=exc.code)
+    return AppError(exc.message, code=exc.code, status_code=503)
+
+
+def _guess_mime(upload: UploadFile) -> str:
+    declared = (upload.content_type or "").lower()
+    if declared in storage_service.ALLOWED_MIMES:
+        return declared
+    ext = (upload.filename or "").rsplit(".", 1)[-1].lower() if "." in (upload.filename or "") else ""
+    return _EXTENSION_MIMES.get(ext, declared or "application/octet-stream")
+
+
+def _team_deliverable_response(d: Deliverable, request: Request) -> dict[str, object]:
+    return {**workflow.serialize_for_team(d, request), "task_id": str(d.task_id) if d.task_id else None}
+
+
+# ── Team: production task actions ────────────────────────────────────────────
+
+
+class UploadIntentRequest(BaseModel):
+    mime_type: str
+    file_size_bytes: int = Field(gt=0)
+
+
+class SubmitUploadRequest(BaseModel):
+    storage_key: str
+    mime_type: str
+    file_size_bytes: int = Field(gt=0)
+    notes: str | None = Field(default=None, max_length=2000)
+
+
+@router.post("/tasks/{task_id}/start")
+async def start_task(
+    task_id: uuid.UUID,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, object]:
+    """Creative marks a queued task In Progress (App Flow 5.5 step 4)."""
+    _require_team(actor)
+    task = await workflow.get_task_for_actor(db, actor, task_id)
+    task = await workflow.start_task(db, actor, task)
+    return {
+        "task_id": str(task.id),
+        "status": task.status.value,
+        "assigned_to": str(task.assigned_to) if task.assigned_to else None,
+    }
+
+
+@router.post("/tasks/{task_id}/upload-intent")
+async def task_upload_intent(
+    task_id: uuid.UUID,
+    payload: UploadIntentRequest,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, object]:
+    """Pre-signed PUT URL so large files go straight from the browser to storage."""
+    _require_team(actor)
+    task = await workflow.get_task_for_actor(db, actor, task_id)
+    try:
+        storage_service.validate_media(payload.mime_type, payload.file_size_bytes)
+    except storage_service.StorageError as exc:
+        raise _storage_conflict(exc) from exc
+    if not storage_service.supports_direct_upload():
+        return {"direct_upload": False, "mime_type": payload.mime_type}
+    try:
+        intent = await asyncio.to_thread(
+            storage_service.upload_intent, task.client_id, payload.mime_type, payload.file_size_bytes
+        )
+    except storage_service.StorageError as exc:
+        raise _storage_conflict(exc) from exc
+    return {**intent, "direct_upload": True, "task_id": str(task.id)}
+
+
+@router.post("/tasks/{task_id}/submit")
+async def submit_direct_upload(
+    task_id: uuid.UUID,
+    payload: SubmitUploadRequest,
+    request: Request,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, object]:
+    """Confirm a direct upload exists in storage, then send it to lead QA."""
+    _require_team(actor)
+    task = await workflow.get_task_for_actor(db, actor, task_id)
+    # A key from another client's namespace must never be attachable to this task.
+    if not payload.storage_key.startswith(f"clients/{task.client_id}/"):
+        raise Forbidden("Storage key does not belong to this client", code="STORAGE_KEY_FORBIDDEN")
+    try:
+        storage_service.validate_media(payload.mime_type, payload.file_size_bytes)
+        await asyncio.to_thread(
+            storage_service.confirm_upload, payload.storage_key, payload.file_size_bytes
+        )
+    except storage_service.StorageError as exc:
+        raise _storage_conflict(exc) from exc
+    d = await workflow.submit_task_deliverable(
+        db, actor, task,
+        file_url=payload.storage_key,
+        mime_type=payload.mime_type,
+        file_size_bytes=payload.file_size_bytes,
+        notes=payload.notes,
     )
+    return _team_deliverable_response(d, request)
+
+
+@router.post("/tasks/{task_id}/upload")
+async def upload_task_file(
+    task_id: uuid.UUID,
+    request: Request,
+    file: UploadFile = File(...),
+    notes: str | None = Form(default=None, max_length=2000),
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, object]:
+    """Server-side upload used when a direct browser PUT is unavailable."""
+    _require_team(actor)
+    task = await workflow.get_task_for_actor(db, actor, task_id)
+    mime_type = _guess_mime(file)
+    size = file.size
+    if size is None:
+        file.file.seek(0, os.SEEK_END)
+        size = file.file.tell()
+    file.file.seek(0)
+    try:
+        storage_service.validate_media(mime_type, size)
+        storage_key = storage_service.make_storage_key(task.client_id, mime_type)
+        stored = await asyncio.to_thread(
+            storage_service.put_object, storage_key, file.file, mime_type, size
+        )
+    except storage_service.StorageError as exc:
+        raise _storage_conflict(exc) from exc
+    d = await workflow.submit_task_deliverable(
+        db, actor, task,
+        file_url=stored,
+        mime_type=mime_type,
+        file_size_bytes=size,
+        notes=notes,
+    )
+    return _team_deliverable_response(d, request)
+
+
+# ── Lead QA ──────────────────────────────────────────────────────────────────
+
+
+class QADecisionRequest(BaseModel):
+    notes: str | None = Field(default=None, max_length=2000)
+
+
+async def _qa(
+    deliverable_id: uuid.UUID,
+    approve: bool,
+    notes: str | None,
+    actor: Actor,
+    db: AsyncSession,
+    background: BackgroundTasks,
+) -> dict[str, str]:
+    d, task = await workflow.get_deliverable_for_review(db, actor, deliverable_id)
+    d, email = await workflow.qa_decide(db, actor, d, task, approve=approve, notes=notes)
+    if email:
+        background.add_task(workflow.send_ready_for_review_email, **email)
     return {"status": d.status.value, "deliverable_id": str(d.id)}
 
 
 @router.post("/{deliverable_id}/qa-approve")
 async def qa_approve(
     deliverable_id: uuid.UUID,
+    background: BackgroundTasks,
+    payload: QADecisionRequest | None = Body(default=None),
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
-    """Team lead approves QA. pending_qa → pending_approval."""
-    wide_scope = TenantScope(agency_id=actor.agency_id, client_id=None, user_id=actor.user_id, role=actor.role)
-    d = await _get_deliverable_or_404(deliverable_id, wide_scope, db)
-    d = await deliverable_state.transition(
-        db,
-        d,
-        DeliverableStatus.PENDING_APPROVAL,
-        actor_id=actor.user_id,
-        actor_role=actor.role,
-    )
-
-    # Multi-Channel Alert: Notify client that deliverable (reel/poster) is ready for review
-    from app.models.ops import Notification
-    from app.models.work import Task
-    deliv_type_label = "Reel" if "video" in (d.file_type or "") else "Poster"
-    if d.task_id:
-        task = await db.get(Task, d.task_id)
-        if task and task.deliverable_type:
-            deliv_type_label = task.deliverable_type.value.capitalize()
-
-    db.add(
-        Notification(
-            user_id=d.client_id,
-            title=f"🎬 Your {deliv_type_label} is Ready for Review",
-            message="Our creative team has finished production. Please review, approve, or request revisions.",
-            link="/portal/deliverables",
-            is_read=False,
-        )
-    )
-    await db.commit()
-
-    return {"status": d.status.value, "deliverable_id": str(d.id)}
+    """Team lead approves QA; the client is notified in-portal and by email."""
+    return await _qa(deliverable_id, True, payload.notes if payload else None, actor, db, background)
 
 
 @router.post("/{deliverable_id}/qa-reject")
 async def qa_reject(
     deliverable_id: uuid.UUID,
-    qa_notes: str,
+    background: BackgroundTasks,
+    qa_notes: str | None = Query(default=None),
+    payload: QADecisionRequest | None = Body(default=None),
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
-    """Team lead rejects in QA. pending_qa → qa_rejected. qa_notes required."""
-    if not qa_notes.strip():
-        raise Conflict("qa_notes is required for QA rejection", code="MISSING_QA_NOTES")
-    wide_scope = TenantScope(agency_id=actor.agency_id, client_id=None, user_id=actor.user_id, role=actor.role)
-    d = await _get_deliverable_or_404(deliverable_id, wide_scope, db)
-    d = await deliverable_state.transition(
-        db,
-        d,
-        DeliverableStatus.QA_REJECTED,
-        actor_id=actor.user_id,
-        actor_role=actor.role,
-        qa_notes=qa_notes,
-    )
-    return {"status": d.status.value, "deliverable_id": str(d.id)}
+    """Team lead sends work back to the creative. Notes are required."""
+    notes = (payload.notes if payload and payload.notes else qa_notes) or ""
+    return await _qa(deliverable_id, False, notes, actor, db, background)
+
+
+# ── Client decisions ─────────────────────────────────────────────────────────
+
+
+class RequestChangesBody(BaseModel):
+    rejection_comment: str = Field(min_length=1, max_length=4000)
 
 
 @router.post("/{deliverable_id}/approve")
@@ -267,57 +305,19 @@ async def approve_deliverable(
     scope = _scope_from_actor(actor)
     d = await _get_deliverable_or_404(deliverable_id, scope, db)
 
-    # Idempotency: if already approved, return current state immediately
     if d.status == DeliverableStatus.APPROVED:
-        log.info(
-            "approve_idempotent",
-            deliverable_id=str(deliverable_id),
-            idempotency_key=idempotency_key,
-        )
+        log.info("approve_idempotent", deliverable_id=str(deliverable_id), idempotency_key=idempotency_key)
         return {"status": d.status.value, "deliverable_id": str(d.id), "idempotent": "true"}
 
-    d = await deliverable_state.transition(
-        db,
-        d,
-        DeliverableStatus.APPROVED,
-        actor_id=actor.user_id,
-        actor_role=actor.role,
-        request_id=idempotency_key,
-    )
-
-    # Notify staff / team lead of client approval
-    from app.models.ops import Notification
-    from app.models.work import Task
-    deliv_type_label = "Reel" if "video" in (d.file_type or "") else "Poster"
-    assignee_id = d.submitted_by
-    if d.task_id:
-        task = await db.get(Task, d.task_id)
-        if task:
-            if task.deliverable_type:
-                deliv_type_label = task.deliverable_type.value.capitalize()
-            if task.assigned_to:
-                assignee_id = task.assigned_to
-            task.status = TaskStatus.READY_TO_PUBLISH
-
-    if assignee_id:
-        db.add(
-            Notification(
-                user_id=assignee_id,
-                title="🎉 Deliverable Approved by Client!",
-                message=f"The client approved the {deliv_type_label}.",
-                link="/admin/queue",
-                is_read=False,
-            )
-        )
-        await db.commit()
-
+    d = await workflow.client_approve(db, actor, d, request_id=idempotency_key)
     return {"status": d.status.value, "deliverable_id": str(d.id)}
 
 
 @router.post("/{deliverable_id}/request-changes")
 async def request_changes(
     deliverable_id: uuid.UUID,
-    rejection_comment: str,
+    rejection_comment: str | None = Query(default=None),
+    payload: RequestChangesBody | None = Body(default=None),
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
     _sub_guard: dict[str, Any] = Depends(require_active_subscription),
@@ -327,48 +327,10 @@ async def request_changes(
     On REVISION_LIMIT_REACHED, raises Conflict with code 'REVISION_LIMIT_REACHED'.
     The frontend should render a plan upsell dialog, not a red toast.
     """
-    if not rejection_comment.strip():
-        raise Conflict(
-            "rejection_comment is required to request changes",
-            code="MISSING_REJECTION_COMMENT",
-        )
+    comment = (payload.rejection_comment if payload else rejection_comment) or ""
     scope = _scope_from_actor(actor)
     d = await _get_deliverable_or_404(deliverable_id, scope, db)
-    d = await deliverable_state.transition(
-        db,
-        d,
-        DeliverableStatus.REVISION_REQUESTED,
-        actor_id=actor.user_id,
-        actor_role=actor.role,
-        reason=rejection_comment,
-    )
-
-    # Alert creator & team lead that client requested revisions/support
-    from app.models.ops import Notification
-    from app.models.work import Task
-    deliv_type_label = "Reel" if "video" in (d.file_type or "") else "Poster"
-    assignee_id = d.submitted_by
-    if d.task_id:
-        task = await db.get(Task, d.task_id)
-        if task:
-            if task.deliverable_type:
-                deliv_type_label = task.deliverable_type.value.capitalize()
-            if task.assigned_to:
-                assignee_id = task.assigned_to
-            task.status = TaskStatus.IN_PRODUCTION
-
-    if assignee_id:
-        db.add(
-            Notification(
-                user_id=assignee_id,
-                title="⚠️ Revision Requested by Client",
-                message=f"Changes requested on {deliv_type_label}: '{rejection_comment.strip()}'",
-                link="/admin/queue",
-                is_read=False,
-            )
-        )
-        await db.commit()
-
+    d = await workflow.client_request_changes(db, actor, d, comment)
     return {
         "status": d.status.value,
         "deliverable_id": str(d.id),
@@ -384,8 +346,8 @@ async def schedule_deliverable(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """Staff schedules an approved deliverable. approved → scheduled."""
-    wide_scope = TenantScope(agency_id=actor.agency_id, client_id=None, user_id=actor.user_id, role=actor.role)
-    d = await _get_deliverable_or_404(deliverable_id, wide_scope, db)
+    _require_team(actor)
+    d, _task = await workflow.get_deliverable_for_review(db, actor, deliverable_id)
     d = await deliverable_state.transition(
         db,
         d,
@@ -404,49 +366,44 @@ async def schedule_deliverable(
 # ── Version History ────────────────────────────────────────────────────────────
 
 
-def _resolve_deliverable_url(raw_url_or_key: str | None) -> str | None:
-    if not raw_url_or_key:
-        return None
-    if raw_url_or_key.startswith("http://") or raw_url_or_key.startswith("https://") or raw_url_or_key.startswith("/static/"):
-        return raw_url_or_key
-    try:
-        return storage_service.signed_get(raw_url_or_key)
-    except Exception as exc:
-        log.warning("deliverable_url_sign_failed", key=raw_url_or_key, error=str(exc))
-        return raw_url_or_key
+async def _client_history(
+    db: AsyncSession, d: Deliverable, request: Request, revisions_allowed: int
+) -> list[dict[str, object]]:
+    """Versions of this deliverable the client has been shown, newest first."""
+    rows = (await db.execute(
+        select(Deliverable, Task)
+        .outerjoin(Task, Task.id == Deliverable.task_id)
+        .where(Deliverable.root_id == d.root_id)
+        .order_by(Deliverable.version.desc())
+    )).all()
+    archived = [v.id for v, _t in rows if v.status == DeliverableStatus.ARCHIVED]
+    seen = await workflow.client_seen_ids(db, archived)
+    return [
+        workflow.serialize_for_client(v, t, request=request, revisions_allowed=revisions_allowed)
+        for v, t in rows
+        if v.status in workflow.CLIENT_VISIBLE_STATUSES or v.id in seen
+    ]
 
 
 @router.get("/{deliverable_id}/versions")
 async def get_versions(
     deliverable_id: uuid.UUID,
+    request: Request,
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> list[dict[str, object]]:
-    """Return the full root_id revision chain, newest version first."""
-    # First get the deliverable to find root_id
-    wide_scope = TenantScope(agency_id=actor.agency_id, client_id=actor.client_id, user_id=actor.user_id, role=actor.role)
-    d = await _get_deliverable_or_404(deliverable_id, wide_scope, db)
+    """Return the root_id revision chain, newest version first."""
+    if actor.role == UserRole.CLIENT:
+        d = await _get_deliverable_or_404(deliverable_id, _scope_from_actor(actor), db)
+        allowed = await workflow.plan_revision_rounds(db, d.client_id)
+        return await _client_history(db, d, request, allowed)
 
-    stmt = (
-        select(Deliverable)
-        .where(Deliverable.root_id == d.root_id)
-        .order_by(Deliverable.version.desc())
-    )
-    result = await db.execute(stmt)
-    versions = result.scalars().all()
-
-    return [
-        {
-            "id": str(v.id),
-            "version": v.version,
-            "status": v.status.value,
-            "revision_round": v.revision_round,
-            "file_url": _resolve_deliverable_url(v.file_url),
-            "created_at": v.created_at.isoformat() if v.created_at else None,
-            "approved_at": v.approved_at.isoformat() if v.approved_at else None,
-        }
-        for v in versions
-    ]
+    _require_team(actor)
+    d, _task = await workflow.get_deliverable_for_review(db, actor, deliverable_id)
+    versions = (await db.execute(
+        select(Deliverable).where(Deliverable.root_id == d.root_id).order_by(Deliverable.version.desc())
+    )).scalars().all()
+    return [workflow.serialize_for_team(v, request) for v in versions]
 
 
 # ── Zip Download Endpoint ──────────────────────────────────────────────────────
@@ -457,47 +414,54 @@ async def get_versions(
 async def download_all_approved_zip(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
-):
-    """Bundle all approved/published deliverables for client into a downloadable ZIP archive."""
+) -> Any:
+    """Bundle the client's approved deliverables into a downloadable ZIP archive."""
     import io
     import zipfile
+
     import httpx
     from fastapi.responses import StreamingResponse
 
     client_id = actor.client_id or actor.user_id
-    stmt = (
-        select(Deliverable)
+    rows = (await db.execute(
+        select(Deliverable, Task)
+        .outerjoin(Task, Task.id == Deliverable.task_id)
         .where(
             Deliverable.client_id == client_id,
-            Deliverable.status.in_([
-                DeliverableStatus.APPROVED,
-                DeliverableStatus.SCHEDULED,
-            ]),
+            Deliverable.status.in_(list(workflow.DOWNLOADABLE_STATUSES)),
         )
         .order_by(Deliverable.created_at.desc())
-    )
-    items = (await db.execute(stmt)).scalars().all()
+    )).all()
 
     zip_buffer = io.BytesIO()
+    included = 0
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-        async with httpx.AsyncClient(timeout=15.0) as http_client:
-            for idx, d in enumerate(items, 1):
-                url = _resolve_deliverable_url(d.file_url)
-                ext = ".mp4" if (d.file_type and "video" in d.file_type.lower()) else ".jpg"
-                filename = f"asset_{idx}_{str(d.id)[:8]}{ext}"
-                if url and url.startswith("http"):
-                    try:
+        async with httpx.AsyncClient(timeout=30.0) as http_client:
+            for idx, (d, task) in enumerate(rows, 1):
+                filename = f"{idx:02d}_{workflow.download_filename(task, d)}"
+                raw = d.file_url or ""
+                try:
+                    if raw.startswith(storage_service.LOCAL_UPLOAD_PREFIXES):
+                        local = os.path.join(storage_service._LOCAL_STATIC_DIR, raw.split("/static/", 1)[-1])
+                        if os.path.isfile(local):
+                            zf.write(local, filename)
+                            included += 1
+                            continue
+                    url = storage_service.resolve_media_url(raw)
+                    if url:
                         resp = await http_client.get(url)
                         if resp.status_code == 200:
                             zf.writestr(filename, resp.content)
+                            included += 1
                             continue
-                    except Exception:
-                        pass
-                # Fallback manifest note if remote asset fetch fails
-                zf.writestr(f"asset_{idx}_{str(d.id)[:8]}.txt", f"Deliverable ID: {d.id}\nFile URL: {url}\nStatus: {d.status.value}\n")
+                except Exception as exc:
+                    log.warning("zip_asset_fetch_failed", deliverable_id=str(d.id), error=str(exc))
+                zf.writestr(f"{filename}.missing.txt", f"Deliverable {d.id} could not be fetched.\n")
 
-        # Include manifest summary
-        zf.writestr("MANIFEST.txt", f"Creo Approved Assets Package\nTotal Assets: {len(items)}\nGenerated At: {datetime.now().isoformat()}\n")
+        zf.writestr(
+            "MANIFEST.txt",
+            f"Creo approved assets\nFiles: {included} of {len(rows)}\nGenerated: {datetime.now().isoformat()}\n",
+        )
 
     zip_buffer.seek(0)
     return StreamingResponse(
@@ -510,146 +474,136 @@ async def download_all_approved_zip(
 # ── Portal Deliverables (Client) ──────────────────────────────────────────────
 
 
+async def _portal_gate(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any] | None:
+    """Return an empty-list payload when the client may not see deliverables yet."""
+    from fastapi import HTTPException
+
+    from app.services.onboarding_service import get_onboarding_status
+
+    ob_status = await get_onboarding_status(db, client_id)
+    if not ob_status.is_complete:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "ONBOARDING_INCOMPLETE",
+                "message": "Onboarding must be completed before accessing deliverables.",
+                "stage": ob_status.stage,
+                "next_required_stage": ob_status.next_required_stage,
+                "next_route": ob_status.next_route,
+                "resume_section": ob_status.resume_section,
+            },
+        )
+    sub_check = await check_client_subscription(db, client_id)
+    if not sub_check["is_active"]:
+        return {
+            "items": [],
+            "has_more": False,
+            "waiting_on_you": 0,
+            "subscription_active": False,
+            "is_expired": sub_check["is_expired"],
+            "server_time_utc": sub_check["server_time_utc"],
+        }
+    return None
+
+
 @portal_router.get("/deliverables")
 async def portal_list_deliverables(
+    request: Request,
     status: DeliverableStatus | None = Query(None),
     limit: int = Query(default=50, ge=1, le=200),
     cursor_id: uuid.UUID | None = Query(None),  # keyset pagination cursor
+    client_id: uuid.UUID | None = Query(None, description="Staff only: whose portal to view"),
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, object]:
-    """Client portal: list deliverables with keyset pagination and status filter.
+    """Client portal: deliverables the client may see, newest first, one card per deliverable.
 
-    Uses cursor-based pagination (cursor_id = last seen id) to avoid OFFSET performance issues.
-    Guaranteed: <= 3 DB queries (1 for deliverables, 1 for total pending count, 1 optional).
+    Internal drafts (in production, internal QA, QA rejections) are never listed.
     """
-    scope = _scope_from_actor(actor)
     if actor.role == UserRole.CLIENT:
-        if not scope.client_id:
+        target = actor.client_id
+        if not target:
             return {"items": [], "has_more": False, "waiting_on_you": 0, "subscription_active": False}
+        blocked = await _portal_gate(db, target)
+        if blocked is not None:
+            return blocked
+    elif actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN):
+        target = client_id or actor.client_id
+        if target is None:
+            return {"items": [], "has_more": False, "waiting_on_you": 0, "limit": limit}
+    else:
+        raise Forbidden("The client portal is for clients", code="PORTAL_FORBIDDEN")
 
-        from app.services.onboarding_service import get_onboarding_status
-        ob_status = await get_onboarding_status(db, scope.client_id)
-        if not ob_status.is_complete:
-            from fastapi import HTTPException
-            raise HTTPException(
-                status_code=403,
-                detail={
-                    "code": "ONBOARDING_INCOMPLETE",
-                    "message": "Onboarding must be completed before accessing deliverables.",
-                    "stage": ob_status.stage,
-                    "next_required_stage": ob_status.next_required_stage,
-                    "next_route": ob_status.next_route,
-                    "resume_section": ob_status.resume_section,
-                },
-            )
+    visible = list(workflow.CLIENT_VISIBLE_STATUSES)
+    if status is not None and status not in workflow.CLIENT_VISIBLE_STATUSES:
+        visible = []
+    elif status is not None:
+        visible = [status]
 
-        sub_check = await check_client_subscription(db, scope.client_id)
-        if not sub_check["is_active"]:
-            return {
-                "items": [],
-                "has_more": False,
-                "waiting_on_you": 0,
-                "subscription_active": False,
-                "is_expired": sub_check["is_expired"],
-                "server_time_utc": sub_check["server_time_utc"],
-            }
-
-    # Build keyset query — single query, no count(*) for main list
-    stmt = select(Deliverable)
-
-    if actor.role == UserRole.CLIENT:
-        stmt = stmt.where(Deliverable.client_id == scope.client_id)
-    elif scope.client_id:
-        stmt = stmt.where(Deliverable.client_id == scope.client_id)
-
-    if status:
-        stmt = stmt.where(Deliverable.status == status)
-
+    stmt = (
+        select(Deliverable, Task)
+        .outerjoin(Task, Task.id == Deliverable.task_id)
+        .where(Deliverable.client_id == target, Deliverable.status.in_(visible))
+    )
     if cursor_id:
-        # Keyset: get deliverables created before the cursor row (newest first pagination)
-        cursor_stmt = select(Deliverable.created_at).where(Deliverable.id == cursor_id)
-        cursor_res = await db.execute(cursor_stmt)
-        cursor_created_at = cursor_res.scalar_one_or_none()
+        cursor_created_at = (await db.execute(
+            select(Deliverable.created_at).where(Deliverable.id == cursor_id)
+        )).scalar_one_or_none()
         if cursor_created_at:
             stmt = stmt.where(Deliverable.created_at < cursor_created_at)
 
     stmt = stmt.order_by(Deliverable.created_at.desc()).limit(limit + 1)
-    result = await db.execute(stmt)
-    items = list(result.scalars().all())
+    rows = list((await db.execute(stmt)).all())
+    has_more = len(rows) > limit
+    rows = rows[:limit]
 
-    has_more = len(items) > limit
-    if has_more:
-        items = items[:limit]
+    # One card per deliverable: keep only the newest visible version of each root.
+    newest: dict[uuid.UUID, tuple[Deliverable, Task | None]] = {}
+    for d, t in rows:
+        kept = newest.get(d.root_id)
+        if kept is None or d.version > kept[0].version:
+            newest[d.root_id] = (d, t)
+    ordered = sorted(newest.values(), key=lambda pair: pair[0].created_at or datetime.min, reverse=True)
 
-    # Count items waiting for client decision (pending_approval for this client)
-    waiting_stmt = select(func.count(Deliverable.id)).where(
-        Deliverable.status == DeliverableStatus.PENDING_APPROVAL,
-    )
-    if scope.client_id:
-        waiting_stmt = waiting_stmt.where(Deliverable.client_id == scope.client_id)
-    waiting_count = (await db.execute(waiting_stmt)).scalar_one()
+    waiting_count = (await db.execute(
+        select(func.count(Deliverable.id)).where(
+            Deliverable.client_id == target,
+            Deliverable.status == DeliverableStatus.PENDING_APPROVAL,
+        )
+    )).scalar_one()
+    allowed = await workflow.plan_revision_rounds(db, target)
 
     return {
         "items": [
-            {
-                "id": str(d.id),
-                "root_id": str(d.root_id),
-                "version": d.version,
-                "status": d.status.value,
-                "file_url": _resolve_deliverable_url(d.file_url),
-                "file_type": d.file_type,
-                "revision_round": d.revision_round,
-                "rejection_comment": d.rejection_comment,
-                "approved_at": d.approved_at.isoformat() if d.approved_at else None,
-                "scheduled_at": d.scheduled_at.isoformat() if d.scheduled_at else None,
-                "created_at": d.created_at.isoformat() if d.created_at else None,
-            }
-            for d in items
+            workflow.serialize_for_client(d, t, request=request, revisions_allowed=allowed)
+            for d, t in ordered
         ],
         "has_more": has_more,
         "waiting_on_you": waiting_count,
+        "revisions_allowed": allowed,
         "limit": limit,
     }
 
 
-async def submit_revision(
-    db: AsyncSession,
-    original: Deliverable,
-    storage_key: str,
-    file_size_bytes: int,
-    submitted_by: uuid.UUID,
-) -> Deliverable:
-    """Create a new Deliverable row (version+1) sharing root_id. Archive the previous.
-
-    Never mutates the original file — immutable version chain.
-    """
-    new_version = (original.version or 1) + 1
-    new_deliverable = Deliverable(
-        id=uuid.uuid4(),
-        root_id=original.root_id,
-        version=new_version,
-        client_id=original.client_id,
-        task_id=original.task_id,
-        submitted_by=submitted_by,
-        parent_deliverable_id=original.id,
-        file_url=storage_key,
-        file_type=original.file_type,
-        file_size_bytes=file_size_bytes,
-        status=DeliverableStatus.IN_PRODUCTION,
-        revision_round=original.revision_round,
-    )
-    db.add(new_deliverable)
-
-    # Archive previous version exclusively through state machine
-    await deliverable_state.transition(
-        db,
-        original,
-        DeliverableStatus.ARCHIVED,
-        actor_id=submitted_by,
-        actor_role=UserRole.EDITOR,
-        reason=f"Superseded by revision v{new_version}",
-    )
-    await db.commit()
-    await db.refresh(new_deliverable)
-    return new_deliverable
+@portal_router.get("/deliverables/{deliverable_id}")
+async def portal_deliverable_detail(
+    deliverable_id: uuid.UUID,
+    request: Request,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, object]:
+    """Deliverable detail for /portal/deliverables/{id}, including its reviewed versions."""
+    if actor.role not in (UserRole.CLIENT, UserRole.ADMIN, UserRole.SUPER_ADMIN):
+        raise Forbidden("The client portal is for clients", code="PORTAL_FORBIDDEN")
+    d = await _get_deliverable_or_404(deliverable_id, _scope_from_actor(actor), db)
+    if actor.role == UserRole.CLIENT:
+        blocked = await _portal_gate(db, d.client_id)
+        if blocked is not None:
+            raise Conflict("An active subscription is required to view deliverables",
+                           code="SUBSCRIPTION_INACTIVE")
+    allowed = await workflow.plan_revision_rounds(db, d.client_id)
+    versions = await _client_history(db, d, request, allowed)
+    if not versions:
+        raise NotFound(f"Deliverable {deliverable_id} not found", code="DELIVERABLE_NOT_FOUND")
+    current = next((v for v in versions if v["id"] == str(d.id)), versions[0])
+    return {**current, "versions": versions}

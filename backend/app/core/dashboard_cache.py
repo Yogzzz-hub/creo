@@ -19,6 +19,9 @@ from fastapi.encoders import jsonable_encoder
 from app.core.cache import get_redis
 
 GENERATION_KEY = "creo:dashboard:v1:generation"
+# Dependencies that are not part of a snapshot's identity. The request only
+# supplies the API origin for media URLs, which is the same for every caller.
+_UNCACHED_ARGS = ("actor", "db", "request")
 _locks: WeakValueDictionary[str, asyncio.Lock] = WeakValueDictionary()
 _PUBLISH = """
 if (redis.call('GET', KEYS[1]) or '0') == ARGV[1] then
@@ -53,7 +56,7 @@ def dashboard_cached(ttl: int = 15) -> Callable[[Callable[..., Awaitable[Any]]],
                 return await endpoint(*args, **kwargs)
             scope = [str(actor.user_id), str(actor.agency_id), str(actor.client_id),
                      str(actor.role), actor.email]
-            parameters = {k: v for k, v in bound.arguments.items() if k not in ("actor", "db")}
+            parameters = {k: v for k, v in bound.arguments.items() if k not in _UNCACHED_ARGS}
             identity = json.dumps([endpoint.__module__, endpoint.__name__, scope,
                                    jsonable_encoder(parameters)], sort_keys=True)
             key = "creo:dashboard:v1:" + hashlib.sha256(identity.encode()).hexdigest()
@@ -93,7 +96,7 @@ def dashboard_cached(ttl: int = 15) -> Callable[[Callable[..., Awaitable[Any]]],
                 str(actor.user_id), str(actor.agency_id), str(actor.client_id),
                 str(actor.role), actor.email,
                 jsonable_encoder({k: v for k, v in bound.arguments.items()
-                                  if k not in ("actor", "db")})], sort_keys=True)
+                                  if k not in _UNCACHED_ARGS})], sort_keys=True)
             key = hashlib.sha256(identity.encode()).hexdigest()
             lock = _locks.get(key)
             if lock is None:

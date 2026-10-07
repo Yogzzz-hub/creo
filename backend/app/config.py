@@ -133,6 +133,9 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = Field(default="")
     STORAGE_ENDPOINT_URL: str | None = Field(default=None)  # For non-AWS S3-compatible stores (e.g. Cloudflare R2)
     PRESIGNED_URL_TTL: int = Field(default=900)  # 15 minutes
+    # Absolute origin used when serving locally stored media to the SPA (optional;
+    # derived from the request's forwarded scheme/host when empty).
+    PUBLIC_API_BASE_URL: str = Field(default="")
 
     # Supabase (Storage, Auth, Direct REST)
     SUPABASE_URL: str = Field(default="")

@@ -21,9 +21,9 @@ from datetime import UTC, date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile, status
 from pydantic import BaseModel
-from sqlalchemy import delete, func, or_, select, text
+from sqlalchemy import and_, delete, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, selectinload
 
@@ -2387,59 +2387,72 @@ async def list_admin_team_roster(
 
 
 # --- Deliverables Hub Endpoints ---
+# Creative uploads go through /deliverables/tasks/{task_id}/... (deliverable_workflow).
+# These admin endpoints list deliverables and let staff attach an already
+# stored file; every status change still goes through the state machine.
 
 class DeliverableStatusUpdate(BaseModel):
     status: str
+    reason: str | None = None
 
 
 class AdminDeliverableCreate(BaseModel):
     client_id: uuid.UUID
     type: str = "reel"
     title: str | None = None
-    file_url: str | None = None
+    file_url: str
     file_type: str | None = None
-    status: str = "pending_approval"
-    revision_round: int = 1
     description: str | None = None
-    scheduled_at: datetime | None = None
+    task_id: uuid.UUID | None = None
 
 
-UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "static", "uploads"))
-DELIVERABLES_DIR = os.path.join(UPLOAD_DIR, "deliverables")
-os.makedirs(DELIVERABLES_DIR, exist_ok=True)
+_ADMIN_TYPE_DISPLAY = {
+    "reel": "Reel 9:16",
+    "static_post": "Static Poster",
+    "carousel": "Carousel",
+    "story": "Story 9:16",
+    "shoot_day": "Shoot Day",
+}
 
 
 @router.post("/deliverables/upload")
 async def upload_admin_deliverable_file(
+    request: Request,
     file: UploadFile = File(...),
+    client_id: uuid.UUID = Form(...),
     actor: Actor = StaffActor,
-) -> dict[str, str]:
-    """Upload deliverable media file (MP4, MOV, PNG, JPG, WEBP) to deliverables folder."""
-    ext = file.filename.split(".")[-1] if file.filename and "." in file.filename else "png"
-    safe_name = f"{uuid.uuid4().hex[:12]}_{file.filename}"
-    file_path = os.path.join(DELIVERABLES_DIR, safe_name)
+) -> dict[str, Any]:
+    """Store a deliverable file in the media bucket (never on the server's ephemeral disk)."""
+    import asyncio
 
-    content = await file.read()
-    with open(file_path, "wb") as f:
-        f.write(content)
-
-    file_url = f"/static/uploads/deliverables/{safe_name}"
-    content_type = file.content_type or ("video/mp4" if ext.lower() in ["mp4", "mov"] else f"image/{ext.lower()}")
+    mime_type = (file.content_type or "").lower()
+    size = file.size or 0
+    try:
+        storage_service.validate_media(mime_type, size)
+        key = storage_service.make_storage_key(client_id, mime_type)
+        stored = await asyncio.to_thread(storage_service.put_object, key, file.file, mime_type, size)
+    except storage_service.StorageError as exc:
+        status_code = 503 if type(exc) is storage_service.StorageError else 409
+        raise HTTPException(status_code=status_code, detail={"code": exc.code, "message": exc.message}) from exc
     return {
-        "file_url": file_url,
-        "filename": file.filename or safe_name,
-        "content_type": content_type,
-        "file_type": content_type,
+        "file_url": stored,
+        "preview_url": storage_service.resolve_media_url(stored, request),
+        "filename": file.filename or key.rsplit("/", 1)[-1],
+        "content_type": mime_type,
+        "file_type": mime_type,
+        "file_size_bytes": size,
     }
 
 
 @router.get("/deliverables")
 async def list_admin_deliverables(
+    request: Request,
+    client_id: uuid.UUID | None = None,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> list[dict[str, Any]]:
-    """List all client deliverables with status, real storage URLs, and client brand profiles."""
+    """List deliverables with client, task and specialist context and browser-loadable URLs."""
     StaffUser = aliased(User)
     stmt = (
         select(
@@ -2448,44 +2461,50 @@ async def list_admin_deliverables(
             User.full_name.label("client_name"),
             ClientProfile.company_name.label("company_name"),
             StaffUser,
+            Task,
         )
         .join(User, User.id == Deliverable.client_id)
         .outerjoin(ClientProfile, ClientProfile.user_id == Deliverable.client_id)
         .outerjoin(StaffUser, StaffUser.id == Deliverable.submitted_by)
-        .order_by(Deliverable.created_at.desc())
-        .limit(limit)
+        .outerjoin(Task, Task.id == Deliverable.task_id)
+        .where(Deliverable.status != DeliverableStatus.ARCHIVED)
     )
-    res = await db.execute(stmt)
-    rows = res.fetchall()
+    if client_id:
+        stmt = stmt.where(Deliverable.client_id == client_id)
+    if actor.role != UserRole.SUPER_ADMIN and actor.agency_id:
+        stmt = stmt.where(or_(Deliverable.agency_id == actor.agency_id, Deliverable.agency_id.is_(None)))
+    stmt = stmt.order_by(Deliverable.created_at.desc()).limit(max(1, min(limit, 300)))
+    rows = (await db.execute(stmt)).fetchall()
+
+    from app.services import deliverable_workflow
 
     results = []
-    for row in rows:
-        d = row[0]
-        client_email = row[1]
-        client_name = row[2]
-        company_name = row[3]
-        staff_user = row[4]
-        assignee_name = staff_user.full_name if staff_user else None
+    for d, client_email, client_name, company_name, staff_user, task in rows:
         client_label = company_name or client_name or (client_email.split("@")[0].capitalize() if client_email else "Client")
-        file_type_clean = d.file_type.split("/")[-1].lower() if "/" in d.file_type else d.file_type.lower()
-        type_display = "Reel 9:16" if "mp4" in file_type_clean or "video" in file_type_clean or "reel" in file_type_clean else "Static Poster" if "png" in file_type_clean or "poster" in file_type_clean or "image" in file_type_clean else "Carousel"
-
+        deliv_type = deliverable_workflow.deliverable_type_of(task, d)
+        type_display = _ADMIN_TYPE_DISPLAY.get(deliv_type, "Deliverable")
+        rounds = d.revision_round or 0
         results.append({
             "id": str(d.id),
+            "root_id": str(d.root_id),
             "client_id": str(d.client_id),
             "client": client_label,
-            "title": f"{type_display} · {client_label}",
+            "client_name": client_label,
+            "title": f"{deliverable_workflow.deliverable_title(task, d)} · {client_label}",
             "type": type_display,
+            "deliverable_type": deliv_type,
             "status": d.status.value,
+            "version": d.version,
+            "revision_round": rounds,
             "date": d.scheduled_at.strftime("%b %d, %I:%M %p") if d.scheduled_at else (d.created_at.strftime("%b %d, %Y") if d.created_at else "Today"),
-            "round": f"Round {d.revision_round} of 2" if d.revision_round > 1 else "Draft 1",
-            "file_url": (
-                storage_service.signed_get(d.file_url)
-                if (d.file_url and not (d.file_url.startswith("http://") or d.file_url.startswith("https://") or d.file_url.startswith("/static/")))
-                else d.file_url
-            ),
-            "description": d.rejection_comment or f"High-resolution social media creative formatted for Instagram brand channel.",
-            "assigned_name": assignee_name or "Creative Studio",
+            "round": f"Revision round {rounds}" if rounds else f"Draft v{d.version}",
+            "file_url": storage_service.resolve_media_url(d.file_url, request),
+            "file_type": d.file_type,
+            "is_video": deliverable_workflow.is_video(d.file_type, d.file_url),
+            "description": d.rejection_comment or "",
+            "task_id": str(task.id) if task else None,
+            "task_status": task.status.value if task else None,
+            "assigned_name": staff_user.full_name if staff_user else "Creative Studio",
             "assignee": {
                 "id": str(staff_user.id),
                 "full_name": staff_user.full_name,
@@ -2493,6 +2512,7 @@ async def list_admin_deliverables(
                 "role": staff_user.role.value if hasattr(staff_user.role, "value") else str(staff_user.role),
             } if staff_user else None,
             "created_at": d.created_at.isoformat() if d.created_at else None,
+            "scheduled_at": d.scheduled_at.isoformat() if d.scheduled_at else None,
         })
     return results
 
@@ -2500,80 +2520,53 @@ async def list_admin_deliverables(
 @router.post("/deliverables")
 async def create_admin_deliverable(
     payload: AdminDeliverableCreate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> dict[str, Any]:
-    """Team Lead / Staff / Admin creates a deliverable record for a specified client."""
+    """Attach an already stored file to a client's task; it enters internal QA like any upload."""
+    from app.services import deliverable_workflow
+
     client = await db.get(User, payload.client_id)
-    if not client:
+    if not client or client.role != UserRole.CLIENT:
         raise HTTPException(status_code=404, detail="Client user not found")
+    if storage_service.resolve_media_url(payload.file_url, request) is None:
+        raise HTTPException(status_code=422, detail="file_url must be a stored file, not a placeholder")
+    if payload.file_url.startswith("clients/") and not payload.file_url.startswith(f"clients/{client.id}/"):
+        raise HTTPException(status_code=403, detail="Storage key does not belong to this client")
 
-    try:
-        deliv_status = DeliverableStatus(payload.status)
-    except ValueError:
-        deliv_status = DeliverableStatus.PENDING_APPROVAL
-
-    file_url = payload.file_url or "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop"
-
-    if payload.file_type:
-        file_type = payload.file_type
-    elif "mp4" in file_url.lower() or "video" in file_url.lower() or payload.type.lower() == "reel":
-        file_type = "video/mp4"
+    if payload.task_id:
+        task = await deliverable_workflow.get_task_for_actor(db, actor, payload.task_id)
+        if task.client_id != client.id:
+            raise HTTPException(status_code=409, detail="Task belongs to a different client")
     else:
-        file_type = "image/png"
+        try:
+            deliv_type = DeliverableType(payload.type.lower())
+        except ValueError:
+            deliv_type = DeliverableType.REEL if "video" in (payload.file_type or "") else DeliverableType.STATIC_POST
+        task = Task(
+            agency_id=client.agency_id,
+            client_id=client.id,
+            deliverable_type=deliv_type,
+            status=TaskStatus.IN_PRODUCTION,
+            assigned_to=actor.user_id if actor.role != UserRole.SUPER_ADMIN else None,
+            blueprint={"concept_name": payload.title} if payload.title else None,
+        )
+        db.add(task)
+        await db.flush()
 
-    # Verify submitted_by foreign key if user exists
-    submitted_by = None
-    if actor and actor.user_id:
-        user_check = await db.execute(select(User.id).where(User.id == actor.user_id))
-        if user_check.scalar():
-            submitted_by = actor.user_id
-
-    new_id = uuid.uuid4()
-    deliverable = Deliverable(
-        id=new_id,
-        root_id=new_id,
-        version=1,
-        client_id=payload.client_id,
-        submitted_by=submitted_by,
-        file_url=file_url,
-        file_type=file_type,
-        file_size_bytes=1024 * 1024,
-        status=deliv_status,
-        revision_round=payload.revision_round or 1,
-        rejection_comment=payload.description,
-        scheduled_at=payload.scheduled_at,
+    file_type = payload.file_type or ("video/mp4" if "video" in payload.type.lower() or payload.type.lower() == "reel" else "image/png")
+    deliverable = await deliverable_workflow.submit_task_deliverable(
+        db, actor, task,
+        file_url=payload.file_url,
+        mime_type=file_type,
+        file_size_bytes=0,
+        notes=payload.description,
     )
-    db.add(deliverable)
-    await db.commit()
-    await db.refresh(deliverable)
-
-    cp_stmt = select(ClientProfile.company_name).where(ClientProfile.user_id == payload.client_id)
-    cp_res = await db.execute(cp_stmt)
-    company_name = cp_res.scalar()
-
-    client_label = company_name or client.full_name or client.email.split("@")[0].capitalize()
-    file_type_clean = deliverable.file_type.lower()
-    type_display = (
-        "Reel 9:16" if ("mp4" in file_type_clean or "video" in file_type_clean or "reel" in payload.type.lower())
-        else "Static Poster" if ("png" in file_type_clean or "poster" in payload.type.lower() or "image" in file_type_clean)
-        else "Carousel"
-    )
-    title = payload.title or f"{type_display} · {client_label}"
-
     return {
-        "id": str(deliverable.id),
-        "client_id": str(deliverable.client_id),
-        "client": client_label,
-        "title": title,
-        "type": type_display,
-        "status": deliverable.status.value,
-        "date": deliverable.scheduled_at.strftime("%b %d, %I:%M %p") if deliverable.scheduled_at else (deliverable.created_at.strftime("%b %d, %Y") if deliverable.created_at else "Today"),
-        "round": f"Round {deliverable.revision_round} of 2" if deliverable.revision_round > 1 else "Draft 1",
-        "file_url": deliverable.file_url,
-        "description": deliverable.rejection_comment or "High-resolution creative deliverable formatted for Instagram.",
-        "assigned_name": actor.user_id and str(actor.user_id)[:8] or "Team Lead",
-        "created_at": deliverable.created_at.isoformat() if deliverable.created_at else None,
+        **deliverable_workflow.serialize_for_team(deliverable, request),
+        "task_id": str(task.id),
+        "client_id": str(client.id),
     }
 
 
@@ -2584,42 +2577,23 @@ async def update_deliverable_status(
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> dict[str, Any]:
-    """Admin override for deliverable quality and review status with audit logging."""
-    deliverable = await db.get(Deliverable, deliverable_id)
-    if not deliverable:
-        raise HTTPException(status_code=404, detail="Deliverable not found")
+    """Status change for staff, restricted to the state machine's legal, role-permitted edges."""
+    from app.services import deliverable_workflow
 
     try:
         new_status = DeliverableStatus(payload.status)
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid status: {payload.status}")
 
-    prev_status = deliverable.status
-    from app.services.deliverable_state import transition
-    try:
-        await transition(
-            db,
-            deliverable,
-            new_status,
-            actor_id=actor.user_id,
-            actor_role=actor.role,
-            reason="Admin/Lead operations override",
-        )
-    except Exception as exc:
-        deliverable.status = new_status
-        audit = AuditLog(
-            actor_id=actor.user_id,
-            actor_role=actor.role,
-            entity="deliverable",
-            entity_id=deliverable.id,
-            action="admin_status_override",
-            from_value={"status": prev_status.value if hasattr(prev_status, "value") else str(prev_status)},
-            to_value={"status": new_status.value, "reason": str(exc)},
-        )
-        db.add(audit)
-        await db.commit()
-
-    await db.refresh(deliverable)
+    deliverable, _task = await deliverable_workflow.get_deliverable_for_review(db, actor, deliverable_id)
+    await deliverable_state.transition(
+        db,
+        deliverable,
+        new_status,
+        actor_id=actor.user_id,
+        actor_role=actor.role,
+        reason=payload.reason or "Status updated from the operations dashboard",
+    )
     return {"status": "updated", "id": str(deliverable_id), "new_status": deliverable.status.value}
 
 
@@ -3294,11 +3268,7 @@ async def get_admin_calendar(
                 if d.status.value in ["draft", "pending_approval"]
                 else d.status.value
             )
-            file_url = (
-                storage_service.signed_get(d.file_url)
-                if (d.file_url and not (d.file_url.startswith("http://") or d.file_url.startswith("https://") or d.file_url.startswith("/static/")))
-                else d.file_url
-            )
+            file_url = storage_service.resolve_media_url(d.file_url)
 
         title = cal.caption or f"{format_label} · {client_name}"
 
@@ -3388,196 +3358,10 @@ async def get_admin_calendar(
             "year": event_date.year if event_date else 2026,
             "time": event_date.strftime("%I:%M %p") if event_date else "11:00 AM",
             "caption": "",
-            "file_url": (
-                storage_service.signed_get(d.file_url)
-                if (d.file_url and not (d.file_url.startswith("http://") or d.file_url.startswith("https://") or d.file_url.startswith("/static/")))
-                else d.file_url
-            ),
+            "file_url": storage_service.resolve_media_url(d.file_url),
         })
 
     return events
-
-
-# --- Admin Deliverables Management & Automated Task Pipeline Sync ---
-
-class AdminDeliverableCreateRequest(BaseModel):
-    client_id: uuid.UUID
-    title: str = ""
-    type: str = "reel"
-    file_url: str
-    file_type: str = "video/mp4"
-    status: str = "pending_approval"
-    revision_round: int = 1
-    description: str = ""
-    scheduled_at: str | None = None
-
-
-class AdminDeliverableStatusUpdate(BaseModel):
-    status: str
-
-
-@router.get("/deliverables")
-async def list_admin_deliverables(
-    client_id: uuid.UUID | None = None,
-    db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
-) -> list[dict[str, Any]]:
-    """List creative deliverables with client information and task links."""
-    stmt = (
-        select(
-            Deliverable,
-            User.email,
-            ClientProfile.company_name,
-            Task.id.label("task_id"),
-            Task.status.label("task_status"),
-        )
-        .join(User, User.id == Deliverable.client_id)
-        .outerjoin(ClientProfile, ClientProfile.user_id == Deliverable.client_id)
-        .outerjoin(Task, Task.id == Deliverable.task_id)
-    )
-    if client_id:
-        stmt = stmt.where(Deliverable.client_id == client_id)
-
-    stmt = stmt.order_by(Deliverable.created_at.desc()).limit(300)
-    res = await db.execute(stmt)
-    rows = res.fetchall()
-
-    results = []
-    for d, email, company, t_id, t_status in rows:
-        c_name = company or email.split("@")[0].capitalize()
-        status_val = d.status.value if hasattr(d.status, "value") else str(d.status)
-        deliv_type = "reel" if ("video" in (d.file_type or "").lower() or "mp4" in (d.file_type or "").lower()) else "static_post"
-
-        results.append({
-            "id": str(d.id),
-            "root_id": str(d.root_id),
-            "client_id": str(d.client_id),
-            "client_name": c_name,
-            "title": f"{deliv_type.replace('_', ' ').capitalize()} · {c_name}",
-            "type": deliv_type,
-            "file_url": (
-                storage_service.signed_get(d.file_url)
-                if (d.file_url and not (d.file_url.startswith("http://") or d.file_url.startswith("https://") or d.file_url.startswith("/uploads/") or d.file_url.startswith("/static/")))
-                else d.file_url
-            ),
-            "file_type": d.file_type,
-            "status": status_val,
-            "version": d.version,
-            "revision_round": d.revision_round,
-            "task_id": str(t_id) if t_id else None,
-            "task_status": t_status.value if hasattr(t_status, "value") else (str(t_status) if t_status else None),
-            "created_at": d.created_at.isoformat() if d.created_at else None,
-            "scheduled_at": d.scheduled_at.isoformat() if d.scheduled_at else None,
-        })
-    return results
-
-
-@router.post("/deliverables/upload")
-async def upload_admin_deliverable_file(
-    file: UploadFile = File(...),
-    actor: Actor = StaffActor,
-) -> dict[str, str]:
-    """Upload media file directly to local server storage."""
-    import time
-    from app.main import _uploads_dir
-
-    ext = os.path.splitext(file.filename or "")[1].lower()
-    clean_name = f"{int(time.time())}_{uuid.uuid4().hex[:8]}{ext}"
-    dest_path = os.path.join(_uploads_dir, clean_name)
-
-    content = await file.read()
-    with open(dest_path, "wb") as f:
-        f.write(content)
-
-    return {
-        "file_url": f"/uploads/{clean_name}",
-        "filename": file.filename or clean_name,
-        "file_type": file.content_type or "application/octet-stream",
-    }
-
-
-@router.post("/deliverables")
-async def create_admin_deliverable(
-    payload: AdminDeliverableCreateRequest,
-    db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
-) -> dict[str, Any]:
-    """Staff uploads/creates a new deliverable. Automates task pipeline progression into Internal QA."""
-    # Validate target status
-    target_status = DeliverableStatus.PENDING_QA
-    try:
-        if payload.status:
-            target_status = DeliverableStatus(payload.status)
-    except ValueError:
-        target_status = DeliverableStatus.PENDING_QA
-
-    deliverable = Deliverable(
-        id=uuid.uuid4(),
-        root_id=uuid.uuid4(),
-        version=1,
-        client_id=payload.client_id,
-        submitted_by=actor.user_id,
-        file_url=payload.file_url,
-        file_type=payload.file_type or "video/mp4",
-        file_size_bytes=1024 * 1024,
-        status=target_status,
-        revision_round=payload.revision_round,
-    )
-    if payload.scheduled_at:
-        try:
-            deliverable.scheduled_at = datetime.fromisoformat(payload.scheduled_at)
-        except Exception:
-            pass
-
-    db.add(deliverable)
-    await db.flush()
-
-    # Automate task pipeline progression: upload by team moves task to Internal QA
-    await deliverable_state.sync_task_with_deliverable(db, deliverable, target_status)
-
-    await db.commit()
-    await db.refresh(deliverable)
-
-    return {
-        "id": str(deliverable.id),
-        "status": deliverable.status.value,
-        "task_id": str(deliverable.task_id) if deliverable.task_id else None,
-        "file_url": deliverable.file_url,
-    }
-
-
-@router.patch("/deliverables/{deliverable_id}/status")
-async def update_admin_deliverable_status(
-    deliverable_id: uuid.UUID,
-    payload: AdminDeliverableStatusUpdate,
-    db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
-) -> dict[str, Any]:
-    """Update deliverable status. Automatically syncs and moves the corresponding task in the pipeline."""
-    deliverable = await db.get(Deliverable, deliverable_id)
-    if not deliverable:
-        raise HTTPException(status_code=404, detail="Deliverable not found")
-
-    try:
-        new_status = DeliverableStatus(payload.status)
-    except ValueError:
-        raise HTTPException(status_code=400, detail=f"Invalid status: {payload.status}")
-
-    deliverable.status = new_status
-    if new_status == DeliverableStatus.APPROVED:
-        deliverable.approved_at = datetime.now(timezone.utc)
-
-    # Sync corresponding Task in the pipeline
-    await deliverable_state.sync_task_with_deliverable(db, deliverable, new_status)
-
-    await db.commit()
-    await db.refresh(deliverable)
-
-    return {
-        "id": str(deliverable.id),
-        "status": deliverable.status.value,
-        "task_id": str(deliverable.task_id) if deliverable.task_id else None,
-    }
 
 
 # =========================================================================
@@ -3640,11 +3424,14 @@ class PodTaskReassignRequest(BaseModel):
 @router.get("/pod-dashboard")
 @dashboard_cached()
 async def get_pod_dashboard(
+    request: Request = None,  # type: ignore[assignment]  # injected by FastAPI; None in direct calls
     pod: str | None = None,
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> dict[str, Any]:
     """Retrieve complete scoped pod dashboard data for Team Leads and Admins."""
+    from app.services import deliverable_workflow
+
     actor_email = (actor.email or "").lower().strip()
     is_team_lead = actor.role in (UserRole.TEAM_LEAD, "team_lead")
 
@@ -3769,13 +3556,17 @@ async def get_pod_dashboard(
         Task.assigned_to.in_(member_ids),
         Task.client_id.in_(client_ids) if client_ids else False,
     )
+    # One row per task version; ordering puts each task's newest live upload first.
     tasks_stmt = (
         select(Task, User, ClientProfile, Deliverable)
         .outerjoin(User, User.id == Task.assigned_to)
         .outerjoin(ClientProfile, ClientProfile.user_id == Task.client_id)
-        .outerjoin(Deliverable, Deliverable.task_id == Task.id)
+        .outerjoin(
+            Deliverable,
+            and_(Deliverable.task_id == Task.id, Deliverable.status != DeliverableStatus.ARCHIVED),
+        )
         .where(task_filter)
-        .order_by(Task.created_at.desc())
+        .order_by(Task.created_at.desc(), Task.id, Deliverable.version.desc().nulls_last())
     )
     tasks_rows = (await db.execute(tasks_stmt)).all()
 
@@ -3825,14 +3616,8 @@ async def get_pod_dashboard(
             "is_near_sla": is_near_sla,
             "effort_points": t.effort_points,
             "blueprint": t.blueprint or {},
-            "deliverable": {
-                "id": str(deliv.id),
-                "file_url": deliv.file_url,
-                "file_type": deliv.file_type,
-                "status": deliv.status.value if hasattr(deliv.status, "value") else str(deliv.status),
-                "revision_round": deliv.revision_round,
-                "rejection_comment": deliv.rejection_comment,
-            } if deliv else None,
+            "is_revision": t.is_revision,
+            "deliverable": deliverable_workflow.serialize_for_team(deliv, request) if deliv else None,
         }
         tasks_by_status[t_status].append(task_data)
 
@@ -3963,54 +3748,43 @@ async def get_pod_dashboard(
 async def pod_task_qa_review(
     task_id: uuid.UUID,
     payload: PodQAReviewRequest,
+    background: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> dict[str, Any]:
-    """Team Lead QA Approval or Rejection for a deliverable."""
-    task = await db.get(Task, task_id)
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+    """Team Lead QA approval (client notified) or rejection (creative notified) of a task's upload."""
+    from app.services import deliverable_workflow
 
-    deliv_stmt = select(Deliverable).where(Deliverable.task_id == task_id).order_by(Deliverable.created_at.desc())
-    deliv = (await db.execute(deliv_stmt)).scalars().first()
-
-    now = datetime.now(timezone.utc)
     decision = payload.decision.lower().strip()
-
-    if decision == "approve":
-        task.status = TaskStatus.CLIENT_REVIEW
-        if deliv:
-            deliv.status = DeliverableStatus.PENDING_APPROVAL
-            deliv.rejection_comment = None
-        message = "Deliverable approved by Lead QA and moved to Client Review."
-    elif decision == "reject":
-        task.status = TaskStatus.IN_PRODUCTION
-        if deliv:
-            deliv.status = DeliverableStatus.QA_REJECTED
-            deliv.rejection_comment = payload.comment or "QA feedback: Please refine pacing and visuals according to brand guide."
-        message = f"Deliverable returned to specialist for revisions: {payload.comment or 'Revisions requested.'}"
-    else:
+    if decision not in ("approve", "reject"):
         raise HTTPException(status_code=400, detail="Invalid QA decision. Must be 'approve' or 'reject'.")
 
-    # Audit log
-    audit = AuditLog(
-        actor_id=actor.user_id,
-        action=f"pod_qa_{decision}",
-        entity="task",
-        entity_id=task.id,
-        to_value={"decision": decision, "comment": payload.comment},
+    task = await deliverable_workflow.get_task_for_actor(db, actor, task_id)
+    deliv = await deliverable_workflow.latest_version(db, task.id)
+    if deliv is None or deliv.status != DeliverableStatus.PENDING_QA:
+        raise Conflict(
+            "There is no uploaded file waiting for QA on this task",
+            code="NOTHING_TO_REVIEW",
+        )
+    deliv, email = await deliverable_workflow.qa_decide(
+        db, actor, deliv, task, approve=decision == "approve", notes=payload.comment
     )
-    db.add(audit)
-
-    await db.commit()
+    if email:
+        background.add_task(deliverable_workflow.send_ready_for_review_email, **email)
     await db.refresh(task)
 
+    message = (
+        "Approved and sent to the client for review."
+        if decision == "approve"
+        else "Returned to the creative with your notes."
+    )
     return {
         "status": "success",
         "message": message,
         "task_id": str(task.id),
         "new_task_status": task.status.value,
-        "deliverable_status": deliv.status.value if deliv else None,
+        "deliverable_id": str(deliv.id),
+        "deliverable_status": deliv.status.value,
     }
 
 

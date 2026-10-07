@@ -72,6 +72,8 @@ jobs:
           DIRECT_DATABASE_URL: postgresql+asyncpg://postgres:postgrespassword@localhost:5432/creo
           REDIS_URL: redis://localhost:6379/0
           JWT_SECRET: test-super-secret-key-for-ci-runs-32-chars-long
+          # Opt-in for tests that write (and roll back) rows in the throwaway CI database
+          CREO_TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgrespassword@localhost:5432/creo
         run: pytest -v
 
   frontend:

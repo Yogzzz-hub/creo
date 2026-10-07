@@ -168,23 +168,32 @@ async def get_portal_dashboard(
         }
 
     # 5. Recent deliverables for activity feed
+    # Internal drafts and QA rejections are never shown to the client.
+    from app.models.work import Task
+    from app.services import deliverable_workflow
+
     recent_delivs_stmt = (
-        select(Deliverable)
-        .where(Deliverable.client_id == target_client_id)
+        select(Deliverable, Task)
+        .outerjoin(Task, Task.id == Deliverable.task_id)
+        .where(
+            Deliverable.client_id == target_client_id,
+            Deliverable.status.in_(list(deliverable_workflow.CLIENT_VISIBLE_STATUSES)),
+        )
         .order_by(Deliverable.created_at.desc())
         .limit(5)
     )
-    recent_delivs = (await db.execute(recent_delivs_stmt)).scalars().all()
+    recent_delivs = (await db.execute(recent_delivs_stmt)).all()
 
     recent_activity = [
         {
             "id": str(d.id),
             "type": "deliverable",
-            "title": f"Deliverable v{d.version} ({d.file_type})",
+            "title": f"{deliverable_workflow.deliverable_title(t, d)} v{d.version}",
             "status": d.status.value,
+            "link": f"/portal/deliverables/{d.id}",
             "created_at": d.created_at.isoformat() if d.created_at else None,
         }
-        for d in recent_delivs
+        for d, t in recent_delivs
     ]
 
     # 6. Assigned creative pod / handlers
