@@ -707,7 +707,7 @@ export function SlackChatPage() {
               <button
                 type="button"
                 onClick={() => setMobileView("channels")}
-                className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9] font-bold text-xs shrink-0 transition-colors cursor-pointer"
+                className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#F1F5F9] font-bold text-xs shrink-0 transition-colors cursor-pointer"
                 title="View Channels"
               >
                 <ArrowLeft className="size-3.5" />
@@ -806,7 +806,7 @@ export function SlackChatPage() {
                           <span
                             className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
                               msg.taskData.priority === "P1 High"
-                                ? "bg-rose-100 text-rose-700 border border-rose-200"
+                                ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
                                 : "bg-[#7FA0D6]/20 text-[#7FA0D6]"
                             }`}
                           >

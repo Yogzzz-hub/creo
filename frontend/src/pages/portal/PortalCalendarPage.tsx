@@ -70,9 +70,9 @@ const DEFAULT_TYPE_CONFIG: TypeConfig = {
   icon: ImageIcon,
   badgeBg: "bg-[#7FA0D6]",
   badgeText: "text-white",
-  border: "border-blue-200",
-  softBg: "bg-blue-50 text-[#7FA0D6] hover:bg-blue-100",
-  pillBg: "bg-blue-600/10 text-[#7FA0D6] border-blue-200",
+  border: "border-blue-500/30",
+  softBg: "bg-blue-500/15 text-[#7FA0D6] hover:bg-blue-500/25 border border-blue-500/30",
+  pillBg: "bg-blue-500/15 text-[#7FA0D6] border border-blue-500/30",
 };
 
 const TYPE_CONFIG: Record<string, TypeConfig> = {
@@ -81,9 +81,9 @@ const TYPE_CONFIG: Record<string, TypeConfig> = {
     icon: Video,
     badgeBg: "bg-purple-600",
     badgeText: "text-white",
-    border: "border-purple-200",
-    softBg: "bg-purple-50 text-purple-700 hover:bg-purple-100",
-    pillBg: "bg-purple-600/10 text-purple-700 border-purple-200",
+    border: "border-purple-500/30",
+    softBg: "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 border border-purple-500/30",
+    pillBg: "bg-purple-500/15 text-purple-400 border border-purple-500/30",
   },
   poster: DEFAULT_TYPE_CONFIG,
   story: {
@@ -91,18 +91,18 @@ const TYPE_CONFIG: Record<string, TypeConfig> = {
     icon: Layers,
     badgeBg: "bg-amber-600",
     badgeText: "text-white",
-    border: "border-amber-200",
-    softBg: "bg-amber-50 text-amber-800 hover:bg-amber-100",
-    pillBg: "bg-amber-600/10 text-amber-800 border-amber-200",
+    border: "border-amber-500/30",
+    softBg: "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/30",
+    pillBg: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
   },
   carousel: {
     label: "Carousel",
     icon: Layers,
     badgeBg: "bg-amber-600",
     badgeText: "text-white",
-    border: "border-amber-200",
-    softBg: "bg-amber-50 text-amber-800 hover:bg-amber-100",
-    pillBg: "bg-amber-600/10 text-amber-800 border-amber-200",
+    border: "border-amber-500/30",
+    softBg: "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/30",
+    pillBg: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
   },
 };
 
@@ -577,11 +577,11 @@ export function PortalCalendarPage() {
                 </span>
 
                 {previewEntry.slot_strategy === "flex" || previewEntry.slot_strategy === "swapped" ? (
-                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
                     ⚡ Flex Slot (30% Buffer)
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold bg-blue-50 text-[#7FA0D6] border border-blue-200">
+                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold bg-blue-500/15 text-[#7FA0D6] border border-blue-500/30">
                     🎯 Anchor Slot (70%)
                   </span>
                 )}
@@ -589,10 +589,10 @@ export function PortalCalendarPage() {
                 {previewEntry.blueprint?.funnel_stage && (
                   <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
                     previewEntry.blueprint.funnel_stage === "reach"
-                      ? "bg-sky-100 text-sky-800"
+                      ? "bg-sky-500/15 text-sky-400 border border-sky-500/30"
                       : previewEntry.blueprint.funnel_stage === "authority"
-                      ? "bg-indigo-100 text-indigo-800"
-                      : "bg-emerald-100 text-emerald-800"
+                      ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30"
+                      : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
                   }`}>
                     {previewEntry.blueprint.funnel_stage.toUpperCase()} (Funnel Mix)
                   </span>
@@ -602,7 +602,7 @@ export function PortalCalendarPage() {
               <button
                 type="button"
                 onClick={() => setPreviewEntry(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer shrink-0"
+                className="p-1 rounded-lg text-[#97A0B3] hover:text-white hover:bg-[#2A3446] transition-colors cursor-pointer shrink-0"
               >
                 <X className="size-5" />
               </button>
@@ -636,8 +636,8 @@ export function PortalCalendarPage() {
               {conceptFeedback && (
                 <div className={`p-3.5 rounded-xl text-xs font-semibold flex items-center justify-between ${
                   conceptFeedback.type === "success"
-                    ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
-                    : "bg-red-50 border border-red-200 text-red-800"
+                    ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400"
+                    : "bg-rose-500/15 border border-rose-500/30 text-rose-400"
                 }`}>
                   <span>{conceptFeedback.text}</span>
                   <button type="button" onClick={() => setConceptFeedback(null)} className="cursor-pointer">
@@ -648,19 +648,19 @@ export function PortalCalendarPage() {
 
               {/* Flex Slot Propose Section (if strategy is flex or swapped) */}
               {(previewEntry.slot_strategy === "flex" || previewEntry.slot_strategy === "swapped") && (
-                <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 space-y-3">
+                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                      <Zap className="size-4 text-amber-600" />
+                    <h4 className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                      <Zap className="size-4 text-amber-400" />
                       Dynamic Flex Hot-Swap Protocol
                     </h4>
                     {previewEntry.flex_deadline && (
-                      <span className="text-[10px] font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">
+                      <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md">
                         Auto-converts by: {previewEntry.flex_deadline}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-amber-800/80 leading-relaxed">
+                  <p className="text-xs text-amber-200/80 leading-relaxed">
                     Have a sudden industry event, feature launch, or viral trend? Fill this flex slot instantly with human-guided direction.
                   </p>
                   <div className="flex gap-2">
@@ -697,11 +697,11 @@ export function PortalCalendarPage() {
 
               {/* Blueprint Premise */}
               {previewEntry.blueprint?.premise && (
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">
+                <div className="p-4 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-1">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#97A0B3] block">
                     Core Premise
                   </span>
-                  <p className="text-xs font-semibold text-slate-800 leading-relaxed">
+                  <p className="text-xs font-semibold text-[#F1F5F9] leading-relaxed">
                     {previewEntry.blueprint.premise}
                   </p>
                 </div>
@@ -712,11 +712,11 @@ export function PortalCalendarPage() {
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-sm font-black text-[#0B111C] flex items-center gap-1.5">
+                      <h4 className="text-sm font-black text-white flex items-center gap-1.5">
                         <Target className="size-4 text-[#7FA0D6]" />
                         <span>Select Concept Hook Angle (A / B / C)</span>
                       </h4>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-[11px] text-[#97A0B3]">
                         Approve your preferred hook before production starts. Revisions after production cost hours; concept alignment is instant.
                       </p>
                     </div>
@@ -725,7 +725,7 @@ export function PortalCalendarPage() {
                       type="button"
                       onClick={handleRerollConcept}
                       disabled={isConceptSubmitting}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-[#7FA0D6] hover:text-[#7FA0D6] disabled:opacity-50 cursor-pointer"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-[#7FA0D6] hover:text-[#BCCCE6] disabled:opacity-50 cursor-pointer"
                       title="Generate new hook angles (5 daily quota)"
                     >
                       <RotateCcw className="size-3.5" />
@@ -752,8 +752,8 @@ export function PortalCalendarPage() {
                           }}
                           className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
                             isSelected || isApprovedHook
-                              ? "border-[#7FA0D6] bg-[#161F2D] shadow-xs"
-                              : "border-slate-200 bg-white hover:border-slate-300"
+                              ? "border-[#7FA0D6] bg-[#0B111C] shadow-xs"
+                              : "border-[#2A3446] bg-[#161F2D] hover:border-[#7FA0D6]/40"
                           }`}
                         >
                           <div className="flex items-center justify-between mb-1.5">
@@ -761,13 +761,13 @@ export function PortalCalendarPage() {
                               <span className="size-5 rounded-full flex items-center justify-center text-[10px] font-black bg-[#7FA0D6] text-white">
                                 {idx === 0 ? "A" : idx === 1 ? "B" : "C"}
                               </span>
-                              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-[#0B111C] text-[#F1F5F9] border border-[#2A3446]">
                                 {hook.angle.replace("_", " ")}
                               </span>
                             </div>
 
                             {isApprovedHook && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full border border-emerald-500/30">
                                 <CheckCircle2 className="size-3" />
                                 Chosen Hook
                               </span>
@@ -805,8 +805,8 @@ export function PortalCalendarPage() {
                       </button>
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800 font-semibold flex items-center gap-2">
-                      <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/15 p-3 text-xs text-emerald-400 font-semibold flex items-center gap-2">
+                      <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
                       <span>Concept Approved! Task dispatched with your selected angle.</span>
                     </div>
                   )}
@@ -815,25 +815,25 @@ export function PortalCalendarPage() {
 
               {/* ── Storyboard & Beats Breakdown ───────────────────────────── */}
               {previewEntry.blueprint?.beats && previewEntry.blueprint.beats.length > 0 && (
-                <div className="space-y-2 pt-2 border-t border-slate-100">
-                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <div className="space-y-2 pt-2 border-t border-[#2A3446]">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#97A0B3] flex items-center gap-1.5">
                     <Film className="size-3.5 text-[#7FA0D6]" />
                     Shot-by-Shot Storyboard Beats
                   </h4>
                   <div className="space-y-2">
                     {previewEntry.blueprint.beats.map((beat, bIdx) => (
-                      <div key={bIdx} className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 text-xs space-y-1">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
+                      <div key={bIdx} className="p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs space-y-1">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-[#97A0B3]">
                           <span className="text-[#7FA0D6] font-extrabold">Shot {bIdx + 1} ({beat.timestamp_range})</span>
-                          <span className="px-1.5 py-0.5 rounded bg-slate-200/60 text-slate-700 font-semibold text-[10px]">
+                          <span className="px-1.5 py-0.5 rounded bg-[#161F2D] text-[#F1F5F9] border border-[#2A3446] font-semibold text-[10px]">
                             {beat.shot_type}
                           </span>
                         </div>
-                        <p className="text-slate-800 font-medium">
-                          <strong className="text-slate-900">Visual:</strong> {beat.visual_cue}
+                        <p className="text-[#F1F5F9] font-medium">
+                          <strong className="text-white">Visual:</strong> {beat.visual_cue}
                         </p>
-                        <p className="text-slate-600 italic">
-                          <strong className="text-slate-900 not-italic">Voiceover / Script:</strong> &ldquo;{beat.script_line}&rdquo;
+                        <p className="text-[#97A0B3] italic">
+                          <strong className="text-white not-italic">Voiceover / Script:</strong> &ldquo;{beat.script_line}&rdquo;
                         </p>
                       </div>
                     ))}
@@ -843,28 +843,28 @@ export function PortalCalendarPage() {
 
               {/* ── Audio Direction & Brand Guardrails ─────────────────────── */}
               {previewEntry.blueprint?.audio_direction && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100 text-xs">
-                  <div className="p-3.5 rounded-xl bg-purple-50/60 border border-purple-100 space-y-1">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-700 flex items-center gap-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[#2A3446] text-xs">
+                  <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/30 space-y-1">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-400 flex items-center gap-1">
                       <Music className="size-3" />
                       Actionable Audio Direction
                     </span>
-                    <p className="font-bold text-slate-800 text-[11.5px]">
+                    <p className="font-bold text-white text-[11.5px]">
                       {previewEntry.blueprint.audio_direction.genre_mood} · {previewEntry.blueprint.audio_direction.bpm_range}
                     </p>
-                    <p className="text-[11px] text-slate-600">
+                    <p className="text-[11px] text-[#97A0B3]">
                       Rule: {previewEntry.blueprint.audio_direction.vocal_rules}
                     </p>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60 space-y-1">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-                      <ShieldCheck className="size-3 text-emerald-600" />
+                  <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] space-y-1">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#97A0B3] flex items-center gap-1">
+                      <ShieldCheck className="size-3 text-emerald-400" />
                       Brand Guardrails Respected
                     </span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {previewEntry.blueprint.respects?.map((resp, rIdx) => (
-                        <span key={rIdx} className="text-[10.5px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium">
+                        <span key={rIdx} className="text-[10.5px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium">
                           ✓ {resp}
                         </span>
                       ))}
@@ -875,8 +875,8 @@ export function PortalCalendarPage() {
 
               {/* Editorial Caption (if exists) */}
               {previewEntry.caption && (
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 leading-relaxed">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                <div className="p-3.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-[#F1F5F9] leading-relaxed">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] block mb-1">
                     Editorial Caption & Call to Action
                   </span>
                   {previewEntry.caption}
@@ -884,7 +884,7 @@ export function PortalCalendarPage() {
               )}
 
               {/* Action Buttons Footer */}
-              <div className="flex gap-3 pt-2 border-t border-slate-100">
+              <div className="flex gap-3 pt-2 border-t border-[#2A3446]">
                 <Link
                   to="/portal/deliverables"
                   className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#7FA0D6] hover:bg-[#7FA0D6] text-white font-bold text-xs shadow-xs transition-colors"
@@ -895,7 +895,7 @@ export function PortalCalendarPage() {
                 <button
                   type="button"
                   onClick={() => setPreviewEntry(null)}
-                  className="px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-xs transition-colors cursor-pointer"
+                  className="px-4 py-3 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:bg-[#2A3446] text-[#F1F5F9] font-bold text-xs transition-colors cursor-pointer"
                 >
                   Close
                 </button>

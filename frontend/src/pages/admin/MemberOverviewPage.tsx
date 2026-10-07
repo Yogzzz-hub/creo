@@ -105,7 +105,7 @@ export function MemberOverviewPage() {
       author: "Automated QA Bot",
       role: "Render Pass Sentinel • 2h ago",
       badge: "Passed",
-      badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      badgeColor: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
       content:
         "Pre-flight check passed for 9:16 export specs: Color gamut verified, 709 standard, peak nitrates within client target window.",
       avatarBg: "bg-purple-600",
@@ -170,8 +170,8 @@ export function MemberOverviewPage() {
           <div
             className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-between shadow-2xs animate-fade-in ${
               toastMessage.type === "info"
-                ? "bg-[#7FA0D6]/15 border-[#7FA0D6]/30 text-blue-800"
-                : "bg-emerald-50 border-emerald-200 text-emerald-800"
+                ? "bg-[#7FA0D6]/15 border-[#7FA0D6]/30 text-[#7FA0D6]"
+                : "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -248,7 +248,7 @@ export function MemberOverviewPage() {
               <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
                 WEEKLY HOURS LOGGED
               </span>
-              <div className="size-6 sm:size-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <div className="size-6 sm:size-7 rounded-lg bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
                 <Clock className="size-3 sm:size-3.5" />
               </div>
             </div>
@@ -279,7 +279,7 @@ export function MemberOverviewPage() {
               <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#97A0B3]">
                 REMAINING PTO
               </span>
-              <div className="size-6 sm:size-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+              <div className="size-6 sm:size-7 rounded-lg bg-purple-500/15 text-purple-400 border border-purple-500/30 flex items-center justify-center">
                 <Calendar className="size-3 sm:size-3.5" />
               </div>
             </div>
@@ -416,7 +416,7 @@ export function MemberOverviewPage() {
                     </div>
                   </div>
 
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 self-start">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 self-start">
                     Keyframing · Due in 6h
                   </span>
                 </div>
@@ -613,7 +613,7 @@ export function MemberOverviewPage() {
                       </button>
                     )}
                     {note.tag && (
-                      <span className="inline-block text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded">
+                      <span className="inline-block text-[9px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded">
                         ✓ {note.tag}
                       </span>
                     )}
@@ -646,15 +646,15 @@ export function MemberOverviewPage() {
                   <Users className="size-3.5 text-[#7FA0D6]" />
                   <h3 className="text-xs font-black text-white">{podName} Team Sync</h3>
                 </div>
-                <span className="px-2 py-0.2 rounded-full text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                   ● {members.length || 1} Active
                 </span>
               </div>
 
               {/* Standup Banner */}
-              <div className="p-2.5 rounded-xl bg-[#7FA0D6]/15/80 border border-[#7FA0D6]/30 flex items-center justify-between gap-2">
+              <div className="p-2.5 rounded-xl bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 flex items-center justify-between gap-2">
                 <div>
-                  <div className="text-[11px] font-black text-blue-900">10:00 AM Daily Standup</div>
+                  <div className="text-[11px] font-black text-white">10:00 AM Daily Standup</div>
                   <div className="text-[10px] text-[#7FA0D6] font-medium">Zoom link active in 25m</div>
                 </div>
                 <button
@@ -993,7 +993,7 @@ export function MemberOverviewPage() {
             className="w-full max-w-md bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="size-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto font-black">
+            <div className="size-12 rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mx-auto font-black">
               <Video className="size-6" />
             </div>
             <div>

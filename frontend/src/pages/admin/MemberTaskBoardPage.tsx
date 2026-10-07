@@ -446,8 +446,8 @@ export function MemberTaskBoardPage() {
           <div
             className={`p-3 rounded-xl border text-xs font-bold flex items-center justify-between shadow-2xs animate-fade-in ${
               toastMessage.type === "info"
-                ? "bg-[#7FA0D6]/15 border-[#7FA0D6]/30 text-blue-800"
-                : "bg-emerald-50 border-emerald-200 text-emerald-800"
+                ? "bg-[#7FA0D6]/15 border-[#7FA0D6]/30 text-[#7FA0D6]"
+                : "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -697,7 +697,7 @@ export function MemberTaskBoardPage() {
                   <div className="flex items-center justify-between text-[10px] font-bold">
                     <span className={task.clientColor}>{task.client.toUpperCase()}</span>
                     {task.priority === "High" ? (
-                      <span className="px-1.5 py-0.2 rounded bg-rose-50 text-rose-700 text-[8px] font-black">
+                      <span className="px-1.5 py-0.2 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[8px] font-black">
                         ⏱ {task.deadline}
                       </span>
                     ) : (
@@ -806,7 +806,7 @@ export function MemberTaskBoardPage() {
                   <div className="flex items-center justify-between text-[10px] font-bold">
                     <span className={task.clientColor}>{task.client.toUpperCase()}</span>
                     {task.reviewData?.status === "Revision Pending" ? (
-                      <span className="px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 text-[9px] font-bold">
+                      <span className="px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[9px] font-bold">
                         Revision Pending
                       </span>
                     ) : (
@@ -834,12 +834,12 @@ export function MemberTaskBoardPage() {
 
                   {/* Revision Note Box if Active */}
                   {task.reviewData?.revisionNote && (
-                    <div className="p-2 rounded-lg bg-amber-50/80 border border-amber-200 text-xs space-y-0.5">
-                      <div className="flex justify-between font-bold text-amber-900 text-[10px]">
+                    <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs space-y-0.5">
+                      <div className="flex justify-between font-bold text-amber-300 text-[10px]">
                         <span>1 Tweak Required</span>
-                        <span className="text-amber-700">Feedback</span>
+                        <span className="text-amber-400">Feedback</span>
                       </div>
-                      <p className="text-[10px] text-amber-800 leading-snug italic">
+                      <p className="text-[10px] text-amber-200/90 leading-snug italic">
                         "{task.reviewData.revisionNote}"
                       </p>
                     </div>
@@ -856,7 +856,7 @@ export function MemberTaskBoardPage() {
                     </button>
                     <button
                       onClick={() => handleFastTrackDispatch(task.id)}
-                      className="p-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors cursor-pointer"
+                      className="p-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 transition-colors cursor-pointer"
                       title="Fast-Track Sign-off"
                     >
                       <Check className="size-3.5" />
@@ -886,7 +886,7 @@ export function MemberTaskBoardPage() {
                   Signed Off
                 </h3>
               </div>
-              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                 {dispatchedTasks.length}
               </span>
             </div>
@@ -899,7 +899,7 @@ export function MemberTaskBoardPage() {
                 >
                   <div className="flex items-center justify-between text-[10px] font-bold">
                     <span className={task.clientColor}>{task.client.toUpperCase()}</span>
-                    <span className="px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 text-[9px] font-bold flex items-center gap-0.5">
+                    <span className="px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold flex items-center gap-0.5">
                       <Check className="size-2.5" /> Approved
                     </span>
                   </div>
@@ -955,7 +955,7 @@ export function MemberTaskBoardPage() {
               <button
                 type="button"
                 onClick={() => setAddDeliverableModalOpen(false)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer transition-colors"
+                className="size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center cursor-pointer transition-colors"
               >
                 <X className="size-4" />
               </button>
@@ -1146,7 +1146,7 @@ export function MemberTaskBoardPage() {
               <button
                 type="button"
                 onClick={() => setReviewModalCard(null)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer shrink-0 transition-colors"
+                className="size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center cursor-pointer shrink-0 transition-colors"
               >
                 <X className="size-4" />
               </button>
@@ -1327,12 +1327,12 @@ export function MemberTaskBoardPage() {
 
             {/* Revision feedback note if existing */}
             {reviewModalCard.reviewData?.revisionNote && (
-              <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 space-y-1 text-xs">
-                <div className="flex justify-between font-bold text-amber-900 text-[11px]">
+              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-1 text-xs">
+                <div className="flex justify-between font-bold text-amber-300 text-[11px]">
                   <span>Prior Lead Review Feedback</span>
-                  <span className="text-amber-700">{leadName}</span>
+                  <span className="text-amber-400">{leadName}</span>
                 </div>
-                <p className="text-amber-800 leading-relaxed font-medium italic">
+                <p className="text-amber-200/90 leading-relaxed font-medium italic">
                   "{reviewModalCard.reviewData.revisionNote}"
                 </p>
               </div>
@@ -1396,7 +1396,7 @@ export function MemberTaskBoardPage() {
               <button
                 type="button"
                 onClick={() => setLogTimeModalCard(null)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer"
+                className="size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center cursor-pointer transition-colors"
               >
                 <X className="size-4" />
               </button>
@@ -1460,7 +1460,7 @@ export function MemberTaskBoardPage() {
               <button
                 type="button"
                 onClick={() => setUpdateProgressModalCard(null)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer"
+                className="size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center cursor-pointer transition-colors"
               >
                 <X className="size-4" />
               </button>
@@ -1516,7 +1516,7 @@ export function MemberTaskBoardPage() {
           >
             <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="size-9 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                <div className="size-9 rounded-2xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold">
                   <AlertTriangle className="size-4.5" />
                 </div>
                 <div>
@@ -1527,15 +1527,15 @@ export function MemberTaskBoardPage() {
               <button
                 type="button"
                 onClick={() => setRevisionModalCard(null)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer"
+                className="size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center cursor-pointer transition-colors"
               >
                 <X className="size-4" />
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-2 text-xs">
-              <div className="font-bold text-amber-900">{revisionModalCard.title}</div>
-              <p className="text-amber-800 leading-relaxed font-medium italic">
+            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2 text-xs">
+              <div className="font-bold text-amber-300">{revisionModalCard.title}</div>
+              <p className="text-amber-200/90 leading-relaxed font-medium italic">
                 "{revisionModalCard.reviewData?.revisionNote}"
               </p>
             </div>

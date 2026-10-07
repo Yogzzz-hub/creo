@@ -314,7 +314,7 @@ export function PodDeliverablesReviewPage() {
                   </div>
 
                   {/* Media Preview & Review Panel (2 columns) */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 lg:gap-8 items-start">
                     {/* Left Column: Media Player Visual Mockup */}
                     <div className="lg:col-span-5 space-y-3">
                       <div className="relative aspect-4/5 sm:aspect-square lg:aspect-4/5 w-full bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-xl flex flex-col justify-between p-4 group">
@@ -561,7 +561,7 @@ export function PodDeliverablesReviewPage() {
             <div className="flex justify-end gap-3 pt-3">
               <button
                 onClick={() => setNewDeliverableModal(false)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition"
+                className="px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[#F1F5F9] text-xs font-bold hover:bg-[#2A3446] transition"
               >
                 Cancel
               </button>

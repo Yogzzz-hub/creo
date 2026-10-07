@@ -352,22 +352,22 @@ export function PodClientAllocationsPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-auto">
               <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#97A0B3]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Filter clients..."
-                className="pl-7 pr-3 py-1 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-medium w-44 sm:w-52 focus:w-60 focus:bg-[#161F2D] focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                className="pl-7 pr-3 py-1 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-medium w-full sm:w-52 sm:focus:w-60 focus:bg-[#161F2D] focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
               />
             </div>
           </div>
         </div>
 
         {/* 3. Top 4 Metric KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           {/* Card 1: Assigned Clients */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -568,7 +568,7 @@ export function PodClientAllocationsPage() {
                     {/* Button 1: Client Details */}
                     <Link
                       to={`/lead/clients/${client.id}`}
-                      className="px-3 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#7FA0D6]/15/70 border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs active:scale-95 cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#7FA0D6]/20 border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs active:scale-95 cursor-pointer"
                     >
                       <Sparkles className="size-3 text-[#7FA0D6]" />
                       Client Details
@@ -711,7 +711,7 @@ export function PodClientAllocationsPage() {
               <button
                 type="button"
                 onClick={() => setReviewModal(null)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+                className="size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
                 aria-label="Close review dialog"
               >
                 <X className="size-4" />
@@ -797,7 +797,7 @@ export function PodClientAllocationsPage() {
                   setReviewModal(null);
                   navigate("/lead/deliverables");
                 }}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9] text-xs font-bold active:scale-95 transition-all cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#F1F5F9] text-xs font-bold active:scale-95 transition-all cursor-pointer"
               >
                 Open Review Studio →
               </button>
@@ -832,7 +832,7 @@ export function PodClientAllocationsPage() {
             <button
               type="button"
               onClick={() => setAlertModal(null)}
-              className="absolute top-4 right-4 size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-4 right-4 size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Close modal"
             >
               <X className="size-4" />
@@ -871,7 +871,7 @@ export function PodClientAllocationsPage() {
                     setAlertModal(null);
                     navigate(`/lead/clients/${id}`);
                   }}
-                  className="px-5 py-3 rounded-2xl bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9] font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-5 py-3 rounded-2xl bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#F1F5F9] font-bold text-xs active:scale-95 transition-all cursor-pointer"
                 >
                   View Client Profile
                 </button>
@@ -900,7 +900,7 @@ export function PodClientAllocationsPage() {
               <button
                 type="button"
                 onClick={() => setReallocationModal(false)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+                className="size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -934,7 +934,7 @@ export function PodClientAllocationsPage() {
               <button
                 type="button"
                 onClick={() => setReallocationModal(false)}
-                className="px-4 py-2 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-xs font-bold hover:bg-slate-200 transition cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[#F1F5F9] text-xs font-bold hover:bg-[#2A3446] transition cursor-pointer"
               >
                 Cancel
               </button>

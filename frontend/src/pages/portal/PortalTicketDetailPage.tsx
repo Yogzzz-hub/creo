@@ -722,7 +722,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                       setMoreMenuOpen(false);
                       showToast(`Ticket #${ticketId} archived to compliance vault.`, "info");
                     }}
-                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-rose-400 hover:bg-rose-500/15 flex items-center gap-2.5 transition-colors cursor-pointer"
                   >
                     <Archive className="size-4 text-rose-500" />
                     Archive Incident
@@ -766,7 +766,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                               msg.isSystemAudit
                                 ? "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]"
                                 : msg.isInternal
-                                ? "bg-amber-100 text-amber-800 border-amber-200"
+                                ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
                                 : "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30"
                             }`}
                           >
@@ -926,7 +926,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                         "Could you please confirm if your destination webhook server accepts chunked transfer encoding for assets over 1GB?"
                       )
                     }
-                    className="px-2.5 py-1 rounded-lg bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9] text-[11px] font-semibold border border-[#2A3446] transition-colors cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-[#161F2D] hover:bg-[#2A3446] text-[#F1F5F9] text-[11px] font-semibold border border-[#2A3446] transition-colors cursor-pointer"
                   >
                     Request Info
                   </button>
@@ -1253,7 +1253,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
               </div>
               <button
                 onClick={() => setReassignModalOpen(false)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer transition-colors"
+                className="size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center cursor-pointer transition-colors"
               >
                 <X className="size-4" />
               </button>
@@ -1273,7 +1273,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                       onClick={() => setSelectedLead(lead)}
                       className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
                         selectedLead.name === lead.name
-                          ? "border-blue-600 bg-[#7FA0D6]/15/50 shadow-xs"
+                          ? "border-blue-600 bg-[#7FA0D6]/15 shadow-xs"
                           : "border-[#2A3446] hover:border-[#2A3446] bg-[#161F2D]"
                       }`}
                     >
@@ -1338,7 +1338,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
           <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-2xl p-6 sm:p-8 max-w-lg w-full space-y-6 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
               <div className="flex items-center gap-3">
-                <div className="size-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                <div className="size-10 rounded-2xl bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center justify-center font-bold">
                   <AlertTriangle className="size-5" />
                 </div>
                 <div>
@@ -1348,7 +1348,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
               </div>
               <button
                 onClick={() => setEscalateModalOpen(false)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer transition-colors"
+                className="size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center cursor-pointer transition-colors"
               >
                 <X className="size-4" />
               </button>
