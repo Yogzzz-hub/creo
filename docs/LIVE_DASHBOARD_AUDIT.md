@@ -110,3 +110,14 @@ The latest staff leave bundle was confirmed deployed by its real form/API marker
 All lead/task/review/schedule/client/chat pod queries now use the same user-scoped
 key and freshness policy. A controlled browser navigation check visited six staff
 pages using a single pod-data request, without overflow or JavaScript errors.
+
+The lead schedule's separate November 2025 demo was also replaced with the scoped
+live calendar and actual leave queue/history. Approval/rejection waits for the
+server before refreshing. Chromium at 320 pixels verified that a failed review
+preserves the pending request and a successful review refreshes its status; the
+calendar shows October 2026 with no overflow or page errors.
+
+An admin-only GET /api/v1/admin/performance/runtime exposes non-secret region hints
+and pool settings without SQL. It supplies a database-independent request baseline.
+It returns no hostname, URL, password or signing secret. Tests verify anonymous
+401, client-role 403, admin access and zero SQL calls. Twenty-one backend tests pass.

@@ -6,7 +6,9 @@ import { request } from "../../lib/http";
 
 type CalendarEvent = { id: string; title: string; client_name: string; date: string; time: string; type: string; status: string };
 
-export function AdminCalendarPage() {
+export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } = {}) {
+  const Container = embedded ? "section" : "main";
+  const Heading = embedded ? "h2" : "h1";
   const { user } = useAuth();
   const [month, setMonth] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), 1); });
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
@@ -25,10 +27,10 @@ export function AdminCalendarPage() {
   const offset = (month.getDay() + 6) % 7;
   const selected = visible.filter((event) => Number(event.date.split("-")[2]) === selectedDay);
   const moveMonth = (delta: number) => { setMonth(new Date(year, month.getMonth() + delta, 1)); setSelectedDay(1); };
-  return <main className="min-h-screen bg-[#0B111C] text-slate-100 p-3 sm:p-6">
+  return <Container className={embedded ? "text-slate-100" : "min-h-screen bg-[#0B111C] text-slate-100 p-3 sm:p-6"}>
     <div className="max-w-7xl mx-auto space-y-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <div><h1 className="text-2xl font-semibold">Content Calendar</h1><p className="text-sm text-slate-400">Scheduled publications and deliverables</p></div>
+        <div><Heading className="text-2xl font-semibold">Content Calendar</Heading><p className="text-sm text-slate-400">Scheduled publications and deliverables</p></div>
         <button onClick={() => void query.refetch()} disabled={query.isFetching} className="min-h-11 px-4 rounded-xl border border-slate-700 inline-flex items-center gap-2"><RefreshCw size={16} />Refresh</button>
       </header>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -54,5 +56,5 @@ export function AdminCalendarPage() {
         {selected.map((event) => <article key={event.id} className="rounded-xl bg-slate-900 p-3 break-words"><h3 className="font-medium">{event.title}</h3><p className="text-sm text-slate-400 mt-1">{event.client_name} ? {event.time} ? {event.type} ? {event.status.replaceAll("_", " ")}</p></article>)}
       </section>
     </div>
-  </main>;
+  </Container>;
 }

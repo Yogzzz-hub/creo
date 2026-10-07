@@ -1,6 +1,6 @@
 import uuid
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import httpx
 import pytest
@@ -13,7 +13,7 @@ from app.models.enums import UserRole
 from app.routers.admin import get_admin_calendar, get_pod_dashboard
 from app.routers.notifications import list_notifications
 from app.routers.auth import get_me
-from app.core.security import decode_token
+from app.core.security import create_access_token, decode_token
 from app.models.enums import AccountStatus
 from app.config import Settings
 
@@ -54,6 +54,25 @@ def test_provider_postgres_urls_use_async_driver_without_changing_redis():
     assert settings.DATABASE_URL.startswith('postgresql+asyncpg://')
     assert settings.DIRECT_DATABASE_URL.startswith('postgresql+asyncpg://')
     assert settings.REDIS_URL == 'redis://cache:6379/0'
+
+
+@pytest.mark.asyncio
+async def test_runtime_diagnostics_require_admin_and_do_not_query_database():
+    from app.main import app
+    transport = httpx.ASGITransport(app=app)
+    with patch('app.core.rbac.is_user_suspended_in_cache', new=AsyncMock(return_value=False)):
+        async with httpx.AsyncClient(transport=transport, base_url='http://test') as client:
+            response = await client.get('/api/v1/admin/performance/runtime')
+            assert response.status_code == 401
+            token = create_access_token(subject=uuid.uuid4(), role='client')
+            response = await client.get('/api/v1/admin/performance/runtime', headers={'Authorization': f'Bearer {token}'})
+            assert response.status_code == 403
+            token = create_access_token(subject=uuid.uuid4(), role='admin')
+            response = await client.get('/api/v1/admin/performance/runtime', headers={'Authorization': f'Bearer {token}'})
+    assert response.status_code == 200
+    assert 'db;dur=0.0;desc="0 queries"' in response.headers['server-timing']
+    assert 'database_pool' in response.json()
+    assert all(key not in response.json() for key in ('DATABASE_URL', 'password', 'host', 'JWT_SECRET'))
 
 
 @pytest.mark.asyncio

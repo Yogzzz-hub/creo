@@ -87,6 +87,29 @@ class PlanUpdateRequest(BaseModel):
 # --- Routes ---
 
 
+@router.get("/performance/runtime")
+async def get_performance_runtime(actor: Actor = AdminActor) -> dict[str, Any]:
+    """Non-secret deployment hints for diagnosing database round-trip latency.
+
+    This performs no SQL. Authentication still checks session revocation, so its
+    Server-Timing provides a baseline independent of the database path.
+    """
+    import re
+    from app.config import settings
+    from app.db.session import engine
+
+    host = engine.url.host or ""
+    region = re.search(r"\b((?:ap|eu|us|sa|ca|me|af|il)-[a-z]+-\d+)\b", host)
+    return {
+        "api_region_hint": os.environ.get("RENDER_REGION"),
+        "database_region_hint": region.group(1) if region else None,
+        "database_provider": "supabase" if "supabase" in host else "postgresql",
+        "database_pool": type(engine.pool).__name__,
+        "configured_pool_size": settings.DB_POOL_SIZE,
+        "configured_max_overflow": settings.DB_MAX_OVERFLOW,
+    }
+
+
 @router.get("/kpis", response_model=KPIResponse)
 async def get_kpis(
     timeframe: str = "30d",
