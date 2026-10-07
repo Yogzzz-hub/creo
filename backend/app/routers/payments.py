@@ -171,13 +171,13 @@ async def get_client_subscription(
     invoices = []
     for s, p in inv_rows:
         s_status = s.status.value if hasattr(s.status, "value") else str(s.status)
-        inv_amt = float(s.amount) if s.amount is not None else float(p.monthly_price if p else 25000.0)
+        inv_amt = float(s.amount) if s.amount is not None else float(p.monthly_price) if p else None
         invoices.append({
             "id": f"INV-{s.created_at.year}-{str(s.id)[:8].upper()}",
             "date": s.created_at.strftime("%B %d, %Y"),
-            "amount": f"₹{inv_amt:,.2f}",
-            "status": "Paid" if s_status in ["active", "trialing"] else s_status.capitalize(),
-            "plan": p.display_name if p else "Growth Tier",
+            "amount": f"₹{inv_amt:,.2f}" if inv_amt is not None else "Unavailable",
+            "status": s_status.capitalize(),
+            "plan": p.display_name if p else "Plan unavailable",
         })
 
     sub_data = None
@@ -214,6 +214,7 @@ async def get_client_subscription(
             "poster_quota": plan.poster_quota,
             "reel_quota": plan.reel_quota,
             "story_quota": plan.story_quota,
+            "revision_rounds": plan.revision_rounds,
         } if plan else None,
         "quotas": quota_map if (sub_data and check["is_active"]) else {},
         "invoices": invoices,

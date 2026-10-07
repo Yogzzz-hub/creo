@@ -1,3 +1,5 @@
+import { resolveAssetUrl } from "../../lib/media";
+import { getAuthToken } from "../../lib/auth-token";
 import { useState } from "react";
 import { Search, Download, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +16,7 @@ export function PortalLibraryPage() {
 
   const gate = useOnboardingGate();
 
-  const { data: response, isLoading } = useQuery({
+  const { data: response, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["portal-library", user?.id],
     queryFn: () => fetchPortalDeliverables(user?.id || "", undefined, 100),
     enabled: !!user?.id && gate.isComplete,
@@ -29,8 +31,8 @@ export function PortalLibraryPage() {
   const realAssets = rawItems.map((item: any) => ({
     id: item.id,
     status: item.status === "approved" ? "Approved" : item.status === "scheduled" ? "Scheduled" : "Published",
-    type: (item.type || (item.file_type?.includes("video") ? "reel" : "post")).toUpperCase(),
-    title: item.title || `${item.type || "Asset"} Draft`,
+    type: ({ static_post: "POST", poster: "POST", reel: "REEL", carousel: "CAROUSEL", story: "STORY" } as Record<string, string>)[item.asset_type || item.type] || "UNKNOWN",
+    title: item.title || `${item.asset_type?.replaceAll("_", " ") || "Asset"} v${item.version}`,
     image: item.thumbnail_url || item.file_url || "",
     fileUrl: item.file_url
   }));
@@ -66,8 +68,8 @@ export function PortalLibraryPage() {
     setDownloading(id);
     try {
       if (id === "all") {
-        const res = await fetch("/api/v1/deliverables/download-zip", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
+        const res = await fetch(resolveAssetUrl("/api/v1/portal/deliverables/download-zip"), {
+          headers: { Authorization: `Bearer ${getAuthToken() || ""}` },
         });
         if (res.ok) {
           const blob = await res.blob();
@@ -96,6 +98,7 @@ export function PortalLibraryPage() {
     }
   };
 
+  if (isError) return <div role="alert">{error.message} <button onClick={() => void refetch()}>Retry</button></div>;
   if (isLoading) {
     return (
       <div className="flex h-[400px] items-center justify-center">

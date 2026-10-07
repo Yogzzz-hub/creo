@@ -25,6 +25,7 @@ import structlog
 from fastapi import APIRouter, Depends, Header, Query
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from app.core.errors import Conflict, Forbidden, NotFound
 from app.core.rbac import Actor, get_current_actor
@@ -556,7 +557,7 @@ async def portal_list_deliverables(
             }
 
     # Build keyset query — single query, no count(*) for main list
-    stmt = select(Deliverable)
+    stmt = select(Deliverable).options(joinedload(Deliverable.task))
 
     if actor.role == UserRole.CLIENT:
         stmt = stmt.where(Deliverable.client_id == scope.client_id)
@@ -599,6 +600,7 @@ async def portal_list_deliverables(
                 "status": d.status.value,
                 "file_url": _resolve_deliverable_url(d.file_url),
                 "file_type": d.file_type,
+                "asset_type": d.task.deliverable_type.value if d.task else None,
                 "revision_round": d.revision_round,
                 "rejection_comment": d.rejection_comment,
                 "approved_at": d.approved_at.isoformat() if d.approved_at else None,

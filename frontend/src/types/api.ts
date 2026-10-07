@@ -207,6 +207,7 @@ export type DeliverableStatusType =
 export interface DeliverableItem {
   id: string;
   root_id: string;
+  asset_type?: string | null;
   version: number;
   status: DeliverableStatusType;
   file_url: string;

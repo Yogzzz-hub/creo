@@ -83,6 +83,7 @@ class PlanUpdateRequest(BaseModel):
     reels: int | None = None
     stories: int | None = None
     revision_rounds: int | None = None
+    highlights: list[str] | None = None
 
 
 # --- Routes ---
@@ -473,7 +474,7 @@ async def get_dashboard(
         "active_clients": active_clients,
         "churned_last_30d": churned_last_30d,
         "avg_turnaround_hours": avg_turnaround_hours,
-        "trend_points": [0.2, 0.4, 0.35, 0.5, 0.65, 0.8, 1.0] # Mocked trend points for SVG sparkline
+        "trend_points": []
     }
 
     # Count the pipeline and open breaches in one scan and one round trip.
@@ -521,11 +522,10 @@ async def get_dashboard(
     
     total_with_sla = sla_row[2] if sla_row and sla_row[2] else 0
     met_overall = sla_row[1] if sla_row and sla_row[1] else 0
-    overall_sla = round((met_overall / total_with_sla * 100) if total_with_sla > 0 else 100.0, 1)
+    overall_sla = round(met_overall / total_with_sla * 100, 1) if total_with_sla > 0 else None
     
-    # Deriving response/resolution SLA artificially for UI realism since they aren't explicitly tracked
-    response_sla = min(100.0, round(overall_sla * 1.02, 1)) 
-    resolution_sla = max(0.0, round(overall_sla * 0.98, 1))
+    response_sla = None
+    resolution_sla = None
 
     return {
         "kpis": kpi_data,
@@ -1015,6 +1015,10 @@ async def update_plan(
     if payload.revision_rounds is not None:
         changes["revision_rounds"] = {"from": plan.revision_rounds, "to": payload.revision_rounds}
         plan.revision_rounds = payload.revision_rounds
+
+    if payload.highlights is not None:
+        changes["highlights"] = {"from": plan.highlights, "to": payload.highlights}
+        plan.highlights = payload.highlights
 
     audit = AuditLog(
         actor_id=actor.user_id,
@@ -1929,7 +1933,7 @@ _ADDONS_CATALOG: list[dict[str, Any]] = [
         "price_inr": 25000,
         "unit": "Day",
         "description": "Cinema-grade 4K 10-bit shoot with professional lighting, audio, and director on set.",
-        "pending_requests": 1,
+        "pending_requests": None,
     },
     {
         "id": "addon-vfx-motion",
@@ -1938,7 +1942,7 @@ _ADDONS_CATALOG: list[dict[str, Any]] = [
         "price_inr": 18000,
         "unit": "Asset Pack",
         "description": "Custom 3D logo physics, CGI product models, and animated kinetic typography.",
-        "pending_requests": 0,
+        "pending_requests": None,
     },
     {
         "id": "addon-express-turnaround",
@@ -1947,7 +1951,7 @@ _ADDONS_CATALOG: list[dict[str, Any]] = [
         "price_inr": 12000,
         "unit": "Per Sprint",
         "description": "Guaranteed 24-hour delivery turnaround on priority video revisions and drops.",
-        "pending_requests": 2,
+        "pending_requests": None,
     },
     {
         "id": "addon-creator-collab",
@@ -1956,7 +1960,7 @@ _ADDONS_CATALOG: list[dict[str, Any]] = [
         "price_inr": 35000,
         "unit": "Campaign",
         "description": "Full UGC creator sourcing, rights management, and organic collaboration contract setup.",
-        "pending_requests": 0,
+        "pending_requests": None,
     },
 ]
 
@@ -1975,11 +1979,7 @@ async def complete_admin_addon_request(
     actor: Actor = AdminActor,
 ) -> dict[str, Any]:
     """Mark pending add-on fulfillment requests as completed."""
-    for addon in _ADDONS_CATALOG:
-        if addon["id"] == addon_id:
-            addon["pending_requests"] = 0
-            return {"status": "completed", "addon": addon}
-    return {"status": "completed", "addon_id": addon_id}
+    raise HTTPException(status_code=501, detail="Add-on fulfillment tracking is not configured")
 
 
 # --- Escalations Endpoints ---
@@ -2026,7 +2026,7 @@ async def get_sla_escalations(
 
         deliv_type = task.deliverable_type.value.capitalize() if task.deliverable_type else "Deliverable"
         client_name = company_name or (client_email.split("@")[0].capitalize() if client_email else "Client Brand")
-        due_str = task.due_date.isoformat() if task.due_date else "Today"
+        due_str = task.due_date.isoformat() if task.due_date else None
 
         is_breached = bool(task.due_date and task.due_date < date.today())
         # Check sla_service for breach status
@@ -2050,7 +2050,7 @@ async def get_sla_escalations(
             "assignee": "Assigned Creator" if staff_id else "Unassigned",
             "assigned_to_name": "Assigned Creator" if staff_id else "Unassigned",
             "due_date": due_str,
-            "hours_overdue": 4.5 if task.status == TaskStatus.INTERNAL_QA else 2.0,
+            "hours_overdue": round(max(0.0, (datetime.now(timezone.utc) - task.sla_due_at).total_seconds() / 3600), 1) if task.sla_due_at else None,
             "severity": severity,
             "status": breach_status,
         })
@@ -2077,16 +2077,8 @@ async def resolve_sla_escalation(
             state.resolved = True
             state.level = "resolved"
         await db.commit()
-    except ValueError:
-        # Non-UUID mock string fallback
-        stmt = select(EscalationState).where(EscalationState.level == f"id_{escalation_id}")
-        state = (await db.execute(stmt)).scalar_one_or_none()
-        if not state:
-            state = EscalationState(level=f"id_{escalation_id}", resolved=True, details={"resolved_by": str(actor.user_id)})
-            db.add(state)
-        else:
-            state.resolved = True
-        await db.commit()
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Invalid escalation ID") from exc
 
     return {"status": "resolved", "id": escalation_id}
 
@@ -2153,105 +2145,29 @@ async def update_admin_settings(
 
 # --- Sales Pipeline Endpoints ---
 
-_CUSTOM_DEALS: list[dict[str, Any]] = [
-    {
-        "id": "deal-001",
-        "client_name": "Acme Global Brands",
-        "contact_email": "partnerships@acmeglobal.com",
-        "requested_plan": "Scale Tier + 4 Extra Reels",
-        "offered_price_inr": 79000,
-        "standard_price_inr": 99000,
-        "status": "pending",
-    },
-    {
-        "id": "deal-002",
-        "client_name": "Zenith Retail",
-        "contact_email": "marketing@zenithretail.in",
-        "requested_plan": "Growth Tier Custom Bundle",
-        "offered_price_inr": 42000,
-        "standard_price_inr": 49000,
-        "status": "pending",
-    },
-    {
-        "id": "deal-003",
-        "client_name": "Luxe Botanicals",
-        "contact_email": "founder@luxebotanicals.co",
-        "requested_plan": "Enterprise 360 Production",
-        "offered_price_inr": 129000,
-        "standard_price_inr": 149000,
-        "status": "pending",
-    },
-]
-
-
 @router.get("/sales")
 async def get_admin_sales(
     db: AsyncSession = Depends(get_db),
     actor: Actor = SalesActor,
 ) -> dict[str, Any]:
-    """Return distinct subscription tiers, active counts, slot availability, and custom enterprise deals."""
-    sub_counts_q = select(Subscription.plan_id, func.count(Subscription.id)).where(Subscription.status == "active").group_by(Subscription.plan_id)
-    sub_rows = (await db.execute(sub_counts_q)).all()
-    sub_counts = {r[0]: r[1] for r in sub_rows}
-
-    # Curate distinct active tiers for clean presentation
-    plans_list = [
-        {
-            "id": "plan-growth",
-            "name": "growth",
-            "display_name": "Growth Tier",
-            "monthly_price": 49000,
-            "active_subs": sub_counts.get(uuid.UUID("11111111-1111-1111-1111-111111111111"), 2),
-            "scarcity_slots": 2,
-        },
-        {
-            "id": "plan-scale",
-            "name": "scale",
-            "display_name": "Scale Tier",
-            "monthly_price": 89000,
-            "active_subs": sub_counts.get(uuid.UUID("22222222-2222-2222-2222-222222222222"), 3),
-            "scarcity_slots": 1,
-        },
-        {
-            "id": "plan-enterprise",
-            "name": "enterprise",
-            "display_name": "Enterprise Custom",
-            "monthly_price": 149000,
-            "active_subs": sub_counts.get(uuid.UUID("33333333-3333-3333-3333-333333333333"), 1),
-            "scarcity_slots": 2,
-        },
-    ]
-
+    sub_rows = (await db.execute(select(Subscription.plan_id, func.count(Subscription.id)).where(Subscription.status == "active").group_by(Subscription.plan_id))).all()
+    counts = {row[0]: row[1] for row in sub_rows}
+    plans = (await db.execute(select(Plan).where(Plan.is_active.is_(True)))).scalars().all()
+    negotiations = (await db.execute(select(PlanNegotiation).order_by(PlanNegotiation.created_at.desc()))).scalars().all()
     return {
-        "plans": plans_list,
-        "custom_pricing_requests": _CUSTOM_DEALS,
+        "plans": [{"id": str(p.id), "name": p.name, "display_name": p.display_name, "monthly_price": p.price_minor / 100, "active_subs": counts.get(p.id, 0), "scarcity_slots": p.scarcity_slots} for p in plans],
+        "custom_pricing_requests": [{"id": str(n.id), "client_name": n.client_name, "contact_email": n.client_email, "requested_plan": n.target_topic, "proposed_offer": n.proposed_offer, "status": n.status} for n in negotiations],
     }
 
 
 @router.post("/sales/deals/{deal_id}/approve")
-async def approve_custom_deal(
-    deal_id: str,
-    actor: Actor = SalesActor,
-) -> dict[str, Any]:
-    """Approve a custom enterprise deal in the sales pipeline."""
-    for deal in _CUSTOM_DEALS:
-        if deal["id"] == deal_id:
-            deal["status"] = "approved"
-            return {"status": "approved", "deal": deal}
-    raise HTTPException(status_code=404, detail="Deal not found")
+async def approve_custom_deal(deal_id: str, actor: Actor = SalesActor) -> dict[str, Any]:
+    raise HTTPException(status_code=410, detail="Use the persisted plan negotiation review endpoint")
 
 
 @router.post("/sales/deals/{deal_id}/reject")
-async def reject_custom_deal(
-    deal_id: str,
-    actor: Actor = SalesActor,
-) -> dict[str, Any]:
-    """Reject a custom enterprise deal in the sales pipeline."""
-    for deal in _CUSTOM_DEALS:
-        if deal["id"] == deal_id:
-            deal["status"] = "rejected"
-            return {"status": "rejected", "deal": deal}
-    raise HTTPException(status_code=404, detail="Deal not found")
+async def reject_custom_deal(deal_id: str, actor: Actor = SalesActor) -> dict[str, Any]:
+    raise HTTPException(status_code=410, detail="Use the persisted plan negotiation review endpoint")
 
 
 # --- Executive Reports & Analytics ---
@@ -2394,11 +2310,13 @@ class DeliverableStatusUpdate(BaseModel):
 
 class AdminDeliverableCreate(BaseModel):
     client_id: uuid.UUID
+    task_id: uuid.UUID | None = None
     type: str = "reel"
     title: str | None = None
     file_url: str | None = None
     file_type: str | None = None
-    status: str = "pending_approval"
+    file_size_bytes: int = 0
+    status: str = "pending_qa"
     revision_round: int = 1
     description: str | None = None
     scheduled_at: datetime | None = None
@@ -2448,9 +2366,11 @@ async def list_admin_deliverables(
             User.full_name.label("client_name"),
             ClientProfile.company_name.label("company_name"),
             StaffUser,
+            Task.deliverable_type.label("asset_type"),
         )
         .join(User, User.id == Deliverable.client_id)
         .outerjoin(ClientProfile, ClientProfile.user_id == Deliverable.client_id)
+        .outerjoin(Task, Task.id == Deliverable.task_id)
         .outerjoin(StaffUser, StaffUser.id == Deliverable.submitted_by)
         .order_by(Deliverable.created_at.desc())
         .limit(limit)
@@ -2475,16 +2395,18 @@ async def list_admin_deliverables(
             "client_id": str(d.client_id),
             "client": client_label,
             "title": f"{type_display} · {client_label}",
-            "type": type_display,
+            "type": row[5].value if row[5] else "Deliverable",
+            "asset_type": row[5].value if row[5] else None,
             "status": d.status.value,
             "date": d.scheduled_at.strftime("%b %d, %I:%M %p") if d.scheduled_at else (d.created_at.strftime("%b %d, %Y") if d.created_at else "Today"),
-            "round": f"Round {d.revision_round} of 2" if d.revision_round > 1 else "Draft 1",
+            "round": f"Round {d.revision_round} " if d.revision_round > 1 else "Draft 1",
+            "task_id": str(d.task_id) if d.task_id else None,
             "file_url": (
                 storage_service.signed_get(d.file_url)
                 if (d.file_url and not (d.file_url.startswith("http://") or d.file_url.startswith("https://") or d.file_url.startswith("/static/")))
                 else d.file_url
             ),
-            "description": d.rejection_comment or f"High-resolution social media creative formatted for Instagram brand channel.",
+            "description": d.rejection_comment,
             "assigned_name": assignee_name or "Creative Studio",
             "assignee": {
                 "id": str(staff_user.id),
@@ -2508,12 +2430,20 @@ async def create_admin_deliverable(
     if not client:
         raise HTTPException(status_code=404, detail="Client user not found")
 
+    task = await db.get(Task, payload.task_id) if payload.task_id else None
+    if payload.task_id and (not task or task.client_id != payload.client_id):
+        raise HTTPException(status_code=422, detail="Task does not belong to the selected client")
+    if task and actor.role in (UserRole.EDITOR, UserRole.DESIGNER) and task.assigned_to != actor.user_id:
+        raise HTTPException(status_code=403, detail="Upload is restricted to your assigned tasks")
+
     try:
         deliv_status = DeliverableStatus(payload.status)
-    except ValueError:
-        deliv_status = DeliverableStatus.PENDING_APPROVAL
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Invalid deliverable status") from exc
 
-    file_url = payload.file_url or "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop"
+    if not payload.file_url:
+        raise HTTPException(status_code=422, detail="An uploaded media URL is required")
+    file_url = payload.file_url
 
     if payload.file_type:
         file_type = payload.file_type
@@ -2535,16 +2465,21 @@ async def create_admin_deliverable(
         root_id=new_id,
         version=1,
         client_id=payload.client_id,
+        task_id=payload.task_id,
         submitted_by=submitted_by,
         file_url=file_url,
         file_type=file_type,
-        file_size_bytes=1024 * 1024,
+        file_size_bytes=payload.file_size_bytes,
         status=deliv_status,
         revision_round=payload.revision_round or 1,
         rejection_comment=payload.description,
         scheduled_at=payload.scheduled_at,
     )
     db.add(deliverable)
+    await db.flush()
+    if task:
+        from app.services.deliverable_state import sync_task_with_deliverable
+        await sync_task_with_deliverable(db, deliverable, deliv_status)
     await db.commit()
     await db.refresh(deliverable)
 
@@ -2553,12 +2488,8 @@ async def create_admin_deliverable(
     company_name = cp_res.scalar()
 
     client_label = company_name or client.full_name or client.email.split("@")[0].capitalize()
-    file_type_clean = deliverable.file_type.lower()
-    type_display = (
-        "Reel 9:16" if ("mp4" in file_type_clean or "video" in file_type_clean or "reel" in payload.type.lower())
-        else "Static Poster" if ("png" in file_type_clean or "poster" in payload.type.lower() or "image" in file_type_clean)
-        else "Carousel"
-    )
+    asset_type = task.deliverable_type.value if task else None
+    type_display = asset_type.replace("_", " ").title() if asset_type else "Deliverable"
     title = payload.title or f"{type_display} · {client_label}"
 
     return {
@@ -2569,10 +2500,10 @@ async def create_admin_deliverable(
         "type": type_display,
         "status": deliverable.status.value,
         "date": deliverable.scheduled_at.strftime("%b %d, %I:%M %p") if deliverable.scheduled_at else (deliverable.created_at.strftime("%b %d, %Y") if deliverable.created_at else "Today"),
-        "round": f"Round {deliverable.revision_round} of 2" if deliverable.revision_round > 1 else "Draft 1",
+        "round": f"Round {deliverable.revision_round} " if deliverable.revision_round > 1 else "Draft 1",
         "file_url": deliverable.file_url,
-        "description": deliverable.rejection_comment or "High-resolution creative deliverable formatted for Instagram.",
-        "assigned_name": actor.user_id and str(actor.user_id)[:8] or "Team Lead",
+        "description": deliverable.rejection_comment,
+        "assigned_name": str(actor.user_id) if actor.user_id else None,
         "created_at": deliverable.created_at.isoformat() if deliverable.created_at else None,
     }
 
@@ -2594,30 +2525,8 @@ async def update_deliverable_status(
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid status: {payload.status}")
 
-    prev_status = deliverable.status
     from app.services.deliverable_state import transition
-    try:
-        await transition(
-            db,
-            deliverable,
-            new_status,
-            actor_id=actor.user_id,
-            actor_role=actor.role,
-            reason="Admin/Lead operations override",
-        )
-    except Exception as exc:
-        deliverable.status = new_status
-        audit = AuditLog(
-            actor_id=actor.user_id,
-            actor_role=actor.role,
-            entity="deliverable",
-            entity_id=deliverable.id,
-            action="admin_status_override",
-            from_value={"status": prev_status.value if hasattr(prev_status, "value") else str(prev_status)},
-            to_value={"status": new_status.value, "reason": str(exc)},
-        )
-        db.add(audit)
-        await db.commit()
+    await transition(db, deliverable, new_status, actor_id=actor.user_id, actor_role=actor.role, reason="Operations status update")
 
     await db.refresh(deliverable)
     return {"status": "updated", "id": str(deliverable_id), "new_status": deliverable.status.value}
@@ -3046,13 +2955,13 @@ async def approve_leave_request(
     try:
         val_uuid = uuid.UUID(leave_id)
     except ValueError:
-        return {"status": "approved", "id": str(leave_id), "message": "Leave request approved."}
+        raise HTTPException(status_code=404, detail="Leave request not found")
 
     lr_stmt = select(LeaveRequest, StaffProfile).outerjoin(StaffProfile, StaffProfile.user_id == LeaveRequest.user_id).where(LeaveRequest.id == val_uuid)
     lr_res = await db.execute(lr_stmt)
     row = lr_res.first()
     if not row:
-        return {"status": "approved", "id": str(leave_id), "message": "Leave request approved."}
+        raise HTTPException(status_code=404, detail="Leave request not found")
 
     lr, sp = row[0], row[1]
     is_admin = actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN, "admin", "super_admin")
@@ -3119,13 +3028,13 @@ async def reject_leave_request(
     try:
         val_uuid = uuid.UUID(leave_id)
     except ValueError:
-        return {"status": "rejected", "id": str(leave_id), "message": "Leave request rejected."}
+        raise HTTPException(status_code=404, detail="Leave request not found")
 
     lr_stmt = select(LeaveRequest, StaffProfile).outerjoin(StaffProfile, StaffProfile.user_id == LeaveRequest.user_id).where(LeaveRequest.id == val_uuid)
     lr_res = await db.execute(lr_stmt)
     row = lr_res.first()
     if not row:
-        return {"status": "rejected", "id": str(leave_id), "message": "Leave request rejected."}
+        raise HTTPException(status_code=404, detail="Leave request not found")
 
     lr, sp = row[0], row[1]
     is_admin = actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN, "admin", "super_admin")
@@ -3416,168 +3325,12 @@ class AdminDeliverableStatusUpdate(BaseModel):
     status: str
 
 
-@router.get("/deliverables")
-async def list_admin_deliverables(
-    client_id: uuid.UUID | None = None,
-    db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
-) -> list[dict[str, Any]]:
-    """List creative deliverables with client information and task links."""
-    stmt = (
-        select(
-            Deliverable,
-            User.email,
-            ClientProfile.company_name,
-            Task.id.label("task_id"),
-            Task.status.label("task_status"),
-        )
-        .join(User, User.id == Deliverable.client_id)
-        .outerjoin(ClientProfile, ClientProfile.user_id == Deliverable.client_id)
-        .outerjoin(Task, Task.id == Deliverable.task_id)
-    )
-    if client_id:
-        stmt = stmt.where(Deliverable.client_id == client_id)
-
-    stmt = stmt.order_by(Deliverable.created_at.desc()).limit(300)
-    res = await db.execute(stmt)
-    rows = res.fetchall()
-
-    results = []
-    for d, email, company, t_id, t_status in rows:
-        c_name = company or email.split("@")[0].capitalize()
-        status_val = d.status.value if hasattr(d.status, "value") else str(d.status)
-        deliv_type = "reel" if ("video" in (d.file_type or "").lower() or "mp4" in (d.file_type or "").lower()) else "static_post"
-
-        results.append({
-            "id": str(d.id),
-            "root_id": str(d.root_id),
-            "client_id": str(d.client_id),
-            "client_name": c_name,
-            "title": f"{deliv_type.replace('_', ' ').capitalize()} · {c_name}",
-            "type": deliv_type,
-            "file_url": (
-                storage_service.signed_get(d.file_url)
-                if (d.file_url and not (d.file_url.startswith("http://") or d.file_url.startswith("https://") or d.file_url.startswith("/uploads/") or d.file_url.startswith("/static/")))
-                else d.file_url
-            ),
-            "file_type": d.file_type,
-            "status": status_val,
-            "version": d.version,
-            "revision_round": d.revision_round,
-            "task_id": str(t_id) if t_id else None,
-            "task_status": t_status.value if hasattr(t_status, "value") else (str(t_status) if t_status else None),
-            "created_at": d.created_at.isoformat() if d.created_at else None,
-            "scheduled_at": d.scheduled_at.isoformat() if d.scheduled_at else None,
-        })
-    return results
 
 
-@router.post("/deliverables/upload")
-async def upload_admin_deliverable_file(
-    file: UploadFile = File(...),
-    actor: Actor = StaffActor,
-) -> dict[str, str]:
-    """Upload media file directly to local server storage."""
-    import time
-    from app.main import _uploads_dir
-
-    ext = os.path.splitext(file.filename or "")[1].lower()
-    clean_name = f"{int(time.time())}_{uuid.uuid4().hex[:8]}{ext}"
-    dest_path = os.path.join(_uploads_dir, clean_name)
-
-    content = await file.read()
-    with open(dest_path, "wb") as f:
-        f.write(content)
-
-    return {
-        "file_url": f"/uploads/{clean_name}",
-        "filename": file.filename or clean_name,
-        "file_type": file.content_type or "application/octet-stream",
-    }
 
 
-@router.post("/deliverables")
-async def create_admin_deliverable(
-    payload: AdminDeliverableCreateRequest,
-    db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
-) -> dict[str, Any]:
-    """Staff uploads/creates a new deliverable. Automates task pipeline progression into Internal QA."""
-    # Validate target status
-    target_status = DeliverableStatus.PENDING_QA
-    try:
-        if payload.status:
-            target_status = DeliverableStatus(payload.status)
-    except ValueError:
-        target_status = DeliverableStatus.PENDING_QA
-
-    deliverable = Deliverable(
-        id=uuid.uuid4(),
-        root_id=uuid.uuid4(),
-        version=1,
-        client_id=payload.client_id,
-        submitted_by=actor.user_id,
-        file_url=payload.file_url,
-        file_type=payload.file_type or "video/mp4",
-        file_size_bytes=1024 * 1024,
-        status=target_status,
-        revision_round=payload.revision_round,
-    )
-    if payload.scheduled_at:
-        try:
-            deliverable.scheduled_at = datetime.fromisoformat(payload.scheduled_at)
-        except Exception:
-            pass
-
-    db.add(deliverable)
-    await db.flush()
-
-    # Automate task pipeline progression: upload by team moves task to Internal QA
-    await deliverable_state.sync_task_with_deliverable(db, deliverable, target_status)
-
-    await db.commit()
-    await db.refresh(deliverable)
-
-    return {
-        "id": str(deliverable.id),
-        "status": deliverable.status.value,
-        "task_id": str(deliverable.task_id) if deliverable.task_id else None,
-        "file_url": deliverable.file_url,
-    }
 
 
-@router.patch("/deliverables/{deliverable_id}/status")
-async def update_admin_deliverable_status(
-    deliverable_id: uuid.UUID,
-    payload: AdminDeliverableStatusUpdate,
-    db: AsyncSession = Depends(get_db),
-    actor: Actor = StaffActor,
-) -> dict[str, Any]:
-    """Update deliverable status. Automatically syncs and moves the corresponding task in the pipeline."""
-    deliverable = await db.get(Deliverable, deliverable_id)
-    if not deliverable:
-        raise HTTPException(status_code=404, detail="Deliverable not found")
-
-    try:
-        new_status = DeliverableStatus(payload.status)
-    except ValueError:
-        raise HTTPException(status_code=400, detail=f"Invalid status: {payload.status}")
-
-    deliverable.status = new_status
-    if new_status == DeliverableStatus.APPROVED:
-        deliverable.approved_at = datetime.now(timezone.utc)
-
-    # Sync corresponding Task in the pipeline
-    await deliverable_state.sync_task_with_deliverable(db, deliverable, new_status)
-
-    await db.commit()
-    await db.refresh(deliverable)
-
-    return {
-        "id": str(deliverable.id),
-        "status": deliverable.status.value,
-        "task_id": str(deliverable.task_id) if deliverable.task_id else None,
-    }
 
 
 # =========================================================================
@@ -3907,7 +3660,9 @@ async def get_pod_dashboard(
     total_tasks_count = sum(len(lst) for lst in tasks_by_status.values())
     completed_count = len(tasks_by_status["ready_to_publish"]) + len(tasks_by_status["completed"])
     total_wip = len(tasks_by_status["in_production"]) + len(tasks_by_status["internal_qa"])
-    sla_pct = 95 if total_tasks_count == 0 else max(75, 100 - (sla_breaches_count * 5))
+    sla_tasks = [t for items in tasks_by_status.values() for t in items if t["sla_due_at"] and t["status"] not in ("completed", "ready_to_publish")]
+    overdue_tasks = sum(1 for t in sla_tasks if t["hours_remaining"] is not None and t["hours_remaining"] < 0)
+    sla_pct = round(100 * (len(sla_tasks) - overdue_tasks) / len(sla_tasks), 1) if sla_tasks else None
 
     # All pods list for Admin Switcher
     available_pods = [

@@ -1,3 +1,4 @@
+import { request } from "../../lib/http";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../lib/auth-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,16 +12,17 @@ export function PortalDeliverablesPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const gate = useOnboardingGate();
-  const clientId = user?.id || "00000000-0000-0000-0000-000000000001";
+  const clientId = user?.id || "";
 
   // Query deliverables (only once the workspace is unlocked)
   const { data: deliverablesData, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["portal", "deliverables", clientId],
     queryFn: () => fetchPortalDeliverables(clientId),
-    enabled: gate.isComplete,
+    enabled: gate.isComplete && !!user?.id,
     refetchInterval: 2 * 60_000,
   });
 
+  const subscription = useQuery({ queryKey: ["client-subscription", user?.id], queryFn: () => request<any>("/api/v1/payments/subscription"), enabled: !!user?.id && gate.isComplete });
   const deliverables = deliverablesData?.items || [];
   const countAwaiting = deliverables.filter((d: any) => d.status === "pending_approval").length;
 
@@ -50,7 +52,7 @@ export function PortalDeliverablesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["portal", "deliverables", clientId] });
-      showToast("Approved! Assets synced.");
+      showToast("Deliverable approved.");
     },
     onError: (error: Error) => showToast(error.message || "Approval failed. Please retry."),
   });
@@ -85,10 +87,10 @@ export function PortalDeliverablesPage() {
     ? [
         {
           id: "rev-note",
-          author: "You",
+          author: "Review feedback",
           timestamp: selectedItem.created_at ? new Date(selectedItem.created_at).toLocaleDateString() : "Latest review",
           text: selectedItem.rejection_comment,
-          fixed: (selectedItem.revision_round || 1) > 1,
+          fixed: false,
         },
       ]
     : [];
@@ -158,7 +160,7 @@ export function PortalDeliverablesPage() {
                 
                 // Fallbacks mimicking design
                 const title = d.title || `Asset ${idx + 1}`;
-                const meta = `${d.asset_type || "Reel"} · v${d.revision_round || 1}`;
+                const meta = `${d.asset_type || "Deliverable"} · v${d.revision_round || 1}`;
                 const thumb = d.thumbnail_url || d.file_url;
 
                 return (
@@ -210,21 +212,7 @@ export function PortalDeliverablesPage() {
           {/* Version Switcher */}
           {selectedItem && (
             <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 flex p-1 bg-[#0B111C]/80 backdrop-blur-md rounded-full border border-[#2A3446]">
-              {Array.from({ length: selectedItem.revision_round || 1 }).map((_, i) => {
-                const isLatest = i + 1 === (selectedItem.revision_round || 1);
-                return (
-                  <button
-                    key={i}
-                    className={`px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors ${
-                      isLatest 
-                        ? "bg-[#161F2D] text-white shadow-sm border border-[#2A3446]" 
-                        : "text-[#97A0B3] hover:text-white"
-                    }`}
-                  >
-                    v{i + 1} {isLatest && "· latest"}
-                  </button>
-                );
-              })}
+              <span className="px-4 py-1.5 text-white">v{selectedItem.version ?? "Unavailable"}</span>
             </div>
           )}
 
@@ -296,18 +284,17 @@ export function PortalDeliverablesPage() {
 
               {/* Revision rounds */}
               {(() => {
-                const planName = (String((deliverablesData as any)?.plan_name || (user as any)?.plan_id || (user as any)?.plan || "")).toLowerCase();
-                const maxRevisionRounds = planName.includes("starter") ? 1 : planName.includes("scale") || planName.includes("pro") ? 3 : 2;
-                const currentRound = selectedItem.revision_round || 1;
+                const maxRevisionRounds = subscription.data?.plan?.revision_rounds ?? null;
+                const currentRound = selectedItem.revision_round ?? 0;
 
                 return (
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[13px] font-bold text-white">Revision rounds</span>
-                      <span className="text-xs text-[#97A0B3]">{currentRound} of {maxRevisionRounds} used</span>
+                      <span className="text-xs text-[#97A0B3]">{currentRound} used{maxRevisionRounds == null ? " ? Plan limit unavailable" : ` of ${maxRevisionRounds}`}</span>
                     </div>
                     <div className="h-1.5 w-full bg-white/[0.08] rounded-full flex gap-1">
-                      {Array.from({ length: maxRevisionRounds }).map((_, i) => (
+                      {Array.from({ length: maxRevisionRounds ?? 0 }).map((_, i) => (
                         <div
                           key={i}
                           className={`h-full flex-1 rounded-full ${currentRound > i ? "bg-[#7FA0D6]" : "bg-white/[0.08]"}`}
