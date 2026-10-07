@@ -26,6 +26,10 @@ import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { SlaPerformanceWidget } from "../../components/admin/SlaPerformanceWidget";
 
 
+function LoadingPanel({ label }: { label: string }) {
+  return <div role="status" className="min-h-48 rounded-3xl bg-[#161F2D] border border-[#2A3446] p-5 text-sm text-slate-400">{label}</div>;
+}
+
 export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) {
   const { user } = useAuth();
   const options = { staleTime: 30_000, enabled: !!user?.id };
@@ -115,7 +119,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
               transition={{ duration: 0.35, delay: 0.05, ease: "easeOut" }}
               className="flex flex-col h-full min-h-0 hover-card-innovative rounded-3xl"
             >
-              <Suspense fallback={<div role="status" className="min-h-64 rounded-3xl bg-[#161F2D] border border-[#2A3446] p-5 text-sm text-slate-400">Loading revenue chart?</div>}><RevenueEngineWidget kpis={kpis} clients={clients} /></Suspense>
+              <Suspense fallback={<div role="status" className="min-h-64 rounded-3xl bg-[#161F2D] border border-[#2A3446] p-5 text-sm text-slate-400">Loading revenue chart?</div>}>{kpiQuery.data ? <RevenueEngineWidget kpis={kpis} clients={clients} /> : <LoadingPanel label={kpiQuery.isError ? "Revenue unavailable" : "Loading revenue?"} />}</Suspense>
             </motion.div>
           )}
 
@@ -127,7 +131,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
               transition={{ duration: 0.35, delay: 0.1, ease: "easeOut" }}
               className="flex flex-col h-full min-h-0 hover-card-innovative rounded-3xl"
             >
-              <TeamDetailsWidget queue={queue} />
+              {queueQuery.data ? <TeamDetailsWidget queue={queue} /> : <LoadingPanel label={queueQuery.isError ? "Team data unavailable" : "Loading team?"} />}
             </motion.div>
           )}
 
@@ -139,7 +143,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
               transition={{ duration: 0.35, delay: 0.15, ease: "easeOut" }}
               className="flex flex-col h-full min-h-0 hover-card-innovative rounded-3xl"
             >
-              <ContentEngineWidget queue={queue} />
+              {queueQuery.data ? <ContentEngineWidget queue={queue} /> : <LoadingPanel label={queueQuery.isError ? "Production data unavailable" : "Loading production?"} />}
             </motion.div>
           )}
         </div>
@@ -153,7 +157,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
             transition={{ duration: 0.35, delay: 0.2, ease: "easeOut" }}
             className="mt-3.5 sm:mt-4 hover-card-innovative rounded-2xl"
           >
-            <ClientDetailsWidget clients={clients} />
+            {clientQuery.data ? <ClientDetailsWidget clients={clients} /> : <LoadingPanel label={clientQuery.isError ? "Client data unavailable" : "Loading clients?"} />}
           </motion.div>
         )}
 
@@ -166,7 +170,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
               transition={{ duration: 0.35, delay: 0.25, ease: "easeOut" }}
               className="hover-card-innovative rounded-2xl h-full"
             >
-              <SupportTicketsWidget slas={slas} />
+              {slaQuery.data ? <SupportTicketsWidget slas={slas} /> : <LoadingPanel label={slaQuery.isError ? "Support data unavailable" : "Loading support?"} />}
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -174,7 +178,7 @@ export function AdminDashboard({ actorRole = "admin" }: { actorRole?: string }) 
               transition={{ duration: 0.35, delay: 0.3, ease: "easeOut" }}
               className="hover-card-innovative rounded-2xl h-full"
             >
-              <SlaPerformanceWidget slas={slas} />
+              {slaQuery.data ? <SlaPerformanceWidget slas={slas} /> : <LoadingPanel label={slaQuery.isError ? "SLA data unavailable" : "Loading SLA?"} />}
             </motion.div>
           </div>
         )}

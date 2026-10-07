@@ -64,3 +64,24 @@ samples must separate database/Redis/application delays. The hosting blueprint
 is not evidence of actual deployed regions, instance sizes or environment.
 Actual infrastructure access is needed for hosting changes. End-to-end Gemini,
 unlocked client pages, sales and investor roles need dedicated test accounts.
+
+## Deployment timing results
+
+The new backend was confirmed live by its detailed Server-Timing headers.
+All 26 sampled authenticated read requests across admin, team lead, editor,
+designer and client returned HTTP 200. Warm staff session calls measured
+approximately 2.0?2.1 seconds in the browser; the server spent 1.48?1.55 seconds
+in two SQL calls (transaction context plus the joined profile query) and about
+215 milliseconds checking Redis. Warm notifications measured 2.16 seconds;
+warm admin queue 3.07 seconds and calendar 3.04 seconds. Pod data measured
+4.18?4.94 seconds. Client session/status requests still take several seconds.
+
+The fixed SQL round-trip cost dominates these samples. This is evidence of a
+database-path bottleneck; a region mismatch is a hypothesis, not a verified
+hosting configuration. Moving the API, database and Redis onto a nearby/private
+network needs actual hosting access. No unrelated subscription or permission
+results were cached to manufacture a faster benchmark.
+
+Cloudflare CLI is not authenticated in this workspace. Git-connected automatic
+deployment did update the frontend: live mobile calendar displays October 2026
+and real API entries. Deployment monitoring must confirm any subsequent commits.
