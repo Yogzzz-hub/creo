@@ -2,10 +2,12 @@ import "../../styles/public-responsive.css";
 import { useState, useEffect } from "react";
 import { 
   Mail, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Check, User, Building2,
-  Loader2, ShieldCheck, Zap, X
+  Loader2, ShieldCheck, Zap
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../../lib/auth-context";
+
+import { PasswordRecoveryModal } from "../../components/auth/PasswordRecoveryModal";
 
 const PENDING_REGISTRATION_KEY = "creo_pending_registration";
 
@@ -45,7 +47,7 @@ function clearPendingRegistration(): void {
 export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { loginWithPassword, registerIntent, resendRegistration, verifyRegistration, getGoogleAuthUrl, forgotPassword } = useAuth();
+  const { loginWithPassword, registerIntent, resendRegistration, verifyRegistration, getGoogleAuthUrl } = useAuth();
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,10 +75,6 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
 
   // Forgot password modal state
   const [forgotOpen, setForgotOpen] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState("");
-  const [forgotStatus, setForgotStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
-  const [forgotLoading, setForgotLoading] = useState(false);
-
   useEffect(() => {
     if (location.pathname === "/signup") {
       setMode("signup");
@@ -176,24 +174,6 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
       setError(err.message || "Unable to resend the verification code.");
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handleForgotPasswordSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!forgotEmail.trim()) {
-      setForgotStatus({ type: "error", msg: "Please enter your email address." });
-      return;
-    }
-    try {
-      setForgotLoading(true);
-      setForgotStatus(null);
-      const res = await forgotPassword(forgotEmail.trim());
-      setForgotStatus({ type: "success", msg: res?.message || "Password reset instructions dispatched." });
-    } catch (err: any) {
-      setForgotStatus({ type: "error", msg: err.message || "Failed to process reset request." });
-    } finally {
-      setForgotLoading(false);
     }
   }
 
@@ -506,8 +486,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                       type="button"
                       onClick={() => {
                         setForgotOpen(true);
-                        setForgotEmail(email);
-                        setForgotStatus(null);
+
                       }}
                       className="text-[#7FA0D6] hover:text-white transition focus:outline-none text-[11px] cursor-pointer"
                     >
@@ -607,72 +586,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
       </footer>
 
       {/* ── Forgot Password Modal ── */}
-      {forgotOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto bg-[#121926] border border-[#222F44] rounded-2xl p-6 shadow-2xl relative text-left">
-            <button
-              type="button"
-              onClick={() => setForgotOpen(false)}
-              className="absolute top-4 right-4 text-[#97A0B3] hover:text-[#F8FAFC] transition p-1 cursor-pointer"
-            >
-              <X className="size-4" />
-            </button>
-
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="size-8 rounded-lg bg-[#0A0F18] border border-[#222F44] flex items-center justify-center text-[#7FA0D6]">
-                <Mail className="size-4" />
-              </div>
-              <h3 className="text-base font-bold text-[#F8FAFC]">Reset Agency Password</h3>
-            </div>
-
-            <p className="text-xs text-[#97A0B3] mb-4">
-              Enter your verified business email to receive an authentication reset link.
-            </p>
-
-            {forgotStatus && (
-              <div className={`mb-4 px-3 py-2 rounded-xl text-xs font-semibold ${
-                forgotStatus.type === "success" 
-                  ? "bg-emerald-950/40 border border-emerald-800/60 text-emerald-300"
-                  : "bg-red-950/40 border border-red-800/60 text-red-300"
-              }`}>
-                {forgotStatus.msg}
-              </div>
-            )}
-
-            <form onSubmit={handleForgotPasswordSubmit} className="space-y-3">
-              <div className="relative flex items-center bg-[#0A0F18] border border-[#222F44] rounded-xl px-3 py-2.5 focus-within:border-[#7FA0D6]">
-                <Mail className="text-[#97A0B3] size-4 mr-2.5 shrink-0" />
-                <input 
-                  type="email" 
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  placeholder="admin@creo.agency"
-                  className="bg-transparent text-xs text-[#F8FAFC] placeholder-[#97A0B3]/50 focus:outline-none w-full"
-                  required
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setForgotOpen(false)}
-                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-[#97A0B3] hover:text-[#F8FAFC] transition cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={forgotLoading}
-                  className="bg-[#BCCCE6] hover:bg-white text-[#050810] font-bold text-xs px-4 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 cursor-pointer"
-                >
-                  {forgotLoading && <Loader2 className="size-3.5 animate-spin" />}
-                  <span>Send Reset Link</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {forgotOpen && <PasswordRecoveryModal initialEmail={email} onClose={() => setForgotOpen(false)} />}
 
     </div>
   );

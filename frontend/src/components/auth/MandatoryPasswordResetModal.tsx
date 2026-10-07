@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Lock, Eye, EyeOff, ShieldAlert, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
@@ -12,6 +12,12 @@ export const MandatoryPasswordResetModal: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  useEffect(() => {
+    if (user?.must_reset_password) {
+      setNewPassword(""); setConfirmPassword(""); setError(null); setSuccess(false);
+    }
+  }, [user?.must_reset_password, user?.id]);
+
   // If user is not logged in or doesn't need to reset password, do not render
   if (!user || !user.must_reset_password) {
     return null;
@@ -21,8 +27,12 @@ export const MandatoryPasswordResetModal: React.FC = () => {
     e.preventDefault();
     setError(null);
 
-    if (newPassword.length < 6) {
-      setError("New password must be at least 6 characters long.");
+    if (newPassword.length < 8) {
+      setError("New password must be at least 8 characters long.");
+      return;
+    }
+    if (newPassword.length > 128 || !/[a-zA-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      setError("Use 8–128 characters, including a letter and a number.");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -59,7 +69,7 @@ export const MandatoryPasswordResetModal: React.FC = () => {
             <ShieldAlert className="w-8 h-8 animate-pulse" />
           </div>
           <h2 id="mandatory-reset-title" className="text-2xl font-bold tracking-tight text-[#0B111C]">
-            Mandatory Password Setup
+            Set your Creo password
           </h2>
           <p className="mt-2 text-sm text-[#97A0B3] leading-relaxed">
             You accessed your account via a password reset code. For your security, you{" "}
@@ -68,7 +78,7 @@ export const MandatoryPasswordResetModal: React.FC = () => {
         </div>
 
         {error && (
-          <div className="mb-5 flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm">
+          <div role="alert" className="mb-5 flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm">
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-rose-500" />
             <span>{error}</span>
           </div>
@@ -85,18 +95,21 @@ export const MandatoryPasswordResetModal: React.FC = () => {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-[#0B111C] mb-1.5">
+              <label htmlFor="new-password" className="block text-xs font-semibold text-[#0B111C] mb-1.5">
                 New Password <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <input
+                  id="new-password"
                   type={showPassword ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="At least 6 characters"
+                  placeholder="At least 8 characters, with a letter and a number"
                   required
                   autoFocus
-                  minLength={6}
+                  minLength={8}
+                  maxLength={128}
+                  autoComplete="new-password"
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#2A3446] rounded-xl text-[#0B111C] placeholder-[#97A0B3] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]/30 focus:border-[#7FA0D6] text-sm transition-all"
                 />
                 <button
@@ -110,17 +123,20 @@ export const MandatoryPasswordResetModal: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#0B111C] mb-1.5">
+              <label htmlFor="confirm-password" className="block text-xs font-semibold text-[#0B111C] mb-1.5">
                 Confirm New Password <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <input
+                  id="confirm-password"
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter your password"
                   required
-                  minLength={6}
+                  minLength={8}
+                  maxLength={128}
+                  autoComplete="new-password"
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#2A3446] rounded-xl text-[#0B111C] placeholder-[#97A0B3] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]/30 focus:border-[#7FA0D6] text-sm transition-all"
                 />
                 <button

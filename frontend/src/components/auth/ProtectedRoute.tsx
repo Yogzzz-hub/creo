@@ -44,6 +44,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to={`/login?redirectedFrom=${returnUrl}`} replace />;
   }
 
+  if (user.must_reset_password) return null;
+
   // Role check: Admin and super_admin have universal access
   if (allowedRoles && allowedRoles.length > 0) {
     const isSuperOrAdmin = user.role === "admin" || user.role === "super_admin";

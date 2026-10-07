@@ -5,6 +5,7 @@ import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
+import { PasswordRecoveryModal } from "../../components/auth/PasswordRecoveryModal";
 import { resolveAssetUrl } from "../../lib/media";
 export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: string }) {
   const { user } = useAuth();
@@ -27,6 +28,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
     colors: "",
     instagram: "",
   });
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   useEffect(() => {
@@ -100,6 +102,8 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
         </p>
       )}
       {message && <p role="status">{message}</p>}
+      {!brand && <section className="bg-[#161F2D] border border-[#2A3446] p-5 rounded-3xl space-y-3"><h2 className="font-bold">Password sign-in</h2><p className="text-sm text-[#97A0B3]">Verify your email to set or reset a Creo password. You can continue using Google sign-in.</p><button className="underline" onClick={() => setRecoveryOpen(true)}>Set or reset password</button></section>}
+      {recoveryOpen && <PasswordRecoveryModal initialEmail={user?.email || ""} onClose={() => setRecoveryOpen(false)} />}
       {query.data && (
         <>
           <div className="flex gap-5">

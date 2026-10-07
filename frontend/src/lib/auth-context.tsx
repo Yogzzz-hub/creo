@@ -228,10 +228,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const setMandatoryPassword = async (newPassword: string) => {
-    const res = await request<{ status: string; user: AuthUser }>("/api/v1/auth/set-mandatory-password", {
+    const res = await request<{ status: string; access_token: string; user: AuthUser }>("/api/v1/auth/set-mandatory-password", {
       method: "POST",
       body: JSON.stringify({ new_password: newPassword }),
     });
+    setToken(res.access_token);
     if (res.user) {
       setUser(res.user);
     } else {

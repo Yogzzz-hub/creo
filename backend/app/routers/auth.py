@@ -506,6 +506,9 @@ async def verify_reset_otp(
     )
     refresh_token = create_refresh_token(subject=user.id)
 
+    from app.services.onboarding_service import get_current_stage
+    stage = await get_current_stage(db, user.id) if user.role == UserRole.CLIENT else 5
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -517,6 +520,7 @@ async def verify_reset_otp(
             "role": user.role.value,
             "account_status": user.account_status.value,
             "must_reset_password": True,
+            "onboarding_stage": stage,
         },
     }
 
@@ -557,6 +561,9 @@ async def set_mandatory_password(
         extra_claims={"must_reset_password": False},
     )
 
+    from app.services.onboarding_service import get_current_stage
+    stage = await get_current_stage(db, user.id) if user.role == UserRole.CLIENT else 5
+
     return {
         "status": "success",
         "message": "Password updated successfully. Account unlocked.",
@@ -568,6 +575,7 @@ async def set_mandatory_password(
             "role": user.role.value,
             "account_status": user.account_status.value,
             "must_reset_password": False,
+            "onboarding_stage": stage,
         },
     }
 
