@@ -133,3 +133,12 @@ to leave Celery's broker/result backend at localhost. Both now inherit REDIS_URL
 unless explicitly configured. This is covered by a regression check preserving
 explicit separate brokers. Twenty-two backend tests pass. Worker/beat deployment
 and live recovery remain infrastructure verification tasks.
+
+Final live verification confirms the new lead schedule is deployed, shows October
+2026 and has no mobile overflow or JavaScript errors. A warm runtime probe without
+SQL took 605 ms in the browser and 216 ms on the server. Another probe took 19.9
+seconds in the browser while server processing was 217 ms; transport/deployment
+routing variability must be investigated separately. These samples overlapped
+rolling deployments and must not be presented as steady-state p95 results.
+The under-one-second requirement remains unmet; neither database nor browser
+transport delays should be hidden by reporting only the fastest sample.
