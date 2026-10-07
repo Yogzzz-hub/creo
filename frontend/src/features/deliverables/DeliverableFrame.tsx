@@ -116,7 +116,7 @@ export function DeliverableFrame({
       >
         {isPlaying && isVideo ? (
           <video
-            src={deliverable.file_url}
+            src={deliverable.file_url ?? undefined}
             controls
             autoPlay
             playsInline

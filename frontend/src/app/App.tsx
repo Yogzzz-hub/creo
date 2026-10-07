@@ -447,6 +447,7 @@ export function App() {
               >
                 <Route index element={<PortalDashboardPage />} />
                 <Route path="deliverables" element={<SimpleErrorBoundary name="Deliverables"><PortalDeliverablesPage /></SimpleErrorBoundary>} />
+                <Route path="deliverables/:deliverableId" element={<SimpleErrorBoundary name="Deliverables"><PortalDeliverablesPage /></SimpleErrorBoundary>} />
                 <Route path="calendar" element={<PortalCalendarPage />} />
                 <Route path="creative-pod" element={<PortalCreativePodPage />} />
                 <Route path="creative_pod" element={<PortalCreativePodPage />} />

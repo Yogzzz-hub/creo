@@ -1,16 +1,25 @@
 import { useState } from "react";
-import { Search, Download, Loader2 } from "lucide-react";
+import { Search, Download, Loader2, Film } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
-import { fetchPortalDeliverables } from "../../lib/deliverables-api";
+import { downloadApprovedZip, fetchPortalDeliverables } from "../../lib/deliverables-api";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
+
+const LIBRARY_STATUSES = new Set(["approved", "scheduled", "publishing", "published", "publish_failed"]);
+const TYPE_KEYS: Record<string, string> = {
+  reel: "REEL",
+  static_post: "POST",
+  carousel: "CAROUSEL",
+  story: "STORY",
+};
 
 export function PortalLibraryPage() {
   const { user } = useAuth();
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const gate = useOnboardingGate();
 
@@ -20,22 +29,20 @@ export function PortalLibraryPage() {
     enabled: !!user?.id && gate.isComplete,
   });
 
-  // Filter strictly to delivered/approved assets per Rule R4
-  const rawItems = (response?.items || []).filter(
-    (item: any) => item.status === "approved" || item.status === "scheduled" || item.status === "published"
-  );
-  
-  // Transform real items into library format
-  const realAssets = rawItems.map((item: any) => ({
-    id: item.id,
-    status: item.status === "approved" ? "Approved" : item.status === "scheduled" ? "Scheduled" : "Published",
-    type: (item.type || (item.file_type?.includes("video") ? "reel" : "post")).toUpperCase(),
-    title: item.title || `${item.type || "Asset"} Draft`,
-    image: item.thumbnail_url || item.file_url || "",
-    fileUrl: item.file_url
-  }));
-
-  const assets = realAssets;
+  // Only approved work belongs in the library (App Flow 5.1 step 15).
+  const assets = (response?.items || [])
+    .filter((item) => LIBRARY_STATUSES.has(item.status))
+    .map((item) => ({
+      id: item.id,
+      status: item.status === "published" ? "Published" : item.status === "scheduled" ? "Scheduled" : "Approved",
+      type: TYPE_KEYS[item.deliverable_type] || "POST",
+      typeLabel: item.type_label,
+      title: item.title,
+      previewUrl: item.file_url,
+      isVideo: item.is_video,
+      downloadUrl: item.download_url,
+      firstRound: (item.revisions_used || 0) === 0,
+    }));
 
   const counts = {
     total: assets.length,
@@ -44,6 +51,7 @@ export function PortalLibraryPage() {
     posts: assets.filter(a => a.type === "POST").length,
     stories: assets.filter(a => a.type === "STORY").length,
   };
+  const firstRoundPct = assets.length ? Math.round((assets.filter(a => a.firstRound).length / assets.length) * 100) : null;
 
   const filteredAssets = assets.filter(a => {
     const matchesFilter = filter === "All" || filter.toUpperCase().startsWith(a.type);
@@ -62,35 +70,25 @@ export function PortalLibraryPage() {
     );
   }
 
-  const handleDownload = async (id: string, url?: string) => {
+  const handleDownload = async (id: string, url?: string | null) => {
+    setDownloadError(null);
     setDownloading(id);
     try {
       if (id === "all") {
-        const res = await fetch("/api/v1/deliverables/download-zip", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
-        });
-        if (res.ok) {
-          const blob = await res.blob();
-          const downloadUrl = window.URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = downloadUrl;
-          a.download = "creo_approved_assets.zip";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          window.URL.revokeObjectURL(downloadUrl);
-        }
+        await downloadApprovedZip();
       } else if (url) {
+        // Signed with an attachment disposition, so the browser saves the file.
         const a = document.createElement("a");
         a.href = url;
-        a.download = "asset";
-        a.target = "_blank";
+        a.rel = "noopener";
         document.body.appendChild(a);
         a.click();
         a.remove();
+      } else {
+        setDownloadError("This file's download link is unavailable. Refresh the page and try again.");
       }
-    } catch {
-      // Gracefully handle download failure
+    } catch (err) {
+      setDownloadError(err instanceof Error ? err.message : "Download failed. Please try again.");
     } finally {
       setDownloading(null);
     }
@@ -125,9 +123,10 @@ export function PortalLibraryPage() {
               className="w-full sm:w-[280px] pl-10 pr-4 py-2.5 bg-[#161F2D] border border-[#2A3446] rounded-xl text-sm text-white placeholder:text-[#97A0B3] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6] transition-all"
             />
           </div>
-          <button 
+          <button
             onClick={() => handleDownload("all")}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#161F2D] border border-[#2A3446] hover:bg-white/[0.04] transition-colors rounded-xl text-sm font-medium text-white shrink-0"
+            disabled={assets.length === 0 || downloading === "all"}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#161F2D] border border-[#2A3446] hover:bg-white/[0.04] transition-colors rounded-xl text-sm font-medium text-white shrink-0 disabled:opacity-50"
           >
             {downloading === "all" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             Download all
@@ -149,15 +148,21 @@ export function PortalLibraryPage() {
         </div>
         <div className="p-5 sm:p-6">
           <p className="text-xs text-[#97A0B3] font-medium mb-1.5">First-round approvals</p>
-          <p className="text-3xl font-semibold text-white mb-1">94%</p>
-          <p className="text-xs text-[#97A0B3]">across all batches</p>
+          <p className="text-3xl font-semibold text-white mb-1">{firstRoundPct === null ? "—" : `${firstRoundPct}%`}</p>
+          <p className="text-xs text-[#97A0B3]">approved without a revision</p>
         </div>
         <div className="p-5 sm:p-6">
-          <p className="text-xs text-[#97A0B3] font-medium mb-1.5">Brand files</p>
-          <p className="text-3xl font-semibold text-white mb-1">12</p>
-          <p className="text-xs text-[#97A0B3]">logos, fonts, photos</p>
+          <p className="text-xs text-[#97A0B3] font-medium mb-1.5">Videos</p>
+          <p className="text-3xl font-semibold text-white mb-1">{assets.filter(a => a.isVideo).length}</p>
+          <p className="text-xs text-[#97A0B3]">reels and video stories</p>
         </div>
       </div>
+
+      {downloadError && (
+        <div role="alert" className="text-sm text-[#F1C9A5] bg-[#D8BF9B]/10 border border-[#D8BF9B]/30 rounded-xl px-4 py-3">
+          {downloadError}
+        </div>
+      )}
 
       {/* Filters & Notice */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#2A3446] pb-4">
@@ -210,12 +215,23 @@ export function PortalLibraryPage() {
               >
                 {/* Image Box */}
                 <div className="relative aspect-square overflow-hidden bg-[#0B111C] flex items-center justify-center">
-                  {asset.image ? (
+                  {asset.previewUrl && asset.isVideo ? (
+                    <video
+                      src={`${asset.previewUrl}#t=0.5`}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : asset.previewUrl ? (
                     <img
-                      src={asset.image}
+                      src={asset.previewUrl}
                       alt={asset.title}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
+                  ) : asset.isVideo ? (
+                    <Film className="w-6 h-6 text-[#97A0B3]" />
                   ) : (
                     <div className="text-center p-4">
                       <span className="text-xs font-bold text-[#97A0B3] tracking-wider uppercase">{asset.type}</span>
@@ -232,14 +248,15 @@ export function PortalLibraryPage() {
                 <div className="p-4 flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-[11px] font-bold tracking-wider text-[#97A0B3] uppercase mb-1">
-                      {asset.type}
+                      {asset.typeLabel}
                     </p>
                     <p className="text-sm font-semibold text-white truncate">
                       {asset.title}
                     </p>
                   </div>
-                  <button 
-                    onClick={() => handleDownload(asset.id, (asset as any).fileUrl)}
+                  <button
+                    onClick={() => handleDownload(asset.id, asset.downloadUrl)}
+                    aria-label={`Download ${asset.title}`}
                     className="w-8 h-8 rounded-full bg-white/[0.05] flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-white/[0.1] transition-colors shrink-0"
                   >
                     {downloading === asset.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <Download className="w-3.5 h-3.5" />}

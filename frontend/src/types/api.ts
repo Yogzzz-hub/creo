@@ -209,19 +209,41 @@ export interface DeliverableItem {
   root_id: string;
   version: number;
   status: DeliverableStatusType;
-  file_url: string;
+  /** Client-facing label, e.g. "Pending approval", "Revision in progress". */
+  status_label: string;
+  title: string;
+  deliverable_type: "reel" | "static_post" | "carousel" | "story" | "shoot_day" | string;
+  type_label: string;
+  /** Short-lived signed URL (or absolute API URL); null if the file cannot be served. */
+  file_url: string | null;
   file_type: string;
+  is_video: boolean;
+  file_size_bytes: number;
+  /** Present only once the client has approved the deliverable. */
+  download_url: string | null;
   revision_round: number;
+  revisions_used: number;
+  revisions_allowed: number | null;
+  /** The client's own change request; internal QA notes are never sent. */
   rejection_comment: string | null;
   approved_at: string | null;
   scheduled_at: string | null;
+  due_date: string | null;
   created_at: string | null;
+}
+
+export interface DeliverableDetail extends DeliverableItem {
+  /** Versions the client has reviewed, newest first. */
+  versions: DeliverableItem[];
 }
 
 export interface PortalDeliverablesResponse {
   items: DeliverableItem[];
   has_more: boolean;
   waiting_on_you: number;
+  revisions_allowed?: number;
+  subscription_active?: boolean;
+  is_expired?: boolean;
   limit: number;
 }
 

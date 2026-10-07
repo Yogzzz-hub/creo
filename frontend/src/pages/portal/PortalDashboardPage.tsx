@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { request } from "../../lib/http";
+import { HttpError, request } from "../../lib/http";
+import { approveDeliverable, requestChanges } from "../../lib/deliverables-api";
 import { useAuth } from "../../lib/auth-context";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
@@ -127,15 +128,13 @@ export function PortalDashboardPage() {
     e.preventDefault();
     e.stopPropagation();
     try {
-      await request(`/api/v1/deliverables/${id}/approve`, {
-        method: "POST",
-        headers: { "Idempotency-Key": crypto.randomUUID() },
-      });
+      await approveDeliverable(id, user?.id || "", crypto.randomUUID());
       queryClient.invalidateQueries({ queryKey: ["portal-dashboard-deliverables"] });
       queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] });
-      showToast("Deliverable approved!");
-    } catch {
-      showToast("Approval failed or already processed");
+      queryClient.invalidateQueries({ queryKey: ["portal", "deliverables"] });
+      showToast("Deliverable approved — download it from Review or Library.");
+    } catch (err) {
+      showToast(err instanceof HttpError ? err.message : "Approval failed. Please retry.");
     }
   };
 
@@ -154,26 +153,22 @@ export function PortalDashboardPage() {
     if (!declineTarget || !declineComment.trim()) return;
     setSubmittingDecline(true);
     try {
-      await request(
-        `/api/v1/deliverables/${declineTarget.id}/request-changes?rejection_comment=${encodeURIComponent(
-          declineComment.trim()
-        )}`,
-        { method: "POST" }
-      );
+      await requestChanges(declineTarget.id, user?.id || "", declineComment.trim());
       queryClient.invalidateQueries({ queryKey: ["portal-dashboard-deliverables"] });
       queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["portal", "deliverables"] });
       showToast("Revision requested from pod");
       setDeclineTarget(null);
       setDeclineComment("");
-    } catch {
-      showToast("Change request failed");
+    } catch (err) {
+      showToast(err instanceof HttpError ? err.message : "Change request failed");
     } finally {
       setSubmittingDecline(false);
     }
   };
 
   const pendingDeliverables = (deliverablesData?.items || []).filter(
-    (d: any) => d.status === "pending_approval" || d.status === "in_production"
+    (d: any) => d.status === "pending_approval"
   );
 
   const companyName = dashboard?.company?.name || user?.company_name || user?.full_name || "Brand";
@@ -259,7 +254,8 @@ export function PortalDashboardPage() {
 
             {/* Progress Steps */}
             {(() => {
-              const inProd = deliverablesData?.items?.filter((d: any) => d.status === "in_production" || d.status === "draft")?.length || 0;
+              // Internal drafts are never sent to clients; open revisions are the visible "in production" work.
+              const inProd = deliverablesData?.items?.filter((d: any) => d.status === "revision_requested")?.length || 0;
               const hasScheduled = (upcomingEntries.length > 0) || (deliverablesData?.items?.some((d: any) => d.status === "scheduled" || d.status === "approved"));
               const hasReview = pendingDeliverables.length > 0;
 
@@ -323,10 +319,16 @@ export function PortalDashboardPage() {
                   <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 py-4">
                     {/* Thumbnail + Info */}
                     <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-[#0B111C] border border-[#2A3446] overflow-hidden shrink-0 flex items-center justify-center">
-                        {item.thumbnail_url || item.file_url ? (
+                      <Link
+                        to={`/portal/deliverables/${item.id}`}
+                        aria-label={`Review ${item.title}`}
+                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-[#0B111C] border border-[#2A3446] overflow-hidden shrink-0 flex items-center justify-center"
+                      >
+                        {item.file_url && item.is_video ? (
+                          <video src={`${item.file_url}#t=0.5`} muted playsInline preload="metadata" className="w-full h-full object-cover" />
+                        ) : item.file_url ? (
                           <img
-                            src={item.thumbnail_url || item.file_url}
+                            src={item.file_url}
                             alt={item.title}
                             className="w-full h-full object-cover"
                           />
@@ -335,16 +337,19 @@ export function PortalDashboardPage() {
                             <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
                           </svg>
                         )}
-                      </div>
+                      </Link>
                       <div className="min-w-0 flex-1">
                         <p className="text-[11px] sm:text-xs uppercase text-[#7FA0D6] font-bold tracking-wider">
-                          {item.asset_type || "Reel"} · {item.duration || "0:30"}
+                          {item.type_label || "Deliverable"} · v{item.version || 1}
                         </p>
-                        <p className="text-sm sm:text-[15px] font-bold text-white truncate mt-0.5">
+                        <Link
+                          to={`/portal/deliverables/${item.id}`}
+                          className="block text-sm sm:text-[15px] font-bold text-white truncate mt-0.5 hover:underline"
+                        >
                           {item.title || "Untitled"}
-                        </p>
+                        </Link>
                         <p className="text-xs sm:text-[13px] text-[#97A0B3] truncate mt-0.5">
-                          {item.description || "Ready for your review"}
+                          Ready for your review
                         </p>
                       </div>
                     </div>

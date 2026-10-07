@@ -19,7 +19,7 @@ from datetime import date, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -51,6 +51,8 @@ class TaskCreateRequest(BaseModel):
     deliverable_type: DeliverableType
     due_date: date | None = None
     auto_dispatch: bool = False
+    title: str | None = Field(default=None, max_length=200)
+    brief: str | None = Field(default=None, max_length=2000)
 
 
 class TaskAssignRequest(BaseModel):
@@ -214,7 +216,22 @@ async def create_task(
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> TaskResponse:
-    """Create a new task with automated SLA due computation."""
+    """Create a new task with automated SLA due computation.
+
+    Creatives and leads may only create work for clients on their own pod; a
+    creative's own task is assigned to them.
+    """
+    from app.services.deliverable_workflow import on_client_pod
+
+    client = await db.get(User, payload.client_id)
+    if client is None or client.role != UserRole.CLIENT:
+        raise NotFound("Client not found", code="CLIENT_NOT_FOUND")
+    if actor.role in (UserRole.EDITOR, UserRole.DESIGNER, UserRole.TEAM_LEAD):
+        if not await on_client_pod(db, actor.user_id, client.id):
+            raise Forbidden("This client is not on your pod", code="CLIENT_NOT_ON_POD")
+    elif actor.role == UserRole.ADMIN and actor.agency_id and client.agency_id not in (None, actor.agency_id):
+        raise Forbidden("This client belongs to another agency", code="CLIENT_FORBIDDEN")
+
     # Lookup client plan tier to compute turnaround SLA
     sub_res = await db.execute(
         select(Plan.name)
@@ -223,17 +240,27 @@ async def create_task(
             Subscription.client_id == payload.client_id,
             Subscription.status.in_([SubscriptionStatus.TRIALING, SubscriptionStatus.ACTIVE]),
         )
+        .order_by(Subscription.created_at.desc())
+        .limit(1)
     )
     plan_name = sub_res.scalar_one_or_none()
 
     sla_due = compute_sla_due_at(plan_name, payload.deliverable_type)
 
+    blueprint = {
+        key: value.strip()
+        for key, value in (("concept_name", payload.title), ("brief", payload.brief))
+        if value and value.strip()
+    }
     task = Task(
+        agency_id=client.agency_id,
         client_id=payload.client_id,
         deliverable_type=payload.deliverable_type,
         status=TaskStatus.BACKLOG,
         due_date=payload.due_date,
         sla_due_at=sla_due,
+        assigned_to=actor.user_id if actor.role in (UserRole.EDITOR, UserRole.DESIGNER) else None,
+        blueprint=blueprint or None,
     )
     db.add(task)
     await db.flush()

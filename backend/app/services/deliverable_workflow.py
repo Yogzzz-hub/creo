@@ -156,7 +156,7 @@ def _status(value: DeliverableStatus | str) -> DeliverableStatus:
 # ── Access control ────────────────────────────────────────────────────────────
 
 
-async def _on_client_pod(db: AsyncSession, user_id: uuid.UUID, client_id: uuid.UUID) -> bool:
+async def on_client_pod(db: AsyncSession, user_id: uuid.UUID, client_id: uuid.UUID) -> bool:
     stmt = select(ClientAssignment.id).where(
         ClientAssignment.client_id == client_id,
         ClientAssignment.user_id == user_id,
@@ -181,13 +181,13 @@ async def ensure_task_access(db: AsyncSession, actor: Actor, task: Task) -> None
     if role in _CREATIVE_ROLES:
         if task.assigned_to == actor.user_id:
             return
-        if task.assigned_to is None and await _on_client_pod(db, actor.user_id, task.client_id):
+        if task.assigned_to is None and await on_client_pod(db, actor.user_id, task.client_id):
             return
         raise Forbidden("This task is assigned to another creative", code="TASK_NOT_ASSIGNED")
     if role == UserRole.TEAM_LEAD:
         if task.assigned_to == actor.user_id:
             return
-        if await _on_client_pod(db, actor.user_id, task.client_id):
+        if await on_client_pod(db, actor.user_id, task.client_id):
             return
         if task.assigned_to and await _reports_to(db, task.assigned_to, actor.user_id):
             return
@@ -212,7 +212,7 @@ async def get_deliverable_for_review(
     task = await db.get(Task, deliverable.task_id) if deliverable.task_id else None
     if task is not None:
         await ensure_task_access(db, actor, task)
-    elif actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN) and not await _on_client_pod(
+    elif actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN) and not await on_client_pod(
         db, actor.user_id, deliverable.client_id
     ):
         raise Forbidden("This deliverable is outside your pod", code="DELIVERABLE_FORBIDDEN")

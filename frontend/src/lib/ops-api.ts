@@ -321,13 +321,21 @@ export interface PodTask {
   is_near_sla: boolean;
   effort_points: number;
   blueprint: Record<string, any>;
+  is_revision?: boolean;
+  /** Newest non-archived upload for this task. */
   deliverable?: {
     id: string;
-    file_url: string;
+    root_id: string;
+    version: number;
+    /** Signed or absolute URL, null if the stored file cannot be served. */
+    file_url: string | null;
     file_type: string;
+    is_video: boolean;
     status: string;
     revision_round: number;
+    /** QA notes (qa_rejected) or the client's change request (revision_requested). */
     rejection_comment?: string | null;
+    created_at?: string | null;
   } | null;
 }
 
