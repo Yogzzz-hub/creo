@@ -1081,6 +1081,42 @@ class RemoveClientPlanRequest(BaseModel):
     reason: str | None = "Admin removed plan / refund request"
 
 
+@router.post("/clients/{client_id}/offboard")
+async def offboard_client(
+    client_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    actor: Actor = AdminActor,
+) -> dict[str, Any]:
+    """Persist offboarding without deleting billing or content history."""
+    from app.core.client_scope import ensure_client_access
+    from app.core.dashboard_cache import invalidate_dashboard_cache
+
+    await ensure_client_access(db, actor, client_id, write=True, allow_client=False)
+    client = (await db.execute(select(User).where(User.id == client_id).with_for_update())).scalar_one()
+    subscriptions = (await db.execute(select(Subscription).where(
+        Subscription.client_id == client_id,
+        Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
+    ))).scalars().all()
+    for subscription in subscriptions:
+        subscription.status = SubscriptionStatus.CANCELED
+    counters = (await db.execute(select(UsageCounter).where(UsageCounter.client_id == client_id))).scalars().all()
+    for counter in counters:
+        counter.quota = 0
+    already_offboarded = client.account_status == AccountStatus.SUSPENDED
+    client.account_status = AccountStatus.SUSPENDED
+    if not already_offboarded:
+        client.token_version += 1
+    await db.execute(delete(ClientAssignment).where(ClientAssignment.client_id == client_id))
+    if not already_offboarded or subscriptions:
+        db.add(AuditLog(actor_id=actor.user_id, actor_role=actor.role, entity="client",
+                        entity_id=client_id, action="client_offboarded",
+                        to_value={"account_status": "suspended", "cancelled_subscriptions": len(subscriptions)}))
+    await db.commit()
+    await invalidate_user_session(client_id, agency_id=client.agency_id)
+    await invalidate_dashboard_cache()
+    return {"status": "offboarded", "client_id": str(client_id), "cancelled_subscriptions": len(subscriptions)}
+
+
 @router.post("/clients/{client_id}/remove-plan")
 async def remove_client_plan(
     client_id: uuid.UUID,

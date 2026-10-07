@@ -170,7 +170,7 @@ export function AdminClientsPage() {
   useEffect(() => {
     fetchClientRoster()
       .then((data) => {
-        if (Array.isArray(data)) setServerClients(data);
+        if (Array.isArray(data)) setServerClients(data.filter(client => !["suspended", "cancelled"].includes(client.account_status)));
       })
       .catch(console.error);
   }, []);
@@ -187,6 +187,8 @@ export function AdminClientsPage() {
   const [newClientPodInput, setNewClientPodInput] = useState("Pod A (Creative & Brand Strategy)");
   const [clientToRemoveInput, setClientToRemoveInput] = useState("Ryze");
   const [customClients, setCustomClients] = useState<Record<string, ClientDetailData>>({});
+  const [removingClient, setRemovingClient] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
   const [removedClientIds, setRemovedClientIds] = useState<Set<string>>(new Set());
   const [previewDeliverable, setPreviewDeliverable] = useState<any | null>(null);
 
@@ -196,6 +198,20 @@ export function AdminClientsPage() {
     priority: "Standard",
     notes: "",
   });
+
+  const offboardClient = async (id: string, name: string) => {
+    if (removingClient) return;
+    setRemovingClient(true); setRemoveError(null);
+    try {
+      await request(`/api/v1/admin/clients/${id}/offboard`, { method: "POST" });
+      setRemovedClientIds(previous => new Set([...previous, id.toLowerCase()]));
+      setServerClients(previous => previous.filter(client => client.client_id !== id));
+      setSelectedClientId(null);
+      setIsCancelClientModalOpen(false); setIsRemoveClientModalOpen(false);
+      showToast(`Offboarded ${name}. Plan cancelled and account access revoked.`);
+    } catch (error) { setRemoveError(error instanceof Error ? error.message : "Unable to remove this client."); }
+    finally { setRemovingClient(false); }
+  };
 
   const mergedClientsData: Record<string, ClientDetailData> = { ...customClients };
 
@@ -528,7 +544,7 @@ export function AdminClientsPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIsRemoveClientModalOpen(true)}
+                  onClick={() => { setRemoveError(null); setClientToRemoveInput(clientList[0]?.id || ""); setIsRemoveClientModalOpen(true); }}
                   className="px-3 py-2.5 rounded-xl border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
                 >
                   <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Remove Client
@@ -624,14 +640,14 @@ export function AdminClientsPage() {
 
             {/* Client Header Card matching Screenshot */}
             <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-4">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div className="flex items-start gap-4">
+              <div className="flex flex-col gap-6">
+                <div className="flex items-start gap-4 min-w-0">
                   <div className="w-16 h-16 rounded-2xl bg-[#0B111C] text-white font-black text-2xl flex items-center justify-center shadow-lg shrink-0">
                     {activeClient?.initials}
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2.5">
-                      <h1 className="text-2xl font-black text-white tracking-tight">
+                      <h1 className="text-2xl font-black text-white tracking-tight break-words">
                         {activeClient?.name}
                       </h1>
                       <CheckCircle2 className="w-5 h-5 text-[#7FA0D6] fill-blue-600 text-white" />
@@ -664,7 +680,7 @@ export function AdminClientsPage() {
                 </div>
 
                 {/* Header Action Buttons */}
-                <div className="flex items-center gap-2.5 shrink-0">
+                <div className="flex flex-wrap items-center gap-2.5 w-full border-t border-[#2A3446] pt-4">
                   <Link
                     to={`/admin/clients/${activeClient?.id || ""}/brand`}
                     className="px-4 py-2.5 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-xs font-bold text-[#7FA0D6] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
@@ -694,7 +710,7 @@ export function AdminClientsPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsCancelClientModalOpen(true)}
+                    onClick={() => { setRemoveError(null); setIsCancelClientModalOpen(true); }}
                     className="px-4 py-2.5 rounded-xl border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-xs font-bold text-rose-400 flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
                     <Trash2 className="w-3.5 h-3.5 text-rose-400" /> Remove Client & Cancel Plan
@@ -1510,6 +1526,7 @@ export function AdminClientsPage() {
                 </div>
               </div>
 
+              {removeError && <p role="alert" className="text-sm text-[#D8BF9B]">{removeError}</p>}
               <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
                 <button
                   type="button"
@@ -1520,17 +1537,11 @@ export function AdminClientsPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (activeClient) {
-                      activeClient.status = "CANCELLED";
-                    }
-                    showToast(`Cancelled plan & removed ${activeClient?.name} from active retainers.`);
-                    setIsCancelClientModalOpen(false);
-                    setSelectedClientId(null);
-                  }}
+                  disabled={removingClient}
+                  onClick={() => { if (activeClient) void offboardClient(activeClient.id, activeClient.name); }}
                   className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md cursor-pointer"
                 >
-                  Confirm Cancellation
+                  {removingClient ? "Removing…" : "Confirm Cancellation"}
                 </button>
               </div>
             </div>
@@ -1724,7 +1735,7 @@ export function AdminClientsPage() {
                     className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
                   >
                     {clientList.map((client) => (
-                      <option key={client.id} value={client.name}>
+                      <option key={client.id} value={client.id}>
                         {client.name} ({client.industry})
                       </option>
                     ))}
@@ -1732,10 +1743,11 @@ export function AdminClientsPage() {
                 </div>
 
                 <p className="text-[#97A0B3] text-[11px] leading-relaxed">
-                  Offboarding <strong className="text-white">{clientToRemoveInput}</strong> will archive their active retainer and release assigned pod capacity back to the roster.
+                  Offboarding <strong className="text-white">{clientToRemoveInput}</strong> will cancel their active plan, revoke account access, and remove their team mapping. Billing and content history will be retained.
                 </p>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                {removeError && <p role="alert" className="text-sm text-[#D8BF9B]">{removeError}</p>}
+              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
                   <button
                     type="button"
                     onClick={() => setIsRemoveClientModalOpen(false)}
@@ -1745,30 +1757,10 @@ export function AdminClientsPage() {
                   </button>
                   <button
                     type="button"
+                    disabled={removingClient || !clientList.some(client => client.name === clientToRemoveInput || client.id === clientToRemoveInput)}
                     onClick={() => {
-                      const targetName = clientToRemoveInput.trim();
-                      if (!targetName) return;
-
-                      const foundClient = clientList.find(
-                        (c) => c.name.toLowerCase() === targetName.toLowerCase() || c.id.toLowerCase() === targetName.toLowerCase()
-                      );
-
-                      const idsToRemove = foundClient 
-                        ? [foundClient.id.toLowerCase(), foundClient.name.toLowerCase(), (foundClient.contact?.email || "").toLowerCase()]
-                        : [targetName.toLowerCase()];
-
-                      setRemovedClientIds((prev) => {
-                        const next = new Set(prev);
-                        idsToRemove.forEach((id) => next.add(id));
-                        return next;
-                      });
-
-                      if (selectedClientId && foundClient && foundClient.id === selectedClientId) {
-                        setSelectedClientId(null);
-                      }
-
-                      showToast(`Successfully offboarded client "${targetName}".`);
-                      setIsRemoveClientModalOpen(false);
+                      const client = clientList.find(client => client.name === clientToRemoveInput || client.id === clientToRemoveInput);
+                      if (client) void offboardClient(client.id, client.name);
                     }}
                     className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md cursor-pointer"
                   >

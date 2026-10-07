@@ -1,0 +1,22 @@
+[
+  {
+    "width": 375,
+    "headerAligned": true,
+    "noOverflow": true,
+    "persistedRemoval": true,
+    "failureVisible": true,
+    "retryWorks": true,
+    "refreshDoesNotRestoreClient": true,
+    "pageErrors": []
+  },
+  {
+    "width": 1440,
+    "headerAligned": true,
+    "noOverflow": true,
+    "persistedRemoval": true,
+    "failureVisible": true,
+    "retryWorks": true,
+    "refreshDoesNotRestoreClient": true,
+    "pageErrors": []
+  }
+]
