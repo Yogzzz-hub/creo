@@ -297,8 +297,18 @@ function RoutePrefetcher() {
   const needsOnboarding = role === "client" && (user?.onboarding_stage ?? 0) < 8;
 
   useEffect(() => {
-    if (role !== "client") return;
-    return whenIdle(() => preloadPortalPages({ includeOnboarding: needsOnboarding }));
+    if (!role) return;
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    if (connection?.saveData || ["slow-2g", "2g"].includes(connection?.effectiveType ?? "")) return;
+    return whenIdle(() => {
+      if (role === "client") { preloadPortalPages({ includeOnboarding: needsOnboarding }); return; }
+      const chunks = role === "team_lead"
+        ? [import("../pages/admin/PodTaskBoardPage"), import("../pages/admin/PodDeliverablesReviewPage"), import("../pages/admin/PodScheduleLeavePage")]
+        : ["editor", "designer", "team_member"].includes(role)
+          ? [import("../pages/admin/MemberTaskBoardPage"), import("../pages/admin/MemberSchedulePTOPage")]
+          : [import("../features/admin/AdminSubPages"), import("../features/admin/AdminCalendarPage")];
+      void Promise.allSettled(chunks);
+    });
   }, [role, needsOnboarding]);
 
   return null;

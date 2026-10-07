@@ -85,3 +85,23 @@ results were cached to manufacture a faster benchmark.
 Cloudflare CLI is not authenticated in this workspace. Git-connected automatic
 deployment did update the frontend: live mobile calendar displays October 2026
 and real API entries. Deployment monitoring must confirm any subsequent commits.
+
+## Additional functional correction
+
+The staff schedule page previously fabricated leave balances and reported saved
+requests/cancellations without an API call. It now loads real requests, submits
+validated date/reason fields to POST /admin/leave and cancels through the existing
+DELETE endpoint. Success appears only after the server responds; failures remain
+visible. Upcoming assignments come from the scoped pod data. No fabricated leave
+allowance or balance is displayed because the API does not provide that ledger.
+
+A controlled Chromium check at 320 pixels verified submission, persistence after
+reload, cancellation, and failed submission without false success or an optimistic
+phantom record. No production leave or notification was created. Staff route chunks
+now preload while idle, respecting data-saver and slow-network preferences.
+
+Post-deployment desktop checks confirmed lead/editor/designer dashboards have
+three actual pod members and two assigned clients each, no overflow and no page
+errors. Thirteen live admin pages at 320 pixels also showed no overflow/page errors.
+These checks do not establish that every production mutation or feature is complete.
+The complete client/Gemini flow and sales/investor roles still await test accounts.
