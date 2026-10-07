@@ -1,0 +1,66 @@
+# Live dashboard audit ? 7 October 2026
+
+Site: https://creo.yogalakshmibaskar20.workers.dev/
+
+Previous live checks covered ten public/auth routes at 320 and 1440 pixels,
+thirteen admin desktop routes, six admin mobile routes, a client brand detail,
+and ten client/onboarding routes. The seeded client is still at stage 1:
+protected client features remain locked and require a dedicated test account.
+
+This run adds fourteen authenticated mobile pages at 390 pixels: team lead
+dashboard/tasks/deliverables/schedule/clients/chat, editor overview/tasks/schedule/chat,
+and designer overview/tasks/schedule/chat. No document overflow or uncaught
+application JavaScript errors were recorded. Checks were read-only.
+
+| Baseline API | Browser request duration |
+| --- | --- |
+| Staff session profile | 2.6?5.5 seconds |
+| Notifications | 2.6?3.4 seconds |
+| Pod dashboard | 4.6?8.9 seconds |
+| Chat messages | 2.1?2.4 seconds |
+
+These are individual request durations, not page completion times or p95.
+Each page had a ten-second observation window; that window is not a latency
+measurement. Target-closed warnings from audit response handlers on browser
+teardown are separate from the recorded application page errors.
+
+## Resulting changes
+
+Independent user-scoped dashboard queries and a separate revenue-chart chunk
+remove the slowest-request barrier. Staff screens share their pod cache.
+Incomplete onboarding avoids protected dashboard requests; navigation
+subscription queries share a 30-second freshness window. Support list polling
+pauses in hidden tabs and runs every 30 seconds.
+
+Notifications fetch recent items and the complete unread count in one query.
+Session profiles use one joined query, and every authentication/refresh flow
+preserves agency identity in signed tokens. Pod data follows actual reporting
+lines/assignments and never falls back to unrelated clients or global tasks.
+
+The calendar uses current-month production records instead of November 2024
+demo entries. It filters both data sources before their limits, excludes linked
+deliverables consistently, validates dates and applies agency/staff scope.
+Tenant settings use parameter-safe set_config in one round trip. Server-Timing
+separates application, SQL duration/query count and suspension-cache duration;
+SQL and credentials are not exposed. Gemini stops at its total deadline.
+
+Provider PostgreSQL URLs normalize to asyncpg. Render builds run inside the
+backend directory; worker and beat reference the web JWT secret using Render's
+documented service environment references:
+https://render.com/docs/blueprint-spec#setting-environment-variables
+
+## Validation and limits
+
+Twenty backend tests passed, including new checks for timing-context cleanup,
+unread counts outside the latest twenty records, invalid calendar dates,
+empty-pod scoping, refreshed agency claims and async database URL handling.
+Production frontend build passed. Chromium at 320 and 1440 pixels showed the
+current October 2026 calendar without overflow or JavaScript errors. Controlled
+2?3 second API delays confirmed the dashboard renders independently of queue
+completion. Controlled checks do not establish production latency.
+
+The under-one-second production API target remains unachieved. Deployment
+samples must separate database/Redis/application delays. The hosting blueprint
+is not evidence of actual deployed regions, instance sizes or environment.
+Actual infrastructure access is needed for hosting changes. End-to-end Gemini,
+unlocked client pages, sales and investor roles need dedicated test accounts.

@@ -32,22 +32,19 @@ async def list_notifications(
     """Retrieve notifications and unread badge count for current actor."""
     target_user_id = actor.user_id
 
-    # Fetch recent 20 notifications
+    unread_count_query = select(func.count(Notification.id)).where(
+        Notification.user_id == target_user_id,
+        Notification.is_read.is_(False),
+    ).correlate(None).scalar_subquery()
     stmt = (
-        select(Notification)
+        select(Notification, unread_count_query.label("unread_count"))
         .where(Notification.user_id == target_user_id)
         .order_by(Notification.created_at.desc())
         .limit(20)
     )
-    res = await db.execute(stmt)
-    notifications = res.scalars().all()
-
-    # Unread count
-    unread_stmt = select(func.count(Notification.id)).where(
-        Notification.user_id == target_user_id,
-        Notification.is_read.is_(False),
-    )
-    unread_count = (await db.execute(unread_stmt)).scalar() or 0
+    rows = (await db.execute(stmt)).all()
+    notifications = [row[0] for row in rows]
+    unread_count = rows[0][1] if rows else 0
 
     return {
         "unread_count": unread_count,

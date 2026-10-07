@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.pool import NullPool
 
 from app.config import settings
+from app.core.performance import request_timings
 
 # Context variables for RLS
 current_agency_ctx: contextvars.ContextVar[str | None] = contextvars.ContextVar("current_agency", default=None)
@@ -91,12 +92,29 @@ def receive_begin(conn: Any) -> None:
     agency_id = current_agency_ctx.get()
     is_admin = is_platform_admin_ctx.get()
     
+    # PostgreSQL SET does not accept bound parameters. set_config safely sets
+    # transaction-local values, combining tenant and administrator context in one
+    # round trip when an agency exists. Preserve the unset tenant for global actors.
+    statement = "SELECT set_config('app.is_platform_admin', :admin, true)"
+    params = {"admin": "true" if is_admin else "false"}
     if agency_id:
-        conn.execute(text("SET LOCAL app.current_agency = :a").bindparams(a=agency_id))
-    if is_admin:
-        conn.execute(text("SET LOCAL app.is_platform_admin = 'true'"))
-    else:
-        conn.execute(text("SET LOCAL app.is_platform_admin = 'false'"))
+        statement += ", set_config('app.current_agency', :agency, true)"
+        params["agency"] = str(agency_id)
+    conn.execute(text(statement), params)
+
+
+
+@event.listens_for(engine.sync_engine, "before_cursor_execute")
+def _start_query_timer(conn: Any, cursor: Any, statement: Any, parameters: Any, context: Any, executemany: bool) -> None:
+    context._creo_started = time.perf_counter()
+
+
+@event.listens_for(engine.sync_engine, "after_cursor_execute")
+def _finish_query_timer(conn: Any, cursor: Any, statement: Any, parameters: Any, context: Any, executemany: bool) -> None:
+    timings = request_timings.get()
+    if timings is not None:
+        timings.db_ms += (time.perf_counter() - context._creo_started) * 1000
+        timings.db_queries += 1
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,

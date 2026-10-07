@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "../../lib/auth-context";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import {
@@ -17,10 +18,12 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchPodDashboard, type PodDashboardData } from "../../lib/ops-api";
 
 export function MemberSchedulePTOPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { data } = useQuery<PodDashboardData>({
-    queryKey: ["pod_dashboard"],
+    queryKey: ["pod_dashboard", user?.id, undefined],
     queryFn: () => fetchPodDashboard(),
+    staleTime: 30_000,
   });
   const leadName = data?.members?.find((m) => m.role?.toLowerCase().includes("lead"))?.full_name || "Pod Lead";
   const podName = data?.pod?.name || "Pod A";

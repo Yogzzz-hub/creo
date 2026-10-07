@@ -73,8 +73,9 @@ export function MemberTaskBoardPage() {
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
 
   const { data } = useQuery<PodDashboardData>({
-    queryKey: ["pod_dashboard"],
+    queryKey: ["pod_dashboard", user?.id, undefined],
     queryFn: () => fetchPodDashboard(),
+    staleTime: 30_000,
   });
   const podName = data?.pod?.name || "Pod A";
   const members = data?.members || [];

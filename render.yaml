@@ -7,7 +7,7 @@ services:
     region: singapore
     plan: standard
     numInstances: 2
-    buildCommand: "poetry install --no-root --only main || pip install -r requirements.txt"
+    buildCommand: "cd backend && (poetry install --no-root --only main || pip install -r requirements.txt)"
     # IMPORTANT: alembic upgrade head runs in startCommand, NEVER in buildCommand.
     # Build commands execute before database environment bindings are provisioned
     # and multiple concurrent builds can cause DDL race conditions.
@@ -48,9 +48,14 @@ services:
     runtime: python
     region: singapore
     plan: standard
-    buildCommand: "poetry install --no-root --only main || pip install -r requirements.txt"
+    buildCommand: "cd backend && (poetry install --no-root --only main || pip install -r requirements.txt)"
     startCommand: "cd backend && celery -A app.workers.celery_app worker -Q publish,default -c 4 --loglevel=info"
     envVars:
+      - key: JWT_SECRET
+        fromService:
+          name: creo-api
+          type: web
+          envVarKey: JWT_SECRET
       - key: PYTHON_VERSION
         value: 3.12.0
       # Celery tasks run asyncio.run() per task, so pooled asyncpg connections
@@ -79,13 +84,18 @@ services:
     runtime: python
     region: singapore
     plan: starter
-    buildCommand: "poetry install --no-root --only main || pip install -r requirements.txt"
+    buildCommand: "cd backend && (poetry install --no-root --only main || pip install -r requirements.txt)"
     # CRITICAL INVARIANT: NEVER scale creo-beat above 1 instance.
     # While database rows use FOR UPDATE SKIP LOCKED for due publish pickup,
     # running multiple Celery beat instances causes duplicate scheduling of
     # notification sweeps, KPI refreshes, and maintenance crons.
     startCommand: "cd backend && celery -A app.workers.celery_app beat --loglevel=info"
     envVars:
+      - key: JWT_SECRET
+        fromService:
+          name: creo-api
+          type: web
+          envVarKey: JWT_SECRET
       - key: PYTHON_VERSION
         value: 3.12.0
       - key: ENVIRONMENT

@@ -55,8 +55,9 @@ export function PodLeadDashboardPage() {
   const [reinforceForm, setReinforceForm] = useState({ role: "3D Motion Designer", hours: "+20 hrs/week", urgency: "Immediate (Today)", notes: "" });
 
   const { data, isLoading } = useQuery<PodDashboardData>({
-    queryKey: ["pod_dashboard", selectedPodKey],
+    queryKey: ["pod_dashboard", user?.id, selectedPodKey],
     queryFn: () => fetchPodDashboard(selectedPodKey),
+    staleTime: 30_000,
   });
 
   const showToast = (text: string, type: "success" | "error" | "info" = "success") => {

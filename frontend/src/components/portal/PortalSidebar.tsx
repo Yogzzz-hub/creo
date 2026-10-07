@@ -47,13 +47,14 @@ export function PortalSidebar() {
     queryKey: ["client-subscription", user?.id],
     queryFn: () => request<any>("/api/v1/payments/subscription"),
     staleTime: 30_000,
-    refetchOnMount: "always",
+    enabled: !!user?.id,
   });
 
   const { data: dashboard } = useQuery({
     queryKey: ["portal-dashboard", user?.id],
     queryFn: () => request<any>("/api/v1/portal/dashboard"),
-    enabled: !!user?.id,
+    enabled: !!user?.id && (user?.onboarding_stage ?? 0) >= 8,
+    staleTime: 30_000,
   });
 
   const stage = dashboard?.onboarding_stage ?? user?.onboarding_stage ?? 1;
@@ -207,12 +208,15 @@ export function MobileBottomTabBar() {
   const { data: subData } = useQuery({
     queryKey: ["client-subscription", user?.id],
     queryFn: () => request<any>("/api/v1/payments/subscription"),
+    enabled: !!user?.id,
+    staleTime: 30_000,
   });
 
   const { data: dashboard } = useQuery({
     queryKey: ["portal-dashboard", user?.id],
     queryFn: () => request<any>("/api/v1/portal/dashboard"),
-    enabled: !!user?.id,
+    enabled: !!user?.id && (user?.onboarding_stage ?? 0) >= 8,
+    staleTime: 30_000,
   });
 
   const stage = dashboard?.onboarding_stage ?? user?.onboarding_stage ?? 1;

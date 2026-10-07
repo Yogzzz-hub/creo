@@ -126,7 +126,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
     };
 
     loadWidgetTickets();
-    const interval = setInterval(loadWidgetTickets, 5000);
+    const interval = setInterval(() => { if (!document.hidden) void loadWidgetTickets(); }, 30_000);
     const handleStorage = (e: StorageEvent) => {
       if (e.key === "creo_support_tickets") loadWidgetTickets();
     };

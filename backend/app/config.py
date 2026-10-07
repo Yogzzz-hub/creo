@@ -60,7 +60,13 @@ class Settings(BaseSettings):
     @classmethod
     def strip_urls(cls, v: Any) -> Any:
         if isinstance(v, str):
-            return v.strip().strip("'").strip('"')
+            normalized = v.strip().strip("'").strip('"')
+            # Hosting providers supply plain PostgreSQL URLs; both the API and
+            # Alembic use async engines and require the asyncpg dialect.
+            for prefix in ("postgres://", "postgresql://"):
+                if normalized.startswith(prefix):
+                    return "postgresql+asyncpg://" + normalized[len(prefix):]
+            return normalized
         return v
 
     # Redis & Celery

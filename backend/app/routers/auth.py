@@ -390,6 +390,7 @@ async def verify_registration(
         role=user.role.value,
         email=user.email,
         client_id=user.id if user.role == UserRole.CLIENT else None,
+        agency_id=user.agency_id,
         extra_claims={"must_reset_password": False},
     )
     refresh_token = create_refresh_token(subject=user.id)
@@ -493,6 +494,7 @@ async def verify_reset_otp(
         role=user.role.value,
         email=user.email,
         client_id=user.id if user.role == UserRole.CLIENT else None,
+        agency_id=user.agency_id,
         extra_claims={"must_reset_password": True},
     )
     refresh_token = create_refresh_token(subject=user.id)
@@ -544,6 +546,7 @@ async def set_mandatory_password(
         role=user.role.value,
         email=user.email,
         client_id=user.id if user.role == UserRole.CLIENT else None,
+        agency_id=user.agency_id,
         extra_claims={"must_reset_password": False},
     )
 
@@ -616,6 +619,7 @@ async def login(
         role=user.role.value,
         email=user.email,
         client_id=user.id if user.role == UserRole.CLIENT else None,
+        agency_id=user.agency_id,
         extra_claims={"must_reset_password": bool(getattr(user, "must_reset_password", False))},
     )
     refresh_token = create_refresh_token(subject=user.id)
@@ -727,6 +731,7 @@ async def verify_otp(
         role=user.role.value,
         email=user.email,
         client_id=user.id if user.role == UserRole.CLIENT else None,
+        agency_id=user.agency_id,
         extra_claims={"must_reset_password": bool(getattr(user, "must_reset_password", False))},
     )
     refresh_token = create_refresh_token(subject=user.id)
@@ -762,16 +767,13 @@ async def get_me(
     if str(user_id) == "00000000-0000-0000-0000-000000000001" and actor.email is None:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    stmt = select(User).where(User.id == user_id)
-    res = await db.execute(stmt)
-    user = res.scalar_one_or_none()
-
-    if not user:
+    stmt = select(User, ClientProfile).outerjoin(
+        ClientProfile, ClientProfile.user_id == User.id
+    ).where(User.id == user_id)
+    row = (await db.execute(stmt)).first()
+    if row is None:
         raise HTTPException(status_code=401, detail="User session not found")
-
-    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == user.id)
-    profile_res = await db.execute(profile_stmt)
-    profile = profile_res.scalar_one_or_none()
+    user, profile = row
 
     from app.services.onboarding_service import get_current_stage
     stage = await get_current_stage(db, user.id) if user.role == UserRole.CLIENT else 5
@@ -789,6 +791,7 @@ async def get_me(
             role=user.role.value,
             email=user.email,
             client_id=user.id if user.role == UserRole.CLIENT else None,
+            agency_id=user.agency_id,
             extra_claims={"must_reset_password": False},
         )
 
@@ -983,6 +986,7 @@ async def _process_google_code(
         role=user.role.value,
         email=user.email,
         client_id=user.id if user.role == UserRole.CLIENT else None,
+        agency_id=user.agency_id,
     )
     refresh_token = create_refresh_token(subject=user.id)
 
@@ -1059,6 +1063,7 @@ async def refresh_access_token(
         role=user.role.value,
         email=user.email,
         client_id=user.id if user.role == UserRole.CLIENT else None,
+        agency_id=user.agency_id,
     )
     return {
         "access_token": new_access_token,

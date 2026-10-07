@@ -155,7 +155,7 @@ export function AdminSupportTicketsPage() {
 
   useEffect(() => {
     loadTickets();
-    const interval = setInterval(loadTickets, 5000);
+    const interval = setInterval(() => { if (!document.hidden) void loadTickets(); }, 30_000);
     const handleStorage = (e: StorageEvent) => {
       if (e.key === "creo_support_tickets") {
         loadTickets();

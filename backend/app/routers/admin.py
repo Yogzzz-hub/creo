@@ -3144,7 +3144,18 @@ async def get_admin_calendar(
 ) -> list[dict[str, Any]]:
     """Retrieve content calendar scheduled deliverables and publication entries from DB."""
     events: list[dict[str, Any]] = []
-    seen_deliverable_ids = set()
+    if (month is None) != (year is None):
+        raise HTTPException(status_code=400, detail="Provide both month and year.")
+    if month is not None and (not 1 <= month <= 12 or not 1 <= year <= 9998):
+        raise HTTPException(status_code=400, detail="Invalid calendar month or year.")
+
+    def scope_calendar(stmt: Any, client_column: Any) -> Any:
+        if actor.role not in (UserRole.SUPER_ADMIN, "super_admin"):
+            stmt = stmt.where(User.agency_id == actor.agency_id)
+        if actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN, "admin", "super_admin"):
+            assigned_clients = select(ClientAssignment.client_id).where(ClientAssignment.user_id == actor.user_id)
+            stmt = stmt.where(client_column.in_(assigned_clients))
+        return stmt
 
     # 1. Query ContentCalendar entries joined with Client, Profile, Task, Deliverable
     cal_stmt = (
@@ -3161,6 +3172,7 @@ async def get_admin_calendar(
         .outerjoin(Deliverable, Deliverable.id == ContentCalendar.deliverable_id)
         .outerjoin(Task, Task.id == Deliverable.task_id)
     )
+    cal_stmt = scope_calendar(cal_stmt, ContentCalendar.client_id)
     if client_id:
         cal_stmt = cal_stmt.where(ContentCalendar.client_id == client_id)
     if month and year:
@@ -3177,9 +3189,6 @@ async def get_admin_calendar(
     cal_rows = cal_res.fetchall()
 
     for cal, email, company_name, d, deliv_type, brand_summary in cal_rows:
-        if d:
-            seen_deliverable_ids.add(d.id)
-
         client_name = company_name or email.split("@")[0].capitalize()
         event_dt = cal.scheduled_time or datetime.combine(cal.publish_date, datetime.min.time().replace(hour=11), tzinfo=timezone.utc)
         
@@ -3250,8 +3259,17 @@ async def get_admin_calendar(
         .outerjoin(Task, Task.id == Deliverable.task_id)
         .outerjoin(ClientProfile, ClientProfile.user_id == Deliverable.client_id)
     )
-    if seen_deliverable_ids:
-        deliv_stmt = deliv_stmt.where(Deliverable.id.not_in(seen_deliverable_ids))
+    deliv_stmt = scope_calendar(deliv_stmt, Deliverable.client_id)
+    # Exclude every linked deliverable, including links outside the selected month.
+    deliv_stmt = deliv_stmt.where(~select(ContentCalendar.id).where(
+        ContentCalendar.deliverable_id == Deliverable.id
+    ).exists())
+    if month and year:
+        event_date_expr = func.coalesce(Deliverable.scheduled_at, Deliverable.created_at)
+        deliv_stmt = deliv_stmt.where(
+            event_date_expr >= datetime.combine(start_d, datetime.min.time(), tzinfo=timezone.utc),
+            event_date_expr < datetime.combine(end_d, datetime.min.time(), tzinfo=timezone.utc),
+        )
     if client_id:
         deliv_stmt = deliv_stmt.where(Deliverable.client_id == client_id)
     deliv_stmt = (
@@ -3577,11 +3595,32 @@ async def get_pod_dashboard(
             selected_pod = POD_DEFINITIONS[0]  # Default to Pod Alpha
 
     # 2. Query all users and staff profiles
-    users_stmt = select(User, StaffProfile).outerjoin(StaffProfile, StaffProfile.user_id == User.id)
+    users_stmt = select(User, StaffProfile).outerjoin(StaffProfile, StaffProfile.user_id == User.id).where(User.role != UserRole.CLIENT)
+    if actor.role not in (UserRole.SUPER_ADMIN, "super_admin"):
+        users_stmt = users_stmt.where(User.agency_id == actor.agency_id)
+    if is_team_lead:
+        users_stmt = users_stmt.where(or_(User.id == actor.user_id, StaffProfile.team_lead_id == actor.user_id))
     all_users_res = await db.execute(users_stmt)
     all_users_map: dict[str, tuple[User, StaffProfile | None]] = {}
     for u, sp in all_users_res.all():
         all_users_map[u.email.lower()] = (u, sp)
+
+    # Resolve staff from persisted reporting lines; a non-admin may not select
+    # another pod through the query parameter or a missing-data fallback.
+    if actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN, "admin", "super_admin"):
+        actor_record = next(((u, sp) for u, sp in all_users_map.values() if u.id == actor.user_id), (None, None))
+        actor_user, actor_profile = actor_record
+        lead_id = actor.user_id if is_team_lead else (actor_profile.team_lead_id if actor_profile else None)
+        lead_record = next(((u, sp) for u, sp in all_users_map.values() if u.id == lead_id), (None, None))
+        actual_lead, _ = lead_record
+        selected_pod = next((p for p in POD_DEFINITIONS if actual_lead and actual_lead.email.lower() in (p.get("lead_email"), p.get("lead_alias_email"))), selected_pod)
+        if actual_lead and actual_lead.email.lower() not in (selected_pod.get("lead_email"), selected_pod.get("lead_alias_email")):
+            selected_pod = {**selected_pod, "id": str(actual_lead.id), "key": str(actual_lead.id), "name": f"{actual_lead.full_name or 'Creative'} Pod", "lead_email": actual_lead.email.lower(), "editor_email": "", "designer_email": ""}
+        allowed_ids = {actor.user_id}
+        if lead_id:
+            allowed_ids.add(lead_id)
+            allowed_ids.update(u.id for u, sp in all_users_map.values() if sp and sp.team_lead_id == lead_id)
+        all_users_map = {email: record for email, record in all_users_map.items() if record[0].id in allowed_ids}
 
     # 3. Resolve members of this pod
     pod_lead_user, pod_lead_sp = all_users_map.get(selected_pod["lead_email"], (None, None))
@@ -3622,6 +3661,9 @@ async def get_pod_dashboard(
             if sp and sp.team_lead_id == pod_lead_user.id and u.id not in member_ids:
                 pod_members_list.append(format_member(u, sp, "Creative Specialist"))
 
+    if not pod_members_list and actor.role not in (UserRole.ADMIN, UserRole.SUPER_ADMIN, "admin", "super_admin") and actor_user:
+        pod_members_list.append(format_member(actor_user, actor_profile, "Creative Specialist"))
+
     # 4. Assigned clients for this pod
     clients_stmt = (
         select(ClientAssignment, User, ClientProfile)
@@ -3646,57 +3688,21 @@ async def get_pod_dashboard(
                 "instagram": c_profile.instagram_username if c_profile else None,
             }
 
-    # If no clients explicitly assigned via ClientAssignment, find client by email pattern
-    if not assigned_clients_dict:
-        default_client_stmt = select(User, ClientProfile).outerjoin(ClientProfile, ClientProfile.user_id == User.id).where(User.role == UserRole.CLIENT).limit(2)
-        for c_user, c_profile in (await db.execute(default_client_stmt)).all():
-            cid_str = str(c_user.id)
-            client_ids.append(c_user.id)
-            assigned_clients_dict[cid_str] = {
-                "id": cid_str,
-                "name": c_profile.company_name if c_profile and c_profile.company_name else (c_user.full_name or c_user.email),
-                "email": c_user.email,
-                "brand_summary": c_profile.brand_summary if c_profile else "Active Content Retainer",
-                "brand_dna": c_profile.brand_dna if c_profile else {},
-                "instagram": c_profile.instagram_username if c_profile else None,
-            }
-
     # 5. Query tasks scoped to this pod
     now = datetime.now(timezone.utc)
-    if not is_team_lead or not member_ids:
-        tasks_stmt = (
-            select(Task, User, ClientProfile, Deliverable)
-            .outerjoin(User, User.id == Task.assigned_to)
-            .outerjoin(ClientProfile, ClientProfile.user_id == Task.client_id)
-            .outerjoin(Deliverable, Deliverable.task_id == Task.id)
-            .order_by(Task.created_at.desc())
-        )
-    else:
-        task_filter = or_(
-            Task.assigned_to.in_(member_ids),
-            Task.client_id.in_(client_ids) if client_ids else False,
-        )
-        tasks_stmt = (
-            select(Task, User, ClientProfile, Deliverable)
-            .outerjoin(User, User.id == Task.assigned_to)
-            .outerjoin(ClientProfile, ClientProfile.user_id == Task.client_id)
-            .outerjoin(Deliverable, Deliverable.task_id == Task.id)
-            .where(task_filter)
-            .order_by(Task.created_at.desc())
-        )
-    tasks_res = await db.execute(tasks_stmt)
-    tasks_rows = tasks_res.all()
-
-    if not tasks_rows:
-        fallback_stmt = (
-            select(Task, User, ClientProfile, Deliverable)
-            .outerjoin(User, User.id == Task.assigned_to)
-            .outerjoin(ClientProfile, ClientProfile.user_id == Task.client_id)
-            .outerjoin(Deliverable, Deliverable.task_id == Task.id)
-            .order_by(Task.created_at.desc())
-        )
-        tasks_res = await db.execute(fallback_stmt)
-        tasks_rows = tasks_res.all()
+    task_filter = or_(
+        Task.assigned_to.in_(member_ids),
+        Task.client_id.in_(client_ids) if client_ids else False,
+    )
+    tasks_stmt = (
+        select(Task, User, ClientProfile, Deliverable)
+        .outerjoin(User, User.id == Task.assigned_to)
+        .outerjoin(ClientProfile, ClientProfile.user_id == Task.client_id)
+        .outerjoin(Deliverable, Deliverable.task_id == Task.id)
+        .where(task_filter)
+        .order_by(Task.created_at.desc())
+    )
+    tasks_rows = (await db.execute(tasks_stmt)).all()
 
     tasks_by_status: dict[str, list[dict[str, Any]]] = {
         "backlog": [],
@@ -3855,7 +3861,7 @@ async def get_pod_dashboard(
             "progressBg": selected_pod["progressBg"],
             "lead": {
                 "id": str(pod_lead_user.id) if pod_lead_user else None,
-                "name": pod_lead_user.full_name if pod_lead_user else "Sarah Connor",
+                "name": pod_lead_user.full_name if pod_lead_user else "Unassigned lead",
                 "email": pod_lead_user.email if pod_lead_user else selected_pod["lead_email"],
             },
             "stats": {

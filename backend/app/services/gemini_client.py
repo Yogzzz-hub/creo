@@ -311,6 +311,12 @@ async def generate_gemini_content(
                             model=model,
                             status_code=res.status_code,
                         )
+                except TimeoutError:
+                    # The enclosing timeout consumes the total generation budget.
+                    # Windows timers may fire just before the monotonic deadline;
+                    # do not start another provider request in that tiny gap.
+                    logger.warning("gemini_latency_budget_exhausted", attempts=attempts)
+                    return None, None
                 except Exception as err:
                     logger.warning(
                         "gemini_request_exception",

@@ -41,8 +41,9 @@ export function MemberOverviewPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data, isLoading } = useQuery<PodDashboardData>({
-    queryKey: ["pod_dashboard"],
+    queryKey: ["pod_dashboard", user?.id, undefined],
     queryFn: () => fetchPodDashboard(),
+    staleTime: 30_000,
   });
   const podName = data?.pod?.name || "Pod A";
   const members = data?.members || [];

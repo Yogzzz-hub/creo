@@ -61,7 +61,7 @@ const AdminTasksPage = lazy(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminTasksPage }))
 );
 const AdminCalendarPage = lazy(() =>
-  import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminCalendarPage }))
+  import("../features/admin/AdminCalendarPage").then((m) => ({ default: m.AdminCalendarPage }))
 );
 const AdminSupportTicketsPage = lazy(() =>
   import("../features/admin/AdminSupportTicketsPage").then((m) => ({ default: m.AdminSupportTicketsPage }))

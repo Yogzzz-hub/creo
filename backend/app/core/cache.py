@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import logging
 import uuid
+from time import perf_counter
 from typing import Any
 
 import redis.asyncio as aioredis
 
 from app.config import settings
+from app.core.performance import request_timings
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +76,13 @@ async def is_user_suspended_in_cache(user_id: uuid.UUID | str, agency_id: uuid.U
         return False
     try:
         r = await get_redis()
-        val = await r.get(key)
+        started = perf_counter()
+        try:
+            val = await r.get(key)
+        finally:
+            timings = request_timings.get()
+            if timings is not None:
+                timings.auth_cache_ms += (perf_counter() - started) * 1000
         if val == "1":
             _in_memory_suspended.add(key)
             return True
