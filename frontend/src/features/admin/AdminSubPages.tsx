@@ -1,3 +1,7 @@
+import { useAuth } from "../../lib/auth-context";
+import * as Dialog from "@radix-ui/react-dialog";
+import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
+import { resolveAssetUrl } from "../../lib/media";
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams, Navigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -7,7 +11,6 @@ import {
   fetchPlanNegotiations,
   updatePlanNegotiation,
   createPlanNegotiation,
-  fetchPodDashboard,
   fetchLeaveRequests,
   approveLeaveRequest,
   rejectLeaveRequest,
@@ -1785,6 +1788,7 @@ export function AdminClientsPage() {
 // 2. ADMIN DELIVERABLES PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export function AdminDeliverablesPage() {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClient, setSelectedClient] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -1793,108 +1797,66 @@ export function AdminDeliverablesPage() {
   const [commentModalItem, setCommentModalItem] = useState<any | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const [deliverablesList, setDeliverablesList] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetchAdminDeliverables()
-      .then((data) => {
-        setDeliverablesList(data || []);
-      })
-      .catch(console.error);
-  }, []);
-
+  const [revisionItem, setRevisionItem] = useState<{ id: string; title: string } | null>(null);
+  const [revisionReason, setRevisionReason] = useState("");
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const deliverablesQuery = useQuery({ queryKey: ["admin-uploaded-deliverables", user?.id], enabled: !!user, queryFn: () => fetchAdminDeliverables(), retry: false });
+  const deliverablesList = (deliverablesQuery.data || []).map((d: any) => ({
+    ...d,
+    assetCode: d.id.slice(0, 8),
+    title: d.title || "Untitled upload",
+    client: d.client || d.client_name || "Client unavailable",
+    clientInitial: (d.client || d.client_name || "?").slice(0, 2).toUpperCase(),
+    clientBg: "bg-[#2A3446]",
+    statusLabel: (d.status || "unknown").replaceAll("_", " "),
+    statusBadge: "bg-[#161F2D] text-[#7FA0D6] border-[#2A3446]",
+    formatType: d.deliverable_type || d.type || "unknown",
+    formatLabel: d.type || d.deliverable_type || "Format unavailable",
+    format: d.type || d.deliverable_type || "Format unavailable",
+    previewUrl: d.file_url ? resolveAssetUrl(d.file_url) : null,
+    pod: d.pod_name || "Not provided",
+    podLead: d.pod_lead || null,
+    slaText: d.scheduled_at ? `Scheduled ${new Date(d.scheduled_at).toLocaleDateString()}` : "Not scheduled",
+    slaColor: "text-[#97A0B3]",
+  }));
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
-
-  const handleApprove = (id: string, title: string) => {
-    setDeliverablesList((prev) =>
-      prev.map((d) =>
-        d.id === id
-          ? {
-              ...d,
-              status: "approved",
-              statusLabel: "Approved",
-              statusBadge: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
-              slaType: "completed",
-              slaText: "Approved Just Now",
-              slaColor: "text-emerald-400 font-bold",
-            }
-          : d
-      )
-    );
-    showToast(`✓ Deliverable "${title}" approved and marked ready for client handoff!`);
+  const handleApprove = async (id: string, _title: string) => {
+    if (reviewBusy) return;
+    setReviewBusy(true); setReviewError(null);
+    try {
+      await request(`/api/v1/deliverables/${id}/qa-approve`, { method: "POST" });
+      await deliverablesQuery.refetch();
+      setPreviewItem(null);
+      showToast("QA approved. The asset is now awaiting client review.");
+    } catch (error) { setReviewError(error instanceof Error ? error.message : "QA approval failed."); }
+    finally { setReviewBusy(false); }
   };
-
   const handleDecline = (id: string, title: string) => {
-    const reason = window.prompt(`Enter revision request or rejection reason for "${title}":`);
-    if (reason !== null) {
-      setDeliverablesList((prev) =>
-        prev.map((d) =>
-          d.id === id
-            ? {
-                ...d,
-                status: "declined",
-                statusLabel: "Declined",
-                statusBadge: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
-                slaType: "target",
-                slaText: "Revision Required",
-                slaColor: "text-rose-400 font-bold",
-              }
-            : d
-        )
-      );
-      showToast(`Revision request dispatched for "${title}".`);
-    }
+    setRevisionItem({ id, title }); setRevisionReason(""); setReviewError(null);
   };
-
-  const { data: podData } = useQuery({
-    queryKey: ["pod_dashboard"],
-    queryFn: () => fetchPodDashboard(),
-    staleTime: 0,
-    refetchOnMount: "always",
-  });
-
-  useEffect(() => {
-    if (podData?.tasks) {
-      const allTasks = [
-        ...(podData.tasks.backlog || []),
-        ...(podData.tasks.in_production || []),
-        ...(podData.tasks.internal_qa || []),
-        ...(podData.tasks.client_review || []),
-        ...(podData.tasks.ready_to_publish || []),
-        ...(podData.tasks.completed || []),
-      ];
-      const mapped = allTasks.map((t: any) => ({
-        id: t.id,
-        assetCode: t.id ? t.id.slice(0, 8) : "DEL-00",
-        title: t.title || "Deliverable",
-        client: t.client_name || "Client",
-        pod: t.pod_name || "Pod Alpha",
-        status: t.status,
-        statusLabel: (t.status || "").replace("_", " ").toUpperCase(),
-        statusBadge: "bg-[#161F2D] text-[#7FA0D6] border-[#2A3446]",
-        formatType: t.type || "Reels",
-        formatLabel: t.type || "Reels",
-        previewUrl: t.file_url || null,
-        assigneeName: t.assignee_name || "Specialist",
-        assigneeAvatar: t.assignee_name ? t.assignee_name.slice(0, 2).toUpperCase() : "SP",
-        dueDate: t.due_date || "Today",
-        slaType: "active",
-        slaText: "On Track",
-        slaColor: "text-emerald-400 font-bold",
-      }));
-      setDeliverablesList(mapped);
-    }
-  }, [podData]);
+  const submitRevision = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!revisionItem || !revisionReason.trim() || reviewBusy) return;
+    setReviewBusy(true); setReviewError(null);
+    try {
+      await request(`/api/v1/deliverables/${revisionItem.id}/qa-reject`, { method: "POST", body: JSON.stringify({ notes: revisionReason.trim() }) });
+      await deliverablesQuery.refetch();
+      setRevisionItem(null); setPreviewItem(null);
+      showToast("Revision feedback saved and sent back to the production team.");
+    } catch (error) { setReviewError(error instanceof Error ? error.message : "Unable to save revision feedback."); }
+    finally { setReviewBusy(false); }
+  };
 
   const movedToProductionCount = deliverablesList.filter(
     (d) => d.status === "in_production" || d.status === "in_progress" || d.status === "backlog"
   ).length;
 
   const pendingReviewCount = deliverablesList.filter(
-    (d) => d.status === "internal_qa" || d.status === "client_review" || d.status === "in_review"
+    (d) => d.status === "pending_qa" || d.status === "pending_approval"
   ).length;
 
   const approvedTodayCount = deliverablesList.filter(
@@ -1902,7 +1864,7 @@ export function AdminDeliverablesPage() {
   ).length;
 
   const declinedCount = deliverablesList.filter(
-    (d) => d.status === "declined" || d.status === "rejected" || d.status === "revision_requested"
+    (d) => d.status === "qa_rejected" || d.status === "rejected" || d.status === "revision_requested"
   ).length;
 
   const filteredDeliverables = deliverablesList.filter((d) => {
@@ -1915,16 +1877,7 @@ export function AdminDeliverablesPage() {
     const matchesClient =
       selectedClient === "all" || d.client.toLowerCase().includes(selectedClient.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === "all"
-        ? true
-        : statusFilter === "in_production"
-        ? d.status === "in_production"
-        : statusFilter === "in_review"
-        ? d.status === "in_review"
-        : statusFilter === "approved"
-        ? d.status === "approved"
-        : true;
+    const matchesStatus = statusFilter === "all" || d.status === statusFilter;
 
     const matchesFormat =
       selectedFormat === "all" ? true : d.formatType === selectedFormat;
@@ -2025,40 +1978,21 @@ export function AdminDeliverablesPage() {
               value={selectedClient}
               onChange={setSelectedClient}
               ariaLabel="Filter Deliverable Client"
-              options={[
-                { value: "all", label: "All Clients" },
-                { value: "Ryze", label: "Ryze" },
-                { value: "Aravindan", label: "Aravindan" },
-                { value: "Shanmugaraj", label: "Shanmugaraj" },
-                { value: "Luma", label: "Luma Global" },
-              ]}
+              options={[{ value: "all", label: "All Clients" }, ...Array.from(new Set(deliverablesList.map(d => d.client))).map(client => ({ value: client, label: client }))]}
             />
 
             <CustomSelect
               value={statusFilter}
               onChange={setStatusFilter}
               ariaLabel="Filter Deliverable Status"
-              options={[
-                { value: "all", label: "All Statuses" },
-                { value: "in_review", label: "In Review" },
-                { value: "in_production", label: "In Production" },
-                { value: "approved", label: "Approved" },
-              ]}
+              options={[{ value: "all", label: "All Statuses" }, ...Array.from(new Set(deliverablesList.map(d => d.status))).map(status => ({ value: status, label: status.replaceAll("_", " ") }))]}
             />
 
             <CustomSelect
               value={selectedFormat}
               onChange={setSelectedFormat}
               ariaLabel="Filter Deliverable Format Type"
-              options={[
-                { value: "all", label: "All Formats" },
-                { value: "3d", label: "3D Render" },
-                { value: "deck", label: "Presentation Deck" },
-                { value: "photo", label: "Photo Retouching" },
-                { value: "video", label: "Short-form Video" },
-                { value: "banner", label: "Ad Banner Set" },
-                { value: "interactive", label: "WebGL Interactive" },
-              ]}
+              options={[{ value: "all", label: "All Formats" }, ...Array.from(new Map(deliverablesList.map(d => [d.formatType, d.formatLabel])).entries()).map(([value, label]) => ({ value, label }))]}
             />
           </div>
 
@@ -2069,8 +2003,25 @@ export function AdminDeliverablesPage() {
           </div>
         </div>
 
+        {deliverablesQuery.isPending && <p role="status" className="p-4 text-[#97A0B3]">Loading uploaded deliverables…</p>}
+        {(deliverablesQuery.error || reviewError) && !revisionItem && <div role="alert" className="p-4 border border-[#D8BF9B] rounded-xl text-[#D8BF9B]">{reviewError || deliverablesQuery.error?.message}<button onClick={() => void deliverablesQuery.refetch()} className="ml-3 underline">Retry loading</button></div>}
+        <Dialog.Root open={!!revisionItem} onOpenChange={open => { if (!open && !reviewBusy) setRevisionItem(null); }}>
+          <Dialog.Portal>
+            <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[10000]" />
+            <Dialog.Content className="fixed z-[10001] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw_-_2rem)] max-w-lg bg-[#161F2D] border border-[#2A3446] rounded-2xl p-6 text-white shadow-2xl">
+              <Dialog.Title className="text-lg font-bold">Request an edit</Dialog.Title>
+              <Dialog.Description className="text-sm text-[#97A0B3] mt-2 mb-5">Explain what needs to change in {revisionItem?.title}. Feedback is saved to this upload and returned to the production team.</Dialog.Description>
+              <form onSubmit={submitRevision} className="space-y-4">
+                <label className="block text-sm font-semibold" htmlFor="admin-revision-reason">Revision feedback</label>
+                <textarea id="admin-revision-reason" value={revisionReason} onChange={event => setRevisionReason(event.target.value)} required maxLength={2000} rows={5} disabled={reviewBusy} className="w-full p-3 bg-[#0B111C] border border-[#2A3446] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]" placeholder="Describe the changes needed…" />
+                {reviewError && <p role="alert" className="text-sm text-[#D8BF9B]">{reviewError}</p>}
+                <div className="flex justify-end gap-3"><Dialog.Close disabled={reviewBusy} className="px-4 py-3 rounded-xl border border-[#2A3446]">Cancel</Dialog.Close><button type="submit" disabled={reviewBusy || !revisionReason.trim()} className="px-4 py-3 rounded-xl bg-[#BCCCE6] text-[#050810] font-semibold disabled:opacity-50">{reviewBusy ? "Saving…" : "Send revision request"}</button></div>
+              </form>
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
         {/* 3-Column Deliverables Grid or Empty State */}
-        {filteredDeliverables.length === 0 ? (
+        {!deliverablesQuery.isPending && !deliverablesQuery.isError && filteredDeliverables.length === 0 ? (
           <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] p-12 text-center text-[#97A0B3] space-y-3">
             <Layers className="w-10 h-10 text-[#2A3446] mx-auto" />
             <h3 className="text-base font-bold text-white">No deliverables in queue</h3>
@@ -2125,11 +2076,7 @@ export function AdminDeliverablesPage() {
                 className="relative h-44 bg-gray-900 group cursor-pointer overflow-hidden mx-5 rounded-2xl"
                 onClick={() => setPreviewItem(item)}
               >
-                <img
-                  src={item.previewUrl}
-                  alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
-                />
+                <DeliverableMedia url={item.previewUrl} isVideo={!!item.is_video} title={item.title} controls={false} className="w-full h-full" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <span className="px-4 py-2 bg-[#161F2D]/90 backdrop-blur-md rounded-xl text-xs font-black text-white shadow-xl flex items-center gap-1.5">
                     <Eye className="w-3.5 h-3.5 text-[#7FA0D6]" /> Quick Preview
@@ -2146,7 +2093,7 @@ export function AdminDeliverablesPage() {
                       Pod:
                     </span>
                     <span className="px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] text-[11px] font-black">
-                      {item.pod} ({item.podLead})
+                      {item.pod} {item.podLead ? `(${item.podLead})` : ""}
                     </span>
                   </div>
                   <span className="text-[11px] font-bold text-[#97A0B3]">
@@ -2165,7 +2112,7 @@ export function AdminDeliverablesPage() {
                     className="text-[#97A0B3] hover:text-[#7FA0D6] text-[11px] font-bold flex items-center gap-1 cursor-pointer"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
-                    {item.commentsCount} notes
+                    Review notes
                   </button>
                 </div>
 
@@ -2173,15 +2120,17 @@ export function AdminDeliverablesPage() {
                 <div className="flex items-center gap-2 pt-1">
                   <button
                     type="button"
-                    onClick={() => handleApprove(item.id, item.title)}
-                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 cursor-pointer"
+                    disabled={reviewBusy || item.status !== "pending_qa" || !item.previewUrl}
+                    onClick={() => void handleApprove(item.id, item.title)}
+                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" /> Approve
                   </button>
                   <button
                     type="button"
+                    disabled={reviewBusy || item.status !== "pending_qa" || !item.previewUrl}
                     onClick={() => handleDecline(item.id, item.title)}
-                    className="flex-1 py-2.5 bg-[#161F2D] hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="flex-1 py-2.5 bg-[#161F2D] hover:bg-rose-50 text-[#F1F5F9] hover:text-rose-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <X className="w-3.5 h-3.5 stroke-[2.5]" /> Request Edit
                   </button>
@@ -2218,11 +2167,7 @@ export function AdminDeliverablesPage() {
               </div>
 
               <div className="rounded-2xl overflow-hidden bg-black max-h-[420px] flex items-center justify-center">
-                <img
-                  src={previewItem.previewUrl}
-                  alt={previewItem.title}
-                  className="w-full h-auto max-h-[420px] object-contain"
-                />
+                <DeliverableMedia url={previewItem.previewUrl} isVideo={!!previewItem.is_video} title={previewItem.title} className="w-full max-h-[420px]" />
               </div>
 
               <div className="p-4 bg-[#0B111C] rounded-2xl space-y-2 text-xs">
@@ -2230,7 +2175,7 @@ export function AdminDeliverablesPage() {
                 <p className="text-[#F1F5F9] leading-relaxed">{previewItem.description}</p>
                 <div className="flex flex-wrap gap-4 pt-2 text-[11px] text-[#97A0B3] border-t border-[#2A3446]">
                   <span><strong>Format:</strong> {previewItem.format}</span>
-                  <span><strong>Pod:</strong> {previewItem.pod} ({previewItem.podLead})</span>
+                  <span><strong>Pod:</strong> {previewItem.pod} {previewItem.podLead ? `(${previewItem.podLead})` : ""}</span>
                   <span><strong>SLA:</strong> {previewItem.slaText}</span>
                 </div>
               </div>
@@ -2238,6 +2183,7 @@ export function AdminDeliverablesPage() {
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
+                  disabled={reviewBusy || previewItem.status !== "pending_qa" || !previewItem.previewUrl}
                   onClick={() => {
                     handleDecline(previewItem.id, previewItem.title);
                     setPreviewItem(null);
@@ -2248,6 +2194,7 @@ export function AdminDeliverablesPage() {
                 </button>
                 <button
                   type="button"
+                  disabled={reviewBusy || previewItem.status !== "pending_qa" || !previewItem.previewUrl}
                   onClick={() => {
                     handleApprove(previewItem.id, previewItem.title);
                     setPreviewItem(null);
@@ -2281,26 +2228,7 @@ export function AdminDeliverablesPage() {
                 </button>
               </div>
 
-              <div className="space-y-3">
-                <div className="p-3 bg-[#0B111C] rounded-2xl border border-[#2A3446] space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-bold text-[#97A0B3]">
-                    <span>David K. (Client Lead)</span>
-                    <span>Today 10:45 AM</span>
-                  </div>
-                  <p className="text-xs text-[#F1F5F9] leading-relaxed font-medium">
-                    "Typography and layout look crisp. Please ensure the hex code for brand teal matches #7FA0D6."
-                  </p>
-                </div>
-                <div className="p-3 bg-[#7FA0D6]/15/50 rounded-2xl border border-[#7FA0D6]/30 space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-bold text-[#7FA0D6]">
-                    <span>Elena Rostova (Pod A)</span>
-                    <span>Today 2:15 PM</span>
-                  </div>
-                  <p className="text-xs text-[#F1F5F9] leading-relaxed font-medium">
-                    "Updated slide shaders and color profiles. Ready for final review."
-                  </p>
-                </div>
-              </div>
+              <p className="text-sm text-[#BCCCE6] whitespace-pre-wrap">{commentModalItem.description || "No revision feedback recorded for this upload."}</p>
 
               <div className="pt-2 flex justify-end">
                 <button

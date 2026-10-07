@@ -1,0 +1,28 @@
+[
+  {
+    "width": 320,
+    "nativePromptRemoved": true,
+    "notesRequired": true,
+    "feedbackPersisted": true,
+    "failurePreservesState": true,
+    "retryWorks": true,
+    "approvalUsesBackend": true,
+    "missingUploadsDisabled": true,
+    "clientReviewDisabled": true,
+    "noPageErrors": true,
+    "noOverflow": true
+  },
+  {
+    "width": 1440,
+    "nativePromptRemoved": true,
+    "notesRequired": true,
+    "feedbackPersisted": true,
+    "failurePreservesState": true,
+    "retryWorks": true,
+    "approvalUsesBackend": true,
+    "missingUploadsDisabled": true,
+    "clientReviewDisabled": true,
+    "noPageErrors": true,
+    "noOverflow": true
+  }
+]
