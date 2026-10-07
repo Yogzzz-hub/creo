@@ -1,0 +1,154 @@
+# Review billing before creating these two paid services. This blueprint preserves
+# the live Singapore API and its existing database. It does not migrate data.
+# Existing external broker persistence must be verified before claiming durability.
+services:
+  - type: worker
+    name: creo-worker-singapore
+    runtime: python
+    region: singapore
+    plan: 0.5c-512mb
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A app.workers.celery_app worker -Q publish,default -c 1 --loglevel=info
+    envVars: &worker_environment
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: ENVIRONMENT
+        value: production
+      - key: DB_USE_NULLPOOL
+        value: "true"
+      - key: JWT_SECRET
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: JWT_SECRET
+      - key: DATABASE_URL
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: DATABASE_URL
+      - key: DIRECT_DATABASE_URL
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: DIRECT_DATABASE_URL
+      - key: REDIS_URL
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: REDIS_URL
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: CELERY_BROKER_URL
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: CELERY_RESULT_BACKEND
+      - key: GEMINI_API_KEY
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: GEMINI_API_KEY
+      - key: SMTP_USERNAME
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: SMTP_USERNAME
+      - key: SMTP_PASSWORD
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: SMTP_PASSWORD
+      - key: SMTP_FROM_EMAIL
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: SMTP_FROM_EMAIL
+      - key: ENCRYPTION_KEY
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: ENCRYPTION_KEY
+      - key: SMTP_SERVER
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: SMTP_SERVER
+      - key: SMTP_PORT
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: SMTP_PORT
+      - key: SMTP_USE_TLS
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: SMTP_USE_TLS
+      - key: INSTAGRAM_APP_ID
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: INSTAGRAM_APP_ID
+      - key: INSTAGRAM_APP_SECRET
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: INSTAGRAM_APP_SECRET
+      - key: INSTAGRAM_CLIENT_MODE
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: INSTAGRAM_CLIENT_MODE
+      - key: SUPABASE_URL
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: SUPABASE_URL
+      - key: SUPABASE_KEY
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: SUPABASE_KEY
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: SUPABASE_SERVICE_ROLE_KEY
+      - key: STORAGE_REGION
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: STORAGE_REGION
+      - key: STORAGE_BUCKET
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: STORAGE_BUCKET
+      - key: STORAGE_ENDPOINT_URL
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: STORAGE_ENDPOINT_URL
+      - key: AWS_ACCESS_KEY_ID
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: AWS_ACCESS_KEY_ID
+      - key: AWS_SECRET_ACCESS_KEY
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: AWS_SECRET_ACCESS_KEY
+  # Exactly one scheduler. Do not combine multiple beat instances with scaling.
+  - type: worker
+    name: creo-beat-singapore
+    runtime: python
+    region: singapore
+    plan: 0.5c-512mb
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A app.workers.celery_app beat --loglevel=info
+    envVars: *worker_environment

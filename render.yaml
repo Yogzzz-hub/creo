@@ -91,6 +91,16 @@ services:
     # notification sweeps, KPI refreshes, and maintenance crons.
     startCommand: "cd backend && celery -A app.workers.celery_app beat --loglevel=info"
     envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: creo-db
+          property: connectionString
+      - key: DIRECT_DATABASE_URL
+        fromDatabase:
+          name: creo-db
+          property: connectionString
+      - key: DB_USE_NULLPOOL
+        value: "true"
       - key: JWT_SECRET
         fromService:
           name: creo-api

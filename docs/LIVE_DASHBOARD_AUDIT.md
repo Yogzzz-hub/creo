@@ -235,3 +235,28 @@ Zero of eighty warm client requests were below 100 ms. The 100 ms end-to-end tar
 is therefore explicitly **not met**. Cached snapshots do not eliminate Redis,
 serialization, process scheduling or transport variability. Raw data:
 singapore-cached-concurrent-2026-10-07.json.
+
+
+## Infrastructure preparation after account inspection
+
+Reopened the signed-in Singapore Render service and confirmed the cache commit is
+live, but compute remains free: 0.1 CPU / 512 MB RAM. Its upgrade screen lists
+0.5 CPU / 512 MB at $7/month. No upgrade was purchased.
+
+Prepared render-workers.yaml with one Singapore worker (concurrency one) and one
+Singapore beat scheduler, using the existing API's database, JWT, broker, Gemini,
+email and provider configuration bindings without committing secrets. This creates
+paid resources only when explicitly deployed. It preserves the current database;
+it does not implement private-network migration or prove broker persistence.
+Fixed missing database/null-pool settings in the alternative root scheduler blueprint.
+Both files pass Render's current official JSON schema validation. This validation
+checks structure, not account resource existence or runtime connectivity.
+
+Concrete next paid deployment: upgrade the existing API and create the worker and
+single scheduler on 0.5c-512mb compute. At the displayed $7/service-month rate this
+is approximately $21/month compute, before taxes, bandwidth and existing datastore
+charges. Billing confirmation is still required before creating those services.
+Broker persistence/noeviction and delivery recovery must be verified before calling
+jobs durable. Private PostgreSQL/Redis migration is a separate priced rollout that
+requires backup, restored-data checks and a rollback plan; it is not silently bundled
+into the compute approval. Full six-requirement completion remains pending.
