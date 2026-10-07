@@ -442,7 +442,9 @@ async def download_all_approved_zip(
                 raw = d.file_url or ""
                 try:
                     if raw.startswith(storage_service.LOCAL_UPLOAD_PREFIXES):
-                        local = os.path.join(storage_service._LOCAL_STATIC_DIR, raw.split("/static/", 1)[-1])
+                        # /static/<path> and the legacy /uploads/<path> mount both live under app/static.
+                        relative = raw[len("/static/"):] if raw.startswith("/static/") else "uploads/" + raw[len("/uploads/"):]
+                        local = os.path.join(storage_service._LOCAL_STATIC_DIR, relative)
                         if os.path.isfile(local):
                             zf.write(local, filename)
                             included += 1

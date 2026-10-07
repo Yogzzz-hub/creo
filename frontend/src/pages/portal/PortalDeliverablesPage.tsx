@@ -213,6 +213,8 @@ export function PortalDeliverablesPage() {
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["portal", "deliverables", clientId] });
     queryClient.invalidateQueries({ queryKey: ["portal", "deliverable"] });
+    queryClient.invalidateQueries({ queryKey: ["portal", "dashboard"] });
+    queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] });
     queryClient.invalidateQueries({ queryKey: ["portal-dashboard-deliverables"] });
     queryClient.invalidateQueries({ queryKey: ["portal-library"] });
   };
@@ -337,7 +339,7 @@ export function PortalDeliverablesPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0 pb-6">
           {/* Left Column: Batch List */}
           <div className="col-span-1 lg:col-span-3 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-4 flex flex-col overflow-hidden max-h-[420px] lg:max-h-none">
-            <div className="flex gap-1 mb-3 overflow-x-auto no-scrollbar" role="tablist" aria-label="Filter deliverables">
+            <div className="flex flex-wrap gap-1 mb-3" role="tablist" aria-label="Filter deliverables">
               {FILTERS.map((f) => (
                 <button
                   key={f.key}

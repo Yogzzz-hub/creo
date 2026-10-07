@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams, Navigate } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "../../lib/http";
+import { qaApproveDeliverable, qaRejectDeliverable } from "../../lib/deliverables-api";
+import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
 import {
   fetchClientRoster,
   fetchPlanNegotiations,
@@ -1808,44 +1810,40 @@ export function AdminDeliverablesPage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleApprove = (id: string, title: string) => {
-    setDeliverablesList((prev) =>
-      prev.map((d) =>
-        d.id === id
-          ? {
-              ...d,
-              status: "approved",
-              statusLabel: "Approved",
-              statusBadge: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
-              slaType: "completed",
-              slaText: "Approved Just Now",
-              slaColor: "text-emerald-400 font-bold",
-            }
-          : d
-      )
-    );
-    showToast(`✓ Deliverable "${title}" approved and marked ready for client handoff!`);
+  const queryClient = useQueryClient();
+  const awaitingQa = (item: any) => item?.deliverableStatus === "pending_qa" && !!item?.deliverableId;
+
+  // Admin QA decisions go through the same workflow as the pod lead's: approval
+  // sends the upload to the client, a revision request returns it to the creative.
+  const handleApprove = async (id: string, title: string) => {
+    const item = deliverablesList.find((d) => d.id === id);
+    if (!awaitingQa(item)) {
+      showToast(`"${title}" has no upload waiting for QA.`);
+      return;
+    }
+    try {
+      await qaApproveDeliverable(item.deliverableId);
+      queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
+      showToast(`✓ "${title}" approved and sent to the client for review.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Approval failed.");
+    }
   };
 
-  const handleDecline = (id: string, title: string) => {
-    const reason = window.prompt(`Enter revision request or rejection reason for "${title}":`);
-    if (reason !== null) {
-      setDeliverablesList((prev) =>
-        prev.map((d) =>
-          d.id === id
-            ? {
-                ...d,
-                status: "declined",
-                statusLabel: "Declined",
-                statusBadge: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
-                slaType: "target",
-                slaText: "Revision Required",
-                slaColor: "text-rose-400 font-bold",
-              }
-            : d
-        )
-      );
-      showToast(`Revision request dispatched for "${title}".`);
+  const handleDecline = async (id: string, title: string) => {
+    const item = deliverablesList.find((d) => d.id === id);
+    if (!awaitingQa(item)) {
+      showToast(`"${title}" has no upload waiting for QA.`);
+      return;
+    }
+    const reason = window.prompt(`What should the creative change in "${title}"?`);
+    if (!reason?.trim()) return;
+    try {
+      await qaRejectDeliverable(item.deliverableId, reason.trim());
+      queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
+      showToast(`Revision notes sent to the creative for "${title}".`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Could not send the revision request.");
     }
   };
 
@@ -1869,7 +1867,7 @@ export function AdminDeliverablesPage() {
       const mapped = allTasks.map((t: any) => ({
         id: t.id,
         assetCode: t.id ? t.id.slice(0, 8) : "DEL-00",
-        title: t.title || "Deliverable",
+        title: t.blueprint?.concept_name || t.title || "Deliverable",
         client: t.client_name || "Client",
         pod: t.pod_name || "Pod Alpha",
         status: t.status,
@@ -1877,7 +1875,10 @@ export function AdminDeliverablesPage() {
         statusBadge: "bg-[#161F2D] text-[#7FA0D6] border-[#2A3446]",
         formatType: t.type || "Reels",
         formatLabel: t.type || "Reels",
-        previewUrl: t.file_url || null,
+        previewUrl: t.deliverable?.file_url || null,
+        isVideo: !!t.deliverable?.is_video,
+        deliverableId: t.deliverable?.id || null,
+        deliverableStatus: t.deliverable?.status || null,
         assigneeName: t.assignee_name || "Specialist",
         assigneeAvatar: t.assignee_name ? t.assignee_name.slice(0, 2).toUpperCase() : "SP",
         dueDate: t.due_date || "Today",
@@ -2125,10 +2126,12 @@ export function AdminDeliverablesPage() {
                 className="relative h-44 bg-gray-900 group cursor-pointer overflow-hidden mx-5 rounded-2xl"
                 onClick={() => setPreviewItem(item)}
               >
-                <img
-                  src={item.previewUrl}
-                  alt={item.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+                <DeliverableMedia
+                  url={item.previewUrl}
+                  isVideo={item.isVideo}
+                  title={item.title}
+                  controls={false}
+                  className="w-full h-full"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <span className="px-4 py-2 bg-[#161F2D]/90 backdrop-blur-md rounded-xl text-xs font-black text-white shadow-xl flex items-center gap-1.5">
@@ -2169,7 +2172,12 @@ export function AdminDeliverablesPage() {
                   </button>
                 </div>
 
-                {/* Action Buttons */}
+                {/* Action Buttons: only an upload waiting for QA can be decided here */}
+                {!awaitingQa(item) ? (
+                  <p className="text-[11px] text-[#97A0B3] pt-1">
+                    {item.deliverableStatus ? `Latest upload: ${String(item.deliverableStatus).replace(/_/g, " ")}` : "No upload yet"}
+                  </p>
+                ) : (
                 <div className="flex items-center gap-2 pt-1">
                   <button
                     type="button"
@@ -2186,6 +2194,7 @@ export function AdminDeliverablesPage() {
                     <X className="w-3.5 h-3.5 stroke-[2.5]" /> Request Edit
                   </button>
                 </div>
+                )}
               </div>
             </div>
           ))}
@@ -2217,11 +2226,12 @@ export function AdminDeliverablesPage() {
                 </button>
               </div>
 
-              <div className="rounded-2xl overflow-hidden bg-black max-h-[420px] flex items-center justify-center">
-                <img
-                  src={previewItem.previewUrl}
-                  alt={previewItem.title}
-                  className="w-full h-auto max-h-[420px] object-contain"
+              <div className="rounded-2xl overflow-hidden bg-black h-[420px] flex items-center justify-center">
+                <DeliverableMedia
+                  url={previewItem.previewUrl}
+                  isVideo={previewItem.isVideo}
+                  title={previewItem.title}
+                  className="w-full h-full"
                 />
               </div>
 
@@ -2235,6 +2245,7 @@ export function AdminDeliverablesPage() {
                 </div>
               </div>
 
+              {awaitingQa(previewItem) && (
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
@@ -2257,6 +2268,7 @@ export function AdminDeliverablesPage() {
                   ✓ Approve Asset
                 </button>
               </div>
+              )}
             </div>
           </div>
         )}

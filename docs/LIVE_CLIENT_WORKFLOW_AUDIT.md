@@ -65,6 +65,11 @@ deployment evidence, not an authenticated end-to-end business-flow pass.
 
 ## Additional unresolved blockers found during review
 
+> Update: the three upload/QA blockers below are fixed in code and pass a local
+> end-to-end run (34/34 checks); see
+> [DELIVERABLE_UPLOAD_AND_REVIEW_WORKFLOW.md](DELIVERABLE_UPLOAD_AND_REVIEW_WORKFLOW.md).
+> They still need verification on the live deployment with real logins.
+
 - The reachable `MemberTaskBoardPage` file picker stores an `uploaded://filename`
   placeholder. Its QA submission, direct dispatch, and new-task handlers update
   local React state and display success without a backend mutation. Reloading

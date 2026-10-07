@@ -144,9 +144,13 @@ def _get_s3_client() -> Any:
         import importlib
 
         boto3: Any = importlib.import_module("boto3")
+        botocore_config: Any = importlib.import_module("botocore.config")
 
         kwargs: dict[str, Any] = {
             "region_name": settings.STORAGE_REGION or "auto",
+            # Cloudflare R2 only accepts SigV4; without this botocore may sign
+            # pre-signed URLs with legacy SigV2, which R2 rejects.
+            "config": botocore_config.Config(signature_version="s3v4"),
         }
         if settings.AWS_ACCESS_KEY_ID:
             kwargs["aws_access_key_id"] = settings.AWS_ACCESS_KEY_ID

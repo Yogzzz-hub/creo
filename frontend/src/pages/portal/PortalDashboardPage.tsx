@@ -132,6 +132,7 @@ export function PortalDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["portal-dashboard-deliverables"] });
       queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["portal", "deliverables"] });
+      queryClient.invalidateQueries({ queryKey: ["portal", "dashboard"] });
       showToast("Deliverable approved — download it from Review or Library.");
     } catch (err) {
       showToast(err instanceof HttpError ? err.message : "Approval failed. Please retry.");
@@ -157,6 +158,7 @@ export function PortalDashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["portal-dashboard-deliverables"] });
       queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["portal", "deliverables"] });
+      queryClient.invalidateQueries({ queryKey: ["portal", "dashboard"] });
       showToast("Revision requested from pod");
       setDeclineTarget(null);
       setDeclineComment("");

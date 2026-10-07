@@ -67,6 +67,20 @@ def test_media_urls_load_from_the_frontend_origin():
     assert storage_service.resolve_media_url("https://cdn.example.com/x.png") == "https://cdn.example.com/x.png"
 
 
+def test_presigned_urls_use_sigv4_which_r2_requires(monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "AWS_ACCESS_KEY_ID", "key")
+    monkeypatch.setattr(settings, "AWS_SECRET_ACCESS_KEY", "secret")
+    monkeypatch.setattr(settings, "STORAGE_ENDPOINT_URL", "https://account.r2.cloudflarestorage.com")
+    # R2 accepts "us-east-1" as an alias for "auto"; botocore would sign that region with SigV2.
+    monkeypatch.setattr(settings, "STORAGE_REGION", "us-east-1")
+    view = storage_service.signed_get("clients/c/2026/10/a.mp4")
+    download = storage_service.signed_get("clients/c/2026/10/a.mp4", download_filename="Creo_Teaser_v2.mp4")
+    assert "X-Amz-Algorithm=AWS4-HMAC-SHA256" in view and "AWSAccessKeyId=" not in view
+    assert "response-content-disposition=attachment" in download
+
+
 def _deliverable(status: DeliverableStatus, comment: str | None = None) -> Deliverable:
     return Deliverable(
         id=uuid.uuid4(), root_id=uuid.uuid4(), version=2, client_id=uuid.uuid4(),

@@ -454,9 +454,9 @@ export function MemberTaskBoardPage() {
                       <h4 className="text-xs font-black text-white leading-snug">{taskTitle(task)}</h4>
                       <p className="text-[11px] text-[#97A0B3]">{formatLabel(task.deliverable_type)}{task.deliverable ? ` · last upload v${task.deliverable.version}` : ""}</p>
                       {feedback && (
-                        <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs space-y-0.5">
-                          <div className="font-bold text-amber-300 text-[10px]">{feedback.source} requested changes</div>
-                          <p className="text-[10px] text-amber-100/90 leading-snug line-clamp-3">"{feedback.text}"</p>
+                        <div className="p-2 rounded-lg bg-[#0B111C] border border-[#D8BF9B]/50 text-xs space-y-0.5">
+                          <div className="font-bold text-[#D8BF9B] text-[10px]">{feedback.source} requested changes</div>
+                          <p className="text-[11px] text-[#F1F5F9] leading-snug line-clamp-3">"{feedback.text}"</p>
                         </div>
                       )}
                       <div className="pt-1.5 border-t border-[#2A3446]">
@@ -598,9 +598,9 @@ export function MemberTaskBoardPage() {
             </div>
 
             {modalFeedback && (
-              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-1 text-xs">
-                <div className="font-bold text-amber-300">{modalFeedback.source} requested changes on v{uploadTask.deliverable?.version}</div>
-                <p className="text-amber-100/90 leading-relaxed whitespace-pre-wrap">{modalFeedback.text}</p>
+              <div className="p-3 rounded-2xl bg-[#0B111C] border border-[#D8BF9B]/50 space-y-1 text-xs">
+                <div className="font-bold text-[#D8BF9B]">{modalFeedback.source} requested changes on v{uploadTask.deliverable?.version}</div>
+                <p className="text-[#F1F5F9] leading-relaxed whitespace-pre-wrap">{modalFeedback.text}</p>
               </div>
             )}
 

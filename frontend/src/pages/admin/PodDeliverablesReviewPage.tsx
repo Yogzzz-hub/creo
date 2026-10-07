@@ -44,6 +44,8 @@ export function PodDeliverablesReviewPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [checks, setChecks] = useState<boolean[]>(RUBRIC.map(() => false));
   const [feedbackNote, setFeedbackNote] = useState("");
+  // Hide decided uploads at once; the refetch that removes them can lag a moment.
+  const [decided, setDecided] = useState<Set<string>>(() => new Set());
 
   const { data, isLoading, isError, error, refetch, isFetching } = useQuery<PodDashboardData>({
     queryKey: ["pod_dashboard", user?.id, undefined],
@@ -54,8 +56,11 @@ export function PodDeliverablesReviewPage() {
 
   const podName = data?.pod?.name || "Pod";
   const queue = useMemo(
-    () => (data?.tasks?.internal_qa || []).filter((t) => t.deliverable?.status === "pending_qa"),
-    [data],
+    () =>
+      (data?.tasks?.internal_qa || []).filter(
+        (t) => t.deliverable?.status === "pending_qa" && !decided.has(t.deliverable.id),
+      ),
+    [data, decided],
   );
   const withClient = data?.tasks?.client_review?.length || 0;
   const inRevision = (data?.tasks?.in_production || []).filter(
@@ -78,6 +83,7 @@ export function PodDeliverablesReviewPage() {
     mutationFn: ({ deliverableId, approve, notes }: { deliverableId: string; approve: boolean; notes: string }) =>
       approve ? qaApproveDeliverable(deliverableId, notes) : qaRejectDeliverable(deliverableId, notes),
     onSuccess: (_res, vars) => {
+      setDecided((prev) => new Set(prev).add(vars.deliverableId));
       queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
       setSelectedId(null);
       showToast(
