@@ -38,7 +38,7 @@ Full maintained suite: 172 tests passed with the explicitly configured migrated 
 
 The public API root and health response now expose a validated 40-character `build_revision`, or null if unavailable. This enables verification of deployed code without needing a privileged account. Render supplies `RENDER_GIT_COMMIT` as its service/deploy SHA ([official environment-variable documentation](https://render.com/docs/environment-variables)). Arbitrary environment strings are never exposed as revisions.
 
-Production revision verification is recorded after pushing the changes. GitHub push alone is not confirmation that production migrations finished.
+Live API code deployment verified: the root response reports `bc62170ae724623247b9f4d448084aeb75416b46`, matching the fixes commit. Health returned HTTP 200, database `ok` and Redis `ok`. Evidence: `backend-deployment-2026-10-07.json`. These public checks verify the deployed code and service health; production indexes and client business records were not inspected through an authenticated session.
 
 ## Still requires live access
 
