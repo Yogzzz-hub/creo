@@ -51,3 +51,8 @@ No new UI bug was reproduced in this run. Existing UI fixes and their controlled
 - Real database/object-storage end-to-end test: skipped because an explicitly named test database was not supplied. No production connection was substituted.
 - This run changes backend code only. Previous production frontend build and browser results remain separately documented.
 - Working live role accounts, fresh-user OTP/inbox access and a dedicated test database remain required to finish the ordered workflow. PASS denotes only the evidence stated in each row; unexecuted checks remain blocked or pending.
+
+
+## Database-backed follow-up
+
+The unresolved DB-01 migration finding is now reproduced and fixed. See [MIGRATION_AND_DATABASE_WORKFLOW_FIXES.md](MIGRATION_AND_DATABASE_WORKFLOW_FIXES.md). A clean dedicated PostgreSQL database upgrades successfully; forward integrity repair and downgrade/upgrade checks pass. Fresh registration/login → client-specific pricing → onboarding → persisted lead/editor/designer allocation → 30 exact-entitlement calendar dates → duplicate completion is now tested against SQL. The previously skipped upload/review database test also runs. This supersedes the earlier absence of a test database; working live credentials/provider access are still required for production verification.

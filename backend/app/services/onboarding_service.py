@@ -45,6 +45,22 @@ STAGE_NAMES = {
 }
 
 
+def core_sections_complete(sections: dict[str, dict[str, Any]]) -> bool:
+    a, b, c, d, e = (sections.get(key) or {} for key in "abcde")
+    camera_answered = e.get("on_camera") is False or bool(e.get("on_camera"))
+    return bool(
+        (a.get("brand_name") or a.get("one_liner"))
+        and b.get("ideal_customer")
+        and (("humour" in c and c["humour"] is not None) or c.get("voice_words"))
+        and (d.get("visual_direction") or d.get("colours"))
+        and (camera_answered or e.get("shoot_locations"))
+    )
+
+
+def _questionnaire_core_complete(quest: Questionnaire) -> bool:
+    return core_sections_complete({key: getattr(quest, f"section_{key}") or {} for key in "abcde"})
+
+
 def get_first_incomplete_section(quest: Questionnaire | None) -> str:
     """Identify the first incomplete section among mandatory core sections A to E."""
     if not quest:
@@ -62,7 +78,7 @@ def get_first_incomplete_section(quest: Questionnaire | None) -> str:
     if not (sec_d.get("visual_direction") or sec_d.get("colours")):
         return "d"
     sec_e = quest.section_e or {}
-    if not (sec_e.get("on_camera") or sec_e.get("shoot_locations")):
+    if not (sec_e.get("on_camera") is False or sec_e.get("on_camera") or sec_e.get("shoot_locations")):
         return "e"
     # If core A-E are all filled, check if client was on an active section
     ans = quest.answers or {}
@@ -375,13 +391,7 @@ async def save_questionnaire_sections(
                 profile.company_name = str(identity["brand_name"])
             if identity.get("instagram_handle"):
                 profile.instagram_username = str(identity["instagram_handle"])
-    core_complete = bool(
-        (quest.section_a.get("brand_name") or quest.section_a.get("one_liner"))
-        and quest.section_b.get("ideal_customer")
-        and ("humour" in quest.section_c or quest.section_c.get("voice_words"))
-        and (quest.section_d.get("visual_direction") or quest.section_d.get("colours"))
-        and quest.section_e.get("on_camera")
-    )
+    core_complete = _questionnaire_core_complete(quest)
     quest.core_completed_at = (quest.core_completed_at or now) if core_complete else None
     if core_complete and not quest.submitted_at:
         quest.submitted_at = now
@@ -464,6 +474,8 @@ async def submit_questionnaire(
     now = datetime.now(UTC)
     payload = data.model_dump()
     mapped = map_legacy_answers_to_sections(payload)
+    if not core_sections_complete(mapped):
+        raise Conflict("Mandatory Brand Questionnaire Sections A-E are incomplete", code="QUESTIONNAIRE_REQUIRED")
 
     if not quest:
         quest = Questionnaire(
@@ -582,28 +594,21 @@ async def complete_onboarding(db: AsyncSession, client_id: uuid.UUID) -> Onboard
     # Prerequisite 3: Questionnaire Sections A-E completed
     q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_id)
     quest = (await db.execute(q_stmt)).scalar_one_or_none()
-    if quest and not quest.core_completed_at:
-        has_a = bool(quest.section_a and (quest.section_a.get("brand_name") or quest.section_a.get("one_liner")))
-        has_b = bool(quest.section_b and quest.section_b.get("ideal_customer"))
-        has_c = bool(quest.section_c and ("humour" in quest.section_c or quest.section_c.get("voice_words")))
-        has_d = bool(quest.section_d and (quest.section_d.get("visual_direction") or quest.section_d.get("colours")))
-        has_e = bool(quest.section_e and (quest.section_e.get("on_camera") or quest.section_e.get("shoot_locations")))
-
-        if not (has_a and has_b and has_c and has_d and has_e) and quest.answers and len(quest.answers) >= 5:
+    if quest:
+        if not _questionnaire_core_complete(quest) and quest.answers:
             mapped = map_legacy_answers_to_sections(quest.answers)
-            for sec_k in ["a", "b", "c", "d", "e", "f", "g"]:
+            for sec_k in "abcdefg":
                 if not getattr(quest, f"section_{sec_k}"):
                     setattr(quest, f"section_{sec_k}", mapped[sec_k])
-            has_a = has_b = has_c = has_d = has_e = True
-
-        if has_a and has_b and has_c and has_d and has_e:
-            quest.core_completed_at = now
+        if _questionnaire_core_complete(quest):
+            quest.core_completed_at = quest.core_completed_at or now
             if not quest.submitted_at:
                 quest.submitted_at = now
             await db.commit()
             await db.refresh(quest)
-
-    if not quest or not quest.core_completed_at:
+        else:
+            raise Conflict("Mandatory Brand Questionnaire Sections A-E must be submitted before completing onboarding", code="QUESTIONNAIRE_REQUIRED")
+    else:
         raise Conflict("Mandatory Brand Questionnaire Sections A-E must be submitted before completing onboarding", code="QUESTIONNAIRE_REQUIRED")
 
     # Prerequisite 4: Brand DNA. Use the instant deterministic version so the client never

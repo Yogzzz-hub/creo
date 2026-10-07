@@ -20,6 +20,7 @@ from app.db.session import engine, get_db
 
 from app.config import settings
 from app.core.errors import AppError, app_error_handler
+from app.core.build_info import get_build_revision
 from app.core.logging import get_logger, setup_logging
 from app.core.middleware import RequestIdMiddleware
 from app.db.session import engine
@@ -348,6 +349,7 @@ async def root(
         "name": "Creo API",
         "status": "online",
         "version": settings.VERSION,
+        "build_revision": get_build_revision(),
         "docs": "/docs",
         "health": "/health",
     }
@@ -417,6 +419,7 @@ async def health_check() -> JSONResponse:
         "db": db_status,
         "redis": redis_status,
         "version": settings.VERSION,
+        "build_revision": get_build_revision(),
     }
     if errors:
         payload["details"] = errors

@@ -10,6 +10,30 @@ from app.services.brand_dna import BRAND_DNA_PROMPT, brand_dna_input_hash, sanit
 from app.services.onboarding_service import get_current_stage, save_questionnaire_sections
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("previously_marked_complete", [False, True])
+async def test_incomplete_legacy_answers_cannot_bypass_onboarding_requirements(previously_marked_complete):
+    from datetime import UTC, datetime
+    import uuid
+    from app.core.errors import Conflict
+    from app.services.onboarding_service import complete_onboarding
+
+    now = datetime.now(UTC)
+    profile = SimpleNamespace(onboarding_completed_at=None, terms_accepted_at=now)
+    quest = SimpleNamespace(answers={f"unrelated_{i}": "value" for i in range(5)},
+        core_completed_at=now if previously_marked_complete else None, submitted_at=None,
+        **{f"section_{key}": {} for key in "abcdefg"})
+    db = SimpleNamespace(execute=AsyncMock(side_effect=[
+        SimpleNamespace(scalar_one_or_none=lambda: profile),
+        SimpleNamespace(scalar_one_or_none=lambda: quest),
+    ]), commit=AsyncMock())
+    with patch("app.services.subscription_guard.check_client_subscription", new=AsyncMock(return_value={"is_active": True})):
+        with pytest.raises(Conflict) as failure:
+            await complete_onboarding(db, uuid.uuid4())
+    assert failure.value.code == "QUESTIONNAIRE_REQUIRED"
+    db.commit.assert_not_awaited()
+
+
 def answers():
     return {
         "a": {"brand_name": "Creo"}, "b": {"ideal_customer": "Founders"},
