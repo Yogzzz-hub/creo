@@ -78,7 +78,7 @@ async def get_portal_dashboard(
         if current_stage < 8:
             # Full status is only needed to describe where to resume
             from app.services.onboarding_service import get_onboarding_status
-            ob_status = await get_onboarding_status(db, target_client_id)
+            ob_status = await get_onboarding_status(db, target_client_id, known_stage=current_stage)
             raise HTTPException(
                 status_code=403,
                 detail={
@@ -102,27 +102,26 @@ async def get_portal_dashboard(
             target_client_id = found_id
 
     # 1. User profile and stage
-    user_stmt = select(User).where(User.id == target_client_id)
-    user_res = await db.execute(user_stmt)
-    user = user_res.scalar_one_or_none()
-
-    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == target_client_id)
-    profile_res = await db.execute(profile_stmt)
-    profile = profile_res.scalar_one_or_none()
+    profile_row = (await db.execute(
+        select(User, ClientProfile)
+        .outerjoin(ClientProfile, ClientProfile.user_id == User.id)
+        .where(User.id == target_client_id)
+    )).first()
+    user, profile = profile_row if profile_row else (None, None)
 
     # 2. Deliverables count pending approval
     deliv_stmt = select(func.count(Deliverable.id)).where(
         Deliverable.client_id == target_client_id,
         Deliverable.status == DeliverableStatus.PENDING_APPROVAL,
     )
-    deliv_count = (await db.execute(deliv_stmt)).scalar() or 0
 
     # 3. Open tickets count
     ticket_stmt = select(func.count(Ticket.id)).where(
         Ticket.client_id == target_client_id,
         Ticket.status.in_([TicketStatus.OPEN, TicketStatus.IN_PROGRESS]),
     )
-    ticket_count = (await db.execute(ticket_stmt)).scalar() or 0
+    counts = (await db.execute(select(deliv_stmt.scalar_subquery(), ticket_stmt.scalar_subquery()))).one()
+    deliv_count, ticket_count = counts[0] or 0, counts[1] or 0
 
     # 4. Active subscription & plan (prioritize active/trialing)
     from app.services.subscription_guard import check_client_subscription

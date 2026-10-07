@@ -1395,7 +1395,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
               {/* Priority Selector */}
               <div>
                 <label className="block font-bold text-[#F1F5F9] mb-1.5">Priority Override</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                   {(["P0", "P1", "P2"] as const).map((p) => (
                     <button
                       key={p}

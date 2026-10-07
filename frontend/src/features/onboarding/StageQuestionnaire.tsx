@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type AllocationStatus, PodAllocationModal } from "./PodAllocationModal";
 import { useSearchParams } from "react-router";
 import { motion } from "motion/react";
@@ -27,6 +27,7 @@ import {
 import {
   fetchQuestionnaireState,
   saveQuestionnaireSection,
+  saveQuestionnaireSections,
   completeOnboarding,
 } from "../../lib/onboarding-api";
 import type { AssignedTeamMember } from "../../types/api";
@@ -416,6 +417,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
   });
 
   // Load existing questionnaire state
+  const queryClient = useQueryClient();
   const { data: qState, isLoading } = useQuery({
     queryKey: ["questionnaire-state", userId],
     queryFn: () => fetchQuestionnaireState(userId),
@@ -557,7 +559,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
 
   // Debounced autosave — only sends a request when the active section actually changed
   useEffect(() => {
-    if (!dataInitialized || isSaving) return;
+    if (!dataInitialized || isSaving || isSynthesizing) return;
 
     if (autosaveTimerRef.current) {
       clearTimeout(autosaveTimerRef.current);
@@ -571,7 +573,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [activeSection, secA, secB, secC, secD, secE, secF, secG, dataInitialized, isSaving, userId]);
+  }, [activeSection, secA, secB, secC, secD, secE, secF, secG, dataInitialized, isSaving, isSynthesizing, userId]);
 
   // Clear errors when changing field or section
   const clearFieldError = (fieldName: string) => {
@@ -784,7 +786,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
       setValidationBanner(null);
       setApiError(null);
       if (isSectionDirty(activeSection)) {
-        void persistSection(activeSection);
+        void saveSectionInBackground(activeSection);
       }
       setActiveSection(targetKey);
       formTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -833,16 +835,17 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
     }
 
     try {
-      // 2. Make sure every answered section (A–G) is on the server. Usually nothing is left
-      // because autosave already sent them. Sequential on purpose: each save re-evaluates
-      // core completion.
+      // Finish pending autosaves, then acknowledge all seven sections in one request.
+      // This also prevents an older autosave from overwriting the final snapshot.
+      await saveQueueRef.current;
       const allSections: SectionKey[] = ["a", "b", "c", "d", "e", "f", "g"];
-      const dirtySections = allSections.filter(sec => isSectionDirty(sec));
-      if (dirtySections.length > 0) {
-        for (const sec of dirtySections) {
-          await persistSection(sec);
-        }
-      }
+      const snapshot = Object.fromEntries(allSections.map(key => [key, getCurrentSectionData(key)]));
+      const saved = await saveQuestionnaireSections(userId, snapshot, activeSection);
+      queryClient.setQueryData(["questionnaire-state", userId], {
+        ...qState, ...saved, last_active_section: activeSection,
+        ...Object.fromEntries(allSections.map(key => [`section_${key}`, snapshot[key]])),
+      });
+      for (const key of allSections) lastSavedRef.current[key] = JSON.stringify(snapshot[key]);
 
       // 3. Allocate the pod and generate the workspace. This call is fast: the Gemini
       // summary of sections A–G and the team brief are produced on the server afterwards

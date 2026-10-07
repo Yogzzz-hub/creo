@@ -26,7 +26,7 @@ export function PricingPage() {
     <div className="min-h-screen bg-[#050810] pt-8 sm:pt-12 lg:pt-14 pb-16 sm:pb-24">
 
       {/* Hero Header */}
-      <div className="relative isolate max-w-4xl mx-auto px-6 text-center mb-12 sm:mb-16">
+      <div className="relative isolate max-w-4xl mx-auto px-4 sm:px-6 text-center mb-12 sm:mb-16">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -50,12 +50,12 @@ export function PricingPage() {
       </div>
 
       {/* 3 Pricing Tier Bento Cards */}
-      <div className="max-w-[1240px] mx-auto px-6">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
         <PricingCards />
       </div>
 
       {/* Feature Comparison Table */}
-      <div className="max-w-[1240px] mx-auto px-6 mt-20 sm:mt-24">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 mt-20 sm:mt-24">
 
         <div className="mb-10 text-center lg:text-left">
           <Reveal>
@@ -73,8 +73,30 @@ export function PricingPage() {
           </Reveal>
         </div>
 
-        <Reveal blur>
-          <div data-lenis-prevent className="bg-[#121926] border border-[#222F44] rounded-2xl overflow-hidden overflow-x-auto">
+        <div className="space-y-4 md:hidden" aria-label="Plan feature comparison">
+          {CAPABILITIES.map((capability) => {
+            const Icon = capability.icon;
+            return (
+              <section key={capability.label} className="rounded-2xl border border-[#222F44] bg-[#121926] p-5">
+                <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-[#F8FAFC]">
+                  <Icon className="size-4 shrink-0 text-[#7FA0D6]" />
+                  {capability.label}
+                </h3>
+                <dl className="space-y-3">
+                  {TIERS.map((tier, index) => (
+                    <div key={tier.name} className={`grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 rounded-lg p-3 text-sm ${index === 1 ? "bg-[#7FA0D6]/10" : "bg-[#0A0F18]"}`}>
+                      <dt className={`font-semibold ${tier.tone}`}>{tier.name}</dt>
+                      <dd className="leading-relaxed text-[#97A0B3]">{capability.values[index]}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            );
+          })}
+        </div>
+
+        <Reveal blur className="hidden md:block">
+          <div data-lenis-prevent role="region" aria-label="Plan feature comparison" tabIndex={0} className="public-scroll-region bg-[#121926] border border-[#222F44] rounded-2xl overflow-hidden overflow-x-auto">
             <div className="relative min-w-[900px]">
               {/* Highlighted Growth column */}
               <div

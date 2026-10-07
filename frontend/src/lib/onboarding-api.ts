@@ -99,6 +99,18 @@ export function saveQuestionnaireSection(
   );
 }
 
+export function saveQuestionnaireSections(
+  userId: string,
+  sections: Partial<Record<"a" | "b" | "c" | "d" | "e" | "f" | "g", Record<string, unknown>>>,
+  activeSection: string,
+): Promise<{ core_completed: boolean; extended_completed: boolean; version: number }> {
+  return request("/api/v1/onboarding/questionnaire/sections", {
+    method: "POST",
+    headers: actorHeaders(userId),
+    body: JSON.stringify({ sections, active_section: activeSection }),
+  });
+}
+
 export function queueBrandDNAGeneration(userId: string): Promise<{ status: string; brand_dna?: any }> {
   return request<{ status: string; brand_dna?: any }>("/api/v1/onboarding/brand", {
     method: "POST",

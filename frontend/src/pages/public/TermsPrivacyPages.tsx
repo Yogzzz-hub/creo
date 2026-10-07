@@ -354,9 +354,17 @@ export function TermsPage() {
       {/* Main Content Area: TOC + Sections */}
       <section className="py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <details className="mb-6 rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 lg:hidden">
+            <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-[#BCCCE6]">Jump to a section</summary>
+            <nav aria-label="Page sections" className="mt-3 grid gap-1">
+              {filtered.map((section) => (
+                <a key={section.id} href={`#${section.id}`} className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-[#97A0B3] hover:bg-[#0B111C] hover:text-white">{section.title}</a>
+              ))}
+            </nav>
+          </details>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Table of Contents Sidebar */}
-            <aside className="lg:col-span-4 sticky top-24 rounded-3xl border border-[#2A3446] bg-[#161F2D] p-6 shadow-xl hidden lg:block">
+            <aside className="lg:col-span-4 sticky top-24 rounded-3xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-6 shadow-xl hidden lg:block">
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#222F44]">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#7FA0D6]">
                   Table of Contents
@@ -422,7 +430,7 @@ export function TermsPage() {
                   <article
                     key={section.id}
                     id={section.id}
-                    className="rounded-3xl border border-[#2A3446] bg-[#161F2D] p-6 sm:p-8 shadow-xl hover:border-[#7FA0D6]/40 transition-colors"
+                    className="scroll-mt-24 rounded-3xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-8 shadow-xl hover:border-[#7FA0D6]/40 transition-colors"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-[#222F44]">
                       <h2 className="text-lg sm:text-xl font-bold text-[#F8FAFC]">
@@ -435,7 +443,7 @@ export function TermsPage() {
                       )}
                     </div>
 
-                    <div className="space-y-3.5 text-xs sm:text-sm leading-relaxed text-[#97A0B3]">
+                    <div className="space-y-3.5 text-sm leading-relaxed text-[#97A0B3]">
                       {section.content.map((p, idx) => (
                         <p key={idx}>{p}</p>
                       ))}
@@ -445,7 +453,7 @@ export function TermsPage() {
               )}
 
               {/* Bottom Support Banner */}
-              <div className="rounded-3xl border border-[#2A3446] bg-[#121926] p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
+              <div className="rounded-3xl border border-[#2A3446] bg-[#121926] p-4 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
                 <div>
                   <h4 className="text-base font-bold text-[#F8FAFC]">
                     Need Clarification on Our Retainer Terms?
@@ -558,9 +566,17 @@ export function PrivacyPage() {
       {/* Main Content Area */}
       <section className="py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <details className="mb-6 rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 lg:hidden">
+            <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-[#BCCCE6]">Jump to a section</summary>
+            <nav aria-label="Page sections" className="mt-3 grid gap-1">
+              {filtered.map((section) => (
+                <a key={section.id} href={`#${section.id}`} className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-[#97A0B3] hover:bg-[#0B111C] hover:text-white">{section.title}</a>
+              ))}
+            </nav>
+          </details>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Table of Contents Sidebar */}
-            <aside className="lg:col-span-4 sticky top-24 rounded-3xl border border-[#2A3446] bg-[#161F2D] p-6 shadow-xl hidden lg:block">
+            <aside className="lg:col-span-4 sticky top-24 rounded-3xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-6 shadow-xl hidden lg:block">
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#222F44]">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#7FA0D6]">
                   Privacy Index
@@ -626,7 +642,7 @@ export function PrivacyPage() {
                   <article
                     key={section.id}
                     id={section.id}
-                    className="rounded-3xl border border-[#2A3446] bg-[#161F2D] p-6 sm:p-8 shadow-xl hover:border-[#7FA0D6]/40 transition-colors"
+                    className="scroll-mt-24 rounded-3xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-8 shadow-xl hover:border-[#7FA0D6]/40 transition-colors"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-[#222F44]">
                       <h2 className="text-lg sm:text-xl font-bold text-[#F8FAFC]">
@@ -639,7 +655,7 @@ export function PrivacyPage() {
                       )}
                     </div>
 
-                    <div className="space-y-3.5 text-xs sm:text-sm leading-relaxed text-[#97A0B3]">
+                    <div className="space-y-3.5 text-sm leading-relaxed text-[#97A0B3]">
                       {section.content.map((p, idx) => (
                         <p key={idx}>{p}</p>
                       ))}
@@ -649,7 +665,7 @@ export function PrivacyPage() {
               )}
 
               {/* Bottom Privacy Banner */}
-              <div className="rounded-3xl border border-[#2A3446] bg-[#121926] p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
+              <div className="rounded-3xl border border-[#2A3446] bg-[#121926] p-4 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
                 <div>
                   <h4 className="text-base font-bold text-[#F8FAFC]">
                     Questions Regarding Your Data or Instagram Access?

@@ -1,3 +1,4 @@
+import "../../styles/public-responsive.css";
 import { useState, useEffect } from "react";
 import { 
   Mail, Lock, Eye, EyeOff, ArrowLeft, ArrowRight, Check, User, Building2,
@@ -75,15 +76,6 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotStatus, setForgotStatus] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [forgotLoading, setForgotLoading] = useState(false);
-
-  // Lock body scroll so page remains strictly unscrollable
-  useEffect(() => {
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prevOverflow;
-    };
-  }, []);
 
   useEffect(() => {
     if (location.pathname === "/signup") {
@@ -203,7 +195,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
   }
 
   return (
-    <div className="fixed inset-0 h-screen max-h-screen w-screen overflow-hidden flex flex-col justify-between bg-[#050810] text-[#F8FAFC] font-sans selection:bg-[#7FA0D6]/30">
+    <div className="auth-page relative min-h-[100svh] w-full overflow-x-clip flex flex-col justify-between bg-[#050810] text-[#F8FAFC] font-sans selection:bg-[#7FA0D6]/30">
       
       {/* Background Ambient Glow & Grid Matrix */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -245,7 +237,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
       </header>
 
       {/* ── Main Fit-to-Screen Centerfold ── */}
-      <main className="relative z-10 flex-1 min-h-0 flex items-center justify-center px-4 sm:px-8 py-2">
+      <main className="relative z-10 flex-1 min-w-0 flex items-center justify-center px-4 sm:px-8 py-6 sm:py-8">
         <div className="w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
           {/* Left Column: Agency OS Telemetry Feature Deck (Desktop only) */}
@@ -325,7 +317,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
           </div>
 
           {/* Right Column: Auth Console Bento Card (Fits cleanly in vertical space) */}
-          <div className="col-span-12 lg:col-span-6 flex justify-center">
+          <div className="min-w-0 lg:col-span-6 flex justify-center">
             <div className="w-full max-w-[410px] bg-[#121926]/90 backdrop-blur-xl border border-[#222F44] rounded-2xl p-5 sm:p-6 shadow-[0_15px_40px_rgba(0,0,0,0.6)] flex flex-col justify-between">
               
               {/* Keep verification focused: account switching is unavailable until OTP succeeds. */}
@@ -650,7 +642,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
       </main>
 
       {/* ── Slim Bottom Bar (Compact: 36px) ── */}
-      <footer className="relative z-20 h-9 shrink-0 flex items-center justify-between px-6 sm:px-10 border-t border-[#222F44]/40 bg-[#050810]/70 text-[10px] text-[#97A0B3]/60">
+      <footer className="relative z-20 min-h-12 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-10 py-4 border-t border-[#222F44]/40 bg-[#050810]/70 text-[10px] text-[#97A0B3]/60">
         <div>
           &copy; {new Date().getFullYear()} CREO Technologies Inc. All rights reserved.
         </div>
@@ -667,8 +659,8 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
 
       {/* ── Forgot Password Modal ── */}
       {forgotOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-sm bg-[#121926] border border-[#222F44] rounded-2xl p-6 shadow-2xl relative text-left">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto bg-[#121926] border border-[#222F44] rounded-2xl p-6 shadow-2xl relative text-left">
             <button
               type="button"
               onClick={() => setForgotOpen(false)}

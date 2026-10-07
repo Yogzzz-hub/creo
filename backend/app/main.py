@@ -64,7 +64,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         async with AsyncSessionLocal() as db:
             res = await db.execute(select(User).where(User.email == "admin@creo.agency"))
             admin = res.scalar_one_or_none()
-            if not admin:
+            if not admin and settings.ENVIRONMENT == "development":
                 admin = User(
                     email="admin@creo.agency",
                     auth_id="auth_admin_001",
@@ -74,11 +74,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                     hashed_password=hash_password("Admin123!"),
                 )
                 db.add(admin)
-                await db.commit()
-            else:
-                admin.hashed_password = hash_password("Admin123!")
-                admin.role = UserRole.SUPER_ADMIN
-                admin.account_status = AccountStatus.ACTIVE
                 await db.commit()
 
             # Ensure plan_negotiations table exists
@@ -129,6 +124,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-Id", "Server-Timing"],
 )
 
 # Standardized application error handler

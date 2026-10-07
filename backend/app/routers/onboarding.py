@@ -20,6 +20,7 @@ from app.schemas.brand_dna import (
     BrandDNAStatusResponse,
     QuestionnaireStateResponse,
     SaveSectionRequest,
+    SaveSectionsRequest,
 )
 from app.schemas.onboarding import (
     OnboardingCompleteResponse,
@@ -52,6 +53,17 @@ async def accept_terms(
     client_id = actor.client_id or actor.user_id
     await onboarding_service.accept_terms(db, client_id, body.terms_version)
     return {"status": "ok", "message": "Terms accepted successfully"}
+
+
+@router.post("/questionnaire/sections")
+async def save_questionnaire_sections(
+    body: SaveSectionsRequest,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    return await onboarding_service.save_questionnaire_sections(
+        db, actor.client_id or actor.user_id, body.sections, body.active_section,
+    )
 
 
 @router.post("/questionnaire/section")
@@ -212,7 +224,8 @@ async def submit_questionnaire(
     """Legacy submit questionnaire endpoint maintaining backward compatibility."""
     client_id = actor.client_id or actor.user_id
     await onboarding_service.submit_questionnaire(db, client_id, body)
-    dna = await brand_dna.run_brand_dna_pipeline(db, client_id)
+    dna = await brand_dna.save_template_brand_dna(db, client_id)
+    onboarding_service.schedule_brand_enrichment(client_id)
     return {
         "status": "ok",
         "message": "Questionnaire submitted successfully",

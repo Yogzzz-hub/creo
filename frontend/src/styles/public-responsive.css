@@ -1,0 +1,96 @@
+/* Shared public-page foundations. Product dashboards retain their own layouts. */
+.public-site,
+.auth-page {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.public-site :where(.grid, .flex) > * {
+  min-width: 0;
+}
+
+.public-site :where(h1, h2, h3) {
+  text-wrap: balance;
+}
+
+.public-site :where(p, li) {
+  text-wrap: pretty;
+}
+
+.public-site :where(button, a, input, select, textarea),
+.auth-page :where(button, a, input) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.public-site :where(a, button, input, [tabindex]):focus-visible,
+.auth-page :where(a, button, input):focus-visible {
+  outline: 2px solid #7fa0d6;
+  outline-offset: 4px;
+}
+
+.public-skip-link {
+  position: fixed;
+  top: 8px;
+  left: 16px;
+  z-index: 100;
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: #bccce6;
+  color: #050810;
+  transform: translateY(-160%);
+}
+
+.public-skip-link:focus {
+  transform: translateY(0);
+}
+
+.public-scroll-region {
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #7fa0d6 #0a0f18;
+}
+
+@media (max-width: 639px) {
+  .public-site h1 {
+    font-size: clamp(2rem, 8.8vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+
+  .public-site :where(input, select, textarea),
+  .auth-page input {
+    /* Prevent iOS from zooming the page when a field gains focus. */
+    font-size: 16px;
+    min-height: 24px;
+  }
+
+  .public-site main a.rounded-full,
+  .public-site button,
+  .auth-page button {
+    min-height: 44px;
+  }
+
+  .public-site footer a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .hero-collage {
+    max-width: 480px;
+    margin-inline: auto;
+    width: 100%;
+  }
+
+  .auth-page {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+@media (pointer: coarse) {
+  .public-site :where(input, select, textarea),
+  .auth-page input {
+    font-size: 16px;
+  }
+}

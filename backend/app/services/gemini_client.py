@@ -205,7 +205,9 @@ async def get_key_quota_status() -> list[dict[str, Any]]:
 async def generate_gemini_content(
     payload: dict[str, Any],
     candidate_models: list[str] | None = None,
-    timeout: float = 25.0,
+    timeout: float = 20.0,
+    total_timeout: float = 35.0,
+    max_attempts: int = 6,
 ) -> tuple[dict[str, Any] | None, str | None]:
     """Execute generateContent against Gemini API with automatic key rotation and model failover.
     
@@ -219,96 +221,104 @@ async def generate_gemini_content(
 
     models_to_try = candidate_models or DEFAULT_CANDIDATE_MODELS
 
-    for idx, key in enumerate(key_pool):
-        if not await is_key_usable_today(key):
-            logger.info(
-                "gemini_key_skipped_quota_exhausted",
-                key_index=idx,
-                key=mask_key(key),
-            )
-            continue
+    deadline = asyncio.get_running_loop().time() + total_timeout
+    attempts = 0
+    # Reuse transport and TLS connections during key/model failover.
+    async with httpx.AsyncClient(timeout=httpx.Timeout(timeout, connect=5.0)) as client:
+        for idx, key in enumerate(key_pool):
+            if not await is_key_usable_today(key):
+                logger.info(
+                    "gemini_key_skipped_quota_exhausted",
+                    key_index=idx,
+                    key=mask_key(key),
+                )
+                continue
 
-        key_succeeded = False
-        for model in models_to_try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
-            try:
-                async with httpx.AsyncClient(timeout=timeout) as client:
-                    res = await client.post(url, json=_payload_for_model(payload, model))
+            for model in models_to_try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+                remaining = deadline - asyncio.get_running_loop().time()
+                if remaining <= 0 or attempts >= max_attempts:
+                    logger.warning("gemini_latency_budget_exhausted", attempts=attempts)
+                    return None, None
+                attempts += 1
+                try:
+                    async with asyncio.timeout(remaining):
+                        res = await client.post(url, headers={"x-goog-api-key": key}, json=_payload_for_model(payload, model))
 
-                if res.status_code == 200:
-                    data = res.json()
-                    candidates = data.get("candidates") or []
-                    if candidates:
-                        await record_key_success(key)
-                        logger.info(
-                            "gemini_generation_succeeded",
+                    if res.status_code == 200:
+                        data = res.json()
+                        candidates = data.get("candidates") or []
+                        if candidates:
+                            await record_key_success(key)
+                            logger.info(
+                                "gemini_generation_succeeded",
+                                key_index=idx,
+                                key=mask_key(key),
+                                model=model,
+                            )
+                            return data, mask_key(key)
+
+                    elif res.status_code == 429:
+                        # Daily quota or rate limit exceeded on this key
+                        logger.warning(
+                            "gemini_quota_limit_429_received",
                             key_index=idx,
                             key=mask_key(key),
                             model=model,
+                            message="Falling back to next key account automatically",
                         )
-                        return data, mask_key(key)
+                        await mark_key_exhausted(key, reason="429_quota_exceeded")
+                        # Break out of model loop to try the NEXT KEY immediately
+                        break
 
-                elif res.status_code == 429:
-                    # Daily quota or rate limit exceeded on this key
+                    elif res.status_code == 404:
+                        # Model not found or deprecated for this key version; try next model
+                        logger.debug(
+                            "gemini_model_not_found_trying_next_model",
+                            key=mask_key(key),
+                            model=model,
+                        )
+                        continue
+
+                    elif res.status_code == 400 and "API_KEY_INVALID" not in res.text:
+                        # A malformed request (e.g. schema the model doesn't support) says
+                        # nothing about the key, so don't burn it for the day
+                        logger.warning(
+                            "gemini_bad_request_trying_next_model",
+                            key=mask_key(key),
+                            model=model,
+                            response=res.text[:200],
+                        )
+                        continue
+
+                    elif res.status_code in (400, 401, 403):
+                        # Key invalid or project access denied
+                        logger.warning(
+                            "gemini_key_access_denied_or_invalid",
+                            key_index=idx,
+                            key=mask_key(key),
+                            status_code=res.status_code,
+                            response=res.text[:120],
+                        )
+                        await mark_key_exhausted(key, reason=f"http_{res.status_code}")
+                        # Break out of model loop to try the NEXT KEY immediately
+                        break
+
+                    else:
+                        logger.warning(
+                            "gemini_unexpected_status",
+                            key=mask_key(key),
+                            model=model,
+                            status_code=res.status_code,
+                        )
+                except Exception as err:
                     logger.warning(
-                        "gemini_quota_limit_429_received",
-                        key_index=idx,
+                        "gemini_request_exception",
                         key=mask_key(key),
                         model=model,
-                        message="Falling back to next key account automatically",
-                    )
-                    await mark_key_exhausted(key, reason="429_quota_exceeded")
-                    # Break out of model loop to try the NEXT KEY immediately
-                    break
-
-                elif res.status_code == 404:
-                    # Model not found or deprecated for this key version; try next model
-                    logger.debug(
-                        "gemini_model_not_found_trying_next_model",
-                        key=mask_key(key),
-                        model=model,
+                        error=str(err),
                     )
                     continue
-
-                elif res.status_code == 400 and "API_KEY_INVALID" not in res.text:
-                    # A malformed request (e.g. schema the model doesn't support) says
-                    # nothing about the key, so don't burn it for the day
-                    logger.warning(
-                        "gemini_bad_request_trying_next_model",
-                        key=mask_key(key),
-                        model=model,
-                        response=res.text[:200],
-                    )
-                    continue
-
-                elif res.status_code in (400, 401, 403):
-                    # Key invalid or project access denied
-                    logger.warning(
-                        "gemini_key_access_denied_or_invalid",
-                        key_index=idx,
-                        key=mask_key(key),
-                        status_code=res.status_code,
-                        response=res.text[:120],
-                    )
-                    await mark_key_exhausted(key, reason=f"http_{res.status_code}")
-                    # Break out of model loop to try the NEXT KEY immediately
-                    break
-
-                else:
-                    logger.warning(
-                        "gemini_unexpected_status",
-                        key=mask_key(key),
-                        model=model,
-                        status_code=res.status_code,
-                    )
-            except Exception as err:
-                logger.warning(
-                    "gemini_request_exception",
-                    key=mask_key(key),
-                    model=model,
-                    error=str(err),
-                )
-                continue
 
     logger.warning("all_gemini_keys_exhausted_or_failed_falling_back_to_next_tier")
     return None, None

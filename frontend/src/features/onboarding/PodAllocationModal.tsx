@@ -25,8 +25,8 @@ const PHASES = [
 ];
 
 /** The allocation request itself is fast; keep the sequence readable rather than flashing past. */
-const MIN_VISIBLE_MS = 1800;
-const SUCCESS_HOLD_MS = 900;
+const MIN_VISIBLE_MS = 300;
+const SUCCESS_HOLD_MS = 200;
 
 export function PodAllocationModal({
   open,
@@ -66,16 +66,16 @@ export function PodAllocationModal({
   // Request finished: respect the minimum sequence, fill to 100%, show the check, then continue
   useEffect(() => {
     if (!open || status !== "success") return;
-    const wait = Math.max(0, MIN_VISIBLE_MS - (performance.now() - openedAt.current));
+    const wait = Math.max(0, (reduce ? 0 : MIN_VISIBLE_MS) - (performance.now() - openedAt.current));
     const t1 = window.setTimeout(() => setProgress(100), wait);
-    const t2 = window.setTimeout(() => setShowSuccess(true), wait + 450);
-    const t3 = window.setTimeout(() => doneRef.current(), wait + 450 + SUCCESS_HOLD_MS);
+    const t2 = window.setTimeout(() => setShowSuccess(true), wait + (reduce ? 0 : 150));
+    const t3 = window.setTimeout(() => doneRef.current(), wait + (reduce ? 0 : 150) + SUCCESS_HOLD_MS);
     return () => {
       window.clearTimeout(t1);
       window.clearTimeout(t2);
       window.clearTimeout(t3);
     };
-  }, [open, status]);
+  }, [open, status, reduce]);
 
   // Block page scroll behind the overlay
   useEffect(() => {

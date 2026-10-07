@@ -15,7 +15,7 @@ export function AboutPage() {
     <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen pb-20 lg:pb-24 font-sans selection:bg-[#7FA0D6]/30">
       
       {/* ── Section 1: Hero (2-Column Grid) ── */}
-      <section className="relative isolate max-w-[1240px] mx-auto px-6 pt-8 pb-16 sm:pt-12 sm:pb-20 lg:pt-14 lg:pb-24">
+      <section className="relative isolate overflow-clip max-w-[1240px] mx-auto px-4 sm:px-6 pt-8 pb-16 sm:pt-12 sm:pb-20 lg:pt-14 lg:pb-24">
         <motion.div
           aria-hidden="true"
           className="absolute -left-32 top-0 -z-10 size-[30rem] rounded-full bg-[radial-gradient(circle,rgba(127,160,214,0.12),transparent_62%)]"
@@ -25,7 +25,7 @@ export function AboutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           
           {/* Left Column */}
-          <div className="pr-4 lg:pr-8">
+          <div className="pr-0 lg:pr-8">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -87,7 +87,7 @@ export function AboutPage() {
             animate={{ opacity: 1, x: 0, rotateY: 0 }}
             transition={{ duration: 1, delay: 0.3, ease: EASE_OUT_EXPO }}
           >
-          <TiltCard max={6} className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/40 rounded-2xl p-6 shadow-2xl relative overflow-hidden flex flex-col gap-6">
+          <TiltCard max={6} className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/40 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden flex flex-col gap-6">
             <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
               <div className="font-black text-[#F8FAFC] text-sm tracking-tight">CREO Kernel v2.6 &bull; Architecture Blueprint</div>
               <div className="text-[#7FA0D6] text-xs font-semibold flex items-center gap-2">
@@ -124,7 +124,7 @@ export function AboutPage() {
       </section>
 
       {/* ── Section 2: Why CREO Exists ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16 border-t border-[#2A3446]">
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-[#2A3446]">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
             ⚡ THE ORIGIN STORY
@@ -145,7 +145,7 @@ export function AboutPage() {
           
           {/* Left Card - The Past / Chaos */}
           <div 
-            className={`bg-[#0A0F18] border rounded-3xl p-6 lg:p-8 transition-all duration-300 ${hoverSection === 'past' ? 'border-[#D8BF9B]/30 shadow-[0_0_20px_-10px_rgba(216,191,155,0.1)]' : 'border-[#D8BF9B]/20'}`}
+            className={`bg-[#0A0F18] border rounded-3xl p-4 sm:p-6 lg:p-8 transition-all duration-300 ${hoverSection === 'past' ? 'border-[#D8BF9B]/30 shadow-[0_0_20px_-10px_rgba(216,191,155,0.1)]' : 'border-[#D8BF9B]/20'}`}
             onMouseEnter={() => setHoverSection('past')}
             onMouseLeave={() => setHoverSection(null)}
           >
@@ -220,7 +220,7 @@ export function AboutPage() {
 
           {/* Right Card - The CREO Advantage / Precision */}
           <div 
-            className={`bg-[#0A0F18] border rounded-3xl p-6 lg:p-8 relative overflow-hidden transition-all duration-300 ${hoverSection === 'creo' ? 'border-[#7FA0D6]/60 shadow-[0_0_40px_-15px_rgba(127,160,214,0.3)]' : 'border-[#2A3446]/50 shadow-[0_0_40px_-15px_rgba(127,160,214,0.05)]'}`}
+            className={`bg-[#0A0F18] border rounded-3xl p-4 sm:p-6 lg:p-8 relative overflow-hidden transition-all duration-300 ${hoverSection === 'creo' ? 'border-[#7FA0D6]/60 shadow-[0_0_40px_-15px_rgba(127,160,214,0.3)]' : 'border-[#2A3446]/50 shadow-[0_0_40px_-15px_rgba(127,160,214,0.05)]'}`}
             onMouseEnter={() => setHoverSection('creo')}
             onMouseLeave={() => setHoverSection(null)}
           >
@@ -288,7 +288,7 @@ export function AboutPage() {
       </section>
 
       {/* ── Section 3: Three Principles ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16 border-t border-[#2A3446]">
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-[#2A3446]">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
             ⚡ OUR CORE PHILOSOPHY
@@ -301,9 +301,9 @@ export function AboutPage() {
           />
         </div>
 
-        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-6" gap={0.12}>
+        <Stagger className="grid grid-cols-1 lg:grid-cols-3 gap-6" gap={0.12}>
           {/* Card 1 */}
-          <StaggerItem className="h-full"><TiltCard max={6} className="h-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/40 rounded-3xl p-6 lg:p-8 flex flex-col transition-colors duration-300 hover:border-[#7FA0D6]/40">
+          <StaggerItem className="h-full"><TiltCard max={6} className="h-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/40 rounded-3xl p-4 sm:p-6 lg:p-8 flex flex-col transition-colors duration-300 hover:border-[#7FA0D6]/40">
             <div className="inline-flex items-center rounded-full bg-[#0A0F18] border border-[#2A3446] text-[#7FA0D6] text-[10px] font-bold px-3 py-1 mb-6 w-fit">
               PEOPLE
             </div>
@@ -343,7 +343,7 @@ export function AboutPage() {
           </TiltCard></StaggerItem>
 
           {/* Card 2 */}
-          <StaggerItem className="h-full"><TiltCard max={6} className="h-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/40 rounded-3xl p-6 lg:p-8 flex flex-col transition-colors duration-300 hover:border-[#7FA0D6]/40">
+          <StaggerItem className="h-full"><TiltCard max={6} className="h-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/40 rounded-3xl p-4 sm:p-6 lg:p-8 flex flex-col transition-colors duration-300 hover:border-[#7FA0D6]/40">
             <div className="inline-flex items-center rounded-full bg-[#0A0F18] border border-[#2A3446] text-[#7FA0D6] text-[10px] font-bold px-3 py-1 mb-6 w-fit">
               PROCESS
             </div>
@@ -352,20 +352,20 @@ export function AboutPage() {
               Linear end-to-end workflows from brief to 1-click client sign-off with automated SLA timers.
             </p>
             <div className="bg-[#0A0F18] border border-[#2A3446] rounded-xl p-5">
-              <div className="flex justify-between relative">
-                <div className="absolute left-4 right-4 top-3.5 h-[1px] bg-[#2A3446]" />
+              <div className="grid grid-cols-3 gap-x-2 gap-y-5 xl:flex xl:justify-between relative">
+                <div className="hidden xl:block absolute left-4 right-4 top-3.5 h-[1px] bg-[#2A3446]" />
                 {["01", "02", "03", "04", "05", "06"].map((step, i) => {
                   const labels = ["Lead", "Onboard", "Brief", "Production", "Review", "Report"];
                   const isActive = activeMilestone === step;
                   return (
-                    <div key={step} className="flex flex-col items-center gap-3 z-10 cursor-pointer" onClick={() => setActiveMilestone(step)}>
+                    <button type="button" key={step} aria-pressed={isActive} className="flex min-h-11 flex-col items-center gap-2 sm:gap-3 z-10 cursor-pointer" onClick={() => setActiveMilestone(step)}>
                       <div className={`w-7 h-7 rounded-full bg-[#0A0F18] border text-[11px] font-bold flex items-center justify-center transition-all ${isActive ? 'border-[#7FA0D6] text-[#7FA0D6] shadow-[0_0_10px_rgba(127,160,214,0.4)]' : 'border-[#2A3446] text-[#97A0B3]'}`}>
                         {step}
                       </div>
                       <div className={`text-[10px] sm:text-[11px] font-medium text-center whitespace-nowrap ${isActive ? 'text-[#F8FAFC]' : 'text-[#97A0B3]'}`}>
                         {labels[i]}
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -376,7 +376,7 @@ export function AboutPage() {
           </TiltCard></StaggerItem>
 
           {/* Card 3 */}
-          <StaggerItem className="h-full"><TiltCard max={6} className="h-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/40 rounded-3xl p-6 lg:p-8 flex flex-col transition-colors duration-300 hover:border-[#7FA0D6]/40">
+          <StaggerItem className="h-full"><TiltCard max={6} className="h-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/40 rounded-3xl p-4 sm:p-6 lg:p-8 flex flex-col transition-colors duration-300 hover:border-[#7FA0D6]/40">
             <div className="inline-flex items-center rounded-full bg-[#0A0F18] border border-[#2A3446] text-[#7FA0D6] text-[10px] font-bold px-3 py-1 mb-6 w-fit">
               PERFORMANCE
             </div>
@@ -418,7 +418,7 @@ export function AboutPage() {
       </section>
 
       {/* ── Section 4: Leadership Pods ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16 border-t border-[#2A3446]/50">
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-[#2A3446]/50">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] border border-[#2A3446]/50 text-[#7FA0D6] text-[11px] font-bold px-3 py-1 mb-6">
             ⚡ THE PEOPLE BEHIND CREO
@@ -431,7 +431,7 @@ export function AboutPage() {
           />
         </div>
         
-        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-6" gap={0.12}>
+        <Stagger className="grid grid-cols-1 lg:grid-cols-3 gap-6" gap={0.12}>
           {/* Pod 1 */}
           <StaggerItem className="h-full"><TiltCard max={8} className="h-full bg-[#161F2D] border border-[#2A3446]/50 rounded-xl p-5 flex flex-col hover:border-[#7FA0D6]/40 transition-colors group cursor-pointer">
             <div className="flex items-center gap-4 mb-4">

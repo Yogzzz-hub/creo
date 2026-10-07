@@ -107,6 +107,11 @@ class SaveSectionRequest(BaseModel):
     data: dict[str, Any]
 
 
+class SaveSectionsRequest(BaseModel):
+    sections: dict[Literal["a", "b", "c", "d", "e", "f", "g"], dict[str, Any]] = Field(min_length=1, max_length=7)
+    active_section: Literal["a", "b", "c", "d", "e", "f", "g"] | None = None
+
+
 class QuestionnaireStateResponse(BaseModel):
     client_id: str
     section_a: dict[str, Any]

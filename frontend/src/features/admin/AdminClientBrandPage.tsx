@@ -205,12 +205,12 @@ export function AdminClientBrandPage() {
         </div>
 
       {/* ── Client Header Hero ─────────────────────────────── */}
-      <div className="rounded-2xl border border-[#2A3446]/80 bg-gradient-to-br from-[#0B111C] to-[#7FA0D6] p-6 sm:p-8 text-white relative overflow-hidden">
+      <div className="rounded-2xl border border-[#2A3446]/80 bg-gradient-to-br from-[#0B111C] to-[#7FA0D6] p-4 sm:p-6 lg:p-8 text-white relative overflow-hidden">
         {/* Ambient glow */}
         <div className="pointer-events-none absolute -top-20 -right-20 size-56 rounded-full bg-sky-400/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-16 -left-16 size-44 rounded-full bg-[#7FA0D6]/150/15 blur-2xl" />
 
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-start gap-5">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-5">
           {/* Avatar */}
           <div className="size-16 sm:size-20 rounded-2xl bg-gradient-to-br from-[#7FA0D6] to-[#7FA0D6] border-2 border-white/30 flex items-center justify-center text-2xl sm:text-3xl font-black shadow-lg shadow-blue-500/30 shrink-0">
             {(client.full_name?.[0] || "C").toUpperCase()}
@@ -267,7 +267,7 @@ export function AdminClientBrandPage() {
           </div>
 
           {/* Quick Stats */}
-          <div className="flex gap-2 shrink-0">
+          <div className="flex flex-wrap gap-2 shrink-0 w-full sm:w-auto justify-center sm:justify-end mt-3 sm:mt-0">
             {[
               {
                 label: "Total Tasks",
@@ -287,7 +287,7 @@ export function AdminClientBrandPage() {
             ].map((s) => (
               <div
                 key={s.label}
-                className="text-center px-3 py-2 rounded-xl bg-[#161F2D]/10 border border-white/15 backdrop-blur-sm"
+                className="text-center px-2.5 sm:px-3 py-2 rounded-xl bg-[#161F2D]/10 border border-white/15 backdrop-blur-sm flex-1 min-w-[70px]"
               >
                 <s.icon className="size-4 mx-auto mb-1 text-cyan-300" />
                 <p className="text-lg font-black">{s.value}</p>
@@ -300,7 +300,7 @@ export function AdminClientBrandPage() {
         </div>
 
         {/* Quick Action Links */}
-        <div className="relative z-10 flex flex-wrap gap-2 mt-5 pt-4 border-t border-white/15">
+        <div className="relative z-10 flex flex-wrap gap-2 mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-white/15">
           <Link
             to="/admin/tasks"
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#161F2D]/15 hover:bg-[#161F2D]/25 text-white text-[11px] font-bold border border-white/20 transition-all"
@@ -590,7 +590,7 @@ export function AdminClientBrandPage() {
       {/* ── Assigned Pod Team ──────────────────────────────── */}
       {client.assigned_team.length > 0 && (
         <SectionCard title="Assigned Creative Pod" icon={Users}>
-          <div className="overflow-x-auto -mx-1">
+          <div className="overflow-x-auto -mx-1 -mr-2">
             <table className="w-full text-xs">
               <thead>
                 <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] border-b border-[#2A3446]">
@@ -633,7 +633,7 @@ export function AdminClientBrandPage() {
       )}
 
       {/* ── Brand DNA Meta Footer ──────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 py-3 px-4 rounded-xl border border-[#2A3446] bg-[#0B111C]/50 text-[10px] text-[#97A0B3] font-medium">
+      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-2 sm:gap-3 py-3 px-3 sm:px-4 rounded-xl border border-[#2A3446] bg-[#0B111C]/50 text-[10px] text-[#97A0B3] font-medium">
         <div className="flex items-center gap-4">
           <span>
             DNA Source:{" "}

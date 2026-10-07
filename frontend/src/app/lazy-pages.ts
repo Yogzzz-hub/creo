@@ -101,6 +101,11 @@ const PORTAL_CORE_PAGES = [
 
 /** Warm common portal routes without downloading the entire application after login. */
 export function preloadPortalPages(options: { includeOnboarding?: boolean } = {}): void {
+  const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  if (connection?.saveData || connection?.effectiveType?.includes("2g")) return;
+  if (options.includeOnboarding) {
+    void OnboardingView.preload().catch(() => {});
+    return;
+  }
   for (const page of PORTAL_CORE_PAGES) void page.preload().catch(() => {});
-  if (options.includeOnboarding) void OnboardingView.preload().catch(() => {});
 }

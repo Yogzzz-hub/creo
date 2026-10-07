@@ -12,7 +12,7 @@ export function ClientsPage() {
     <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen pb-20 lg:pb-24 font-sans selection:bg-[#7FA0D6]/30">
       
       {/* ── Section 1: Hero & Pipeline Monitor ── */}
-      <section className="max-w-[1240px] mx-auto px-6 pt-6 pb-16 sm:pt-8 sm:pb-20 lg:pt-10 lg:pb-24">
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-6 pb-16 sm:pt-8 sm:pb-20 lg:pt-10 lg:pb-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           
           {/* Left Column - Headline & Metrics */}
@@ -59,7 +59,7 @@ export function ClientsPage() {
           </div>
 
           {/* Right Column - Asset Pipeline Monitor */}
-          <div className="bg-[#161F2D]/60 backdrop-blur-md border border-[#2A3446]/50 rounded-2xl p-6 shadow-2xl">
+          <div className="bg-[#161F2D]/60 backdrop-blur-md border border-[#2A3446]/50 rounded-2xl p-4 sm:p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-8 pb-4 border-b border-[#2A3446]/50">
               <div className="flex items-center gap-2 text-sm font-bold text-[#F8FAFC]">
                 <Layers className="size-4 text-[#7FA0D6]" /> Asset Pipeline
@@ -139,7 +139,7 @@ export function ClientsPage() {
       </section>
 
       {/* ── Section 2: Creative Workflows ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16 border-t border-[#2A3446]/50">
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-[#2A3446]/50">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
           <div>
             <h2 className="text-2xl sm:text-3xl font-black text-[#F8FAFC] mb-2">Creative Workflows</h2>
@@ -172,7 +172,7 @@ export function ClientsPage() {
             { title: 'Enterprise Creative Ops', desc: 'Workflow management, stakeholder sync, delivery.', img: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=800&q=80', badge: 'OPS' },
             { title: 'Post-Production House', desc: 'Edit, color, sound, VFX, final mastering.', img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=800&q=80', badge: 'POST' }
           ].map(card => (
-            <div key={card.title} className="backdrop-blur-md bg-[#161F2D]/60 border border-[#2A3446]/50 rounded-2xl p-6 sm:p-8 group cursor-pointer hover:border-[#7FA0D6]/40 transition-colors flex flex-col">
+            <div key={card.title} className="backdrop-blur-md bg-[#161F2D]/60 border border-[#2A3446]/50 rounded-2xl p-4 sm:p-8 group cursor-pointer hover:border-[#7FA0D6]/40 transition-colors flex flex-col">
               <div className="relative mb-5">
                 <img src={card.img} alt={card.title} className="w-full h-44 object-cover rounded-xl border border-[#2A3446]/40 transition-transform duration-500 hover:scale-[1.02]" />
                 <div className="absolute top-3 right-3 bg-[#050810]/80 backdrop-blur-sm border border-[#2A3446] px-2 py-1 rounded text-[9px] font-bold text-[#F8FAFC]">
@@ -195,14 +195,14 @@ export function ClientsPage() {
       </section>
 
       {/* ── Section 3: Engineering Standards ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16 border-t border-[#2A3446]/50">
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-[#2A3446]/50">
         <div className="mb-12">
           <h2 className="text-2xl sm:text-3xl font-black text-[#F8FAFC] mb-2">Our Engineering Standards</h2>
           <p className="text-sm text-[#97A0B3]">Built for security, speed and creative freedom.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-[#161F2D]/60 backdrop-blur-md border border-[#2A3446]/50 rounded-2xl p-6 lg:p-8 flex flex-col">
+          <div className="bg-[#161F2D]/60 backdrop-blur-md border border-[#2A3446]/50 rounded-2xl p-4 sm:p-6 lg:p-8 flex flex-col">
             <div className="w-12 h-12 rounded-xl bg-[#0A0F18] border border-[#2A3446] flex items-center justify-center mb-6">
               <Link className="size-5 text-[#7FA0D6]" />
             </div>
@@ -211,7 +211,7 @@ export function ClientsPage() {
               Instant, secure access for your team and clients. No accounts. No friction.
             </p>
           </div>
-          <div className="bg-[#161F2D]/60 backdrop-blur-md border border-[#2A3446]/50 rounded-2xl p-6 lg:p-8 flex flex-col">
+          <div className="bg-[#161F2D]/60 backdrop-blur-md border border-[#2A3446]/50 rounded-2xl p-4 sm:p-6 lg:p-8 flex flex-col">
             <div className="w-12 h-12 rounded-xl bg-[#0A0F18] border border-[#2A3446] flex items-center justify-center mb-6">
               <Maximize className="size-5 text-[#7FA0D6]" />
             </div>
@@ -220,7 +220,7 @@ export function ClientsPage() {
               Collaborate with precision. Comment on exact frames, not just timestamps.
             </p>
           </div>
-          <div className="bg-[#161F2D]/60 backdrop-blur-md border border-[#2A3446]/50 rounded-2xl p-6 lg:p-8 flex flex-col">
+          <div className="bg-[#161F2D]/60 backdrop-blur-md border border-[#2A3446]/50 rounded-2xl p-4 sm:p-6 lg:p-8 flex flex-col">
             <div className="w-12 h-12 rounded-xl bg-[#0A0F18] border border-[#2A3446] flex items-center justify-center mb-6">
               <CheckSquare className="size-5 text-[#7FA0D6]" />
             </div>
@@ -233,7 +233,7 @@ export function ClientsPage() {
       </section>
 
       {/* ── Section 4: Video Deliverable Review Cockpit ── */}
-      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16 border-t border-[#2A3446]/50">
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-16 border-t border-[#2A3446]/50">
         <div className="mb-12">
           <div className="text-[10px] font-bold text-[#7FA0D6] uppercase tracking-wider mb-2">CLIENT PORTAL</div>
           <h2 className="text-2xl sm:text-3xl font-black text-[#F8FAFC] mb-2">Video Deliverable Review</h2>
@@ -439,14 +439,14 @@ export function ClientsPage() {
                 </div>
               </div>
               
-              <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pb-2">
                 {[
                   { name: 'NOSTIC_Logo_v2.png', size: '2.4 MB', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=100&q=80' },
                   { name: 'Behind the Scenes.mp4', size: '1.2 GB', img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=100&q=80' },
                   { name: 'Final Cut v3.mov', size: '890 MB', img: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=100&q=80' }
                 ].map(asset => (
-                  <div key={asset.name} className="flex-1 min-w-[140px] bg-[#0A0F18]/80 border border-[#2A3446]/40 rounded-xl p-2 flex items-center gap-2 group cursor-pointer hover:border-[#7FA0D6]/40 transition-colors">
-                    <img src={asset.img} className="size-10 rounded object-cover border border-[#2A3446]/50" />
+                  <div key={asset.name} className="flex-1 min-w-0 bg-[#0A0F18]/80 border border-[#2A3446]/40 rounded-xl p-2 flex items-center gap-2 group cursor-pointer hover:border-[#7FA0D6]/40 transition-colors">
+                    <img src={asset.img} className="size-10 shrink-0 rounded object-cover border border-[#2A3446]/50" />
                     <div className="overflow-hidden">
                       <div className="text-[9px] font-bold text-[#F8FAFC] truncate mb-0.5">{asset.name}</div>
                       <div className="text-[8px] text-[#97A0B3]">{asset.size}</div>

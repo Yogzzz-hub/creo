@@ -57,6 +57,11 @@ celery_app.conf.update(
 )
 
 celery_app.conf.beat_schedule = {
+    "recover-brand-enrichment": {
+        "task": "app.workers.tasks.scheduler.recover_brand_enrichment_task",
+        "schedule": crontab(minute="*/5"),
+        "options": {"queue": "default"},
+    },
     # Beat publishes query with FOR UPDATE SKIP LOCKED every minute
     "dispatch-due-publishes": {
         "task": "app.workers.tasks.scheduler.dispatch_due_publishes_task",
@@ -93,10 +98,10 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(hour=8, minute=0, day_of_week="monday"),
         "options": {"queue": "default"},
     },
-    # Nightly rolling 10-day task window assignment at 01:00 IST
+    # Recover and dispatch durable backlog every five minutes
     "assign-upcoming-window": {
         "task": "app.workers.tasks.scheduler.assign_upcoming_window_task",
-        "schedule": crontab(hour=1, minute=0),
+        "schedule": crontab(minute="*/5"),
         "options": {"queue": "default"},
     },
     # Nightly operational rebalance sweep at 02:00 IST

@@ -1,16 +1,16 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "motion/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router";
 import { CheckCircle2, Mail, ShieldCheck, ArrowRight, RefreshCw } from "lucide-react";
 import { acceptTerms, fetchOnboardingStatus } from "../../lib/onboarding-api";
 import { useAuth } from "../../lib/auth-context";
 import { CreoInlineLoader } from "../../components/ui/CreoLoader";
 import { ONBOARDING_STEPS } from "../../lib/useOnboardingGate";
-import { StageComplete } from "./StageComplete";
-import { StagePayment } from "./StagePayment";
-import { StageQuestionnaire } from "./StageQuestionnaire";
-import { StageTerms } from "./StageTerms";
+const StageComplete = lazy(() => import("./StageComplete").then(module => ({ default: module.StageComplete })));
+const StagePayment = lazy(() => import("./StagePayment").then(module => ({ default: module.StagePayment })));
+const StageQuestionnaire = lazy(() => import("./StageQuestionnaire").then(module => ({ default: module.StageQuestionnaire })));
+const StageTerms = lazy(() => import("./StageTerms").then(module => ({ default: module.StageTerms })));
 import { OtpPinInput } from "../../components/ui/OtpPinInput";
 import type { AssignedTeamMember, OnboardingStatus } from "../../types/api";
 
@@ -457,7 +457,7 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
 
       {/* Dynamic Stage Views */}
       <div className="w-full">
-        <AnimatePresence mode="popLayout">
+        <Suspense fallback={<CreoInlineLoader />}><AnimatePresence mode="popLayout">
           {currentStep === 1 && (
             <StageVerifyEmail
               key="verify"
@@ -520,7 +520,7 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
               onLaunchPortal={onPortalLaunch ?? (() => {})}
             />
           )}
-        </AnimatePresence>
+        </AnimatePresence></Suspense>
       </div>
     </div>
   );

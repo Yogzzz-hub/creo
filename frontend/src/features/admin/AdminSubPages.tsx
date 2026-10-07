@@ -474,7 +474,7 @@ export function AdminClientsPage() {
         activeTab="Client Details"
       />
 
-      <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+      <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {toast && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
@@ -491,7 +491,7 @@ export function AdminClientsPage() {
             VIEW 1: CLIENT ROSTER / DIRECTORY (WHEN NO CLIENT IS SELECTED)
         ═════════════════════════════════════════════════════════════════════ */}
         {!selectedClientId ? (
-          <div className="space-y-6 animate-fade-in">
+          <div className="space-y-4 sm:space-y-6 animate-fade-in">
             {/* Controls */}
             <div className="flex flex-col sm:flex-row items-center gap-3">
               <div className="relative flex-1 w-full">
@@ -541,12 +541,12 @@ export function AdminClientsPage() {
             </div>
 
             {/* Client Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6">
               {filteredClientList.map((client) => (
                 <div
                   key={client.id}
                   onClick={() => setSelectedClientId(client.id)}
-                  className="bg-[#161F2D]/80 backdrop-blur-xl rounded-3xl p-6 border border-[#2A3446]/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between"
+                  className="bg-[#161F2D]/80 backdrop-blur-xl rounded-3xl p-4 sm:p-6 border border-[#2A3446]/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between"
                 >
                   <div className="space-y-4">
                     <div className="flex items-start justify-between">
@@ -601,10 +601,10 @@ export function AdminClientsPage() {
           /* ═════════════════════════════════════════════════════════════════════
               VIEW 2: DEDICATED CLIENT DETAIL VIEW (MATCHING USER SCREENSHOT)
           ═════════════════════════════════════════════════════════════════════ */
-          <div className="space-y-6 animate-fade-in">
+          <div className="space-y-4 sm:space-y-6 animate-fade-in">
             {/* Top Breadcrumb & Live Status */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#97A0B3]">
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-bold text-[#97A0B3] flex-wrap">
                 <button
                   type="button"
                   onClick={() => setSelectedClientId(null)}
@@ -708,7 +708,7 @@ export function AdminClientsPage() {
             </div>
 
             {/* 4 Main Grid Cards matching Screenshot (2x2) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-6">
               {/* CARD 1: PRIMARY CONTACT */}
               <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
                 <div className="space-y-4">
@@ -813,7 +813,7 @@ export function AdminClientsPage() {
                   </div>
 
                   {/* 3 Metric Counters matching Screenshot */}
-                  <div className="grid grid-cols-3 gap-3 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 pt-1">
                     <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
                       <span className="text-sm font-black text-white">
                         {activeClient?.postsDelivered}/{activeClient?.postsQuota}
@@ -908,7 +908,7 @@ export function AdminClientsPage() {
                   <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
                     APPROVED COLOR SPECTRUM
                   </span>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-2.5">
                     {activeClient?.brand.colors.map((c) => (
                       <div key={c.hex} className="rounded-2xl border border-[#2A3446] overflow-hidden bg-[#161F2D] shadow-2xs space-y-1.5 pb-2">
                         <div className="h-10 w-full" style={{ backgroundColor: c.hex }} />
@@ -1112,7 +1112,7 @@ export function AdminClientsPage() {
                   <p className="text-xs text-[#97A0B3]">No active deliverables requiring attention for this client.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
                   {filteredDeliverables.map((deliv) => (
                   <div
                     key={deliv.id}
@@ -1152,7 +1152,7 @@ export function AdminClientsPage() {
                     {/* Action Buttons */}
                     <div className="space-y-2 pt-2 border-t border-[#2A3446]">
                       {deliv.status === "IN REVIEW" && (
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <button
                             type="button"
                             onClick={() => handleApproveDeliverable(deliv.id, deliv.title)}
@@ -1171,7 +1171,7 @@ export function AdminClientsPage() {
                       )}
 
                       {deliv.status === "IN PRODUCTION" && (
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <button
                             type="button"
                             onClick={() => setPreviewDeliverable(deliv)}
@@ -1209,7 +1209,7 @@ export function AdminClientsPage() {
 
                       {deliv.status === "READY FOR REVIEW" && (
                         <div className="space-y-1.5">
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <button
                               type="button"
                               onClick={() => handleApproveDeliverable(deliv.id, deliv.title)}
@@ -1276,7 +1276,7 @@ export function AdminClientsPage() {
                   <label className="block font-bold mb-1">Industry / Category</label>
                   <input type="text" defaultValue={activeClient?.industry} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block font-bold mb-1">Primary Signer</label>
                     <input type="text" defaultValue={activeClient?.contact.name} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
@@ -1381,7 +1381,7 @@ export function AdminClientsPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Type</label>
                     <select
@@ -1942,18 +1942,18 @@ export function AdminDeliverablesPage() {
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
-      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {/* Toast Notification */}
         {toastMessage && (
-          <div className="fixed top-24 right-8 z-50 bg-[#0B111C] text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2.5 animate-bounce">
+          <div className="fixed top-20 right-4 sm:right-8 left-4 sm:left-auto z-50 bg-[#0B111C] text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-2.5 animate-bounce">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             <span>{toastMessage}</span>
           </div>
         )}
 
         {/* 4 KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="kpi-card bg-[#161F2D] rounded-3xl p-4 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
                 MOVED TO PRODUCTION
@@ -1968,7 +1968,7 @@ export function AdminDeliverablesPage() {
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-[#161F2D] rounded-3xl p-4 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
                 PENDING REVIEW
@@ -1983,7 +1983,7 @@ export function AdminDeliverablesPage() {
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-[#161F2D] rounded-3xl p-4 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
                 APPROVED TODAY
@@ -1998,7 +1998,7 @@ export function AdminDeliverablesPage() {
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-[#161F2D] rounded-3xl p-4 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
                 DECLINED / REVISE
@@ -2086,7 +2086,7 @@ export function AdminDeliverablesPage() {
             </p>
           </div>
         ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6">
           {filteredDeliverables.map((item) => (
             <div
               key={item.id}
@@ -2555,7 +2555,7 @@ export function AdminTasksPage() {
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
-      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {/* Header Title and Search Filter Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -2610,7 +2610,7 @@ export function AdminTasksPage() {
         </div>
 
         {/* 4 Kanban Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
           {/* Column 1: TO DO */}
           <div className="bg-[#161F2D]/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-[#2A3446]/60">
             <div className="flex items-center justify-between px-1">
@@ -2831,7 +2831,7 @@ export function AdminTasksPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Client Brand</label>
                     <select
@@ -2856,7 +2856,7 @@ export function AdminTasksPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority</label>
                     <select
@@ -3287,7 +3287,7 @@ export function AdminCalendarPage() {
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Content Engine" />
-      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {/* Header and Controls */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -3381,7 +3381,7 @@ export function AdminCalendarPage() {
 
 
         {/* Calendar Grid + Dynamic Selected Date Work Split */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-6">
           {/* Main 7-Column Month Calendar View */}
           <div className="lg:col-span-2 bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] p-6 space-y-4">
             <div className="flex items-center justify-between">
@@ -3639,7 +3639,7 @@ export function AdminCalendarPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Type</label>
                     <select
@@ -3674,7 +3674,7 @@ export function AdminCalendarPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Target Pod</label>
                     <select
@@ -3704,7 +3704,7 @@ export function AdminCalendarPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Target Time</label>
                     <input
@@ -4290,7 +4290,7 @@ export function AdminTeamManagementPage() {
         activeTab="Team Details"
       />
 
-      <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6">
+      <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {toast && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
@@ -4335,7 +4335,7 @@ export function AdminTeamManagementPage() {
               const lastPodLetter = pods[pods.length - 1]?.letter || String.fromCharCode(65 + Math.max(0, pods.length - 1));
 
               return (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-6">
                   {/* Card 1: NO OF PODS */}
                   <div className="kpi-card bg-[#161F2D] rounded-3xl p-6 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
                     <div className="flex items-center justify-between mb-3">
@@ -4413,7 +4413,7 @@ export function AdminTeamManagementPage() {
             </div>
 
             {/* Pod Cards Grid matching Screenshot 1 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6">
               {pods.map((pod) => (
                 <div
                   key={pod.id}
@@ -4504,7 +4504,7 @@ export function AdminTeamManagementPage() {
           <div className="space-y-6">
             {/* Top Breadcrumb & Action Controls */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#97A0B3]">
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-bold text-[#97A0B3] flex-wrap">
                 <button
                   type="button"
                   onClick={() => setActivePodId(null)}
@@ -4845,7 +4845,7 @@ export function AdminTeamManagementPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Client Account</label>
                     <select
@@ -4875,7 +4875,7 @@ export function AdminTeamManagementPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Workload Allocation</label>
                     <div className="grid grid-cols-4 gap-1">
@@ -4949,7 +4949,7 @@ export function AdminTeamManagementPage() {
             onClick={() => setScheduleModalMember(null)}
           >
             <div
-              className="relative w-full max-w-2xl rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col space-y-5 max-h-[92vh] overflow-y-auto"
+              className="relative w-full max-w-2xl rounded-3xl bg-[#161F2D] p-5 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col space-y-5 max-h-[92vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
@@ -5094,7 +5094,7 @@ export function AdminTeamManagementPage() {
             onClick={() => setSuccessPopup(null)}
           >
             <div
-              className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
+              className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-5 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
@@ -5169,7 +5169,7 @@ export function AdminTeamManagementPage() {
 
               {/* Add Member Form */}
               <form onSubmit={handleCreateTeamMember} className="space-y-3.5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Full Name *</label>
                     <input
@@ -5205,7 +5205,7 @@ export function AdminTeamManagementPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Role Title</label>
                     <input
@@ -5230,7 +5230,7 @@ export function AdminTeamManagementPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Role Track Category</label>
                     <select
@@ -5352,7 +5352,7 @@ export function AdminLeaveApprovalsPage() {
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader activeTab="Team Details" />
-      <main className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 pb-24 sm:pb-16 max-w-[1500px] w-full mx-auto space-y-8">
         {toast && (
           <div className="p-4 bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs font-bold rounded-2xl flex items-center justify-between shadow-xl backdrop-blur-md animate-fade-in">
             <div className="flex items-center gap-2">
@@ -5385,7 +5385,7 @@ export function AdminLeaveApprovalsPage() {
         </div>
 
         {/* 2 Top KPI Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6">
           <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-bold text-[#97A0B3] uppercase tracking-wider">
@@ -5449,10 +5449,10 @@ export function AdminLeaveApprovalsPage() {
           <table className="w-full text-left text-xs text-white">
             <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-bold uppercase tracking-wider text-[#97A0B3]">
               <tr>
-                <th className="px-5 py-3.5">Specialist</th>
-                <th className="px-5 py-3.5">Dates</th>
-                <th className="px-5 py-3.5">Reason</th>
-                <th className="px-5 py-3.5">Status</th>
+                <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Specialist</th>
+                <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Dates</th>
+                <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Reason</th>
+                <th className="px-3 sm:px-5 py-2.5 sm:py-3.5">Status</th>
                 <th className="px-5 py-3.5 text-right">Action</th>
               </tr>
             </thead>
@@ -5466,7 +5466,7 @@ export function AdminLeaveApprovalsPage() {
               ) : (
                 filteredRequests.map((lr) => (
                 <tr key={lr.id} className="hover:bg-[#0B111C]/60">
-                  <td className="px-5 py-4">
+                  <td className="px-3 sm:px-5 py-3 sm:py-4">
                     <div className="font-bold text-white">{lr.user_name || (lr as any).name || "Team Member"}</div>
                     <div className="text-[11px] text-[#97A0B3]">{lr.user_role || (lr as any).department || "Specialist"}</div>
                   </td>
@@ -5474,7 +5474,7 @@ export function AdminLeaveApprovalsPage() {
                     <div>{lr.start_date || (lr as any).startDate} to {lr.end_date || (lr as any).endDate}</div>
                   </td>
                   <td className="px-5 py-4 text-[#F1F5F9] max-w-xs">{lr.reason}</td>
-                  <td className="px-5 py-4">
+                  <td className="px-3 sm:px-5 py-3 sm:py-4">
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                         lr.status === "approved"
@@ -5537,7 +5537,7 @@ export function AdminLeaveApprovalsPage() {
                 }}
                 className="space-y-3"
               >
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Start Date</label>
                     <input type="date" required className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs" />
@@ -5806,7 +5806,7 @@ export function AdminRevenuePage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             TOP METRIC CARDS (Matching Image 1)
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6">
           {/* Metric 1: Total Revenue (MRR) */}
           <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex items-center justify-between">
             <div className="space-y-2">
@@ -5853,7 +5853,7 @@ export function AdminRevenuePage() {
         {/* ─────────────────────────────────────────────────────────────────────────────
             CHARTS & TIER BREAKDOWN GRID
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-6">
           {/* Revenue Growth & Trajectory (2 Cols - Bar Chart matching Dashboard) */}
           <div className="lg:col-span-2 bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-xl space-y-6 flex flex-col justify-between">
             <div>
@@ -6117,15 +6117,15 @@ export function AdminRevenuePage() {
           </div>
 
           {/* Table matching Image 2 */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto -mx-1 sm:mx-0">
             <table className="w-full text-left text-xs text-white">
               <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
                 <tr>
-                  <th className="px-5 py-4">CLIENT & SCOPE</th>
-                  <th className="px-5 py-4">INVOICE #</th>
-                  <th className="px-5 py-4">AMOUNT</th>
-                  <th className="px-5 py-4">PAYMENT METHOD</th>
-                  <th className="px-5 py-4">STATUS</th>
+                  <th className="px-3 sm:px-5 py-3 sm:py-4">CLIENT & SCOPE</th>
+                  <th className="px-3 sm:px-5 py-3 sm:py-4">INVOICE #</th>
+                  <th className="px-3 sm:px-5 py-3 sm:py-4">AMOUNT</th>
+                  <th className="px-3 sm:px-5 py-3 sm:py-4">PAYMENT METHOD</th>
+                  <th className="px-3 sm:px-5 py-3 sm:py-4">STATUS</th>
                   <th className="px-5 py-4 text-right">ACTIONS</th>
                 </tr>
               </thead>
@@ -6139,7 +6139,7 @@ export function AdminRevenuePage() {
                 ) : (
                   filteredTx.map((tx) => (
                   <tr key={tx.id} className="hover:bg-[#0B111C]/70 transition-colors">
-                    <td className="px-5 py-4">
+                    <td className="px-3 sm:px-5 py-3 sm:py-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-9 h-9 rounded-xl ${tx.avatarBg} font-black text-xs flex items-center justify-center shrink-0`}>
                           {tx.clientInitials}
@@ -6159,7 +6159,7 @@ export function AdminRevenuePage() {
 
                     <td className="px-5 py-4 text-[#F1F5F9] font-medium">{tx.method}</td>
 
-                    <td className="px-5 py-4">
+                    <td className="px-3 sm:px-5 py-3 sm:py-4">
                       <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border flex items-center gap-1.5 w-fit ${tx.badgeClass}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]/150"}`} />
                         {tx.status} ({tx.date})
@@ -6239,7 +6239,7 @@ export function AdminRevenuePage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 <div>
                   <label className="block font-bold text-[#F1F5F9] mb-1">Amount (₹ INR)</label>
                   <input
@@ -6848,7 +6848,7 @@ export function AdminPlansPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-6">
             {plans.map((plan) => (
               <div
                 key={plan.id}
@@ -7077,7 +7077,7 @@ export function AdminPlansPage() {
             </span>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto -mx-1 sm:mx-0">
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-[#2A3446] text-[10px] font-black uppercase text-[#97A0B3] tracking-wider">
@@ -7324,7 +7324,7 @@ export function AdminPlansPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 <div>
                   <label className="block font-bold text-[#F1F5F9] mb-1">Standard Rate (₹/mo)</label>
                   <input
@@ -7515,7 +7515,7 @@ export function AdminPlansPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Refund Amount (₹ INR)</label>
                     <input
@@ -7586,7 +7586,7 @@ export function AdminPlansPage() {
           onClick={() => setDealSuccessModal(null)}
         >
           <div
-            className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-6 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
+            className="relative w-full max-w-md rounded-3xl bg-[#161F2D] p-5 sm:p-8 shadow-2xl border border-[#2A3446] flex flex-col items-center text-center animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"

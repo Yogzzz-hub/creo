@@ -15,7 +15,7 @@ const LEGAL_LINKS = [
 export function Footer() {
   return (
     <footer data-footer className="w-full bg-[#050810] text-[#F8FAFC] border-t border-[#222F44] py-10 sm:py-12 selection:bg-[#7FA0D6]/30">
-      <div className="mx-auto max-w-[1240px] px-6">
+      <div className="mx-auto max-w-[1240px] px-4 sm:px-6">
         
         {/* 1. Pre-Footer Conversion Bento Banner */}
         <div className="bg-[#121926] border border-[#222F44] rounded-3xl p-6 sm:p-10 text-center mb-10 sm:mb-12 shadow-2xl relative overflow-hidden">
@@ -135,7 +135,7 @@ export function Footer() {
                 href="https://www.instagram.com/creotool26?igsh=NjN0eWxwZ2VqbWJ3"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-gradient-to-tr hover:from-amber-500 hover:via-rose-500 hover:to-purple-600 hover:border-transparent transition-all shadow-xs"
+                className="flex size-11 sm:size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-gradient-to-tr hover:from-amber-500 hover:via-rose-500 hover:to-purple-600 hover:border-transparent transition-all shadow-xs"
                 aria-label="Instagram"
                 title="Instagram"
               >
@@ -149,7 +149,7 @@ export function Footer() {
                 href="https://www.linkedin.com/in/creo-tool-3bb3b841b?utm_source=share_via&utm_content=profile&utm_medium=member_android"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-[#7FA0D6] hover:border-transparent transition-all shadow-xs"
+                className="flex size-11 sm:size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-[#7FA0D6] hover:border-transparent transition-all shadow-xs"
                 aria-label="LinkedIn"
                 title="LinkedIn"
               >
@@ -163,7 +163,7 @@ export function Footer() {
                 href="https://www.facebook.com/share/1GKDeenkvC/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-[#7FA0D6] hover:border-transparent transition-all shadow-xs"
+                className="flex size-11 sm:size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-[#7FA0D6] hover:border-transparent transition-all shadow-xs"
                 aria-label="Facebook"
                 title="Facebook"
               >
@@ -177,7 +177,7 @@ export function Footer() {
                 href="https://x.com/creotool"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-black hover:border-slate-700 transition-all shadow-xs"
+                className="flex size-11 sm:size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-black hover:border-slate-700 transition-all shadow-xs"
                 aria-label="Twitter / X"
                 title="X (Twitter)"
               >

@@ -1,6 +1,8 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { HttpError, request } from "./http";
 import { getAuthToken, setAuthToken, clearAuthToken } from "./auth-token";
+
+import { queryClient } from "./query-client";
 
 const USER_CACHE_KEY = "creo_auth_user";
 
@@ -83,6 +85,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(initialUser);
   const [token, setTokenState] = useState<string | null>(() => getAuthToken());
   const [loading, setLoading] = useState(!initialUser);
+  const cacheIdentity = useRef(initialUser?.id);
+
+  useEffect(() => {
+    if (cacheIdentity.current !== user?.id) {
+      queryClient.clear();
+      cacheIdentity.current = user?.id;
+    }
+  }, [user?.id]);
 
   // Persist the profile for the next page load (and forget it on sign-out)
   useEffect(() => {
@@ -256,6 +266,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearAuthToken();
       setToken(null);
       setUser(null);
+      queryClient.clear();
       try {
         sessionStorage.removeItem("creo_last_route");
       } catch (e) {}

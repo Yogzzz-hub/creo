@@ -413,26 +413,16 @@ async def get_dashboard(
         "trend_points": [0.2, 0.4, 0.35, 0.5, 0.65, 0.8, 1.0] # Mocked trend points for SVG sparkline
     }
 
-    # 2. Pipeline status counts
-    pipeline_res = await db.execute(
-        text("""
-        SELECT status, COUNT(id)
-        FROM tasks
-        GROUP BY status;
-    """)
-    )
-    status_counts = {r[0]: r[1] for r in pipeline_res.fetchall()}
-
-    # 3. Open SLA breaches
-    sla_res = await db.execute(
-        text("""
-        SELECT COUNT(id)
-        FROM tasks
-        WHERE sla_due_at < NOW()
-          AND status NOT IN ('ready_to_publish', 'completed');
-    """)
-    )
-    open_sla_breaches = sla_res.scalar() or 0
+    # Count the pipeline and open breaches in one scan and one round trip.
+    pipeline_res = await db.execute(text("""
+        SELECT status, COUNT(id),
+               COUNT(id) FILTER (WHERE sla_due_at < NOW()
+                   AND status NOT IN ('ready_to_publish', 'completed'))
+        FROM tasks GROUP BY status
+    """))
+    pipeline_rows = pipeline_res.fetchall()
+    status_counts = {row[0]: row[1] for row in pipeline_rows}
+    open_sla_breaches = sum(row[2] for row in pipeline_rows)
 
     # 4. Staff capacity summary
     staff_res = await db.execute(

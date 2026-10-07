@@ -134,9 +134,9 @@ export function PortalCalendarPage() {
   const queryClient = useQueryClient();
 
   const { data: subData, isLoading: isSubLoading } = useQuery({
-    queryKey: ["client-subscription"],
+    queryKey: ["client-subscription", user?.id],
     queryFn: () => request<any>("/api/v1/payments/subscription"),
-    staleTime: 0,
+    staleTime: 30_000,
     refetchOnMount: "always",
   });
 

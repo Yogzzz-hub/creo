@@ -163,3 +163,32 @@ def flex_deadline_sweep_task() -> dict[str, int]:
     return run_async_safe(_flex_deadline_sweep_async())
 
 
+
+
+async def _recover_brand_enrichment_async() -> int:
+    """Recover completed onboarding requests whose AI job was interrupted by restart."""
+    from app.services.onboarding_service import _enrich_and_notify_in_background
+    recovered = 0
+    for agency_id in await _get_active_agencies():
+        async with async_session_factory() as db:
+            async with tenant_session(db, agency_id=agency_id):
+                rows = (await db.execute(text("""
+                    SELECT q.user_id FROM questionnaires q
+                    JOIN client_profiles p ON p.user_id = q.user_id
+                    WHERE q.agency_id = :agency_id
+                      AND p.onboarding_completed_at IS NOT NULL
+                      AND q.answers->>'brand_requested_version' IS NOT NULL
+                      AND (q.answers->>'brand_generated_version') IS DISTINCT FROM
+                          (q.answers->>'brand_requested_version')
+                    ORDER BY q.submitted_at LIMIT 20
+                """), {"agency_id": agency_id})).all()
+                await db.rollback()
+                for row in rows:
+                    await _enrich_and_notify_in_background(row[0])
+                    recovered += 1
+    return recovered
+
+
+@celery_app.task(name="app.workers.tasks.scheduler.recover_brand_enrichment_task", queue="default")
+def recover_brand_enrichment_task() -> int:
+    return run_async_safe(_recover_brand_enrichment_async())

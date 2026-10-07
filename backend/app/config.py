@@ -172,6 +172,8 @@ class Settings(BaseSettings):
         """Resolve cross-field dependencies like SECRET_KEY fallback and CORS origins."""
         if not self.JWT_SECRET and self.SECRET_KEY:
             self.JWT_SECRET = self.SECRET_KEY
+        if not self.JWT_SECRET and self.ENVIRONMENT not in ("development", "test"):
+            raise ValueError("JWT_SECRET or SECRET_KEY must be configured outside development/test")
         if not self.JWT_SECRET:
             self.JWT_SECRET = "super-secret-jwt-key-creo-development-32chars"
 

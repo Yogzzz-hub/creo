@@ -66,7 +66,7 @@ async def assign_client_and_generate_schedule(
     slots = await draft_month_calendar(db, client_id)
 
     # 3. Materialize tasks and dispatch rolling 10-day window
-    approval = await approve_calendar_month(db, client_id)
+    approval = await approve_calendar_month(db, client_id, dispatch_immediately=False)
 
     return {
         "status": "assigned_and_scheduled",

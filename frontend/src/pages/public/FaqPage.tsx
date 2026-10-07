@@ -55,7 +55,7 @@ export function FaqPage() {
         jsonLd={jsonLd}
       />
 
-      <div className="max-w-[900px] mx-auto px-6">
+      <div className="max-w-[900px] mx-auto px-4 sm:px-6">
         <div className="text-center mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] text-xs font-bold uppercase tracking-wider mb-4">
             <HelpCircle className="size-4" />
@@ -106,7 +106,7 @@ export function FaqPage() {
           </div>
         </Reveal>
 
-        <div className="mt-14 text-center p-8 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-xl">
+        <div className="mt-14 text-center p-5 sm:p-8 rounded-2xl bg-[#161F2D] border border-[#2A3446] shadow-xl">
           <h3 className="text-xl font-bold text-white mb-2">Have a specific question about your brand?</h3>
           <p className="text-sm text-[#97A0B3] mb-6 max-w-md mx-auto">
             Get a free custom sample batch of reels and carousels engineered specifically for your brand identity.

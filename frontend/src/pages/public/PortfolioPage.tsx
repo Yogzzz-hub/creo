@@ -11,7 +11,7 @@ export function PortfolioPage() {
     <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen pb-20 lg:pb-24 font-sans selection:bg-[#7FA0D6]/30">
       
       {/* - Top Hero Section (2-Column Grid) - */}
-      <section className="max-w-[1240px] mx-auto px-6 pt-6 pb-16 sm:pt-8 sm:pb-20 lg:pt-10 lg:pb-24 relative">
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-6 pb-16 sm:pt-8 sm:pb-20 lg:pt-10 lg:pb-24 relative">
         <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
         <svg className="absolute w-full h-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -28,7 +28,7 @@ export function PortfolioPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
           
           {/* Left Hero Column */}
-          <div className="pr-4 lg:pr-8">
+          <div className="pr-0 lg:pr-8">
             <div className="inline-flex items-center gap-2 rounded-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 px-3 py-1.5 text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#7FA0D6] mb-6 shadow-sm">
                THE OPERATING SYSTEM IN MOTION
             </div>
@@ -77,7 +77,7 @@ export function PortfolioPage() {
           </div>
 
           {/* Right Hero Column - Ops Console Card */}
-          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-[#2A3446]/30 pb-4 mb-6">
               <div className="flex items-center gap-3">
@@ -92,10 +92,10 @@ export function PortfolioPage() {
             </div>
 
             {/* Top Stat Pods Grid */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-3 mb-6">
               <div className="bg-[#0B111C] border border-[#2A3446]/30 rounded-xl p-3.5">
                 <div className="text-[10px] text-[#97A0B3] font-bold uppercase mb-1">ARR</div>
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
                   <div className="text-2xl font-black text-[#F8FAFC]">₹1,24,82,200</div>
                   <div className="text-[10px] text-[#7FA0D6] bg-[#7FA0D6]/10 border border-[#7FA0D6]/30 px-1.5 py-0.5 rounded font-bold">+14.2%</div>
                 </div>
@@ -201,7 +201,7 @@ export function PortfolioPage() {
       </section>
 
       {/* - Module 01 - */}
-      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16">
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <div className="inline-flex items-center gap-2 rounded-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 px-3 py-1 text-[10px] font-bold tracking-widest uppercase text-[#97A0B3] mb-6">
           01 &nbsp; ONBOARDING &amp; TEAM CAPACITY
         </div>
@@ -213,7 +213,7 @@ export function PortfolioPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left Card */}
-          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-6 lg:p-8">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-4 sm:p-6 lg:p-8">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-full bg-[#7FA0D6] flex items-center justify-center text-[#050810] font-bold text-sm">AL</div>
@@ -233,7 +233,7 @@ export function PortfolioPage() {
               <button onClick={() => setDossierTab('metrics')} className={dossierTab === 'metrics' ? "bg-[#161F2D] text-[#F8FAFC] border border-[#7FA0D6]/40 font-bold text-xs px-3 py-1 rounded-md" : "text-[#97A0B3] text-xs px-3 py-1 hover:text-[#F8FAFC]"}>Metrics</button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 mb-8">
+            <div className="grid grid-cols-1 min-[400px]:grid-cols-3 gap-3 mb-8">
               <div className="bg-[#0B111C] border border-[#2A3446]/30 rounded-xl p-4 flex flex-col justify-center">
                 <div className="text-[11px] text-[#97A0B3] font-bold mb-1">Active Deliverables</div>
                 <div className="text-xl sm:text-2xl font-black text-[#F8FAFC]">4</div>
@@ -290,7 +290,7 @@ export function PortfolioPage() {
           </div>
 
           {/* Right Card */}
-          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-6 lg:p-8 flex flex-col justify-between">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-4 sm:p-6 lg:p-8 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-8">
                 <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC]">Live Team Utilization</div>
@@ -360,7 +360,7 @@ export function PortfolioPage() {
       </section>
 
       {/* - Module 02 - */}
-      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16">
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <div className="inline-flex items-center gap-2 rounded-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 px-3 py-1 text-[10px] font-bold tracking-widest uppercase text-[#97A0B3] mb-6">
           02 &nbsp; CREATIVE PRODUCTION &amp; CLIENT SIGN-OFF
         </div>
@@ -372,10 +372,10 @@ export function PortfolioPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left Card */}
-          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-6 lg:p-8">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-4 sm:p-6 lg:p-8">
             <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] mb-6">Production Cadence &amp; Editorial Calendar</div>
             
-            <div className="w-full overflow-x-auto mb-8">
+            <div className="public-scroll-region w-full overflow-x-auto mb-8" role="region" aria-label="Deliverable queue, scroll horizontally to see all columns" tabIndex={0}>
               <table className="w-full text-left border-collapse min-w-[500px]">
                 <thead>
                   <tr className="border-b border-[#2A3446]/30 text-[10px] uppercase font-bold text-[#97A0B3]">
@@ -459,7 +459,7 @@ export function PortfolioPage() {
           </div>
 
           {/* Right Card */}
-          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-6 lg:p-8 flex flex-col">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-4 sm:p-6 lg:p-8 flex flex-col">
             <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] w-full text-left mb-2">Velox Studio Client Portal</div>
             <div className="text-xs text-[#97A0B3] mb-6 font-medium">Summer DTC Campaign Reel #04</div>
             
@@ -525,7 +525,7 @@ export function PortfolioPage() {
       </section>
 
       {/* - Module 03 - */}
-      <section className="max-w-[1240px] mx-auto px-6 py-12 sm:py-16">
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <div className="inline-flex items-center gap-2 rounded-full backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 px-3 py-1 text-[10px] font-bold tracking-widest uppercase text-[#97A0B3] mb-6">
           03 &nbsp; REAL-TIME PROFITABILITY &amp; CASH FLOW
         </div>
@@ -537,7 +537,7 @@ export function PortfolioPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Left Card */}
-          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-6 lg:p-8">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-4 sm:p-6 lg:p-8">
             <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] mb-2">TechCorp Series B &bull; Monthly Creative Retainer</div>
             <div className="text-xs text-[#97A0B3] mb-8">Balance Sheet &amp; Contribution</div>
             
@@ -597,7 +597,7 @@ export function PortfolioPage() {
           </div>
 
           {/* Right Card */}
-          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-6 lg:p-8 flex flex-col">
+          <div className="backdrop-blur-md bg-[#161F2D]/50 border border-[#2A3446]/30 rounded-3xl p-4 sm:p-6 lg:p-8 flex flex-col">
             <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] mb-6">Cash Flow Engine &amp; Auto-Chase</div>
             
             <div className="space-y-3 mb-8">
@@ -612,14 +612,14 @@ export function PortfolioPage() {
                     <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC]">D2C Apparel Brand</div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between sm:justify-end gap-4 sm:w-[60%]">
+                <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 sm:w-[60%]">
                   <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] whitespace-nowrap">₹120,000</div>
                   {inv1 === 'Paid ✓' ? (
                     <span className="inline-flex items-center gap-1.5 bg-[#7FA0D6]/15 text-[#7FA0D6] px-2 py-1 rounded text-[10px] font-bold border border-[#7FA0D6]/20 shrink-0">
                       {inv1}
                     </span>
                   ) : (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-[10px] text-[#D8BF9B] font-bold shrink-0">{inv1}</span>
                       <button onClick={() => setInv1('Paid ✓')} className="bg-[#BCCCE6] hover:bg-[#BCCCE6] text-[#050810] text-[10px] font-semibold transition-all shadow-sm hover:shadow-[0_0_20px_rgba(188,204,230,0.25)] px-2 py-1 rounded transition-colors shrink-0">Resolve</button>
                       <button onClick={() => setInv1('Reminder Sent ')} className="bg-[#7FA0D6] hover:bg-white text-[#050810] text-[10px] font-bold px-2 py-1 rounded transition-colors shrink-0">Chase</button>
@@ -639,14 +639,14 @@ export function PortfolioPage() {
                     <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC]">Global Fintech</div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between sm:justify-end gap-4 sm:w-[60%]">
+                <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 sm:w-[60%]">
                   <div className="text-xs sm:text-sm font-semibold text-[#F8FAFC] whitespace-nowrap">₹80,000</div>
                   {inv2 === 'Paid ✓' ? (
                     <span className="inline-flex items-center gap-1.5 bg-[#7FA0D6]/15 text-[#7FA0D6] px-2 py-1 rounded text-[10px] font-bold border border-[#7FA0D6]/20 shrink-0">
                       {inv2}
                     </span>
                   ) : (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-[10px] text-[#D8BF9B] font-bold shrink-0">{inv2}</span>
                       <button onClick={() => setInv2('Paid ✓')} className="bg-[#BCCCE6] hover:bg-[#BCCCE6] text-[#050810] text-[10px] font-semibold transition-all shadow-sm hover:shadow-[0_0_20px_rgba(188,204,230,0.25)] px-2 py-1 rounded transition-colors shrink-0">Resolve</button>
                       <button onClick={() => setInv2('Reminder Sent ')} className="bg-[#7FA0D6] hover:bg-white text-[#050810] text-[10px] font-bold px-2 py-1 rounded transition-colors shrink-0">Chase</button>

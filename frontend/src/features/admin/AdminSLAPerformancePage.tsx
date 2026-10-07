@@ -59,7 +59,7 @@ export function AdminSLAPerformancePage() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="px-6 lg:px-8 py-6 max-w-[1500px] w-full mx-auto space-y-6"
+          className="px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 sm:pb-8 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6"
         >
           {/* Top 2 KPI Metric Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -115,9 +115,9 @@ export function AdminSLAPerformancePage() {
           </div>
 
           {/* Row 1: Chart & Compliance by Priority */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Chart Card (2 Cols) */}
-            <div className="lg:col-span-2 bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-6 shadow-xs space-y-4 hover-card-innovative">
+            <div className="lg:col-span-2 bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 hover-card-innovative">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2A3446] pb-4">
                 <div>
                   <h3 className="text-base font-black text-white">Response & Resolution Trend</h3>
@@ -196,7 +196,7 @@ export function AdminSLAPerformancePage() {
             </div>
 
             {/* Compliance by Priority Card (1 Col) */}
-            <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-6 shadow-xs space-y-5 hover-card-innovative">
+            <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-5 hover-card-innovative">
               <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                 <div>
                   <h3 className="text-base font-black text-white">Compliance by Priority</h3>
@@ -267,9 +267,9 @@ export function AdminSLAPerformancePage() {
           </div>
 
           {/* Row 2: Pod Efficiency Leaderboard & Active Breach Warnings */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Leaderboard (2 Cols) */}
-            <div className="lg:col-span-2 bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-6 shadow-xs space-y-4 hover-card-innovative">
+            <div className="lg:col-span-2 bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 hover-card-innovative">
               <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                 <div>
                   <h3 className="text-sm font-bold text-white">Pod Efficiency Leaderboard</h3>
@@ -325,7 +325,7 @@ export function AdminSLAPerformancePage() {
             </div>
 
             {/* Active Breach Warnings (1 Col) */}
-            <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-6 shadow-xs space-y-4 hover-card-innovative">
+            <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4 hover-card-innovative">
               <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                 <h3 className="text-sm font-bold text-white">Active Breach Warnings</h3>
                 <span className="text-[11px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2.5 py-0.5 rounded-full border border-[#7FA0D6]/30">

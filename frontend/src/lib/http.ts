@@ -52,50 +52,67 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
   ).replace(/\/$/, "");
   const requestUrl = path.startsWith("/api") && apiBase ? `${apiBase}${path}` : path;
 
-  const response = await fetch(requestUrl, {
-    ...options,
-    headers,
-    credentials: "include",
-  });
+  const controller = new AbortController();
+  const abortFromCaller = () => controller.abort(options.signal?.reason);
+  if (options.signal?.aborted) abortFromCaller();
+  else options.signal?.addEventListener("abort", abortFromCaller, { once: true });
+  const timeoutId = setTimeout(() => controller.abort(new DOMException("The request timed out. Please try again.", "TimeoutError")), 60_000);
 
-  if (!response.ok) {
-    let errorCode = "HTTP_ERROR";
-    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-    let errorDetails: Record<string, unknown> = {};
+  try {
+    const response = await fetch(requestUrl, {
+      ...options,
+      headers,
+      signal: controller.signal,
+      credentials: "include",
+    });
 
-    try {
-      const errorJson = (await response.json()) as
-        | ApiErrorResponse
-        | { detail?: string | Array<{ loc?: string[]; msg: string }> }
-        | undefined;
-      if (errorJson && "error" in errorJson && errorJson.error) {
-        errorCode = errorJson.error.code || errorCode;
-        errorMessage = errorJson.error.message || errorMessage;
-        errorDetails = errorJson.error.details || {};
-      } else if (errorJson && "detail" in errorJson && errorJson.detail) {
-        errorCode = "VALIDATION_ERROR";
-        if (Array.isArray(errorJson.detail)) {
-          errorMessage =
-            errorJson.detail
-              .map((d) => `${d.loc ? d.loc.filter((l) => l !== "body").join(".") + ": " : ""}${d.msg}`)
-              .join("; ") || errorMessage;
-        } else if (typeof errorJson.detail === "string") {
-          errorMessage = errorJson.detail;
+    if (!response.ok) {
+      let errorCode = "HTTP_ERROR";
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      let errorDetails: Record<string, unknown> = {};
+
+      try {
+        const errorJson = (await response.json()) as
+          | ApiErrorResponse
+          | { detail?: string | Array<{ loc?: string[]; msg: string }> | { code?: string; message?: string; [key: string]: unknown } }
+          | undefined;
+        if (errorJson && "error" in errorJson && errorJson.error) {
+          errorCode = errorJson.error.code || errorCode;
+          errorMessage = errorJson.error.message || errorMessage;
+          errorDetails = errorJson.error.details || {};
+        } else if (errorJson && "detail" in errorJson && errorJson.detail) {
+          errorCode = "VALIDATION_ERROR";
+          if (Array.isArray(errorJson.detail)) {
+            errorMessage =
+              errorJson.detail
+                .map((d) => `${d.loc ? d.loc.filter((l) => l !== "body").join(".") + ": " : ""}${d.msg}`)
+                .join("; ") || errorMessage;
+          } else if (typeof errorJson.detail === "string") {
+            errorMessage = errorJson.detail;
+          } else {
+            errorCode = errorJson.detail.code || errorCode;
+            errorMessage = errorJson.detail.message || errorMessage;
+            errorDetails = errorJson.detail;
+          }
+        }
+      } catch {
+        // Body was not JSON
+      }
+
+      if (response.status === 401) {
+        // If an existing authenticated session expired or token was revoked
+        if (!path.includes("/auth/login") && !path.includes("/auth/verify-")) {
+          clearAuthToken();
         }
       }
-    } catch {
-      // Body was not JSON
+
+      throw new HttpError(response.status, errorCode, errorMessage, errorDetails);
     }
 
-    if (response.status === 401) {
-      // If an existing authenticated session expired or token was revoked
-      if (!path.includes("/auth/login") && !path.includes("/auth/verify-")) {
-        clearAuthToken();
-      }
-    }
-
-    throw new HttpError(response.status, errorCode, errorMessage, errorDetails);
+    if (response.status === 204 || response.status === 205) return undefined as T;
+    return (await response.json()) as T;
+  } finally {
+    clearTimeout(timeoutId);
+    options.signal?.removeEventListener("abort", abortFromCaller);
   }
-
-  return (await response.json()) as T;
 }

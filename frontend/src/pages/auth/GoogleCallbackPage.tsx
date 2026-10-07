@@ -1,3 +1,4 @@
+import "../../styles/public-responsive.css";
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router";
 import { Check, AlertCircle, ArrowRight, Lock, Loader2 } from "lucide-react";
@@ -97,7 +98,7 @@ export function GoogleCallbackPage() {
   }, [searchParams, navigate, refresh]);
 
   return (
-    <div className="min-h-screen w-full bg-[#050810] flex flex-col items-center justify-center p-4 sm:p-6 select-none relative overflow-hidden font-sans">
+    <div className="auth-page min-h-[100svh] w-full bg-[#050810] flex flex-col items-center justify-center p-4 sm:p-6 select-none relative overflow-hidden font-sans">
       {/* Subtle Night Navy depth backdrop (admin screens style) */}
       <div
         aria-hidden="true"
@@ -105,7 +106,7 @@ export function GoogleCallbackPage() {
       />
 
       {/* Main Authentication Card */}
-      <div className="relative w-full max-w-[760px] mx-auto rounded-[22px] border border-[#2A3446] bg-[#161F2D] py-10 sm:py-12 px-6 sm:px-12 shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex flex-col items-center text-center">
+      <div className="relative w-full max-w-[760px] mx-auto rounded-[22px] border border-[#2A3446] bg-[#161F2D] py-8 sm:py-12 px-4 sm:px-12 shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex flex-col items-center text-center">
         {/* Authentication Connection Row: Google → Lock → CREO */}
         <div className="relative flex items-center justify-between w-full max-w-[320px] mx-auto h-14">
           {/* Connector Line Exactly Through Centers */}
@@ -219,7 +220,7 @@ export function GoogleCallbackPage() {
               <div className="mt-6">
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#BCCCE6] px-6 py-2.5 text-[13px] font-semibold text-[#050810] hover:bg-white transition-colors"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#BCCCE6] px-6 py-2.5 text-[13px] font-semibold text-[#050810] hover:bg-white transition-colors"
                 >
                   Back to Sign In <ArrowRight className="size-4" />
                 </Link>
@@ -232,7 +233,7 @@ export function GoogleCallbackPage() {
       {/* Bottom Message: Card → footer spacing 48–56px */}
       <div className="flex items-center justify-center gap-3 w-full max-w-[540px] mx-auto mt-12 sm:mt-14 text-[12px] sm:text-[13px] text-[#97A0B3]">
         <div className="h-px bg-[#2A3446] flex-1 hidden sm:block" />
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 text-center">
           <span>Protected by Creo Zero-Trust Infrastructure</span>
           <span className="text-[#2A3446]">&middot;</span>
           <a

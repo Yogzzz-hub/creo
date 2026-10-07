@@ -510,6 +510,22 @@ async def assign_load_first(
 
 async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
     """Assign durable creative pod ownership (Lead, Video Editor, Graphic Designer) for a client."""
+    # Serialize ownership changes and preserve an already allocated pod on retries.
+    client = (await db.execute(select(User).where(User.id == client_id).with_for_update())).scalar_one()
+    existing = (await db.execute(
+        select(ClientAssignment, User).join(User, User.id == ClientAssignment.user_id)
+        .where(ClientAssignment.client_id == client_id)
+    )).all()
+    by_role = {assignment.role: member for assignment, member in existing}
+    lead = by_role.get("team_lead")
+    if lead and str(lead.account_status) == "active":
+        editor = by_role.get("video_editor", lead)
+        designer = by_role.get("graphic_designer", lead)
+        return {
+            "team_lead_id": lead.id, "team_lead_name": lead.full_name or lead.email,
+            "editor_id": editor.id, "editor_name": editor.full_name or editor.email,
+            "designer_id": designer.id, "designer_name": designer.full_name or designer.email,
+        }
     # 1. Select Team Lead (Fewest active clients + longest since last assigned, prioritizing agency team)
     tl_query = text("""
         SELECT
@@ -584,15 +600,15 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
     # Clear old client assignments for idempotency
     await db.execute(delete(ClientAssignment).where(ClientAssignment.client_id == client_id))
 
-    db.add(ClientAssignment(client_id=client_id, user_id=best_tl_id, role="team_lead", craft_role="team_lead", is_primary=True))
+    db.add(ClientAssignment(agency_id=client.agency_id, client_id=client_id, user_id=best_tl_id, role="team_lead", craft_role="team_lead", is_primary=True))
 
     editor_id = best_editor[0] if best_editor else best_tl_id
     designer_id = best_designer[0] if best_designer else best_tl_id
 
     if best_editor:
-        db.add(ClientAssignment(client_id=client_id, user_id=best_editor[0], role="video_editor", craft_role="video_editor", is_primary=False))
+        db.add(ClientAssignment(agency_id=client.agency_id, client_id=client_id, user_id=best_editor[0], role="video_editor", craft_role="video_editor", is_primary=False))
     if best_designer and (not best_editor or best_designer[0] != best_editor[0]):
-        db.add(ClientAssignment(client_id=client_id, user_id=best_designer[0], role="graphic_designer", craft_role="graphic_designer", is_primary=False))
+        db.add(ClientAssignment(agency_id=client.agency_id, client_id=client_id, user_id=best_designer[0], role="graphic_designer", craft_role="graphic_designer", is_primary=False))
 
     await db.commit()
     logger.info("Assigned pod for client %s: TL=%s, Editor=%s, Designer=%s", client_id, best_tl_id, editor_id, designer_id)
@@ -811,6 +827,7 @@ async def draft_month_calendar(
                 caption = f"Brand {format_label} · Flexible News/Trend Reserve"
 
             slot = ContentCalendar(
+                agency_id=sub_row[0].agency_id if sub_row else (client_prof.agency_id if client_prof else None),
                 client_id=client_id,
                 deliverable_id=None,
                 publish_date=slot_day,
@@ -849,6 +866,8 @@ async def approve_calendar_month(
     db: AsyncSession,
     client_id: uuid.UUID,
     actor_id: uuid.UUID | None = None,
+    *,
+    dispatch_immediately: bool = True,
 ) -> dict[str, Any]:
     """Approve draft calendar slots, materialize production tasks with lead times, and dispatch rolling horizon."""
     # 1. Fetch draft slots
@@ -897,6 +916,7 @@ async def approve_calendar_month(
         pref_skill = "motion_graphics_2d" if kind == "reel" else "carousel_typography" if kind == "carousel" else None
 
         new_task = Task(
+            agency_id=slot.agency_id,
             client_id=client_id,
             deliverable_type=deliv_type,
             status=TaskStatus.BACKLOG,
@@ -904,20 +924,19 @@ async def approve_calendar_month(
             sla_due_at=sla_due_at,
             effort_points=effort,
             is_revision=False,
-            assigned_to=default_assignee,
+            assigned_to=default_assignee if dispatch_immediately else None,
             preferred_sub_skill=pref_skill,
             concept_status=slot.concept_status,
             blueprint=slot.blueprint,
         )
         db.add(new_task)
-        await db.flush()
         created_tasks.append(new_task)
 
     await db.commit()
 
     # Dispatch tasks entering the 10-day rolling window
     dispatched_count = 0
-    for t in created_tasks:
+    for t in created_tasks if dispatch_immediately else []:
         if t.due_date and t.due_date <= horizon_date:
             assigned = await assign_continuity_first(db, t, actor_id=actor_id)
             if assigned:
@@ -973,7 +992,7 @@ async def approve_calendar_month(
 
 # --- Part 8: Nightly Horizon & Rebalance Sweeps ---
 
-async def assign_upcoming_window(db: AsyncSession, horizon_days: int = 10) -> int:
+async def assign_upcoming_window(db: AsyncSession, horizon_days: int = 10, client_id: uuid.UUID | None = None) -> int:
     """Nightly Celery job: Dispatches tasks entering the 10-day horizon using continuity-first policy."""
     today = date.today()
     horizon = today + timedelta(days=horizon_days)
@@ -987,11 +1006,23 @@ async def assign_upcoming_window(db: AsyncSession, horizon_days: int = 10) -> in
         .order_by(Task.due_date.asc())
         .limit(50)
     )
+    if client_id is not None:
+        stmt = stmt.where(Task.client_id == client_id)
     tasks = (await db.execute(stmt)).scalars().all()
     assigned_count = 0
 
     for t in tasks:
-        assigned_id = await assign_continuity_first(db, t)
+        # Each assignment commits independently; reacquire the task lock after every
+        # commit so concurrent onboarding/beat workers cannot dispatch the same task.
+        locked = (await db.execute(
+            select(Task).where(Task.id == t.id, Task.status == TaskStatus.BACKLOG,
+                               Task.assigned_to.is_(None))
+            .with_for_update(skip_locked=True)
+            .execution_options(populate_existing=True)
+        )).scalar_one_or_none()
+        if locked is None:
+            continue
+        assigned_id = await assign_continuity_first(db, locked)
         if assigned_id:
             assigned_count += 1
 

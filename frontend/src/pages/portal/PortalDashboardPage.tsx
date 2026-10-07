@@ -106,7 +106,7 @@ export function PortalDashboardPage() {
   });
 
   const { data: subData } = useQuery<any>({
-    queryKey: ["portal-sub-usage", user?.id],
+    queryKey: ["client-subscription", user?.id],
     queryFn: async () => {
       try {
         return await request<any>("/api/v1/payments/subscription");

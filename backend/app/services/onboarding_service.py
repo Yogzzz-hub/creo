@@ -77,46 +77,28 @@ def get_first_incomplete_section(quest: Questionnaire | None) -> str:
 
 async def get_current_stage(db: AsyncSession, client_id: uuid.UUID) -> int:
     """Derive client onboarding stage (0..8) directly from v_client_onboarding."""
-    stmt = text("SELECT stage FROM v_client_onboarding WHERE client_id = :uid")
-    result = await db.execute(stmt, {"uid": client_id})
+    result = await db.execute(text("""
+        SELECT CASE
+          WHEN COALESCE(v.stage, 0) < 4 THEN COALESCE(v.stage, 0)
+          WHEN p.brand_dna IS NULL OR p.brand_dna = '{}'::jsonb THEN 4
+          WHEN NOT EXISTS (SELECT 1 FROM client_assignments a WHERE a.client_id = u.id) THEN 5
+          WHEN NOT EXISTS (SELECT 1 FROM content_calendar c WHERE c.client_id = u.id) THEN 6
+          WHEN p.onboarding_completed_at IS NULL THEN 7
+          ELSE 8 END
+        FROM users u
+        LEFT JOIN v_client_onboarding v ON v.client_id = u.id
+        LEFT JOIN client_profiles p ON p.user_id = u.id
+        WHERE u.id = :uid
+    """), {"uid": client_id})
     row = result.fetchone()
-    if not row:
-        # Verify if user exists at all
-        user_res = await db.execute(select(User).where(User.id == client_id))
-        if not user_res.scalar_one_or_none():
-            raise NotFound("Client account not found", code="CLIENT_NOT_FOUND")
-        return 0
-    base_stage = int(row[0])
-    if base_stage < 4:
-        return base_stage
-        
-    # v_client_onboarding tops out at 4 when core questionnaire is complete.
-    # Derive higher stages dynamically.
-    from sqlalchemy import func
-    from app.models.user import ClientProfile
-    from app.models.work import ClientAssignment, ContentCalendar
-    
-    profile = (await db.execute(select(ClientProfile).where(ClientProfile.user_id == client_id))).scalar_one_or_none()
-    if not profile or not profile.brand_dna:
-        return 4
-        
-    ca_count = (await db.execute(select(func.count(ClientAssignment.id)).where(ClientAssignment.client_id == client_id))).scalar() or 0
-    if ca_count == 0:
-        return 5
-        
-    cc_count = (await db.execute(select(func.count(ContentCalendar.id)).where(ContentCalendar.client_id == client_id))).scalar() or 0
-    if cc_count == 0:
-        return 6
-        
-    if not profile.onboarding_completed_at:
-        return 7
-        
-    return 8
+    if row is None:
+        raise NotFound("Client account not found", code="CLIENT_NOT_FOUND")
+    return int(row[0])
 
 
-async def get_onboarding_status(db: AsyncSession, client_id: uuid.UUID) -> OnboardingStatusResponse:
+async def get_onboarding_status(db: AsyncSession, client_id: uuid.UUID, *, known_stage: int | None = None) -> OnboardingStatusResponse:
     """Return full onboarding status, progress flags, and deadline."""
-    stage = await get_current_stage(db, client_id)
+    stage = known_stage if known_stage is not None else await get_current_stage(db, client_id)
 
     profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
     profile_res = await db.execute(profile_stmt)
@@ -357,86 +339,71 @@ def map_legacy_answers_to_sections(answers: dict[str, Any]) -> dict[str, dict[st
     }
 
 
-async def save_questionnaire_section(
+async def save_questionnaire_sections(
     db: AsyncSession,
     client_id: uuid.UUID,
-    section: str,
-    data: dict[str, Any],
+    sections: dict[str, dict[str, Any]],
+    active_section: str | None = None,
 ) -> dict[str, Any]:
-    """Autosave an individual questionnaire section (a..g) and unlock core if sections A-E are complete."""
-    sec = section.lower()
-    if sec not in ["a", "b", "c", "d", "e", "f", "g"]:
-        raise Conflict(f"Invalid section '{section}'. Expected one of a..g", code="INVALID_SECTION")
-
-    q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_id)
-    quest = (await db.execute(q_stmt)).scalar_one_or_none()
-
+    """Persist a questionnaire snapshot in one transaction, including optional F/G."""
+    if not sections or any(key not in "abcdefg" or len(key) != 1 for key in sections):
+        raise Conflict("Expected questionnaire sections a..g", code="INVALID_SECTION")
+    # Serialize saves from multiple tabs, including the first questionnaire insert.
+    user = (await db.execute(select(User).where(User.id == client_id).with_for_update())).scalar_one_or_none()
+    if not user:
+        raise NotFound("Client account not found", code="CLIENT_NOT_FOUND")
+    quest = (await db.execute(select(Questionnaire).where(Questionnaire.user_id == client_id))).scalar_one_or_none()
     now = datetime.now(UTC)
     if not quest:
         quest = Questionnaire(
-            id=uuid.uuid4(),
-            user_id=client_id,
-            section_a={},
-            section_b={},
-            section_c={},
-            section_d={},
-            section_e={},
-            section_f={},
-            section_g={},
-            version=1,
+            id=uuid.uuid4(), user_id=client_id, agency_id=user.agency_id,
+            **{f"section_{key}": {} for key in "abcdefg"}, version=0,
         )
         db.add(quest)
-
-    # Persist section data
-    setattr(quest, f"section_{sec}", data)
-
-    # Sync Section A details to ClientProfile
-    if sec == "a":
-        p_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
-        profile = (await db.execute(p_stmt)).scalar_one_or_none()
+    changed = False
+    for key, data in sections.items():
+        if getattr(quest, f"section_{key}") != data:
+            setattr(quest, f"section_{key}", data)
+            changed = True
+    if changed:
+        quest.version = (quest.version or 0) + 1
+    if "a" in sections:
+        profile = (await db.execute(select(ClientProfile).where(ClientProfile.user_id == client_id))).scalar_one_or_none()
         if profile:
-            if data.get("brand_name"):
-                profile.company_name = str(data["brand_name"])
-            if data.get("instagram_handle"):
-                profile.instagram_username = str(data["instagram_handle"])
-
-    # Core unlock condition: check if Sections A-E have their essential fields
-    has_a = bool(quest.section_a and (quest.section_a.get("brand_name") or quest.section_a.get("one_liner")))
-    has_b = bool(quest.section_b and quest.section_b.get("ideal_customer"))
-    has_c = bool(quest.section_c and ("humour" in quest.section_c or quest.section_c.get("voice_words")))
-    has_d = bool(quest.section_d and (quest.section_d.get("visual_direction") or quest.section_d.get("colours")))
-    has_e = bool(quest.section_e and quest.section_e.get("on_camera"))
-
-    if has_a and has_b and has_c and has_d and has_e:
-        if not quest.core_completed_at:
-            quest.core_completed_at = now
-            if not quest.submitted_at:
-                quest.submitted_at = now
-
-    # Persist last active section
-    from sqlalchemy.orm.attributes import flag_modified
-    ans = dict(quest.answers or {})
-    ans["last_active_section"] = sec
-    quest.answers = ans
-    flag_modified(quest, "answers")
-
-    # Extended completion check
-    has_f = bool(quest.section_f and bool(quest.section_f))
-    has_g = bool(quest.section_g and bool(quest.section_g))
-    if quest.core_completed_at and has_f and has_g:
-        if not quest.extended_completed_at:
-            quest.extended_completed_at = now
-
+            identity = sections["a"]
+            if identity.get("brand_name"):
+                profile.company_name = str(identity["brand_name"])
+            if identity.get("instagram_handle"):
+                profile.instagram_username = str(identity["instagram_handle"])
+    core_complete = bool(
+        (quest.section_a.get("brand_name") or quest.section_a.get("one_liner"))
+        and quest.section_b.get("ideal_customer")
+        and ("humour" in quest.section_c or quest.section_c.get("voice_words"))
+        and (quest.section_d.get("visual_direction") or quest.section_d.get("colours"))
+        and quest.section_e.get("on_camera")
+    )
+    quest.core_completed_at = (quest.core_completed_at or now) if core_complete else None
+    if core_complete and not quest.submitted_at:
+        quest.submitted_at = now
+    quest.extended_completed_at = (
+        (quest.extended_completed_at or now)
+        if core_complete and quest.section_f and quest.section_g else None
+    )
+    quest.answers = {**(quest.answers or {}), "last_active_section": active_section or next(reversed(sections))}
     await db.commit()
-    await db.refresh(quest)
-
     return {
-        "client_id": str(client_id),
-        "section_saved": sec,
-        "core_completed": quest.core_completed_at is not None,
+        "client_id": str(client_id), "sections_saved": list(sections),
+        "core_completed": core_complete,
         "extended_completed": quest.extended_completed_at is not None,
         "version": quest.version,
     }
+
+
+async def save_questionnaire_section(
+    db: AsyncSession, client_id: uuid.UUID, section: str, data: dict[str, Any],
+) -> dict[str, Any]:
+    result = await save_questionnaire_sections(db, client_id, {section.lower(): data}, section.lower())
+    return {**result, "section_saved": section.lower()}
 
 
 async def get_questionnaire_state(
@@ -586,6 +553,12 @@ async def complete_onboarding(db: AsyncSession, client_id: uuid.UUID) -> Onboard
                     "name": u.full_name or u.email,
                     "role": role_label,
                 })
+            quest = (await db.execute(select(Questionnaire).where(Questionnaire.user_id == client_id))).scalar_one_or_none()
+            if quest:
+                quest.answers = {**(quest.answers or {}), "brand_requested_version": quest.version}
+                await db.commit()
+            schedule_brand_enrichment(client_id)
+            schedule_client_dispatch(client_id)
             return OnboardingCompleteResponse(
                 status="completed",
                 onboarding_completed_at=profile.onboarding_completed_at,
@@ -648,6 +621,9 @@ async def complete_onboarding(db: AsyncSession, client_id: uuid.UUID) -> Onboard
     if cc_count == 0:
         raise Conflict("Content calendar generation failed. Schedule could not be confirmed.", code="CALENDAR_GENERATION_FAILED")
 
+    # Persist the requested version so the worker can recover enrichment after a restart.
+    quest.answers = {**(quest.answers or {}), "brand_requested_version": quest.version}
+
     # Only after all prerequisites succeed:
     profile.onboarding_completed_at = now
     if not profile.onboarding_deadline:
@@ -689,6 +665,7 @@ async def complete_onboarding(db: AsyncSession, client_id: uuid.UUID) -> Onboard
     # After the response: Gemini summarises the questionnaire (Brand DNA + team brief with pod
     # alignment), then the team lead and specialists get the brief in-app and by email.
     schedule_brand_enrichment(client_id)
+    schedule_client_dispatch(client_id)
 
     return OnboardingCompleteResponse(
         status="completed",
@@ -698,6 +675,25 @@ async def complete_onboarding(db: AsyncSession, client_id: uuid.UUID) -> Onboard
 
 
 _background_tasks: set[asyncio.Task[None]] = set()
+_enrichment_tasks: dict[uuid.UUID, asyncio.Task[None]] = {}
+
+
+async def _dispatch_client_in_background(client_id: uuid.UUID) -> None:
+    from app.db.session import AsyncSessionLocal
+    from app.services.dispatch_engine import assign_upcoming_window
+    try:
+        async with AsyncSessionLocal() as db:
+            await assign_upcoming_window(db, client_id=client_id)
+    except Exception as err:
+        logger.error("client_dispatch_deferred_to_sweep", client_id=str(client_id), error=str(err))
+
+
+def schedule_client_dispatch(client_id: uuid.UUID) -> None:
+    # Tasks are already durable BACKLOG rows; the periodic worker recovers on crash.
+    task = asyncio.create_task(_dispatch_client_in_background(client_id))
+    _background_tasks.add(task)
+    task.add_done_callback(_background_tasks.discard)
+
 
 
 async def _notify_team_in_background(client_id: uuid.UUID) -> None:
@@ -719,22 +715,34 @@ def schedule_team_notification(client_id: uuid.UUID) -> None:
 
 async def _enrich_and_notify_in_background(client_id: uuid.UUID) -> None:
     from app.db.session import AsyncSessionLocal
-    from app.services.brand_dna import run_brand_dna_pipeline
+    from app.services.brand_dna import brand_dna_input_hash, questionnaire_answers, run_brand_dna_pipeline
 
     async with AsyncSessionLocal() as bg_db:
         try:
             profile = (
                 await bg_db.execute(select(ClientProfile).where(ClientProfile.user_id == client_id))
             ).scalar_one_or_none()
+            quest = (await bg_db.execute(select(Questionnaire).where(Questionnaire.user_id == client_id))).scalar_one_or_none()
+            roster = await load_pod_roster(bg_db, client_id)
+            input_hash = brand_dna_input_hash(questionnaire_answers(quest), roster) if quest else None
             brief = (profile.brand_dna or {}).get("team_brief") if profile else None
             already_llm = bool(
                 profile
                 and profile.brand_dna_source in ("gemini", "openai")
                 and brief
-                and brief.get("pod_alignment")
+                and quest
+                and (quest.answers or {}).get("brand_dna_input_hash") == input_hash
             )
+            if already_llm:
+                return
             if not already_llm:
-                await run_brand_dna_pipeline(bg_db, client_id, notify_team=False)
+                try:
+                    await run_brand_dna_pipeline(bg_db, client_id, notify_team=False)
+                except Exception as err:
+                    if getattr(err, "code", None) != "BRAND_INPUT_CHANGED":
+                        raise
+                    await bg_db.rollback()
+                    await run_brand_dna_pipeline(bg_db, client_id, notify_team=False)
         except Exception as e_dna:
             await bg_db.rollback()
             logger.error("background_brand_dna_enrichment_failed", client_id=str(client_id), error=str(e_dna))
@@ -746,9 +754,17 @@ async def _enrich_and_notify_in_background(client_id: uuid.UUID) -> None:
 
 def schedule_brand_enrichment(client_id: uuid.UUID) -> None:
     """Summarise the questionnaire with Gemini and brief the pod, without blocking the client."""
+    existing = _enrichment_tasks.get(client_id)
+    if existing and not existing.done():
+        return
     task = asyncio.create_task(_enrich_and_notify_in_background(client_id))
+    _enrichment_tasks[client_id] = task
     _background_tasks.add(task)
-    task.add_done_callback(_background_tasks.discard)
+    def done(finished: asyncio.Task[None]) -> None:
+        _background_tasks.discard(finished)
+        if _enrichment_tasks.get(client_id) is finished:
+            _enrichment_tasks.pop(client_id, None)
+    task.add_done_callback(done)
 
 
 async def load_pod_roster(db: AsyncSession, client_id: uuid.UUID) -> list[dict[str, str]]:

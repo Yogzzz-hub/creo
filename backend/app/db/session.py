@@ -109,16 +109,17 @@ async_session_factory = AsyncSessionLocal
 
 @asynccontextmanager
 async def tenant_session(db: AsyncSession, agency_id: str | uuid.UUID | None, is_platform_admin: bool = False) -> AsyncGenerator[AsyncSession, None]:
-    """Context manager to explicitly set RLS for Celery tasks or custom blocks."""
+    """Set RLS context without owning the caller's transaction boundaries.
+
+    Workers commit per assignment and AI generation releases its transaction before
+    network calls. Wrapping those operations in db.begin() would prohibit subsequent
+    queries after their first commit/rollback. The begin event applies this context
+    whenever the caller starts the next transaction.
+    """
     t_agency = current_agency_ctx.set(str(agency_id) if agency_id else None)
     t_admin = is_platform_admin_ctx.set(is_platform_admin)
     try:
-        # Force a transaction if not already in one to apply the begin event
-        if not db.in_transaction():
-            async with db.begin():
-                yield db
-        else:
-            yield db
+        yield db
     finally:
         current_agency_ctx.reset(t_agency)
         is_platform_admin_ctx.reset(t_admin)
@@ -137,8 +138,8 @@ async def get_db(request: Request) -> AsyncGenerator[AsyncSession, None]:
         if auth and auth.startswith("Bearer "):
             token = auth[7:]
             try:
-                import jwt
-                payload = jwt.decode(token, options={"verify_signature": False})
+                from app.core.security import decode_token
+                payload = decode_token(token)
                 agency_id = payload.get("agency_id")
                 if payload.get("role") == "super_admin":
                     is_admin = True

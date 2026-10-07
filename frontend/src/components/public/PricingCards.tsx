@@ -85,7 +85,7 @@ export function PricingCards({ className = "" }: PricingCardsProps) {
               max={5}
               lift={plan.isFeatured ? 36 : 22}
               glow="transparent"
-              className={`h-full rounded-2xl p-7 flex flex-col justify-between transition-colors duration-300 shadow-xl ${
+              className={`h-full rounded-2xl p-5 sm:p-7 flex flex-col justify-between transition-colors duration-300 shadow-xl ${
                 plan.isFeatured
                   ? "creo-conic-border"
                   : "bg-[#121926] border border-[#222F44] hover:border-[#7FA0D6]/60"
@@ -104,7 +104,7 @@ export function PricingCards({ className = "" }: PricingCardsProps) {
 
                 {/* Price & Unit Cost */}
                 <div className="mb-2">
-                  <div className="flex items-baseline gap-1">
+                  <div className="flex flex-wrap items-baseline gap-1">
                     <CountUp value={plan.price} className="text-4xl font-extrabold text-white tracking-tight" />
                     <span className="text-sm font-normal text-[#97A0B3]">{plan.period}</span>
                   </div>
@@ -127,7 +127,7 @@ export function PricingCards({ className = "" }: PricingCardsProps) {
                 {/* Features List */}
                 <ul className="space-y-3.5 mb-8 text-sm text-[#97A0B3] leading-relaxed">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2.5">
+                    <li key={feature} className="flex items-start gap-2.5">
                       <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#7FA0D6]/12 text-[#7FA0D6]">
                         <Check className="size-3" strokeWidth={3} />
                       </span>

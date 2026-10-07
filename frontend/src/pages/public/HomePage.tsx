@@ -58,7 +58,7 @@ function CollageTile({
       />
       <div className="absolute inset-0 bg-gradient-to-t from-[#050810]/55 via-transparent to-transparent" />
       {label && (
-        <div className="absolute bottom-3 left-3 z-[2] bg-[#050810]/70 backdrop-blur-sm px-2.5 py-1 rounded-md text-[11px] font-medium text-white [transform:translateZ(30px)]">
+        <div className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3 z-[2] bg-[#050810]/70 backdrop-blur-sm px-2.5 py-1 rounded-md text-[11px] font-medium text-white [transform:translateZ(30px)]">
           {label}
         </div>
       )}
@@ -185,11 +185,11 @@ export function HomePage() {
         </Suspense>
         )}
 
-        <div className="max-w-[1240px] mx-auto px-6 pt-8 pb-16 sm:pt-12 sm:pb-24 lg:pt-14 lg:pb-28">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-8 pb-16 sm:pt-12 sm:pb-24 lg:pt-14 lg:pb-28">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-start">
 
             {/* Left Hero Column */}
-            <div className="pr-4 lg:pr-12 relative z-10">
+            <div className="pr-0 lg:pr-12 relative z-10">
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -203,7 +203,7 @@ export function HomePage() {
                 A CREATIVE POD FOR D2C BRANDS
               </motion.div>
 
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[0.98] sm:leading-[1.0] text-[#F8FAFC]">
+              <h1 className="text-[clamp(2.25rem,10vw,3rem)] sm:text-6xl lg:text-7xl font-black tracking-tight leading-[0.98] sm:leading-[1.0] text-[#F8FAFC]">
                 <SplitText text="Content that" animateOnMount className="block" />
                 <SplitText text="ships every week." animateOnMount delay={0.12} className="block" />
                 <SplitText
@@ -257,19 +257,19 @@ export function HomePage() {
               initial={{ opacity: 0, scale: 0.96, rotateX: 8 }}
               animate={{ opacity: 1, scale: 1, rotateX: 0 }}
               transition={{ duration: 1.1, delay: 0.2, ease: EASE_OUT_EXPO }}
-              className="grid grid-cols-3 gap-4 lg:h-[600px] [perspective:1200px]"
+              className="hero-collage grid grid-cols-3 gap-2 sm:gap-4 lg:h-[600px] [perspective:1200px]"
             >
-              <Parallax offset={30} className="flex flex-col gap-4">
+              <Parallax offset={30} className="flex min-w-0 flex-col gap-2 sm:gap-4">
                 <CollageTile aspect="aspect-[9/16]" label="Reel · 9:16" alt="Athlete" src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80" />
                 <CollageTile aspect="aspect-[16/11]" alt="Sourdough" src="https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80" />
               </Parallax>
 
-              <Parallax offset={-45} className="flex flex-col gap-4 pt-8">
+              <Parallax offset={-45} className="flex min-w-0 flex-col gap-2 sm:gap-4 pt-4 sm:pt-8">
                 <CollageTile aspect="aspect-[16/11]" alt="Interior" src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=80" />
                 <CollageTile aspect="aspect-[9/16]" label="Reel · 9:16" alt="Reel" src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80" />
               </Parallax>
 
-              <Parallax offset={55} className="flex flex-col gap-4">
+              <Parallax offset={55} className="flex min-w-0 flex-col gap-2 sm:gap-4">
                 <CollageTile aspect="aspect-[9/14]" alt="Model" src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80" />
                 <CollageTile aspect="aspect-[4/5]" label="Carousel" alt="Serum" src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=800&q=80" />
               </Parallax>
@@ -292,7 +292,7 @@ export function HomePage() {
 
       {/* 2. The Studio Ledger Section */}
       <section className="bg-[#0B111C] py-12 sm:py-16 border-y border-[#222F44]">
-        <div className="max-w-[1240px] mx-auto px-6">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <Reveal>
               <div className="text-[11px] tracking-widest uppercase font-bold text-[#7FA0D6] mb-4">
@@ -347,7 +347,7 @@ export function HomePage() {
       </section>
 
       {/* 3. Horizontal 5-Step Process Rail — the connecting line draws as you scroll */}
-      <section className="max-w-[1240px] mx-auto px-6 pt-12 sm:pt-16">
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-12 sm:pt-16">
         <div ref={processRef} className="relative py-8 border-b border-[#2A3446]/40">
           <div className="absolute left-3.5 right-3.5 top-[3.05rem] hidden md:block h-px bg-[#2A3446]" />
           <ScrollDrawLine
@@ -375,14 +375,14 @@ export function HomePage() {
       </section>
 
       {/* 4. Interactive Approval Portal Layout */}
-      <section className="max-w-[1240px] mx-auto px-6 pb-12 sm:pb-16 pt-10">
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 pb-12 sm:pb-16 pt-10">
         <Reveal blur className="relative">
           <div className="absolute -top-4 left-6 bg-[#0A0F18] border border-[#7FA0D6]/50 text-[#7FA0D6] text-[11px] font-bold px-4 py-1.5 rounded-full z-10 shadow-lg tracking-wider">
             TRY IT — THIS PANEL WORKS
           </div>
           
-          <div className="backdrop-blur-md bg-[#161F2D]/70 border border-[#2A3446]/60 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
-            <div className="flex items-center justify-between pb-4 border-b border-[#2A3446]">
+          <div className="backdrop-blur-md bg-[#161F2D]/70 border border-[#2A3446]/60 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden">
+            <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-[#2A3446]">
               <div className="font-black text-[#F8FAFC] text-lg">Batch 04</div>
               <div className="text-xs font-bold text-[#97A0B3] flex items-center gap-3">
                 <span className="hidden sm:block w-24 h-1.5 rounded-full bg-[#2A3446] overflow-hidden">
@@ -497,7 +497,7 @@ export function HomePage() {
 
       {/* 5. Pricing Cards (Synchronized with Pricing Page) */}
       <section className="bg-[#050810] py-12 sm:py-16">
-        <div className="max-w-[1240px] mx-auto px-6">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
           <div className="text-center mb-12 max-w-2xl mx-auto">
             <Reveal>
               <div className="inline-flex items-center justify-center bg-[#121926] border border-[#222F44] text-[#7FA0D6] text-[11px] font-bold px-3 py-1 rounded-full mb-4">
@@ -523,7 +523,7 @@ export function HomePage() {
 
       
       {/* 5.5 FAQ Section */}
-      <section className="max-w-3xl mx-auto px-6 py-12 sm:py-16">
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <div className="text-center mb-12">
           <SplitText
             as="h2"
@@ -596,7 +596,7 @@ export function HomePage() {
 
       {/* 6. "Try Us Before You Pay Us" Lead Capture Section */}
       <section className="relative isolate overflow-hidden bg-[#0B111C] py-16 sm:py-24 border-y border-[#222F44] creo-grain">
-        <Reveal className="max-w-3xl mx-auto px-6 text-center">
+        <Reveal className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <SplitText
             as="h2"
             text="Try us before you pay us."
@@ -609,7 +609,7 @@ export function HomePage() {
           </p>
           
           {sampleSuccess ? (
-            <div className="p-6 rounded-2xl bg-emerald-950/50 border border-emerald-800/80 text-center max-w-md mx-auto shadow-2xl">
+            <div className="p-4 sm:p-6 rounded-2xl bg-emerald-950/50 border border-emerald-800/80 text-center max-w-md mx-auto shadow-2xl">
               <div className="size-12 rounded-full bg-emerald-500 text-[#0B111C] flex items-center justify-center mx-auto mb-3">
                 <Check className="size-6 stroke-[3]" />
               </div>

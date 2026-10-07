@@ -297,7 +297,7 @@ function RoutePrefetcher() {
   const needsOnboarding = role === "client" && (user?.onboarding_stage ?? 0) < 8;
 
   useEffect(() => {
-    if (role !== "client" && role !== "admin" && role !== "super_admin") return;
+    if (role !== "client") return;
     return whenIdle(() => preloadPortalPages({ includeOnboarding: needsOnboarding }));
   }, [role, needsOnboarding]);
 
