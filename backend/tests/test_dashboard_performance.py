@@ -1,4 +1,5 @@
 import uuid
+import os
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -54,6 +55,18 @@ def test_provider_postgres_urls_use_async_driver_without_changing_redis():
     assert settings.DATABASE_URL.startswith('postgresql+asyncpg://')
     assert settings.DIRECT_DATABASE_URL.startswith('postgresql+asyncpg://')
     assert settings.REDIS_URL == 'redis://cache:6379/0'
+
+
+def test_background_jobs_inherit_redis_and_preserve_explicit_brokers():
+    with patch.dict(os.environ, {}, clear=True):
+        settings = Settings(_env_file=None, REDIS_URL='redis://cache:6379/0')
+        assert settings.CELERY_BROKER_URL == settings.REDIS_URL
+        assert settings.CELERY_RESULT_BACKEND == settings.REDIS_URL
+        settings = Settings(_env_file=None, REDIS_URL='redis://cache:6379/0',
+                            CELERY_BROKER_URL='redis://queue:6379/1',
+                            CELERY_RESULT_BACKEND='redis://results:6379/2')
+        assert settings.CELERY_BROKER_URL == 'redis://queue:6379/1'
+        assert settings.CELERY_RESULT_BACKEND == 'redis://results:6379/2'
 
 
 @pytest.mark.asyncio

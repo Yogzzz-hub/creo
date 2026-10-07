@@ -121,3 +121,15 @@ An admin-only GET /api/v1/admin/performance/runtime exposes non-secret region hi
 and pool settings without SQL. It supplies a database-independent request baseline.
 It returns no hostname, URL, password or signing secret. Tests verify anonymous
 401, client-role 403, admin access and zero SQL calls. Twenty-one backend tests pass.
+
+Live runtime diagnostics confirm Supabase's ap-southeast-1 database region hint
+and an active AsyncAdaptedQueuePool (pool size 5, overflow 5). The API does not
+provide RENDER_REGION, so its actual hosting region still requires account access.
+Database pooling is already enabled; blindly increasing it does not address the
+measured round-trip cost.
+
+A further configuration issue was corrected: configuring REDIS_URL alone used
+to leave Celery's broker/result backend at localhost. Both now inherit REDIS_URL
+unless explicitly configured. This is covered by a regression check preserving
+explicit separate brokers. Twenty-two backend tests pass. Worker/beat deployment
+and live recovery remain infrastructure verification tasks.

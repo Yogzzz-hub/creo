@@ -176,6 +176,12 @@ class Settings(BaseSettings):
 
     def model_post_init(self, __context: Any) -> None:
         """Resolve cross-field dependencies like SECRET_KEY fallback and CORS origins."""
+        # A deployment that supplies REDIS_URL must not silently leave background
+        # jobs pointing at localhost. Preserve explicitly configured queue stores.
+        if "CELERY_BROKER_URL" not in self.model_fields_set:
+            self.CELERY_BROKER_URL = self.REDIS_URL
+        if "CELERY_RESULT_BACKEND" not in self.model_fields_set:
+            self.CELERY_RESULT_BACKEND = self.REDIS_URL
         if not self.JWT_SECRET and self.SECRET_KEY:
             self.JWT_SECRET = self.SECRET_KEY
         if not self.JWT_SECRET and self.ENVIRONMENT not in ("development", "test"):
