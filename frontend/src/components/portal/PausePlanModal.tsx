@@ -1,3 +1,4 @@
+import { NativeSelect } from "../../ui/NativeSelect";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -174,7 +175,7 @@ export function PausePlanModal({
               <label className="block text-xs font-semibold text-[#F8FAFC]">
                 Reason for pause (Optional feedback)
               </label>
-              <select
+              <NativeSelect
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
@@ -184,7 +185,7 @@ export function PausePlanModal({
                     {r}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
 
             {/* Optional Notes */}

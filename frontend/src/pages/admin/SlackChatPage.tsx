@@ -1,3 +1,4 @@
+import { NativeSelect } from "../../ui/NativeSelect";
 import { useState, useRef, useEffect } from "react";
 import { motion } from "motion/react";
 import {
@@ -1058,7 +1059,7 @@ export function SlackChatPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-[#F1F5F9] mb-1">Assignee</label>
-                  <select
+                  <NativeSelect
                     value={taskAssignee}
                     onChange={(e) => setTaskAssignee(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold bg-[#0B111C] text-white"
@@ -1075,12 +1076,12 @@ export function SlackChatPage() {
                         );
                       })
                     )}
-                  </select>
+                  </NativeSelect>
                 </div>
 
                 <div>
                   <label className="block font-bold text-[#F1F5F9] mb-1">Client Pod</label>
-                  <select
+                  <NativeSelect
                     value={taskClient}
                     onChange={(e) => setTaskClient(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold bg-[#0B111C] text-white"
@@ -1094,14 +1095,14 @@ export function SlackChatPage() {
                         </option>
                       ))
                     )}
-                  </select>
+                  </NativeSelect>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-[#F1F5F9] mb-1">Priority Level</label>
-                  <select
+                  <NativeSelect
                     value={taskPriority}
                     onChange={(e) => setTaskPriority(e.target.value as any)}
                     className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C] text-white"
@@ -1109,7 +1110,7 @@ export function SlackChatPage() {
                     <option value="P1 High">P1 High (Urgent SLA)</option>
                     <option value="P2 Med">P2 Medium</option>
                     <option value="P3 Normal">P3 Normal Sprint</option>
-                  </select>
+                  </NativeSelect>
                 </div>
 
                 <div>

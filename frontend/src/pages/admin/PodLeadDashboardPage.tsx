@@ -1,3 +1,4 @@
+import { NativeSelect } from "../../ui/NativeSelect";
 import { useState } from "react";
 import { Link } from "react-router";
 import { motion } from "motion/react";
@@ -872,7 +873,7 @@ export function PodLeadDashboardPage() {
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="font-bold text-[#F1F5F9] block mb-1">Format</label>
-                  <select
+                  <NativeSelect
                     value={assignForm.format}
                     onChange={(e) => setAssignForm({ ...assignForm, format: e.target.value })}
                     className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium"
@@ -880,11 +881,11 @@ export function PodLeadDashboardPage() {
                     <option value="Reel">Reel</option>
                     <option value="Story">Story</option>
                     <option value="Post">Post</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="font-bold text-[#F1F5F9] block mb-1">Client</label>
-                  <select
+                  <NativeSelect
                     value={assignForm.client}
                     onChange={(e) => setAssignForm({ ...assignForm, client: e.target.value })}
                     className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white"
@@ -896,11 +897,11 @@ export function PodLeadDashboardPage() {
                         <option key={c.id} value={c.name}>{c.name}</option>
                       ))
                     )}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="font-bold text-[#F1F5F9] block mb-1">Specialist</label>
-                  <select
+                  <NativeSelect
                     value={assignForm.assignee}
                     onChange={(e) => setAssignForm({ ...assignForm, assignee: e.target.value })}
                     className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white"
@@ -912,7 +913,7 @@ export function PodLeadDashboardPage() {
                         <option key={m.id} value={m.name}>{m.name} ({m.role})</option>
                       ))
                     )}
-                  </select>
+                  </NativeSelect>
                 </div>
               </div>
             </div>
@@ -975,7 +976,7 @@ export function PodLeadDashboardPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-[#F1F5F9] block mb-1">Affected Client</label>
-                  <select
+                  <NativeSelect
                     value={blockedForm.client}
                     onChange={(e) => setBlockedForm({ ...blockedForm, client: e.target.value })}
                     className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
@@ -987,11 +988,11 @@ export function PodLeadDashboardPage() {
                         <option key={c.id} value={c.name}>{c.name}</option>
                       ))
                     )}
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="font-bold text-[#F1F5F9] block mb-1">Severity</label>
-                  <select
+                  <NativeSelect
                     value={blockedForm.severity}
                     onChange={(e) => setBlockedForm({ ...blockedForm, severity: e.target.value })}
                     className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
@@ -999,7 +1000,7 @@ export function PodLeadDashboardPage() {
                     <option value="Blocker (P0)">Blocker (P0 - SLA Risk)</option>
                     <option value="High (P1)">High (P1)</option>
                     <option value="Medium (P2)">Medium (P2)</option>
-                  </select>
+                  </NativeSelect>
                 </div>
               </div>
 
@@ -1069,7 +1070,7 @@ export function PodLeadDashboardPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-[#F1F5F9] block mb-1">Craft Role Needed</label>
-                  <select
+                  <NativeSelect
                     value={reinforceForm.role}
                     onChange={(e) => setReinforceForm({ ...reinforceForm, role: e.target.value })}
                     className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
@@ -1078,11 +1079,11 @@ export function PodLeadDashboardPage() {
                     <option value="Video Editor & Colorist">Video Editor & Colorist</option>
                     <option value="Lead Copy Strategist">Lead Copy Strategist</option>
                     <option value="Brand Visual Designer">Brand Visual Designer</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="font-bold text-[#F1F5F9] block mb-1">Bandwidth Surge</label>
-                  <select
+                  <NativeSelect
                     value={reinforceForm.hours}
                     onChange={(e) => setReinforceForm({ ...reinforceForm, hours: e.target.value })}
                     className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
@@ -1090,13 +1091,13 @@ export function PodLeadDashboardPage() {
                     <option value="+20 hrs/week">+20 hrs/week (Part-time)</option>
                     <option value="+40 hrs/week">+40 hrs/week (Dedicated Surge)</option>
                     <option value="Single Milestone">Single Milestone Sprint</option>
-                  </select>
+                  </NativeSelect>
                 </div>
               </div>
 
               <div>
                 <label className="font-bold text-[#F1F5F9] block mb-1">Required Starting</label>
-                <select
+                <NativeSelect
                   value={reinforceForm.urgency}
                   onChange={(e) => setReinforceForm({ ...reinforceForm, urgency: e.target.value })}
                   className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white focus:bg-[#161F2D]"
@@ -1104,7 +1105,7 @@ export function PodLeadDashboardPage() {
                   <option value="Immediate (Today)">Immediate (Today - Critical Bandwidth)</option>
                   <option value="Next Sprint Cycle">Next Sprint Cycle</option>
                   <option value="Next Month">Next Month</option>
-                </select>
+                </NativeSelect>
               </div>
 
               <div>

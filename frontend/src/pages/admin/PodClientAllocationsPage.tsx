@@ -1,3 +1,4 @@
+import { NativeSelect } from "../../ui/NativeSelect";
 import { useAuth } from "../../lib/auth-context";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
@@ -911,7 +912,7 @@ export function PodClientAllocationsPage() {
             <div className="space-y-3 text-xs">
               <div>
                 <label className="font-bold text-[#F1F5F9] block mb-1">Target Account</label>
-                <select className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white">
+                <NativeSelect className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white">
                   {clients.length > 0 ? (
                     clients.map((c) => (
                       <option key={c.id} value={c.name}>{c.name}</option>
@@ -919,15 +920,15 @@ export function PodClientAllocationsPage() {
                   ) : (
                     <option value="Ryze">Ryze Mushroom Coffee</option>
                   )}
-                </select>
+                </NativeSelect>
               </div>
               <div>
                 <label className="font-bold text-[#F1F5F9] block mb-1">Resource Needed</label>
-                <select className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium">
+                <NativeSelect className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium">
                   <option>Additional 3D Motion Specialist Support</option>
                   <option>Copywriting surge capacity</option>
                   <option>Senior Visual Designer QA backup</option>
-                </select>
+                </NativeSelect>
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-3 border-t border-[#2A3446]">

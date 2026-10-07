@@ -1,3 +1,4 @@
+import { NativeSelect } from "../../ui/NativeSelect";
 import { useAuth } from "../../lib/auth-context";
 import * as Dialog from "@radix-ui/react-dialog";
 import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
@@ -1396,7 +1397,7 @@ export function AdminClientsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Type</label>
-                    <select
+                    <NativeSelect
                       value={newRequestForm.type}
                       onChange={(e) => setNewRequestForm({ ...newRequestForm, type: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
@@ -1405,11 +1406,11 @@ export function AdminClientsPage() {
                       <option value="Carousel">🎨 Carousel (3-5 slides)</option>
                       <option value="Static Post">🖼️ Static Hero Graphic</option>
                       <option value="Deck">📊 Presentation Deck</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority</label>
-                    <select
+                    <NativeSelect
                       value={newRequestForm.priority}
                       onChange={(e) => setNewRequestForm({ ...newRequestForm, priority: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
@@ -1417,7 +1418,7 @@ export function AdminClientsPage() {
                       <option value="Standard">Standard (3-4 Days)</option>
                       <option value="Expedited">Expedited (48 Hours)</option>
                       <option value="Urgent">Urgent (24 Hours)</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
 
@@ -1681,7 +1682,7 @@ export function AdminClientsPage() {
 
                 <div>
                   <label className="block font-bold text-[#F1F5F9] mb-1">Assigned Creative Pod</label>
-                  <select
+                  <NativeSelect
                     value={newClientPodInput}
                     onChange={(e) => setNewClientPodInput(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
@@ -1689,7 +1690,7 @@ export function AdminClientsPage() {
                     <option value="Pod A (Creative & Brand Strategy)">Pod A (Creative & Brand Strategy)</option>
                     <option value="Pod B (Performance & Video Ops)">Pod B (Performance & Video Ops)</option>
                     <option value="Pod C (3D Motion & Visual Design)">Pod C (3D Motion & Visual Design)</option>
-                  </select>
+                  </NativeSelect>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
@@ -1729,7 +1730,7 @@ export function AdminClientsPage() {
               <div className="space-y-3.5 text-xs">
                 <div>
                   <label className="block font-bold text-[#F1F5F9] mb-1">Select Client to Remove</label>
-                  <select
+                  <NativeSelect
                     value={clientToRemoveInput}
                     onChange={(e) => setClientToRemoveInput(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
@@ -1739,7 +1740,7 @@ export function AdminClientsPage() {
                         {client.name} ({client.industry})
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </div>
 
                 <p className="text-[#97A0B3] text-[11px] leading-relaxed">
@@ -2785,17 +2786,17 @@ export function AdminTasksPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Client Brand</label>
-                    <select
+                    <NativeSelect
                       value={newTaskForm.client}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, client: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
                     >
                       <option value="Ryze Mushroom Coffee">Ryze Mushroom Coffee</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Creative Pod</label>
-                    <select
+                    <NativeSelect
                       value={newTaskForm.pod}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, pod: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
@@ -2803,14 +2804,14 @@ export function AdminTasksPage() {
                       <option value="Pod A">Pod A (Brand Strategy)</option>
                       <option value="Pod B">Pod B (Performance &amp; Video)</option>
                       <option value="Pod C">Pod C (3D Motion &amp; Design)</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority</label>
-                    <select
+                    <NativeSelect
                       value={newTaskForm.priority}
                       onChange={(e) => setNewTaskForm({ ...newTaskForm, priority: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
@@ -2818,7 +2819,7 @@ export function AdminTasksPage() {
                       <option value="Normal">Normal</option>
                       <option value="High">High</option>
                       <option value="Urgent">Urgent</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Story Points</label>
@@ -3940,7 +3941,7 @@ export function AdminTeamManagementPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Client Account</label>
-                    <select
+                    <NativeSelect
                       value={assignForm.client}
                       onChange={(e) => setAssignForm({ ...assignForm, client: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
@@ -3949,12 +3950,12 @@ export function AdminTeamManagementPage() {
                       <option value="Shanmugaraj">Shanmugaraj (Growth)</option>
                       <option value="Aravindan">Aravindan (Custom Retainer)</option>
                       <option value="Luma">Luma Global (Enterprise)</option>
-                    </select>
+                    </NativeSelect>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority Level</label>
-                    <select
+                    <NativeSelect
                       value={assignForm.priority}
                       onChange={(e) => setAssignForm({ ...assignForm, priority: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
@@ -3963,7 +3964,7 @@ export function AdminTeamManagementPage() {
                       <option value="High">⚡ High (Sprint Priority)</option>
                       <option value="Medium">Standard Medium</option>
                       <option value="Normal">Normal Priority</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
 
@@ -4325,7 +4326,7 @@ export function AdminTeamManagementPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Role Track Category</label>
-                    <select
+                    <NativeSelect
                       value={newMemberForm.category}
                       onChange={(e) => {
                         const cat = e.target.value as TeamMember["category"];
@@ -4343,12 +4344,12 @@ export function AdminTeamManagementPage() {
                       <option value="videographer">🎥 Cinematographer & Videographer</option>
                       <option value="photographer">📷 Commercial Photographer</option>
                       <option value="lead">👑 Pod Lead & Strategist</option>
-                    </select>
+                    </NativeSelect>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Assign Sprint Pod</label>
-                    <select
+                    <NativeSelect
                       value={newMemberForm.podId}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, podId: e.target.value })}
                       className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
@@ -4356,7 +4357,7 @@ export function AdminTeamManagementPage() {
                       <option value="pod-a">Pod A • Enterprise Brand & Design</option>
                       <option value="pod-b">Pod B • Performance & Video</option>
                       <option value="pod-c">Pod C • 3D Motion & VFX</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
 
@@ -5345,7 +5346,7 @@ export function AdminRevenuePage() {
                 </div>
                 <div>
                   <label className="block font-bold text-[#F1F5F9] mb-1">Payment Method</label>
-                  <select
+                  <NativeSelect
                     value={newInvMethod}
                     onChange={(e) => setNewInvMethod(e.target.value)}
                     className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
@@ -5354,7 +5355,7 @@ export function AdminRevenuePage() {
                     <option value="Bank Wire">Bank Wire</option>
                     <option value="Invoice Net 15">Invoice Net 15</option>
                     <option value="Credit / Debit Card">Credit / Debit Card</option>
-                  </select>
+                  </NativeSelect>
                 </div>
               </div>
 
@@ -6622,7 +6623,7 @@ export function AdminPlansPage() {
 
                   <div>
                     <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Refund Method</label>
-                    <select
+                    <NativeSelect
                       value={refundMethodInput}
                       onChange={(e) => setRefundMethodInput(e.target.value)}
                       className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
@@ -6630,13 +6631,13 @@ export function AdminPlansPage() {
                       <option value="Original Payment Gateway (Stripe ACH / Card)">Original Payment Gateway (Stripe / ACH)</option>
                       <option value="Direct Bank Wire / IMPS / RTGS">Direct Bank Transfer (IMPS / RTGS)</option>
                       <option value="Internal Account Service Credit">Internal Account Service Credit</option>
-                    </select>
+                    </NativeSelect>
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Reason for Refund</label>
-                  <select
+                  <NativeSelect
                     value={refundReasonInput}
                     onChange={(e) => setRefundReasonInput(e.target.value)}
                     className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] text-xs font-medium text-white bg-[#161F2D]"
@@ -6645,7 +6646,7 @@ export function AdminPlansPage() {
                     <option value="SLA Non-Compliance / Delivery Disruption">SLA Non-Compliance / Delivery Disruption</option>
                     <option value="Duplicate or Overcharge Billing Adjustment">Duplicate or Overcharge Billing Adjustment</option>
                     <option value="Executive Discretionary Credit">Executive Discretionary Credit</option>
-                  </select>
+                  </NativeSelect>
                 </div>
 
                 <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#2A3446]">

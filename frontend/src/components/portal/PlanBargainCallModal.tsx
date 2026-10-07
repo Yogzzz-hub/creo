@@ -1,3 +1,4 @@
+import { NativeSelect } from "../../ui/NativeSelect";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -193,7 +194,7 @@ export function PlanBargainCallModal({
               <label className="block text-xs font-semibold text-[#F8FAFC]">
                 What would you like to negotiate?
               </label>
-              <select
+              <NativeSelect
                 value={targetTopic}
                 onChange={(e) => setTargetTopic(e.target.value)}
                 className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
@@ -206,7 +207,7 @@ export function PlanBargainCallModal({
                     {topic}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
 
             {/* Proposed Budget or Offer */}
@@ -245,7 +246,7 @@ export function PlanBargainCallModal({
               <label className="block text-xs font-semibold text-[#F8FAFC]">
                 Preferred Call Window
               </label>
-              <select
+              <NativeSelect
                 value={preferredTime}
                 onChange={(e) => setPreferredTime(e.target.value)}
                 className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
@@ -255,7 +256,7 @@ export function PlanBargainCallModal({
                     {slot}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
 
             {/* Notes */}

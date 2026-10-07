@@ -1,3 +1,4 @@
+import { NativeSelect } from "../../ui/NativeSelect";
 import { useState } from "react";
 import { Link } from "react-router";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
@@ -485,17 +486,17 @@ export function PodTaskBoardPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-[#F1F5F9] block mb-1">Content Format</label>
-                  <select
+                  <NativeSelect
                     className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white"
                   >
                     <option value="Reel">Reel</option>
                     <option value="Story">Story</option>
                     <option value="Post">Post</option>
-                  </select>
+                  </NativeSelect>
                 </div>
                 <div>
                   <label className="font-bold text-[#F1F5F9] block mb-1">Client</label>
-                  <select
+                  <NativeSelect
                     value={newCardClient}
                     onChange={(e) => setNewCardClient(e.target.value)}
                     className="w-full p-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] font-medium text-white"
@@ -507,7 +508,7 @@ export function PodTaskBoardPage() {
                         <option key={c.id} value={c.name}>{c.name}</option>
                       ))
                     )}
-                  </select>
+                  </NativeSelect>
                 </div>
               </div>
             </div>
@@ -608,7 +609,7 @@ export function PodTaskBoardPage() {
             </div>
             <div className="space-y-2 text-xs">
               <label className="font-bold text-[#F1F5F9] block">Select Target Specialist for Re-routing</label>
-              <select
+              <NativeSelect
                 value={rerouteTarget}
                 onChange={(e) => setRerouteTarget(e.target.value)}
                 className="w-full p-3 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold"
@@ -620,7 +621,7 @@ export function PodTaskBoardPage() {
                     <option key={m.id} value={m.full_name}>{m.full_name} ({m.role})</option>
                   ))
                 )}
-              </select>
+              </NativeSelect>
             </div>
             <div className="flex justify-end gap-3 pt-3 border-t border-[#2A3446]">
               <button

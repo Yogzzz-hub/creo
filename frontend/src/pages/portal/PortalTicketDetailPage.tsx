@@ -1,3 +1,4 @@
+import { NativeSelect } from "../../ui/NativeSelect";
 import { useState, useRef, useEffect } from "react";
 import { useParams, Link } from "react-router";
 import { motion } from "motion/react";
@@ -1381,7 +1382,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
               {/* Target Engineering Unit */}
               <div>
                 <label className="block font-bold text-[#F1F5F9] mb-1.5">Target Engineering Unit</label>
-                <select
+                <NativeSelect
                   value={escalateTarget}
                   onChange={(e) => setEscalateTarget(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-xl border border-[#2A3446] focus:outline-none focus:ring-2 focus:ring-rose-500 text-white font-medium bg-[#161F2D]"
@@ -1390,7 +1391,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                   <option value="Media Transcoding Engine">Media Transcoding Engine (HEVC/ProRes)</option>
                   <option value="Webhook Broker & Queue">Webhook Broker & Queue Ingress</option>
                   <option value="Billing & Token Metering">Billing & Token Metering</option>
-                </select>
+                </NativeSelect>
               </div>
 
               {/* Escalation Notes */}

@@ -1,3 +1,4 @@
+import { NativeSelect } from "../../ui/NativeSelect";
 import { useState } from "react";
 import { motion } from "motion/react";
 import {
@@ -848,11 +849,11 @@ export function MemberAssetHandoffQAPage() {
 
               <div>
                 <label className="block font-bold text-[#F1F5F9] mb-1">Client Pod</label>
-                <select className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold bg-[#161F2D]">
+                <NativeSelect className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold bg-[#161F2D]">
                   <option value="Client Workspace">Client Workspace</option>
                   <option value="Client Retainer">Client Retainer</option>
                   <option value="Active Client">Active Client</option>
-                </select>
+                </NativeSelect>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2A3446]">

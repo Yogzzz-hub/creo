@@ -1,3 +1,4 @@
+import { NativeSelect } from "../../ui/NativeSelect";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, RefreshCw, Calendar as CalendarIcon } from "lucide-react";
@@ -74,7 +75,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
 
         <label className="text-xs sm:text-sm font-semibold text-[#97A0B3] flex items-center gap-2">
           Client:
-          <select
+          <NativeSelect
             value={client}
             onChange={(event) => setClient(event.target.value)}
             className="min-h-9 max-w-44 sm:max-w-56 bg-[#0B111C] border border-[#2A3446] rounded-xl px-3 text-xs sm:text-sm text-white focus:outline-none focus:border-[#7FA0D6]"
@@ -83,7 +84,7 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             {Array.from(new Set(events.map((event) => event.client_name))).sort().map((name) => (
               <option key={name} value={name}>{name}</option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
       </div>
 

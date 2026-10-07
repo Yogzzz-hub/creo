@@ -1,3 +1,4 @@
+import { NativeSelect } from "../../ui/NativeSelect";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type AllocationStatus, PodAllocationModal } from "./PodAllocationModal";
 import { useSearchParams } from "react-router";
@@ -1105,7 +1106,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   A4: Primary Category <span className="text-rose-400 font-bold">*</span>
                 </label>
-                <select
+                <NativeSelect
                   value={secA.category}
                   onChange={(e) => {
                     setSecA({ ...secA, category: e.target.value });
@@ -1119,7 +1120,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                       {c.label}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
                 {fieldErrors.category && (
                   <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
                     <AlertCircle className="size-3.5 shrink-0" /> {fieldErrors.category}
@@ -1131,7 +1132,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   A6: Single Outcome That Matters Most <span className="text-rose-400 font-bold">*</span>
                 </label>
-                <select
+                <NativeSelect
                   value={secA.primary_goal}
                   onChange={(e) => {
                     setSecA({ ...secA, primary_goal: e.target.value });
@@ -1145,7 +1146,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                       {g.label}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
                 {fieldErrors.primary_goal && (
                   <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
                     <AlertCircle className="size-3.5 shrink-0" /> {fieldErrors.primary_goal}
@@ -1188,7 +1189,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                       }}
                       className="w-full sm:w-1/2 px-3 py-2 text-xs bg-[#161F2D] text-white rounded-lg border border-[#2A3446] placeholder-[#97A0B3] focus:border-[#7FA0D6] focus:outline-none"
                     />
-                    <select
+                    <NativeSelect
                       value={prod.price_band}
                       style={{ colorScheme: "dark" }}
                       onChange={(e) => {
@@ -1204,7 +1205,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                       <option value="mid">Mid-Tier</option>
                       <option value="premium">Premium</option>
                       <option value="luxury">Luxury</option>
-                    </select>
+                    </NativeSelect>
                     {secA.products.length > 1 && (
                       <button
                         type="button"
@@ -1395,7 +1396,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   B7: Caption & Script Format <span className="text-rose-400 font-bold">*</span>
                 </label>
-                <select
+                <NativeSelect
                   value={secB.caption_script}
                   onChange={(e) => {
                     setSecB({ ...secB, caption_script: e.target.value });
@@ -1409,7 +1410,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                       {s.label}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
                 {fieldErrors.caption_script && (
                   <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
                     <AlertCircle className="size-3.5 shrink-0" /> {fieldErrors.caption_script}
@@ -1629,7 +1630,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   D1: Do you have existing brand guidelines? <span className="text-rose-400 font-bold">*</span>
                 </label>
-                <select
+                <NativeSelect
                   value={secD.brand_guidelines}
                   onChange={(e) => {
                     setSecD({ ...secD, brand_guidelines: e.target.value });
@@ -1641,7 +1642,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   <option value="yes_will_upload">Yes, will upload full guidelines PDF</option>
                   <option value="partial">Partial (We have logo & colors only)</option>
                   <option value="none">None (Creo will establish visual palette)</option>
-                </select>
+                </NativeSelect>
               </div>
 
               <div>
@@ -1689,7 +1690,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                       }}
                       className="w-20 px-2 py-1 text-xs font-mono bg-[#161F2D] border border-[#2A3446] text-white rounded-lg uppercase"
                     />
-                    <select
+                    <NativeSelect
                       value={col.label}
                       style={{ colorScheme: "dark" }}
                       onChange={(e) => {
@@ -1704,7 +1705,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                       <option value="primary">Primary</option>
                       <option value="accent">Accent</option>
                       <option value="background">Background</option>
-                    </select>
+                    </NativeSelect>
                     {secD.colours.length > 1 && (
                       <button
                         type="button"
@@ -1842,7 +1843,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   E2: Is the founder comfortable on camera? <span className="text-rose-400 font-bold">*</span>
                 </label>
-                <select
+                <NativeSelect
                   value={secE.founder_comfort}
                   onChange={(e) => setSecE({ ...secE, founder_comfort: e.target.value })}
                   style={{ colorScheme: "dark" }}
@@ -1852,7 +1853,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   <option value="yes_with_direction">Yes, with teleprompter & direction</option>
                   <option value="prefers_voiceover">Prefers voiceover only</option>
                   <option value="no">No, will not film</option>
-                </select>
+                </NativeSelect>
 
                 <div id="field-shoot_locations">
                   <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
@@ -1920,7 +1921,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   E8: Where should content send viewers? <span className="text-rose-400 font-bold">*</span>
                 </label>
-                <select
+                <NativeSelect
                   value={secE.cta_destination}
                   onChange={(e) => {
                     setSecE({ ...secE, cta_destination: e.target.value });
@@ -1934,7 +1935,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                       {c.label}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
 
               <div>
@@ -1975,7 +1976,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                 <label className="block text-xs font-semibold text-[#F1F5F9] mb-1.5">
                   E11: Who approves content and how fast? <span className="text-rose-400 font-bold">*</span>
                 </label>
-                <select
+                <NativeSelect
                   value={secE.approval_speed}
                   onChange={(e) => setSecE({ ...secE, approval_speed: e.target.value })}
                   style={{ colorScheme: "dark" }}
@@ -1985,7 +1986,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   <option value="founder_2_3_days">Founder (2–3 Days)</option>
                   <option value="marketing_team">Marketing Team Lead (24h SLA)</option>
                   <option value="committee_slower">Review Committee (48h+ SLA)</option>
-                </select>
+                </NativeSelect>
               </div>
 
               <div>

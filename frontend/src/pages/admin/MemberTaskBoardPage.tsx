@@ -1,3 +1,4 @@
+import { NativeSelect } from "../../ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import {
@@ -754,20 +755,20 @@ export function MemberTaskBoardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label htmlFor="task-client" className="block font-bold text-[#F1F5F9] mb-1">Client</label>
-                <select id="task-client" value={newClientId} onChange={(e) => setNewClientId(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C]">
+                <NativeSelect id="task-client" value={newClientId} onChange={(e) => setNewClientId(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C]">
                   {clients.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
               <div>
                 <label htmlFor="task-format" className="block font-bold text-[#F1F5F9] mb-1">Format</label>
-                <select id="task-format" value={newType} onChange={(e) => setNewType(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C]">
+                <NativeSelect id="task-format" value={newType} onChange={(e) => setNewType(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C]">
                   <option value="reel">Reel</option>
                   <option value="static_post">Poster</option>
                   <option value="carousel">Carousel</option>
                   <option value="story">Story</option>
-                </select>
+                </NativeSelect>
               </div>
               <div>
                 <label htmlFor="task-due" className="block font-bold text-[#F1F5F9] mb-1">Due date</label>

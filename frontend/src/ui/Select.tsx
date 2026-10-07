@@ -1,3 +1,5 @@
+import type { Ref } from "react";
+import "./select.css";
 import * as RadixSelect from "@radix-ui/react-select";
 import { clsx } from "clsx";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
@@ -6,11 +8,11 @@ export const Select = RadixSelect.Root;
 export const SelectGroup = RadixSelect.Group;
 export const SelectValue = RadixSelect.Value;
 
-export function SelectTrigger({ className, children, ...props }: RadixSelect.SelectTriggerProps) {
+export function SelectTrigger({ className, children, ...props }: RadixSelect.SelectTriggerProps & { ref?: Ref<HTMLButtonElement> }) {
   return (
     <RadixSelect.Trigger
       className={clsx(
-        "flex min-h-[44px] w-full items-center justify-between rounded-md border border-[var(--surface-border)] bg-[var(--surface-card)] px-3 py-2 text-sm text-[var(--surface-text)] placeholder:text-[var(--surface-muted)] disabled:cursor-not-allowed disabled:opacity-50",
+        "creo-select-trigger flex min-h-[44px] w-full items-center justify-between rounded-md border border-[var(--surface-border)] bg-[var(--surface-card)] px-3 py-2 text-sm text-[var(--surface-text)] placeholder:text-[var(--surface-muted)] disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
@@ -32,9 +34,11 @@ export function SelectContent({
   return (
     <RadixSelect.Portal>
       <RadixSelect.Content
+        sideOffset={6}
+        collisionPadding={12}
         position={position}
         className={clsx(
-          "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-[var(--surface-border)] bg-[var(--surface-card)] text-[var(--surface-text)] shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+          "creo-select-menu relative z-[10050] max-h-96 min-w-[8rem] overflow-hidden rounded-md border border-[var(--surface-border)] bg-[var(--surface-card)] text-[var(--surface-text)] shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
           position === "popper" &&
             "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
           className,
@@ -46,9 +50,9 @@ export function SelectContent({
         </RadixSelect.ScrollUpButton>
         <RadixSelect.Viewport
           className={clsx(
-            "p-1",
+            "creo-select-viewport p-1",
             position === "popper" &&
-              "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]",
+              "w-full min-w-[var(--radix-select-trigger-width)]",
           )}
         >
           {children}
@@ -65,7 +69,7 @@ export function SelectItem({ className, children, ...props }: RadixSelect.Select
   return (
     <RadixSelect.Item
       className={clsx(
-        "relative flex min-h-[44px] w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-hidden hover:bg-[var(--surface-hover)] focus:bg-[var(--surface-hover)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        "creo-select-item relative flex min-h-[44px] w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-hidden hover:bg-[var(--surface-hover)] focus:bg-[var(--surface-hover)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
       {...props}

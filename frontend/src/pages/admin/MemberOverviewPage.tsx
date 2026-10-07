@@ -1,3 +1,4 @@
+import { NativeSelect } from "../../ui/NativeSelect";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
@@ -741,14 +742,14 @@ export function MemberOverviewPage() {
             <form onSubmit={handleSaveHours} className="space-y-3.5 text-xs">
               <div>
                 <label className="block font-bold text-[#F1F5F9] mb-1">Deliverable Project</label>
-                <select
+                <NativeSelect
                   value={hoursProject}
                   onChange={(e) => setHoursProject(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold bg-[#161F2D]"
                 >
                   <option value="General Sprint Task">General Pod Sprint Delivery</option>
                   {clients.map(c => <option key={c.id} value={c.name}>{c.name} · Active Sprint</option>)}
-                </select>
+                </NativeSelect>
               </div>
 
               <div>
@@ -825,13 +826,13 @@ export function MemberOverviewPage() {
             <form onSubmit={handleUploadSubmit} className="space-y-3.5 text-xs">
               <div>
                 <label className="block font-bold text-[#F1F5F9] mb-1">Client Workspace</label>
-                <select
+                <NativeSelect
                   value={uploadClient}
                   onChange={(e) => setUploadClient(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold bg-[#161F2D]"
                 >
                   {clients.length > 0 ? clients.map(c => <option key={c.id} value={c.name}>{c.name}</option>) : <option value="General Pod Workspace">General Pod Workspace</option>}
-                </select>
+                </NativeSelect>
               </div>
 
               <div>
