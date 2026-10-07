@@ -1,4 +1,4 @@
-import { Suspense, lazy, Component, type ReactNode, type ErrorInfo, useEffect } from "react";
+import { Suspense, Component, type ReactNode, type ErrorInfo, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AuthProvider, useAuth } from "../lib/auth-context";
@@ -8,7 +8,7 @@ import type { HealthResponse } from "../types/api";
 
 // Public Layout & Landing Page (other pages are split into their own chunks)
 import { PublicLayout } from "../components/public/PublicLayout";
-import { HomePage } from "../pages/public/HomePage";
+
 import {
   AboutPage,
   AuthPage,
@@ -31,6 +31,7 @@ import {
   TermsPage,
   preloadPortalPages,
   whenIdle,
+  lazyModule,
 } from "./lazy-pages";
 
 import { ProtectedRoute } from "../components/auth/ProtectedRoute";
@@ -47,82 +48,86 @@ import { PortalLayout } from "../components/portal/PortalLayout";
 
 // Ops Layout & Features
 import { OpsLayout } from "../components/ops/OpsLayout";
-const AdminDashboard = lazy(() =>
+const HomePage = lazyModule(() =>
+  import("../pages/public/HomePage").then(m => ({ default: m.HomePage }))
+);
+
+const AdminDashboard = lazyModule(() =>
   import("../features/admin/AdminDashboard").then((m) => ({ default: m.AdminDashboard }))
 );
 
-const AdminClientsPage = lazy(() =>
+const AdminClientsPage = lazyModule(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminClientsPage }))
 );
-const AdminDeliverablesPage = lazy(() =>
+const AdminDeliverablesPage = lazyModule(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminDeliverablesPage }))
 );
-const AdminTasksPage = lazy(() =>
+const AdminTasksPage = lazyModule(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminTasksPage }))
 );
-const AdminCalendarPage = lazy(() =>
+const AdminCalendarPage = lazyModule(() =>
   import("../features/admin/AdminCalendarPage").then((m) => ({ default: m.AdminCalendarPage }))
 );
-const AdminSupportTicketsPage = lazy(() =>
+const AdminSupportTicketsPage = lazyModule(() =>
   import("../features/admin/AdminSupportTicketsPage").then((m) => ({ default: m.AdminSupportTicketsPage }))
 );
-const AdminTicketDetailPage = lazy(() =>
+const AdminTicketDetailPage = lazyModule(() =>
   import("../features/admin/AdminTicketDetailPage").then((m) => ({ default: m.AdminTicketDetailPage }))
 );
-const AdminSLAPerformancePage = lazy(() =>
+const AdminSLAPerformancePage = lazyModule(() =>
   import("../features/admin/AdminSLAPerformancePage").then((m) => ({ default: m.AdminSLAPerformancePage }))
 );
-const ClientTicketDetailPage = lazy(() =>
+const ClientTicketDetailPage = lazyModule(() =>
   import("../pages/portal/PortalTicketDetailPage").then((m) => ({ default: m.ClientTicketDetailPage }))
 );
 
-const AdminRevenuePage = lazy(() =>
+const AdminRevenuePage = lazyModule(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminRevenuePage }))
 );
-const AdminPlansPage = lazy(() =>
+const AdminPlansPage = lazyModule(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminPlansPage }))
 );
-const AdminSalesPage = lazy(() =>
+const AdminSalesPage = lazyModule(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminSalesPage }))
 );
 
-const AdminTeamManagementPage = lazy(() =>
+const AdminTeamManagementPage = lazyModule(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminTeamManagementPage }))
 );
-const AdminLeaveApprovalsPage = lazy(() =>
+const AdminLeaveApprovalsPage = lazyModule(() =>
   import("../features/admin/AdminSubPages").then((m) => ({ default: m.AdminLeaveApprovalsPage }))
 );
-const AdminClientBrandPage = lazy(() =>
+const AdminClientBrandPage = lazyModule(() =>
   import("../features/admin/AdminClientBrandPage").then((m) => ({ default: m.AdminClientBrandPage }))
 );
-const PodLeadDashboardPage = lazy(() =>
+const PodLeadDashboardPage = lazyModule(() =>
   import("../pages/admin/PodLeadDashboardPage").then((m) => ({ default: m.PodLeadDashboardPage }))
 );
-const PodTaskBoardPage = lazy(() =>
+const PodTaskBoardPage = lazyModule(() =>
   import("../pages/admin/PodTaskBoardPage").then((m) => ({ default: m.PodTaskBoardPage }))
 );
-const PodDeliverablesReviewPage = lazy(() =>
+const PodDeliverablesReviewPage = lazyModule(() =>
   import("../pages/admin/PodDeliverablesReviewPage").then((m) => ({ default: m.PodDeliverablesReviewPage }))
 );
-const PodScheduleLeavePage = lazy(() =>
+const PodScheduleLeavePage = lazyModule(() =>
   import("../pages/admin/PodScheduleLeavePage").then((m) => ({ default: m.PodScheduleLeavePage }))
 );
-const PodClientAllocationsPage = lazy(() =>
+const PodClientAllocationsPage = lazyModule(() =>
   import("../pages/admin/PodClientAllocationsPage").then((m) => ({ default: m.PodClientAllocationsPage }))
 );
 
 // Team Member Workstation & Collaboration Hub
-const MemberOverviewPage = lazy(() =>
+const MemberOverviewPage = lazyModule(() =>
   import("../pages/admin/MemberOverviewPage").then((m) => ({ default: m.MemberOverviewPage }))
 );
-const MemberTaskBoardPage = lazy(() =>
+const MemberTaskBoardPage = lazyModule(() =>
   import("../pages/admin/MemberTaskBoardPage").then((m) => ({ default: m.MemberTaskBoardPage }))
 );
 
-const MemberSchedulePTOPage = lazy(() =>
+const MemberSchedulePTOPage = lazyModule(() =>
   import("../pages/admin/MemberSchedulePTOPage").then((m) => ({ default: m.MemberSchedulePTOPage }))
 );
-const SlackChatPage = lazy(() =>
+const SlackChatPage = lazyModule(() =>
   import("../pages/admin/SlackChatPage").then((m) => ({ default: m.SlackChatPage }))
 );
 
@@ -290,6 +295,68 @@ function HealthPage() {
   );
 }
 
+const dashboardRoutes = {
+  "/portal/deliverables": PortalDeliverablesPage,
+  "/portal/deliverables/:deliverableId": PortalDeliverablesPage,
+  "/portal/calendar": PortalCalendarPage,
+  "/portal/creative-pod": PortalCreativePodPage,
+  "/portal/creative_pod": PortalCreativePodPage,
+  "/portal/payments": PortalPaymentsPage,
+  "/portal/support": PortalSupportPage,
+  "/portal/support/:ticketId": ClientTicketDetailPage,
+  "/portal/account": PortalAccountPage,
+  "/portal/brand": PortalBrandDNAPage,
+  "/portal/brand-dna": PortalBrandDNAPage,
+  "/portal/library": PortalLibraryPage,
+  "/portal": PortalDashboardPage,
+  "/admin": AdminDashboard,
+  "/admin/dashboard": AdminDashboard,
+  "/admin/clients": AdminClientsPage,
+  "/admin/clients/:clientId": AdminClientsPage,
+  "/admin/clients/:clientId/brand": AdminClientBrandPage,
+  "/admin/calendar": AdminCalendarPage,
+  "/admin/deliverables": AdminDeliverablesPage,
+  "/admin/tasks": AdminTasksPage,
+  "/admin/support": AdminSupportTicketsPage,
+  "/admin/support/tickets": AdminSupportTicketsPage,
+  "/admin/support/tickets/:ticketId": AdminTicketDetailPage,
+  "/admin/support/sla": AdminSLAPerformancePage,
+  "/admin/sla": AdminSLAPerformancePage,
+  "/admin/teams": AdminTeamManagementPage,
+  "/admin/team": AdminTeamManagementPage,
+  "/admin/leave": AdminLeaveApprovalsPage,
+  "/admin/leaves": AdminLeaveApprovalsPage,
+  "/admin/revenue": AdminRevenuePage,
+  "/admin/plans": AdminPlansPage,
+  "/admin/sales": AdminSalesPage,
+  "/admin/pod-dashboard": PodLeadDashboardPage,
+  "/admin/pod": PodLeadDashboardPage,
+  "/team-lead/dashboard": PodLeadDashboardPage,
+  "/team-lead/tasks": PodTaskBoardPage,
+  "/team-lead/deliverables": PodDeliverablesReviewPage,
+  "/team-lead/schedule": PodScheduleLeavePage,
+  "/team-lead/clients": PodClientAllocationsPage,
+  "/team-lead/clients/:clientId": AdminClientBrandPage,
+  "/lead/dashboard": PodLeadDashboardPage,
+  "/lead/tasks": PodTaskBoardPage,
+  "/lead/deliverables": PodDeliverablesReviewPage,
+  "/lead/schedule": PodScheduleLeavePage,
+  "/lead/clients": PodClientAllocationsPage,
+  "/lead/clients/:clientId": AdminClientBrandPage,
+  "/workstation": MemberOverviewPage,
+  "/workstation/overview": MemberOverviewPage,
+  "/member": MemberOverviewPage,
+  "/member/overview": MemberOverviewPage,
+  "/workstation/tasks": MemberTaskBoardPage,
+  "/member/tasks": MemberTaskBoardPage,
+  "/workstation/schedule": MemberSchedulePTOPage,
+  "/member/schedule": MemberSchedulePTOPage,
+  "/slack": SlackChatPage,
+  "/workstation/slack": SlackChatPage,
+  "/admin/slack": SlackChatPage,
+  "/portal/slack": SlackChatPage,
+};
+
 /** Prefetch the chunks a signed-in user is most likely to open next, once the browser is idle. */
 function RoutePrefetcher() {
   const { user } = useAuth();
@@ -311,6 +378,30 @@ function RoutePrefetcher() {
     });
   }, [role, needsOnboarding]);
 
+  useEffect(() => {
+    if (!role) return;
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    if (connection?.saveData || connection?.effectiveType?.includes("2g")) return;
+    const warmLink = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const link = target.closest("a[href]");
+      if (!(link instanceof HTMLAnchorElement) || link.origin !== location.origin) return;
+      const path = link.pathname.replace(/\/$/, "");
+      for (const [route, page] of Object.entries(dashboardRoutes)) {
+        const pattern = new RegExp(`^${route.replace(/:[^/]+/g, "[^/]+")}$`);
+        if (pattern.test(path)) { void page.preload().catch(() => {}); break; }
+      }
+    };
+    document.addEventListener("pointerover", warmLink, { passive: true });
+    document.addEventListener("focusin", warmLink);
+    document.addEventListener("touchstart", warmLink, { passive: true });
+    return () => {
+      document.removeEventListener("pointerover", warmLink);
+      document.removeEventListener("focusin", warmLink);
+      document.removeEventListener("touchstart", warmLink);
+    };
+  }, [role]);
   return null;
 }
 

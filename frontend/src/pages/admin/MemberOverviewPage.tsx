@@ -156,7 +156,7 @@ export function MemberOverviewPage() {
   };
 
   if (isLoading || !data) {
-    return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Workstation Overview" />;
+    return <CreoLoadingScreen fullScreen={false} label="Loading Workstation Overview" className="min-h-[45vh]" />;
   }
 
   return (

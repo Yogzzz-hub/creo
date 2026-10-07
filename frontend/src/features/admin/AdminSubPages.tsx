@@ -5,7 +5,7 @@ import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
 import { resolveAssetUrl } from "../../lib/media";
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams, Navigate } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "../../lib/http";
 import {
   fetchClientRoster,
@@ -157,6 +157,13 @@ export interface ClientDetailData {
 }
 
 export function AdminClientsPage() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const rosterQuery = useQuery({
+    queryKey: ["admin-client-roster", user?.id],
+    queryFn: () => fetchClientRoster(),
+    enabled: !!user,
+  });
   const { clientId } = useParams<{ clientId?: string }>();
   const [searchParams] = useSearchParams();
   const urlClientId = clientId || searchParams.get("clientId") || searchParams.get("client");
@@ -169,12 +176,10 @@ export function AdminClientsPage() {
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchClientRoster()
-      .then((data) => {
-        if (Array.isArray(data)) setServerClients(data.filter(client => !["suspended", "cancelled"].includes(client.account_status)));
-      })
-      .catch(console.error);
-  }, []);
+    if (Array.isArray(rosterQuery.data)) {
+      setServerClients(rosterQuery.data.filter(client => !["suspended", "cancelled"].includes(client.account_status)));
+    }
+  }, [rosterQuery.data]);
 
   // Active Modals
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -207,6 +212,8 @@ export function AdminClientsPage() {
       await request(`/api/v1/admin/clients/${id}/offboard`, { method: "POST" });
       setRemovedClientIds(previous => new Set([...previous, id.toLowerCase()]));
       setServerClients(previous => previous.filter(client => client.client_id !== id));
+      queryClient.setQueryData<ClientRosterItem[]>(["admin-client-roster", user?.id], previous => previous?.filter(client => client.client_id !== id));
+      void queryClient.invalidateQueries({ queryKey: ["admin-client-roster", user?.id] });
       setSelectedClientId(null);
       setIsCancelClientModalOpen(false); setIsRemoveClientModalOpen(false);
       showToast(`Offboarded ${name}. Plan cancelled and account access revoked.`);

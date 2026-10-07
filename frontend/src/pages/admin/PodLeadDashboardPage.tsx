@@ -227,7 +227,7 @@ export function PodLeadDashboardPage() {
   };
 
   if (isLoading || !data) {
-    return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Pod Operations" />;
+    return <CreoLoadingScreen fullScreen={false} label="Loading Pod Operations" className="min-h-[45vh]" />;
   }
 
   return (

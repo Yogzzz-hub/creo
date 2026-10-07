@@ -163,7 +163,7 @@ export function PortalCreativePodPage() {
   ];
 
   if (!gate.isReady || (gate.isComplete && isLoading)) {
-    return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Creative Pod" />;
+    return <CreoLoadingScreen fullScreen={false} label="Loading Creative Pod" className="min-h-[45vh]" />;
   }
 
   if (!gate.isComplete) {

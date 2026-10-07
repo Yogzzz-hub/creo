@@ -44,9 +44,9 @@ export function apiUrl(path: string): string {
   return path.startsWith("/api") && apiBase ? `${apiBase}${path}` : path;
 }
 
-export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function performRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
-  if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
+  if (options.body != null && !headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -120,4 +120,23 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
     clearTimeout(timeoutId);
     options.signal?.removeEventListener("abort", abortFromCaller);
   }
+}
+
+// Share only concurrent, identical GETs. Nothing is retained after completion;
+// writes and independently cancellable requests always have their own transport.
+const inFlightReads = new Map<string, Promise<unknown>>();
+export function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const canShare = (options.method ?? "GET").toUpperCase() === "GET"
+    && !options.signal && !options.body
+    && Object.keys(options).every(key => ["method", "headers", "credentials"].includes(key));
+  if (!canShare) return performRequest<T>(path, options);
+  const headers = Array.from(new Headers(options.headers).entries()).sort();
+  const key = JSON.stringify([apiUrl(path), getAuthToken(), headers, options.credentials ?? "include"]);
+  const existing = inFlightReads.get(key);
+  if (existing) return existing as Promise<T>;
+  const pending = performRequest<T>(path, options).finally(() => {
+    if (inFlightReads.get(key) === pending) inFlightReads.delete(key);
+  });
+  inFlightReads.set(key, pending);
+  return pending;
 }

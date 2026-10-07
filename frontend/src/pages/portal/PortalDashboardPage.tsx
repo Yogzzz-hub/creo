@@ -183,7 +183,7 @@ export function PortalDashboardPage() {
   const cycleDay = Math.max(1, Math.min(30, 30 - daysRemaining + 1));
 
   if (!gate.isReady || (!isLocked && (isDashboardLoading || !dashboard))) {
-    return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Workspace" />;
+    return <CreoLoadingScreen fullScreen={false} label="Loading Workspace" className="min-h-[45vh]" />;
   }
 
   return (

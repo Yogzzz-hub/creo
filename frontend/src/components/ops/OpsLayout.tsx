@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { CreoInlineLoader } from "../ui/CreoLoader";
 import { Outlet } from "react-router";
 import { AdminBottomNav } from "./AdminBottomNav";
 import { useRouteMemory } from "../../lib/useRouteMemory";
@@ -19,7 +21,7 @@ export function OpsLayout() {
           {/* Main Content Area: Offset on desktop to sit beside the permanent sidebar */}
           <div className="flex-1 min-w-0 md:pl-64 lg:pl-72 flex flex-col min-h-screen">
             <div className="flex-1 pb-20 lg:pb-0">
-              <Outlet />
+              <Suspense fallback={<CreoInlineLoader label="Loading workspace" />}><Outlet /></Suspense>
             </div>
             <AdminBottomNav />
           </div>

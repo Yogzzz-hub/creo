@@ -54,7 +54,7 @@ export function PortalPaymentsPage() {
   const gate = useOnboardingGate();
 
   if (!gate.isReady || isSubLoading || !subData) {
-    return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Plan & Billing" />;
+    return <CreoLoadingScreen fullScreen={false} label="Loading Plan & Billing" className="min-h-[45vh]" />;
   }
 
   const hasActivePlan = Boolean((subData as any)?.is_active || subData?.subscription || (subData as any)?.plan);

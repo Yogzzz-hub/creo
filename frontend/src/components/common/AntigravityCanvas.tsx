@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from "react";
-import { useLocation } from "react-router";
 
 export type AntigravityTheme = "admin" | "lead" | "member";
 
@@ -342,23 +341,8 @@ export function AntigravityBackground({ theme = "admin" }: AntigravityBackground
 
 /* ── Portal Wrapper ── */
 export function PortalWrapper({ children }: { children: React.ReactNode }) {
-  const { pathname } = useLocation();
-
-  // Strict Routing Rules: ONLY portal routes (/admin/*, /team-lead/* or /lead/*, /member/* or /workstation/*)
-  const isAdmin = pathname.startsWith("/admin");
-  const isTeamLead = pathname.startsWith("/team-lead") || pathname.startsWith("/lead");
-  const isMember = pathname.startsWith("/member") || pathname.startsWith("/workstation");
-  const shouldRender = isAdmin || isTeamLead || isMember;
-
-  const currentTheme: AntigravityTheme = isAdmin
-    ? "admin"
-    : isTeamLead
-    ? "lead"
-    : "member";
-
   return (
     <div className="portal-dark relative min-h-screen w-full bg-[#0B111C] text-[#F1F5F9] overflow-x-hidden">
-      {shouldRender && <AntigravityBackground theme={currentTheme} />}
       <div className="relative z-10 w-full min-h-screen flex flex-col">
         {children}
       </div>

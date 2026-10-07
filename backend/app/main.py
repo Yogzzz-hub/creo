@@ -12,6 +12,7 @@ import urllib.parse
 from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -114,6 +115,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Compress large JSON responses, leaving streaming responses to Starlette.
+app.add_middleware(GZipMiddleware, minimum_size=1200, compresslevel=4)
+
 # Request ID tracking middleware
 app.add_middleware(RequestIdMiddleware)
 
@@ -123,6 +127,7 @@ app.add_middleware(
     allow_origins=settings.CORS_ORIGINS,
     allow_origin_regex=r"^https:\/\/([a-zA-Z0-9\-_]+\.)*(vercel\.app|pages\.dev|workers\.dev|onrender\.com)$|^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
+    max_age=3600,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-Request-Id", "Server-Timing"],

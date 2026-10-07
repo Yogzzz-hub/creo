@@ -12,14 +12,20 @@ export type PreloadableComponent<T extends AnyComponent> = LazyExoticComponent<T
  * React.lazy plus a `preload()` handle so layouts can warm route chunks during
  * idle time. The browser caches the module, so a later render resolves instantly.
  */
-function lazyPage<T extends AnyComponent>(factory: () => Promise<T>): PreloadableComponent<T> {
-  const load = () => factory().then((component) => ({ default: component })).catch(error => {
+export function lazyModule<T extends AnyComponent>(factory: () => Promise<{ default: T }>): PreloadableComponent<T> {
+  let pending: Promise<{ default: T }> | undefined;
+  const load = () => pending ??= factory().catch(error => {
     if (recoverStaleChunk(error)) return new Promise<{ default: T }>(() => {});
+    pending = undefined;
     throw error;
   });
   const component = lazy(load) as PreloadableComponent<T>;
   component.preload = load;
   return component;
+}
+
+function lazyPage<T extends AnyComponent>(factory: () => Promise<T>): PreloadableComponent<T> {
+  return lazyModule(() => factory().then(component => ({ default: component })));
 }
 
 /** Run work once the browser is idle so it never competes with the current page. */

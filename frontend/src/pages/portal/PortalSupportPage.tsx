@@ -139,7 +139,7 @@ export function PortalSupportPage() {
   };
 
   if (isSubLoading || isTicketsLoading) {
-    return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Support Desk" />;
+    return <CreoLoadingScreen fullScreen={false} label="Loading Support Desk" className="min-h-[45vh]" />;
   }
 
   return (
