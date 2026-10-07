@@ -19,8 +19,9 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import delete, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.errors import PaymentRequired
 from app.models.billing import Plan, Subscription
-from app.models.enums import DeliverableType, TaskStatus, UserRole
+from app.models.enums import DeliverableType, SubscriptionStatus, TaskStatus, UserRole
 from app.models.ops import AuditLog, Notification
 from app.models.user import ClientProfile, StaffProfile, User
 from app.models.work import ClientAssignment, ContentCalendar, Deliverable, Task
@@ -709,19 +710,20 @@ async def draft_month_calendar(
         select(Subscription, Plan)
         .join(Plan, Subscription.plan_id == Plan.id)
         .where(Subscription.client_id == client_id)
+        .where(Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]))
+        .where(Subscription.current_period_end > datetime.now(timezone.utc))
         .order_by(Subscription.created_at.desc())
         .limit(1)
     )
     sub_row = (await db.execute(sub_query)).first()
-    if sub_row:
-        plan = sub_row[1]
-        quotas: dict[str, int] = {
-            "reel": plan.reel_quota,
-            "poster": plan.poster_quota,
-            "story": plan.story_quota,
-        }
-    else:
-        quotas = {"reel": 4, "poster": 8, "story": 8}
+    if not sub_row:
+        raise PaymentRequired("Active subscription required before calendar generation", code="PAYMENT_REQUIRED")
+    plan = sub_row[1]
+    quotas: dict[str, int] = {
+        "reel": plan.reel_quota,
+        "poster": plan.poster_quota,
+        "story": plan.story_quota,
+    }
 
     # Fetch client profile for timezone and custom template
     client_prof = await db.get(ClientProfile, client_id)

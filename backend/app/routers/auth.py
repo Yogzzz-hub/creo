@@ -139,7 +139,7 @@ async def _deliver_otp_or_raise(email: str, otp_code: str) -> None:
         delivered = False
 
     if not delivered:
-        if getattr(settings, "ALLOW_FALLBACK_OTP", False):
+        if settings.ENVIRONMENT != "production" and getattr(settings, "ALLOW_FALLBACK_OTP", False):
             logger.warning(
                 "otp_delivery_failed_allowing_fallback",
                 email=email,

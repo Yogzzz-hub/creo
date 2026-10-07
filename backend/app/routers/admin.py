@@ -1168,23 +1168,30 @@ async def fix_client_plan(
     2. Validates custom price and quotas for negotiated packages.
     3. Activates/updates subscription with the exact negotiated price and plan.
     4. Configures and aligns deliverable monthly quotas (Reels, Static Posters, Carousels/Stories).
-    5. Completes onboarding status (stage 4) and activates account workflow.
+    5. Preserves onboarding prerequisites and recorded monthly usage.
     6. Notifies the client and registers a secure audit trail.
     """
     user = await db.get(User, client_id)
     if not user:
         raise NotFound(f"Client {client_id} not found", code="CLIENT_NOT_FOUND")
+    if user.role != UserRole.CLIENT:
+        raise HTTPException(status_code=400, detail="Subscription plans can only be assigned to clients.")
 
     # Multi-tenant security: agency admins cannot modify clients belonging to other agencies
     if actor.role != "super_admin" and actor.agency_id and user.agency_id:
         if user.agency_id != actor.agency_id:
             raise Forbidden("You do not have permission to manage clients outside your agency.")
 
+    prof_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    prof = (await db.execute(prof_stmt)).scalar_one_or_none()
+
     # Determine if this is a custom negotiated package
     is_custom = (
         payload.is_custom
         or payload.custom_price is not None
         or payload.custom_reel_quota is not None
+        or payload.custom_poster_quota is not None
+        or payload.custom_story_quota is not None
         or payload.plan_name.strip().lower() in ("custom", "customized", "negotiated")
     )
 
@@ -1206,7 +1213,7 @@ async def fix_client_plan(
         reel_q = int(payload.custom_reel_quota if payload.custom_reel_quota is not None else 8)
         poster_q = int(payload.custom_poster_quota if payload.custom_poster_quota is not None else 12)
         story_q = int(payload.custom_story_quota if payload.custom_story_quota is not None else 15)
-        display_name = payload.custom_display_name or f"Custom Retainer ({user.company_name or 'Bargained Package'})"
+        display_name = payload.custom_display_name or f"Custom Retainer ({(prof.company_name if prof else None) or 'Bargained Package'})"
 
         plan_key = f"custom_{client_id.hex[:8]}"
         plan_stmt = select(Plan).where(Plan.name == plan_key)
@@ -1300,6 +1307,7 @@ async def fix_client_plan(
         existing_sub.current_period_end = period_end
     else:
         new_sub = Subscription(
+            agency_id=user.agency_id,
             client_id=client_id,
             plan_id=plan.id,
             status=SubscriptionStatus.ACTIVE,
@@ -1311,14 +1319,11 @@ async def fix_client_plan(
         )
         db.add(new_sub)
 
-    # 2. Unlock client account workflow and complete onboarding
+    # A plan activates billing; completion still requires terms, questionnaire,
+    # Brand DNA, pod ownership and a generated calendar in complete_onboarding.
     user.account_status = AccountStatus.ACTIVE
-    prof_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
-    prof = (await db.execute(prof_stmt)).scalar_one_or_none()
-    if prof:
-        prof.onboarding_completed_at = now
-    else:
-        db.add(ClientProfile(user_id=client_id, onboarding_completed_at=now))
+    if not prof:
+        db.add(ClientProfile(agency_id=user.agency_id, user_id=client_id))
 
     # 3. Synchronize monthly deliverable usage counters to the exact negotiated quotas
     period_start_date = now.date().replace(day=1)
@@ -1339,13 +1344,17 @@ async def fix_client_plan(
         )
         uc = (await db.execute(uc_stmt)).scalar_one_or_none()
         if uc:
-            uc.quota = quota
             if uc.used > quota:
-                uc.used = 0
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Cannot lower {kind.value} quota to {quota}: {uc.used} deliverables already used this month.",
+                )
+            uc.quota = quota
             uc.period_end = period_end_date
         else:
             db.add(
                 UsageCounter(
+                    agency_id=user.agency_id,
                     client_id=client_id,
                     period_start=period_start_date,
                     period_end=period_end_date,
@@ -1360,7 +1369,7 @@ async def fix_client_plan(
         Notification(
             user_id=client_id,
             title=f"🎉 Retainer Plan Fixed: {plan.display_name}",
-            message=f"Your subscription plan has been fixed to {plan.display_name} at ₹{float(plan.monthly_price):,.2f}/mo ({plan.reel_quota} Reels, {plan.poster_quota} Posters, {plan.story_quota} Stories). Deliverables and calendar workflows are now active.",
+            message=f"Your subscription plan has been fixed to {plan.display_name} at ₹{float(plan.monthly_price):,.2f}/mo ({plan.reel_quota} Reels, {plan.poster_quota} Posters, {plan.story_quota} Stories). Complete onboarding to activate your production workflow.",
             link="/portal",
         )
     )

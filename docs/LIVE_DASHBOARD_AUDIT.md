@@ -1,5 +1,9 @@
 # Live dashboard audit ? 7 October 2026
 
+New client-workflow testing is recorded in [LIVE_CLIENT_WORKFLOW_AUDIT.md](LIVE_CLIENT_WORKFLOW_AUDIT.md).
+Registration reached the OTP gate, but mailbox verification and working role
+test logins are still required for the complete production mutation workflow.
+
 Latest update ? 7 October 2026: the region mismatch is confirmed and corrected.
 The public frontend now uses the tested Singapore API. Warm API samples are
 substantially faster; see the final verification below. Earlier latency and

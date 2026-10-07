@@ -102,6 +102,10 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
       setError("Please enter your full name.");
       return;
     }
+    if (mode === "signup" && !termsAccepted) {
+      setError("Please accept the Terms & Privacy Policy to create an account.");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -121,10 +125,9 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
           navigate(roleHome, { replace: true });
         }
       } else {
-        // Move to the OTP surface immediately; delivery continues in this request.
-        setRegistrationPending(true);
-        writePendingRegistration(cleanEmail, cleanName);
         await registerIntent(cleanEmail, cleanPass, cleanName);
+        writePendingRegistration(cleanEmail, cleanName);
+        setRegistrationPending(true);
       }
     } catch (err: any) {
       console.error(err);
