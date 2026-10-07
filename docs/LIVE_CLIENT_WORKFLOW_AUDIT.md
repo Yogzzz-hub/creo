@@ -2,6 +2,11 @@
 
 Target: https://creo.yogalakshmibaskar20.workers.dev/
 
+Screenshot-driven calendar, review, assignment, navigation and loading corrections
+are documented in [CALENDAR_WORKFLOW_AND_FIXES.md](CALENDAR_WORKFLOW_AND_FIXES.md).
+The initial-month-proration note below describes the prior implementation;
+the corrected generator now preserves plan quantities and shares daily load.
+
 ## Live evidence and access limit
 
 Chromium visited the live login and signup pages. The existing local test

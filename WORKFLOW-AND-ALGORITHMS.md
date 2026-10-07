@@ -2,6 +2,11 @@
 
 Updated: 10 September 2026.
 
+7 October implementation correction: see [Calendar workflow and fixes](docs/CALENDAR_WORKFLOW_AND_FIXES.md)
+for the current full-quota daily scheduling, genuine creative-role assignment,
+and screenshot regression checks. Earlier admin fallbacks and initial-month
+proration descriptions are historical.
+
 This document describes the implementation in the top-level `frontend/`, `backend/`, and `database/` directories. The separate `creo/` directory is excluded. It is a documentation update, not a change to application behavior.
 
 The descriptions below come from static code inspection. They do not certify that integrations are configured, deployed, or passing tests. Where comments, older documentation, and executable code disagree, this document follows the executable code and records the difference. Secrets and credential values are deliberately omitted.

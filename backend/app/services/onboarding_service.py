@@ -531,6 +531,10 @@ async def complete_onboarding(db: AsyncSession, client_id: uuid.UUID) -> Onboard
 
     # Idempotent check: if already completed, return existing assignment
     if profile.onboarding_completed_at is not None:
+        # Revalidate persisted creative roles so retrying completion can repair
+        # legacy admin fallbacks rather than reporting an ineligible pod as ready.
+        from app.services.dispatch_engine import assign_pod
+        await assign_pod(db, client_id)
         ca_stmt = (
             select(ClientAssignment, User)
             .join(User, User.id == ClientAssignment.user_id)

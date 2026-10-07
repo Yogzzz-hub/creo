@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
+from app.models.enums import UserRole
 from app.models.work import ContentCalendar, Deliverable, Task
 
 router = APIRouter(prefix="/calendar", tags=["Calendar"])
@@ -86,7 +87,7 @@ async def get_calendar_entries(
         
         raw_slot_kind = str(cal.slot_kind or "").lower()
         if raw_slot_kind in {"reel", "carousel", "story", "poster", "static_post"}:
-            type_str = "post" if raw_slot_kind in {"poster", "static_post"} else raw_slot_kind
+            type_str = "poster" if raw_slot_kind in {"poster", "static_post"} else raw_slot_kind
         elif d_type:
             val = str(d_type.value if hasattr(d_type, "value") else d_type).lower()
             if "reel" in val or "video" in val:
@@ -106,7 +107,7 @@ async def get_calendar_entries(
         else:
             type_str = "post"
 
-        format_label = "Reel" if type_str == "reel" else "Carousel" if type_str == "carousel" else "Story" if type_str == "story" else "Post"
+        format_label = "Reel" if type_str == "reel" else "Carousel" if type_str == "carousel" else "Story" if type_str == "story" else "Poster"
         
         if caption and not caption.startswith("Brand campaign"):
             topic_text = caption
@@ -165,7 +166,7 @@ async def get_calendar_entries(
         else:
             type_str = "post"
 
-        format_label = "Reel" if type_str == "reel" else "Carousel" if type_str == "carousel" else "Story" if type_str == "story" else "Post"
+        format_label = "Reel" if type_str == "reel" else "Carousel" if type_str == "carousel" else "Story" if type_str == "story" else "Poster"
         topic_text = f"Brand {format_label} · Deliverable v{d.version}"
 
         calendar_list.append({
@@ -201,7 +202,7 @@ async def draft_calendar_month_endpoint(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Generate quota-driven draft content calendar slots spread evenly across client template days."""
+    """Generate named content slots with shared daily load and full subscription quotas."""
     if actor.role == "client" or actor.role == UserRole.CLIENT:
         target_id = actor.client_id or actor.user_id
     else:

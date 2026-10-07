@@ -167,28 +167,7 @@ export function CreoLoader({
           </circle>
 
           {/* ── Moving Light Pulse (4px core + periwinkle/white center + soft 12-16px glow) ── */}
-          <g className="creo-travelling-pulse">
-            <animateMotion
-              path={wave1Path}
-              dur="2.8s"
-              repeatCount="indefinite"
-              keyTimes="0; 0.5; 1"
-              keySplines="0.42 0 0.58 1; 0.42 0 0.58 1"
-              calcMode="spline"
-            />
 
-            {/* Soft 14px outer ambient glow */}
-            <circle r="7" fill="#7FA0D6" opacity="0.4" filter="url(#creoPulseGlow)" />
-
-            {/* 4px periwinkle outer core */}
-            <circle r="2.4" fill="#7FA0D6" opacity="0.9" />
-
-            {/* Inner core #BCCCE6 */}
-            <circle r="1.7" fill="#BCCCE6" />
-
-            {/* Tiny crisp white epicenter center */}
-            <circle r="0.8" fill="#FFFFFF" />
-          </g>
         </svg>
       </div>
 

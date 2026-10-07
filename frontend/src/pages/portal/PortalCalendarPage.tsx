@@ -153,15 +153,11 @@ export function PortalCalendarPage() {
       (subData?.is_active === true ||
         (!!subData?.subscription && ["active", "trialing"].includes(subData?.subscription?.status))));
 
-  const { data: rawEntriesData, isLoading: isEntriesLoading } = useQuery<CalendarEntry[]>({
-    queryKey: ["calendar-entries", user?.id],
+  const { data: rawEntriesData, isLoading: isEntriesLoading, isError: isEntriesError, refetch: refetchEntries } = useQuery<CalendarEntry[]>({
+    queryKey: ["calendar-entries", user?.id, currentYear, currentMonth],
     queryFn: async () => {
-      try {
-        const res = await request<CalendarEntry[]>("/api/v1/calendar/entries");
-        return Array.isArray(res) ? res : [];
-      } catch {
-        return [];
-      }
+      const res = await request<CalendarEntry[]>("/api/v1/calendar/entries");
+      return Array.isArray(res) ? res : [];
     },
     enabled: isSubscribed,
   });
@@ -170,12 +166,14 @@ export function PortalCalendarPage() {
     const list = rawEntriesData || [];
     return list.map((e) => {
       let resolvedType: DeliverableType = "poster";
-      const rawType = (e.type || "").toLowerCase();
+      const rawType = (e.slot_kind || e.type || "").toLowerCase();
       const rawFile = (e.file_type || "").toLowerCase();
 
-      if (rawType.includes("reel") || rawFile.includes("video") || rawFile.includes("mp4")) {
+      if (rawType.includes("reel") || (!rawType && (rawFile.includes("video") || rawFile.includes("mp4")))) {
         resolvedType = "reel";
-      } else if (rawType.includes("story") || rawType.includes("carousel")) {
+      } else if (rawType.includes("carousel")) {
+        resolvedType = "carousel";
+      } else if (rawType.includes("story")) {
         resolvedType = "story";
       } else {
         resolvedType = "poster";
@@ -192,7 +190,9 @@ export function PortalCalendarPage() {
         type: resolvedType,
         format_label: TYPE_CONFIG[resolvedType]?.label || "Post",
         topic: displayTopic,
-        scheduled_time: e.scheduled_time || "11:00 AM",
+        scheduled_time: e.scheduled_at && !Number.isNaN(Date.parse(e.scheduled_at))
+          ? new Date(e.scheduled_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+          : e.scheduled_time || "Time pending",
       };
     });
   }, [rawEntriesData]);
@@ -360,13 +360,17 @@ export function PortalCalendarPage() {
     return <SubscriptionLockedState />;
   }
 
+  if (isEntriesError) {
+    return <div role="alert" className="p-6 text-white">Could not load your calendar. <button onClick={() => refetchEntries()} className="underline">Retry</button></div>;
+  }
+
   return (
     <div className="flex flex-col gap-6 w-full max-w-[1440px] mx-auto px-4 md:px-8 pb-10 font-sans text-white bg-[#0B111C]">
       {/* ── Bento Grid Layout ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
         
         {/* Left Column: Calendar View (xl:col-span-2) */}
-        <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-6 lg:p-8 flex-col">
+        <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-2 sm:p-4 lg:p-6 min-w-0 flex-col">
           {/* Calendar Header */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-3">
@@ -396,6 +400,14 @@ export function PortalCalendarPage() {
             </div>
           </div>
 
+          <div className="flex flex-wrap gap-2 mb-4 text-xs text-slate-300" aria-label="Monthly content totals">
+            {["reel", "poster", "story", "carousel"].map((kind) => {
+              const count = monthEntries.filter(entry => entry.type === kind).length;
+              return count > 0 ? <span key={kind} className="rounded-lg border border-[#2A3446] px-2 py-1">{count} {getTypeConfig(kind).label}{count > 1 ? "s" : ""}</span> : null;
+            })}
+            <span className="px-2 py-1">{monthEntries.length} planned this month</span>
+          </div>
+
           {/* Month Grid */}
           <div className="flex-1 flex flex-col min-h-[500px]">
             {/* Weekday Headers */}
@@ -408,7 +420,7 @@ export function PortalCalendarPage() {
             </div>
 
             {/* Calendar Cells */}
-            <div className="grid grid-cols-7 gap-3 flex-1 auto-rows-fr">
+            <div className="grid grid-cols-7 gap-1 sm:gap-2 flex-1 auto-rows-fr">
               {calendarCells.map((cell) => {
                 if (!cell.isCurrentMonth) {
                   return (
@@ -421,15 +433,13 @@ export function PortalCalendarPage() {
                 const isTodayCell = isCurrentMonth && today.getDate() === day;
                 const isSelected = selectedDate === day;
 
-                const scheduled = dayEntries.length;
-                const approved = dayEntries.filter(e => e.status === "approved" || e.concept_status === "concept_approved").length;
-                const isSlaReview = day === 25;
+
 
                 return (
                   <div
                     key={cell.key}
                     onClick={() => setSelectedDate(day)}
-                    className={`relative rounded-[1.25rem] p-3.5 sm:p-4 transition-all cursor-pointer min-h-[110px] flex flex-col justify-between border-2 group ${
+                    className={`relative rounded-xl p-1 sm:p-2 min-w-0 transition-all cursor-pointer min-h-[110px] flex flex-col justify-between border-2 group ${
                       isSelected 
                         ? "border-blue-500 bg-[#7FA0D6]/15 ring-2 ring-blue-500/20 shadow-lg scale-[1.01] z-10"
                         : isTodayCell
@@ -444,31 +454,15 @@ export function PortalCalendarPage() {
                     </span>
                     
                     <div className="mt-auto flex flex-col gap-1.5 w-full">
-                      {scheduled > 0 && scheduled !== approved && (
-                        <div className="w-full rounded-full bg-blue-900/40 border border-blue-500/30 text-[#BCCCE6] px-2.5 py-1 text-xs font-extrabold truncate text-left shadow-xs">
-                          {scheduled} Deliverables
-                        </div>
-                      )}
-                      {approved > 0 && (
-                        <div className="w-full rounded-full bg-blue-600/30 border border-blue-500/30 text-[#BCCCE6] px-2.5 py-1 text-xs font-extrabold truncate text-left shadow-xs">
-                          {approved} Approved
-                        </div>
-                      )}
-                      {scheduled > 0 && approved === 0 && (
-                         <div className="w-full rounded-full bg-blue-900/40 border border-blue-500/30 text-[#BCCCE6] px-2.5 py-1 text-xs font-extrabold truncate text-left">
-                          {scheduled} Scheduled
-                        </div>
-                      )}
-                      {dayEntries.length === 0 && day === 15 && (
-                         <div className="w-full rounded-full bg-blue-600/30 text-[#BCCCE6] px-2.5 py-0.5 text-[11px] font-black truncate text-left shadow-2xs">
-                          3 Scheduled
-                        </div>
-                      )}
-                      {dayEntries.length === 0 && isSlaReview && (
-                         <div className="w-full rounded-full bg-blue-500/20 text-[#BCCCE6] px-2.5 py-0.5 text-[11px] font-black truncate text-left shadow-2xs">
-                          SLA Review
-                        </div>
-                      )}
+                      {Object.entries(dayEntries.reduce<Record<string, number>>((counts, entry) => {
+                        const label = getTypeConfig(entry.type).label;
+                        counts[label] = (counts[label] || 0) + 1;
+                        return counts;
+                      }, {})).map(([label, count]) => (
+                        <span key={label} className="rounded-md bg-blue-500/15 text-[#BCCCE6] px-0.5 sm:px-1 py-1 text-[9px] sm:text-[11px] font-bold leading-tight break-words" title={`${count} ${label}${count > 1 ? "s" : ""}`}>
+                          {count} {label}{count > 1 ? "s" : ""}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 );

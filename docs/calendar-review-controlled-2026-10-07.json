@@ -1,0 +1,23 @@
+[
+  {
+    "width": 320,
+    "reviewLoadTransition": true,
+    "formatLabels": true,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "reviewLoadTransition": true,
+    "formatLabels": true,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 1920,
+    "reviewLoadTransition": true,
+    "formatLabels": true,
+    "overflow": false,
+    "errors": []
+  }
+]

@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import delete, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import PaymentRequired
+from app.core.errors import Conflict, PaymentRequired
 from app.models.billing import Plan, Subscription
 from app.models.enums import DeliverableType, SubscriptionStatus, TaskStatus, UserRole
 from app.models.ops import AuditLog, Notification
@@ -519,7 +519,12 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
     )).all()
     by_role = {assignment.role: member for assignment, member in existing}
     lead = by_role.get("team_lead")
-    if lead and str(lead.account_status) == "active":
+    if (lead and lead.role == UserRole.TEAM_LEAD and str(lead.account_status) == "active"
+        and lead.agency_id == client.agency_id
+        and all(role in by_role and by_role[role].role == (UserRole.EDITOR if role == "video_editor" else UserRole.DESIGNER)
+                and str(by_role[role].account_status) == "active"
+                and by_role[role].agency_id == client.agency_id
+                for role in ("video_editor", "graphic_designer"))):
         editor = by_role.get("video_editor", lead)
         designer = by_role.get("graphic_designer", lead)
         return {
@@ -535,32 +540,22 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
             MAX(ca.created_at) AS last_assigned_at
         FROM users u
         LEFT JOIN client_assignments ca ON ca.user_id = u.id AND ca.role = 'team_lead'
-        WHERE u.role IN ('team_lead', 'admin')
+        WHERE u.role = 'team_lead'
+          AND u.agency_id IS NOT DISTINCT FROM CAST(:agency_id AS UUID)
           AND u.account_status = 'active'
         GROUP BY u.id, u.full_name, u.email
         ORDER BY 
-            (CASE WHEN u.email LIKE '%creo.agency' THEN 0 ELSE 1 END) ASC,
             active_clients ASC,
-            last_assigned_at ASC NULLS FIRST;
+            last_assigned_at ASC NULLS FIRST, u.id ASC;
     """)
-    tl_res = await db.execute(tl_query)
+    tl_res = await db.execute(tl_query, {"agency_id": client.agency_id})
     tl_candidates = tl_res.fetchall()
 
     if tl_candidates:
         best_tl_id = tl_candidates[0][0]
         best_tl_name = tl_candidates[0][1] or tl_candidates[0][2]
     else:
-        admin_res = await db.execute(
-            select(User.id, User.full_name, User.email)
-            .where(User.role.in_([UserRole.SUPER_ADMIN, UserRole.ADMIN]))
-            .order_by((User.email.like("%creo.agency%")).desc())
-            .limit(1)
-        )
-        row = admin_res.first()
-        if not row:
-            raise RuntimeError("No team lead or admin available for assignment")
-        best_tl_id = row[0]
-        best_tl_name = row[1] or row[2]
+        raise Conflict("No active team lead available in this agency. Configure a creative team before onboarding.", code="POD_UNAVAILABLE")
 
     # 2. Select Video Editor & Graphic Designer by lowest client assignment count
     staff_query = text("""
@@ -571,25 +566,22 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
         JOIN staff_profiles sp ON sp.user_id = u.id
         LEFT JOIN client_assignments ca ON ca.user_id = u.id
         WHERE u.account_status = 'active'
+          AND u.role IN ('editor', 'designer')
+          AND u.agency_id IS NOT DISTINCT FROM CAST(:agency_id AS UUID)
           AND sp.is_accepting_work = TRUE
         GROUP BY u.id, u.full_name, u.email, u.role, sp.department, sp.skills, sp.team_lead_id
         ORDER BY 
-            (CASE WHEN u.email LIKE '%creo.agency' THEN 0 ELSE 1 END) ASC,
-            client_count ASC;
+            client_count ASC, u.id ASC;
     """)
-    staff_rows = (await db.execute(staff_query)).fetchall()
+    staff_rows = (await db.execute(staff_query, {"agency_id": client.agency_id})).fetchall()
 
     def is_video_capable(s: Any) -> bool:
-        skills = [str(sk).lower() for sk in (s[5] or [])]
-        dept = str(s[4]).lower()
         role = str(s[3]).lower()
-        return dept in ["video", "motion", "creative"] or role == "editor" or any("video" in sk or "reel" in sk for sk in skills)
+        return role == "editor"
 
     def is_design_capable(s: Any) -> bool:
-        skills = [str(sk).lower() for sk in (s[5] or [])]
-        dept = str(s[4]).lower()
         role = str(s[3]).lower()
-        return dept in ["graphics", "design", "creative"] or role == "designer" or any("poster" in sk or "figma" in sk or "carousel" in sk for sk in skills)
+        return role == "designer"
 
     # Prefer staff in best_tl_id pod
     pod_staff = [s for s in staff_rows if s[6] == best_tl_id]
@@ -597,6 +589,9 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
 
     best_editor = next((s for s in pool if is_video_capable(s)), None) or next((s for s in staff_rows if is_video_capable(s)), None)
     best_designer = next((s for s in pool if is_design_capable(s)), None) or next((s for s in staff_rows if is_design_capable(s)), None)
+
+    if not best_editor or not best_designer:
+        raise Conflict("An active video editor and designer are required for a dedicated creative pod.", code="POD_UNAVAILABLE")
 
     # Clear old client assignments for idempotency
     await db.execute(delete(ClientAssignment).where(ClientAssignment.client_id == client_id))
@@ -608,7 +603,7 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
 
     if best_editor:
         db.add(ClientAssignment(agency_id=client.agency_id, client_id=client_id, user_id=best_editor[0], role="video_editor", craft_role="video_editor", is_primary=False))
-    if best_designer and (not best_editor or best_designer[0] != best_editor[0]):
+    if best_designer:
         db.add(ClientAssignment(agency_id=client.agency_id, client_id=client_id, user_id=best_designer[0], role="graphic_designer", craft_role="graphic_designer", is_primary=False))
 
     await db.commit()
@@ -688,6 +683,28 @@ def distribute_quota_slots(
     return slots[:quota]
 
 
+def distribute_balanced_slots(
+    start: date, end: date, quota: int, preferred_weekdays: list[int],
+    day_load: dict[date, int],
+) -> list[tuple[date, int]]:
+    """Keep exact quotas while spreading all formats across the eligible days."""
+    days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
+    slots = []
+    for index in range(max(0, quota)):
+        if not days:
+            break
+        target = index * len(days) / max(1, quota)
+        chosen = min(range(len(days)), key=lambda i: (
+            day_load.get(days[i], 0), abs(i - target),
+            days[i].weekday() not in preferred_weekdays,
+        ))
+        day = days[chosen]
+        offset = day_load.get(day, 0)
+        day_load[day] = offset + 1
+        slots.append((day, offset))
+    return slots
+
+
 # --- Part 6: Quota-Driven Calendar Drafting ---
 
 async def draft_month_calendar(
@@ -747,15 +764,11 @@ async def draft_month_calendar(
         buffer_date = sub_start_date + timedelta(days=7)
         start_from = max(month_start, buffer_date)
         if start_from > month_end:
-            start_from = month_start
+            return await draft_month_calendar(db, client_id, month_anchor=buffer_date)
     else:
         start_from = month_start
 
     window_end = month_end
-
-    total_days_in_month = (month_end - month_start).days + 1
-    active_days_in_window = (window_end - start_from).days + 1
-    is_partial_first_month = (start_from > month_start) and (active_days_in_window < total_days_in_month)
 
     # Clean previous unapproved/draft slots strictly for the target month
     await db.execute(
@@ -771,16 +784,13 @@ async def draft_month_calendar(
     brand_dna = client_prof.brand_dna if client_prof and client_prof.brand_dna else {}
 
     created_slots: list[ContentCalendar] = []
+    day_load: dict[date, int] = {}
 
     for kind, base_quota in quotas.items():
         if base_quota <= 0:
             continue
 
-        if is_partial_first_month:
-            # Proportionally allocate deliverables to keep daily pod workload manageable and matching the plan
-            quota = max(1, round(base_quota * (active_days_in_window / total_days_in_month)))
-        else:
-            quota = base_quota
+        quota = base_quota
 
         tmpl = template.get(kind, DEFAULT_TEMPLATE.get(kind, {"days": [1, 3], "time": "19:30"}))
         preferred_weekdays = tmpl.get("days", [1, 3])
@@ -788,7 +798,7 @@ async def draft_month_calendar(
         hour, minute = [int(p) for p in time_str.split(":")]
 
         # Distribute EXACTLY `quota` publication slots
-        slots_distribution = distribute_quota_slots(start_from, window_end, quota, preferred_weekdays)
+        slots_distribution = distribute_balanced_slots(start_from, window_end, quota, preferred_weekdays, day_load)
 
         # 70/30 Anchor + Flex partition
         anchor_quota = max(1, round(quota * 0.7))
@@ -907,7 +917,7 @@ async def approve_calendar_month(
 
         sla_due_at = datetime.combine(task_due_date, time(hour=18), tzinfo=timezone.utc)
 
-        deliv_type = DeliverableType.REEL if kind == "reel" else DeliverableType.CAROUSEL if kind == "carousel" else DeliverableType.STATIC_POST
+        deliv_type = {"reel": DeliverableType.REEL, "carousel": DeliverableType.CAROUSEL, "story": DeliverableType.STORY}.get(kind, DeliverableType.STATIC_POST)
 
         default_assignee = editor_id if kind == "reel" else designer_id
         if not default_assignee:

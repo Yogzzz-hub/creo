@@ -38,13 +38,12 @@ const ACCOUNT_NAV = [
   { label: "Settings", href: "/portal/account", icon: Settings },
 ];
 
-function isActive(href: string, pathname: string) {
-  if (href === "/portal") return pathname === "/portal" || pathname === "/portal/";
-  // For query-string links like ?tab=brand, match base path only
-  const basePath = href.split("?")[0] || href;
-  return pathname.startsWith(basePath) && href === basePath
-    ? true
-    : pathname + window.location.search === href;
+function isActive(href: string, pathname: string, search: string) {
+  const [path, query] = href.split("?");
+  if (path === "/portal") return pathname === "/portal" || pathname === "/portal/";
+  if (query) return pathname === path && new URLSearchParams(search).get("tab") === new URLSearchParams(query).get("tab");
+  if (path === "/portal/account") return pathname === path && !new URLSearchParams(search).has("tab");
+  return pathname === path || pathname.startsWith(path + "/");
 }
 
 /* ── Sidebar Component ── */
@@ -120,7 +119,7 @@ export function PortalSidebarNew() {
           {/* Main Links */}
           <div className="space-y-0.5">
             {MAIN_NAV.map((item) => {
-              const active = isActive(item.href, location.pathname);
+              const active = isActive(item.href, location.pathname, location.search);
               const Icon = item.icon;
               return (
                 <Link
@@ -151,7 +150,7 @@ export function PortalSidebarNew() {
             </p>
             <div className="space-y-0.5">
               {BRAND_NAV.map((item) => {
-                const active = isActive(item.href, location.pathname);
+                const active = isActive(item.href, location.pathname, location.search);
                 const Icon = item.icon;
                 return (
                   <Link
@@ -178,7 +177,7 @@ export function PortalSidebarNew() {
             </p>
             <div className="space-y-0.5">
               {ACCOUNT_NAV.map((item) => {
-                const active = isActive(item.href, location.pathname);
+                const active = isActive(item.href, location.pathname, location.search);
                 const Icon = item.icon;
                 return (
                   <Link

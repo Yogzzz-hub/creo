@@ -16,6 +16,10 @@ from app.models.user import ClientProfile, User
 from app.routers.admin import FixClientPlanRequest, fix_client_plan
 from app.core.errors import PaymentRequired
 from app.services.dispatch_engine import draft_month_calendar, distribute_quota_slots
+from app.services.dispatch_engine import assign_pod, distribute_balanced_slots, approve_calendar_month
+from app.core.errors import Conflict
+from app.models.enums import DeliverableType
+from app.models.work import Task
 
 
 def workflow(completed_at=None, used=0):
@@ -143,3 +147,71 @@ async def test_production_registration_cannot_claim_email_sent_when_provider_fai
             await _deliver_otp_or_raise("workflow@example.com", "123456")
     assert error.value.status_code == 503
     logger.warning.assert_not_called()
+
+
+def test_daily_cadence_spreads_all_formats_without_losing_entitlement():
+    loads = {}
+    slots = []
+    for quota in (12, 20, 30):
+        slots += distribute_balanced_slots(date(2026, 10, 14), date(2026, 10, 31), quota, [1, 3], loads)
+    assert len(slots) == 62
+    assert len(loads) == 18
+    assert max(loads.values()) - min(loads.values()) <= 1
+    assert len(set(slots)) == 62
+
+
+@pytest.mark.asyncio
+async def test_initial_month_does_not_silently_reduce_paid_quotas():
+    sub = SimpleNamespace(agency_id=None, created_at=datetime(2026, 10, 7, tzinfo=UTC))
+    plan = SimpleNamespace(reel_quota=12, poster_quota=20, story_quota=30)
+    db = SimpleNamespace(execute=AsyncMock(side_effect=[SimpleNamespace(first=lambda: (sub, plan)), None]),
+                         get=AsyncMock(return_value=None), add=MagicMock(), commit=AsyncMock())
+    slots = await draft_month_calendar(db, uuid.uuid4(), date(2026, 10, 1))
+    assert len(slots) == 62
+    assert min(slot.publish_date for slot in slots) == date(2026, 10, 14)
+    assert len({slot.publish_date for slot in slots}) == 18
+
+
+@pytest.mark.asyncio
+async def test_admin_assignment_is_not_reused_as_creative_team_lead():
+    agency_id = uuid.uuid4()
+    client = SimpleNamespace(agency_id=agency_id)
+    admin = SimpleNamespace(role=UserRole.ADMIN, account_status="active", agency_id=agency_id)
+    db = SimpleNamespace(execute=AsyncMock(side_effect=[
+        SimpleNamespace(scalar_one=lambda: client),
+        SimpleNamespace(all=lambda: [(SimpleNamespace(role="team_lead"), admin)]),
+        SimpleNamespace(fetchall=lambda: []),
+    ]), add=MagicMock(), commit=AsyncMock())
+    with pytest.raises(Conflict) as error:
+        await assign_pod(db, uuid.uuid4())
+    assert error.value.code == "POD_UNAVAILABLE"
+    db.add.assert_not_called()
+    db.commit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_story_calendar_slot_materializes_story_task():
+    client_id = uuid.uuid4()
+    slot = SimpleNamespace(agency_id=None, publish_date=date(2026, 11, 10), slot_kind="story",
+                           concept_status="approved", blueprint=None)
+    results = [SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: [slot])),
+               SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: []))]
+    db = SimpleNamespace(execute=AsyncMock(side_effect=results), add=MagicMock(), commit=AsyncMock())
+    await approve_calendar_month(db, client_id, dispatch_immediately=False)
+    tasks = [call.args[0] for call in db.add.call_args_list if isinstance(call.args[0], Task)]
+    assert len(tasks) == 1
+    assert tasks[0].deliverable_type == DeliverableType.STORY
+
+
+@pytest.mark.asyncio
+async def test_completed_onboarding_retry_revalidates_legacy_pod():
+    from app.services.onboarding_service import complete_onboarding
+
+    client_id = uuid.uuid4()
+    profile = SimpleNamespace(onboarding_completed_at=datetime(2026, 10, 1, tzinfo=UTC))
+    db = SimpleNamespace(execute=AsyncMock(return_value=SimpleNamespace(scalar_one_or_none=lambda: profile)))
+    with patch("app.services.dispatch_engine.assign_pod", new=AsyncMock(side_effect=Conflict("Missing genuine lead", code="POD_UNAVAILABLE"))) as allocator:
+        with pytest.raises(Conflict) as error:
+            await complete_onboarding(db, client_id)
+    assert error.value.code == "POD_UNAVAILABLE"
+    allocator.assert_awaited_once_with(db, client_id)

@@ -14,7 +14,7 @@ export function PortalDeliverablesPage() {
   const clientId = user?.id || "00000000-0000-0000-0000-000000000001";
 
   // Query deliverables (only once the workspace is unlocked)
-  const { data: deliverablesData, isLoading } = useQuery({
+  const { data: deliverablesData, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["portal", "deliverables", clientId],
     queryFn: () => fetchPortalDeliverables(clientId),
     enabled: gate.isComplete,
@@ -36,21 +36,6 @@ export function PortalDeliverablesPage() {
     }
   }, [deliverables, selectedId]);
 
-  if (!gate.isReady || (gate.isComplete && isLoading)) {
-    return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Deliverables Queue" />;
-  }
-
-  if (!gate.isComplete) {
-    return (
-      <div className="flex items-center justify-center py-6 sm:py-10">
-        <SubscriptionLockedState
-          title="Deliverables Queue Locked"
-          description="Your creative deliverables queue and sign-off docks will activate as soon as your workspace setup is complete."
-        />
-      </div>
-    );
-  }
-
   const selectedItem: any = deliverables.find((d: any) => d.id === selectedId);
 
   const showToast = (msg: string) => {
@@ -67,6 +52,7 @@ export function PortalDeliverablesPage() {
       queryClient.invalidateQueries({ queryKey: ["portal", "deliverables", clientId] });
       showToast("Approved! Assets synced.");
     },
+    onError: (error: Error) => showToast(error.message || "Approval failed. Please retry."),
   });
 
   const requestChangesMutation = useMutation({
@@ -78,6 +64,7 @@ export function PortalDeliverablesPage() {
       showToast("Revision requested.");
       setCommentText("");
     },
+    onError: (error: Error) => showToast(error.message || "Revision request failed. Please retry."),
   });
 
   const handleApprove = () => {
@@ -105,6 +92,25 @@ export function PortalDeliverablesPage() {
         },
       ]
     : [];
+
+  if (!gate.isReady || (gate.isComplete && isLoading)) {
+    return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Deliverables Queue" />;
+  }
+
+  if (!gate.isComplete) {
+    return (
+      <div className="flex items-center justify-center py-6 sm:py-10">
+        <SubscriptionLockedState
+          title="Deliverables Queue Locked"
+          description="Your creative deliverables queue and sign-off docks will activate as soon as your workspace setup is complete."
+        />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return <div role="alert" className="p-6 text-white">{error.message || "Could not load deliverables."} <button className="underline" onClick={() => refetch()}>Retry</button></div>;
+  }
 
   if (isLoading && deliverables.length === 0) {
     return (
