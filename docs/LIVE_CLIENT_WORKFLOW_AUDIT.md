@@ -50,6 +50,30 @@ or payment mutation was performed. Authentication is the current live-test gate.
 
 Controlled evidence: `workflow-auth-controlled-2026-10-07.json`.
 
+## Deployment verification
+
+Commit `dc644c76` was pushed to `origin/main`. The public frontend's loaded
+AuthPage bundle contains the new terms-validation marker. The live Singapore
+API's OpenAPI description contains the updated plan-endpoint prerequisite
+description. Both deployments have therefore picked up this change. This is
+deployment evidence, not an authenticated end-to-end business-flow pass.
+
+## Additional unresolved blockers found during review
+
+- The reachable `MemberTaskBoardPage` file picker stores an `uploaded://filename`
+  placeholder. Its QA submission, direct dispatch, and new-task handlers update
+  local React state and display success without a backend mutation. Reloading
+  cannot establish persistence of those actions. A genuine media/QA flow still
+  needs implementation and authenticated storage checks.
+- `admin.py` registers duplicate upload/list/create deliverable paths. The active
+  upload implementation writes to ephemeral local disk, while the separate R2
+  upload-intent path expects a staff client scope that normal JWT staff sessions
+  do not populate. Choosing and validating one production upload path is still
+  required; a fake browser success must not count as an upload test.
+- The admin status-update implementation directly assigns deliverable status,
+  bypassing the declared state-machine transitions. Role/assignment enforcement
+  and cross-client denial require targeted tests before this is a validated QA flow.
+
 ## Still required for end-to-end completion
 
 1. Verify a new client through an actual inbox/spam OTP and sign in again.
