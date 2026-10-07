@@ -105,3 +105,8 @@ deployment evidence, not an authenticated end-to-end business-flow pass.
 
 The complete client → team → upload → client review workflow has **not passed**
 this run. Local fixes and controlled tests must not be presented as live completion.
+
+
+## Ordered follow-up audit
+
+See [WORKFLOW_VERIFICATION_2026-10-07.md](WORKFLOW_VERIFICATION_2026-10-07.md) for the requested ten-step checklist, exact reproductions, live read-only probes, current role/API tests, fixed calendar authorization/data bugs and remaining authenticated checks. The earlier claims that negotiation acceptance does not update pricing and that initial scheduling is prorated are superseded by the fixes documented in CALENDAR_WORKFLOW_AND_FIXES.md. Full authenticated live completion remains blocked by working role credentials and a retrievable OTP.

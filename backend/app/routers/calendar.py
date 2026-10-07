@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+import asyncio
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
@@ -10,6 +11,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rbac import Actor, get_current_actor
+from app.core.client_scope import ensure_client_access
+from app.core.errors import Conflict, NotFound
 from app.db.session import get_db
 from app.models.enums import UserRole
 from app.models.work import ContentCalendar, Deliverable, Task
@@ -24,11 +27,8 @@ async def get_calendar_entries(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict[str, Any]]:
     """Retrieve scheduled and published content calendar entries with format metadata."""
-    if actor.role == "client":
-        target_client_id = actor.client_id or actor.user_id
-    else:
-        actual_client_id = client_id if isinstance(client_id, uuid.UUID) else None
-        target_client_id = actual_client_id or actor.client_id or actor.user_id
+    target_client_id = client_id or actor.client_id or actor.user_id
+    await ensure_client_access(db, actor, target_client_id)
 
     # If client role, require active, unexpired subscription and completed onboarding
     if actor.role == "client":
@@ -73,7 +73,12 @@ async def get_calendar_entries(
     calendar_list: list[dict[str, Any]] = []
     seen_deliverable_ids: set[uuid.UUID] = set()
 
+    from app.services.deliverable_workflow import CLIENT_VISIBLE_STATUSES
+    from app.services.storage_service import resolve_media_url
     for cal, d, d_type in cal_rows:
+        if actor.role == UserRole.CLIENT and d and d.status not in CLIENT_VISIBLE_STATUSES:
+            d = None
+        media_url = await asyncio.to_thread(resolve_media_url, d.file_url) if d else None
         if d:
             seen_deliverable_ids.add(d.id)
         
@@ -114,9 +119,7 @@ async def get_calendar_entries(
         else:
             topic_text = f"Brand {format_label} · Scheduled Post"
 
-        status_val = "scheduled"
-        if d:
-            status_val = "approved" if d.status.value == "approved" else "scheduled" if d.status.value in ["draft", "pending_approval"] else d.status.value
+        status_val = d.status.value if d else (cal.status or "draft")
 
         calendar_list.append({
             "id": str(cal.id),
@@ -137,10 +140,10 @@ async def get_calendar_entries(
             "concept_status": getattr(cal, "concept_status", "approved"),
             "blueprint": cal.blueprint,
             "selected_hook": cal.selected_hook,
-            "raw_status": d.status.value if d else "scheduled",
+            "raw_status": d.status.value if d else (cal.status or "draft"),
             "version": d.version if d else 1,
-            "thumbnail_url": d.file_url if d else None,
-            "file_url": d.file_url if d else None,
+            "thumbnail_url": media_url,
+            "file_url": media_url,
             "file_type": d.file_type if d else ("video/mp4" if type_str == "reel" else "image/jpeg"),
             "caption": caption or topic_text,
             "permalink": d.ig_permalink if d else None,
@@ -153,8 +156,11 @@ async def get_calendar_entries(
         .where(Deliverable.client_id == target_client_id)
         .order_by(Deliverable.scheduled_at.asc().nulls_last(), Deliverable.created_at.asc())
     )
+    if actor.role == UserRole.CLIENT:
+        deliv_stmt = deliv_stmt.where(Deliverable.status.in_(CLIENT_VISIBLE_STATUSES))
     deliv_rows = (await db.execute(deliv_stmt)).all()
     for d, d_type in deliv_rows:
+        media_url = await asyncio.to_thread(resolve_media_url, d.file_url)
         if d.id in seen_deliverable_ids:
             continue
         sched_dt = d.scheduled_at or d.created_at
@@ -179,14 +185,14 @@ async def get_calendar_entries(
             "date": sched_dt.strftime("%Y-%m-%d"),
             "scheduled_at": sched_dt.isoformat(),
             "scheduled_time": sched_dt.strftime("%I:%M %p"),
-            "status": "approved" if d.status.value == "approved" else "scheduled" if d.status.value in ["draft", "pending_approval"] else d.status.value,
+            "status": d.status.value,
             "calendar_status": "approved",
             "is_locked": True,
             "slot_kind": type_str,
             "raw_status": d.status.value,
             "version": d.version,
-            "thumbnail_url": d.file_url,
-            "file_url": d.file_url,
+            "thumbnail_url": media_url,
+            "file_url": media_url,
             "file_type": d.file_type,
             "caption": topic_text,
             "permalink": d.ig_permalink,
@@ -203,10 +209,8 @@ async def draft_calendar_month_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Generate named content slots with shared daily load and full subscription quotas."""
-    if actor.role == "client" or actor.role == UserRole.CLIENT:
-        target_id = actor.client_id or actor.user_id
-    else:
-        target_id = client_id or actor.client_id or actor.user_id
+    target_id = client_id or actor.client_id or actor.user_id
+    await ensure_client_access(db, actor, target_id, write=True)
     from app.services.dispatch_engine import draft_month_calendar
 
     month_anchor = None
@@ -237,10 +241,8 @@ async def rebalance_calendar_month_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Rebalance calendar deliverables across the month to ensure manageable daily pod workload and exact quota match."""
-    if actor.role == "client" or actor.role == UserRole.CLIENT:
-        target_id = actor.client_id or actor.user_id
-    else:
-        target_id = client_id or actor.client_id or actor.user_id
+    target_id = client_id or actor.client_id or actor.user_id
+    await ensure_client_access(db, actor, target_id, write=True)
     from app.services.dispatch_engine import rebalance_month_calendar
 
     month_anchor = None
@@ -270,10 +272,8 @@ async def approve_draft_calendar_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Approve draft calendar slots, lock schedule, materialize tasks, and dispatch the rolling 10-day window."""
-    if actor.role == "client" or actor.role == UserRole.CLIENT:
-        target_id = actor.client_id or actor.user_id
-    else:
-        target_id = client_id or actor.client_id or actor.user_id
+    target_id = client_id or actor.client_id or actor.user_id
+    await ensure_client_access(db, actor, target_id, write=True)
     from app.services.dispatch_engine import approve_calendar_month
 
     res = await approve_calendar_month(db, target_id, actor_id=actor.user_id)
@@ -307,6 +307,7 @@ async def approve_concept_endpoint(
 ) -> dict[str, Any]:
     """Tier 2: Client concept approval gate. Selects chosen hook A/B/C and unlocks task production."""
     target_id = client_id or actor.client_id or actor.user_id
+    await ensure_client_access(db, actor, target_id, write=True)
     slot = await db.get(ContentCalendar, slot_id)
     if not slot or slot.client_id != target_id:
         from fastapi import HTTPException
@@ -315,15 +316,15 @@ async def approve_concept_endpoint(
     slot.selected_hook = payload.selected_hook
     slot.concept_status = "concept_approved"
 
-    # Also sync to any existing task for this slot (match by type + date proximity)
+    # Only sync the task linked to this exact slot; dates/types are not ownership.
     from app.models.enums import DeliverableType, TaskStatus
     kind_to_type = {"reel": DeliverableType.REEL, "carousel": DeliverableType.CAROUSEL, "story": DeliverableType.STORY}
     slot_deliv_type = kind_to_type.get(slot.slot_kind or "", DeliverableType.STATIC_POST)
     task_stmt = (
         select(Task)
         .where(Task.client_id == target_id)
+        .where(Task.calendar_id == slot.id)
         .where(Task.deliverable_type == slot_deliv_type)
-        .where(Task.due_date <= slot.publish_date)
         .where(Task.status.notin_([TaskStatus.COMPLETED]))
         .order_by(Task.due_date.desc())
         .limit(1)
@@ -352,6 +353,7 @@ async def reroll_concept_endpoint(
     """Tier 2: Re-roll angle for a slot concept under capped daily quota (5 re-rolls/day)."""
     from fastapi import HTTPException
     target_id = client_id or actor.client_id or actor.user_id
+    await ensure_client_access(db, actor, target_id, write=True)
     slot = await db.get(ContentCalendar, slot_id)
     if not slot or slot.client_id != target_id:
         raise HTTPException(status_code=404, detail="Calendar slot not found")
@@ -400,6 +402,7 @@ async def propose_flex_fill_endpoint(
     """Tier 3: Hot-swap an open flex slot with a trending topic or announcement."""
     from fastapi import HTTPException
     target_id = client_id or actor.client_id or actor.user_id
+    await ensure_client_access(db, actor, target_id, write=True)
     from app.services.dispatch_engine import propose_flex_fill
 
     slot = await propose_flex_fill(db, target_id, slot_id, theme=payload.theme, urgency=payload.urgency)
@@ -431,6 +434,15 @@ from app.services.calendar_engine import (
     request_shoot_reschedule,
     resolve_publish_at,
 )
+
+
+
+async def _check_resource_scope(db, actor, model, resource_id, *, write=True, allow_client=False):
+    resource = await db.get(model, resource_id)
+    if resource is None:
+        raise NotFound("Calendar resource not found", code="CALENDAR_NOT_FOUND")
+    await ensure_client_access(db, actor, resource.client_id, write=write, allow_client=allow_client)
+    return resource
 
 ops_router = APIRouter(prefix="/ops", tags=["Calendar Ops"])
 portal_router = APIRouter(prefix="/portal", tags=["Calendar Portal"])
@@ -481,6 +493,7 @@ async def ops_edit_brand_dna(
     actor: Actor = Depends(get_current_actor),
 ) -> dict[str, Any]:
     """Account Manager corrects Brand DNA, writes v+1, invalidates blueprint cache, and logs audit diff."""
+    await ensure_client_access(db, actor, client_id, write=True, allow_client=False)
     from app.services import brand_dna
     dna_dict = payload.get("brand_dna", payload)
     validated = await brand_dna.edit_brand_dna_ops(db, client_id, dna_dict, actor)
@@ -500,6 +513,7 @@ async def ops_regenerate_brand_dna(
     actor: Actor = Depends(get_current_actor),
 ) -> dict[str, Any]:
     """Account Manager triggers Brand DNA regeneration, capped per day."""
+    await ensure_client_access(db, actor, client_id, write=True, allow_client=False)
     from app.services import brand_dna
     dna = await brand_dna.regenerate_brand_dna_ops(db, client_id, actor)
     return {
@@ -519,6 +533,7 @@ async def ops_generate_cycle(
     actor: Actor = Depends(get_current_actor),
 ) -> dict[str, Any]:
     """Generate draft cycle, shoot days, and slots under deterministic rules."""
+    await ensure_client_access(db, actor, client_id, write=True, allow_client=False)
     req = payload or GenerateCycleRequest()
     cycle, shoot_days, slots = await generate_client_cycle(
         db,
@@ -560,6 +575,7 @@ async def ops_get_cycle(
     actor: Actor = Depends(get_current_actor),
 ) -> dict[str, Any]:
     """Fetch full cycle draft with all slots and shoot days for AM editing."""
+    await _check_resource_scope(db, actor, ClientCycle, cycle_id, write=False, allow_client=False)
     stmt = (
         select(ClientCycle)
         .options(
@@ -620,6 +636,7 @@ async def ops_move_slot(
     actor: Actor = Depends(get_current_actor),
 ) -> dict[str, Any]:
     """AM moves or updates a single draft slot."""
+    await _check_resource_scope(db, actor, ContentCalendar, slot_id, write=True, allow_client=False)
     from fastapi import HTTPException
 
     slot = await db.get(ContentCalendar, slot_id)
@@ -629,6 +646,9 @@ async def ops_move_slot(
     cycle = await db.get(ClientCycle, cycle_id)
     if not cycle or cycle.status != "draft":
         raise HTTPException(status_code=400, detail="Only draft cycle slots can be modified.")
+
+    if slot.is_locked or slot.deliverable_id:
+        raise Conflict("Locked or uploaded slots cannot be moved", code="SLOT_LOCKED")
 
     policy_row = await get_or_create_calendar_policy(db, slot.client_id)
     tz_name = policy_row.timezone or "Asia/Kolkata"
@@ -658,12 +678,15 @@ async def ops_publish_draft(
     actor: Actor = Depends(get_current_actor),
 ) -> dict[str, Any]:
     """Send draft cycle to the client (transitions to 'client_review')."""
+    await _check_resource_scope(db, actor, ClientCycle, cycle_id, write=True, allow_client=False)
     from fastapi import HTTPException
 
     cycle = await db.get(ClientCycle, cycle_id)
     if not cycle:
         raise HTTPException(status_code=404, detail="Cycle not found")
 
+    if cycle.status not in {"draft", "client_review"}:
+        raise Conflict("Only a draft cycle can be sent for review", code="CYCLE_LOCKED")
     cycle.status = "client_review"
     await db.commit()
     return {"status": "client_review", "cycle_id": str(cycle.id)}
@@ -677,6 +700,7 @@ async def ops_decide_shoot(
     actor: Actor = Depends(get_current_actor),
 ) -> dict[str, Any]:
     """Team decides on reschedule request with cascade and 48h guardrail."""
+    await _check_resource_scope(db, actor, ShootDay, shoot_id, write=True, allow_client=False)
     shoot = await decide_shoot_reschedule(
         db,
         shoot_id=shoot_id,
@@ -701,6 +725,7 @@ async def ops_complete_shoot(
     actor: Actor = Depends(get_current_actor),
 ) -> dict[str, Any]:
     """Mark shoot completed and record footage intake timestamp."""
+    await _check_resource_scope(db, actor, ShootDay, shoot_id, write=True, allow_client=False)
     shoot = await complete_shoot_day(
         db,
         shoot_id=shoot_id,
@@ -722,6 +747,7 @@ async def portal_get_calendar(
     actor: Actor = Depends(get_current_actor),
 ) -> dict[str, Any]:
     """Client portal view of current content calendar, shoot days, and carried credits."""
+    await ensure_client_access(db, actor, actor.client_id or actor.user_id)
     target_id = actor.client_id or actor.user_id
 
     # 1. Fetch active, client_review, or latest cycle
@@ -805,6 +831,7 @@ async def portal_approve_cycle(
     actor: Actor = Depends(get_current_actor),
 ) -> dict[str, Any]:
     """Client approves calendar cycle, locking slots and generating production tasks."""
+    await _check_resource_scope(db, actor, ClientCycle, cycle_id, write=True, allow_client=True)
     return await approve_cycle(db, cycle_id, actor)
 
 
@@ -816,7 +843,13 @@ async def portal_comment_cycle(
     actor: Actor = Depends(get_current_actor),
 ) -> dict[str, Any]:
     """Client leaves feedback or comment on cycle or individual slot."""
+    cycle = await _check_resource_scope(db, actor, ClientCycle, cycle_id, write=True, allow_client=True)
+    if payload.slot_id:
+        slot = await db.get(ContentCalendar, payload.slot_id)
+        if not slot or slot.cycle_id != cycle_id or slot.client_id != cycle.client_id:
+            raise NotFound("Slot not found in this cycle", code="CALENDAR_NOT_FOUND")
     from app.models.ops import Notification
+    from app.models.work import ClientAssignment
 
     notif = Notification(
         id=uuid.uuid4(),
@@ -825,6 +858,13 @@ async def portal_comment_cycle(
         message=f"Comment on cycle {cycle_id}: {payload.body}",
     )
     db.add(notif)
+    leads = (await db.execute(select(ClientAssignment.user_id).where(
+        ClientAssignment.client_id == cycle.client_id, ClientAssignment.role == "team_lead"
+    ))).scalars().all()
+    for lead_id in set(leads) - {actor.user_id}:
+        db.add(Notification(user_id=lead_id, agency_id=getattr(cycle, "agency_id", None),
+            title="Client Calendar Feedback", message=f"Comment on cycle {cycle_id}: {payload.body}",
+            link=f"/team-lead/clients/{cycle.client_id}"))
     await db.commit()
     return {"status": "comment_received", "cycle_id": str(cycle_id), "slot_id": str(payload.slot_id) if payload.slot_id else None}
 
@@ -837,6 +877,7 @@ async def portal_request_reschedule(
     actor: Actor = Depends(get_current_actor),
 ) -> dict[str, Any]:
     """Client requests a shoot day reschedule."""
+    await _check_resource_scope(db, actor, ShootDay, shoot_id, write=True, allow_client=True)
     target_id = actor.client_id or actor.user_id
     shoot = await request_shoot_reschedule(
         db,

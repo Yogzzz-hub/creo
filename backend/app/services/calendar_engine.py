@@ -22,7 +22,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.errors import Conflict, Forbidden, NotFound, ValidationError
+from app.core.errors import Conflict, Forbidden, NotFound, PaymentRequired, ValidationError
 from app.core.logging import get_logger
 from app.core.rbac import Actor
 from app.models.billing import Plan, Subscription
@@ -32,7 +32,7 @@ from app.models.calendar import (
     ClientCycle,
     ShootDay,
 )
-from app.models.enums import DeliverableType, TaskStatus, UserRole
+from app.models.enums import DeliverableType, SubscriptionStatus, TaskStatus, UserRole
 from app.models.ops import AuditLog, Notification
 from app.models.user import ClientProfile, User
 from app.models.work import ClientAssignment, ContentCalendar, Task
@@ -699,6 +699,27 @@ def distribute_sequenced_slots(
 # §3 & §4: CYCLE GENERATION & SNAPSHOT FREEZING
 # ==============================================================================
 
+async def _clear_replaceable_draft(db: AsyncSession, client_id: uuid.UUID, cycle_number: int, *, replace_draft: bool = False) -> None:
+    # Lock the client even when no cycle exists, serializing concurrent generations.
+    await db.execute(select(User.id).where(User.id == client_id).with_for_update())
+    cycle = (await db.execute(select(ClientCycle).where(
+        ClientCycle.client_id == client_id, ClientCycle.cycle_number == cycle_number
+    ).with_for_update())).scalar_one_or_none()
+    if cycle is None:
+        return
+    if cycle.status != "draft":
+        raise Conflict("An approved or submitted cycle cannot be regenerated", code="CYCLE_LOCKED")
+    if not replace_draft:
+        raise Conflict("This cycle already exists; refresh the calendar", code="CYCLE_EXISTS")
+    protected = (await db.execute(select(ContentCalendar.id).where(
+        ContentCalendar.cycle_id == cycle.id,
+        (ContentCalendar.is_locked.is_(True)) | (ContentCalendar.deliverable_id.is_not(None))
+    ).limit(1))).scalar_one_or_none()
+    if protected is not None:
+        raise Conflict("This draft already contains locked or uploaded work", code="CYCLE_LOCKED")
+    await db.execute(delete(ClientCycle).where(ClientCycle.id == cycle.id, ClientCycle.status == "draft"))
+
+
 async def generate_client_cycle(
     db: AsyncSession,
     client_id: uuid.UUID,
@@ -707,6 +728,7 @@ async def generate_client_cycle(
     plan_id: uuid.UUID | None = None,
     carryover_credits: dict[str, int] | None = None,
     created_by: uuid.UUID | None = None,
+    replace_draft: bool = False,
 ) -> tuple[ClientCycle, list[ShootDay], list[ContentCalendar]]:
     """Generate a draft client cycle with deterministic slots, frozen snapshots, and shoot days."""
     carryover = carryover_credits or {}
@@ -721,30 +743,20 @@ async def generate_client_cycle(
             from fastapi import HTTPException
             raise HTTPException(403, "Agency account is past due. New cycle generation is blocked.")
 
-    # 1. Fetch Plan
-    plan_row: Plan | None = None
-    if plan_id:
-        plan_row = await db.get(Plan, plan_id)
-    if not plan_row:
-        # Fall back to client's active subscription plan
-        sub_stmt = (
-            select(Subscription, Plan)
-            .join(Plan, Subscription.plan_id == Plan.id)
-            .where(Subscription.client_id == client_id)
-            .order_by(Subscription.created_at.desc())
-            .limit(1)
-        )
-        sub_res = (await db.execute(sub_stmt)).first()
-        if sub_res:
-            plan_row = sub_res[1]
-
-    if not plan_row:
-        # Fall back to starter
-        plan_res = await db.execute(select(Plan).where(Plan.name == "starter").limit(1))
-        plan_row = plan_res.scalar_one_or_none()
-        if not plan_row:
-            # Fall back to any active plan
-            plan_row = (await db.execute(select(Plan).limit(1))).scalar_one()
+    # Entitlement comes from this client's valid subscription, never a fallback plan.
+    sub_stmt = (
+        select(Subscription, Plan).join(Plan, Subscription.plan_id == Plan.id)
+        .where(Subscription.client_id == client_id)
+        .where(Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]))
+        .where(Subscription.current_period_end > datetime.now(UTC))
+        .order_by(Subscription.created_at.desc()).limit(1)
+    )
+    sub_res = (await db.execute(sub_stmt)).first()
+    if not sub_res:
+        raise PaymentRequired("Active subscription required before calendar generation", code="PAYMENT_REQUIRED")
+    plan_row = sub_res[1]
+    if plan_id and plan_id != plan_row.id:
+        raise Conflict("Update the client's subscription before selecting a different calendar plan", code="PLAN_MISMATCH")
 
     shoot_days_count = 2 if plan_row.name.lower() in ("scale", "enterprise", "pro") else 1
     base_quotas = {"poster": plan_row.poster_quota, "reel": plan_row.reel_quota, "story": plan_row.story_quota}
@@ -854,13 +866,7 @@ async def generate_client_cycle(
         },
     }
 
-    # Clean existing draft cycle for this client and cycle_number
-    await db.execute(
-        delete(ClientCycle).where(
-            ClientCycle.client_id == client_id,
-            ClientCycle.cycle_number == cycle_number,
-        )
-    )
+    await _clear_replaceable_draft(db, client_id, cycle_number, replace_draft=replace_draft)
 
     # Create ClientCycle
     cycle = ClientCycle(
@@ -1399,7 +1405,7 @@ async def admin_regenerate_cycle(
         raise ValidationError("Only draft cycles can be regenerated.")
 
     res = await generate_client_cycle(
-        db, client_id, cycle_number, cycle.start_date, plan_id=cycle.plan_id, created_by=actor.user_id if actor else None
+        db, client_id, cycle_number, cycle.start_date, plan_id=cycle.plan_id, created_by=actor.user_id if actor else None, replace_draft=True
     )
 
     audit = AuditLog(
