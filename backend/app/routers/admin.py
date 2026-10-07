@@ -3199,6 +3199,7 @@ async def cancel_leave_request(
 # --- Content Calendar Endpoints ---
 
 @router.get("/calendar")
+@dashboard_cached(ttl=5)
 async def get_admin_calendar(
     client_id: uuid.UUID | None = None,
     month: int | None = None,

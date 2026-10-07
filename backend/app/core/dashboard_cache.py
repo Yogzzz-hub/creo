@@ -12,12 +12,14 @@ import json
 from collections.abc import Awaitable, Callable
 from functools import wraps
 from typing import Any, get_type_hints
+from weakref import WeakValueDictionary
 
 from fastapi.encoders import jsonable_encoder
 
 from app.core.cache import get_redis
 
 GENERATION_KEY = "creo:dashboard:v1:generation"
+_locks: WeakValueDictionary[str, asyncio.Lock] = WeakValueDictionary()
 _PUBLISH = """
 if (redis.call('GET', KEYS[1]) or '0') == ARGV[1] then
     return redis.call('SET', KEYS[2], ARGV[2], 'EX', ARGV[3])
@@ -80,12 +82,35 @@ def dashboard_cached(ttl: int = 15) -> Callable[[Callable[..., Awaitable[Any]]],
                     pass
             return result
 
+        @wraps(endpoint)
+        async def serialized(*args: Any, **kwargs: Any) -> Any:
+            bound = signature.bind(*args, **kwargs)
+            bound.apply_defaults()
+            actor = bound.arguments.get("actor")
+            if actor is None or not hasattr(actor, "user_id"):
+                return await wrapped(*args, **kwargs)
+            identity = json.dumps([endpoint.__module__, endpoint.__name__,
+                str(actor.user_id), str(actor.agency_id), str(actor.client_id),
+                str(actor.role), actor.email,
+                jsonable_encoder({k: v for k, v in bound.arguments.items()
+                                  if k not in ("actor", "db")})], sort_keys=True)
+            key = hashlib.sha256(identity.encode()).hexdigest()
+            lock = _locks.get(key)
+            if lock is None:
+                lock = asyncio.Lock()
+                _locks[key] = lock
+            # Recheck the shared snapshot after waiting. Weak references keep
+            # completed keys from accumulating. Separate processes may still
+            # perform one refresh each; no distributed lock can strand a reader.
+            async with lock:
+                return await wrapped(*args, **kwargs)
+
         # Resolve postponed annotations in the endpoint's original module so
         # FastAPI still runs its existing actor and database dependencies.
-        setattr(wrapped, "__signature__", signature.replace(
+        setattr(serialized, "__signature__", signature.replace(
             parameters=[p.replace(annotation=hints.get(name, p.annotation))
                         for name, p in signature.parameters.items()],
             return_annotation=hints.get("return", signature.return_annotation),
         ))
-        return wrapped
+        return serialized
     return decorate

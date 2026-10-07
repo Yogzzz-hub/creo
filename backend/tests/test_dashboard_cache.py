@@ -1,4 +1,5 @@
 import uuid
+import asyncio
 from unittest.mock import AsyncMock, patch
 
 import httpx
@@ -25,6 +26,25 @@ class MemoryRedis:
     async def eval(self, script, count, generation_key, key, generation, snapshot, ttl):
         if self.data.get(generation_key, "0") == generation:
             self.data[key] = snapshot
+
+
+@pytest.mark.asyncio
+async def test_concurrent_cache_misses_refresh_once_per_process():
+    redis = MemoryRedis()
+    calls = 0
+
+    @dashboard_cached()
+    async def endpoint(actor):
+        nonlocal calls
+        calls += 1
+        await asyncio.sleep(0.01)
+        return {'calls': calls}
+
+    actor = Actor(uuid.uuid4(), UserRole.ADMIN)
+    with patch('app.core.dashboard_cache.get_redis', new=AsyncMock(return_value=redis)):
+        values = await asyncio.gather(*(endpoint(actor) for _ in range(10)))
+    assert calls == 1
+    assert all(v == {'calls': 1} for v in values)
 
 
 @pytest.mark.asyncio
