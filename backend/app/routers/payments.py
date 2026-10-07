@@ -82,10 +82,7 @@ async def create_addon_order(
     actor: Actor = Depends(get_current_actor),
 ) -> dict:
     """Create a Razorpay order for a one-time add-on pack purchase (server-authoritative pricing)."""
-    import uuid as _uuid
-    import httpx
     from app.config import settings as _s
-    from app.models.enums import PaymentProvider
 
     ADDON_PRICING = {
         "addon_posters_5": 350000,
@@ -110,24 +107,8 @@ async def create_addon_order(
     key_id = _s.RAZORPAY_KEY_ID or "rzp_test_TO2r0YMjDZSpuC"
     key_secret = _s.RAZORPAY_KEY_SECRET or ""
 
-    order_id = f"order_addon_{_uuid.uuid4().hex[:12]}"
-
-    if key_id and key_secret:
-        try:
-            async with httpx.AsyncClient(timeout=8.0) as client:
-                res = await client.post(
-                    "https://api.razorpay.com/v1/orders",
-                    auth=(key_id, key_secret),
-                    json={
-                        "amount": amount_minor,
-                        "currency": currency,
-                        "receipt": f"addon_{_uuid.uuid4().hex[:10]}",
-                    },
-                )
-                if res.status_code == 200:
-                    order_id = res.json().get("id", order_id)
-        except Exception:
-            pass  # fallback to generated order_id
+    from app.services.razorpay_orders import create_razorpay_order
+    order_id = await create_razorpay_order(key_id, key_secret, amount_minor, currency)
 
     return {
         "order_id": order_id,

@@ -88,7 +88,6 @@ async def create_order(
             },
         )
 
-    order_id = f"order_{gateway.value[:3]}_{uuid.uuid4().hex[:12]}"
     sub_id = uuid.uuid4()
 
     key_id = (
@@ -98,26 +97,13 @@ async def create_order(
     )
     key_secret = getattr(settings, "RAZORPAY_KEY_SECRET", "")
 
-    # Attempt live Razorpay order generation if credentials are configured
-    if gateway == PaymentProvider.RAZORPAY and key_id and key_secret:
-        try:
-            import httpx
-
-            async with httpx.AsyncClient(timeout=8.0) as client:
-                res = await client.post(
-                    "https://api.razorpay.com/v1/orders",
-                    auth=(key_id, key_secret),
-                    json={
-                        "amount": plan.price_minor,
-                        "currency": plan.currency,
-                        "receipt": f"rcpt_{uuid.uuid4().hex[:10]}",
-                    },
-                )
-                if res.status_code == 200:
-                    data = res.json()
-                    order_id = data.get("id", order_id)
-        except Exception as e:
-            logger.warning("razorpay_live_order_creation_fallback", error=str(e))
+    if gateway == PaymentProvider.RAZORPAY:
+        from app.services.razorpay_orders import create_razorpay_order
+        order_id = await create_razorpay_order(key_id, key_secret, plan.price_minor, plan.currency)
+    else:
+        from app.core.errors import AppError
+        raise AppError("This payment gateway is unavailable.",
+                       code="PAYMENT_GATEWAY_UNAVAILABLE", status_code=503)
 
     subscription = Subscription(
         id=sub_id,

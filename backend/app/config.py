@@ -86,10 +86,12 @@ class Settings(BaseSettings):
 
     # Google Gmail SMTP
     SMTP_SERVER: str = Field(default="smtp.gmail.com")
-    SMTP_PORT: int = Field(default=587)
+    SMTP_HOST: str = Field(default="smtp.gmail.com")
+    SMTP_PORT: int = Field(default=465)
     SMTP_USERNAME: str = Field(default="")
     SMTP_PASSWORD: str = Field(default="")
-    SMTP_USE_TLS: bool = Field(default=True)
+    SMTP_USE_TLS: bool = Field(default=False)
+    SMTP_USE_SSL: bool = Field(default=True)
     SMTP_FROM_EMAIL: str = Field(default="")
 
     # Payment Gateways — Razorpay
@@ -188,6 +190,29 @@ class Settings(BaseSettings):
             raise ValueError("JWT_SECRET or SECRET_KEY must be configured outside development/test")
         if not self.JWT_SECRET:
             self.JWT_SECRET = "super-secret-jwt-key-creo-development-32chars"
+
+        # Reconcile SMTP configuration
+        if "SMTP_HOST" in self.model_fields_set and "SMTP_SERVER" not in self.model_fields_set:
+            self.SMTP_SERVER = self.SMTP_HOST
+        elif "SMTP_SERVER" in self.model_fields_set and "SMTP_HOST" not in self.model_fields_set:
+            self.SMTP_HOST = self.SMTP_SERVER
+        elif not self.SMTP_HOST and self.SMTP_SERVER:
+            self.SMTP_HOST = self.SMTP_SERVER
+        elif not self.SMTP_SERVER and self.SMTP_HOST:
+            self.SMTP_SERVER = self.SMTP_HOST
+
+        if "SMTP_USE_SSL" in self.model_fields_set:
+            if self.SMTP_USE_SSL and "SMTP_USE_TLS" not in self.model_fields_set:
+                self.SMTP_USE_TLS = False
+            elif not self.SMTP_USE_SSL and "SMTP_USE_TLS" not in self.model_fields_set:
+                self.SMTP_USE_TLS = True
+        elif "SMTP_PORT" in self.model_fields_set:
+            if self.SMTP_PORT == 465:
+                self.SMTP_USE_SSL = True
+                self.SMTP_USE_TLS = False
+            elif self.SMTP_PORT == 587:
+                self.SMTP_USE_SSL = False
+                self.SMTP_USE_TLS = True
 
         if self.BACKEND_CORS_ORIGINS:
             origins = self.BACKEND_CORS_ORIGINS

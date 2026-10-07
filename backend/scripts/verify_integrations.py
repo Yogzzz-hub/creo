@@ -97,7 +97,7 @@ async def run_verifications() -> dict[str, bool]:
         results["instagram"] = False
 
     # 4. Google Gmail SMTP
-    print("\n[4/7] Testing Google SMTP TLS & Email Dispatch...")
+    print("\n[4/7] Testing Google SMTP SSL/TLS & Email Dispatch...")
     try:
         email_ok = await send_otp_email("creotool26@gmail.com", "992841")
         assert email_ok is True

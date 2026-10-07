@@ -17,7 +17,7 @@ import socket
 logger = get_logger(__name__)
 
 
-def _create_ipv4_connection(address: tuple[str, int], timeout: float = 3.0, source_address: Any = None) -> socket.socket:
+def _create_ipv4_connection(address: tuple[str, int], timeout: float = 10.0, source_address: Any = None) -> socket.socket:
     """Force IPv4 (AF_INET) socket connection to prevent [Errno 101] Network is unreachable on cloud container networks."""
     host, port = address
     err = None
@@ -59,12 +59,9 @@ def _send_smtp_sync(
     html_content: str,
     text_content: str | None = None,
 ) -> bool:
-    """Send an email synchronously over TLS via configured SMTP credentials with RFC-compliant anti-spam headers."""
+    """Send an email synchronously over SSL or TLS via configured SMTP credentials with RFC-compliant anti-spam headers."""
     smtp_pw = (settings.SMTP_PASSWORD or "").strip().strip('"').strip("'")
     smtp_user = (settings.SMTP_USERNAME or "").strip()
-    smtp_server = (settings.SMTP_SERVER or "smtp.gmail.com").strip()
-    smtp_port = settings.SMTP_PORT or 587
-
     sender_email = (settings.SMTP_FROM_EMAIL or smtp_user).strip()
     clean_to = to_email.strip()
 
@@ -99,18 +96,53 @@ def _send_smtp_sync(
     # HTML part second
     msg.attach(MIMEText(html_content, "html", "utf-8"))
 
-    # 1. Primary delivery attempt (e.g. port 587 with STARTTLS over forced IPv4)
+    # Establish SMTP connection: direct SSL (port 465) or STARTTLS (port 587)
+    server = None
     try:
-        smtp_class = IPv4SMTP_SSL if smtp_port == 465 else IPv4SMTP
-        with smtp_class(smtp_server, smtp_port, timeout=3) as server:
-            if settings.SMTP_USE_TLS and smtp_port != 465:
-                server.starttls()
-            server.login(smtp_user, smtp_pw)
-            server.sendmail(sender_email, [clean_to], msg.as_string())
-        logger.info("smtp_email_sent_successfully", to_email=clean_to, subject=subject, port=smtp_port)
+        if settings.SMTP_USE_SSL:
+            try:
+                server = IPv4SMTP_SSL(
+                    settings.SMTP_HOST,
+                    settings.SMTP_PORT,
+                    timeout=10,
+                )
+            except Exception:
+                server = smtplib.SMTP_SSL(
+                    settings.SMTP_HOST,
+                    settings.SMTP_PORT,
+                    timeout=10,
+                )
+        else:
+            try:
+                server = IPv4SMTP(
+                    settings.SMTP_HOST,
+                    settings.SMTP_PORT,
+                    timeout=10,
+                )
+            except Exception:
+                server = smtplib.SMTP(
+                    settings.SMTP_HOST,
+                    settings.SMTP_PORT,
+                    timeout=10,
+                )
+            server.starttls()
+
+        server.login(smtp_user, smtp_pw)
+        server.send_message(msg)
+        try:
+            server.quit()
+        except Exception:
+            pass
+        logger.info("smtp_email_sent_successfully", to_email=clean_to, subject=subject, port=settings.SMTP_PORT)
         return True
     except Exception as e_primary:
-        logger.warning("smtp_primary_attempt_failed", port=smtp_port, error=str(e_primary))
+        logger.warning("smtp_primary_attempt_failed", port=settings.SMTP_PORT, error=str(e_primary))
+    finally:
+        if server is not None:
+            try:
+                server.close()
+            except Exception:
+                pass
 
     return False
 

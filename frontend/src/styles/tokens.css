@@ -1133,3 +1133,25 @@ button, input, select, textarea, nav, aside, header, [data-surface] {
   font-family: var(--font-sans);
 }
 
+/* Razorpay Checkout Modal Dark Theme & Floating Fix */
+.razorpay-container {
+  color-scheme: light !important;
+  background: rgba(5, 8, 16, 0.82) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+.razorpay-container iframe,
+iframe.razorpay-checkout-frame,
+iframe[src*="razorpay"],
+iframe[name*="razorpay"],
+iframe[id*="razorpay"] {
+  color-scheme: light !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+.razorpay-backdrop {
+  background: rgba(5, 8, 16, 0.82) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
