@@ -200,3 +200,38 @@ singapore-client-latency-2026-10-07.json,
 singapore-dependency-probe-2026-10-07.json,
 singapore-live-mobile-audit-2026-10-07.json,
 and SINGAPORE_DEPLOYMENT_REVIEW.md.
+
+
+## Concurrent checks and additional cache coordination
+
+Five concurrent readers, twenty warm samples per endpoint and a five-request/second
+cap produced zero HTTP errors in the initial eight-endpoint run, but all client-side
+samples exceeded 100 ms. Initial client p95 ranged from 236 to 856 ms. Only two of
+eight endpoint server p95 values were below 100 ms. This disproves an all-endpoint
+100 ms claim on the current deployment; it does not establish maximum capacity.
+
+Added per-process snapshot refresh coordination to avoid duplicate database work
+on simultaneous cache misses, with a ten-reader regression test. Added a scoped
+five-second calendar cache retaining existing authentication dependencies and write
+invalidation. Backend now passes 26 tests and nine-file core mypy checks.
+A live calendar cache hit was confirmed at 16.7 ms server time with zero SQL calls.
+
+A second broad run overlapped rolling deployment and had larger outliers (profile
+p95 1,739 ms, calendar client p95 2,014 ms); its raw results and caveat are preserved
+in singapore-concurrent-after-2026-10-07.json. Do not present it as a clean before/after
+comparison. See ARCHITECTURE_LATENCY_DECISIONS.md for implemented load safeguards,
+connection budgets and the remaining six-requirement deployment decisions.
+
+Private datastore migration, paid always-on compute, separately deployed durable
+workers and full cold-start/capacity testing remain incomplete. No new billing or
+data migration was performed. Generic control-of-PC authorization does not resolve
+the pending explicit recurring-charge decision.
+
+A final separately confirmed deployment run covered four cached/baseline endpoints
+with twenty warm samples each at concurrency five. No HTTP errors occurred.
+Client p95: runtime 422 ms, KPI 201 ms, queue 605 ms, calendar 368 ms.
+Server p95: runtime 101 ms, KPI 64 ms, queue 353 ms, calendar 195 ms.
+Zero of eighty warm client requests were below 100 ms. The 100 ms end-to-end target
+is therefore explicitly **not met**. Cached snapshots do not eliminate Redis,
+serialization, process scheduling or transport variability. Raw data:
+singapore-cached-concurrent-2026-10-07.json.
