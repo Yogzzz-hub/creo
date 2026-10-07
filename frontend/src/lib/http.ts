@@ -47,7 +47,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
   const apiBase = (
     import.meta.env.VITE_API_URL ||
     (isWorkersDev
-      ? "https://creo-dsxr.onrender.com"
+      ? "https://creo-api-singapore.onrender.com"
       : (isLocalhost ? "http://localhost:8000" : ""))
   ).replace(/\/$/, "");
   const requestUrl = path.startsWith("/api") && apiBase ? `${apiBase}${path}` : path;

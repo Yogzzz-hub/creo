@@ -198,6 +198,12 @@ async def security_and_rate_limit_middleware(
         timestamps.append(now)
         _ip_request_timestamps[client_ip] = timestamps
 
+    # Invalidate both sides of a write: reads during the mutation must not
+    # republish an older snapshot after its transaction commits.
+    invalidates_dashboard = request.method in {"POST", "PUT", "PATCH", "DELETE"} and not request.url.path.startswith("/api/v1/auth/")
+    if invalidates_dashboard:
+        from app.core.dashboard_cache import invalidate_dashboard_cache
+        await invalidate_dashboard_cache()
     try:
         response = await call_next(request)
     except Exception as exc:
@@ -214,6 +220,10 @@ async def security_and_rate_limit_middleware(
                 },
             )
         )
+
+    finally:
+        if invalidates_dashboard:
+            await invalidate_dashboard_cache()
 
     # 3. Comprehensive OWASP Recommended Security Headers (Excluding CSP which breaks cross-origin SPA APIs)
     response.headers["X-Content-Type-Options"] = "nosniff"

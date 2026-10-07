@@ -28,6 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, selectinload
 
 from app.core.cache import invalidate_user_session
+from app.core.dashboard_cache import dashboard_cached
 from app.core.errors import Conflict, Forbidden, NotFound
 from app.core.rbac import (
     Actor,
@@ -110,7 +111,46 @@ async def get_performance_runtime(actor: Actor = AdminActor) -> dict[str, Any]:
     }
 
 
+@router.get("/performance/probe")
+async def get_performance_probe(actor: Actor = AdminActor) -> dict[str, Any]:
+    """Bounded, read-only dependency probe; excludes credentials and business data."""
+    import asyncio
+    from time import perf_counter
+    from app.core.cache import get_redis
+    from app.db.session import engine
+
+    try:
+        async with asyncio.timeout(5):
+            started = perf_counter()
+            redis = await get_redis()
+            await redis.ping()
+            redis_ms = (perf_counter() - started) * 1000
+            started = perf_counter()
+            async with engine.connect() as connection:
+                checkout_ms = (perf_counter() - started) * 1000
+                started = perf_counter()
+                await connection.execute(text("SELECT 1"))
+                first_query_ms = (perf_counter() - started) * 1000
+                started = perf_counter()
+                await connection.execute(text("SELECT 1"))
+                warm_query_ms = (perf_counter() - started) * 1000
+                explanation = await connection.execute(text("EXPLAIN (ANALYZE, FORMAT JSON) SELECT 1"))
+                plan = explanation.scalar_one()[0]
+            return {
+                "redis_ping_ms": round(redis_ms, 2),
+                "database_checkout_ms": round(checkout_ms, 2),
+                "database_first_query_ms": round(first_query_ms, 2),
+                "database_warm_query_ms": round(warm_query_ms, 2),
+                "database_server_execution_ms": plan["Execution Time"],
+                "database_server_planning_ms": plan["Planning Time"],
+                "note": "First query includes transaction/RLS setup; warm query includes driver and network time. SELECT 1 does not benchmark business queries.",
+            }
+    except Exception:
+        raise HTTPException(status_code=503, detail="Dependency probe unavailable") from None
+
+
 @router.get("/kpis", response_model=KPIResponse)
+@dashboard_cached()
 async def get_kpis(
     timeframe: str = "30d",
     db: AsyncSession = Depends(get_db),
@@ -758,6 +798,7 @@ async def get_client_brand_profile(
 
 
 @router.get("/queue")
+@dashboard_cached()
 async def get_dispatch_queue(
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
@@ -3587,6 +3628,7 @@ class PodTaskReassignRequest(BaseModel):
 
 
 @router.get("/pod-dashboard")
+@dashboard_cached()
 async def get_pod_dashboard(
     pod: str | None = None,
     db: AsyncSession = Depends(get_db),
