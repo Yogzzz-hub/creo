@@ -169,8 +169,10 @@ export function SlackChatPage() {
   const { user } = useAuth();
 
   const { data: podData } = useQuery<PodDashboardData>({
-    queryKey: ["pod_dashboard"],
+    queryKey: ["pod_dashboard", user?.id, undefined],
     queryFn: () => fetchPodDashboard(),
+    staleTime: 30_000,
+    enabled: !!user?.id && user?.role !== "client",
   });
 
   const podName = podData?.pod?.name || "Pod Operations";
@@ -179,7 +181,7 @@ export function SlackChatPage() {
   const isOpsOrSuperAdmin = user?.role === "admin" || user?.role === "super_admin" || user?.role === "ops_admin";
 
   const { data: rawClientRoster } = useQuery<ClientRosterItem[]>({
-    queryKey: ["client_roster"],
+    queryKey: ["client_roster", user?.id],
     queryFn: () => fetchClientRoster(),
     enabled: isOpsOrSuperAdmin,
   });

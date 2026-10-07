@@ -1,3 +1,4 @@
+import { useAuth } from "../../lib/auth-context";
 import { useState } from "react";
 import { motion } from "motion/react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
@@ -18,11 +19,14 @@ import {
 } from "lucide-react";
 
 export function PodDeliverablesReviewPage() {
+  const { user } = useAuth();
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
 
   const { data } = useQuery<PodDashboardData>({
-    queryKey: ["pod_dashboard"],
+    queryKey: ["pod_dashboard", user?.id, undefined],
     queryFn: () => fetchPodDashboard(),
+    staleTime: 30_000,
+    enabled: !!user?.id,
   });
 
   const podName = data?.pod?.name || "Pod A";

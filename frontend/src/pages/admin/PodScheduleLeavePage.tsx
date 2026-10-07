@@ -27,8 +27,10 @@ export function PodScheduleLeavePage() {
   const [standupNote, setStandupNote] = useState("");
 
   const { data } = useQuery<PodDashboardData>({
-    queryKey: ["pod_dashboard"],
+    queryKey: ["pod_dashboard", user?.id, undefined],
     queryFn: () => fetchPodDashboard(),
+    staleTime: 30_000,
+    enabled: !!user?.id,
   });
 
   const podName = data?.pod?.name || "Pod Operations";

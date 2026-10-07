@@ -105,3 +105,8 @@ three actual pod members and two assigned clients each, no overflow and no page
 errors. Thirteen live admin pages at 320 pixels also showed no overflow/page errors.
 These checks do not establish that every production mutation or feature is complete.
 The complete client/Gemini flow and sales/investor roles still await test accounts.
+
+The latest staff leave bundle was confirmed deployed by its real form/API markers.
+All lead/task/review/schedule/client/chat pod queries now use the same user-scoped
+key and freshness policy. A controlled browser navigation check visited six staff
+pages using a single pod-data request, without overflow or JavaScript errors.

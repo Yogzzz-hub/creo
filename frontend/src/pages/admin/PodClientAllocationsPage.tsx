@@ -1,3 +1,4 @@
+import { useAuth } from "../../lib/auth-context";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
@@ -63,6 +64,7 @@ interface ClientAccount {
 const INITIAL_CLIENTS: ClientAccount[] = [];
 
 export function PodClientAllocationsPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [clients, setClients] = useState<ClientAccount[]>(INITIAL_CLIENTS);
   const [filterTab, setFilterTab] = useState<"all" | "sla" | "review">("all");
@@ -87,13 +89,17 @@ export function PodClientAllocationsPage() {
   } | null>(null);
 
   const { data } = useQuery<PodDashboardData>({
-    queryKey: ["pod_dashboard"],
+    queryKey: ["pod_dashboard", user?.id, undefined],
     queryFn: () => fetchPodDashboard(),
+    staleTime: 30_000,
+    enabled: !!user?.id,
   });
 
   const { data: rosterData } = useQuery<ClientRosterItem[]>({
-    queryKey: ["admin_clients_roster"],
+    queryKey: ["admin_clients_roster", user?.id],
     queryFn: () => fetchClientRoster(),
+    staleTime: 30_000,
+    enabled: !!user?.id,
   });
 
   useEffect(() => {
