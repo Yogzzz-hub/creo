@@ -1,5 +1,12 @@
 # Live dashboard audit ? 7 October 2026
 
+Latest update ? 7 October 2026: the region mismatch is confirmed and corrected.
+The public frontend now uses the tested Singapore API. Warm API samples are
+substantially faster; see the final verification below. Earlier latency and
+region-access limitations in this report describe the Virginia deployment.
+Free-hosting cold starts and the remaining account-specific flows still apply.
+
+
 Site: https://creo.yogalakshmibaskar20.workers.dev/
 
 Previous live checks covered ten public/auth routes at 320 and 1440 pixels,
@@ -142,3 +149,54 @@ routing variability must be investigated separately. These samples overlapped
 rolling deployments and must not be presented as steady-state p95 results.
 The under-one-second requirement remains unmet; neither database nor browser
 transport delays should be hidden by reporting only the fastest sample.
+
+
+## Singapore deployment and final verification
+
+Signed-in Render dashboard/API inspection confirmed the original API was on a
+free Virginia instance. The database is in Singapore. Created a separate Singapore
+API, verified it, then deployed the frontend endpoint switch through GitHub main.
+The live Cloudflare bundle and 28 authenticated mobile route visits all confirmed
+requests go to creo-api-singapore.onrender.com. No failed API requests, JavaScript
+page errors, or horizontal overflow were observed across 13 admin, 6 lead,
+4 editor, 4 designer, and the client's current onboarding route. Full completed
+client onboarding and sales/investor role flows are still unverified.
+
+Read-only latency sampling covered 16 role/endpoint combinations with ten warm
+requests each (160 warm samples; first requests recorded separately). All returned
+HTTP 200. These sequential diagnostic samples are not a concurrency/load test or
+a production SLO guarantee. Warm end-to-end p95 ranges:
+
+- Admin: 204?599 ms across eight routes.
+- Lead/staff: 147?406 ms across five routes.
+- Current client: 236?351 ms across three routes.
+
+Cached pod dashboard server p95: 9 ms. Cached KPI server p95: 11 ms.
+Direct sample cache hits: KPI 6 ms, queue 20 ms, with zero SQL calls.
+Not all server p95 values are below 100 ms; transport alone can exceed 100 ms.
+Dependency probe: Redis ping 1.17 ms, database checkout 0.15 ms, warm SELECT 1
+round trip 8.33 ms, PostgreSQL execution 0.013 ms. The trivial SELECT 1 probe does
+not substitute for business-query analysis. Existing Redis and database were kept;
+no database migration or new datastore was required for the improvement.
+
+Backend: 25 tests pass; core mypy passes nine files. Frontend production build
+passes, with the existing lazy 519 kB hero chunk warning. Redis dashboard snapshots
+are tenant/user/role scoped, retain per-request authorization/revocation checks,
+and expire after 15 seconds. API writes invalidate shared generations before and
+after mutation; tests cover stale in-flight publication and cross-agency isolation.
+
+Free hosting still sleeps when idle. Paid always-on hosting awaits explicit
+approval of its recurring charge; no billing change was made. No Celery worker or
+beat service was verified running in the account's original single-service project.
+Gemini remains outside the onboarding request path, but durable worker recovery
+and actual A?G output quality require the remaining dedicated test flow.
+Temporary Render API access was revoked (dashboard shows no provisioned API keys),
+and local temporary secret exports were removed. Old Virginia API remains live
+for rollback and existing OAuth callback compatibility.
+
+Evidence: singapore-admin-latency-2026-10-07.json,
+singapore-staff-latency-2026-10-07.json,
+singapore-client-latency-2026-10-07.json,
+singapore-dependency-probe-2026-10-07.json,
+singapore-live-mobile-audit-2026-10-07.json,
+and SINGAPORE_DEPLOYMENT_REVIEW.md.

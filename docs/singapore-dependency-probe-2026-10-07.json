@@ -1,0 +1,9 @@
+{
+  "redis_ping_ms": 1.17,
+  "database_checkout_ms": 0.15,
+  "database_first_query_ms": 20.69,
+  "database_warm_query_ms": 8.33,
+  "database_server_execution_ms": 0.013,
+  "database_server_planning_ms": 0.013,
+  "note": "First query includes transaction/RLS setup; warm query includes driver and network time. SELECT 1 does not benchmark business queries."
+}

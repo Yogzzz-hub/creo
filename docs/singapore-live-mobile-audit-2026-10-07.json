@@ -1,0 +1,310 @@
+[
+  {
+    "role": "admin",
+    "route": "/admin",
+    "final_path": "/admin",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "admin",
+    "route": "/admin/calendar",
+    "final_path": "/admin/calendar",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "admin",
+    "route": "/admin/clients",
+    "final_path": "/admin/clients",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "admin",
+    "route": "/admin/deliverables",
+    "final_path": "/admin/deliverables",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "admin",
+    "route": "/admin/tasks",
+    "final_path": "/admin/tasks",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "admin",
+    "route": "/admin/support",
+    "final_path": "/admin/support",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "admin",
+    "route": "/admin/sla",
+    "final_path": "/admin/sla",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "admin",
+    "route": "/admin/teams",
+    "final_path": "/admin/teams",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "admin",
+    "route": "/admin/leave",
+    "final_path": "/admin/leave",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "admin",
+    "route": "/admin/revenue",
+    "final_path": "/admin/revenue",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "admin",
+    "route": "/admin/plans",
+    "final_path": "/admin/plans",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "admin",
+    "route": "/admin/sales",
+    "final_path": "/admin/sales",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "admin",
+    "route": "/admin/slack",
+    "final_path": "/admin/slack",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "lead",
+    "route": "/lead",
+    "final_path": "/lead/dashboard",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "lead",
+    "route": "/lead/tasks",
+    "final_path": "/lead/tasks",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "lead",
+    "route": "/lead/review",
+    "final_path": "/",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "lead",
+    "route": "/lead/schedule",
+    "final_path": "/lead/schedule",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "lead",
+    "route": "/lead/clients",
+    "final_path": "/lead/clients",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "lead",
+    "route": "/lead/chat",
+    "final_path": "/",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "editor",
+    "route": "/workstation",
+    "final_path": "/workstation",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "editor",
+    "route": "/workstation/tasks",
+    "final_path": "/workstation/tasks",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "editor",
+    "route": "/workstation/schedule",
+    "final_path": "/workstation/schedule",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "editor",
+    "route": "/workstation/chat",
+    "final_path": "/",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "designer",
+    "route": "/workstation",
+    "final_path": "/workstation",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "designer",
+    "route": "/workstation/tasks",
+    "final_path": "/workstation/tasks",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "designer",
+    "route": "/workstation/schedule",
+    "final_path": "/workstation/schedule",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "designer",
+    "route": "/workstation/chat",
+    "final_path": "/",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  },
+  {
+    "role": "client",
+    "route": "/onboarding",
+    "final_path": "/onboarding",
+    "overflow": false,
+    "js_error_count": 0,
+    "api_hosts": [
+      "creo-api-singapore.onrender.com"
+    ],
+    "failed_requests": []
+  }
+]

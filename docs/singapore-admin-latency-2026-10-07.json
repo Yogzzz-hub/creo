@@ -1,0 +1,682 @@
+{
+  "base_url": "https://creo-api-singapore.onrender.com",
+  "role": "admin",
+  "warm_samples_per_route": 10,
+  "note": "First samples are not guaranteed cold starts. Small samples are diagnostic, not a production SLO guarantee.",
+  "summary": [
+    {
+      "path": "/auth/me",
+      "errors": 0,
+      "client_p50_ms": 209.125,
+      "client_p95_ms": 599.34,
+      "server_p95_ms": 370.3
+    },
+    {
+      "path": "/notifications",
+      "errors": 0,
+      "client_p50_ms": 203.975,
+      "client_p95_ms": 235.74,
+      "server_p95_ms": 29.7
+    },
+    {
+      "path": "/admin/performance/runtime",
+      "errors": 0,
+      "client_p50_ms": 179.165,
+      "client_p95_ms": 203.68,
+      "server_p95_ms": 4.2
+    },
+    {
+      "path": "/admin/kpis",
+      "errors": 0,
+      "client_p50_ms": 205.3,
+      "client_p95_ms": 510.9,
+      "server_p95_ms": 11.2
+    },
+    {
+      "path": "/admin/queue",
+      "errors": 0,
+      "client_p50_ms": 240.365,
+      "client_p95_ms": 442.16,
+      "server_p95_ms": 100.7
+    },
+    {
+      "path": "/admin/clients",
+      "errors": 0,
+      "client_p50_ms": 205.975,
+      "client_p95_ms": 279.7,
+      "server_p95_ms": 48.0
+    },
+    {
+      "path": "/admin/calendar",
+      "errors": 0,
+      "client_p50_ms": 299.57,
+      "client_p95_ms": 489.9,
+      "server_p95_ms": 212.7
+    },
+    {
+      "path": "/admin/leave",
+      "errors": 0,
+      "client_p50_ms": 204.625,
+      "client_p95_ms": 218.45,
+      "server_p95_ms": 52.5
+    }
+  ],
+  "samples": [
+    {
+      "path": "/auth/me",
+      "phase": "first",
+      "status": 200,
+      "client_ms": 527.85,
+      "server_timing": "app;dur=351.8, db;dur=21.9;desc=\"2 queries\", auth-cache;dur=254.8"
+    },
+    {
+      "path": "/auth/me",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 404.66,
+      "server_timing": "app;dur=26.4, db;dur=20.8;desc=\"2 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/auth/me",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 207.1,
+      "server_timing": "app;dur=26.6, db;dur=21.1;desc=\"2 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/auth/me",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 211.15,
+      "server_timing": "app;dur=36.5, db;dur=30.4;desc=\"2 queries\", auth-cache;dur=1.8"
+    },
+    {
+      "path": "/auth/me",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 203.72,
+      "server_timing": "app;dur=26.6, db;dur=20.2;desc=\"2 queries\", auth-cache;dur=2.6"
+    },
+    {
+      "path": "/auth/me",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 310.03,
+      "server_timing": "app;dur=31.5, db;dur=20.7;desc=\"2 queries\", auth-cache;dur=1.9"
+    },
+    {
+      "path": "/auth/me",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 185.11,
+      "server_timing": "app;dur=28.7, db;dur=23.6;desc=\"2 queries\", auth-cache;dur=1.7"
+    },
+    {
+      "path": "/auth/me",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 200.05,
+      "server_timing": "app;dur=28.3, db;dur=22.4;desc=\"2 queries\", auth-cache;dur=1.6"
+    },
+    {
+      "path": "/auth/me",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 206.51,
+      "server_timing": "app;dur=25.3, db;dur=20.5;desc=\"2 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/auth/me",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 219.03,
+      "server_timing": "app;dur=33.2, db;dur=21.7;desc=\"2 queries\", auth-cache;dur=6.6"
+    },
+    {
+      "path": "/auth/me",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 599.34,
+      "server_timing": "app;dur=370.3, db;dur=105.0;desc=\"2 queries\", auth-cache;dur=261.8"
+    },
+    {
+      "path": "/notifications",
+      "phase": "first",
+      "status": 200,
+      "client_ms": 205.29,
+      "server_timing": "app;dur=33.4, db;dur=21.9;desc=\"2 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/notifications",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 203.72,
+      "server_timing": "app;dur=29.7, db;dur=23.7;desc=\"2 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/notifications",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 174.88,
+      "server_timing": "app;dur=27.3, db;dur=22.1;desc=\"2 queries\", auth-cache;dur=1.6"
+    },
+    {
+      "path": "/notifications",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 235.74,
+      "server_timing": "app;dur=26.3, db;dur=20.5;desc=\"2 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/notifications",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 201.16,
+      "server_timing": "app;dur=26.5, db;dur=21.4;desc=\"2 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/notifications",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 206.67,
+      "server_timing": "app;dur=24.8, db;dur=20.2;desc=\"2 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/notifications",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 203.88,
+      "server_timing": "app;dur=25.9, db;dur=21.5;desc=\"2 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/notifications",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 204.78,
+      "server_timing": "app;dur=27.3, db;dur=21.9;desc=\"2 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/notifications",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 205.67,
+      "server_timing": "app;dur=26.6, db;dur=21.6;desc=\"2 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/notifications",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 204.07,
+      "server_timing": "app;dur=24.6, db;dur=20.0;desc=\"2 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/notifications",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 173.46,
+      "server_timing": "app;dur=25.9, db;dur=20.3;desc=\"2 queries\", auth-cache;dur=1.8"
+    },
+    {
+      "path": "/admin/performance/runtime",
+      "phase": "first",
+      "status": 200,
+      "client_ms": 238.63,
+      "server_timing": "app;dur=22.5, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/performance/runtime",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 200.61,
+      "server_timing": "app;dur=3.5, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.5"
+    },
+    {
+      "path": "/admin/performance/runtime",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 203.17,
+      "server_timing": "app;dur=3.2, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.5"
+    },
+    {
+      "path": "/admin/performance/runtime",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 170.7,
+      "server_timing": "app;dur=3.0, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/performance/runtime",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 145.36,
+      "server_timing": "app;dur=2.7, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/performance/runtime",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 165.86,
+      "server_timing": "app;dur=2.6, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/performance/runtime",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 151.38,
+      "server_timing": "app;dur=2.7, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/performance/runtime",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 192.32,
+      "server_timing": "app;dur=3.5, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=2.0"
+    },
+    {
+      "path": "/admin/performance/runtime",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 118.46,
+      "server_timing": "app;dur=2.6, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/performance/runtime",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 187.63,
+      "server_timing": "app;dur=3.1, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/performance/runtime",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 203.68,
+      "server_timing": "app;dur=4.2, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/kpis",
+      "phase": "first",
+      "status": 200,
+      "client_ms": 305.73,
+      "server_timing": "app;dur=41.7, db;dur=28.1;desc=\"2 queries\", auth-cache;dur=4.3"
+    },
+    {
+      "path": "/admin/kpis",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 510.9,
+      "server_timing": "app;dur=11.2, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=2.1"
+    },
+    {
+      "path": "/admin/kpis",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 158.22,
+      "server_timing": "app;dur=4.3, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.2"
+    },
+    {
+      "path": "/admin/kpis",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 252.97,
+      "server_timing": "app;dur=4.5, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/kpis",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 209.07,
+      "server_timing": "app;dur=7.5, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=2.6"
+    },
+    {
+      "path": "/admin/kpis",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 196.8,
+      "server_timing": "app;dur=4.7, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/kpis",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 204.91,
+      "server_timing": "app;dur=6.2, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.5"
+    },
+    {
+      "path": "/admin/kpis",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 208.9,
+      "server_timing": "app;dur=4.9, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.5"
+    },
+    {
+      "path": "/admin/kpis",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 205.69,
+      "server_timing": "app;dur=5.4, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.5"
+    },
+    {
+      "path": "/admin/kpis",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 153.59,
+      "server_timing": "app;dur=5.1, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.5"
+    },
+    {
+      "path": "/admin/kpis",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 152.28,
+      "server_timing": "app;dur=4.5, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/queue",
+      "phase": "first",
+      "status": 200,
+      "client_ms": 549.25,
+      "server_timing": "app;dur=226.0, db;dur=85.4;desc=\"3 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/queue",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 208.69,
+      "server_timing": "app;dur=16.8, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/queue",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 290.32,
+      "server_timing": "app;dur=14.0, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/queue",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 201.29,
+      "server_timing": "app;dur=21.3, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/queue",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 236.12,
+      "server_timing": "app;dur=14.3, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/queue",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 297.09,
+      "server_timing": "app;dur=11.3, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/queue",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 219.08,
+      "server_timing": "app;dur=12.6, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.2"
+    },
+    {
+      "path": "/admin/queue",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 197.53,
+      "server_timing": "app;dur=10.6, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.5"
+    },
+    {
+      "path": "/admin/queue",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 315.86,
+      "server_timing": "app;dur=30.6, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/queue",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 244.61,
+      "server_timing": "app;dur=12.2, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/queue",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 442.16,
+      "server_timing": "app;dur=100.7, db;dur=0.0;desc=\"0 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/clients",
+      "phase": "first",
+      "status": 200,
+      "client_ms": 281.39,
+      "server_timing": "app;dur=60.8, db;dur=56.7;desc=\"2 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/clients",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 205.78,
+      "server_timing": "app;dur=26.4, db;dur=22.4;desc=\"2 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/clients",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 198.81,
+      "server_timing": "app;dur=27.2, db;dur=23.3;desc=\"2 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/clients",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 211.82,
+      "server_timing": "app;dur=25.5, db;dur=21.4;desc=\"2 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/clients",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 171.88,
+      "server_timing": "app;dur=25.8, db;dur=22.1;desc=\"2 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/clients",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 238.91,
+      "server_timing": "app;dur=32.2, db;dur=24.8;desc=\"2 queries\", auth-cache;dur=1.6"
+    },
+    {
+      "path": "/admin/clients",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 165.58,
+      "server_timing": "app;dur=26.7, db;dur=22.2;desc=\"2 queries\", auth-cache;dur=1.5"
+    },
+    {
+      "path": "/admin/clients",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 206.17,
+      "server_timing": "app;dur=48.0, db;dur=43.8;desc=\"2 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/clients",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 209.91,
+      "server_timing": "app;dur=28.3, db;dur=24.1;desc=\"2 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/clients",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 159.38,
+      "server_timing": "app;dur=27.7, db;dur=23.6;desc=\"2 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/clients",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 279.7,
+      "server_timing": "app;dur=26.2, db;dur=22.5;desc=\"2 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/calendar",
+      "phase": "first",
+      "status": 200,
+      "client_ms": 434.83,
+      "server_timing": "app;dur=178.7, db;dur=85.8;desc=\"3 queries\", auth-cache;dur=1.6"
+    },
+    {
+      "path": "/admin/calendar",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 239.85,
+      "server_timing": "app;dur=65.7, db;dur=40.7;desc=\"3 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/calendar",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 296.46,
+      "server_timing": "app;dur=107.8, db;dur=40.4;desc=\"3 queries\", auth-cache;dur=1.5"
+    },
+    {
+      "path": "/admin/calendar",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 298.4,
+      "server_timing": "app;dur=49.5, db;dur=39.0;desc=\"3 queries\", auth-cache;dur=1.6"
+    },
+    {
+      "path": "/admin/calendar",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 238.51,
+      "server_timing": "app;dur=51.0, db;dur=38.5;desc=\"3 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/calendar",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 284.06,
+      "server_timing": "app;dur=58.9, db;dur=48.0;desc=\"3 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/calendar",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 300.74,
+      "server_timing": "app;dur=93.5, db;dur=82.4;desc=\"3 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/calendar",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 312.67,
+      "server_timing": "app;dur=115.9, db;dur=102.4;desc=\"3 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/calendar",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 489.9,
+      "server_timing": "app;dur=212.7, db;dur=201.1;desc=\"3 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/calendar",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 315.92,
+      "server_timing": "app;dur=98.8, db;dur=42.4;desc=\"3 queries\", auth-cache;dur=2.4"
+    },
+    {
+      "path": "/admin/calendar",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 303.6,
+      "server_timing": "app;dur=82.9, db;dur=43.8;desc=\"3 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/leave",
+      "phase": "first",
+      "status": 200,
+      "client_ms": 265.67,
+      "server_timing": "app;dur=32.3, db;dur=21.8;desc=\"2 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/leave",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 206.77,
+      "server_timing": "app;dur=46.5, db;dur=40.1;desc=\"2 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/leave",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 218.45,
+      "server_timing": "app;dur=27.3, db;dur=21.5;desc=\"2 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/leave",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 195.43,
+      "server_timing": "app;dur=28.6, db;dur=21.2;desc=\"2 queries\", auth-cache;dur=1.5"
+    },
+    {
+      "path": "/admin/leave",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 203.05,
+      "server_timing": "app;dur=26.9, db;dur=20.4;desc=\"2 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/leave",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 207.11,
+      "server_timing": "app;dur=33.4, db;dur=23.7;desc=\"2 queries\", auth-cache;dur=3.5"
+    },
+    {
+      "path": "/admin/leave",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 202.01,
+      "server_timing": "app;dur=52.5, db;dur=21.9;desc=\"2 queries\", auth-cache;dur=14.3"
+    },
+    {
+      "path": "/admin/leave",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 204.34,
+      "server_timing": "app;dur=38.7, db;dur=24.0;desc=\"2 queries\", auth-cache;dur=1.6"
+    },
+    {
+      "path": "/admin/leave",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 201.47,
+      "server_timing": "app;dur=28.5, db;dur=21.9;desc=\"2 queries\", auth-cache;dur=1.3"
+    },
+    {
+      "path": "/admin/leave",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 204.91,
+      "server_timing": "app;dur=42.3, db;dur=22.0;desc=\"2 queries\", auth-cache;dur=1.4"
+    },
+    {
+      "path": "/admin/leave",
+      "phase": "warm",
+      "status": 200,
+      "client_ms": 209.31,
+      "server_timing": "app;dur=29.1, db;dur=20.6;desc=\"2 queries\", auth-cache;dur=2.4"
+    }
+  ]
+}
