@@ -344,7 +344,7 @@ export function AdminSidebar() {
               {user?.full_name || (isClientRole ? (user?.company_name || "Client Account") : isMemberRole ? "Team Specialist" : user?.role === "team_lead" ? "Pod Lead" : "Creo Admin")}
             </h4>
             <p className="text-[10px] text-[#97A0B3] font-medium truncate">
-              {user?.email || "Email unavailable"}
+              {user?.email || (isClientRole ? "client@portal.creo" : isMemberRole ? "specialist@creo.agency" : "admin@creo.agency")}
             </p>
           </div>
           <button

@@ -1,3 +1,4 @@
+import { TrendingUp, Activity, CheckCircle2 } from "lucide-react";
 import "../../styles/public-responsive.css";
 import { useState, useEffect } from "react";
 import { 
@@ -203,7 +204,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
           </Link>
           <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#121926] border border-[#222F44] text-[10px] font-semibold text-[#7FA0D6] uppercase tracking-wider">
             <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Client & team portal
+            Agency OS v2.6
           </div>
         </div>
 
@@ -227,7 +228,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
           <div className="hidden lg:flex lg:col-span-6 flex-col justify-center space-y-4 pr-2">
             <div className="inline-flex items-center gap-2 rounded-full bg-[#121926] border border-[#222F44] px-3 py-1 text-[10px] font-bold tracking-widest uppercase text-[#7FA0D6] w-fit shadow-xs">
               <Zap className="size-3 text-[#7FA0D6]" />
-              CREATIVE WORKSPACE
+              AGENCY COMMAND TELEMETRY
             </div>
 
             <h1 className="text-3xl xl:text-4xl font-black tracking-tight leading-[1.1] text-[#F8FAFC]">
@@ -238,10 +239,64 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
               Replace WhatsApp silos and blind billing with live capacity meters, client approval gates, and unit margin telemetry in real time.
             </p>
 
-            <div className="space-y-3 text-sm text-[#97A0B3]">
-              <p>View your subscription and content calendar.</p>
-              <p>Review uploaded assets and send revision feedback.</p>
-              <p>Connect with your assigned creative team.</p>
+            {/* 3 Telemetry Bento Mini Cards */}
+            <div className="space-y-2.5 pt-1 max-w-md">
+              <div className="bg-[#121926]/70 backdrop-blur-md border border-[#222F44] rounded-xl p-3 flex items-center justify-between hover:border-[#7FA0D6]/30 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="size-8 rounded-lg bg-[#0A0F18] border border-[#222F44] flex items-center justify-center text-[#7FA0D6] shrink-0">
+                    <TrendingUp className="size-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#F8FAFC]">Retainer Margin Engine</div>
+                    <div className="text-[10px] text-[#97A0B3]">Astra Living &bull; Live P&amp;L Tracker</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-mono font-bold text-[#7FA0D6]">41.25%</span>
+                  <div className="text-[9px] text-[#97A0B3]">Verified Margin</div>
+                </div>
+              </div>
+
+              <div className="bg-[#121926]/70 backdrop-blur-md border border-[#222F44] rounded-xl p-3 flex items-center justify-between hover:border-[#7FA0D6]/30 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="size-8 rounded-lg bg-[#0A0F18] border border-[#222F44] flex items-center justify-center text-emerald-400 shrink-0">
+                    <Activity className="size-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#F8FAFC]">Capacity Radar</div>
+                    <div className="text-[10px] text-[#97A0B3]">Motion Pod &bull; Zero Burnout Trigger</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-mono font-bold text-emerald-400">82%</span>
+                  <div className="text-[9px] text-[#97A0B3]">Utilization Nominal</div>
+                </div>
+              </div>
+
+              <div className="bg-[#121926]/70 backdrop-blur-md border border-[#222F44] rounded-xl p-3 flex items-center justify-between hover:border-[#7FA0D6]/30 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="size-8 rounded-lg bg-[#0A0F18] border border-[#222F44] flex items-center justify-center text-[#7FA0D6] shrink-0">
+                    <CheckCircle2 className="size-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#F8FAFC]">1-Click Client Sign-Off</div>
+                    <div className="text-[10px] text-[#97A0B3]">Magic-Links with Frame Annotations</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-mono font-bold text-[#F8FAFC]">2.4h SLA</span>
+                  <div className="text-[9px] text-[#97A0B3]">Turnaround Avg</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-1 text-[11px] text-[#97A0B3]">
+              <span className="flex items-center gap-1.5 font-semibold text-[#F8FAFC]">
+                <ShieldCheck className="size-3.5 text-[#7FA0D6]" />
+                SOC-2 Type II Certified
+              </span>
+              <span>&bull;</span>
+              <span>Trusted by 52+ leading creative studios</span>
             </div>
           </div>
 
@@ -560,7 +615,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
               {/* Bottom security micro badge */}
               <div className="pt-2 text-center text-[10px] text-[#97A0B3]/50 flex items-center justify-center gap-1.5">
                 <ShieldCheck className="size-3 text-[#7FA0D6]" />
-                <span>Sign in to access your workspace</span>
+                <span>256-Bit Encrypted &bull; ISO/SOC-2 Standards</span>
               </div>
 
             </div>
@@ -578,7 +633,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex items-center gap-1.5 text-emerald-400 font-medium">
             <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Client and team access</span>
+            <span>Systems nominal &bull; 24ms</span>
           </div>
           <Link to="/privacy" className="hover:text-[#F8FAFC] transition">Privacy</Link>
           <Link to="/terms" className="hover:text-[#F8FAFC] transition">Terms</Link>

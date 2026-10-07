@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { AnimatePresence, motion, useScroll } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Layers, User, Database, ChevronDown, Zap, Loader2, Instagram, Mail, Check, Layout, Clock } from "lucide-react";
+import { CheckCircle2, AlertCircle, ArrowRight, Layers, User, Database, ChevronDown, Zap, Loader2, Instagram, Mail, Check, Layout, Clock } from "lucide-react";
 import { PricingCards } from "../../components/public/PricingCards";
 import { request } from "../../lib/http";
 import {
@@ -125,6 +125,17 @@ export function HomePage() {
   });
 
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [assets, setAssets] = useState([
+    { id: 1, name: "Brand Launch Teaser", type: "Reel 9:16", status: "awaiting" },
+    { id: 2, name: "Product Feature Breakdown", type: "Carousel 4 slides", status: "awaiting" },
+    { id: 3, name: "Serum launch countdown", type: "Story 3 frames", status: "approved" },
+  ]);
+
+  const updateStatus = (id: number, status: string) => {
+    setAssets(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+  };
+
+  const approvedCount = assets.filter(a => a.status === "approved").length;
   // Fetch the WebGL scene only once the page is idle so it never delays first paint
   const [showScene, setShowScene] = useState(false);
   useEffect(() => whenIdle(() => setShowScene(true)), []);
@@ -249,18 +260,18 @@ export function HomePage() {
               className="hero-collage grid grid-cols-3 gap-2 sm:gap-4 lg:h-[600px] [perspective:1200px]"
             >
               <Parallax offset={30} className="flex min-w-0 flex-col gap-2 sm:gap-4">
-                <CollageTile aspect="aspect-[9/16]"  alt="Athlete" src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80" />
+                <CollageTile aspect="aspect-[9/16]" label="Reel · 9:16" alt="Athlete" src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80" />
                 <CollageTile aspect="aspect-[16/11]" alt="Sourdough" src="https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80" />
               </Parallax>
 
               <Parallax offset={-45} className="flex min-w-0 flex-col gap-2 sm:gap-4 pt-4 sm:pt-8">
                 <CollageTile aspect="aspect-[16/11]" alt="Interior" src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=80" />
-                <CollageTile aspect="aspect-[9/16]"  alt="Reel" src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80" />
+                <CollageTile aspect="aspect-[9/16]" label="Reel · 9:16" alt="Reel" src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80" />
               </Parallax>
 
               <Parallax offset={55} className="flex min-w-0 flex-col gap-2 sm:gap-4">
                 <CollageTile aspect="aspect-[9/14]" alt="Model" src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80" />
-                <CollageTile aspect="aspect-[4/5]"  alt="Serum" src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=800&q=80" />
+                <CollageTile aspect="aspect-[4/5]" label="Carousel" alt="Serum" src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=800&q=80" />
               </Parallax>
             </motion.div>
           </div>
@@ -361,6 +372,127 @@ export function HomePage() {
             ))}
           </Stagger>
         </div>
+      </section>
+
+      {/* 4. Interactive Approval Portal Layout */}
+      <section className="max-w-[1240px] mx-auto px-4 sm:px-6 pb-12 sm:pb-16 pt-10">
+        <Reveal blur className="relative">
+          <div className="absolute -top-4 left-6 bg-[#0A0F18] border border-[#7FA0D6]/50 text-[#7FA0D6] text-[11px] font-bold px-4 py-1.5 rounded-full z-10 shadow-lg tracking-wider">
+            TRY IT — THIS PANEL WORKS
+          </div>
+          
+          <div className="backdrop-blur-md bg-[#161F2D]/70 border border-[#2A3446]/60 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden">
+            <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-[#2A3446]">
+              <div className="font-black text-[#F8FAFC] text-lg">Batch 04</div>
+              <div className="text-xs font-bold text-[#97A0B3] flex items-center gap-3">
+                <span className="hidden sm:block w-24 h-1.5 rounded-full bg-[#2A3446] overflow-hidden">
+                  <motion.span
+                    className="block h-full rounded-full bg-[#7FA0D6]"
+                    animate={{ width: `${(approvedCount / 3) * 100}%` }}
+                    transition={{ duration: 0.6, ease: EASE_OUT_EXPO }}
+                  />
+                </span>
+                <span>
+                  <motion.span key={approvedCount} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="inline-block">
+                    {approvedCount}
+                  </motion.span>{" "}
+                  of 3 approved &bull; <span className="text-[#7FA0D6]">On track: 2 days early</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
+              {assets.map((asset, idx) => (
+                <motion.div
+                  key={asset.id}
+                  layout
+                  whileHover={{ y: -4 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 24 }}
+                  className={`group bg-[#0A0F18] border rounded-xl overflow-hidden flex flex-col transition-colors duration-300 ${
+                    asset.status === "approved"
+                      ? "border-[#7FA0D6]/60 shadow-md"
+                      : asset.status === "revision"
+                        ? "border-[#D8BF9B]/50"
+                        : "border-[#2A3446]"
+                  }`}
+                >
+                  {/* Thumbnail */}
+                  <img 
+                    src={idx === 0 ? "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80" : idx === 1 ? "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=600&q=80" : "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=600&q=80"}
+                    alt={asset.name}
+                    loading="lazy"
+                    className="h-44 object-cover w-full transition-transform duration-700 group-hover:scale-105"
+                  />
+                  
+                  <div className="p-4 flex-1 flex flex-col">
+                    <div className="text-[11px] font-bold text-[#97A0B3] uppercase tracking-wider mb-1">
+                      {asset.type.replace(' ', ' • ')}
+                    </div>
+                    <div className="text-sm font-bold text-[#F8FAFC] mb-4 flex-1">{asset.name}</div>
+                    
+                    <div className="flex items-center justify-between mt-auto min-h-[34px]">
+                      <AnimatePresence mode="wait" initial={false}>
+                      <motion.div
+                        key={asset.status}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.22 }}
+                        className="w-full"
+                      >
+                      {asset.status === "awaiting" && (
+                        <div className="flex items-center gap-2 w-full">
+                          <button 
+                            onClick={() => updateStatus(asset.id, "approved")}
+                            className="flex-1 bg-[#BCCCE6] text-[#050810] hover:bg-[#BCCCE6] font-semibold transition-all shadow-sm text-xs py-2 rounded-full flex items-center justify-center gap-1.5"
+                          >
+                            <CheckCircle2 className="size-3.5" /> Approve
+                          </button>
+                          <button 
+                            onClick={() => updateStatus(asset.id, "revision")}
+                            className="flex-1 bg-transparent border border-[#2A3446] hover:bg-[#222F44] text-[#F8FAFC] font-bold text-xs py-2 rounded-full transition-colors"
+                          >
+                            Change
+                          </button>
+                        </div>
+                      )}
+                      
+                      {asset.status === "approved" && (
+                        <div className="flex items-center justify-between w-full">
+                          <div className="inline-flex items-center gap-1.5 text-[#7FA0D6] text-[10px] font-bold">
+                            <CheckCircle2 className="size-3.5" /> Approved (queued)
+                          </div>
+                          <button 
+                            onClick={() => updateStatus(asset.id, "awaiting")}
+                            className="bg-[#161F2D] border border-[#2A3446] hover:bg-[#222F44] text-[#F8FAFC] text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors"
+                          >
+                            Undo
+                          </button>
+                        </div>
+                      )}
+
+                      {asset.status === "revision" && (
+                        <div className="flex items-center justify-between w-full">
+                          <div className="inline-flex items-center gap-1.5 text-[#D8BF9B] text-[10px] font-bold">
+                            <AlertCircle className="size-3.5" /> Revision requested
+                          </div>
+                          <button 
+                            onClick={() => updateStatus(asset.id, "awaiting")}
+                            className="bg-[#161F2D] border border-[#2A3446] hover:bg-[#222F44] text-[#F8FAFC] text-[10px] font-bold px-3 py-1.5 rounded-full transition-colors"
+                          >
+                            Undo
+                          </button>
+                        </div>
+                      )}
+                      </motion.div>
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </Reveal>
       </section>
 
       {/* 5. Pricing Cards (Synchronized with Pricing Page) */}

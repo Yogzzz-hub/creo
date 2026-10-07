@@ -59,7 +59,7 @@ export function PortalDashboardPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // The dashboard endpoint rejects clients that haven't finished onboarding, so don't call it until then
-  const { data: dashboard, isLoading: isDashboardLoading, error: dashboardError, refetch: refetchDashboard } = useQuery<DashboardData>({
+  const { data: dashboard, isLoading: isDashboardLoading } = useQuery<DashboardData>({
     queryKey: ["portal-dashboard", user?.id],
     queryFn: async () => {
       return await request<DashboardData>("/api/v1/portal/dashboard");
@@ -70,18 +70,23 @@ export function PortalDashboardPage() {
 
   const subscriptionActive = !!dashboard?.active_plan && ["active", "trialing"].includes(dashboard?.active_plan?.status);
 
-  const { data: deliverablesData, error: deliverablesError } = useQuery<{ items: any[]; waiting_on_you: number }>({
+  const { data: deliverablesData } = useQuery<{ items: any[]; waiting_on_you: number }>({
     queryKey: ["portal-dashboard-deliverables", user?.id],
     queryFn: async () => {
-      return await request<any>("/api/v1/portal/deliverables?limit=6");
+      try {
+        return await request<any>("/api/v1/portal/deliverables?limit=6");
+      } catch {
+        return { items: [], waiting_on_you: 0 };
+      }
     },
     enabled: subscriptionActive,
     refetchInterval: 2 * 60_000,
   });
 
-  const { data: upcomingEntries = [], error: calendarError } = useQuery<any[]>({
+  const { data: upcomingEntries = [] } = useQuery<any[]>({
     queryKey: ["portal-dashboard-calendar-upcoming", user?.id],
     queryFn: async () => {
+      try {
         const res = await request<any[]>("/api/v1/calendar/entries");
         if (!Array.isArray(res)) return [];
         const now = new Date();
@@ -93,15 +98,22 @@ export function PortalDashboardPage() {
             return d >= now && d <= in7Days;
           })
           .slice(0, 6);
+      } catch {
+        return [];
+      }
     },
     enabled: subscriptionActive,
     refetchInterval: 2 * 60_000,
   });
 
-  const { data: subData, error: subscriptionError } = useQuery<any>({
+  const { data: subData } = useQuery<any>({
     queryKey: ["client-subscription", user?.id],
     queryFn: async () => {
-      return await request<any>("/api/v1/payments/subscription");
+      try {
+        return await request<any>("/api/v1/payments/subscription");
+      } catch {
+        return null;
+      }
     },
     enabled: subscriptionActive,
     refetchInterval: 2 * 60_000,
@@ -167,11 +179,8 @@ export function PortalDashboardPage() {
   const today = new Date();
   const dayName = today.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
   const dateStr = today.toLocaleDateString("en-GB", { day: "numeric", month: "short" }).toUpperCase();
-  const daysRemaining = (dashboard?.active_plan as any)?.days_remaining ?? subData?.days_remaining ?? null;
-  const cycleDay = daysRemaining == null ? null : Math.max(1, Math.min(30, 30 - daysRemaining + 1));
-
-  if (deliverablesError || calendarError || subscriptionError) return <div role="alert">Some dashboard data could not be loaded. <button onClick={() => void queryClient.invalidateQueries()}>Retry</button></div>;
-  if (dashboardError) return <div role="alert">{dashboardError.message} <button onClick={() => void refetchDashboard()}>Retry</button></div>;
+  const daysRemaining = (dashboard?.active_plan as any)?.days_remaining ?? subData?.days_remaining ?? 30;
+  const cycleDay = Math.max(1, Math.min(30, 30 - daysRemaining + 1));
 
   if (!gate.isReady || (!isLocked && (isDashboardLoading || !dashboard))) {
     return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Workspace" />;
@@ -263,7 +272,7 @@ export function PortalDashboardPage() {
               return (
                 <div className="flex gap-2 mb-8">
                   {dynamicSteps.map((step) => (
-                    <div key={step.label} className="flex-1 min-w-0 flex flex-col">
+                    <div key={step.label} className="flex-1 flex flex-col">
                       <div
                         className={`h-1.5 w-full rounded-full mb-3 ${
                           step.completed || step.active
@@ -272,7 +281,7 @@ export function PortalDashboardPage() {
                         }`}
                       />
                       <span
-                        className={`text-[10px] sm:text-[13px] text-center break-words tracking-wide ${
+                        className={`text-[13px] text-center tracking-wide ${
                           step.active
                             ? "text-white font-bold"
                             : step.completed

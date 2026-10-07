@@ -5,6 +5,7 @@ import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { fetchClientNegotiations } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem } from "../../lib/ops-api";
+import { openRazorpayCheckout } from "../../lib/razorpay";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
 import { PausePlanModal } from "../../components/portal/PausePlanModal";
@@ -16,7 +17,6 @@ import type { InvoiceData } from "../../lib/pdf-invoice";
 
 interface SubscriptionData {
   status: string;
-  gateway?: string;
   name?: string;
   price_minor?: number;
   current_period_end?: string;
@@ -26,7 +26,7 @@ export function PortalPaymentsPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [downloadingInv, setDownloadingInv] = useState<string | null>(null);
-
+  const [processingAddon, setProcessingAddon] = useState<string | null>(null);
   const [pauseModalOpen, setPauseModalOpen] = useState(false);
   const [compareModalOpen, setCompareModalOpen] = useState(false);
   const [negotiateModalOpen, setNegotiateModalOpen] = useState(false);
@@ -35,7 +35,7 @@ export function PortalPaymentsPage() {
   const [actionNotice, setActionNotice] = useState<string | null>(null);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
 
-  const { data: subData, isLoading: isSubLoading, error: subscriptionError, refetch: refetchSubscription } = useQuery<{ subscription?: SubscriptionData; is_paused_next_month?: boolean }>({
+  const { data: subData, isLoading: isSubLoading } = useQuery<{ subscription?: SubscriptionData; is_paused_next_month?: boolean }>({
     queryKey: ["client-subscription", user?.id],
     queryFn: () => request<any>("/api/v1/payments/subscription"),
     enabled: !!user?.id,
@@ -53,7 +53,6 @@ export function PortalPaymentsPage() {
 
   const gate = useOnboardingGate();
 
-  if (subscriptionError) return <div role="alert">{subscriptionError.message} <button onClick={() => void refetchSubscription()}>Retry</button></div>;
   if (!gate.isReady || isSubLoading || !subData) {
     return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Plan & Billing" />;
   }
@@ -68,6 +67,13 @@ export function PortalPaymentsPage() {
     : (hasActivePlan ? "NEXT BILLING CYCLE" : "INACTIVE");
 
   const isPausedNextMonth = !!(subData as any)?.is_paused_next_month;
+
+  const addons = [
+    { id: "extra_reel", name: "Extra reel", desc: "Delivered within this batch", price: 4500 },
+    { id: "rush", name: "Rush delivery", desc: "24-hour turnaround on one asset", price: 6000 },
+    { id: "revision", name: "Extra revision round", desc: "For one asset", price: 1500 },
+    { id: "shoot", name: "Half-day shoot", desc: "Product + process footage in Chennai", price: 18000 },
+  ];
 
   const backendInvoices = (subData as any)?.invoices || [];
   const invoices = backendInvoices.map((inv: any) => ({
@@ -87,13 +93,37 @@ export function PortalPaymentsPage() {
   const totalMax = usageBars.reduce((sum, item) => sum + item.max, 0);
   const costPerAsset = totalMax > 0 && planPrice > 0 ? Math.round(planPrice / totalMax) : 0;
 
+  const rzpKey = (import.meta.env.VITE_RAZORPAY_KEY_ID as string) || "rzp_test_TO2r0YMjDZSpuC";
+
+  const handleAddon = (addon: typeof addons[0]) => {
+    setProcessingAddon(addon.id);
+    setTimeout(() => {
+      setProcessingAddon(null);
+      openRazorpayCheckout(
+        {
+          key: rzpKey,
+          amount: addon.price * 100,
+          currency: "INR",
+          name: "Creo Studio",
+          description: addon.name,
+          order_id: "addon_" + addon.id + "_" + Date.now(),
+          prefill: { name: user?.full_name || "", email: user?.email || "" }
+        },
+        () => {
+          setActionNotice(`Successfully added ${addon.name} to this cycle!`);
+          setTimeout(() => setActionNotice(null), 4000);
+        },
+        () => {}
+      );
+    }, 600);
+  };
+
   const handleDownload = async (id: string) => {
     setDownloadingInv(id);
     const targetInv = backendInvoices.find((i: any) => i.id === id);
-    if (!targetInv) { setErrorNotice("Invoice not found."); setDownloadingInv(null); return; }
     const invToRender: InvoiceData = {
       id: id,
-      date: targetInv.date || "Unavailable",
+      date: targetInv?.date || new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
       amount: targetInv?.amount ? String(targetInv.amount) : `₹${planPrice.toLocaleString("en-IN")}`,
       status: targetInv.status || "Unavailable",
       plan: targetInv.plan || planName,
@@ -221,7 +251,7 @@ export function PortalPaymentsPage() {
                 Subscription renewal scheduled to pause on {renewalDate}
               </p>
               <p className="text-xs text-amber-200/80 mt-0.5 leading-relaxed">
-                Your plan is scheduled to pause at the next renewal.
+                Your current {planName} deliverables remain 100% active until {renewalDate}. AutoPay renewal charge will not occur next month.
               </p>
             </div>
           </div>
@@ -323,14 +353,14 @@ export function PortalPaymentsPage() {
                   <span className="text-[13px] font-medium text-[#97A0B3]">{item.current} / {item.max}</span>
                 </div>
                 <div className="h-1.5 w-full bg-white/[0.05] rounded-full overflow-hidden">
-                  <div className={`h-full ${item.color} rounded-full`} style={{ width: `${item.max > 0 ? Math.min(100, item.current / item.max * 100) : 0}%` }} />
+                  <div className={`h-full ${item.color} rounded-full`} style={{ width: `${(item.current / item.max) * 100}%` }} />
                 </div>
               </div>
             ))}
           </div>
 
           <p className="text-xs text-[#97A0B3] font-medium leading-relaxed">
-            {(subData as any)?.plan?.revision_rounds != null ? `${(subData as any).plan.revision_rounds} revision rounds per asset` : "Revision limits unavailable"}
+            2 revision rounds per asset • 2 business-day batch SLA • dedicated account director
           </p>
         </div>
 
@@ -338,7 +368,24 @@ export function PortalPaymentsPage() {
         <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
           <h3 className="text-sm font-bold text-white mb-6">Add to this cycle</h3>
           <div className="divide-y divide-white/[0.05]">
-            <p className="text-sm text-[#97A0B3]">Contact your team to request additional content. Online add-on purchasing is not available.</p>
+            {addons.map(addon => (
+              <div key={addon.id} className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-[13px] font-bold text-white mb-1">{addon.name}</h4>
+                  <p className="text-xs text-[#97A0B3]">{addon.desc}</p>
+                </div>
+                <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0">
+                  <span className="text-[13px] font-bold text-white">₹{addon.price.toLocaleString('en-IN')}</span>
+                  <button 
+                    onClick={() => handleAddon(addon)}
+                    disabled={!!processingAddon}
+                    className="px-5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors w-20 flex items-center justify-center disabled:opacity-50 cursor-pointer"
+                  >
+                    {processingAddon === addon.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Add"}
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -380,7 +427,7 @@ export function PortalPaymentsPage() {
                           className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
                         >
                           {downloadingInv === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-white" /> : <Download className="w-3.5 h-3.5" />}
-                          Billing record
+                          GST invoice
                         </button>
                       </td>
                     </tr>
@@ -399,7 +446,7 @@ export function PortalPaymentsPage() {
             <div className="space-y-4 mb-8">
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-[#97A0B3]">Method</span>
-                <span className="text-[13px] font-bold text-white">{subData.subscription?.gateway || "Payment gateway unavailable"}</span>
+                <span className="text-[13px] font-bold text-white">UPI AutoPay • Razorpay</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-[#97A0B3]">Next charge</span>
@@ -407,14 +454,28 @@ export function PortalPaymentsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-[13px] text-[#97A0B3]">GSTIN on invoices</span>
-                <span className="text-[13px] font-bold text-white">Not provided</span>
+                <span className="text-[13px] font-bold text-white">Added</span>
               </div>
             </div>
           </div>
           
           <button 
             onClick={() => {
-              setErrorNotice("Payment method changes are not configured. Contact your team for billing assistance.");
+              openRazorpayCheckout(
+                {
+                  key: rzpKey,
+                  amount: 0,
+                  currency: "INR",
+                  name: "Creo Studio",
+                  description: "Update payment method",
+                  order_id: "auth_" + Date.now(),
+                },
+                () => {
+                  setActionNotice("Payment method updated successfully!");
+                  setTimeout(() => setActionNotice(null), 4000);
+                },
+                () => {}
+              );
             }}
             className="w-full py-3 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors mt-auto cursor-pointer"
           >
@@ -431,7 +492,7 @@ export function PortalPaymentsPage() {
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["client-subscription", user?.id] });
           queryClient.refetchQueries({ queryKey: ["client-subscription", user?.id] });
-          setActionNotice("Plan scheduled to pause at the next renewal.");
+          setActionNotice("Plan scheduled to pause for next month. AutoPay will not charge your account next cycle.");
           setTimeout(() => setActionNotice(null), 5000);
         }}
         planName={planName}

@@ -24,7 +24,7 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
           <p className="text-[11px] text-[#97A0B3] font-medium truncate">Deliverables, calendar & task queue</p>
         </div>
         <span className="shrink-0 min-w-max px-2.5 py-0.5 rounded-full text-[11px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 hover:bg-[#7FA0D6]/25 hover:border-[#7FA0D6]/60 transition-all cursor-pointer">
-          Content workflow
+          Active Q4
         </span>
       </div>
 
