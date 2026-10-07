@@ -149,14 +149,11 @@ cd frontend
 npm run dev
 ```
 
-### Run Tests
+### Check Frontend
 ```cmd
-cd backend
-.venv\Scripts\activate
-pytest
-
-cd ..\frontend
+cd frontend
 npm run lint
+npm run build
 ```
 
 ## 🐛 Troubleshooting
@@ -238,7 +235,6 @@ creo/
 2. ✅ Open http://localhost:5173 in browser
 3. ✅ Check API docs at http://localhost:8000/docs
 4. ✅ Read `CLAUDE.md` for architecture details
-5. ✅ Read `BUILD-PROMPTS.md` for phase information
 
 ## 💡 Pro Tips
 
