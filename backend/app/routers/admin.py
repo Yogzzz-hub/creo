@@ -83,6 +83,7 @@ class PlanUpdateRequest(BaseModel):
     reels: int | None = None
     stories: int | None = None
     revision_rounds: int | None = None
+    highlights: list[str] | None = None
 
 
 # --- Routes ---
@@ -473,7 +474,7 @@ async def get_dashboard(
         "active_clients": active_clients,
         "churned_last_30d": churned_last_30d,
         "avg_turnaround_hours": avg_turnaround_hours,
-        "trend_points": [0.2, 0.4, 0.35, 0.5, 0.65, 0.8, 1.0] # Mocked trend points for SVG sparkline
+        "trend_points": []
     }
 
     # Count the pipeline and open breaches in one scan and one round trip.
@@ -521,11 +522,10 @@ async def get_dashboard(
     
     total_with_sla = sla_row[2] if sla_row and sla_row[2] else 0
     met_overall = sla_row[1] if sla_row and sla_row[1] else 0
-    overall_sla = round((met_overall / total_with_sla * 100) if total_with_sla > 0 else 100.0, 1)
+    overall_sla = round(met_overall / total_with_sla * 100, 1) if total_with_sla > 0 else None
     
-    # Deriving response/resolution SLA artificially for UI realism since they aren't explicitly tracked
-    response_sla = min(100.0, round(overall_sla * 1.02, 1)) 
-    resolution_sla = max(0.0, round(overall_sla * 0.98, 1))
+    response_sla = None
+    resolution_sla = None
 
     return {
         "kpis": kpi_data,
@@ -1015,6 +1015,10 @@ async def update_plan(
     if payload.revision_rounds is not None:
         changes["revision_rounds"] = {"from": plan.revision_rounds, "to": payload.revision_rounds}
         plan.revision_rounds = payload.revision_rounds
+
+    if payload.highlights is not None:
+        changes["highlights"] = {"from": plan.highlights, "to": payload.highlights}
+        plan.highlights = payload.highlights
 
     audit = AuditLog(
         actor_id=actor.user_id,
@@ -1929,7 +1933,7 @@ _ADDONS_CATALOG: list[dict[str, Any]] = [
         "price_inr": 25000,
         "unit": "Day",
         "description": "Cinema-grade 4K 10-bit shoot with professional lighting, audio, and director on set.",
-        "pending_requests": 1,
+        "pending_requests": None,
     },
     {
         "id": "addon-vfx-motion",
@@ -1938,7 +1942,7 @@ _ADDONS_CATALOG: list[dict[str, Any]] = [
         "price_inr": 18000,
         "unit": "Asset Pack",
         "description": "Custom 3D logo physics, CGI product models, and animated kinetic typography.",
-        "pending_requests": 0,
+        "pending_requests": None,
     },
     {
         "id": "addon-express-turnaround",
@@ -1947,7 +1951,7 @@ _ADDONS_CATALOG: list[dict[str, Any]] = [
         "price_inr": 12000,
         "unit": "Per Sprint",
         "description": "Guaranteed 24-hour delivery turnaround on priority video revisions and drops.",
-        "pending_requests": 2,
+        "pending_requests": None,
     },
     {
         "id": "addon-creator-collab",
@@ -1956,7 +1960,7 @@ _ADDONS_CATALOG: list[dict[str, Any]] = [
         "price_inr": 35000,
         "unit": "Campaign",
         "description": "Full UGC creator sourcing, rights management, and organic collaboration contract setup.",
-        "pending_requests": 0,
+        "pending_requests": None,
     },
 ]
 
@@ -1975,11 +1979,7 @@ async def complete_admin_addon_request(
     actor: Actor = AdminActor,
 ) -> dict[str, Any]:
     """Mark pending add-on fulfillment requests as completed."""
-    for addon in _ADDONS_CATALOG:
-        if addon["id"] == addon_id:
-            addon["pending_requests"] = 0
-            return {"status": "completed", "addon": addon}
-    return {"status": "completed", "addon_id": addon_id}
+    raise HTTPException(status_code=501, detail="Add-on fulfillment tracking is not configured")
 
 
 # --- Escalations Endpoints ---
@@ -2026,7 +2026,7 @@ async def get_sla_escalations(
 
         deliv_type = task.deliverable_type.value.capitalize() if task.deliverable_type else "Deliverable"
         client_name = company_name or (client_email.split("@")[0].capitalize() if client_email else "Client Brand")
-        due_str = task.due_date.isoformat() if task.due_date else "Today"
+        due_str = task.due_date.isoformat() if task.due_date else None
 
         is_breached = bool(task.due_date and task.due_date < date.today())
         # Check sla_service for breach status
@@ -2050,7 +2050,7 @@ async def get_sla_escalations(
             "assignee": "Assigned Creator" if staff_id else "Unassigned",
             "assigned_to_name": "Assigned Creator" if staff_id else "Unassigned",
             "due_date": due_str,
-            "hours_overdue": 4.5 if task.status == TaskStatus.INTERNAL_QA else 2.0,
+            "hours_overdue": round(max(0.0, (datetime.now(timezone.utc) - task.sla_due_at).total_seconds() / 3600), 1) if task.sla_due_at else None,
             "severity": severity,
             "status": breach_status,
         })
@@ -2077,16 +2077,8 @@ async def resolve_sla_escalation(
             state.resolved = True
             state.level = "resolved"
         await db.commit()
-    except ValueError:
-        # Non-UUID mock string fallback
-        stmt = select(EscalationState).where(EscalationState.level == f"id_{escalation_id}")
-        state = (await db.execute(stmt)).scalar_one_or_none()
-        if not state:
-            state = EscalationState(level=f"id_{escalation_id}", resolved=True, details={"resolved_by": str(actor.user_id)})
-            db.add(state)
-        else:
-            state.resolved = True
-        await db.commit()
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Invalid escalation ID") from exc
 
     return {"status": "resolved", "id": escalation_id}
 
@@ -2153,105 +2145,29 @@ async def update_admin_settings(
 
 # --- Sales Pipeline Endpoints ---
 
-_CUSTOM_DEALS: list[dict[str, Any]] = [
-    {
-        "id": "deal-001",
-        "client_name": "Acme Global Brands",
-        "contact_email": "partnerships@acmeglobal.com",
-        "requested_plan": "Scale Tier + 4 Extra Reels",
-        "offered_price_inr": 79000,
-        "standard_price_inr": 99000,
-        "status": "pending",
-    },
-    {
-        "id": "deal-002",
-        "client_name": "Zenith Retail",
-        "contact_email": "marketing@zenithretail.in",
-        "requested_plan": "Growth Tier Custom Bundle",
-        "offered_price_inr": 42000,
-        "standard_price_inr": 49000,
-        "status": "pending",
-    },
-    {
-        "id": "deal-003",
-        "client_name": "Luxe Botanicals",
-        "contact_email": "founder@luxebotanicals.co",
-        "requested_plan": "Enterprise 360 Production",
-        "offered_price_inr": 129000,
-        "standard_price_inr": 149000,
-        "status": "pending",
-    },
-]
-
-
 @router.get("/sales")
 async def get_admin_sales(
     db: AsyncSession = Depends(get_db),
     actor: Actor = SalesActor,
 ) -> dict[str, Any]:
-    """Return distinct subscription tiers, active counts, slot availability, and custom enterprise deals."""
-    sub_counts_q = select(Subscription.plan_id, func.count(Subscription.id)).where(Subscription.status == "active").group_by(Subscription.plan_id)
-    sub_rows = (await db.execute(sub_counts_q)).all()
-    sub_counts = {r[0]: r[1] for r in sub_rows}
-
-    # Curate distinct active tiers for clean presentation
-    plans_list = [
-        {
-            "id": "plan-growth",
-            "name": "growth",
-            "display_name": "Growth Tier",
-            "monthly_price": 49000,
-            "active_subs": sub_counts.get(uuid.UUID("11111111-1111-1111-1111-111111111111"), 2),
-            "scarcity_slots": 2,
-        },
-        {
-            "id": "plan-scale",
-            "name": "scale",
-            "display_name": "Scale Tier",
-            "monthly_price": 89000,
-            "active_subs": sub_counts.get(uuid.UUID("22222222-2222-2222-2222-222222222222"), 3),
-            "scarcity_slots": 1,
-        },
-        {
-            "id": "plan-enterprise",
-            "name": "enterprise",
-            "display_name": "Enterprise Custom",
-            "monthly_price": 149000,
-            "active_subs": sub_counts.get(uuid.UUID("33333333-3333-3333-3333-333333333333"), 1),
-            "scarcity_slots": 2,
-        },
-    ]
-
+    sub_rows = (await db.execute(select(Subscription.plan_id, func.count(Subscription.id)).where(Subscription.status == "active").group_by(Subscription.plan_id))).all()
+    counts = {row[0]: row[1] for row in sub_rows}
+    plans = (await db.execute(select(Plan).where(Plan.is_active.is_(True)))).scalars().all()
+    negotiations = (await db.execute(select(PlanNegotiation).order_by(PlanNegotiation.created_at.desc()))).scalars().all()
     return {
-        "plans": plans_list,
-        "custom_pricing_requests": _CUSTOM_DEALS,
+        "plans": [{"id": str(p.id), "name": p.name, "display_name": p.display_name, "monthly_price": p.price_minor / 100, "active_subs": counts.get(p.id, 0), "scarcity_slots": p.scarcity_slots} for p in plans],
+        "custom_pricing_requests": [{"id": str(n.id), "client_name": n.client_name, "contact_email": n.client_email, "requested_plan": n.target_topic, "proposed_offer": n.proposed_offer, "status": n.status} for n in negotiations],
     }
 
 
 @router.post("/sales/deals/{deal_id}/approve")
-async def approve_custom_deal(
-    deal_id: str,
-    actor: Actor = SalesActor,
-) -> dict[str, Any]:
-    """Approve a custom enterprise deal in the sales pipeline."""
-    for deal in _CUSTOM_DEALS:
-        if deal["id"] == deal_id:
-            deal["status"] = "approved"
-            return {"status": "approved", "deal": deal}
-    raise HTTPException(status_code=404, detail="Deal not found")
+async def approve_custom_deal(deal_id: str, actor: Actor = SalesActor) -> dict[str, Any]:
+    raise HTTPException(status_code=410, detail="Use the persisted plan negotiation review endpoint")
 
 
 @router.post("/sales/deals/{deal_id}/reject")
-async def reject_custom_deal(
-    deal_id: str,
-    actor: Actor = SalesActor,
-) -> dict[str, Any]:
-    """Reject a custom enterprise deal in the sales pipeline."""
-    for deal in _CUSTOM_DEALS:
-        if deal["id"] == deal_id:
-            deal["status"] = "rejected"
-            return {"status": "rejected", "deal": deal}
-    raise HTTPException(status_code=404, detail="Deal not found")
+async def reject_custom_deal(deal_id: str, actor: Actor = SalesActor) -> dict[str, Any]:
+    raise HTTPException(status_code=410, detail="Use the persisted plan negotiation review endpoint")
 
 
 # --- Executive Reports & Analytics ---
@@ -2398,12 +2314,15 @@ class DeliverableStatusUpdate(BaseModel):
 
 class AdminDeliverableCreate(BaseModel):
     client_id: uuid.UUID
+    task_id: uuid.UUID | None = None
     type: str = "reel"
     title: str | None = None
-    file_url: str
+    file_url: str | None = None
     file_type: str | None = None
+    file_size_bytes: int = 0
+    # Accepted for compatibility; every new upload enters internal QA first.
+    status: str = "pending_qa"
     description: str | None = None
-    task_id: uuid.UUID | None = None
 
 
 _ADMIN_TYPE_DISPLAY = {
@@ -2419,17 +2338,24 @@ _ADMIN_TYPE_DISPLAY = {
 async def upload_admin_deliverable_file(
     request: Request,
     file: UploadFile = File(...),
-    client_id: uuid.UUID = Form(...),
+    client_id: uuid.UUID | None = Form(default=None),
     actor: Actor = StaffActor,
 ) -> dict[str, Any]:
-    """Store a deliverable file in the media bucket (never on the server's ephemeral disk)."""
+    """Store a deliverable file in the media bucket (never on the server's ephemeral disk).
+
+    With client_id the key lives in that client's namespace; otherwise in the
+    uploader's staff namespace until POST /admin/deliverables attaches it.
+    """
     import asyncio
 
     mime_type = (file.content_type or "").lower()
     size = file.size or 0
     try:
         storage_service.validate_media(mime_type, size)
-        key = storage_service.make_storage_key(client_id, mime_type)
+        if client_id is not None:
+            key = storage_service.make_storage_key(client_id, mime_type)
+        else:
+            key = storage_service.make_storage_key(actor.user_id, mime_type, prefix="staff")
         stored = await asyncio.to_thread(storage_service.put_object, key, file.file, mime_type, size)
     except storage_service.StorageError as exc:
         status_code = 503 if type(exc) is storage_service.StorageError else 409
@@ -2520,26 +2446,35 @@ async def list_admin_deliverables(
 @router.post("/deliverables")
 async def create_admin_deliverable(
     payload: AdminDeliverableCreate,
-    request: Request,
+    request: Request = None,  # type: ignore[assignment]  # injected by FastAPI; None in direct calls
     db: AsyncSession = Depends(get_db),
     actor: Actor = StaffActor,
 ) -> dict[str, Any]:
     """Attach an already stored file to a client's task; it enters internal QA like any upload."""
     from app.services import deliverable_workflow
 
+    if not payload.file_url:
+        raise HTTPException(status_code=422, detail="An uploaded media URL is required")
     client = await db.get(User, payload.client_id)
-    if not client or client.role != UserRole.CLIENT:
+    if not client:
+        raise HTTPException(status_code=404, detail="Client user not found")
+
+    task: Task | None = None
+    if payload.task_id:
+        task = await db.get(Task, payload.task_id)
+        if not task or task.client_id != payload.client_id:
+            raise HTTPException(status_code=422, detail="Task does not belong to the selected client")
+        # Creatives may only upload to their own tasks; leads to their pod's.
+        await deliverable_workflow.ensure_task_access(db, actor, task)
+
+    if client.role != UserRole.CLIENT:
         raise HTTPException(status_code=404, detail="Client user not found")
     if storage_service.resolve_media_url(payload.file_url, request) is None:
         raise HTTPException(status_code=422, detail="file_url must be a stored file, not a placeholder")
     if payload.file_url.startswith("clients/") and not payload.file_url.startswith(f"clients/{client.id}/"):
         raise HTTPException(status_code=403, detail="Storage key does not belong to this client")
 
-    if payload.task_id:
-        task = await deliverable_workflow.get_task_for_actor(db, actor, payload.task_id)
-        if task.client_id != client.id:
-            raise HTTPException(status_code=409, detail="Task belongs to a different client")
-    else:
+    if task is None:
         try:
             deliv_type = DeliverableType(payload.type.lower())
         except ValueError:
@@ -2560,7 +2495,7 @@ async def create_admin_deliverable(
         db, actor, task,
         file_url=payload.file_url,
         mime_type=file_type,
-        file_size_bytes=0,
+        file_size_bytes=payload.file_size_bytes,
         notes=payload.description,
     )
     return {
@@ -3020,13 +2955,13 @@ async def approve_leave_request(
     try:
         val_uuid = uuid.UUID(leave_id)
     except ValueError:
-        return {"status": "approved", "id": str(leave_id), "message": "Leave request approved."}
+        raise HTTPException(status_code=404, detail="Leave request not found")
 
     lr_stmt = select(LeaveRequest, StaffProfile).outerjoin(StaffProfile, StaffProfile.user_id == LeaveRequest.user_id).where(LeaveRequest.id == val_uuid)
     lr_res = await db.execute(lr_stmt)
     row = lr_res.first()
     if not row:
-        return {"status": "approved", "id": str(leave_id), "message": "Leave request approved."}
+        raise HTTPException(status_code=404, detail="Leave request not found")
 
     lr, sp = row[0], row[1]
     is_admin = actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN, "admin", "super_admin")
@@ -3093,13 +3028,13 @@ async def reject_leave_request(
     try:
         val_uuid = uuid.UUID(leave_id)
     except ValueError:
-        return {"status": "rejected", "id": str(leave_id), "message": "Leave request rejected."}
+        raise HTTPException(status_code=404, detail="Leave request not found")
 
     lr_stmt = select(LeaveRequest, StaffProfile).outerjoin(StaffProfile, StaffProfile.user_id == LeaveRequest.user_id).where(LeaveRequest.id == val_uuid)
     lr_res = await db.execute(lr_stmt)
     row = lr_res.first()
     if not row:
-        return {"status": "rejected", "id": str(leave_id), "message": "Leave request rejected."}
+        raise HTTPException(status_code=404, detail="Leave request not found")
 
     lr, sp = row[0], row[1]
     is_admin = actor.role in (UserRole.ADMIN, UserRole.SUPER_ADMIN, "admin", "super_admin")
@@ -3692,7 +3627,9 @@ async def get_pod_dashboard(
     total_tasks_count = sum(len(lst) for lst in tasks_by_status.values())
     completed_count = len(tasks_by_status["ready_to_publish"]) + len(tasks_by_status["completed"])
     total_wip = len(tasks_by_status["in_production"]) + len(tasks_by_status["internal_qa"])
-    sla_pct = 95 if total_tasks_count == 0 else max(75, 100 - (sla_breaches_count * 5))
+    sla_tasks = [t for items in tasks_by_status.values() for t in items if t["sla_due_at"] and t["status"] not in ("completed", "ready_to_publish")]
+    overdue_tasks = sum(1 for t in sla_tasks if t["hours_remaining"] is not None and t["hours_remaining"] < 0)
+    sla_pct = round(100 * (len(sla_tasks) - overdue_tasks) / len(sla_tasks), 1) if sla_tasks else None
 
     # All pods list for Admin Switcher
     available_pods = [

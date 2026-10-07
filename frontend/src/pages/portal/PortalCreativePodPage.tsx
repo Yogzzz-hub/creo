@@ -22,24 +22,24 @@ interface PodData {
 }
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
-  team_lead: "Strategy, briefs, and client communication. Mon-Fri, 10am-7pm IST.",
+  team_lead: "Strategy, briefs, and client communication. ",
   creative_lead: "Art direction, quality control, and brand consistency.",
-  editor: "Reels, motion graphics, and video editing. Mon-Fri, 10am-7pm IST.",
-  designer: "Static posts, carousels, and brand design. Mon-Fri, 10am-7pm IST.",
-  copywriter: "Captions, hooks, and messaging. Mon-Fri, 10am-7pm IST.",
-  strategist: "Content planning and research. Mon-Fri, 10am-7pm IST.",
+  editor: "Reels, motion graphics, and video editing. ",
+  designer: "Static posts, carousels, and brand design. ",
+  copywriter: "Captions, hooks, and messaging. ",
+  strategist: "Content planning and research. ",
 };
 
 function getRoleDesc(role: string): string {
   const key = role.toLowerCase().replace(/\s+/g, "_");
-  return ROLE_DESCRIPTIONS[key] || "Creative execution and support. Mon-Fri, 10am-7pm IST.";
+  return ROLE_DESCRIPTIONS[key] || "Creative execution and support. ";
 }
 
 export function PortalCreativePodPage() {
   const { user } = useAuth();
   const [chatMessage, setChatMessage] = useState("");
   const [modalMessage, setModalMessage] = useState("");
-  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+
   const [activeRecipientId, setActiveRecipientId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -50,24 +50,7 @@ export function PortalCreativePodPage() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const upcomingSlots = (() => {
-    const slots = [];
-    const times = ["10:30 AM", "2:00 PM", "11:00 AM", "3:30 PM", "10:00 AM"];
-    let d = new Date();
-    while (slots.length < 5) {
-      d = new Date(d.getTime() + 86400000);
-      const day = d.getDay();
-      if (day !== 0 && day !== 6) {
-        const dateStr = d.toLocaleDateString("en-US", { weekday: "short", day: "numeric", month: "short" });
-        slots.push({
-          id: `slot-${d.toISOString().slice(0, 10)}`,
-          date: dateStr,
-          time: times[slots.length % times.length],
-        });
-      }
-    }
-    return slots;
-  })();
+
 
   const clientChannel = `client-${(user?.full_name || "client").toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
   const gate = useOnboardingGate();
@@ -128,12 +111,6 @@ export function PortalCreativePodPage() {
     setTimeout(() => {
       document.getElementById("pod-chat-input")?.focus();
     }, 50);
-  };
-
-  const handleBookSlot = (slotId: string) => {
-    if (!bookedSlots.includes(slotId)) {
-      setBookedSlots(prev => [...prev, slotId]);
-    }
   };
 
   const { data: podData, isLoading } = useQuery<PodData>({
@@ -244,7 +221,7 @@ export function PortalCreativePodPage() {
 
                 {/* Working hours */}
                 <p className="text-xs text-[#97A0B3] mb-4">
-                  Working hours: <span className="text-[#97A0B3]">Mon-Fri, 10am-7pm IST</span>
+                  Working hours: <span className="text-[#97A0B3]">Ask your team lead for availability</span>
                 </p>
 
                 {/* Message Button */}
@@ -325,28 +302,10 @@ export function PortalCreativePodPage() {
         {/* Booking (1 col) */}
         <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
           <h3 className="text-base font-semibold text-white mb-1">Book a call</h3>
-          <p className="text-[13px] text-[#97A0B3] mb-5">15-minute slots with your pod lead</p>
+          <p className="text-[13px] text-[#97A0B3] mb-5">Arrange a call with your pod lead</p>
 
           <div className="space-y-0 divide-y divide-white/[0.05]">
-            {upcomingSlots.map((slot) => {
-              const isBooked = bookedSlots.includes(slot.id);
-              return (
-                <div key={slot.id} className="flex items-center justify-between py-4">
-                  <span className="text-sm text-[#97A0B3]">{slot.date}</span>
-                  <button 
-                    onClick={() => handleBookSlot(slot.id)}
-                    disabled={isBooked}
-                    className={`px-3 py-1 rounded-md text-[13px] font-medium transition-colors flex items-center gap-1.5 ${
-                      isBooked 
-                        ? "bg-[#7FA0D6]/20 text-[#BCCCE6] cursor-default" 
-                        : "bg-white/[0.08] text-white hover:bg-white/[0.12]"
-                    }`}
-                  >
-                    {isBooked ? <><Check className="w-3.5 h-3.5"/> Booked</> : slot.time}
-                  </button>
-                </div>
-              );
-            })}
+            <p className="text-sm text-[#97A0B3]">Send your team lead a message to request a call.</p>
           </div>
         </div>
       </div>

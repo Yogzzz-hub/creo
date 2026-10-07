@@ -131,7 +131,7 @@ export function DeliverableFrame({
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         ) : (
-          /* Poster / Preview mockup */
+          /* Asset preview placeholder */
           <div
             style={{
               width: "100%",

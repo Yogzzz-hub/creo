@@ -190,16 +190,15 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
 
     try {
       const order = await createOrder(userId, selectedPlanId, "razorpay");
-      const selectedPlan = plans?.find((p) => p.id === selectedPlanId);
       const rzpKey =
         order.key_id ||
-        (import.meta.env.VITE_RAZORPAY_KEY_ID as string) ||
-        "rzp_test_TO2r0YMjDZSpuC";
+        (import.meta.env.VITE_RAZORPAY_KEY_ID as string);
 
+      if (!rzpKey || !order.order_id || order.amount_minor == null) throw new Error("Payment gateway did not return a valid checkout order.");
       await openRazorpayCheckout(
         {
           key: rzpKey,
-          amount: order.amount_minor ?? (order.amount ? order.amount * 100 : (selectedPlan?.price_minor ?? 2500000)),
+          amount: order.amount_minor,
           currency: order.currency || "INR",
           name: "Creo Digital Marketing",
           description: `Subscription - ${selectedPlan?.display_name || "Plan"}`,

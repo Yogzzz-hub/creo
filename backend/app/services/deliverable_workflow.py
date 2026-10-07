@@ -599,6 +599,7 @@ def serialize_for_client(
         "status_label": _CLIENT_STATUS_LABELS.get(status.value, "Superseded"),
         "title": deliverable_title(task, deliverable),
         "deliverable_type": deliverable_type_of(task, deliverable),
+        "asset_type": deliverable_type_of(task, deliverable),  # older field name, kept for compatibility
         "type_label": type_label(task, deliverable),
         "file_url": storage_service.resolve_media_url(deliverable.file_url, request),
         "file_type": deliverable.file_type,

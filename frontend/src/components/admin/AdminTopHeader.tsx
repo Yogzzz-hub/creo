@@ -544,7 +544,7 @@ export function AdminTopHeader({
                       {user?.full_name || (isClientRole ? (user?.company_name || "Client Account") : isMemberRole ? "Team Specialist" : user?.role === "team_lead" ? "Pod Lead" : "Creo Admin")}
                     </h4>
                     <p className="text-[11px] text-[#97A0B3] font-medium truncate">
-                      {user?.email || (isClientRole ? "client@portal.creo" : isMemberRole ? "specialist@creo.agency" : "admin@creo.agency")}
+                      {user?.email || "Email unavailable"}
                     </p>
                     <div className="mt-1">
                       <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 capitalize">

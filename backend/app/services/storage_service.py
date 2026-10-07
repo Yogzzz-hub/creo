@@ -110,12 +110,12 @@ class ContentLengthMismatch(StorageError):
         )
 
 
-def make_storage_key(client_id: uuid.UUID, mime_type: str) -> str:
-    """Generate namespaced storage key: clients/{client_id}/{yyyy}/{mm}/{uuid}.{ext}"""
+def make_storage_key(owner_id: uuid.UUID, mime_type: str, prefix: str = "clients") -> str:
+    """Generate namespaced storage key: {prefix}/{owner_id}/{yyyy}/{mm}/{uuid}.{ext}"""
     now = datetime.now(UTC)
     ext = ALLOWED_MIMES[mime_type]
     file_uuid = uuid.uuid4()
-    return f"clients/{client_id}/{now.year}/{now.month:02d}/{file_uuid}.{ext}"
+    return f"{prefix}/{owner_id}/{now.year}/{now.month:02d}/{file_uuid}.{ext}"
 
 
 def _is_s3_configured() -> bool:

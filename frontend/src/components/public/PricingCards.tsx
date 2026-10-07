@@ -1,160 +1,83 @@
-import { ArrowRight, Check } from "lucide-react";
 import { Link } from "react-router";
-import { CountUp, Stagger, StaggerItem, TiltCard } from "../motion";
-
-interface PricingCardsProps {
-  showBillingToggle?: boolean;
-  defaultCycle?: string;
-  className?: string;
+import { useQuery } from "@tanstack/react-query";
+import { request } from "../../lib/http";
+interface Plan {
+  id: string;
+  name: string;
+  display_name: string;
+  price_minor: number;
+  currency: string;
+  reel_quota: number;
+  poster_quota: number;
+  story_quota: number;
+  revision_rounds: number;
+  highlights: string[];
+  is_recommended: boolean;
 }
-
-const PLANS = [
-  {
-    id: "starter",
-    name: "Starter",
-    badge: null,
-    price: "₹25,000",
-    period: "/month",
-    unitCost: "≈ ₹1,136 per asset · 22 assets",
-    stats: [
-      { count: "4", label: "Reels" },
-      { count: "8", label: "Posts" },
-      { count: "10", label: "Stories" },
-    ],
-    features: [
-      "1 revision round per asset",
-      "3 business-day batch SLA",
-      "Shared account lead",
-    ],
-    isFeatured: false,
-    ctaText: "Start with a free sample",
-    ctaLink: "/signup?plan=starter",
-  },
-  {
-    id: "growth",
-    name: "Growth",
-    badge: "Best value per asset",
-    price: "₹50,000",
-    period: "/month",
-    unitCost: "≈ ₹1,042 per asset · 48 assets",
-    stats: [
-      { count: "10", label: "Reels" },
-      { count: "16", label: "Posts" },
-      { count: "22", label: "Stories" },
-    ],
-    features: [
-      "2 revision rounds per asset",
-      "2 business-day batch SLA",
-      "Dedicated account director",
-    ],
-    isFeatured: true,
-    ctaText: "Start with a free sample",
-    ctaLink: "/signup?plan=growth",
-  },
-  {
-    id: "scale",
-    name: "Scale",
-    badge: null,
-    price: "₹95,000",
-    period: "/month",
-    unitCost: "≈ ₹990 per asset · 96 assets",
-    stats: [
-      { count: "20", label: "Reels" },
-      { count: "32", label: "Posts" },
-      { count: "44", label: "Stories" },
-    ],
-    features: [
-      "3 revision rounds per asset",
-      "24-hour priority SLA",
-      "Director + monthly strategy review",
-    ],
-    isFeatured: false,
-    ctaText: "Start with a free sample",
-    ctaLink: "/signup?plan=scale",
-  },
-];
-
-export function PricingCards({ className = "" }: PricingCardsProps) {
+export function PricingCards({
+  className = "",
+}: { className?: string; showBillingToggle?: boolean; defaultCycle?: string }) {
+  const query = useQuery({
+    queryKey: ["public-plans"],
+    queryFn: () => request<Plan[]>("/api/v1/payments/plans"),
+    staleTime: 60_000,
+  });
   return (
-    <div className={`w-full ${className}`}>
-      {/* 3 Pricing Tier Cards */}
-      <Stagger className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch" gap={0.12}>
-        {PLANS.map((plan) => (
-          <StaggerItem key={plan.id} className={`h-full ${plan.isFeatured ? "lg:-translate-y-3" : ""}`}>
-            <TiltCard
-              max={5}
-              lift={plan.isFeatured ? 36 : 22}
-              glow="transparent"
-              className={`h-full rounded-2xl p-5 sm:p-7 flex flex-col justify-between transition-colors duration-300 shadow-xl ${
-                plan.isFeatured
-                  ? "creo-conic-border"
-                  : "bg-[#121926] border border-[#222F44] hover:border-[#7FA0D6]/60"
-              }`}
+    <div className={className}>
+      {query.isPending && (
+        <p role="status" className="text-[#97A0B3]">
+          Loading plans?
+        </p>
+      )}
+      {query.isError && (
+        <p role="alert" className="text-amber-300">
+          Plans could not be loaded.{" "}
+          <button className="underline" onClick={() => void query.refetch()}>
+            Retry
+          </button>
+        </p>
+      )}
+      {query.isSuccess && query.data.length === 0 && (
+        <p className="text-[#97A0B3]">No subscription plans available.</p>
+      )}
+      <section className="grid lg:grid-cols-3 gap-6">
+        {query.data?.map((plan) => (
+          <article
+            key={plan.id}
+            className={`rounded-2xl bg-[#121926] border p-6 space-y-5 flex flex-col text-white ${plan.is_recommended ? "border-[#7FA0D6]" : "border-[#222F44]"}`}
+          >
+            <h2 className="text-xl font-bold">{plan.display_name}</h2>
+            {plan.is_recommended && <p className="text-[#7FA0D6]">Recommended</p>}
+            <p className="text-3xl font-bold">
+              {new Intl.NumberFormat("en-IN", {
+                style: "currency",
+                currency: plan.currency,
+                maximumFractionDigits: 0,
+              }).format(plan.price_minor / 100)}
+              <span className="text-sm text-[#97A0B3]"> / month</span>
+            </p>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <p>{plan.reel_quota} Reels</p>
+              <p>{plan.poster_quota} Posters</p>
+              <p>{plan.story_quota} Stories</p>
+            </div>
+            <p>{plan.revision_rounds} revision rounds</p>
+            {!!plan.highlights?.length && (
+              <ul className="space-y-2 text-[#97A0B3]">
+                {plan.highlights.map((h, i) => (
+                  <li key={i}>{h}</li>
+                ))}
+              </ul>
+            )}
+            <Link
+              to={`/signup?plan=${encodeURIComponent(plan.name)}`}
+              className="mt-auto rounded-xl bg-[#BCCCE6] text-[#050810] p-3 text-center font-bold"
             >
-              <div className="relative z-[2] [transform:translateZ(20px)]">
-                {/* Plan Name & Badge */}
-                <div className="flex items-center justify-between mb-4 min-h-[28px]">
-                  <h3 className="text-white font-semibold text-base tracking-wide">{plan.name}</h3>
-                  {plan.badge && (
-                    <span className="relative overflow-hidden px-3 py-1 rounded-full bg-[#D8BF9B]/10 border border-[#D8BF9B]/35 text-xs font-semibold text-[#D8BF9B]">
-                      {plan.badge}
-                    </span>
-                  )}
-                </div>
-
-                {/* Price & Unit Cost */}
-                <div className="mb-2">
-                  <div className="flex flex-wrap items-baseline gap-1">
-                    <CountUp value={plan.price} className="text-4xl font-extrabold text-white tracking-tight" />
-                    <span className="text-sm font-normal text-[#97A0B3]">{plan.period}</span>
-                  </div>
-                  <p className="text-xs text-[#97A0B3] mt-1.5 font-medium">{plan.unitCost}</p>
-                </div>
-
-                {/* Separator */}
-                <div className="border-t border-[#2A3446] my-6" />
-
-                {/* Quotas 3-column stats */}
-                <div className="grid grid-cols-3 gap-3 mb-8">
-                  {plan.stats.map((stat) => (
-                    <div key={stat.label}>
-                      <CountUp value={stat.count} duration={1.2} className="block text-2xl font-bold text-white tracking-tight" />
-                      <div className="text-xs text-[#97A0B3] mt-0.5 font-medium">{stat.label}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Features List */}
-                <ul className="space-y-3.5 mb-8 text-sm text-[#97A0B3] leading-relaxed">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2.5">
-                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#7FA0D6]/12 text-[#7FA0D6]">
-                        <Check className="size-3" strokeWidth={3} />
-                      </span>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* CTA Button */}
-              <div className="relative z-[2] mt-auto pt-2 [transform:translateZ(28px)]">
-                <Link
-                  to={plan.ctaLink}
-                  className={`group w-full text-sm font-bold py-3.5 px-4 rounded-xl text-center transition-all duration-300 flex items-center justify-center gap-2 shadow-sm ${
-                    plan.isFeatured
-                      ? "bg-[#BCCCE6] hover:bg-white text-[#0B111C]"
-                      : "bg-[#0B111C] border border-[#2A3446] text-[#F8FAFC] hover:border-[#BCCCE6] hover:bg-[#BCCCE6] hover:text-[#0B111C]"
-                  }`}
-                >
-                  {plan.ctaText}
-                  <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
-              </div>
-            </TiltCard>
-          </StaggerItem>
+              Choose {plan.display_name}
+            </Link>
+          </article>
         ))}
-      </Stagger>
+      </section>
     </div>
   );
 }

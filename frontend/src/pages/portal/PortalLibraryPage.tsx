@@ -23,7 +23,7 @@ export function PortalLibraryPage() {
 
   const gate = useOnboardingGate();
 
-  const { data: response, isLoading } = useQuery({
+  const { data: response, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["portal-library", user?.id],
     queryFn: () => fetchPortalDeliverables(user?.id || "", undefined, 100),
     enabled: !!user?.id && gate.isComplete,
@@ -93,6 +93,15 @@ export function PortalLibraryPage() {
       setDownloading(null);
     }
   };
+
+  if (isError) {
+    return (
+      <div role="alert" className="p-6 text-white">
+        {error.message || "Could not load your library."}{" "}
+        <button className="underline" onClick={() => void refetch()}>Retry</button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

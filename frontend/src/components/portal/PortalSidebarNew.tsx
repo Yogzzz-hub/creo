@@ -14,7 +14,6 @@ import {
   HelpCircle,
   Settings,
   LogOut,
-  MessageCircle,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { useConfirm } from "../ui/ConfirmDialog";
@@ -221,28 +220,6 @@ export function PortalSidebarNew() {
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Footer Card: Your Pod Lead */}
-          {dashboardData?.assigned_team && dashboardData.assigned_team.length > 0 && (
-            <div className="mx-1 mb-4 mt-4">
-              <div className="p-4 bg-[#161F2D] rounded-xl border border-white/[0.05]">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#7FA0D6] to-[#7FA0D6] flex items-center justify-center text-white text-xs font-bold shrink-0">
-                    {dashboardData.assigned_team[0].name.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{dashboardData.assigned_team[0].name} <span className="text-[#97A0B3] font-normal">· {dashboardData.assigned_team[0].role.includes("Lead") ? "your lead" : "your pod"}</span></p>
-                  </div>
-                </div>
-                <Link
-                  to="/portal/creative-pod"
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-full border border-white/[0.12] text-[13px] font-medium text-white hover:bg-white/[0.05] transition-colors"
-                >
-                  <MessageCircle className="w-4 h-4" strokeWidth={1.8} />
-                  Message
-                </Link>
-              </div>
-            </div>
-          )}
         </nav>
       </div>
     </aside>

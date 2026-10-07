@@ -11,15 +11,15 @@ const FAQ_ITEMS = [
   },
   {
     q: "What deliverables are included in each plan tier?",
-    a: "Starter provides 22 total assets (4 reels, 8 static posts, 10 stories). Growth provides 48 total assets (10 reels, 16 static posts, 22 stories). Scale provides 96 total assets (20 reels, 32 static posts, 44 stories).",
+    a: "The Pricing page shows the current plan catalog and asset quotas. Your Plan & billing page shows the plan assigned to your account, including any agreed custom terms.",
   },
   {
     q: "What are the batch turnaround SLA promises?",
-    a: "Starter features a 3 business-day batch SLA. Growth features a 2 business-day batch SLA. Scale features a 24-hour priority SLA.",
+    a: "Check the terms of your selected plan. Assigned tasks show their recorded delivery deadlines in the content calendar.",
   },
   {
     q: "How do revisions work if we need changes to a reel or carousel?",
-    a: "Every asset comes with plan-bound revision rounds (1 for Starter, 2 for Growth, 3 for Scale). When reviewing a deliverable in your portal, click Decline, enter your feedback, and your pod will immediately revise and resubmit.",
+    a: "Revision limits come from your assigned subscription plan. Open an uploaded deliverable, request changes, and enter feedback for your assigned team.",
   },
   {
     q: "Are there long-term contracts or cancellation fees?",

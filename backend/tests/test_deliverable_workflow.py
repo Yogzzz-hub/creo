@@ -319,5 +319,11 @@ async def test_upload_qa_and_client_review_follow_the_app_flow(db_session, monke
             assert any("Client approved" in n.title for n in await notes_for(s.editor))
             res = await upload(s.editor, "late.mp4")
             assert res.status_code == 409
+
+            # Operations views list the same deliverable with a loadable file.
+            res = await api.get(f"/api/v1/admin/deliverables?client_id={s.client.id}", headers=_as(s.lead))
+            assert res.status_code == 200, res.text
+            listed = {d["id"]: d for d in res.json()}
+            assert listed[v3["id"]]["status"] == "approved" and listed[v3["id"]]["file_url"]
     finally:
         app.dependency_overrides.pop(get_db, None)

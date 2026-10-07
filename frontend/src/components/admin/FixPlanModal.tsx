@@ -1,3 +1,5 @@
+import { useQuery } from "@tanstack/react-query";
+import { request } from "../../lib/http";
 import { useState, useEffect } from "react";
 import {
   X,
@@ -24,7 +26,7 @@ interface FixPlanModalProps {
 }
 
 interface PlanPreset {
-  id: "starter" | "growth" | "pro";
+  id: string;
   name: string;
   priceNum: number;
   priceStr: string;
@@ -35,50 +37,18 @@ interface PlanPreset {
   isPopular?: boolean;
 }
 
-const PRESETS: PlanPreset[] = [
-  {
-    id: "starter",
-    name: "Starter Growth",
-    priceNum: 25000,
-    priceStr: "₹25,000 / mo",
-    reels: 4,
-    posters: 8,
-    stories: 10,
-    highlight: "1 Shoot Day • Basic Auto-dispatch",
-  },
-  {
-    id: "growth",
-    name: "Brand Accelerator",
-    priceNum: 50000,
-    priceStr: "₹50,000 / mo",
-    reels: 8,
-    posters: 15,
-    stories: 20,
-    highlight: "Dedicated Director • Weekly Matrix",
-    isPopular: true,
-  },
-  {
-    id: "pro",
-    name: "Enterprise Domination",
-    priceNum: 95000,
-    priceStr: "₹95,000 / mo",
-    reels: 16,
-    posters: 30,
-    stories: 40,
-    highlight: "Senior VFX Director • 2 Shoot Days • 24h SLA",
-  },
-];
-
 export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModalProps) {
+  const catalog = useQuery({ queryKey: ["public-plans"], queryFn: () => request<any[]>("/api/v1/payments/plans"), enabled: isOpen });
+  const PRESETS: PlanPreset[] = (catalog.data || []).map(p => ({ id: p.name, name: p.display_name, priceNum: p.price_minor / 100, priceStr: new Intl.NumberFormat("en-IN", { style: "currency", currency: p.currency }).format(p.price_minor / 100) + " / mo", reels: p.reel_quota, posters: p.poster_quota, stories: p.story_quota, highlight: (p.highlights || []).join(" ? "), isPopular: p.is_recommended }));
   const [activeTab, setActiveTab] = useState<"presets" | "custom">("presets");
-  const [selectedPreset, setSelectedPreset] = useState<"starter" | "growth" | "pro">("growth");
+  const [selectedPreset, setSelectedPreset] = useState<string>("");
 
   // Custom bargain fields
   const [customName, setCustomName] = useState("Custom Retainer");
-  const [customPrice, setCustomPrice] = useState<number>(40000);
-  const [customReels, setCustomReels] = useState<number>(10);
-  const [customPosters, setCustomPosters] = useState<number>(12);
-  const [customStories, setCustomStories] = useState<number>(15);
+  const [customPrice, setCustomPrice] = useState<number>(0);
+  const [customReels, setCustomReels] = useState<number>(0);
+  const [customPosters, setCustomPosters] = useState<number>(0);
+  const [customStories, setCustomStories] = useState<number>(0);
   const [customNotes, setCustomNotes] = useState("");
 
   const [loading, setLoading] = useState(false);
@@ -87,14 +57,11 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
   // Sync initial state when modal opens
   useEffect(() => {
     if (client) {
-      const planNorm = (client.plan_name || "").toLowerCase();
-      if (planNorm.includes("starter")) {
-        setSelectedPreset("starter");
-      } else if (planNorm.includes("enterprise") || planNorm.includes("pro")) {
-        setSelectedPreset("pro");
-      } else {
-        setSelectedPreset("growth");
-      }
+      setSelectedPreset(client.plan_name || "");
+      setCustomPrice(client.monthly_price ?? 0);
+      setCustomReels(client.quota_usage.find(q => q.kind === "reel")?.quota ?? 0);
+      setCustomPosters(client.quota_usage.find(q => ["static_post", "poster"].includes(q.kind))?.quota ?? 0);
+      setCustomStories(client.quota_usage.find(q => q.kind === "story")?.quota ?? 0);
       setCustomName(
         client.company_name
           ? `Negotiated Plan - ${client.company_name}`
@@ -122,6 +89,7 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
       setError(null);
 
       if (activeTab === "presets") {
+        if (!PRESETS.some(p => p.id === selectedPreset)) throw new Error("Select an available plan.");
         const preset = PRESETS.find((p) => p.id === selectedPreset);
         const res = await fixClientPlan(client.client_id, {
           plan_name: selectedPreset,
@@ -236,7 +204,9 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
         {activeTab === "presets" && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-              {PRESETS.map((preset) => {
+              {catalog.isPending && <p role="status">Loading plans?</p>}
+          {catalog.isError && <p role="alert">Plans unavailable. <button onClick={() => void catalog.refetch()}>Retry</button></p>}
+          {PRESETS.map((preset) => {
                 const isCurrent =
                   currentPlanNormalized.includes(preset.id) ||
                   (preset.id === "growth" && currentPlanNormalized.includes("accelerator")) ||
@@ -508,7 +478,7 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
                 type="text"
                 value={customNotes}
                 onChange={(e) => setCustomNotes(e.target.value)}
-                placeholder="e.g. Client negotiated on strategy call: agreed rate ₹40,000/mo for 10 reels + 12 posters."
+                placeholder="Enter the agreed pricing terms and reason for this change."
                 className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F1F5F9] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
               />
               <p className="text-[10px] text-[#97A0B3]">

@@ -213,15 +213,15 @@ const PRIVACY_SECTIONS = [
   {
     id: "third-party",
     title: "6. Third-Party Services",
-    badge: "SOC 2 Type II Partners",
+    badge: "Service Providers",
     content: [
       "Creo integrates with the following third-party services to operate our platform:",
-      "Cloud Infrastructure & Database — SOC 2 Type II compliant cloud hosting, encrypted storage, and real-time event streaming.",
+      "Cloud Infrastructure & Database — hosting and storage for account records and uploaded content.",
       "Payment Gateways — Domestic and international payment processing via PCI DSS Level 1 certified processors.",
       "Meta Graph API — Instagram content publishing governed by Meta's Platform Terms.",
-      "Transactional Messaging — Verified transactional email delivery and carrier-grade SMS/WhatsApp verification.",
+      "Transactional Messaging — email delivery for account verification and platform notifications.",
       "AI Strategic Intelligence — Enterprise AI architecture for brand persona synthesis and content strategy formulation.",
-      "Each third-party service operates under its own privacy policy and data processing agreements. We select service providers that maintain industry-standard security certifications.",
+      "Each third-party service operates under its own privacy policy and data processing agreements.",
     ],
   },
   {

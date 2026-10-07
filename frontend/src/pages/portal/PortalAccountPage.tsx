@@ -1,573 +1,192 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "../../lib/auth-context";
+import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 import { request } from "../../lib/http";
-import { Instagram, Upload, Palette } from "lucide-react";
+import { useAuth } from "../../lib/auth-context";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
-import { useAlert } from "../../components/ui/ConfirmDialog";
-
-export function PortalAccountPage() {
+import { resolveAssetUrl } from "../../lib/media";
+export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: string }) {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const tab = searchParams.get("tab") || "settings";
-
-  const { data: profile } = useQuery<any>({
-    queryKey: ["portal-profile", user?.id],
-    queryFn: () => request("/api/v1/portal/profile"),
-  });
-
-  // Profile, security and notification settings stay available during setup;
-  // only the Brand DNA tabs depend on a finished onboarding.
   const gate = useOnboardingGate();
-  const isBrandTab = tab === "brand" || tab === "edit-brand";
-
-  const alert = useAlert();
-
-  const updateProfileMutation = useMutation({
-    mutationFn: async (payload: Record<string, any>) => {
-      return await request("/api/v1/portal/profile", {
-        method: "PUT",
-        body: JSON.stringify(payload),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["portal-profile"] });
-      alert({
-        title: "Profile Saved",
-        description: "Your account settings and brand preferences have been successfully updated.",
-        tone: "success",
-        icon: "success",
-      });
-    },
+  const [params, setParams] = useSearchParams();
+  const tab = params.get("tab") || defaultTab;
+  const brand = ["brand", "edit-brand"].includes(tab);
+  const query = useQuery({
+    queryKey: ["portal-profile", user?.id],
+    queryFn: () => request<any>("/api/v1/portal/profile"),
+    enabled: !!user?.id,
   });
-
   const [form, setForm] = useState({
     name: "",
     company: "",
-    email: "",
     phone: "",
-    brandName: "",
-    igHandle: "",
-    whatYouSell: "",
-    voiceWords: [] as string[],
+    summary: "",
     audience: "",
-    competitors: "",
-    colors: [] as string[],
+    voice: "",
+    colors: "",
+    instagram: "",
   });
-
-  const [notifSettings, setNotifSettings] = useState<Record<string, boolean>>({
-    emailBatch: true,
-    whatsappReminder: true,
-    weeklySummary: false,
-    billingEmails: true,
-  });
-
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [teamMembers, setTeamMembers] = useState<Array<{ name: string; role: string; email: string }>>([]);
-
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
   useEffect(() => {
-    if (profile) {
-      setForm((prev) => ({
-        ...prev,
-        name: profile.full_name || user?.full_name || "",
-        company: profile.company_name || user?.company_name || "",
-        email: profile.email || user?.email || "",
-        phone: profile.phone || "",
-        brandName: profile.company_name || "",
-        igHandle: profile.instagram_username || "",
-        whatYouSell: profile.brand_dna?.summary_line || "",
-        audience: profile.brand_dna?.target_audience || "",
-        voiceWords: profile.brand_dna?.tone_keywords || [],
-        colors: profile.brand_dna?.brand_colors || [],
-      }));
-      if (profile.assigned_team) {
-        setTeamMembers(profile.assigned_team);
-      }
+    if (query.data) {
+      const p = query.data;
+      setForm({
+        instagram: p.instagram_username || "",
+        name: p.full_name || "",
+        company: p.company_name || "",
+        phone: p.phone || "",
+        summary: p.brand_dna?.summary_line || "",
+        audience: p.brand_dna?.target_audience || "",
+        voice: (p.brand_dna?.tone_keywords || []).join(", "),
+        colors: (p.brand_dna?.brand_colors || p.brand_dna?.palette || []).join(", "),
+      });
     }
-  }, [profile, user]);
-
-  const handleSaveSettings = () => {
-    updateProfileMutation.mutate({
-      full_name: form.name,
-      company_name: form.company,
-      phone: form.phone,
-    });
-  };
-
-  const handleSaveBrandDNA = () => {
-    updateProfileMutation.mutate({
-      company_name: form.brandName,
-      instagram_username: form.igHandle,
-      brand_dna: {
-        ...(profile?.brand_dna || {}),
-        summary_line: form.whatYouSell,
-        target_audience: form.audience,
-        tone_keywords: form.voiceWords,
-        palette: form.colors,
-      }
-    });
-    setSearchParams({ tab: "brand" });
-  };
-
-  const toggleVoiceWord = (word: string) => {
-    setForm((prev) => ({
-      ...prev,
-      voiceWords: prev.voiceWords.includes(word)
-        ? prev.voiceWords.filter((w) => w !== word)
-        : [...prev.voiceWords, word],
-    }));
-  };
-
-  const updateColor = (idx: number, hex: string) => {
-    const newColors = [...form.colors];
-    newColors[idx] = hex;
-    setForm((prev) => ({ ...prev, colors: newColors }));
-  };
-
-  if (!gate.isComplete && isBrandTab) {
-    return (
-      <div className="flex items-center justify-center py-6 sm:py-10">
-        <SubscriptionLockedState
-          title="Brand DNA Locked"
-          description="Complete your onboarding setup to manage your brand DNA, visual assets, and brand guidelines."
-        />
-      </div>
-    );
+  }, [query.data]);
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setMessage("");
+    try {
+      await request("/api/v1/portal/profile", {
+        method: "PUT",
+        body: JSON.stringify(
+          brand
+            ? {
+                company_name: form.company,
+                instagram_username: form.instagram,
+                brand_summary: form.summary,
+                brand_dna: {
+                  ...(query.data?.brand_dna || {}),
+                  summary_line: form.summary,
+                  target_audience: form.audience,
+                  tone_keywords: form.voice
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                  brand_colors: form.colors
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                },
+              }
+            : { full_name: form.name, company_name: form.company, phone: form.phone },
+        ),
+      });
+      await query.refetch();
+      setMessage("Changes saved.");
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Changes could not be saved.");
+    } finally {
+      setBusy(false);
+    }
   }
-
-  if (tab === "edit-brand") {
+  if (brand && gate.isReady && !gate.isComplete)
     return (
-      <div className="animate-in fade-in duration-500 max-w-2xl">
-        <h1 className="text-3xl font-semibold text-white mb-6">Edit Brand DNA</h1>
-
-        <div className="flex gap-6">
-          <div className="flex-1 bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-8 space-y-6">
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[13px] font-semibold text-white mb-2">Brand name</label>
-                <input type="text" value={form.brandName} onChange={(e) => setForm({...form, brandName: e.target.value})} className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-white/[0.2]" />
-              </div>
-              <div>
-                <label className="block text-[13px] font-semibold text-white mb-2">Instagram handle</label>
-                <input type="text" value={form.igHandle} onChange={(e) => setForm({...form, igHandle: e.target.value})} className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-white/[0.2]" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[13px] font-semibold text-white mb-2">What do you sell, in one line?</label>
-              <input type="text" value={form.whatYouSell} onChange={(e) => setForm({...form, whatYouSell: e.target.value})} className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-white/[0.2]" placeholder="e.g. Premium sustainable activewear and performance essentials." />
-            </div>
-
-            <div>
-              <label className="block text-[13px] font-semibold text-white mb-2">Pick three words for your voice</label>
-              <div className="flex flex-wrap gap-2">
-                {["Warm", "Playful", "Premium", "Craft-first", "Bold", "Minimal", "Local", "Witty"].map(word => (
-                  <button key={word} onClick={() => toggleVoiceWord(word)} className={`px-4 py-1.5 rounded-full text-[13px] font-medium transition-colors ${form.voiceWords.includes(word) ? "bg-[#BCCCE6] text-[#0B111C]" : "bg-white/[0.05] text-white hover:bg-white/[0.1]"}`}>
-                    {word}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[13px] font-semibold text-white mb-2">Who buys from you?</label>
-              <textarea rows={2} value={form.audience} onChange={(e) => setForm({...form, audience: e.target.value})} className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-4 py-2.5 text-sm text-white resize-none focus:outline-none focus:border-white/[0.2]" placeholder="e.g. Urban professionals aged 25-40, fitness and wellness enthusiasts." />
-            </div>
-
-            <div>
-              <label className="block text-[13px] font-semibold text-white mb-2">Two or three brands you admire (or compete with)</label>
-              <input type="text" value={form.competitors} onChange={(e) => setForm({...form, competitors: e.target.value})} className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-white/[0.2]" placeholder="e.g. @brandone, @brandtwo" />
-            </div>
-
-            <div>
-              <label className="block text-[13px] font-semibold text-white mb-2">Brand Colors</label>
-              <div className="flex gap-4">
-                {form.colors.map((color, idx) => (
-                  <div key={idx} className="relative w-12 h-12 rounded-lg border border-white/[0.1] overflow-hidden cursor-pointer hover:scale-105 transition-transform flex items-center justify-center">
-                    <input 
-                      type="color" 
-                      value={color} 
-                      onChange={(e) => updateColor(idx, e.target.value)}
-                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10" 
-                    />
-                    <div className="absolute inset-0 w-full h-full" style={{ backgroundColor: color }} />
-                    <Palette className="w-4 h-4 text-white/50 z-0 drop-shadow-md" />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-2 border-dashed border-white/[0.1] rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:border-white/[0.2] transition-colors">
-              <Upload className="w-5 h-5 text-[#97A0B3] mb-3" />
-              <p className="text-[13px] font-bold text-white mb-1">Drop your logo, fonts and product photos</p>
-              <p className="text-xs text-[#97A0B3]">Optional now, you can add them later in Brand DNA</p>
-            </div>
-
-            <div className="flex items-center justify-between pt-4">
-              <span className="text-xs text-[#97A0B3]">Saved automatically</span>
-              <div className="flex items-center gap-3">
-                <button onClick={() => setSearchParams({ tab: "brand" })} className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors">
-                  Back
-                </button>
-                <button onClick={handleSaveBrandDNA} className="px-5 py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors flex items-center justify-center">
-                  {updateProfileMutation.isPending ? "Saving..." : "Save and continue"}
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
+      <SubscriptionLockedState
+        title="Brand DNA locked"
+        description="Complete onboarding to manage your brand guidelines."
+      />
     );
-  }
-
-  if (tab === "brand") {
-    return (
-      <div className="animate-in fade-in duration-500">
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <p className="text-[11px] font-bold text-[#97A0B3] uppercase tracking-[0.15em] mb-1">
-              VERSION 3 · UPDATED BY YOU ON 2 SEP
-            </p>
-            <h1 className="text-3xl font-semibold text-white">Brand DNA</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-bold text-white hover:bg-[#161F2D] transition-colors">
-              Version history
-            </button>
-            <button onClick={() => setSearchParams({ tab: "edit-brand" })} className="px-5 py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors">
-              Suggest an edit
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6">
-          <div className="space-y-6">
-            <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
-              <h3 className="text-[15px] font-bold text-white mb-4">Voice</h3>
-              <p className="text-[13px] text-[#97A0B3] mb-5 leading-relaxed">
-                {profile?.brand_dna?.summary_line || form.whatYouSell || "Strategic, engaging, and aligned with your target audience brand guidelines."}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {((profile?.brand_dna?.tone?.voice_words || form.voiceWords) as string[])?.map((word: string) => (
-                  <span key={word} className="px-3 py-1.5 rounded-lg border border-[#2A3446] text-[13px] font-medium text-white">{word}</span>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8 flex flex-col gap-6">
-              <div className="flex-1">
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">MAIN AUDIENCE</h3>
-                <p className="text-[13px] text-white leading-relaxed">
-                  {profile?.brand_dna?.audience_segments?.[0]?.description || form.audience || profile?.brand_dna?.target_audience || "Target customer demographic and core audience segment."}
-                </p>
-              </div>
-              <div className="flex-1 pt-6 border-t border-[#2A3446]">
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">CORE PAIN POINTS & WHAT THEY CARE ABOUT</h3>
-                <p className="text-[13px] text-white leading-relaxed">
-                  {profile?.brand_dna?.audience_segments?.[0]?.core_pain_point || profile?.brand_dna?.value_propositions || "Authenticity, product quality, value proposition, and brand reliability."}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
-              <h3 className="text-[15px] font-bold text-white mb-6">Do & don't</h3>
-              <div className="flex gap-8">
-                <div className="flex-1 space-y-3">
-                  <h4 className="text-[13px] font-bold text-white">Do</h4>
-                  <ul className="text-[13px] text-[#97A0B3] space-y-2 list-disc list-inside">
-                    {profile?.brand_dna?.tone?.writing_rules?.length > 0 ? (
-                      profile.brand_dna.tone.writing_rules.map((item: string, i: number) => <li key={i} className="leading-snug">{item}</li>)
-                    ) : (
-                      <>
-                        <li>Highlight clear product value & storytelling</li>
-                        <li>Consistent brand palette & typography</li>
-                        <li>High-definition native vertical formats</li>
-                      </>
-                    )}
-                  </ul>
-                </div>
-                <div className="flex-1 space-y-3">
-                  <h4 className="text-[13px] font-bold text-[#F87171]">Don't</h4>
-                  <ul className="text-[13px] text-[#97A0B3] space-y-2 list-disc list-inside">
-                    {(profile?.brand_dna?.guidelines?.donts?.length > 0 || profile?.brand_dna?.do_not?.length > 0) ? (
-                      (profile.brand_dna.guidelines?.donts || profile.brand_dna.do_not).map((item: string, i: number) => <li key={i} className="leading-snug">{item}</li>)
-                    ) : (
-                      <>
-                        <li>Generic stock photos without custom grading</li>
-                        <li>Cluttered typography or off-palette overlays</li>
-                        <li>Unclear or missing calls to action</li>
-                      </>
-                    )}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
-              <h3 className="text-[15px] font-bold text-white mb-6">Palette</h3>
-              <div className="grid grid-cols-4 gap-3 mb-6">
-                {form.colors.map((hex, idx) => (
-                  <div key={idx}>
-                    <div className="w-full aspect-[4/3] rounded-lg mb-2 border border-[#2A3446]" style={{ backgroundColor: hex || "#161F2D" }} />
-                    <p className="text-xs font-bold text-white">Color {idx + 1}</p>
-                    <p className="text-[11px] text-[#97A0B3] uppercase">{hex || "None"}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="pt-4 border-t border-[#2A3446]">
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1">TYPE</h3>
-                <p className="text-[13px] text-[#97A0B3]">
-                  Headlines: {profile?.brand_dna?.typography?.headline || "Inter"} · Body: {profile?.brand_dna?.typography?.body || "Inter"}
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
-              <h3 className="text-[15px] font-bold text-white mb-5">High-Performing Hooks</h3>
-              <div className="space-y-2">
-                {profile?.brand_dna?.hooks && profile.brand_dna.hooks.length > 0 ? (
-                  profile.brand_dna.hooks.map((hook: string, i: number) => (
-                    <div key={i} className="flex items-center justify-between gap-4 py-3 border-b border-[#2A3446] last:border-0 last:pb-0">
-                      <p className="text-[13px] text-white flex-1 leading-relaxed">"{hook}"</p>
-                      <span className="px-2 py-0.5 rounded bg-[#7FA0D6]/15 text-[#BCCCE6] text-[11px] font-bold whitespace-nowrap">approved</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-[13px] text-[#97A0B3] py-2">
-                    Campaign hook angles and high-CTR concepts generated during sprints will appear here.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
-              <h3 className="text-[15px] font-bold text-white mb-5">Brand Files</h3>
-              <div className="space-y-2 mb-5">
-                {profile?.brand_dna?.files && profile.brand_dna.files.length > 0 ? (
-                  profile.brand_dna.files.map((file: any, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between py-2 text-[13px]">
-                      <span className="text-[#97A0B3]">{file.name || `Asset-${idx + 1}`}</span>
-                      <span className="text-[#97A0B3] text-xs">{file.size || "Ready"}</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-[13px] text-[#97A0B3] py-2">
-                    No brand files or logo packs uploaded yet.
-                  </p>
-                )}
-              </div>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/[0.05] text-white text-[13px] font-medium hover:bg-white/[0.08] transition-colors">
-                <Upload className="w-4 h-4" /> Upload files
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Default: Settings Tab
+  const field = "w-full p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white";
   return (
-    <div className="animate-in fade-in duration-500">
-      <div className="flex items-end justify-between mb-8">
-        <div>
-          <p className="text-[11px] font-bold text-[#97A0B3] uppercase tracking-[0.15em] mb-1">
-            ACCOUNT
-          </p>
-          <h1 className="text-3xl font-semibold text-white">Settings</h1>
-        </div>
-        <button onClick={handleSaveSettings} className="px-5 py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors">
-          {updateProfileMutation.isPending ? "Saving..." : "Save changes"}
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6">
-        <div className="space-y-6">
-          
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
-            <h3 className="text-[15px] font-bold text-white mb-5">Profile</h3>
-            <div className="grid grid-cols-2 gap-5">
-              <div>
-                <label className="block text-[13px] text-[#97A0B3] mb-2">Your name</label>
-                <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-white/[0.2]" placeholder="[Owner name]" />
-              </div>
-              <div>
-                <label className="block text-[13px] text-[#97A0B3] mb-2">Company</label>
-                <input type="text" value={form.company} onChange={e => setForm({...form, company: e.target.value})} className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-white/[0.2]" placeholder="Company Name" />
-              </div>
-              <div>
-                <label className="block text-[13px] text-[#97A0B3] mb-2">Work email</label>
-                <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-white/[0.2]" placeholder="Email address" />
-              </div>
-              <div>
-                <label className="block text-[13px] text-[#97A0B3] mb-2">Phone</label>
-                <input type="tel" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full bg-[#0B111C] border border-[#2A3446] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-white/[0.2]" placeholder="[+91 ...]" />
-              </div>
-            </div>
+    <main className="text-white space-y-6 pb-12">
+      <h1 className="text-3xl font-bold">{brand ? "Brand DNA" : "Account settings"}</h1>
+      {query.isPending && <p role="status">Loading profile…</p>}
+      {query.isError && (
+        <p role="alert">
+          {query.error.message} <button onClick={() => void query.refetch()}>Retry</button>
+        </p>
+      )}
+      {message && <p role="status">{message}</p>}
+      {query.data && (
+        <>
+          <div className="flex gap-5">
+            <button onClick={() => setParams({ tab: "settings" })}>Account</button>
+            <button onClick={() => setParams({ tab: "brand" })}>Brand DNA</button>
           </div>
-
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
-            <h3 className="text-[15px] font-bold text-white mb-5">Instagram Integration</h3>
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-white/[0.05] border border-[#2A3446] flex items-center justify-center">
-                  <Instagram className="w-5 h-5 text-[#97A0B3]" />
-                </div>
-                <div>
-                  <h4 className="text-[13px] font-bold text-white mb-0.5">Automated Publishing</h4>
-                  <p className="text-xs text-[#97A0B3]">Direct Instagram Graph API publishing will activate when Meta approval completes.</p>
-                </div>
-              </div>
-              <span className="px-3 py-1.5 rounded-full bg-[#0B111C] border border-[#2A3446] text-[#97A0B3] text-xs font-semibold whitespace-nowrap">
-                Coming Soon
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
-            <h3 className="text-[15px] font-bold text-white mb-5">Team access</h3>
-            <div className="space-y-4 mb-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-[13px] text-white font-bold block">{form.name || user?.full_name || "Owner Name"}</span>
-                  <span className="text-xs text-[#97A0B3]">{form.email || user?.email || "owner@brand.com"}</span>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-white/[0.08] text-white text-xs font-bold">Admin</span>
-              </div>
-              {teamMembers.map((member, idx) => (
-                <div key={idx} className="flex items-center justify-between pt-2 border-t border-[#2A3446]">
-                  <div>
-                    <span className="text-[13px] text-white font-medium block">{member.name}</span>
-                    <span className="text-xs text-[#97A0B3]">{member.email}</span>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#0B111C] border border-[#2A3446] text-[#97A0B3] text-xs font-semibold">
-                    {member.role}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-3 border-t border-[#2A3446] flex items-center gap-2">
-              <input
-                type="email"
-                placeholder="Enter colleague email..."
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                className="flex-1 px-3.5 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs text-white placeholder-[#97A0B3] focus:outline-none focus:border-blue-500"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (!inviteEmail.trim()) return;
-                  const newEmail = inviteEmail.trim();
-                  setTeamMembers((prev) => [...prev, { name: newEmail.split("@")[0] || "Invited Colleague", role: "Reviewer", email: newEmail }]);
-                  alert({
-                    title: "Team Invitation Sent",
-                    description: `An invitation link was dispatched to ${newEmail}. They will be able to review assets and leave feedback.`,
-                    tone: "success",
-                    icon: "success",
-                  });
-                  setInviteEmail("");
-                }}
-                className="px-4 py-2 rounded-xl bg-[#7FA0D6] hover:bg-[#688BC4] text-white text-xs font-bold transition-colors cursor-pointer shrink-0"
-              >
-                Invite
-              </button>
-            </div>
-            <p className="text-xs text-[#97A0B3] mt-3">Invited people can review and comment; only admins can approve and pay.</p>
-          </div>
-          
-        </div>
-
-        <div className="space-y-6">
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
-            <h3 className="text-[15px] font-bold text-white mb-6">Notifications</h3>
-            <div className="space-y-6">
-              {[
-                { key: "emailBatch", label: "Email me when a batch is ready" },
-                { key: "whatsappReminder", label: "WhatsApp reminder the day before a review is due" },
-                { key: "weeklySummary", label: "Weekly summary every Monday" },
-                { key: "billingEmails", label: "Billing emails" },
-              ].map((notif) => {
-                const isActive = notifSettings[notif.key] ?? false;
-                return (
-                  <div key={notif.key} className="flex items-center justify-between">
-                    <span className="text-[13px] text-white">{notif.label}</span>
-                    <div
-                      onClick={() => {
-                        const nextVal = !isActive;
-                        setNotifSettings((prev) => ({ ...prev, [notif.key]: nextVal }));
-                        alert({
-                          title: "Notification Preferences Updated",
-                          description: `"${notif.label}" is now ${nextVal ? "enabled" : "disabled"}.`,
-                          tone: "info",
-                          icon: "info",
-                        });
-                      }}
-                      className={`w-9 h-5 rounded-full flex items-center p-0.5 cursor-pointer transition-colors ${
-                        isActive ? "bg-[#7FA0D6]" : "bg-white/[0.1]"
-                      }`}
-                    >
-                      <div
-                        className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                          isActive ? "translate-x-4" : "translate-x-0"
-                        }`}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
-            <h3 className="text-[15px] font-bold text-white mb-6">Security & Authentication</h3>
-            <div className="space-y-5 mb-6">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-5">
-                <div>
-                  <span className="text-[13px] text-white block">Password Reset</span>
-                  <span className="text-xs text-[#97A0B3]">Sends secure reset link to your email</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    alert({
-                      title: "Password Reset Email Sent",
-                      description: `Instructions to reset your password have been sent to ${form.email || user?.email || "your email address"}.`,
-                      tone: "info",
-                      icon: "info",
-                    })
+          <form
+            onSubmit={save}
+            className="bg-[#161F2D] border border-[#2A3446] p-5 sm:p-8 rounded-3xl space-y-5"
+          >
+            {(brand
+              ? ["company", "instagram", "summary", "audience", "voice", "colors"]
+              : ["name", "company", "phone"]
+            ).map((key) => (
+              <label key={key} className="block space-y-2">
+                <span>
+                  {
+                    {
+                      name: "Name",
+                      company: "Company",
+                      phone: "Phone",
+                      summary: "Brand summary",
+                      audience: "Target audience",
+                      voice: "Tone keywords (comma separated)",
+                      colors: "Brand colors (comma separated)",
+                      instagram: "Instagram handle",
+                    }[key]
                   }
-                  className="px-4 py-1.5 rounded-full border border-[#2A3446] text-white text-[13px] font-bold hover:bg-[#161F2D] transition-colors cursor-pointer"
-                >
-                  Reset password
-                </button>
-              </div>
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-5">
-                <div>
-                  <span className="text-[13px] text-white block">2-Step Verification</span>
-                  <span className="text-xs text-[#97A0B3]">Protected by OAuth / Session tokens</span>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-800/60 text-emerald-400 text-xs font-bold">
-                  Enforced
                 </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[13px] text-white">Active Sessions</span>
-                <span className="text-[13px] text-[#97A0B3]">Current Session</span>
-              </div>
-            </div>
-            <p className="text-xs text-[#97A0B3]">Authentication credentials are encrypted using Fernet AES-256 tokens.</p>
-          </div>
-        </div>
-      </div>
-    </div>
+                <input
+                  aria-label={key}
+                  value={form[key as keyof typeof form]}
+                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                  className={field}
+                />
+              </label>
+            ))}
+            {!brand && <p>Email: {query.data.email || user?.email || "Not provided"}</p>}
+            <button
+              disabled={busy}
+              className="bg-[#BCCCE6] text-[#0B111C] px-6 py-3 rounded-xl font-bold"
+            >
+              {busy ? "Saving…" : "Save changes"}
+            </button>
+          </form>
+          {brand && (
+            <section className="bg-[#161F2D] p-5 rounded-3xl space-y-3">
+              <h2 className="font-bold">Stored brand guidelines</h2>
+              <pre className="whitespace-pre-wrap break-words text-sm">
+                {Object.keys(query.data.brand_dna || {}).length
+                  ? JSON.stringify(query.data.brand_dna, null, 2)
+                  : "No brand guidelines stored yet."}
+              </pre>
+              <h2 className="font-bold">Brand files</h2>
+              {!query.data.brand_dna?.files?.length && <p>No brand files uploaded.</p>}
+              {query.data.brand_dna?.files?.map((f: any, i: number) => (
+                <p key={f.id || i}>
+                  {f.url || f.file_url ? (
+                    <a
+                      className="underline"
+                      href={resolveAssetUrl(f.url || f.file_url)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {f.name || "Brand file"}
+                    </a>
+                  ) : (
+                    f.name || "File details unavailable"
+                  )}
+                  {f.size && ` · ${f.size}`}
+                </p>
+              ))}
+            </section>
+          )}
+          {!brand && (
+            <section className="bg-[#161F2D] p-5 rounded-3xl space-y-3">
+              <h2 className="font-bold">Assigned team</h2>
+              {!query.data.assigned_team?.length && <p>No team assigned yet.</p>}
+              {query.data.assigned_team?.map((m: any) => (
+                <p key={m.id || m.email}>
+                  {m.name || m.full_name || m.email} · {m.role}
+                </p>
+              ))}
+            </section>
+          )}
+        </>
+      )}
+    </main>
   );
 }
