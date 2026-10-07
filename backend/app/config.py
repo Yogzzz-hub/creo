@@ -93,6 +93,7 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = Field(default=False)
     SMTP_USE_SSL: bool = Field(default=True)
     SMTP_FROM_EMAIL: str = Field(default="")
+    ALLOW_FALLBACK_OTP: bool = Field(default=False)
 
     # Payment Gateways — Razorpay
     RAZORPAY_KEY_ID: str = Field(default="rzp_test_TO2r0YMjDZSpuC")

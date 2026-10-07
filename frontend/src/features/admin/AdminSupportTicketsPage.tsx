@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
 import {
@@ -7,6 +7,9 @@ import {
   Inbox,
   X,
   RotateCcw,
+  Search,
+  Clock,
+  Zap,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { request } from "../../lib/http";
@@ -36,6 +39,8 @@ const DEFAULT_INITIAL_TICKETS: TicketItem[] = [];
 export function AdminSupportTicketsPage() {
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<"active" | "closed">("active");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [tickets, setTickets] = useState<TicketItem[]>(DEFAULT_INITIAL_TICKETS);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [alertModal, setAlertModal] = useState<{
@@ -168,7 +173,30 @@ export function AdminSupportTicketsPage() {
     };
   }, [loadTickets]);
 
-  const filteredTickets = tickets;
+  const filteredTickets = useMemo(() => {
+    return tickets.filter((t) => {
+      const q = searchQuery.trim().toLowerCase();
+      const matchesSearch =
+        !q ||
+        t.id.toLowerCase().includes(q) ||
+        t.client.toLowerCase().includes(q) ||
+        t.email.toLowerCase().includes(q) ||
+        t.issueTitle.toLowerCase().includes(q) ||
+        t.issueDesc.toLowerCase().includes(q) ||
+        t.agent.toLowerCase().includes(q);
+
+      const matchesPriority =
+        priorityFilter === "all" ||
+        t.priority.toLowerCase() === priorityFilter.toLowerCase();
+
+      const matchesStatus =
+        statusFilter === "active"
+          ? t.status !== "Resolved"
+          : t.status === "Resolved";
+
+      return matchesSearch && matchesPriority && matchesStatus;
+    });
+  }, [tickets, searchQuery, priorityFilter, statusFilter]);
 
   const toggleSelectAll = () => {
     if (selectedIds.length === filteredTickets.length) {
@@ -238,6 +266,7 @@ export function AdminSupportTicketsPage() {
 
   const openCount = tickets.filter((t) => t.status === "Open" || t.status === "In Progress").length;
   const resolvedCount = tickets.filter((t) => t.status === "Resolved").length;
+  const urgentCount = tickets.filter((t) => t.priority === "Urgent" || t.priority === "High").length;
 
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
@@ -247,73 +276,174 @@ export function AdminSupportTicketsPage() {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="flex-1 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 sm:pb-8 max-w-[1500px] w-full mx-auto space-y-5 sm:space-y-6"
+        className="flex-1 px-3 sm:px-6 lg:px-8 py-3.5 sm:py-6 pb-24 sm:pb-8 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6"
       >
-        {/* Top Summary Cards Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Top 4 Summary Cards Row (Symmetrical 2x2 on mobile, 4 on desktop) */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           {/* Card 1: Open Tickets */}
-          <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-5 shadow-xs space-y-3 hover-card-innovative">
+          <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-3 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover-card-innovative">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
-                ACTIVE / OPEN TICKETS
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] truncate">
+                Active Tickets
               </span>
-              <div className="size-8 rounded-xl bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 flex items-center justify-center text-[#7FA0D6]">
-                <Inbox className="size-4" />
+              <div className="size-6 sm:size-8 rounded-xl bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 flex items-center justify-center text-[#7FA0D6] shrink-0">
+                <Inbox className="size-3.5 sm:size-4" />
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white">{openCount}</span>
-              <span className="text-xs font-bold text-[#7FA0D6]">active items</span>
+            <div className="flex items-baseline gap-1.5 sm:gap-2">
+              <span className="text-xl sm:text-3xl font-black text-white">{openCount}</span>
+              <span className="text-[11px] sm:text-xs font-bold text-[#7FA0D6] truncate">in triage</span>
             </div>
-            <div className="pt-1">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 text-[#BCCCE6] text-[11px] font-bold border border-blue-500/30">
-                <span className="size-1.5 rounded-full bg-[#BCCCE6] animate-pulse" />
-                Live SLA Monitoring
+            <div className="pt-0.5">
+              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#BCCCE6] text-[10px] sm:text-[11px] font-bold border border-[#7FA0D6]/30 truncate">
+                <span className="size-1.5 rounded-full bg-[#BCCCE6] animate-pulse shrink-0" />
+                Live SLA Track
               </span>
             </div>
           </div>
 
           {/* Card 2: Resolved Today */}
-          <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-5 shadow-xs space-y-3 hover-card-innovative">
+          <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-3 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover-card-innovative">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
-                RESOLVED TODAY
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] truncate">
+                Resolved Today
               </span>
-              <div className="size-8 rounded-xl bg-blue-600/15 border border-blue-500/30 flex items-center justify-center text-[#BCCCE6]">
-                <CheckCircle2 className="size-4" />
+              <div className="size-6 sm:size-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                <CheckCircle2 className="size-3.5 sm:size-4" />
               </div>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-black text-white">{resolvedCount + 37}</span>
-              <span className="text-xs font-semibold text-[#97A0B3]">Tickets closed</span>
+            <div className="flex items-baseline gap-1.5 sm:gap-2">
+              <span className="text-xl sm:text-3xl font-black text-white">{resolvedCount + 37}</span>
+              <span className="text-[11px] sm:text-xs font-semibold text-[#97A0B3] truncate">closed</span>
             </div>
-            <div className="pt-1">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[11px] font-bold border border-[#7FA0D6]/30">
-                <span className="size-1.5 rounded-full bg-[#7FA0D6]" />
-                100% SLA Compliance Rate
+            <div className="pt-0.5">
+              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] sm:text-[11px] font-bold border border-emerald-500/30 truncate">
+                <span className="size-1.5 rounded-full bg-emerald-400 shrink-0" />
+                100% SLA Met
+              </span>
+            </div>
+          </div>
+
+          {/* Card 3: Response Speed */}
+          <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-3 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover-card-innovative">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] truncate">
+                Avg Response
+              </span>
+              <div className="size-6 sm:size-8 rounded-xl bg-[#7FA0D6]/15 border border-[#7FA0D6]/30 flex items-center justify-center text-[#7FA0D6] shrink-0">
+                <Clock className="size-3.5 sm:size-4" />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-1.5 sm:gap-2">
+              <span className="text-xl sm:text-3xl font-black text-white">8.2m</span>
+              <span className="text-[11px] sm:text-xs font-bold text-emerald-400 truncate">fast</span>
+            </div>
+            <div className="pt-0.5">
+              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] sm:text-[11px] font-bold border border-emerald-500/30 truncate">
+                <span className="size-1.5 rounded-full bg-emerald-400 shrink-0" />
+                Target &lt;15m
+              </span>
+            </div>
+          </div>
+
+          {/* Card 4: Urgent & Critical */}
+          <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-3 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover-card-innovative">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] truncate">
+                Urgent / High
+              </span>
+              <div className="size-6 sm:size-8 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                <Zap className="size-3.5 sm:size-4" />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-1.5 sm:gap-2">
+              <span className="text-xl sm:text-3xl font-black text-white">{urgentCount}</span>
+              <span className="text-[11px] sm:text-xs font-semibold text-[#97A0B3] truncate">high prio</span>
+            </div>
+            <div className="pt-0.5">
+              <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400 text-[10px] sm:text-[11px] font-bold border border-rose-500/30 truncate">
+                <span className="size-1.5 rounded-full bg-rose-400 animate-pulse shrink-0" />
+                Direct Triage
               </span>
             </div>
           </div>
         </div>
 
-        {/* View Toggle */}
-        <div className="flex items-center gap-2 border-b border-[#2A3446] pb-2">
-          <button
-            onClick={() => setStatusFilter("active")}
-            className={`px-4 py-2 text-xs font-bold transition-all border-b-2 ${
-              statusFilter === "active" ? "border-[#7FA0D6] text-white" : "border-transparent text-[#97A0B3] hover:text-[#BCCCE6]"
-            }`}
-          >
-            Active Tickets ({openCount})
-          </button>
-          <button
-            onClick={() => setStatusFilter("closed")}
-            className={`px-4 py-2 text-xs font-bold transition-all border-b-2 ${
-              statusFilter === "closed" ? "border-[#7FA0D6] text-white" : "border-transparent text-[#97A0B3] hover:text-[#BCCCE6]"
-            }`}
-          >
-            Closed Archive ({resolvedCount})
-          </button>
+        {/* 21st.dev Responsive Filter Rail */}
+        <div className="bg-[#161F2D] rounded-2xl p-3 sm:p-4 border border-[#2A3446] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Status Tabs (Touch-friendly horizontal scroll) */}
+          <div className="flex items-center gap-1 bg-[#0B111C] p-1 rounded-xl border border-[#2A3446] overflow-x-auto no-scrollbar shrink-0">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("active")}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                statusFilter === "active"
+                  ? "bg-[#BCCCE6] text-[#0B111C] shadow-xs font-black"
+                  : "text-[#97A0B3] hover:text-white"
+              }`}
+            >
+              Active ({openCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatusFilter("closed")}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                statusFilter === "closed"
+                  ? "bg-[#BCCCE6] text-[#0B111C] shadow-xs font-black"
+                  : "text-[#97A0B3] hover:text-white"
+              }`}
+            >
+              Closed Archive ({resolvedCount})
+            </button>
+          </div>
+
+          {/* Search Input & Priority Pills */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 max-w-2xl justify-end">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#97A0B3]" />
+              <input
+                type="text"
+                placeholder="Search ticket #, client, subject..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-medium text-white placeholder:text-[#97A0B3] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]/30 focus:border-[#7FA0D6] transition-all"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white p-0.5 cursor-pointer"
+                  aria-label="Clear search"
+                >
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
+
+            {/* Priority Selector Pills */}
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar shrink-0">
+              <span className="text-[10px] font-extrabold uppercase text-[#97A0B3] px-1 hidden lg:inline">Priority:</span>
+              {(["all", "Urgent", "High", "Medium"] as const).map((prio) => (
+                <button
+                  key={prio}
+                  type="button"
+                  onClick={() => setPriorityFilter(prio)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer shrink-0 ${
+                    priorityFilter === prio
+                      ? prio === "Urgent"
+                        ? "bg-rose-500/20 text-rose-300 border border-rose-500/50"
+                        : prio === "High"
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/50"
+                        : "bg-[#7FA0D6]/20 text-[#BCCCE6] border border-[#7FA0D6]/50"
+                      : "bg-[#0B111C] text-[#97A0B3] hover:text-white border border-[#2A3446]"
+                  }`}
+                >
+                  {prio === "all" ? "All" : prio}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Mobile Tickets Card List (< md) */}
@@ -395,24 +525,26 @@ export function AdminSupportTicketsPage() {
                     <span className="text-[10px] font-bold text-[#F1F5F9] truncate">{t.agent}</span>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      onClick={() => handlePrimaryAction(t)}
-                      className={`px-3 py-1 rounded-xl text-white text-[11px] font-bold transition-all ${
-                        t.status === "Resolved" ? "bg-slate-700" : "bg-blue-600"
-                      }`}
-                    >
-                      {t.primaryAction}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/admin/support/tickets/${t.rawId || t.id}`)}
-                      className="px-2.5 py-1 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-[11px] font-bold hover:bg-slate-200"
-                    >
-                      {t.secondaryAction}
-                    </button>
-                  </div>
+                    <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={() => handlePrimaryAction(t)}
+                        className={`px-3 py-1.5 rounded-xl text-white text-[11px] font-bold transition-all cursor-pointer shadow-xs active:scale-95 ${
+                          t.status === "Resolved"
+                            ? "bg-[#161F2D] hover:bg-[#2A3446] border border-[#2A3446] text-[#F1F5F9]"
+                            : "bg-[#7FA0D6] hover:bg-blue-600 text-white"
+                        }`}
+                      >
+                        {t.primaryAction}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/admin/support/tickets/${t.rawId || t.id}`)}
+                        className="px-2.5 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] text-[11px] font-bold transition-colors cursor-pointer"
+                      >
+                        {t.secondaryAction}
+                      </button>
+                    </div>
                 </div>
               </div>
             ))
@@ -442,7 +574,7 @@ export function AdminSupportTicketsPage() {
                   <th className="px-4 py-3.5 text-right">Quick Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
+              <tbody className="divide-y divide-[#2A3446] font-medium">
                 {filteredTickets.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center py-12 text-[#97A0B3] font-medium">
@@ -570,7 +702,7 @@ export function AdminSupportTicketsPage() {
                           <button
                             type="button"
                             onClick={() => navigate(`/admin/support/tickets/${t.rawId || t.id}`)}
-                            className="px-2.5 py-1 rounded-xl bg-[#161F2D] text-[#F1F5F9] text-[11px] font-bold hover:bg-slate-200 transition-colors cursor-pointer"
+                            className="px-2.5 py-1 rounded-xl bg-[#0B111C] hover:bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] text-[11px] font-bold transition-colors cursor-pointer"
                           >
                             {t.secondaryAction}
                           </button>

@@ -29,7 +29,7 @@ export function ContentEngineWidget({ queue: _queue }: ContentEngineWidgetProps)
       </div>
 
       {/* 4 Squares (2x2 Grid) - Badges fully aligned INSIDE */}
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 my-2.5">
+      <div className="flex-1 grid grid-cols-2 gap-2 sm:gap-3 my-2.5">
         {/* Box 1: Deliverables Review */}
         <Link
           to="/admin/deliverables"

@@ -29,9 +29,9 @@ import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    active: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    active: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
     trialing: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-    expired: "bg-rose-50 text-rose-700 border-rose-200",
+    expired: "bg-rose-500/15 text-rose-400 border-rose-500/30",
     canceled: "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
   };
   return (
@@ -69,7 +69,7 @@ function SectionCard({
           {title}
         </h3>
       </div>
-      <div className="p-5">{children}</div>
+      <div className="p-4 sm:p-5">{children}</div>
     </div>
   );
 }
@@ -83,9 +83,9 @@ function TagBadge({
 }) {
   const colors = {
     blue: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
-    red: "bg-rose-50 text-rose-700 border-rose-200",
-    green: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    amber: "bg-amber-50 text-amber-700 border-amber-200",
+    red: "bg-rose-500/15 text-rose-400 border-rose-500/30",
+    green: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+    amber: "bg-amber-500/15 text-amber-400 border-amber-500/30",
     slate: "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]",
   };
   return (
@@ -169,10 +169,10 @@ export function AdminClientBrandPage() {
     dna.positioning || dna.summary_line || client.brand_summary || "";
 
   const stageColors: Record<string, string> = {
-    reach: "bg-sky-100 text-sky-700 border-sky-200",
-    authority: "bg-violet-100 text-violet-700 border-violet-200",
-    conversion: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    nurture: "bg-amber-100 text-amber-700 border-amber-200",
+    reach: "bg-sky-500/15 text-sky-400 border border-sky-500/30",
+    authority: "bg-violet-500/15 text-violet-400 border border-violet-500/30",
+    conversion: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
+    nurture: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
   };
 
   return (
@@ -182,7 +182,7 @@ export function AdminClientBrandPage() {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="flex-1 px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-5 animate-page-in"
+        className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-5 animate-page-in"
       >
         {/* ── Back Navigation ────────────────────────────────── */}
         <div className="flex items-center gap-2 text-xs">
@@ -600,7 +600,7 @@ export function AdminClientBrandPage() {
                   <th className="pb-2.5 pr-1 text-center">Primary</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[#2A3446]">
                 {client.assigned_team.map((m) => (
                   <tr key={m.id} className="hover:bg-[#0B111C]/50 transition-colors">
                     <td className="py-3 pl-1 pr-3">
@@ -619,7 +619,7 @@ export function AdminClientBrandPage() {
                     <td className="py-3 pr-3 text-[#97A0B3]">{m.email}</td>
                     <td className="py-3 pr-1 text-center">
                       {m.is_primary && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
                           Primary
                         </span>
                       )}

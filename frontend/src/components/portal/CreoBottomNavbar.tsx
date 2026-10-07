@@ -35,16 +35,16 @@ export function CreoBottomNavbar() {
             <Link
               key={item.name}
               to={item.path}
-              className={`flex flex-col items-center justify-center min-w-[64px] p-2 rounded-xl transition-all ${
+              className={`flex flex-col items-center justify-center min-w-[50px] sm:min-w-[56px] py-1.5 px-1 sm:px-2 rounded-xl transition-all ${
                 isActive
                   ? "text-[#BCCCE6]"
                   : "text-[#97A0B3] hover:text-white hover:bg-[#0B111C]"
               }`}
             >
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full mb-1 transition-all ${isActive ? "bg-[#2A3446] text-[#BCCCE6]" : ""}`}>
-                <Icon className={`w-5 h-5 transition-transform ${isActive ? "scale-110" : ""}`} strokeWidth={isActive ? 2.5 : 2} />
+              <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full mb-0.5 transition-all ${isActive ? "bg-[#2A3446] text-[#BCCCE6]" : ""}`}>
+                <Icon className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform ${isActive ? "scale-110" : ""}`} strokeWidth={isActive ? 2.5 : 2} />
               </div>
-              <span className={`text-[10px] font-bold whitespace-nowrap tracking-tight transition-colors ${isActive ? "text-[#BCCCE6]" : "text-[#97A0B3]"}`}>
+              <span className={`text-[9.5px] sm:text-[10px] font-bold whitespace-nowrap tracking-tight transition-colors ${isActive ? "text-[#BCCCE6]" : "text-[#97A0B3]"}`}>
                 {item.name}
               </span>
             </Link>

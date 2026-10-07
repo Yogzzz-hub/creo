@@ -536,9 +536,9 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
       <AdminTopHeader activeTab="Support" />
 
       {/* Sub-header Breadcrumb Bar */}
-      <div className="bg-[#161F2D] border-b border-[#2A3446] px-6 lg:px-8 py-3.5">
+      <div className="bg-[#161F2D] border-b border-[#2A3446] px-3.5 sm:px-6 lg:px-8 py-3 sm:py-3.5">
         <div className="max-w-[1500px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-[#97A0B3] font-medium">
+          <div className="flex items-center gap-2 text-[#97A0B3] font-medium flex-wrap">
             <Link
               to="/admin/support"
               className="inline-flex items-center gap-1.5 hover:text-[#7FA0D6] transition-colors font-semibold"
@@ -552,7 +552,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
             <span className="text-[#97A0B3]">Deliverables Pipeline</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {alarmSilenced && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#161F2D] text-[#F1F5F9] border border-[#2A3446] font-semibold text-[11px]">
                 <BellOff className="size-3.5 text-[#97A0B3]" />
@@ -573,7 +573,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="flex-1 px-6 lg:px-8 py-6 max-w-[1500px] w-full mx-auto space-y-6"
+        className="flex-1 px-3.5 sm:px-6 lg:px-8 py-4 sm:py-6 max-w-[1500px] w-full mx-auto space-y-6"
       >
         {/* Toast Alert */}
         {toastMessage && (
@@ -594,7 +594,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
         )}
 
         {/* Ticket Header Card */}
-        <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-6 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-5 hover-card-innovative">
+        <div className="bg-[#161F2D] border border-[#2A3446]/90 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-5 hover-card-innovative">
           <div className="space-y-2.5">
             <div className="flex flex-wrap items-center gap-2.5">
               <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
@@ -763,9 +763,9 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                       setMoreMenuOpen(false);
                       showToast(`Ticket #${ticketId} archived to compliance vault.`, "info");
                     }}
-                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                    className="w-full px-4 py-2.5 text-left text-xs font-bold text-rose-400 hover:bg-rose-500/15 flex items-center gap-2.5 transition-colors cursor-pointer"
                   >
-                    <Archive className="size-4 text-rose-500" />
+                    <Archive className="size-4 text-rose-400" />
                     Archive Incident
                   </button>
                 </div>
@@ -807,7 +807,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
                               msg.isSystemAudit
                                 ? "bg-[#161F2D] text-[#F1F5F9] border-[#2A3446]"
                                 : msg.isInternal
-                                ? "bg-amber-100 text-amber-800 border-amber-200"
+                                ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
                                 : "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30"
                             }`}
                           >
@@ -1375,7 +1375,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
           <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-2xl p-6 sm:p-8 max-w-lg w-full space-y-6 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-[#2A3446] pb-4">
               <div className="flex items-center gap-3">
-                <div className="size-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                <div className="size-10 rounded-2xl bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center justify-center font-bold">
                   <AlertTriangle className="size-5" />
                 </div>
                 <div>
@@ -1385,7 +1385,7 @@ Resolution Path: Re-route via US-Central High-Bandwidth Gateway with 60s handsha
               </div>
               <button
                 onClick={() => setEscalateModalOpen(false)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer transition-colors"
+                className="size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-white flex items-center justify-center cursor-pointer transition-colors"
               >
                 <X className="size-4" />
               </button>

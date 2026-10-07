@@ -339,7 +339,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
                 }}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold shadow-2xs active:scale-95 transition-all cursor-pointer shrink-0 ${
                   t.status === "resolved"
-                    ? "bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9]"
+                    ? "bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-white"
                     : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20"
                 }`}
               >
@@ -399,7 +399,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             <button
               type="button"
               onClick={() => setAlertModal(null)}
-              className="absolute top-4 right-4 size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] hover:text-[#F1F5F9] flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-4 right-4 size-8 rounded-full bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#97A0B3] hover:text-white flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Close modal"
             >
               <X className="size-4" />
@@ -440,11 +440,11 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
                 <button
                   type="button"
                   onClick={() => {
-                    const id = alertModal.ticketId;
-                    setAlertModal(null);
-                    navigate(`/admin/support/tickets/${id}`);
+                     const id = alertModal.ticketId;
+                     setAlertModal(null);
+                     navigate(`/admin/support/tickets/${id}`);
                   }}
-                  className="px-5 py-3 rounded-2xl bg-[#161F2D] hover:bg-slate-200 text-[#F1F5F9] font-bold text-xs active:scale-95 transition-all cursor-pointer"
+                  className="px-5 py-3 rounded-2xl bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#F1F5F9] hover:text-white font-bold text-xs active:scale-95 transition-all cursor-pointer"
                 >
                   View Details
                 </button>

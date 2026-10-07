@@ -117,25 +117,25 @@ export function PortalDeliverablesPage() {
   return (
     <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-2 duration-500 overflow-hidden">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-8 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8 shrink-0">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#97A0B3] mb-2">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#97A0B3] mb-1.5 sm:mb-2">
             {deliverables.length > 0 ? `CYCLE DELIVERABLES · ${countAwaiting} WAITING FOR YOU` : "NO DELIVERABLES PENDING"}
           </p>
-          <h1 className="text-3xl font-bold text-white">Review</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">Review</h1>
         </div>
         {countAwaiting > 0 && (
-          <button onClick={handleApproveAll} className="text-[13px] text-[#97A0B3] hover:text-white transition-colors">
+          <button onClick={handleApproveAll} className="text-xs sm:text-[13px] text-[#97A0B3] hover:text-white transition-colors text-left sm:text-right">
             Approve everything in one tap: <span className="font-bold text-white cursor-pointer hover:underline">Approve all {countAwaiting}</span>
           </button>
         )}
       </div>
 
       {/* ── Main Workspace ── */}
-      <div className="grid grid-cols-12 gap-6 flex-1 min-h-0 pb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0 pb-6">
         
         {/* Left Column: Batch List */}
-        <div className="col-span-3 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-4 flex flex-col overflow-hidden">
+        <div className="col-span-1 lg:col-span-3 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-4 flex flex-col overflow-hidden">
           <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#97A0B3] mb-4 pl-3 pt-2">
             THIS BATCH
           </h3>
@@ -200,7 +200,7 @@ export function PortalDeliverablesPage() {
         </div>
 
         {/* Middle Column: Player */}
-        <div className="col-span-5 bg-[#161F2D] rounded-[24px] border border-[#2A3446] flex flex-col relative overflow-hidden">
+        <div className="col-span-1 lg:col-span-5 bg-[#161F2D] rounded-[24px] border border-[#2A3446] flex flex-col relative overflow-hidden min-h-[360px] sm:min-h-[460px]">
           {/* Version Switcher */}
           {selectedItem && (
             <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 flex p-1 bg-[#0B111C]/80 backdrop-blur-md rounded-full border border-[#2A3446]">
@@ -267,7 +267,7 @@ export function PortalDeliverablesPage() {
         </div>
 
         {/* Right Column: Details & Actions */}
-        <div className="col-span-4 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-6 flex flex-col h-full overflow-hidden">
+        <div className="col-span-1 lg:col-span-4 bg-[#161F2D] rounded-[24px] border border-[#2A3446] p-4 sm:p-6 flex flex-col h-full overflow-hidden">
           {selectedItem ? (
             <div className="flex-1 overflow-y-auto pr-2 scrollbar-hide space-y-6">
               {/* Header Info */}

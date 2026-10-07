@@ -58,7 +58,7 @@ def test_smtp_send_ssl_flow(mock_ssl_class):
         success = _send_smtp_sync("target@domain.com", "Subject", "<h1>Test</h1>")
 
         assert success is True
-        mock_ssl_class.assert_called_once_with("smtp.gmail.com", 465, timeout=10)
+        mock_ssl_class.assert_called_once_with("smtp.gmail.com", 465, timeout=5)
         mock_server.login.assert_called_once_with("user@test.com", "secretpassword")
         assert mock_server.send_message.called
         mock_server.quit.assert_called_once()
@@ -66,7 +66,7 @@ def test_smtp_send_ssl_flow(mock_ssl_class):
 
 @patch("app.services.email_service.IPv4SMTP")
 def test_smtp_send_tls_flow(mock_smtp_class):
-    """Verify that when SMTP_USE_SSL is False, STARTTLS flow is used with timeout=10."""
+    """Verify that when SMTP_USE_SSL is False, STARTTLS flow is used with timeout=5."""
     mock_server = MagicMock()
     mock_smtp_class.return_value = mock_server
 
@@ -82,8 +82,26 @@ def test_smtp_send_tls_flow(mock_smtp_class):
         success = _send_smtp_sync("target@domain.com", "Subject", "<h1>Test</h1>")
 
         assert success is True
-        mock_smtp_class.assert_called_once_with("smtp.gmail.com", 587, timeout=10)
+        mock_smtp_class.assert_called_once_with("smtp.gmail.com", 587, timeout=5)
         mock_server.starttls.assert_called_once()
         mock_server.login.assert_called_once_with("user@test.com", "secretpassword")
         assert mock_server.send_message.called
         mock_server.quit.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_deliver_otp_or_raise_behavior():
+    """Verify that _deliver_otp_or_raise raises 503 by default when delivery fails, but succeeds when ALLOW_FALLBACK_OTP is True."""
+    from app.routers.auth import _deliver_otp_or_raise
+    from fastapi import HTTPException
+
+    with patch("app.routers.auth.send_otp_email", return_value=False):
+        with patch("app.routers.auth.settings") as mock_settings:
+            mock_settings.ALLOW_FALLBACK_OTP = False
+            with pytest.raises(HTTPException) as exc_info:
+                await _deliver_otp_or_raise("user@example.com", "123456")
+            assert exc_info.value.status_code == 503
+
+            # With ALLOW_FALLBACK_OTP = True, it does not raise and logs code
+            mock_settings.ALLOW_FALLBACK_OTP = True
+            await _deliver_otp_or_raise("user@example.com", "123456")

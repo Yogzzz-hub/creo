@@ -1816,10 +1816,10 @@ export function AdminDeliverablesPage() {
               ...d,
               status: "approved",
               statusLabel: "Approved",
-              statusBadge: "bg-emerald-50 text-emerald-700 border-emerald-100",
+              statusBadge: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
               slaType: "completed",
               slaText: "Approved Just Now",
-              slaColor: "text-emerald-600 font-bold",
+              slaColor: "text-emerald-400 font-bold",
             }
           : d
       )
@@ -1837,10 +1837,10 @@ export function AdminDeliverablesPage() {
                 ...d,
                 status: "declined",
                 statusLabel: "Declined",
-                statusBadge: "bg-rose-50 text-rose-700 border-rose-100",
+                statusBadge: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
                 slaType: "target",
                 slaText: "Revision Required",
-                slaColor: "text-rose-600 font-bold",
+                slaColor: "text-rose-400 font-bold",
               }
             : d
         )
@@ -1945,79 +1945,79 @@ export function AdminDeliverablesPage() {
         )}
 
         {/* 4 KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-4 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+          <div className="kpi-card bg-[#161F2D] rounded-3xl p-3.5 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
                 MOVED TO PRODUCTION
               </span>
-              <div className="w-7 h-7 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold">
+              <div className="w-7 h-7 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-bold shrink-0">
                 <Zap className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tight">{movedToProductionCount}</div>
+            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">{movedToProductionCount}</div>
             <div className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-              {movedToProductionCount === 0 ? "0 active in production" : `${movedToProductionCount} active tasks`}
+              {movedToProductionCount === 0 ? "0 active" : `${movedToProductionCount} active`}
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-4 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-[#161F2D] rounded-3xl p-3.5 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
                 PENDING REVIEW
               </span>
-              <div className="w-7 h-7 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-bold">
+              <div className="w-7 h-7 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center font-bold shrink-0">
                 <Clock className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tight">{pendingReviewCount}</div>
+            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">{pendingReviewCount}</div>
             <div className="text-xs font-bold text-amber-400 flex items-center gap-1">
-              {pendingReviewCount === 0 ? "0 awaiting review" : `${pendingReviewCount} in QA / review`}
+              {pendingReviewCount === 0 ? "0 review" : `${pendingReviewCount} in review`}
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-4 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-[#161F2D] rounded-3xl p-3.5 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
                 APPROVED TODAY
               </span>
-              <div className="w-7 h-7 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold">
+              <div className="w-7 h-7 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold shrink-0">
                 <CheckCircle2 className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tight">{approvedTodayCount}</div>
+            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">{approvedTodayCount}</div>
             <div className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-              {approvedTodayCount === 0 ? "0 approved today" : `${approvedTodayCount} approved deliverables`}
+              {approvedTodayCount === 0 ? "0 approved" : `${approvedTodayCount} approved`}
             </div>
           </div>
 
-          <div className="kpi-card bg-[#161F2D] rounded-3xl p-4 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
+          <div className="kpi-card bg-[#161F2D] rounded-3xl p-3.5 sm:p-5 border-2 border-[#161F2D] hover:border-[#BCCCE6] transition-all shadow-[0_2px_15px_rgba(0,0,0,0.03)] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider">
+              <span className="text-[10px] font-black text-[#97A0B3] uppercase tracking-wider truncate">
                 DECLINED / REVISE
               </span>
-              <div className="w-7 h-7 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center font-bold">
+              <div className="w-7 h-7 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center font-bold shrink-0">
                 <AlertTriangle className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-3xl font-black text-white tracking-tight">{declinedCount}</div>
+            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">{declinedCount}</div>
             <div className="text-xs font-bold text-rose-400 flex items-center gap-1">
-              {declinedCount === 0 ? "0 revision requests" : `${declinedCount} requiring revision`}
+              {declinedCount === 0 ? "0 revisions" : `${declinedCount} revisions`}
             </div>
           </div>
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-[#161F2D] rounded-2xl p-4 border border-[#2A3446] shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-[#161F2D] rounded-2xl p-3.5 sm:p-4 border border-[#2A3446] shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex flex-wrap items-center gap-3">
-            <div className="relative">
+            <div className="relative w-full sm:w-72">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
               <input
                 type="text"
                 placeholder="Search deliverables, code, tags..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-72 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                className="pl-10 pr-4 py-2 w-full rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white placeholder-[#97A0B3] focus:outline-none focus:ring-2 focus:ring-[#7FA0D6]/20 shadow-2xs"
               />
             </div>
 
@@ -2329,6 +2329,7 @@ export function AdminTasksPage() {
   const [priorityFilter, _setPriorityFilter] = useState<"all" | "urgent" | "high">("all"); void _setPriorityFilter;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [previewTask, setPreviewTask] = useState<any | null>(null);
+  const [mobileKanbanCol, setMobileKanbanCol] = useState<"all" | "todo" | "in_progress" | "under_review" | "approved">("all");
 
   const [newTaskForm, setNewTaskForm] = useState({
     title: "",
@@ -2365,7 +2366,7 @@ export function AdminTasksPage() {
       client: "Ryze Mushroom Coffee",
       clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
       priority: "High",
-      priorityPill: "bg-rose-50 text-rose-600 border-rose-100",
+      priorityPill: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
       title: "DTC Ad Hook Variations (15s Reel Clips)",
       type: "Performance Editing",
       avatar: "SC",
@@ -2381,7 +2382,7 @@ export function AdminTasksPage() {
       client: "Acme Corp",
       clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
       priority: "High",
-      priorityPill: "bg-rose-50 text-rose-600 border-rose-100",
+      priorityPill: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
       title: "Instagram Story Templates (1080x1920 Figma Kit)",
       type: "Visual Design",
       avatar: "ER",
@@ -2413,7 +2414,7 @@ export function AdminTasksPage() {
       client: "Ryze Mushroom Coffee",
       clientPill: "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30",
       priority: "High",
-      priorityPill: "bg-rose-50 text-rose-600 border-rose-100",
+      priorityPill: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
       title: "TikTok Motion Hook (Rec.709 Color Grading)",
       type: "Color Grading",
       avatar: "AR",
@@ -2558,15 +2559,15 @@ export function AdminTasksPage() {
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative">
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
               <input
                 type="text"
                 placeholder="Filter deliverables, tags, owners..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 w-64 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
+                className="pl-9 pr-4 py-2 w-full rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium text-white placeholder-[#97A0B3] focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs"
               />
             </div>
 
@@ -2602,10 +2603,41 @@ export function AdminTasksPage() {
           </div>
         </div>
 
+        {/* Mobile Kanban Column Switcher Pills */}
+        <div className="sm:hidden flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {[
+            { id: "all", label: "All Columns", count: filteredTasks.length },
+            { id: "todo", label: "To Do", count: todoTasks.length },
+            { id: "in_progress", label: "In Progress", count: inProgressTasks.length },
+            { id: "under_review", label: "Review", count: underReviewTasks.length },
+            { id: "approved", label: "Done", count: approvedTasks.length },
+          ].map((col) => (
+            <button
+              key={col.id}
+              type="button"
+              onClick={() => setMobileKanbanCol(col.id as any)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                mobileKanbanCol === col.id
+                  ? "bg-[#7FA0D6] text-white shadow-sm"
+                  : "bg-[#161F2D] text-[#97A0B3] border border-[#2A3446]"
+              }`}
+            >
+              <span>{col.label}</span>
+              <span className={`px-1.5 py-0.2 rounded-md text-[10px] font-mono ${
+                mobileKanbanCol === col.id ? "bg-white/20 text-white" : "bg-[#0B111C] text-[#97A0B3]"
+              }`}>
+                {col.count}
+              </span>
+            </button>
+          ))}
+        </div>
+
         {/* 4 Kanban Columns */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
           {/* Column 1: TO DO */}
-          <div className="bg-[#161F2D]/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-[#2A3446]/60">
+          <div className={`bg-[#161F2D]/40 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
+            mobileKanbanCol !== "all" && mobileKanbanCol !== "todo" ? "hidden sm:flex flex-col" : "flex flex-col"
+          }`}>
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
@@ -2654,7 +2686,9 @@ export function AdminTasksPage() {
           </div>
 
           {/* Column 2: IN PROGRESS */}
-          <div className="bg-[#161F2D]/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-[#2A3446]/60">
+          <div className={`bg-[#161F2D]/40 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
+            mobileKanbanCol !== "all" && mobileKanbanCol !== "in_progress" ? "hidden sm:flex flex-col" : "flex flex-col"
+          }`}>
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]/150 animate-pulse" />
@@ -2695,7 +2729,7 @@ export function AdminTasksPage() {
                       </div>
                       <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
                     </div>
-                    <span className="font-bold text-rose-600">{task.due}</span>
+                    <span className="font-bold text-rose-400">{task.due}</span>
                   </div>
                 </div>
               ))}
@@ -2703,7 +2737,9 @@ export function AdminTasksPage() {
           </div>
 
           {/* Column 3: UNDER REVIEW */}
-          <div className="bg-[#161F2D]/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-[#2A3446]/60">
+          <div className={`bg-[#161F2D]/40 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
+            mobileKanbanCol !== "all" && mobileKanbanCol !== "under_review" ? "hidden sm:flex flex-col" : "flex flex-col"
+          }`}>
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
@@ -2711,7 +2747,7 @@ export function AdminTasksPage() {
                   UNDER REVIEW
                 </h3>
               </div>
-              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-amber-600 text-[11px] font-bold border border-[#2A3446] shadow-2xs">
+              <span className="px-2 py-0.5 rounded-full bg-[#161F2D] text-amber-400 text-[11px] font-bold border border-[#2A3446] shadow-2xs">
                 {underReviewTasks.length}
               </span>
             </div>
@@ -2739,7 +2775,7 @@ export function AdminTasksPage() {
                       </div>
                       <span className="font-medium text-[#F1F5F9]">{task.assigneeName}</span>
                     </div>
-                    <span className="font-bold text-amber-600">{task.pod}</span>
+                    <span className="font-bold text-amber-400">{task.pod}</span>
                   </div>
                 </div>
               ))}
@@ -2747,7 +2783,9 @@ export function AdminTasksPage() {
           </div>
 
           {/* Column 4: APPROVED */}
-          <div className="bg-[#161F2D]/40 rounded-3xl p-4 flex flex-col space-y-3.5 border border-[#2A3446]/60">
+          <div className={`bg-[#161F2D]/40 rounded-3xl p-4 space-y-3.5 border border-[#2A3446]/60 ${
+            mobileKanbanCol !== "all" && mobileKanbanCol !== "approved" ? "hidden sm:flex flex-col" : "flex flex-col"
+          }`}>
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
@@ -3424,14 +3462,14 @@ export function AdminTeamManagementPage() {
         activeTab="Team Details"
       />
 
-      <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-4 sm:space-y-6">
         {toast && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
+          <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span>{toast}</span>
             </div>
-            <button onClick={() => setToast(null)} className="text-emerald-600 hover:text-emerald-900 font-bold">
+            <button onClick={() => setToast(null)} className="text-emerald-400 hover:text-emerald-200 font-bold">
               Dismiss
             </button>
           </div>
@@ -4894,14 +4932,14 @@ export function AdminRevenuePage() {
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
       <AdminTopHeader title="Revenue Engine" activeTab="Revenue" />
 
-      <main className="flex-1 px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-8">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-10 pt-4 pb-16 max-w-[1500px] w-full mx-auto space-y-6 sm:space-y-8">
         {toast && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
+          <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold rounded-2xl flex items-center justify-between shadow-sm animate-fade-in">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span>{toast}</span>
             </div>
-            <button onClick={() => setToast(null)} className="text-emerald-600 hover:text-emerald-900 font-bold">
+            <button onClick={() => setToast(null)} className="text-emerald-400 hover:text-emerald-200 font-bold">
               Dismiss
             </button>
           </div>
@@ -4912,8 +4950,8 @@ export function AdminRevenuePage() {
         ───────────────────────────────────────────────────────────────────────────── */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               Live Cash Flow & Retainers
             </span>
           </div>

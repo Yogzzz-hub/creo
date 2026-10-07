@@ -24,7 +24,7 @@ export function AdminSLAPerformancePage() {
       avgResponse: "6.2m",
       resolved: "42 tickets",
       status: "OPTIMAL",
-      statusBg: "bg-emerald-100 text-emerald-800 border-emerald-200",
+      statusBg: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
     },
     {
       pod: "Pod B",
@@ -35,7 +35,7 @@ export function AdminSLAPerformancePage() {
       avgResponse: "7.8m",
       resolved: "38 tickets",
       status: "OPTIMAL",
-      statusBg: "bg-emerald-100 text-emerald-800 border-emerald-200",
+      statusBg: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
     },
     {
       pod: "Pod C",
@@ -46,7 +46,7 @@ export function AdminSLAPerformancePage() {
       avgResponse: "9.1m",
       resolved: "35 tickets",
       status: "OPTIMAL",
-      statusBg: "bg-emerald-100 text-emerald-800 border-emerald-200",
+      statusBg: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
     },
   ];
 
@@ -291,7 +291,7 @@ export function AdminSLAPerformancePage() {
                       <th className="px-4 py-3 text-right">STATUS</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
+                  <tbody className="divide-y divide-[#2A3446] font-medium">
                     {podLeaderboard.map((item) => (
                       <tr key={item.pod} className="hover:bg-[#0B111C] transition-colors">
                         <td className="px-4 py-3.5">

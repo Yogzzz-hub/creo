@@ -41,7 +41,7 @@ export function TeamDetailsWidget({ queue: _queue }: TeamDetailsWidgetProps) {
       </div>
 
       {/* 4 Squares (2x2 Grid Layout) - Badges fully aligned INSIDE */}
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 my-2.5">
+      <div className="flex-1 grid grid-cols-2 gap-2 sm:gap-3 my-2.5">
         {/* Box 1: Active Pods */}
         <Link
           to="/admin/team"

@@ -211,9 +211,9 @@ export function PortalDashboardPage() {
             </span>
           </h1>
         </div>
-        <div className={`flex items-center gap-3 shrink-0 pt-1 ${isLocked ? "hidden" : ""}`}>
-          <Link to="/portal/creative-pod" className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#2A3446] text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className={`flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0 pt-1 ${isLocked ? "hidden" : ""}`}>
+          <Link to="/portal/creative-pod" className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full border border-[#2A3446] text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors">
+            <svg className="w-4 h-4 text-[#7FA0D6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
             Message your pod
@@ -221,7 +221,7 @@ export function PortalDashboardPage() {
           {pendingCount > 0 && (
             <Link
               to="/portal/deliverables"
-              className="px-5 py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors"
+              className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors"
             >
               Review now
             </Link>
@@ -320,44 +320,45 @@ export function PortalDashboardPage() {
             ) : (
               <div className="space-y-0 divide-y divide-white/[0.05]">
                 {pendingDeliverables.slice(0, 3).map((item: any) => (
-                  <div key={item.id} className="flex items-center gap-4 py-4">
-                    {/* Thumbnail */}
-                    <div className="w-16 h-16 rounded-lg bg-[#161F2D] overflow-hidden shrink-0 flex items-center justify-center">
-                      {item.thumbnail_url || item.file_url ? (
-                        <img
-                          src={item.thumbnail_url || item.file_url}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <svg className="w-6 h-6 text-[#97A0B3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
-                        </svg>
-                      )}
-                    </div>
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs uppercase text-[#97A0B3] font-medium tracking-wider">
-                        {item.asset_type || "Reel"} · {item.duration || "0:30"}
-                      </p>
-                      <p className="text-[15px] font-medium text-white truncate mt-0.5">
-                        {item.title || "Untitled"}
-                      </p>
-                      <p className="text-[13px] text-[#97A0B3] truncate mt-0.5">
-                        {item.description || "Ready for your review"}
-                      </p>
+                  <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 py-4">
+                    {/* Thumbnail + Info */}
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-[#0B111C] border border-[#2A3446] overflow-hidden shrink-0 flex items-center justify-center">
+                        {item.thumbnail_url || item.file_url ? (
+                          <img
+                            src={item.thumbnail_url || item.file_url}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <svg className="w-6 h-6 text-[#97A0B3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] sm:text-xs uppercase text-[#7FA0D6] font-bold tracking-wider">
+                          {item.asset_type || "Reel"} · {item.duration || "0:30"}
+                        </p>
+                        <p className="text-sm sm:text-[15px] font-bold text-white truncate mt-0.5">
+                          {item.title || "Untitled"}
+                        </p>
+                        <p className="text-xs sm:text-[13px] text-[#97A0B3] truncate mt-0.5">
+                          {item.description || "Ready for your review"}
+                        </p>
+                      </div>
                     </div>
                     {/* Actions */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 w-full sm:w-auto justify-end">
                       <button
                         onClick={(e) => handleDeclineDeliverable(item.id, e, item.title)}
-                        className="px-4 py-2 rounded-full border border-[#2A3446] text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors cursor-pointer"
+                        className="flex-1 sm:flex-initial px-4 py-2 rounded-full border border-[#2A3446] bg-[#0B111C] text-xs sm:text-[13px] font-medium text-white hover:bg-[#161F2D] transition-colors cursor-pointer text-center"
                       >
                         Request change
                       </button>
                       <button
                         onClick={(e) => handleApproveDeliverable(item.id, e)}
-                        className="px-4 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors cursor-pointer"
+                        className="flex-1 sm:flex-initial px-4 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-xs sm:text-[13px] font-bold hover:bg-white transition-colors cursor-pointer text-center"
                       >
                         Approve
                       </button>

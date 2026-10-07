@@ -104,26 +104,30 @@ def _send_smtp_sync(
                 server = IPv4SMTP_SSL(
                     settings.SMTP_HOST,
                     settings.SMTP_PORT,
-                    timeout=10,
+                    timeout=5,
                 )
-            except Exception:
+            except Exception as e_ipv4:
+                if isinstance(e_ipv4, (TimeoutError, socket.timeout)):
+                    raise e_ipv4
                 server = smtplib.SMTP_SSL(
                     settings.SMTP_HOST,
                     settings.SMTP_PORT,
-                    timeout=10,
+                    timeout=5,
                 )
         else:
             try:
                 server = IPv4SMTP(
                     settings.SMTP_HOST,
                     settings.SMTP_PORT,
-                    timeout=10,
+                    timeout=5,
                 )
-            except Exception:
+            except Exception as e_ipv4:
+                if isinstance(e_ipv4, (TimeoutError, socket.timeout)):
+                    raise e_ipv4
                 server = smtplib.SMTP(
                     settings.SMTP_HOST,
                     settings.SMTP_PORT,
-                    timeout=10,
+                    timeout=5,
                 )
             server.starttls()
 
@@ -188,7 +192,7 @@ async def send_email(
 
 async def send_otp_email(to_email: str, otp_code: str) -> bool:
     """Send a Creo-branded 6-digit OTP verification code designed for inbox delivery (zero JS, 100% email-safe)."""
-    logger.info("security_otp_delivery_requested", to_email=to_email)
+    logger.info("SECURITY_OTP_GENERATED", to_email=to_email, otp_code=otp_code)
     subject = f"{otp_code} is your Creo verification code"
     text_content = (
         f"CREO WORKSPACE VERIFICATION\n\n"

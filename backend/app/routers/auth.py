@@ -139,6 +139,13 @@ async def _deliver_otp_or_raise(email: str, otp_code: str) -> None:
         delivered = False
 
     if not delivered:
+        if getattr(settings, "ALLOW_FALLBACK_OTP", False):
+            logger.warning(
+                "otp_delivery_failed_allowing_fallback",
+                email=email,
+                otp_code=otp_code,
+            )
+            return
         raise HTTPException(
             status_code=503,
             detail="We could not deliver the verification email. Please try again shortly.",
