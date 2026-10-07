@@ -53,7 +53,7 @@
     {
       "name": "Client gets an in-portal notification linking to the deliverable",
       "ok": true,
-      "detail": "Your revised reel is ready for review → /portal/deliverables/e52a8b52-41a4-4cd6-81e9-b8801a9f7a78"
+      "detail": "Your revised reel is ready for review → /portal/deliverables/4075d741-83cc-4ad4-802f-b9796a5121c4"
     },
     {
       "name": "Dashboard lists the piece awaiting review",
@@ -63,7 +63,7 @@
     {
       "name": "Review page deep-links to the selected deliverable",
       "ok": true,
-      "detail": "http://localhost:5173/portal/deliverables/e52a8b52-41a4-4cd6-81e9-b8801a9f7a78"
+      "detail": "http://localhost:5173/portal/deliverables/4075d741-83cc-4ad4-802f-b9796a5121c4"
     },
     {
       "name": "Client video loads from a signed URL",
@@ -73,7 +73,7 @@
     {
       "name": "Client video actually plays, uncropped",
       "ok": true,
-      "detail": "{\"t\":1.16277,\"fit\":\"contain\"}"
+      "detail": "{\"t\":1.085132,\"fit\":\"contain\"}"
     },
     {
       "name": "No download before approval",
@@ -148,7 +148,7 @@
     {
       "name": "Library ZIP contains the full approved file",
       "ok": true,
-      "detail": "408311  2026-10-07 10:04   01_Creo_Diwali_launch_teaser_v3.mp4"
+      "detail": "408311  2026-10-07 10:18   01_Creo_Diwali_launch_teaser_v3.mp4"
     },
     {
       "name": "Oversized image is rejected before upload (App Flow 6.4)",
@@ -172,23 +172,22 @@
     }
   ],
   "problems": [
-    "editor request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/5f791f37-1708-436c-8bf8-b61764e9cd3b.mp4 net::ERR_ABORTED",
-    "lead request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/5f791f37-1708-436c-8bf8-b61764e9cd3b.mp4 net::ERR_ABORTED",
-    "lead request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/5f791f37-1708-436c-8bf8-b61764e9cd3b.mp4 net::ERR_ABORTED",
-    "editor request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/cef06b96-b5fb-41b1-ba76-5b071d8d3755.mp4 net::ERR_ABORTED",
-    "lead request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/cef06b96-b5fb-41b1-ba76-5b071d8d3755.mp4 net::ERR_ABORTED",
-    "lead request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/cef06b96-b5fb-41b1-ba76-5b071d8d3755.mp4 net::ERR_ABORTED",
-    "lead request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/cef06b96-b5fb-41b1-ba76-5b071d8d3755.mp4 net::ERR_ABORTED",
-    "client request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/cef06b96-b5fb-41b1-ba76-5b071d8d3755.mp4 net::ERR_ABORTED",
-    "editor request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/1367a44a-7027-400c-8d4f-99b129460764.mp4 net::ERR_ABORTED",
-    "lead request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/1367a44a-7027-400c-8d4f-99b129460764.mp4 net::ERR_ABORTED",
-    "lead request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/1367a44a-7027-400c-8d4f-99b129460764.mp4 net::ERR_ABORTED",
-    "client request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/cef06b96-b5fb-41b1-ba76-5b071d8d3755.mp4 net::ERR_ABORTED",
-    "client request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/1367a44a-7027-400c-8d4f-99b129460764.mp4 net::ERR_ABORTED",
-    "client request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/1367a44a-7027-400c-8d4f-99b129460764.mp4 net::ERR_ABORTED",
-    "client request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/cef06b96-b5fb-41b1-ba76-5b071d8d3755.mp4 net::ERR_ABORTED",
-    "client request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/1367a44a-7027-400c-8d4f-99b129460764.mp4 net::ERR_ABORTED",
-    "client request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/1367a44a-7027-400c-8d4f-99b129460764.mp4 net::ERR_ABORTED",
-    "client request failed: GET http://127.0.0.1:5005/creo/clients/384b011f-581f-4a6d-853e-e13b78f6e819/2026/10/1367a44a-7027-400c-8d4f-99b129460764.mp4 net::ERR_ABORTED"
+    "editor request failed: GET http://localhost:8000/api/v1/admin/pod-dashboard net::ERR_ABORTED",
+    "editor request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/d53391e6-21e6-42b3-a173-90d70187cb3c.mp4 net::ERR_ABORTED",
+    "lead request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/d53391e6-21e6-42b3-a173-90d70187cb3c.mp4 net::ERR_ABORTED",
+    "lead request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/d53391e6-21e6-42b3-a173-90d70187cb3c.mp4 net::ERR_ABORTED",
+    "editor request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/02bfc102-0e7e-4c4a-a9e6-bb69229fdb3c.mp4 net::ERR_ABORTED",
+    "lead request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/02bfc102-0e7e-4c4a-a9e6-bb69229fdb3c.mp4 net::ERR_ABORTED",
+    "lead request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/02bfc102-0e7e-4c4a-a9e6-bb69229fdb3c.mp4 net::ERR_ABORTED",
+    "client request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/02bfc102-0e7e-4c4a-a9e6-bb69229fdb3c.mp4 net::ERR_ABORTED",
+    "editor request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/6905c1b3-e45b-4644-b27e-15a29ebcdd2f.mp4 net::ERR_ABORTED",
+    "lead request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/6905c1b3-e45b-4644-b27e-15a29ebcdd2f.mp4 net::ERR_ABORTED",
+    "lead request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/6905c1b3-e45b-4644-b27e-15a29ebcdd2f.mp4 net::ERR_ABORTED",
+    "client request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/02bfc102-0e7e-4c4a-a9e6-bb69229fdb3c.mp4 net::ERR_ABORTED",
+    "client request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/6905c1b3-e45b-4644-b27e-15a29ebcdd2f.mp4 net::ERR_ABORTED",
+    "client request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/02bfc102-0e7e-4c4a-a9e6-bb69229fdb3c.mp4 net::ERR_ABORTED",
+    "client request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/6905c1b3-e45b-4644-b27e-15a29ebcdd2f.mp4 net::ERR_ABORTED",
+    "client request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/6905c1b3-e45b-4644-b27e-15a29ebcdd2f.mp4 net::ERR_ABORTED",
+    "client request failed: GET http://127.0.0.1:5005/creo/clients/81ebec73-f54f-477e-98e3-80c8053d7324/2026/10/6905c1b3-e45b-4644-b27e-15a29ebcdd2f.mp4 net::ERR_ABORTED"
   ]
 }

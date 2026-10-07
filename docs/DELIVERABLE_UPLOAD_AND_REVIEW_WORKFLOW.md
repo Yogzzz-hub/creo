@@ -40,7 +40,8 @@ never sent to the client.
 
 ## Verification
 
-- Backend: 70 tests pass, including `tests/test_deliverable_workflow.py` — an
+- Backend: 80 tests pass (after merging `main`'s mock-data removal), including
+  `tests/test_deliverable_workflow.py` — an
   API-level run of reject → revise → approve against PostgreSQL (opt-in via
   `CREO_TEST_DATABASE_URL`, rolled back; now set in CI) and a SigV4 regression
   test that fails on the previous storage client. `mypy app/core` passes.
@@ -54,6 +55,10 @@ never sent to the client.
   playback (object-fit `contain`), change request, revision-in-progress state,
   version history, approval, attachment download byte-for-byte, Library ZIP,
   poster at full 1080 px, the 10 MB image limit, and no horizontal overflow.
+- The admin Deliverables page from `main` (`LiveAdminDeliverablesPage`) was also
+  driven in the browser: upload without a client namespace, attach to a task,
+  QA approve, and the client then sees the poster. The other pod pages from
+  `main` (`LivePodWorkspace`) upload through the same task-scoped uploader.
 - Playwright's Chromium cannot decode H.264, so test reels were VP9/Opus in MP4.
   Production H.264 MP4s play in Chrome, Safari and Edge; this run does not
   certify any particular codec.
