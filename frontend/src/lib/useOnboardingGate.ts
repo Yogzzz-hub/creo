@@ -85,11 +85,12 @@ export function useOnboardingGate() {
   const { user, patchUser } = useAuth();
   const isClient = user?.role === "client";
 
-  const { data: status, isFetching } = useQuery<OnboardingStatus>({
+  const { data: status, isFetching, error, refetch } = useQuery<OnboardingStatus>({
     queryKey: ["onboarding-status", user?.id],
     queryFn: () => fetchOnboardingStatus(user?.id || ""),
     enabled: !!user?.id && isClient,
     staleTime: 30_000,
+    retry: false,
   });
 
   // Keep the cached auth profile in sync so the next page load starts from the right stage
@@ -105,6 +106,8 @@ export function useOnboardingGate() {
   const isComplete = !isClient || Boolean(status?.is_complete) || stage >= 8;
 
   return {
+    error: knownStage === null ? error : null,
+    refetch,
     isClient,
     /** False only while a client's stage is completely unknown */
     isReady: !isClient || knownStage !== null,

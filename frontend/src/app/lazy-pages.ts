@@ -1,3 +1,4 @@
+import { recoverStaleChunk } from "../lib/chunk-recovery";
 import { type ComponentType, type LazyExoticComponent, lazy } from "react";
 
 // biome-ignore lint/suspicious/noExplicitAny: page components take arbitrary props
@@ -12,7 +13,10 @@ export type PreloadableComponent<T extends AnyComponent> = LazyExoticComponent<T
  * idle time. The browser caches the module, so a later render resolves instantly.
  */
 function lazyPage<T extends AnyComponent>(factory: () => Promise<T>): PreloadableComponent<T> {
-  const load = () => factory().then((component) => ({ default: component }));
+  const load = () => factory().then((component) => ({ default: component })).catch(error => {
+    if (recoverStaleChunk(error)) return new Promise<{ default: T }>(() => {});
+    throw error;
+  });
   const component = lazy(load) as PreloadableComponent<T>;
   component.preload = load;
   return component;

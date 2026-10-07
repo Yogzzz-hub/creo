@@ -39,7 +39,7 @@ interface PlanPreset {
 
 export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModalProps) {
   const catalog = useQuery({ queryKey: ["public-plans"], queryFn: () => request<any[]>("/api/v1/payments/plans"), enabled: isOpen });
-  const PRESETS: PlanPreset[] = (catalog.data || []).map(p => ({ id: p.name, name: p.display_name, priceNum: p.price_minor / 100, priceStr: new Intl.NumberFormat("en-IN", { style: "currency", currency: p.currency }).format(p.price_minor / 100) + " / mo", reels: p.reel_quota, posters: p.poster_quota, stories: p.story_quota, highlight: (p.highlights || []).join(" ? "), isPopular: p.is_recommended }));
+  const PRESETS: PlanPreset[] = (catalog.data || []).map(p => ({ id: p.name, name: p.display_name, priceNum: p.price_minor / 100, priceStr: new Intl.NumberFormat("en-IN", { style: "currency", currency: p.currency }).format(p.price_minor / 100) + " / mo", reels: p.reel_quota, posters: p.poster_quota, stories: p.story_quota, highlight: (p.highlights || []).join(" · "), isPopular: p.is_recommended }));
   const [activeTab, setActiveTab] = useState<"presets" | "custom">("presets");
   const [selectedPreset, setSelectedPreset] = useState<string>("");
 
@@ -61,7 +61,7 @@ export function FixPlanModal({ isOpen, client, onClose, onSuccess }: FixPlanModa
       setCustomPrice(client.monthly_price ?? 0);
       setCustomReels(client.quota_usage.find(q => q.kind === "reel")?.quota ?? 0);
       setCustomPosters(client.quota_usage.find(q => ["static_post", "poster"].includes(q.kind))?.quota ?? 0);
-      setCustomStories(client.quota_usage.find(q => q.kind === "story")?.quota ?? 0);
+      setCustomStories(client.quota_usage.find(q => ["story", "carousel"].includes(q.kind))?.quota ?? 0);
       setCustomName(
         client.company_name
           ? `Negotiated Plan - ${client.company_name}`

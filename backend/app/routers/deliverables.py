@@ -575,11 +575,15 @@ async def portal_list_deliverables(
     )).scalar_one()
     allowed = await workflow.plan_revision_rounds(db, target)
 
+    # Storage signing can perform remote I/O; never block the API event loop.
+    semaphore = asyncio.Semaphore(6)
+    async def serialize(pair):
+        async with semaphore:
+            return await asyncio.to_thread(workflow.serialize_for_client, pair[0], pair[1],
+                request=request, revisions_allowed=allowed)
+    items = await asyncio.gather(*(serialize(pair) for pair in ordered))
     return {
-        "items": [
-            workflow.serialize_for_client(d, t, request=request, revisions_allowed=allowed)
-            for d, t in ordered
-        ],
+        "items": items,
         "has_more": has_more,
         "waiting_on_you": waiting_count,
         "revisions_allowed": allowed,

@@ -116,7 +116,7 @@ async def test_full_month_calendar_uses_negotiated_quotas_and_client_identity():
     subscription = SimpleNamespace(agency_id=agency_id, created_at=datetime(2025, 1, 1, tzinfo=UTC))
     plan = SimpleNamespace(reel_quota=13, poster_quota=17, story_quota=40)
     db = SimpleNamespace(
-        execute=AsyncMock(side_effect=[SimpleNamespace(first=lambda: (subscription, plan)), None]),
+        execute=AsyncMock(side_effect=[SimpleNamespace(first=lambda: (subscription, plan)), None, SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: []))]),
         get=AsyncMock(return_value=None), add=MagicMock(), commit=AsyncMock(),
     )
     slots = await draft_month_calendar(db, client_id, date(2026, 10, 1))
@@ -164,12 +164,13 @@ def test_daily_cadence_spreads_all_formats_without_losing_entitlement():
 async def test_initial_month_does_not_silently_reduce_paid_quotas():
     sub = SimpleNamespace(agency_id=None, created_at=datetime(2026, 10, 7, tzinfo=UTC))
     plan = SimpleNamespace(reel_quota=12, poster_quota=20, story_quota=30)
-    db = SimpleNamespace(execute=AsyncMock(side_effect=[SimpleNamespace(first=lambda: (sub, plan)), None]),
+    db = SimpleNamespace(execute=AsyncMock(side_effect=[SimpleNamespace(first=lambda: (sub, plan)), None, SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: []))]),
                          get=AsyncMock(return_value=None), add=MagicMock(), commit=AsyncMock())
     slots = await draft_month_calendar(db, uuid.uuid4(), date(2026, 10, 1))
     assert len(slots) == 62
     assert min(slot.publish_date for slot in slots) == date(2026, 10, 14)
-    assert len({slot.publish_date for slot in slots}) == 18
+    assert len({slot.publish_date for slot in slots}) == 30
+    assert max(slot.publish_date for slot in slots) == date(2026, 11, 12)
 
 
 @pytest.mark.asyncio
@@ -215,3 +216,99 @@ async def test_completed_onboarding_retry_revalidates_legacy_pod():
             await complete_onboarding(db, client_id)
     assert error.value.code == "POD_UNAVAILABLE"
     allocator.assert_awaited_once_with(db, client_id)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("quotas", [(12, 20, 30), (8, 12, 10), (4, 8, 10)])
+async def test_posting_cycle_includes_weekends_without_inventing_assets(quotas):
+    sub = SimpleNamespace(agency_id=None, created_at=datetime(2026, 10, 7, tzinfo=UTC),
+                          current_period_start=datetime(2026, 10, 7, tzinfo=UTC))
+    plan = SimpleNamespace(reel_quota=quotas[0], poster_quota=quotas[1], story_quota=quotas[2])
+    db = SimpleNamespace(execute=AsyncMock(side_effect=[
+        SimpleNamespace(first=lambda: (sub, plan)), None,
+        SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: []))]),
+        get=AsyncMock(return_value=None), add=MagicMock(), commit=AsyncMock())
+    slots = await draft_month_calendar(db, uuid.uuid4(), date(2026, 10, 7))
+    assert len(slots) == sum(quotas)
+    assert tuple(sum(slot.slot_kind == kind for slot in slots)
+                 for kind in ("reel", "poster", "story")) == quotas
+    days = {slot.publish_date for slot in slots}
+    assert all(date(2026, 10, 14) <= day <= date(2026, 11, 12) for day in days)
+    if sum(quotas) >= 30:
+        assert len(days) == 30
+        assert {5, 6}.issubset({day.weekday() for day in days})
+    else:
+        assert len(days) == sum(quotas)
+
+
+@pytest.mark.asyncio
+async def test_rebuilding_drafts_preserves_locked_assets_and_counts_legacy_formats():
+    sub = SimpleNamespace(agency_id=None, created_at=datetime(2026, 10, 7, tzinfo=UTC),
+                          current_period_start=datetime(2026, 10, 7, tzinfo=UTC))
+    plan = SimpleNamespace(reel_quota=8, poster_quota=12, story_quota=10)
+    retained = SimpleNamespace(slot_kind="static_post", publish_date=date(2026, 10, 14),
+                               is_locked=True, deliverable_id=uuid.uuid4())
+    db = SimpleNamespace(execute=AsyncMock(side_effect=[
+        SimpleNamespace(first=lambda: (sub, plan)), None,
+        SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: [retained]))]),
+        get=AsyncMock(return_value=None), add=MagicMock(), commit=AsyncMock())
+    slots = await draft_month_calendar(db, uuid.uuid4(), date(2026, 10, 7))
+    assert retained in slots
+    assert retained.is_locked and retained.deliverable_id is not None
+    assert len(slots) == 30
+    assert len({slot.publish_date for slot in slots}) == 30
+    assert sum(slot.slot_kind == "poster" for slot in slots) == 11
+
+
+@pytest.mark.asyncio
+async def test_accepting_negotiation_applies_actual_price_preserving_quotas():
+    from app.routers.admin import NegotiationActionPayload, update_plan_negotiation
+    client_id, agency_id = uuid.uuid4(), uuid.uuid4()
+    neg = SimpleNamespace(id=uuid.uuid4(), client_id=client_id, client_name="Client",
+                          notes="Requested price", target_topic="Retainer", status="Pending Review")
+    current = SimpleNamespace(reel_quota=8, poster_quota=12, story_quota=10, display_name="Client plan")
+    db = SimpleNamespace(get=AsyncMock(return_value=neg),
+        execute=AsyncMock(return_value=SimpleNamespace(scalar_one_or_none=lambda: current)),
+        add=MagicMock(), commit=AsyncMock())
+    actor = Actor(user_id=uuid.uuid4(), role=UserRole.SUPER_ADMIN, agency_id=agency_id)
+    with patch("app.routers.admin.fix_client_plan", new=AsyncMock()) as apply:
+        result = await update_plan_negotiation(neg.id,
+            NegotiationActionPayload(action="accept", agreed_price=Decimal("35000")), actor, db)
+    args = apply.await_args
+    assert args.args[0] == client_id
+    assert args.args[1].custom_price == Decimal("35000")
+    assert (args.args[1].custom_reel_quota, args.args[1].custom_poster_quota,
+            args.args[1].custom_story_quota) == (8, 12, 10)
+    assert result["new_status"] == "Accepted"
+
+
+@pytest.mark.asyncio
+async def test_razorpay_order_uses_clients_saved_custom_price():
+    from app.models.billing import Plan
+    from app.services.payment_service import create_order
+    client_id = uuid.uuid4()
+    standard = Plan(id=uuid.uuid4(), name="growth", monthly_price=Decimal("50000"), price_minor=5000000,
+                    currency="INR", reel_quota=10, poster_quota=16, story_quota=22)
+    custom = Plan(id=uuid.uuid4(), name=f"custom_{client_id.hex[:8]}", monthly_price=Decimal("35000.50"), price_minor=3500050,
+                  currency="INR", reel_quota=8, poster_quota=12, story_quota=10)
+    db = SimpleNamespace(execute=AsyncMock(side_effect=[
+        SimpleNamespace(scalar_one_or_none=lambda value=value: value)
+        for value in (standard, SimpleNamespace(id=client_id), custom, None)]),
+        add=MagicMock(), commit=AsyncMock())
+    with patch("app.services.subscription_guard.expire_stale_subscriptions", new=AsyncMock()), \
+         patch("app.services.razorpay_orders.create_razorpay_order", new=AsyncMock(return_value="order_verified_test")) as order:
+        result = await create_order(db, client_id, standard.id)
+    assert order.await_args.args[2:] == (3500050, "INR")
+    assert result.amount_minor == 3500050
+    assert db.add.call_args.args[0].plan_id == custom.id
+
+
+@pytest.mark.parametrize("quotas", [dict(reel=10, poster=16, story=22),
+                                    dict(reel=12, poster=20, story=30)])
+def test_ops_calendar_covers_full_cycle_with_exact_plan_quotas(quotas):
+    from app.services.calendar_engine import distribute_sequenced_slots
+    slots = distribute_sequenced_slots(date(2026, 10, 14), date(2026, 11, 12),
+                                      date(2026, 10, 18), quotas, {})
+    assert len({slot["date"] for slot in slots}) == 30
+    assert {kind: sum(slot["kind"] == kind for slot in slots)
+            for kind in quotas} == quotas

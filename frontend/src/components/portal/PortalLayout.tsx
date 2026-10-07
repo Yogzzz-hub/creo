@@ -5,7 +5,7 @@ import { PortalSidebarNew } from "./PortalSidebarNew";
 import { AdminSidebarProvider } from "../admin/AdminSidebarContext";
 import { AdminTopHeader } from "../admin/AdminTopHeader";
 import { CreoInlineLoader } from "../ui/CreoLoader";
-import { CreoBottomNavbar } from "./CreoBottomNavbar";
+
 import { ResumeOnboardingBanner } from "./ResumeOnboardingBanner";
 
 export function PortalLayout() {
@@ -37,7 +37,7 @@ export function PortalLayout() {
           {/* Main Content Area — same gutters and max width as the header so everything lines up */}
           <main
             id="main-content"
-            className="portal-main flex-1 w-full px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-24 md:pb-10"
+            className="portal-main flex-1 w-full px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-10"
           >
             <div className="mx-auto w-full max-w-[1500px]">
               {!hasHeroResume && <ResumeOnboardingBanner variant="compact" />}
@@ -50,7 +50,7 @@ export function PortalLayout() {
           </main>
 
           {/* Mobile Bottom Navigation Bar */}
-          <CreoBottomNavbar />
+
         </div>
       </div>
     </AdminSidebarProvider>

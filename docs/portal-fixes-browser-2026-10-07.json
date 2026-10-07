@@ -1,0 +1,83 @@
+[
+  {
+    "role": "client",
+    "width": 1440,
+    "sidebarParity": true,
+    "errors": []
+  },
+  {
+    "role": "client",
+    "width": 320,
+    "invoiceDownload": true,
+    "planChangeOpensRequest": true,
+    "brandReadable": true,
+    "loadingResolves": true,
+    "staleChunkRecovered": true
+  },
+  {
+    "role": "client",
+    "width": 320,
+    "sidebarParity": true,
+    "errors": []
+  },
+  {
+    "role": "client",
+    "width": 768,
+    "sidebarParity": true,
+    "errors": []
+  },
+  {
+    "role": "admin",
+    "width": 1440,
+    "sidebarParity": true,
+    "errors": []
+  },
+  {
+    "role": "admin",
+    "width": 320,
+    "sidebarParity": true,
+    "errors": []
+  },
+  {
+    "role": "admin",
+    "width": 768,
+    "sidebarParity": true,
+    "errors": []
+  },
+  {
+    "role": "team_lead",
+    "width": 1440,
+    "sidebarParity": true,
+    "errors": []
+  },
+  {
+    "role": "team_lead",
+    "width": 320,
+    "sidebarParity": true,
+    "errors": []
+  },
+  {
+    "role": "team_lead",
+    "width": 768,
+    "sidebarParity": true,
+    "errors": []
+  },
+  {
+    "role": "editor",
+    "width": 1440,
+    "sidebarParity": true,
+    "errors": []
+  },
+  {
+    "role": "editor",
+    "width": 320,
+    "sidebarParity": true,
+    "errors": []
+  },
+  {
+    "role": "editor",
+    "width": 768,
+    "sidebarParity": true,
+    "errors": []
+  }
+]

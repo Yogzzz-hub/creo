@@ -447,6 +447,7 @@ export async function reassignPodTask(
 export interface PlanNegotiationApiItem {
   id: string;
   clientName: string;
+  clientId?: string | null;
   clientEmail: string;
   clientLogo: string;
   targetTopic: string;
@@ -469,7 +470,7 @@ export async function fetchPlanNegotiations(): Promise<PlanNegotiationApiItem[]>
 export async function updatePlanNegotiation(
   negId: string,
   action: "accept" | "decline" | "counter",
-  extra?: { decline_reason?: string; counter_price?: number; counter_note?: string },
+  extra?: { decline_reason?: string; counter_price?: number; counter_note?: string; agreed_price?: number; reel_quota?: number; poster_quota?: number; story_quota?: number },
 ): Promise<{ status: string; message: string; negotiation_id: string; new_status: string }> {
   return request<{ status: string; message: string; negotiation_id: string; new_status: string }>(
     `/api/v1/admin/negotiations/${negId}`,

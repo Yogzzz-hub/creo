@@ -198,6 +198,9 @@ export function PlanBargainCallModal({
                 onChange={(e) => setTargetTopic(e.target.value)}
                 className="w-full rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 text-xs text-[#F8FAFC] focus:outline-none focus:border-[#7FA0D6] focus:ring-1 focus:ring-[#7FA0D6]"
               >
+                {targetTopic && !TOPICS.includes(targetTopic) && (
+                  <option value={targetTopic}>{targetTopic}</option>
+                )}
                 {TOPICS.map((topic) => (
                   <option key={topic} value={topic} className="bg-[#0B111C] text-[#F8FAFC]">
                     {topic}

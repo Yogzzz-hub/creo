@@ -15,6 +15,9 @@ Key guarantees:
 from __future__ import annotations
 
 import os
+import time as clock_time
+from collections import OrderedDict
+from threading import Lock
 import uuid
 from collections.abc import Iterator
 from datetime import UTC, datetime
@@ -526,6 +529,29 @@ def public_base_url(request: Any | None) -> str:
     return f"{scheme}://{host}"
 
 
+_signed_media_cache: OrderedDict[tuple, tuple[float, str]] = OrderedDict()
+_signed_media_lock = Lock()
+
+
+def _cached_signed_media(raw: str, filename: str | None) -> str:
+    # Only media URLs are cached, after each caller's record-level authorization.
+    key = (settings.STORAGE_ENDPOINT_URL, settings.SUPABASE_URL, settings.STORAGE_BUCKET, raw, filename)
+    now = clock_time.monotonic()
+    with _signed_media_lock:
+        hit = _signed_media_cache.get(key)
+        if hit and hit[0] > now:
+            _signed_media_cache.move_to_end(key)
+            return hit[1]
+    result = signed_get(raw, download_filename=filename)
+    duration = max(0, min(300, settings.PRESIGNED_URL_TTL - 60))
+    with _signed_media_lock:
+        _signed_media_cache[key] = (clock_time.monotonic() + duration, result)
+        _signed_media_cache.move_to_end(key)
+        while len(_signed_media_cache) > 1024:
+            _signed_media_cache.popitem(last=False)
+    return result
+
+
 def resolve_media_url(
     raw: str | None,
     request: Any | None = None,
@@ -548,7 +574,7 @@ def resolve_media_url(
     if "://" in raw:
         return None
     try:
-        return signed_get(raw, download_filename=download_filename)
+        return _cached_signed_media(raw, download_filename)
     except Exception as exc:
         log.warning("media_url_sign_failed", key=raw, error=str(exc))
         return None

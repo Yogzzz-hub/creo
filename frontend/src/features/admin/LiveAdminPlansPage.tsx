@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
 import {
+  fetchClientRoster,
   fetchPlansSummary,
   fetchPlanNegotiations,
   updatePlanNegotiation,
@@ -27,6 +28,8 @@ export function LiveAdminPlansPage() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [edit, setEdit] = useState<Plan | null>(null);
+  const [quoteAction, setQuoteAction] = useState<"accept" | "counter">("counter");
+  const clients = useQuery({ queryKey: ["admin_clients", user?.id], queryFn: () => fetchClientRoster(), enabled: !!user });
   const [counter, setCounter] = useState<PlanNegotiationApiItem | null>(null);
   const catalog = useQuery({
     queryKey: ["admin_plan_catalog", user?.id],
@@ -157,15 +160,15 @@ export function LiveAdminPlansPage() {
             {n.counterNote && <p>{n.counterNote}</p>}
             {n.declineReason && <p>{n.declineReason}</p>}
             {n.requestedAt && <p>{new Date(n.requestedAt).toLocaleString()}</p>}
-            {["Pending Review", "Counter Offered"].includes(n.status) && (
+            {["Pending Review", "Counter Offered", "Accepted"].includes(n.status) && (
               <div className="flex flex-wrap gap-4">
                 <button
                   disabled={busy}
-                  onClick={() => void save(() => updatePlanNegotiation(n.id, "accept"))}
+                  onClick={() => { setQuoteAction("accept"); setCounter(n); }}
                 >
-                  Accept
+                  Apply agreed price
                 </button>
-                <button disabled={busy} onClick={() => setCounter(n)}>
+                <button disabled={busy} onClick={() => { setQuoteAction("counter"); setCounter(n); }}>
                   Counter offer
                 </button>
                 <button
@@ -186,25 +189,30 @@ export function LiveAdminPlansPage() {
             e.preventDefault();
             const values = new FormData(e.currentTarget);
             void save(() =>
-              updatePlanNegotiation(counter.id, "counter", {
-                counter_price: Number(values.get("price")),
+              updatePlanNegotiation(counter.id, quoteAction, {
+                ...(quoteAction === "accept" ? {
+                  agreed_price: Number(values.get("price")),
+                  ...Object.fromEntries(["reel_quota", "poster_quota", "story_quota"].filter(key => values.get(key) !== "").map(key => [key, Number(values.get(key))])),
+                } : { counter_price: Number(values.get("price")) }),
                 counter_note: String(values.get("note")),
               }),
             );
           }}
         >
-          <h3>Counter offer for {counter.clientName}</h3>
+          <h3>{quoteAction === "accept" ? "Apply agreed price" : "Counter offer"} for {counter.clientName}</h3><p className="text-sm text-slate-400">Leave quotas blank to preserve the current plan. Enter all three quotas for a client without a plan.</p>
           <input
             name="price"
             type="number"
             min={1}
-            step="0.01"
-            aria-label="Counter price"
+            step="1"
+            defaultValue={counter.counterPrice || undefined}
+            aria-label={quoteAction === "accept" ? "Agreed monthly price" : "Counter price"}
             className={field}
             required
           />
           <textarea name="note" aria-label="Counter offer note" className={field} />
-          <button disabled={busy}>Submit counter offer</button>
+          {quoteAction === "accept" && ["reel_quota", "poster_quota", "story_quota"].map(key => <label key={key} className="block">{key.replace("_quota", " quota")}<input name={key} type="number" min={0} step={1} aria-label={key.replace("_quota", " quota")} placeholder="Keep current" className={field} /></label>)}
+          <button disabled={busy}>{quoteAction === "accept" ? "Save client price" : "Submit counter offer"}</button>
           <button type="button" onClick={() => setCounter(null)}>
             Cancel
           </button>
@@ -217,9 +225,12 @@ export function LiveAdminPlansPage() {
           const form = e.currentTarget;
           const values = new FormData(form);
           void save(async () => {
+            const client = clients.data?.find(c => c.client_id === values.get("client"));
+            if (!client) throw new Error("Select a registered client");
             await createPlanNegotiation({
-              client_name: String(values.get("name")),
-              client_email: String(values.get("email")) || undefined,
+              client_id: client.client_id,
+              client_name: client.company_name || client.email,
+              client_email: client.email,
               target_topic: String(values.get("topic")),
               proposed_offer: String(values.get("offer")) || undefined,
               notes: String(values.get("notes")) || undefined,
@@ -229,20 +240,7 @@ export function LiveAdminPlansPage() {
         }}
       >
         <h2>Create pricing proposal</h2>
-        <input
-          name="name"
-          aria-label="Client name"
-          placeholder="Client name"
-          className={field}
-          required
-        />
-        <input
-          name="email"
-          type="email"
-          aria-label="Client email"
-          placeholder="Client email"
-          className={field}
-        />
+        <DataState query={clients} /><select name="client" aria-label="Proposal client" className={field} required><option value="">Select registered client</option>{clients.data?.map(c => <option key={c.client_id} value={c.client_id}>{c.company_name || c.email}</option>)}</select>
         <input
           name="topic"
           aria-label="Proposal scope"

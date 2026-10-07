@@ -22,7 +22,7 @@ from decimal import Decimal
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import and_, delete, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased, selectinload
@@ -1403,6 +1403,8 @@ async def fix_client_plan(
     )
 
     await db.commit()
+    from app.core.dashboard_cache import invalidate_dashboard_cache
+    await invalidate_dashboard_cache()
 
     return {
         "status": "success",
@@ -3796,6 +3798,7 @@ async def list_plan_negotiations(
         {
             "id": str(n.id),
             "clientName": n.client_name,
+            "clientId": str(n.client_id) if n.client_id else None,
             "clientEmail": n.client_email,
             "clientLogo": (n.client_name[:2].upper() if n.client_name else "??"),
             "targetTopic": n.target_topic,
@@ -3832,11 +3835,18 @@ async def create_plan_negotiation_by_admin(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Admin initiates a custom proposal/negotiation record."""
+    client = await db.get(User, payload.client_id) if payload.client_id else None
+    if not client and payload.client_email:
+        client = (await db.execute(select(User).where(func.lower(User.email) == payload.client_email.strip().lower()))).scalar_one_or_none()
+    if not client or client.role != UserRole.CLIENT:
+        raise HTTPException(status_code=422, detail="Select a registered client for this proposal")
+    if actor.agency_id and client.agency_id != actor.agency_id:
+        raise HTTPException(status_code=403, detail="Client belongs to another agency")
     neg = PlanNegotiation(
         agency_id=getattr(actor, "agency_id", None),
-        client_id=payload.client_id,
-        client_name=payload.client_name,
-        client_email=payload.client_email or f"{payload.client_name.lower().replace(' ', '')}@creo.agency",
+        client_id=client.id,
+        client_name=client.full_name or client.email,
+        client_email=client.email,
         target_topic=payload.target_topic,
         proposed_offer=payload.proposed_offer,
         phone_number=payload.phone_number,
@@ -3861,6 +3871,10 @@ class NegotiationActionPayload(BaseModel):
     decline_reason: str | None = None
     counter_price: int | None = None
     counter_note: str | None = None
+    agreed_price: Decimal | None = Field(default=None, gt=0)
+    reel_quota: int | None = Field(default=None, ge=0)
+    poster_quota: int | None = Field(default=None, ge=0)
+    story_quota: int | None = Field(default=None, ge=0)
 
 
 @router.patch("/negotiations/{neg_id}", response_model=dict[str, Any])
@@ -3874,14 +3888,33 @@ async def update_plan_negotiation(
     neg = await db.get(PlanNegotiation, neg_id)
     if not neg:
         raise HTTPException(status_code=404, detail="Negotiation not found")
+    if actor.agency_id and getattr(neg, "agency_id", None) and neg.agency_id != actor.agency_id:
+        raise HTTPException(status_code=403, detail="Negotiation belongs to another agency")
 
     now = datetime.now(UTC)
 
     if payload.action == "accept":
+        if not neg.client_id or payload.agreed_price is None:
+            raise HTTPException(status_code=422, detail="A registered client and agreed price are required")
+        current = (await db.execute(select(Plan).join(Subscription, Subscription.plan_id == Plan.id)
+            .where(Subscription.client_id == neg.client_id)
+            .order_by(Subscription.created_at.desc()).limit(1))).scalar_one_or_none()
+        quotas = [payload.reel_quota, payload.poster_quota, payload.story_quota]
+        if not current and any(q is None for q in quotas):
+            raise HTTPException(status_code=422, detail="Enter the agreed reel, poster, and story quotas")
         neg.status = "Accepted"
+        neg.counter_price = int(payload.agreed_price)
         neg.reviewed_by = actor.user_id
         neg.reviewed_at = now
-        msg = f"Plan negotiation ACCEPTED for {neg.client_name}."
+        await fix_client_plan(neg.client_id, FixClientPlanRequest(
+            is_custom=True, custom_price=payload.agreed_price,
+            custom_reel_quota=payload.reel_quota if payload.reel_quota is not None else current.reel_quota,
+            custom_poster_quota=payload.poster_quota if payload.poster_quota is not None else current.poster_quota,
+            custom_story_quota=payload.story_quota if payload.story_quota is not None else current.story_quota,
+            custom_notes=f"Negotiation {neg.id}: {payload.counter_note or neg.notes or neg.target_topic}",
+            custom_display_name=current.display_name if current else "Agreed retainer",
+        ), db=db, actor=actor)
+        msg = f"Agreed retainer price of INR {payload.agreed_price:,.2f}/month applied for {neg.client_name}."
     elif payload.action == "decline":
         neg.status = "Declined"
         neg.decline_reason = payload.decline_reason
@@ -3889,6 +3922,8 @@ async def update_plan_negotiation(
         neg.reviewed_at = now
         msg = f"Plan negotiation DECLINED for {neg.client_name}."
     elif payload.action == "counter":
+        if payload.counter_price is None or payload.counter_price <= 0:
+            raise HTTPException(status_code=422, detail="Enter a positive counter price")
         neg.status = "Counter Offered"
         neg.counter_price = payload.counter_price
         neg.counter_note = payload.counter_note

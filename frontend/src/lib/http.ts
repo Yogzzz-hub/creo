@@ -61,7 +61,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
   const abortFromCaller = () => controller.abort(options.signal?.reason);
   if (options.signal?.aborted) abortFromCaller();
   else options.signal?.addEventListener("abort", abortFromCaller, { once: true });
-  const timeoutId = setTimeout(() => controller.abort(new DOMException("The request timed out. Please try again.", "TimeoutError")), 60_000);
+  const timeoutId = setTimeout(() => controller.abort(new DOMException("The request timed out. Please try again.", "TimeoutError")), (options.method || "GET").toUpperCase() === "GET" ? 20_000 : 60_000);
 
   try {
     const response = await fetch(requestUrl, {

@@ -1,3 +1,4 @@
+import { BrandGuidelines } from "../../components/portal/BrandGuidelines";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
@@ -39,10 +40,10 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
         name: p.full_name || "",
         company: p.company_name || "",
         phone: p.phone || "",
-        summary: p.brand_dna?.summary_line || "",
-        audience: p.brand_dna?.target_audience || "",
-        voice: (p.brand_dna?.tone_keywords || []).join(", "),
-        colors: (p.brand_dna?.brand_colors || p.brand_dna?.palette || []).join(", "),
+        summary: p.brand_summary || p.brand_dna?.summary_line || p.brand_dna?.team_brief?.brand_summary || "",
+        audience: typeof p.brand_dna?.target_audience === "string" ? p.brand_dna.target_audience : "",
+        voice: Array.isArray(p.brand_dna?.tone_keywords) ? p.brand_dna.tone_keywords.filter((v: unknown) => typeof v === "string").join(", ") : "",
+        colors: Array.isArray(p.brand_dna?.brand_colors) ? p.brand_dna.brand_colors.filter((v: unknown) => typeof v === "string").join(", ") : "",
       });
     }
   }, [query.data]);
@@ -62,15 +63,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                 brand_dna: {
                   ...(query.data?.brand_dna || {}),
                   summary_line: form.summary,
-                  target_audience: form.audience,
-                  tone_keywords: form.voice
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-                  brand_colors: form.colors
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean),
+
                 },
               }
             : { full_name: form.name, company_name: form.company, phone: form.phone },
@@ -115,7 +108,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
             className="bg-[#161F2D] border border-[#2A3446] p-5 sm:p-8 rounded-3xl space-y-5"
           >
             {(brand
-              ? ["company", "instagram", "summary", "audience", "voice", "colors"]
+              ? ["company", "instagram", "summary"]
               : ["name", "company", "phone"]
             ).map((key) => (
               <label key={key} className="block space-y-2">
@@ -151,12 +144,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           </form>
           {brand && (
             <section className="bg-[#161F2D] p-5 rounded-3xl space-y-3">
-              <h2 className="font-bold">Stored brand guidelines</h2>
-              <pre className="whitespace-pre-wrap break-words text-sm">
-                {Object.keys(query.data.brand_dna || {}).length
-                  ? JSON.stringify(query.data.brand_dna, null, 2)
-                  : "No brand guidelines stored yet."}
-              </pre>
+              <BrandGuidelines dna={query.data.brand_dna || {}} />
               <h2 className="font-bold">Brand files</h2>
               {!query.data.brand_dna?.files?.length && <p>No brand files uploaded.</p>}
               {query.data.brand_dna?.files?.map((f: any, i: number) => (

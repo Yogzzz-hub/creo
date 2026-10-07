@@ -132,8 +132,24 @@ export function PortalCalendarPage() {
   const [flexTheme, setFlexTheme] = useState<string>("");
   const [isProposingFlex, setIsProposingFlex] = useState<boolean>(false);
   const queryClient = useQueryClient();
+  const [isRebalancing, setIsRebalancing] = useState(false);
+  const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
 
-  const { data: subData, isLoading: isSubLoading } = useQuery({
+  async function rebuildDraftSchedule() {
+    setIsRebalancing(true);
+    setScheduleMessage(null);
+    try {
+      await request("/api/v1/calendar/rebalance-month", { method: "POST" });
+      await queryClient.invalidateQueries({ queryKey: ["calendar-entries"] });
+      setScheduleMessage("Draft schedule updated for the current 30-day cycle. Approved content is preserved.");
+    } catch (error) {
+      setScheduleMessage(error instanceof Error ? error.message : "Could not update the draft schedule. Please retry.");
+    } finally {
+      setIsRebalancing(false);
+    }
+  }
+
+  const { data: subData, isLoading: isSubLoading, error: subscriptionError, refetch: refetchSubscription } = useQuery({
     queryKey: ["client-subscription", user?.id],
     queryFn: () => request<any>("/api/v1/payments/subscription"),
     staleTime: 30_000,
@@ -356,6 +372,7 @@ export function PortalCalendarPage() {
     );
   }
 
+  if (subscriptionError) return <div role="alert">{subscriptionError.message} <button onClick={() => void refetchSubscription()}>Retry</button></div>;
   if (!isSubscribed) {
     return <SubscriptionLockedState />;
   }
@@ -381,6 +398,9 @@ export function PortalCalendarPage() {
             </div>
             
             <div className="flex items-center gap-2">
+              {user?.role === "client" && <button type="button" disabled={isRebalancing} onClick={rebuildDraftSchedule} className="rounded-full border border-[#2A3446] px-3 py-2 text-xs disabled:opacity-60">
+                {isRebalancing ? "Updating schedule…" : "Rebuild draft schedule"}
+              </button>}
               <button
                 type="button"
                 onClick={() => { setSelectedDate(null); goToToday(); }}
@@ -407,6 +427,7 @@ export function PortalCalendarPage() {
             })}
             <span className="px-2 py-1">{monthEntries.length} planned this month</span>
           </div>
+          {scheduleMessage && <p role="status" className="mb-4 text-sm text-slate-300">{scheduleMessage}</p>}
 
           {/* Month Grid */}
           <div className="flex-1 flex flex-col min-h-[500px]">

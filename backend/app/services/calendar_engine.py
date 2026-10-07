@@ -451,10 +451,8 @@ def resolve_publish_at(slot_date: date, time_str: str, tz_name: str) -> datetime
 # ==============================================================================
 
 def active_days(cycle_days: list[date], total_items: int) -> list[date]:
-    """Fill every day only when volume supports >=1/day. Otherwise weekdays only."""
-    if total_items >= len(cycle_days):
-        return cycle_days
-    return [d for d in cycle_days if d.weekday() < 5]
+    """All seven weekdays are eligible; subscription volume controls coverage."""
+    return cycle_days
 
 
 def spread_reels(
@@ -464,87 +462,19 @@ def spread_reels(
     active_set: set[date],
     blackouts: set[date] | None = None,
 ) -> list[date]:
-    """Step 1 - Reels first:
-    Window: first_reel_date..cycle_end.
-    Day preference: Tue, Wed, Thu, Mon, Fri.
-    Min gap: 2 days when quota <= 8, 1 day when quota > 8.
-    """
+    """Spread the exact reel entitlement evenly across production-ready dates."""
     if quota <= 0:
         return []
     blackouts = blackouts or set()
-    min_gap = 2 if quota <= 8 else 1
-
     avail = [d for d in sorted(active_set) if first_reel_date <= d <= cycle_end and d not in blackouts]
-    if len(avail) <= quota:
-        return avail
-
-    if quota > 8:
-        # Dense reel placement (e.g. Enterprise 16 reels in 23 days):
-        # We select len(avail) - quota non-adjacent skip days, prioritizing Fri and Sun to maximize Mon-Thu.
-        s = len(avail) - quota
-        if s <= 0:
-            return avail
-        dow_skip_pref = {4: 0, 6: 1, 5: 2, 0: 3, 3: 4, 2: 5, 1: 6}
-        candidates = list(range(len(avail)))
-        candidates.sort(key=lambda idx: (dow_skip_pref.get(avail[idx].weekday(), 10), idx))
-
-        skipped: set[int] = set()
-        for idx in candidates:
-            if len(skipped) >= s:
-                break
-            if (idx - 1) in skipped or (idx + 1) in skipped:
-                continue
-            skipped.add(idx)
-
-        for idx in candidates:
-            if len(skipped) >= s:
-                break
-            if idx not in skipped and (idx - 1 not in skipped) and (idx + 1 not in skipped):
-                skipped.add(idx)
-
-        return [avail[i] for i in range(len(avail)) if i not in skipped]
-
-    span = (cycle_end - first_reel_date).days
-    ideal_step = span / (quota - 1) if quota > 1 else 0
-    ideals = [first_reel_date + timedelta(days=round(i * ideal_step)) for i in range(quota)]
-
-    placed: list[date] = []
-
-    for i, ideal in enumerate(ideals):
-        rem = quota - 1 - i
-        best_cand = None
-        best_score = (999999, 999999, 999999)
-
-        for cand in avail:
-            if cand in placed:
-                continue
-            if placed:
-                gap = (cand - placed[-1]).days
-                if gap < min_gap:
-                    continue
-            if rem > 0:
-                if (cycle_end - cand).days < rem * min_gap:
-                    continue
-                cands_after = [c for c in avail if (c - cand).days >= min_gap]
-                if len(cands_after) < rem:
-                    continue
-
-            dist = abs((cand - ideal).days)
-            rank = DOW_RANK.get(cand.weekday(), 10)
-            score = (dist, rank, cand)
-            if score < best_score:
-                best_score = score
-                best_cand = cand
-
-        if best_cand is not None:
-            placed.append(best_cand)
-        else:
-            for cand in avail:
-                if cand not in placed and (not placed or (cand - placed[-1]).days >= min_gap):
-                    placed.append(cand)
-                    break
-
-    return sorted(placed)
+    if not avail:
+        return []
+    # Exact entitlement, including overflow for custom high-volume plans.
+    if quota > len(avail):
+        return sorted(avail[i % len(avail)] for i in range(quota))
+    if quota == 1:
+        return [avail[0]]
+    return [avail[round(i * (len(avail) - 1) / (quota - 1))] for i in range(quota)]
 
 
 def spread_posters(
@@ -560,18 +490,6 @@ def spread_posters(
         return []
     blackouts = blackouts or set()
     no_reel_days = [d for d in active if d not in reel_days and d not in blackouts]
-
-    if not blackouts:
-        # Starter Growth fixture (22 items, 8 posters across 18 reel-free weekdays):
-        if len(active) < 30 and quota == 8 and len(no_reel_days) == 18:
-            fixture_indices = [0, 3, 5, 8, 10, 12, 15, 17]
-            return [no_reel_days[i] for i in fixture_indices]
-        # Brand Accelerator fixture (15 posters across 30 days):
-        if quota == 15 and len(active) == 30:
-            return [active[i * 2] for i in range(15)]
-        # Enterprise fixture (30 posters across 30 days):
-        if quota == len(active):
-            return list(active)
 
     # General deterministic placement for custom quotas or blackouts:
     if quota <= len(no_reel_days):
@@ -702,6 +620,25 @@ def distribute_sequenced_slots(
     # 3. Stories (dark days first -> teasers -> echos -> remainder)
     stories = spread_stories(active, reels, posters, quotas.get("story", 0), blackouts)
 
+    eligible = [d for d in active if d not in blackouts]
+    counts = Counter(reels + posters + [d for d, _ in stories])
+    if total_items >= len(eligible):
+        for dark in eligible:
+            if counts[dark]:
+                continue
+            candidates = [(kind, index, day) for kind, values in (("poster", posters), ("story", stories), ("reel", reels))
+                          for index, value in enumerate(values)
+                          for day in [value[0] if isinstance(value, tuple) else value]
+                          if counts[day] > 1 and (kind != "reel" or dark >= first_reel_date)]
+            if not candidates:
+                continue
+            kind, index, old_day = min(candidates, key=lambda x: (x[0] == "reel", abs((x[2] - dark).days)))
+            if kind == "story": stories[index] = (dark, "coverage")
+            elif kind == "poster": posters[index] = dark
+            else: reels[index] = dark
+            counts[old_day] -= 1
+            counts[dark] += 1
+
     dayparts_cfg = policy.get("dayparts", DAYPARTS)
 
     raw_slots: list[dict[str, Any]] = []
@@ -809,17 +746,8 @@ async def generate_client_cycle(
             # Fall back to any active plan
             plan_row = (await db.execute(select(Plan).limit(1))).scalar_one()
 
-    # Plan canonical properties
-    plan_name_clean = plan_row.name.lower()
-    if "enterprise" in plan_name_clean or "pro" in plan_name_clean:
-        shoot_days_count = 2
-        base_quotas = {"poster": 30, "reel": 16, "story": 40}
-    elif "accelerator" in plan_name_clean or "growth" in plan_name_clean:
-        shoot_days_count = 1
-        base_quotas = {"poster": 15, "reel": 8, "story": 20}
-    else:
-        shoot_days_count = 1
-        base_quotas = {"poster": plan_row.poster_quota or 8, "reel": plan_row.reel_quota or 4, "story": plan_row.story_quota or 10}
+    shoot_days_count = 2 if plan_row.name.lower() in ("scale", "enterprise", "pro") else 1
+    base_quotas = {"poster": plan_row.poster_quota, "reel": plan_row.reel_quota, "story": plan_row.story_quota}
 
     # 2. Fetch Policy & Timezone
     policy_row = await get_or_create_calendar_policy(db, client_id)
@@ -865,13 +793,9 @@ async def generate_client_cycle(
 
     # Reel quota pro-rating
     reel_base_quota = base_quotas["reel"] + carryover.get("reel", 0)
-    reel_cap_policy = dict(policy)
-    if reel_base_quota > 8:
-        reel_cap_policy["min_gap_days"] = dict(policy.get("min_gap_days", {}))
-        reel_cap_policy["min_gap_days"]["reel"] = 0
-    # Deliver 100% of subscribed reel quota without prorating loss
-    prorated_reels = min(reel_base_quota, reel_cap_max) if reel_cap_max > 0 else reel_base_quota
-    reel_credit = max(0, reel_base_quota - prorated_reels)
+    # Never prorate away a client's subscribed reel entitlement.
+    prorated_reels = reel_base_quota
+    reel_credit = 0
 
     poster_quota = base_quotas["poster"] + carryover.get("poster", 0)
     story_quota = base_quotas["story"] + carryover.get("story", 0)

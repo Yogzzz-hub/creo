@@ -27,6 +27,7 @@ export function PortalLibraryPage() {
     queryKey: ["portal-library", user?.id],
     queryFn: () => fetchPortalDeliverables(user?.id || "", undefined, 100),
     enabled: !!user?.id && gate.isComplete,
+    retry: false,
   });
 
   // Only approved work belongs in the library (App Flow 5.1 step 15).
@@ -59,6 +60,8 @@ export function PortalLibraryPage() {
     return matchesFilter && matchesSearch;
   });
 
+  if (gate.error) return <div role="alert" className="p-6">Could not load your workspace. <button className="underline" onClick={() => void gate.refetch()}>Retry</button></div>;
+  if (!gate.isReady) return <div role="status" className="p-6 animate-pulse">Loading your library…</div>;
   if (!gate.isComplete) {
     return (
       <div className="flex items-center justify-center py-6 sm:py-10">

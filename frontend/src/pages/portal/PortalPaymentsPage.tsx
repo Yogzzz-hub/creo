@@ -39,6 +39,8 @@ export function PortalPaymentsPage() {
     queryKey: ["client-subscription", user?.id],
     queryFn: () => request<any>("/api/v1/payments/subscription"),
     enabled: !!user?.id,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: clientNegotiations } = useQuery<PlanNegotiationApiItem[]>({
@@ -94,7 +96,7 @@ export function PortalPaymentsPage() {
       date: targetInv.date || "Unavailable",
       amount: targetInv?.amount ? String(targetInv.amount) : `₹${planPrice.toLocaleString("en-IN")}`,
       status: targetInv.status || "Unavailable",
-      plan: planName,
+      plan: targetInv.plan || planName,
       clientName: user?.full_name || undefined,
       clientEmail: user?.email || undefined,
       companyName: user?.company_name || undefined,

@@ -81,3 +81,22 @@ ownership and repair already saved schedules. Generated production data has
 not been bulk-deleted or reassigned. Existing task/deliverable regeneration,
 actual uploads, QA, billing-cycle renewal, and publishing remain the live-workflow
 checks listed in `LIVE_CLIENT_WORKFLOW_AUDIT.md`.
+
+
+## Follow-up: 30-day cycles, mobile navigation, pricing and deployment recovery
+
+Updated 7 October 2026. This replaces the earlier compressed first-month cadence.
+
+- A posting cycle contains 30 consecutive dates after the initial seven-day production runway, even when it crosses a calendar-month boundary. Plans with at least 30 assets cover every date, including Saturdays and Sundays. Per the client's clarification, lower-volume plans retain gaps; no extra subscribed assets are invented.
+- Both calendar engines preserve stored plan quotas. Removed fixture-specific poster placement and fixed the reel algorithm that could generate more reels than purchased. Regeneration subtracts retained locked/uploaded entries, including legacy Poster/Carousel format names. Approved dates are preserved, so already locked schedules can retain previous gaps.
+- The calendar has a Rebuild draft schedule action for repairing existing unlocked drafts. Rebuilding does not delete approved, locked or uploaded content. It updates the current cycle, not every historical month.
+- Deliverables uses a skeleton with a slower-response message after eight seconds. GET requests time out after 20 seconds and the deliverables/library requests expose errors instead of repeated automatic retries. Storage signing runs off the API event loop with bounded concurrency and a short cache that expires before signed URLs. Upload storage calls also run in worker threads.
+- Client mobile bottom navigation is removed. A hamburger opens the same full sidebar used on desktop. Admin, team lead and member menu parity was checked at 320, 768 and 1440 pixels.
+- Brand DNA renders stored information as readable labelled sections. Editing the summary no longer overwrites nested production/audience guidance.
+- Applying an agreed price in Admin now updates that registered client's custom plan, subscription amount and quotas while preserving onboarding and usage. Client dashboard caches are invalidated; billing refreshes regularly and on focus. Admin may preserve existing quotas or enter agreed quantities. Razorpay orders use the saved server-side custom price. This does not charge an existing active retainer a second time.
+- Change plan now opens a scoped negotiation request instead of redirecting back through signup. Downloaded invoice PDFs retain the invoice's historical plan label.
+- Worker routing rejects missing /assets files with a text 404 rather than SPA HTML, avoids caching HTML, and caches existing hashed assets. An outdated tab reloads once on a dynamic-import failure, with a guard against a reload loop.
+
+Validation: production TypeScript/Vite build; 93 backend tests passed, one skipped; 13 controlled Chromium checks passed; three Worker routing checks passed; Wrangler deployment dry-run passed. Evidence: `portal-fixes-browser-2026-10-07.json`. Tests use controlled API fixtures and mocked Razorpay order creation; they do not prove live payment capture or live account changes. Root-level pytest also collects the pre-existing unmarked async `backend/test_apis.py` script and fails collection of that script; the maintained `backend/tests` suite passes.
+
+Deployment remains pending: local `wrangler whoami` reports unauthenticated. No Cloudflare production deployment was performed. GitHub changes also require the backend deployment before the new negotiation and scheduling endpoints take effect. Authenticated live-account validation remains pending because the saved test login returns 401 and OTP inbox access is unavailable.

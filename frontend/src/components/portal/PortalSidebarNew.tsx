@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { request } from "../../lib/http";
@@ -14,9 +14,12 @@ import {
   HelpCircle,
   Settings,
   LogOut,
+  X,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { useConfirm } from "../ui/ConfirmDialog";
+
+import { useAdminSidebar } from "../admin/AdminSidebarContext";
 
 /* ── Navigation Structure ── */
 const MAIN_NAV = [
@@ -28,7 +31,7 @@ const MAIN_NAV = [
 
 const BRAND_NAV = [
   { label: "Your pod", href: "/portal/creative-pod", icon: Users },
-  { label: "Brand DNA", href: "/portal/account?tab=brand", icon: Dna },
+  { label: "Brand DNA", href: "/portal/brand", icon: Dna },
 ];
 
 const ACCOUNT_NAV = [
@@ -48,15 +51,26 @@ function isActive(href: string, pathname: string, search: string) {
 /* ── Sidebar Component ── */
 export function PortalSidebarNew() {
   const location = useLocation();
+  const { mobileOpen, setMobileOpen } = useAdminSidebar();
+  useEffect(() => { setMobileOpen(false); }, [location.pathname, location.search, setMobileOpen]);
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const old = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const escape = (e: KeyboardEvent) => { if (e.key === "Escape") setMobileOpen(false); };
+    window.addEventListener("keydown", escape);
+    return () => { document.body.style.overflow = old; window.removeEventListener("keydown", escape); };
+  }, [mobileOpen, setMobileOpen]);
   const { user, logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const confirm = useConfirm();
   
-  const clientId = user?.id || "00000000-0000-0000-0000-000000000001";
+  const clientId = user?.id;
   const { data: dashboardData } = useQuery({
-    queryKey: ["portal", "dashboard", clientId],
+    queryKey: ["portal-dashboard", clientId],
     queryFn: () => request<any>(`/api/v1/portal/dashboard?client_id=${clientId}`),
     staleTime: 60000,
+    enabled: !!clientId && (user?.onboarding_stage ?? 0) >= 8,
   });
 
   const companyName = user?.company_name || user?.full_name || "Your Brand";
@@ -87,7 +101,10 @@ export function PortalSidebarNew() {
   }
 
   return (
-    <aside className="hidden xl:fixed xl:inset-y-0 xl:left-0 xl:z-40 xl:flex xl:w-[280px] xl:flex-col border-r border-white/[0.06]">
+    <>
+      {mobileOpen && <button aria-label="Close navigation overlay" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-[9998] bg-black/70 xl:hidden" />}
+      <aside aria-label="Client navigation" className={`fixed inset-y-0 left-0 z-[9999] xl:z-40 flex w-[280px] max-w-[85vw] flex-col border-r border-white/[0.06] transition-transform duration-300 xl:translate-x-0 ${mobileOpen ? "translate-x-0 visible" : "-translate-x-full invisible xl:visible"}`}>
+        <button aria-label="Close navigation sidebar" onClick={() => setMobileOpen(false)} className="absolute right-3 top-3 xl:hidden p-2 text-white"><X className="size-5" /></button>
       <div className="flex flex-1 flex-col bg-[#0B111C] overflow-y-auto">
         {/* Logo */}
         <div className="px-7 pt-7 pb-2">
@@ -223,5 +240,6 @@ export function PortalSidebarNew() {
         </nav>
       </div>
     </aside>
+    </>
   );
 }

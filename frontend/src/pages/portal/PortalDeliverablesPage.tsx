@@ -12,7 +12,7 @@ import {
 import { HttpError } from "../../lib/http";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
-import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
+
 import type { DeliverableItem } from "../../types/api";
 
 type Filter = "all" | "needs_you" | "revision" | "approved";
@@ -141,6 +141,12 @@ function errorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+function DeliverablesLoading() {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => { const timer = setTimeout(() => setSlow(true), 8000); return () => clearTimeout(timer); }, []);
+  return <section role="status" aria-live="polite" className="space-y-5 animate-page-in"><h1 className="text-2xl font-bold text-white">Content review</h1><p className="text-sm text-[#97A0B3]">{slow ? "The server is taking longer than usual. Your uploads are still being checked; a retry will appear if the request fails." : "Loading your uploaded content..."}</p><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{[0, 1, 2].map(i => <div key={i} className="rounded-2xl p-5 bg-[#161F2D] border border-[#2A3446] space-y-4 motion-safe:animate-pulse"><div className="aspect-video rounded-xl bg-[#2A3446]" /><div className="h-4 w-2/3 rounded bg-[#2A3446]" /><div className="h-3 w-1/2 rounded bg-[#2A3446]" /></div>)}</div></section>;
+}
+
 export function PortalDeliverablesPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -152,7 +158,8 @@ export function PortalDeliverablesPage() {
   const listQuery = useQuery({
     queryKey: ["portal", "deliverables", clientId],
     queryFn: () => fetchPortalDeliverables(clientId),
-    enabled: gate.isComplete,
+    enabled: gate.isComplete && !!clientId,
+    retry: false,
     // Signed preview links last 15 minutes; refresh well within that.
     refetchInterval: 2 * 60_000,
   });
@@ -259,8 +266,9 @@ export function PortalDeliverablesPage() {
     showToast(failed ? `Approved ${done}; ${failed} could not be approved — please retry.` : `Approved ${done} deliverables.`);
   };
 
+  if (gate.error) return <div role="alert">{gate.error.message} <button onClick={() => void gate.refetch()}>Retry</button></div>;
   if (!gate.isReady || (gate.isComplete && listQuery.isLoading)) {
-    return <CreoLoadingScreen label="Verifying session..." sublabel="Loading Deliverables Queue" />;
+    return <DeliverablesLoading />;
   }
 
   if (!gate.isComplete) {

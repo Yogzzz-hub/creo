@@ -752,45 +752,51 @@ async def draft_month_calendar(
     except Exception:
         client_tz = ZoneInfo("Asia/Kolkata")
 
-    # Target month publish window:
-    # Schedule stays strictly within [month_start, month_end] so months never bleed across calendar boundaries.
-    sub_start_date = (sub_row[0].created_at.date() if sub_row and sub_row[0].created_at else date.today())
-    
-    # Check if initial 7-day onboarding buffer applies to the subscription's first month
-    is_initial_cycle = (sub_start_date >= month_start) or (
-        sub_start_date < month_start and (sub_start_date + timedelta(days=7)) >= month_start
-    )
-    if is_initial_cycle:
-        buffer_date = sub_start_date + timedelta(days=7)
-        start_from = max(month_start, buffer_date)
-        if start_from > month_end:
-            return await draft_month_calendar(db, client_id, month_anchor=buffer_date)
+    # A posting cycle is 30 consecutive days, independent of calendar-month length.
+    sub_start = (sub_row[0].created_at.date() if sub_row[0].created_at else anchor)
+    initial_start = sub_start + timedelta(days=7)
+    period_start = getattr(sub_row[0], "current_period_start", None)
+    if period_start is not None:
+        cycle_base = initial_start
+        offset = max(0, (anchor - cycle_base).days // 30)
+        start_from = cycle_base + timedelta(days=offset * 30)
+    elif sub_start >= month_start or initial_start >= month_start:
+        start_from = initial_start
     else:
         start_from = month_start
+    window_end = start_from + timedelta(days=29)
 
-    window_end = month_end
-
-    # Clean previous unapproved/draft slots strictly for the target month
+    # Rebalancing never deletes approved, locked, or uploaded content.
     await db.execute(
         delete(ContentCalendar)
         .where(ContentCalendar.client_id == client_id)
-        .where(ContentCalendar.status.in_(["draft", "scheduled"]))
+        .where(ContentCalendar.status == "draft")
+        .where(ContentCalendar.is_locked.is_(False))
         .where(ContentCalendar.deliverable_id.is_(None))
-        .where(ContentCalendar.publish_date >= month_start)
-        .where(ContentCalendar.publish_date <= month_end)
+        .where(ContentCalendar.publish_date >= start_from)
+        .where(ContentCalendar.publish_date <= window_end)
     )
+    retained = list((await db.execute(
+        select(ContentCalendar).where(ContentCalendar.client_id == client_id,
+            ContentCalendar.publish_date >= start_from, ContentCalendar.publish_date <= window_end)
+    )).scalars().all())
 
     # Fetch client Brand DNA
     brand_dna = client_prof.brand_dna if client_prof and client_prof.brand_dna else {}
 
-    created_slots: list[ContentCalendar] = []
+    created_slots: list[ContentCalendar] = list(retained)
     day_load: dict[date, int] = {}
+    for slot in retained:
+        day_load[slot.publish_date] = day_load.get(slot.publish_date, 0) + 1
 
     for kind, base_quota in quotas.items():
         if base_quota <= 0:
             continue
 
-        quota = base_quota
+        quota = max(0, base_quota - sum(
+            {"static_post": "poster", "carousel": "story"}.get(s.slot_kind, s.slot_kind) == kind
+            for s in retained
+        ))
 
         tmpl = template.get(kind, DEFAULT_TEMPLATE.get(kind, {"days": [1, 3], "time": "19:30"}))
         preferred_weekdays = tmpl.get("days", [1, 3])

@@ -16,7 +16,8 @@ interface Plan {
 }
 export function PricingCards({
   className = "",
-}: { className?: string; showBillingToggle?: boolean; defaultCycle?: string }) {
+  onChoose,
+}: { className?: string; showBillingToggle?: boolean; defaultCycle?: string; onChoose?: (plan: Plan) => void }) {
   const query = useQuery({
     queryKey: ["public-plans"],
     queryFn: () => request<Plan[]>("/api/v1/payments/plans"),
@@ -69,12 +70,12 @@ export function PricingCards({
                 ))}
               </ul>
             )}
-            <Link
+            {onChoose ? <button type="button" className="mt-auto rounded-xl bg-[#BCCCE6] text-[#050810] p-3 text-center font-bold" onClick={() => onChoose(plan)}>Request {plan.display_name}</button> : <Link
               to={`/signup?plan=${encodeURIComponent(plan.name)}`}
               className="mt-auto rounded-xl bg-[#BCCCE6] text-[#050810] p-3 text-center font-bold"
             >
               Choose {plan.display_name}
-            </Link>
+            </Link>}
           </article>
         ))}
       </section>
