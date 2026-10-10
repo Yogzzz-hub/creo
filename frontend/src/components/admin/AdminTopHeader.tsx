@@ -247,7 +247,7 @@ export function AdminTopHeader({
         ? "Brand DNA"
       : location.pathname.startsWith("/portal/account")
       ? "Account Settings"
-      : location.pathname === "/portal/slack"
+      : location.pathname.startsWith("/portal/slack")
       ? "Slack Workspace Hub"
       : location.pathname.startsWith("/workstation/tasks") || location.pathname.startsWith("/member/tasks")
       ? "My Tasks"

@@ -554,6 +554,7 @@ async def get_client_roster(
         SELECT
             u.id AS client_id,
             u.email,
+            u.full_name,
             u.account_status,
             cp.company_name,
             cp.instagram_username,
@@ -585,7 +586,7 @@ async def get_client_roster(
         LEFT JOIN usage_counters uc ON uc.client_id = u.id
         WHERE u.role = 'client'
         GROUP BY
-            u.id, u.email, u.account_status, cp.company_name, cp.instagram_username,
+            u.id, u.email, u.full_name, u.account_status, cp.company_name, cp.instagram_username,
             cp.onboarding_completed_at, cp.terms_accepted_at, u.email_verified_at,
             p.name, p.display_name, p.monthly_price, s.status, s.id
         ORDER BY u.created_at DESC;
@@ -596,7 +597,7 @@ async def get_client_roster(
 
     clients = []
     for r in rows:
-        quota_raw = r[10]
+        quota_raw = r[11]
         if isinstance(quota_raw, str):
             quota_usage = json.loads(quota_raw)
         else:
@@ -606,14 +607,15 @@ async def get_client_roster(
             {
                 "client_id": str(r[0]),
                 "email": r[1],
-                "account_status": r[2],
-                "company_name": r[3],
-                "instagram_username": r[4],
-                "onboarding_stage": r[5],
-                "plan_name": r[6],
-                "plan_display_name": r[7],
-                "monthly_price": float(r[8]) if r[8] is not None else 0.0,
-                "subscription_status": r[9],
+                "full_name": r[2],
+                "account_status": r[3],
+                "company_name": r[4],
+                "instagram_username": r[5],
+                "onboarding_stage": r[6],
+                "plan_name": r[7],
+                "plan_display_name": r[8],
+                "monthly_price": float(r[9]) if r[9] is not None else 0.0,
+                "subscription_status": r[10],
                 "quota_usage": quota_usage,
             }
         )

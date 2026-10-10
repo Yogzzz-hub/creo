@@ -15,6 +15,7 @@ import {
   Settings,
   LogOut,
   X,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { useConfirm } from "../ui/ConfirmDialog";
@@ -31,6 +32,7 @@ const MAIN_NAV = [
 
 const BRAND_NAV = [
   { label: "Your pod", href: "/portal/creative-pod", icon: Users },
+  { label: "Slack Chat", href: "/portal/slack", icon: MessageSquare },
   { label: "Brand DNA", href: "/portal/brand", icon: Dna },
 ];
 

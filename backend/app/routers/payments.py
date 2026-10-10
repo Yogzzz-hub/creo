@@ -93,6 +93,10 @@ async def create_addon_order(
         "addon_stories_20": 450000,
         "addon_shoot_half": 1500000,
         "addon_shoot_full": 2800000,
+        "extra_reel": 450000,
+        "rush": 600000,
+        "revision": 150000,
+        "shoot": 1800000,
     }
     addon_id = body.get("addon_id", "")
     if addon_id not in ADDON_PRICING:

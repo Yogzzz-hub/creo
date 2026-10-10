@@ -448,6 +448,20 @@ function SupportRedirect() {
   return <Navigate to="/pricing" replace />;
 }
 
+function SlackUniversalRedirect() {
+  const { user } = useAuth();
+  if (user?.role === "client") {
+    return <Navigate to="/portal/slack" replace />;
+  }
+  if (user?.role === "admin" || user?.role === "super_admin" || user?.role === "ops_admin") {
+    return <Navigate to="/admin/slack" replace />;
+  }
+  if (user) {
+    return <Navigate to="/workstation/slack" replace />;
+  }
+  return <Navigate to="/login" replace />;
+}
+
 export function App() {
   return (
     <AuthProvider>
@@ -457,8 +471,9 @@ export function App() {
           <RoutePrefetcher />
           <Suspense fallback={<RouteLoading />}>
             <Routes>
-              {/* Universal Support Redirect */}
+              {/* Universal Support & Slack Redirects */}
               <Route path="/support" element={<SupportRedirect />} />
+              <Route path="/slack" element={<SlackUniversalRedirect />} />
 
               {/* 1. Public Marketing Pages (Open to All) */}
               <Route element={<PublicLayout />}>
@@ -550,6 +565,7 @@ export function App() {
                 <Route path="brand" element={<PortalBrandDNAPage />} />
                 <Route path="brand-dna" element={<PortalBrandDNAPage />} />
                 <Route path="library" element={<PortalLibraryPage />} />
+                <Route path="slack" element={<SlackChatPage />} />
               </Route>
 
               {/* 5. Agency Operations Surface (Ops Paper Surface - Admin, Super Admin, Team) */}
@@ -605,6 +621,7 @@ export function App() {
                 <Route path="/admin/support" element={<AdminSupportTicketsPage />} />
                 <Route path="/admin/support/tickets" element={<AdminSupportTicketsPage />} />
                 <Route path="/admin/support/tickets/:ticketId" element={<AdminTicketDetailPage />} />
+                <Route path="/admin/support/:ticketId" element={<AdminTicketDetailPage />} />
                 <Route path="/admin/support/sla" element={<AdminSLAPerformancePage />} />
                 <Route path="/admin/sla" element={<AdminSLAPerformancePage />} />
                 <Route
@@ -797,11 +814,9 @@ export function App() {
                 <Route path="/workstation/schedule" element={<MemberSchedulePTOPage />} />
                 <Route path="/member/schedule" element={<MemberSchedulePTOPage />} />
 
-                {/* Universal Slack Hub */}
-                <Route path="/slack" element={<SlackChatPage />} />
+                {/* Team & Admin Slack Hub */}
                 <Route path="/workstation/slack" element={<SlackChatPage />} />
                 <Route path="/admin/slack" element={<SlackChatPage />} />
-                <Route path="/portal/slack" element={<SlackChatPage />} />
 
                 {/* Redirect legacy Kanban routes to Task Queue */}
                 <Route path="/dashboard" element={<Navigate to="/admin/pod-dashboard" replace />} />

@@ -23,6 +23,7 @@ from app.core.errors import Conflict, PaymentRequired
 from app.models.billing import Plan, Subscription
 from app.models.enums import DeliverableType, SubscriptionStatus, TaskStatus, UserRole
 from app.models.ops import AuditLog, Notification
+from app.models.tenant import Agency
 from app.models.user import ClientProfile, StaffProfile, User
 from app.models.work import ClientAssignment, ContentCalendar, Deliverable, Task
 from app.services.blueprint_service import (
@@ -513,6 +514,20 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
     """Assign durable creative pod ownership (Lead, Video Editor, Graphic Designer) for a client."""
     # Serialize ownership changes and preserve an already allocated pod on retries.
     client = (await db.execute(select(User).where(User.id == client_id).with_for_update())).scalar_one()
+
+    # Resolve target agency: use client's agency_id or auto-bind to the primary/active agency
+    target_agency_id = client.agency_id
+    if not target_agency_id:
+        target_agency_id = await db.scalar(
+            select(Agency.id).where(Agency.status == "active").order_by(Agency.created_at.asc()).limit(1)
+        )
+        if not target_agency_id:
+            target_agency_id = await db.scalar(select(Agency.id).limit(1))
+        target_agency_id = target_agency_id or uuid.UUID("00000000-0000-0000-0000-000000000001")
+        client.agency_id = target_agency_id
+        db.add(client)
+        await db.flush()
+
     existing = (await db.execute(
         select(ClientAssignment, User).join(User, User.id == ClientAssignment.user_id)
         .where(ClientAssignment.client_id == client_id)
@@ -520,10 +535,10 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
     by_role = {assignment.role: member for assignment, member in existing}
     lead = by_role.get("team_lead")
     if (lead and lead.role == UserRole.TEAM_LEAD and str(lead.account_status) == "active"
-        and lead.agency_id == client.agency_id
+        and (lead.agency_id == target_agency_id or target_agency_id is None)
         and all(role in by_role and by_role[role].role == (UserRole.EDITOR if role == "video_editor" else UserRole.DESIGNER)
                 and str(by_role[role].account_status) == "active"
-                and by_role[role].agency_id == client.agency_id
+                and (by_role[role].agency_id == target_agency_id or target_agency_id is None)
                 for role in ("video_editor", "graphic_designer"))):
         editor = by_role.get("video_editor", lead)
         designer = by_role.get("graphic_designer", lead)
@@ -541,15 +556,32 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
         FROM users u
         LEFT JOIN client_assignments ca ON ca.user_id = u.id AND ca.role = 'team_lead'
         WHERE u.role = 'team_lead'
-          AND u.agency_id IS NOT DISTINCT FROM CAST(:agency_id AS UUID)
+          AND (u.agency_id = CAST(:agency_id AS UUID) OR :agency_id IS NULL OR u.agency_id IS NULL)
           AND u.account_status = 'active'
         GROUP BY u.id, u.full_name, u.email
         ORDER BY 
             active_clients ASC,
             last_assigned_at ASC NULLS FIRST, u.id ASC;
     """)
-    tl_res = await db.execute(tl_query, {"agency_id": client.agency_id})
+    tl_res = await db.execute(tl_query, {"agency_id": target_agency_id})
     tl_candidates = tl_res.fetchall()
+
+    if not tl_candidates and target_agency_id is not None:
+        tl_fallback_query = text("""
+            SELECT
+                u.id, u.full_name, u.email,
+                COUNT(ca.id) AS active_clients,
+                MAX(ca.created_at) AS last_assigned_at
+            FROM users u
+            LEFT JOIN client_assignments ca ON ca.user_id = u.id AND ca.role = 'team_lead'
+            WHERE u.role = 'team_lead'
+              AND u.account_status = 'active'
+            GROUP BY u.id, u.full_name, u.email
+            ORDER BY 
+                active_clients ASC,
+                last_assigned_at ASC NULLS FIRST, u.id ASC;
+        """)
+        tl_candidates = (await db.execute(tl_fallback_query)).fetchall()
 
     if tl_candidates:
         best_tl_id = tl_candidates[0][0]
@@ -567,13 +599,29 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
         LEFT JOIN client_assignments ca ON ca.user_id = u.id
         WHERE u.account_status = 'active'
           AND u.role IN ('editor', 'designer')
-          AND u.agency_id IS NOT DISTINCT FROM CAST(:agency_id AS UUID)
+          AND (u.agency_id = CAST(:agency_id AS UUID) OR :agency_id IS NULL OR u.agency_id IS NULL)
           AND sp.is_accepting_work = TRUE
         GROUP BY u.id, u.full_name, u.email, u.role, sp.department, sp.skills, sp.team_lead_id
         ORDER BY 
             client_count ASC, u.id ASC;
     """)
-    staff_rows = (await db.execute(staff_query, {"agency_id": client.agency_id})).fetchall()
+    staff_rows = (await db.execute(staff_query, {"agency_id": target_agency_id})).fetchall()
+    if not staff_rows and target_agency_id is not None:
+        staff_fallback_query = text("""
+            SELECT
+                u.id, u.full_name, u.email, u.role, sp.department, sp.skills, sp.team_lead_id,
+                COUNT(ca.id) AS client_count
+            FROM users u
+            JOIN staff_profiles sp ON sp.user_id = u.id
+            LEFT JOIN client_assignments ca ON ca.user_id = u.id
+            WHERE u.account_status = 'active'
+              AND u.role IN ('editor', 'designer')
+              AND sp.is_accepting_work = TRUE
+            GROUP BY u.id, u.full_name, u.email, u.role, sp.department, sp.skills, sp.team_lead_id
+            ORDER BY 
+                client_count ASC, u.id ASC;
+        """)
+        staff_rows = (await db.execute(staff_fallback_query)).fetchall()
 
     def is_video_capable(s: Any) -> bool:
         role = str(s[3]).lower()
@@ -596,18 +644,18 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
     # Clear old client assignments for idempotency
     await db.execute(delete(ClientAssignment).where(ClientAssignment.client_id == client_id))
 
-    db.add(ClientAssignment(agency_id=client.agency_id, client_id=client_id, user_id=best_tl_id, role="team_lead", craft_role="team_lead", is_primary=True))
+    db.add(ClientAssignment(agency_id=target_agency_id, client_id=client_id, user_id=best_tl_id, role="team_lead", craft_role="team_lead", is_primary=True))
 
     editor_id = best_editor[0] if best_editor else best_tl_id
     designer_id = best_designer[0] if best_designer else best_tl_id
 
     if best_editor:
-        db.add(ClientAssignment(agency_id=client.agency_id, client_id=client_id, user_id=best_editor[0], role="video_editor", craft_role="video_editor", is_primary=False))
+        db.add(ClientAssignment(agency_id=target_agency_id, client_id=client_id, user_id=best_editor[0], role="video_editor", craft_role="video_editor", is_primary=False))
     if best_designer:
-        db.add(ClientAssignment(agency_id=client.agency_id, client_id=client_id, user_id=best_designer[0], role="graphic_designer", craft_role="graphic_designer", is_primary=False))
+        db.add(ClientAssignment(agency_id=target_agency_id, client_id=client_id, user_id=best_designer[0], role="graphic_designer", craft_role="graphic_designer", is_primary=False))
 
     await db.commit()
-    logger.info("Assigned pod for client %s: TL=%s, Editor=%s, Designer=%s", client_id, best_tl_id, editor_id, designer_id)
+    logger.info("Assigned pod for client %s: TL=%s, Editor=%s, Designer=%s (agency=%s)", client_id, best_tl_id, editor_id, designer_id, target_agency_id)
 
     return {
         "team_lead_id": best_tl_id,
@@ -617,6 +665,7 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
         "designer_id": designer_id,
         "designer_name": best_designer[1] if best_designer else best_tl_name,
     }
+
 
 
 def distribute_quota_slots(
@@ -845,7 +894,7 @@ async def draft_month_calendar(
                 caption = f"Brand {format_label} · Flexible News/Trend Reserve"
 
             slot = ContentCalendar(
-                agency_id=sub_row[0].agency_id if sub_row else (client_prof.agency_id if client_prof else None),
+                agency_id=(sub_row[0].agency_id if sub_row and sub_row[0].agency_id else getattr(client_prof, "agency_id", None)) or uuid.UUID("00000000-0000-0000-0000-000000000001"),
                 client_id=client_id,
                 deliverable_id=None,
                 publish_date=slot_day,

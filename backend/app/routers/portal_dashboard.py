@@ -59,7 +59,26 @@ async def get_portal_pod(
         }
         for assignment, user in assignments.all()
     ]
-    return {"assigned_team": assigned_team}
+
+    sa_stmt = (
+        select(User)
+        .where(User.role.in_([UserRole.SUPER_ADMIN, "super_admin"]))
+        .order_by(User.created_at.asc())
+        .limit(1)
+    )
+    sa_res = await db.execute(sa_stmt)
+    sa = sa_res.scalar_one_or_none()
+    super_admin_data = None
+    if sa:
+        super_admin_data = {
+            "id": str(sa.id),
+            "name": sa.full_name or "Creo Super Admin",
+            "email": sa.email,
+            "role": "Super Admin & Executive Escalations",
+            "is_super_admin": True,
+        }
+
+    return {"assigned_team": assigned_team, "super_admin": super_admin_data}
 
 
 @router.get("/dashboard", response_model=dict[str, Any])
