@@ -378,13 +378,21 @@ def signed_get(
     """Generate a short-lived pre-signed GET URL for the object.
 
     The bucket is NEVER public. Every read request must use a fresh signed URL.
-    Prioritizes Cloudflare R2 / S3 when configured, falling back to Supabase Storage.
-    A download_filename makes the browser save the file instead of rendering it.
+    Respects provider prefixes (r2://, supabase://). If no prefix is present,
+    it falls back to available providers in priority order.
     """
     effective_ttl = expires_in if expires_in is not None else ttl
 
-    # 1. Prioritize Cloudflare R2 / S3 if credentials configured
-    if _is_s3_configured():
+    provider = None
+    if storage_key.startswith("r2://"):
+        provider = "r2"
+        storage_key = storage_key[5:]
+    elif storage_key.startswith("supabase://"):
+        provider = "supabase"
+        storage_key = storage_key[11:]
+
+    # 1. Cloudflare R2 / S3
+    if (provider == "r2" or provider is None) and _is_s3_configured():
         try:
             s3 = _get_s3_client()
             params: dict[str, str] = {"Bucket": settings.STORAGE_BUCKET, "Key": storage_key}
@@ -400,13 +408,12 @@ def signed_get(
             raise
         except Exception as exc:
             log.warning("r2_signed_get_failed", error=str(exc))
-            if not _is_supabase_configured():
-                if settings.ENVIRONMENT in ("development", "test"):
-                    return f"https://{settings.STORAGE_BUCKET}.s3.amazonaws.com/{storage_key}?presigned=mock"
-                raise StorageError(f"Failed to generate signed GET URL: {exc}") from exc
+            if provider == "r2":
+                raise StorageError(f"Failed to generate signed GET URL for R2: {exc}") from exc
+            # If no explicit provider, fall through
 
     # 2. Supabase Storage fallback
-    if _is_supabase_configured():
+    if (provider == "supabase" or provider is None) and _is_supabase_configured():
         import httpx
         from urllib.parse import quote
 
@@ -436,11 +443,8 @@ def signed_get(
             raise
         except Exception as exc:
             log.warning("supabase_signed_get_error", error=str(exc))
-            if settings.ENVIRONMENT in ("development", "test"):
-                return (
-                    f"https://{settings.STORAGE_BUCKET}.s3.amazonaws.com/{storage_key}?presigned=mock"
-                )
-            raise StorageError(f"Failed to generate signed GET URL: {exc}") from exc
+            if provider == "supabase":
+                raise StorageError(f"Failed to generate signed GET URL for Supabase: {exc}") from exc
 
     if settings.ENVIRONMENT in ("development", "test"):
         return f"https://{settings.STORAGE_BUCKET}.s3.amazonaws.com/{storage_key}?presigned=mock"
@@ -452,6 +456,21 @@ def _chunks(fileobj: IO[bytes], size: int = 1024 * 1024) -> Iterator[bytes]:
     while chunk := fileobj.read(size):
         yield chunk
 
+
+class NonClosingWrapper:
+    def __init__(self, fileobj: IO[bytes]) -> None:
+        self._fileobj = fileobj
+    def read(self, *args: Any, **kwargs: Any) -> bytes:
+        return self._fileobj.read(*args, **kwargs)
+    def seek(self, *args: Any, **kwargs: Any) -> int:
+        return self._fileobj.seek(*args, **kwargs)
+    def tell(self, *args: Any, **kwargs: Any) -> int:
+        return self._fileobj.tell(*args, **kwargs)
+    def close(self) -> None:
+        pass
+    @property
+    def closed(self) -> bool:
+        return False
 
 def put_object(storage_key: str, fileobj: IO[bytes], mime_type: str, size_bytes: int) -> str:
     """Store an uploaded file server-side and return the value to persist as file_url.
@@ -468,13 +487,13 @@ def put_object(storage_key: str, fileobj: IO[bytes], mime_type: str, size_bytes:
         try:
             s3 = _get_s3_client()
             s3.upload_fileobj(
-                fileobj,
+                NonClosingWrapper(fileobj),
                 settings.STORAGE_BUCKET,
                 storage_key,
                 ExtraArgs={"ContentType": mime_type},
             )
             log.info("r2_server_upload_stored", storage_key=storage_key, size_bytes=size_bytes)
-            return storage_key
+            return f"r2://{storage_key}"
         except Exception as exc:
             log.error("r2_server_upload_failed", error=str(exc), storage_key=storage_key)
             if not _is_supabase_configured():
@@ -502,7 +521,7 @@ def put_object(storage_key: str, fileobj: IO[bytes], mime_type: str, size_bytes:
         if resp.status_code not in (200, 201):
             raise StorageError(f"Upload to storage failed with HTTP {resp.status_code}: {resp.text[:200]}")
         log.info("supabase_server_upload_stored", storage_key=storage_key, size_bytes=size_bytes)
-        return storage_key
+        return f"supabase://{storage_key}"
 
     if settings.ENVIRONMENT in ("development", "test"):
         relative = os.path.join("uploads", storage_key)
@@ -560,10 +579,9 @@ def resolve_media_url(
     """Turn a stored file_url into a URL a browser on the frontend origin can load.
 
     - http(s) URLs pass through unchanged
-    - local /static or /uploads paths become absolute API URLs (the SPA is served
-      from a different origin, so a relative path would 404 there)
-    - storage keys become short-lived signed URLs
-    - placeholders such as "uploaded://name" were never stored and resolve to None
+    - local /static or /uploads paths become absolute API URLs
+    - prefixed keys (r2://, supabase://) resolve via the specified provider
+    - legacy keys fall back to local disk if present, else signed via available provider
     """
     if not raw:
         return None
@@ -571,10 +589,28 @@ def resolve_media_url(
         return raw
     if raw.startswith(LOCAL_UPLOAD_PREFIXES):
         return f"{public_base_url(request)}{raw}"
-    if "://" in raw:
-        return None
+
+    # Prefix stripping for explicit provider URLs
+    provider = None
+    if raw.startswith("r2://"):
+        provider = "r2"
+        raw = raw[5:]
+    elif raw.startswith("supabase://"):
+        provider = "supabase"
+        raw = raw[11:]
+    elif raw.startswith("local://"):
+        return f"{public_base_url(request)}/static/uploads/{raw[8:]}"
+
+    # For legacy or unspecified provider, check local fallback first
+    if not provider and settings.ENVIRONMENT in ("development", "test"):
+        local_path = os.path.join(_LOCAL_STATIC_DIR, "uploads", raw)
+        if os.path.exists(local_path):
+            # Windows path separators fix for URL
+            relative_url = f"/static/uploads/{raw}".replace("\\", "/")
+            return f"{public_base_url(request)}{relative_url}"
+
     try:
-        return _cached_signed_media(raw, download_filename)
+        return _cached_signed_media(f"{provider}://{raw}" if provider else raw, download_filename)
     except Exception as exc:
         log.warning("media_url_sign_failed", key=raw, error=str(exc))
         return None
