@@ -504,11 +504,13 @@ export function SlackChatPage() {
     setTaskTitle("");
   };
 
+  const isTeamLeadOrAdmin = user?.role === "team_lead" || isOpsOrSuperAdmin;
+
   const channels = [
     { id: "general", label: "general", desc: `${podName} daily standup & team banter` },
     { id: "deliverables-handoff", label: "deliverables-handoff", desc: "Master asset sync & drops" },
     { id: "urgent-escalations", label: "urgent-escalations", desc: "SLA priority alert queue" },
-    ...(isOpsOrSuperAdmin ? (clientRoster || []) : (podData?.clients || [])).map((c) => ({
+    ...(isTeamLeadOrAdmin ? (isOpsOrSuperAdmin ? (clientRoster || []) : (podData?.clients || [])) : []).map((c) => ({
       id: `client-${c.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
       label: `client-${c.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
       desc: isOpsOrSuperAdmin && 'pod_name' in c ? `${c.name} (${c.pod_name})` : `${c.name} pod communication`,
