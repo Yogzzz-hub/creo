@@ -95,27 +95,43 @@ export function PortalPaymentsPage() {
 
   const rzpKey = (import.meta.env.VITE_RAZORPAY_KEY_ID as string) || "rzp_test_TO2r0YMjDZSpuC";
 
-  const handleAddon = (addon: typeof addons[0]) => {
+  const handleAddon = async (addon: typeof addons[0]) => {
     setProcessingAddon(addon.id);
-    setTimeout(() => {
-      setProcessingAddon(null);
-      openRazorpayCheckout(
+    setErrorNotice(null);
+    try {
+      let orderData: any = null;
+      try {
+        orderData = await request<any>("/api/v1/payments/addon-order", {
+          method: "POST",
+          body: JSON.stringify({ addon_id: addon.id }),
+        });
+      } catch (err) {
+        console.warn("Could not generate server order, falling back to client checkout:", err);
+      }
+
+      await openRazorpayCheckout(
         {
-          key: rzpKey,
-          amount: addon.price * 100,
-          currency: "INR",
+          key: orderData?.key_id || rzpKey,
+          amount: orderData?.amount_minor || addon.price * 100,
+          currency: orderData?.currency || "INR",
           name: "Creo Studio",
           description: addon.name,
-          order_id: "addon_" + addon.id + "_" + Date.now(),
-          prefill: { name: user?.full_name || "", email: user?.email || "" }
+          order_id: orderData?.order_id?.startsWith("order_") ? orderData.order_id : undefined,
+          prefill: { name: user?.full_name || "", email: user?.email || "" },
         },
         () => {
           setActionNotice(`Successfully added ${addon.name} to this cycle!`);
           setTimeout(() => setActionNotice(null), 4000);
         },
-        () => {}
+        () => {
+          setProcessingAddon(null);
+        }
       );
-    }, 600);
+    } catch (err: any) {
+      setErrorNotice(err.message || "Failed to initiate payment.");
+    } finally {
+      setProcessingAddon(null);
+    }
   };
 
   const handleDownload = async (id: string) => {
@@ -464,11 +480,11 @@ export function PortalPaymentsPage() {
               openRazorpayCheckout(
                 {
                   key: rzpKey,
-                  amount: 0,
+                  amount: 100,
                   currency: "INR",
                   name: "Creo Studio",
-                  description: "Update payment method",
-                  order_id: "auth_" + Date.now(),
+                  description: "Update payment method (UPI / Card)",
+                  prefill: { name: user?.full_name || "", email: user?.email || "" },
                 },
                 () => {
                   setActionNotice("Payment method updated successfully!");

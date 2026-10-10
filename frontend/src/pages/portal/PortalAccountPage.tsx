@@ -8,6 +8,7 @@ import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
 import { PasswordRecoveryModal } from "../../components/auth/PasswordRecoveryModal";
 import { resolveAssetUrl } from "../../lib/media";
+import { CheckCircle2, X } from "lucide-react";
 export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: string }) {
   const { user } = useAuth();
   const gate = useOnboardingGate();
@@ -94,7 +95,38 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           {query.error.message} <button onClick={() => void query.refetch()}>Retry</button>
         </p>
       )}
-      {message && <p role="status">{message}</p>}
+      {message && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#161F2D] border border-[#2A3446] rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <button
+              type="button"
+              onClick={() => setMessage("")}
+              className="absolute top-4 right-4 size-7 rounded-lg border border-[#2A3446] bg-[#0B111C] flex items-center justify-center text-[#97A0B3] hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="size-4" />
+            </button>
+
+            <div className="size-14 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400 shadow-lg shadow-emerald-500/10">
+              <CheckCircle2 className="size-7" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-bold text-white tracking-tight">Changes Saved Successfully</h3>
+              <p className="text-xs text-[#97A0B3] leading-relaxed">
+                {message}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMessage("")}
+              className="w-full py-2.5 rounded-full bg-[#BCCCE6] text-[#0B111C] font-bold text-xs hover:bg-white transition-all shadow-sm active:scale-95 cursor-pointer"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
       {!brand && <section className="bg-[#161F2D] border border-[#2A3446] p-5 rounded-3xl space-y-3"><h2 className="font-bold">Password sign-in</h2><p className="text-sm text-[#97A0B3]">Verify your email to set or reset a Creo password. You can continue using Google sign-in.</p><button className="underline" onClick={() => setRecoveryOpen(true)}>Set or reset password</button></section>}
       {recoveryOpen && <PasswordRecoveryModal initialEmail={user?.email || ""} onClose={() => setRecoveryOpen(false)} />}
       {query.data && (

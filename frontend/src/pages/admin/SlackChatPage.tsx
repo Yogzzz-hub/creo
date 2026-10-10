@@ -1,24 +1,25 @@
 import { NativeSelect } from "../../ui/NativeSelect";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { motion } from "motion/react";
 import {
-  Hash,
   Send,
-  Plus,
   Paperclip,
   Video,
-  CheckCircle2,
   Sparkles,
   X,
-  User,
   ArrowLeft,
   ChevronRight,
   MessageSquare,
   Smile,
   Search,
+  Shield,
+  Crown,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { request } from "../../lib/http";
+import { useLocation, useSearchParams } from "react-router";
+import { useAuth } from "../../lib/auth-context";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 // WhatsApp Emoji Categories
 const EMOJI_CATEGORIES = [
@@ -87,62 +88,15 @@ const EMOJI_CATEGORIES = [
   },
 ];
 
-const STORAGE_KEY = "creo_slack_messages_v2";
-
-const SEED_MESSAGES: Record<string, ChatMessage[]> = {
-  general: [
-    {
-      id: "seed-1",
-      sender: "Pod Operations Lead",
-      role: "Pod Lead",
-      avatar: "PL",
-      avatarBg: "bg-[#7FA0D6]",
-      content: "Good morning team! Standup update: All 4 active client sprint deliverables are on track for today's review.",
-      timestamp: "09:00 AM",
-      reactions: [
-        { emoji: "🚀", count: 3, users: ["Pod Lead", "Operations"] },
-        { emoji: "👍", count: 2, users: ["Specialist"] },
-      ],
-    },
-    {
-      id: "seed-2",
-      sender: "Client Manager",
-      role: "Operations Executive",
-      avatar: "CM",
-      avatarBg: "bg-[#7FA0D6]",
-      content: "Reminder: Please upload all final MP4 and Figma assets to the deliverables-handoff channel once QA approves.",
-      timestamp: "09:15 AM",
-      reactions: [{ emoji: "✅", count: 4, users: ["Team Lead"] }],
-    },
-  ],
-  "deliverables-handoff": [
-    {
-      id: "seed-3",
-      sender: "Creative Specialist",
-      role: "Video Editor",
-      avatar: "CS",
-      avatarBg: "bg-[#7FA0D6]",
-      content: "📦 Handoff Drop: High-conversion reel assets for Apex Motion are packaged and ready for final review.",
-      timestamp: "10:30 AM",
-      reactions: [{ emoji: "🔥", count: 3, users: ["Lead"] }],
-    },
-  ],
-  "urgent-escalations": [
-    {
-      id: "seed-4",
-      sender: "System Alert",
-      role: "Automation Bot",
-      avatar: "SA",
-      avatarBg: "bg-[#D8BF9B]",
-      content: "⚡ SLA Monitor: Priority 1 deliverable review queue is currently empty. Excellent turnaround time!",
-      timestamp: "11:00 AM",
-      reactions: [{ emoji: "⭐", count: 2, users: ["Admin"] }],
-    },
-  ],
-};
-import { useAuth } from "../../lib/auth-context";
-import { useQuery } from "@tanstack/react-query";
-import { fetchPodDashboard, fetchClientRoster, type PodDashboardData, type ClientRosterItem } from "../../lib/ops-api";
+interface ChatContact {
+  id: string;
+  name: string;
+  role: string;
+  email?: string;
+  is_super_admin?: boolean;
+  is_client?: boolean;
+  online?: boolean;
+}
 
 interface ChatMessage {
   id: string;
@@ -168,39 +122,109 @@ interface ChatMessage {
 
 export function SlackChatPage() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const isClient = user?.role === "client";
+  const [searchParams] = useSearchParams();
+  const urlDm = searchParams.get("dm");
 
-  const { data: podData } = useQuery<PodDashboardData>({
-    queryKey: ["pod_dashboard", user?.id, undefined],
-    queryFn: () => fetchPodDashboard(),
-    staleTime: 30_000,
-    enabled: !!user?.id && user?.role !== "client",
+  // Fetch DM contacts from backend
+  const { data: serverContacts = [] } = useQuery<ChatContact[]>({
+    queryKey: ["chat_contacts", user?.id],
+    queryFn: () => request<ChatContact[]>("/api/v1/chat/contacts"),
+    enabled: !!user?.id,
+    staleTime: 15_000,
   });
 
-  const podName = podData?.pod?.name || "Pod Operations";
-  const defaultPersona = user?.full_name || user?.email?.split("@")[0] || "Team Member";
+  // Fallback contacts if offline or before loading
+  const fallbackContacts: ChatContact[] = useMemo(() => {
+    return [
+      {
+        id: "646f6d6e-3479-42c5-b275-9fcd212453f6",
+        name: "Creo Super Admin",
+        role: "Super Admin & Executive Support",
+        email: "admin@creo.agency",
+        is_super_admin: true,
+        online: true,
+      },
+      {
+        id: "00000000-0000-0000-0000-0000000000b1",
+        name: "Sarah Connor (Lead - Pod B)",
+        role: "Team Lead & Account Director",
+        email: "lead.beta@creo.agency",
+        online: true,
+      },
+      {
+        id: "00000000-0000-0000-0000-0000000000b2",
+        name: "David Kim (Editor - Pod B)",
+        role: "Lead Video Editor (Reels & Motion)",
+        email: "editor.beta@creo.agency",
+        online: true,
+      },
+      {
+        id: "00000000-0000-0000-0000-0000000000b3",
+        name: "Elena Rostova (Designer - Pod B)",
+        role: "Lead Graphic Designer (Posters & Carousels)",
+        email: "designer.beta@creo.agency",
+        online: true,
+      },
+    ];
+  }, []);
 
-  const isOpsOrSuperAdmin = user?.role === "admin" || user?.role === "super_admin" || user?.role === "ops_admin";
+  const contactsList: ChatContact[] = useMemo(() => {
+    if (serverContacts && serverContacts.length > 0) {
+      return serverContacts;
+    }
+    return fallbackContacts;
+  }, [serverContacts, fallbackContacts]);
 
-  const { data: rawClientRoster } = useQuery<ClientRosterItem[]>({
-    queryKey: ["client_roster", user?.id],
-    queryFn: () => fetchClientRoster(),
-    enabled: isOpsOrSuperAdmin,
+  // Active contact selection
+  const [activeContactId, setActiveContactId] = useState<string>(() => {
+    if (urlDm) {
+      const match = contactsList.find(
+        (c) =>
+          c.id === urlDm ||
+          c.name.toLowerCase().includes(urlDm.toLowerCase()) ||
+          (urlDm.toLowerCase() === "super-admin" && c.is_super_admin)
+      );
+      if (match) return match.id;
+    }
+    return contactsList[0]?.id || "646f6d6e-3479-42c5-b275-9fcd212453f6";
   });
 
-  const clientRoster = (rawClientRoster || []).map(c => ({
-    id: c.client_id,
-    name: c.company_name || c.email.split("@")[0] || "Unknown Client",
-    pod_name: (c as any).pod_name || undefined
-  }));
+  // Sync activeContactId if URL param changes or contacts load
+  useEffect(() => {
+    if (urlDm && contactsList.length > 0) {
+      const match = contactsList.find(
+        (c) =>
+          c.id === urlDm ||
+          c.name.toLowerCase().includes(urlDm.toLowerCase()) ||
+          (urlDm.toLowerCase() === "super-admin" && c.is_super_admin)
+      );
+      if (match) {
+        setActiveContactId(match.id);
+      }
+    } else if (!activeContactId && contactsList.length > 0 && contactsList[0]?.id) {
+      setActiveContactId(contactsList[0].id);
+    }
+  }, [urlDm, contactsList, activeContactId]);
 
-  // Active channel / DM selection
-  const [activeChannel, setActiveChannel] = useState<string>("general");
-  const [activeDm, setActiveDm] = useState<string | null>(null);
+  const activeContact = useMemo(() => {
+    return (
+      contactsList.find((c) => c.id === activeContactId) ||
+      contactsList[0] || {
+        id: "646f6d6e-3479-42c5-b275-9fcd212453f6",
+        name: "Creo Super Admin",
+        role: "Super Admin & Executive Support",
+        is_super_admin: true,
+        online: true,
+      }
+    );
+  }, [contactsList, activeContactId]);
 
   // Mobile view toggle ('channels' or 'chat')
   const [mobileView, setMobileView] = useState<"channels" | "chat">("chat");
 
-  // Persona switch
+  const defaultPersona = user?.full_name || user?.email?.split("@")[0] || "Team Member";
   const [currentPersona, setCurrentPersona] = useState<string>(defaultPersona);
 
   useEffect(() => {
@@ -208,6 +232,20 @@ export function SlackChatPage() {
       setCurrentPersona(user.full_name);
     }
   }, [user?.full_name]);
+
+  // Search input for contacts
+  const [contactSearch, setContactSearch] = useState("");
+
+  const filteredContacts = useMemo(() => {
+    if (!contactSearch.trim()) return contactsList;
+    const q = contactSearch.toLowerCase();
+    return contactsList.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.role.toLowerCase().includes(q) ||
+        (c.email && c.email.toLowerCase().includes(q))
+    );
+  }, [contactsList, contactSearch]);
 
   // Input states
   const [messageText, setMessageText] = useState("");
@@ -220,476 +258,437 @@ export function SlackChatPage() {
   // Modals
   const [assignTaskModalOpen, setAssignTaskModalOpen] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
-  const [taskAssignee, setTaskAssignee] = useState("");
-  const [taskClient, setTaskClient] = useState("");
   const [taskPriority, setTaskPriority] = useState<"P1 High" | "P2 Med" | "P3 Normal">("P1 High");
   const [taskDeadline, setTaskDeadline] = useState("Today by 05:00 PM PST");
   const [taskScope, setTaskScope] = useState("");
-
   const [callModalOpen, setCallModalOpen] = useState(false);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
-
-  // Persistent Messages loaded from localStorage with initial seeds
-  const [channelMessages, setChannelMessages] = useState<Record<string, ChatMessage[]>>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Object.keys(parsed).length > 0) return parsed;
-      }
-    } catch (err) {
-      console.warn("Failed to load slack messages from storage:", err);
-    }
-    return SEED_MESSAGES;
-  });
-
-  // Sync messages to localStorage whenever changed
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(channelMessages));
-    } catch (err) {
-      console.warn("Failed to persist slack messages:", err);
-    }
-  }, [channelMessages]);
-
-  // Real-time multi-tab / multi-window broadcast synchronization
-  useEffect(() => {
-    let broadcast: BroadcastChannel | null = null;
-    try {
-      broadcast = new BroadcastChannel("creo_slack_sync_channel");
-      broadcast.onmessage = (event) => {
-        if (event.data && event.data.type === "SLACK_MSG_SYNC" && event.data.payload) {
-          setChannelMessages(event.data.payload);
-        }
-      };
-    } catch (e) {
-      console.log("BroadcastChannel fallback to storage event");
-    }
-
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try {
-          const parsed = JSON.parse(e.newValue);
-          setChannelMessages(parsed);
-        } catch (err) {
-          console.warn(err);
-        }
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => {
-      broadcast?.close();
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
-  const broadcastUpdate = (updated: Record<string, ChatMessage[]>) => {
-    setChannelMessages(updated);
-    try {
-      const bc = new BroadcastChannel("creo_slack_sync_channel");
-      bc.postMessage({ type: "SLACK_MSG_SYNC", payload: updated });
-      bc.close();
-    } catch (e) {
-      // fallback
-    }
-  };
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const showToast = (text: string, type: "success" | "info" = "success") => {
     setToastMessage({ text, type });
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [channelMessages, activeChannel, activeDm]);
+  // Local reactions store
+  const [messageReactions, setMessageReactions] = useState<Record<string, { emoji: string; count: number; users: string[] }[]>>({});
 
-  const activeClientId = activeChannel.startsWith("client-")
-    ? (isOpsOrSuperAdmin 
-        ? clientRoster?.find((c) => `client-${c.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}` === activeChannel)?.id 
-        : podData?.clients?.find((c) => `client-${c.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}` === activeChannel)?.id)
-    : null;
-
-  const { data: serverMessages = [], refetch: refetchServerMessages } = useQuery({
-    queryKey: ["chat_messages", activeChannel, activeDm],
+  // 1-on-1 Messages Query (Live Polling every 1000ms with background sync)
+  const { data: serverMessages = [], refetch: refetchMessages } = useQuery<ChatMessage[]>({
+    queryKey: ["chat_messages", activeContact?.id],
     queryFn: async () => {
-      let url = "";
-      if (activeDm) {
-        const dmUser = podData?.members?.find((m) => (m.name || m.full_name) === activeDm);
-        if (!dmUser?.id) return [];
-        url = `/api/v1/chat/messages?other_user_id=${dmUser.id}`;
-      } else if (activeChannel.startsWith("client-")) {
-        url = `/api/v1/chat/messages?channel=${activeChannel}`;
-      } else {
-        url = `/api/v1/chat/messages?channel=${activeChannel}`;
-      }
-      
-      const res = await request<any[]>(url);
-      return (res || []).map((m: any) => ({
-        id: m.id,
-        sender: m.sender_name || "Unknown",
-        role: "Specialist", 
-        avatar: (m.sender_name || "U").slice(0, 2).toUpperCase(),
-        avatarBg: "bg-[#7FA0D6]",
-        content: m.message,
-        timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        reactions: [],
-      })) as ChatMessage[];
+      if (!activeContact?.id) return [];
+      const res = await request<any[]>(`/api/v1/chat/messages?other_user_id=${activeContact.id}`);
+      return (res || []).map((m: any) => {
+        const isSelf = m.sender_id === user?.id;
+        const senderName = isSelf ? (user?.full_name || "You") : (m.sender_name || activeContact.name);
+        const senderRole = isSelf
+          ? (user?.role === "super_admin" || user?.role === "admin"
+              ? "Super Admin"
+              : user?.role === "client"
+              ? (user?.company_name || "Client")
+              : "Specialist")
+          : activeContact.role;
+
+        return {
+          id: m.id,
+          sender: senderName,
+          role: senderRole,
+          avatar: (senderName || "U").slice(0, 2).toUpperCase(),
+          avatarBg: isSelf ? "bg-[#7FA0D6]" : (activeContact.is_super_admin ? "bg-amber-500" : "bg-[#64748B]"),
+          content: m.message,
+          timestamp: m.created_at
+            ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+            : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          reactions: messageReactions[m.id] || [],
+        };
+      });
     },
-    refetchInterval: 5000,
-    staleTime: 5000,
+    enabled: !!activeContact?.id,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 
-  const activeKey = activeDm ? `dm-${activeDm}` : activeChannel;
-  const currentMessages = activeChannel.startsWith("client-") || activeDm ? serverMessages : (channelMessages[activeKey] || []);
+  // WebSocket Live Real-Time Connection
+  useEffect(() => {
+    if (!user?.id) return;
+
+    let ws: WebSocket | null = null;
+    let pingInterval: any = null;
+
+    try {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const host = window.location.host;
+      ws = new WebSocket(`${protocol}//${host}/api/v1/chat/ws/${user.id}`);
+
+      ws.onopen = () => {
+        pingInterval = setInterval(() => {
+          if (ws?.readyState === WebSocket.OPEN) {
+            ws.send("ping");
+          }
+        }, 30000);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === "NEW_MESSAGE") {
+            queryClient.invalidateQueries({ queryKey: ["chat_messages"] });
+            refetchMessages();
+          }
+        } catch {
+          // ignore pong
+        }
+      };
+
+      ws.onerror = () => {
+        // Fallback to polling
+      };
+    } catch {
+      // Fallback to polling
+    }
+
+    return () => {
+      if (pingInterval) clearInterval(pingInterval);
+      if (ws) ws.close();
+    };
+  }, [user?.id, queryClient, refetchMessages]);
+
+  // BroadcastChannel multi-tab instant sync
+  useEffect(() => {
+    try {
+      const bc = new BroadcastChannel("creo_chat_channel");
+      bc.onmessage = () => {
+        queryClient.invalidateQueries({ queryKey: ["chat_messages"] });
+        refetchMessages();
+      };
+      return () => {
+        bc.close();
+      };
+    } catch {
+      // BroadcastChannel fallback
+    }
+  }, [queryClient, refetchMessages]);
+
+  // Auto-scroll to latest message
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, [serverMessages, activeContact?.id]);
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!messageText.trim()) return;
+    if (!messageText.trim() || !activeContact?.id) return;
 
-    if (activeChannel.startsWith("client-") || activeDm) {
-      try {
-        const payload: any = { message: messageText.trim(), thread_type: "direct" };
-        if (activeDm) {
-          const dmUser = podData?.members?.find((m) => (m.name || m.full_name) === activeDm);
-          if (dmUser?.id) {
-            payload.recipient_id = dmUser.id;
-          }
-        } else {
-          payload.channel = activeChannel;
-          payload.client_id = activeClientId;
-        }
-
-        await request("/api/v1/chat/messages", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-        setMessageText("");
-        setShowEmojiPicker(false);
-        refetchServerMessages();
-        return;
-      } catch (err: any) {
-        showToast(err?.message || "Failed to send message", "info");
-        return;
-      }
-    }
-
-    const senderRole =
-      user?.role === "admin" || user?.role === "super_admin"
-        ? "Operations Executive"
-        : user?.role === "team_lead"
-        ? `${podName} Lead`
-        : user?.role === "client"
-        ? "Client Representative"
-        : "Specialist";
-
-    const senderInitials = (currentPersona || "TM")
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-
-    const newMsg: ChatMessage = {
-      id: `m-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      sender: currentPersona,
-      role: senderRole,
-      avatar: senderInitials,
-      avatarBg: "bg-[#7FA0D6]",
-      content: messageText,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      reactions: [],
-    };
-
-    const updated = {
-      ...channelMessages,
-      [activeKey]: [...(channelMessages[activeKey] || []), newMsg],
-    };
-
-    broadcastUpdate(updated);
+    const text = messageText.trim();
     setMessageText("");
     setShowEmojiPicker(false);
+
+    try {
+      await request("/api/v1/chat/messages", {
+        method: "POST",
+        body: JSON.stringify({
+          recipient_id: activeContact.id,
+          message: text,
+          thread_type: "direct",
+        }),
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["chat_messages", activeContact.id] });
+      refetchMessages();
+
+      try {
+        const bc = new BroadcastChannel("creo_chat_channel");
+        bc.postMessage({ type: "NEW_MESSAGE", timestamp: Date.now() });
+        bc.close();
+      } catch {
+        // BroadcastChannel fallback
+      }
+    } catch (err: any) {
+      console.error("Message send error:", err);
+      showToast(err?.message || "Failed to send message. Please retry.", "info");
+    }
   };
 
   const handleAddReaction = (msgId: string, emoji: string) => {
-    const msgs = channelMessages[activeKey] || [];
-    const updatedMsgs = msgs.map((m) => {
-      if (m.id !== msgId) return m;
-      const existing = m.reactions.find((r) => r.emoji === emoji);
-      if (existing) {
-        if (existing.users.includes(currentPersona)) {
-          return {
-            ...m,
-            reactions: m.reactions
-              .map((r) =>
-                r.emoji === emoji
-                  ? { ...r, count: r.count - 1, users: r.users.filter((u) => u !== currentPersona) }
-                  : r
-              )
-              .filter((r) => r.count > 0),
-          };
+    setMessageReactions((prev) => {
+      const existing = prev[msgId] || [];
+      const match = existing.find((r) => r.emoji === emoji);
+      let updated: { emoji: string; count: number; users: string[] }[];
+      if (match) {
+        if (match.users.includes(currentPersona)) {
+          updated = existing
+            .map((r) =>
+              r.emoji === emoji
+                ? { ...r, count: r.count - 1, users: r.users.filter((u) => u !== currentPersona) }
+                : r
+            )
+            .filter((r) => r.count > 0);
         } else {
-          return {
-            ...m,
-            reactions: m.reactions.map((r) =>
-              r.emoji === emoji ? { ...r, count: r.count + 1, users: [...r.users, currentPersona] } : r
-            ),
-          };
+          updated = existing.map((r) =>
+            r.emoji === emoji
+              ? { ...r, count: r.count + 1, users: [...r.users, currentPersona] }
+              : r
+          );
         }
       } else {
-        return {
-          ...m,
-          reactions: [...m.reactions, { emoji, count: 1, users: [currentPersona] }],
-        };
+        updated = [...existing, { emoji, count: 1, users: [currentPersona] }];
       }
+      return { ...prev, [msgId]: updated };
     });
-
-    const updated = {
-      ...channelMessages,
-      [activeKey]: updatedMsgs,
-    };
-    broadcastUpdate(updated);
   };
 
-  const handleConfirmAssignTask = (e: React.FormEvent) => {
+  const handleConfirmAssignTask = async (e: React.FormEvent) => {
     e.preventDefault();
     setAssignTaskModalOpen(false);
 
-    const resolvedClient = taskClient || podData?.clients?.[0]?.name || "Client";
-    const resolvedAssignee = taskAssignee || podData?.members?.[0]?.name || "Specialist";
-    const resolvedTitle = taskTitle || "Sprint Asset Delivery";
+    const resolvedTitle = taskTitle || "Priority Sprint Request";
+    const taskContent = `⚡ New Sprint Task: **${resolvedTitle}**\n- Priority: ${taskPriority}\n- Due: ${taskDeadline}${taskScope ? `\n- Scope: ${taskScope}` : ""}`;
 
-    const senderRole =
-      user?.role === "team_lead"
-        ? `${podName} Lead`
-        : user?.role === "admin" || user?.role === "super_admin"
-        ? "Operations Executive"
-        : "Specialist";
-
-    const senderInitials = (currentPersona || "TM")
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-
-    const taskMsg: ChatMessage = {
-      id: `task-${Date.now()}`,
-      sender: currentPersona,
-      role: senderRole,
-      avatar: senderInitials,
-      avatarBg: "bg-[#7FA0D6]",
-      content: `⚡ New Task Assigned: **${resolvedTitle}** assigned to **${resolvedAssignee}** for **${resolvedClient}**!`,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      isTaskCard: true,
-      taskData: {
-        id: `TSK-${Math.floor(100 + Math.random() * 900)}`,
-        title: resolvedTitle,
-        assignee: resolvedAssignee,
-        client: resolvedClient,
-        priority: taskPriority,
-        deadline: taskDeadline,
-        status: "In Progress",
-      },
-      reactions: [{ emoji: "🚀", count: 1, users: [currentPersona] }],
-    };
-
-    setChannelMessages((prev) => ({
-      ...prev,
-      [activeKey]: [...(prev[activeKey] || []), taskMsg],
-    }));
-
-    showToast(`Assigned task "${resolvedTitle}" to ${resolvedAssignee}! Posted to #${activeChannel}.`);
-    setTaskTitle("");
+    try {
+      await request("/api/v1/chat/messages", {
+        method: "POST",
+        body: JSON.stringify({
+          recipient_id: activeContact.id,
+          message: taskContent,
+          thread_type: "direct",
+        }),
+      });
+      refetchMessages();
+      showToast(`Task "${resolvedTitle}" sent directly to ${activeContact.name}!`);
+      setTaskTitle("");
+      setTaskScope("");
+    } catch (err) {
+      showToast("Could not assign task", "info");
+    }
   };
 
-  const isTeamLeadOrAdmin = user?.role === "team_lead" || isOpsOrSuperAdmin;
-
-  const channels = [
-    { id: "general", label: "general", desc: `${podName} daily standup & team banter` },
-    { id: "deliverables-handoff", label: "deliverables-handoff", desc: "Master asset sync & drops" },
-    { id: "urgent-escalations", label: "urgent-escalations", desc: "SLA priority alert queue" },
-    ...(isTeamLeadOrAdmin ? (isOpsOrSuperAdmin ? (clientRoster || []) : (podData?.clients || [])) : []).map((c) => ({
-      id: `client-${c.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
-      label: `client-${c.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
-      desc: isOpsOrSuperAdmin && 'pod_name' in c ? `${c.name} (${c.pod_name})` : `${c.name} pod communication`,
-      badge: isOpsOrSuperAdmin && 'pod_name' in c ? c.pod_name : undefined,
-    })),
-  ];
-
   return (
-    <div data-surface="ops" className="h-screen max-h-screen bg-[#0B111C] text-white font-sans flex flex-col overflow-hidden">
-      {/* Top Header Navigation matching Admin */}
-      <AdminTopHeader activeTab="Slack" />
+    <div className="flex flex-col h-[calc(100vh-5.5rem)] min-h-[550px] overflow-hidden -mx-4 sm:-mx-6 -my-6 sm:-my-8">
+      {/* ── Top Header Context Bar ── */}
+      <AdminTopHeader
+        title="Direct Chat Hub"
+        activeTab="Direct Chat"
+      />
 
-      {/* Main Slack Layout (Sidebar + Chat Area) */}
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-18 right-8 z-[99999] bg-[#161F2D]/90 backdrop-blur-xl border border-[#7FA0D6]/40 text-white px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2.5 text-xs animate-in fade-in slide-in-from-top-2">
+          <Sparkles className="size-4 text-[#7FA0D6]" />
+          <span className="font-bold">{toastMessage.text}</span>
+        </div>
+      )}
+
+      {/* Main Slack Hub Shell */}
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="flex-1 min-h-0 flex flex-col md:flex-row max-w-[1650px] w-full mx-auto px-2 sm:px-6 py-2 sm:py-4 gap-3 sm:gap-4 overflow-hidden pb-2 md:pb-4"
+        transition={{ duration: 0.2 }}
+        className="flex-1 flex overflow-hidden p-2 sm:p-4 gap-2 sm:gap-4 min-h-0"
       >
-        {/* Toast Alert */}
-        {toastMessage && (
-          <div
-            className={`fixed top-20 right-4 sm:right-8 z-[9999] p-4 rounded-2xl border text-xs font-bold flex items-center gap-2 shadow-2xl animate-fade-in ${
-              toastMessage.type === "info"
-                ? "bg-[#7FA0D6]/15 border-[#7FA0D6]/30 text-blue-300"
-                : "bg-emerald-950/90 border-emerald-500/50 text-emerald-300"
-            }`}
-          >
-            <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
-            <span>{toastMessage.text}</span>
-            <button onClick={() => setToastMessage(null)} className="ml-2 text-current opacity-70 hover:opacity-100">
-              &times;
-            </button>
-          </div>
-        )}
-
-        {/* 1. SLACK LEFT SIDEBAR (Compact Fixed Width & Equal Height) */}
+        {/* 1. DIRECT MESSAGES SIDEBAR (GLASSMORPHIC) */}
         <aside
           className={`${
             mobileView === "channels" ? "flex w-full" : "hidden md:flex"
-          } md:w-72 lg:w-80 shrink-0 min-w-0 bg-[#161F2D] text-slate-300 rounded-2xl sm:rounded-3xl flex flex-col shadow-xl border border-[#2A3446] overflow-hidden h-full min-h-0`}
+          } md:w-80 lg:w-88 flex-col shrink-0 bg-[#0B111C]/80 backdrop-blur-2xl rounded-2xl sm:rounded-3xl border border-white/[0.08] overflow-hidden shadow-2xl h-full max-h-full min-h-0`}
         >
-          {/* Workspace Title & Persona Switcher */}
-          <div className="p-4 border-b border-[#2A3446] bg-[#0B111C]/80 space-y-2.5 shrink-0">
+          {/* Top Brand Bar */}
+          <div className="p-3.5 border-b border-white/[0.08] space-y-3 shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="size-3 rounded-md bg-[#7FA0D6]" />
-                <span className="font-black text-sm text-white tracking-tight">Creo Slack Hub</span>
+                <div className="size-7 rounded-xl bg-gradient-to-br from-[#7FA0D6] to-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                  <MessageSquare className="size-3.5" />
+                </div>
+                <div>
+                  <span className="font-black text-sm text-white tracking-tight block">Creo Chat Hub</span>
+                  <span className="text-[10px] text-[#97A0B3] block -mt-0.5">Direct 1-on-1 Channels</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  Live {podName}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 backdrop-blur-sm text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Live Sync
                 </span>
                 {mobileView === "channels" && (
                   <button
                     onClick={() => setMobileView("chat")}
-                    className="md:hidden text-xs font-bold text-blue-400 hover:text-white px-2 py-0.5 rounded-lg bg-slate-800"
+                    className="md:hidden text-xs font-bold text-[#7FA0D6] hover:text-white px-2 py-0.5 rounded-lg bg-slate-800"
                   >
-                    Open Chat &rarr;
+                    Open &rarr;
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Authenticated User Identity (Strict - No Role Switching) */}
-            <div className="p-2.5 rounded-xl bg-[#161F2D] border border-[#2A3446] flex items-center gap-2">
-              <div className="size-6 rounded-lg bg-[#7FA0D6] text-white font-black text-[10px] flex items-center justify-center shrink-0">
+            {/* Authenticated User Identity */}
+            <div className="p-2.5 rounded-xl bg-white/[0.04] backdrop-blur-md border border-white/10 flex items-center gap-2.5 shadow-sm">
+              <div className="size-7 rounded-lg bg-gradient-to-br from-[#7FA0D6] to-blue-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20">
                 {currentPersona.slice(0, 2).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-xs font-black text-white truncate">{currentPersona}</div>
                 <div className="text-[10px] font-bold text-[#7FA0D6] truncate">
-                  {user?.role === "admin" || user?.role === "super_admin"
-                    ? "Operations Executive (Admin)"
+                  {user?.role === "super_admin"
+                    ? "Super Admin · Executive"
+                    : user?.role === "admin"
+                    ? "Operations Executive"
                     : user?.role === "team_lead"
-                    ? `${podName} Lead`
+                    ? "Pod Lead"
                     : user?.role === "client"
-                    ? "Client Representative"
+                    ? (user?.company_name ? `${user.company_name} · Client` : "Client")
                     : "Creative Specialist"}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Channels & DMs List */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-4 text-xs">
-            {/* Quick Task Assign Button in Sidebar */}
-            <button
-              onClick={() => setAssignTaskModalOpen(true)}
-              className="w-full py-2.5 px-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white font-black text-xs shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
-            >
-              <Plus className="size-4" />
-              Assign Task in Chat
-            </button>
-
-            {/* Channels Section */}
-            <div className="space-y-1">
-              <div className="px-2 text-[10px] font-black uppercase tracking-wider text-[#97A0B3] flex items-center justify-between">
-                <span>Channels</span>
-                <span className="text-[#97A0B3]">{channels.length}</span>
-              </div>
-
-              {channels.map((c: any) => (
-                <button
-                  key={c.id}
-                  onClick={() => {
-                    setActiveChannel(c.id);
-                    setActiveDm(null);
+          {/* Quick Message Super Admin Button for Clients (Glassmorphism) */}
+          {isClient && (
+            <div className="px-3 pt-3 shrink-0">
+              <button
+                onClick={() => {
+                  const sa = contactsList.find((c) => c.is_super_admin) || contactsList[0];
+                  if (sa) {
+                    setActiveContactId(sa.id);
                     setMobileView("chat");
-                  }}
-                  className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl font-bold transition-all text-left cursor-pointer ${
-                    activeChannel === c.id && !activeDm
-                      ? "bg-[#7FA0D6] text-white shadow-xs font-black"
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                  }`}
-                >
-                  <Hash className="size-3.5 opacity-70" />
-                  <span className="truncate flex-1">{c.label}</span>
-                  {c.badge && (
-                    <span className="px-1.5 py-0.5 rounded text-[8px] uppercase tracking-wider font-bold bg-[#161F2D]/50 text-[#97A0B3] border border-[#2A3446]">
-                      {c.badge}
-                    </span>
-                  )}
-                  <ChevronRight className="size-3.5 opacity-40 md:hidden" />
-                </button>
-              ))}
-            </div>
-
-            {/* Direct Messages Section */}
-            <div className="space-y-1">
-              <div className="px-2 text-[10px] font-black uppercase tracking-wider text-[#97A0B3]">
-                Direct Messages
-              </div>
-
-              {(!podData?.members || podData.members.length === 0) ? (
-                <div className="px-3 py-2 text-[11px] text-[#97A0B3]">
-                  No specialists in pod
+                  }
+                }}
+                className={`w-full py-2.5 px-3 rounded-2xl flex items-center justify-between text-xs font-black transition-all cursor-pointer shadow-md ${
+                  activeContact?.is_super_admin
+                    ? "bg-gradient-to-r from-amber-500/25 via-amber-600/15 to-orange-500/10 backdrop-blur-xl border border-amber-400/50 text-amber-200 shadow-[0_0_25px_rgba(245,158,11,0.2)] ring-1 ring-amber-400/40"
+                    : "bg-white/[0.04] backdrop-blur-md hover:bg-white/[0.08] text-white border border-amber-500/25 hover:border-amber-400/50 shadow-sm"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="size-6 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-amber-950 flex items-center justify-center font-black shadow-md shadow-amber-500/30">
+                    <Crown className="size-3.5" />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-xs font-black text-white">Chat with Super Admin</span>
+                    <span className="block text-[10px] text-amber-300/80 font-medium">Executive Support</span>
+                  </div>
                 </div>
-              ) : (
-                podData.members.map((dm) => {
-                  const displayName = dm.name || dm.full_name || "Specialist";
-                  return (
-                    <button
-                      key={dm.id}
-                      onClick={() => {
-                        setActiveDm(displayName);
-                        setMobileView("chat");
-                      }}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-semibold transition-all text-left cursor-pointer ${
-                        activeDm === displayName
-                          ? "bg-[#7FA0D6] text-white font-black"
-                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="size-5 rounded-md bg-[#7FA0D6] text-white font-black text-[9px] flex items-center justify-center shrink-0">
-                          {displayName.slice(0, 2).toUpperCase()}
-                        </div>
-                        <span className="truncate text-xs">{displayName}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="size-2 rounded-full bg-emerald-400" />
-                        <ChevronRight className="size-3.5 opacity-40 md:hidden text-[#97A0B3]" />
-                      </div>
-                    </button>
-                  );
-                })
+                <span className="px-1.5 py-0.5 rounded text-[8px] uppercase tracking-wider font-extrabold bg-amber-400/20 text-amber-300 border border-amber-400/40 backdrop-blur-xs">
+                  Priority
+                </span>
+              </button>
+            </div>
+          )}
+
+          {/* Search Contacts Filter (Glassmorphic) */}
+          <div className="p-3 pb-1 shrink-0">
+            <div className="relative">
+              <Search className="size-3.5 absolute left-3 top-2.5 text-[#97A0B3]" />
+              <input
+                type="text"
+                value={contactSearch}
+                onChange={(e) => setContactSearch(e.target.value)}
+                placeholder="Search conversations..."
+                className="w-full pl-8 pr-3 py-1.5 text-xs bg-white/[0.04] backdrop-blur-md border border-white/10 rounded-xl text-white placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6]/60 transition-colors"
+              />
+              {contactSearch && (
+                <button
+                  onClick={() => setContactSearch("")}
+                  className="absolute right-2.5 top-2 text-[10px] text-[#97A0B3] hover:text-white"
+                >
+                  ✕
+                </button>
               )}
             </div>
           </div>
 
-          {/* Active User Footer in Sidebar */}
-          <div className="p-3 border-t border-slate-800 bg-slate-950/60 flex items-center gap-2.5 mt-auto shrink-0">
-            <div className="size-8 rounded-xl bg-[#7FA0D6] text-white font-black text-xs flex items-center justify-center shadow-xs">
+          {/* Direct Messages List (Glassmorphic Contact Cards) */}
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-1.5 text-xs">
+            <div className="px-2 text-[10px] font-black uppercase tracking-wider text-[#97A0B3] flex items-center justify-between pb-1">
+              <span>Direct Messages</span>
+              <span className="text-[#97A0B3]">{filteredContacts.length}</span>
+            </div>
+
+            {filteredContacts.length === 0 ? (
+              <div className="px-3 py-6 text-center text-[#97A0B3] text-xs">
+                No matching contacts
+              </div>
+            ) : (
+              filteredContacts.map((contact) => {
+                const isSelected = activeContactId === contact.id;
+                const isSA = contact.is_super_admin;
+                const initials = contact.name
+                  .split(" ")
+                  .filter((w) => w.length > 0)
+                  .map((w) => w[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2);
+
+                return (
+                  <button
+                    key={contact.id}
+                    onClick={() => {
+                      setActiveContactId(contact.id);
+                      setMobileView("chat");
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl font-semibold transition-all text-left cursor-pointer ${
+                      isSelected
+                        ? isSA
+                          ? "bg-gradient-to-r from-amber-500/25 via-amber-600/15 to-transparent backdrop-blur-xl border border-amber-400/50 text-white shadow-[0_0_20px_rgba(245,158,11,0.2)] ring-1 ring-amber-400/30"
+                          : "bg-gradient-to-r from-[#7FA0D6]/25 via-blue-500/15 to-transparent backdrop-blur-xl border border-[#7FA0D6]/50 text-white shadow-[0_0_20px_rgba(127,160,214,0.2)] ring-1 ring-[#7FA0D6]/30"
+                        : isSA
+                        ? "bg-amber-500/[0.06] backdrop-blur-md text-white hover:bg-amber-500/[0.12] border border-amber-500/20"
+                        : "text-slate-300 hover:bg-white/[0.04] backdrop-blur-xs hover:text-white border border-transparent hover:border-white/[0.06]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div
+                        className={`size-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 transition-transform ${
+                          isSA
+                            ? "bg-gradient-to-br from-amber-400 to-orange-500 text-amber-950 shadow-md shadow-amber-500/25"
+                            : isSelected
+                            ? "bg-gradient-to-br from-[#7FA0D6] to-blue-600 text-white shadow-md shadow-blue-500/25"
+                            : "bg-white/[0.06] backdrop-blur-md text-white border border-white/10"
+                        }`}
+                      >
+                        {isSA ? <Crown className="size-4" /> : initials}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate text-xs block font-bold text-white">
+                            {contact.name}
+                          </span>
+                          {isSA && (
+                            <span
+                              className="px-1.5 py-0.2 rounded text-[8px] uppercase font-black shrink-0 bg-amber-400/20 text-amber-300 border border-amber-400/40 backdrop-blur-xs"
+                            >
+                              Admin
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] truncate block text-[#97A0B3]">
+                          {contact.role}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      <span className={`size-2 rounded-full ${isSelected ? "bg-emerald-400 ring-2 ring-emerald-400/30 animate-pulse" : "bg-emerald-400/70"}`} />
+                      <ChevronRight className="size-3.5 opacity-40 md:hidden text-[#97A0B3]" />
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+
+          {/* Active User Footer in Sidebar (Glassmorphic) */}
+          <div className="p-3 border-t border-white/[0.08] bg-white/[0.02] backdrop-blur-md flex items-center gap-2.5 mt-auto shrink-0">
+            <div className="size-8 rounded-xl bg-gradient-to-br from-[#7FA0D6] to-blue-600 text-white font-black text-xs flex items-center justify-center shadow-md shadow-blue-500/20">
               {currentPersona.slice(0, 2).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-xs font-black text-white truncate">{currentPersona}</div>
-              <div className="text-[10px] text-emerald-400 flex items-center gap-1">
+              <div className="text-[10px] text-emerald-400 flex items-center gap-1 font-semibold">
                 <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Active in workspace
               </div>
@@ -697,188 +696,204 @@ export function SlackChatPage() {
           </div>
         </aside>
 
-        {/* 2. SLACK MAIN CHAT AREA (Fills Remaining Space) */}
+        {/* 2. DIRECT CHAT MAIN AREA (GLASSMORPHIC) */}
         <section
           className={`${
             mobileView === "chat" ? "flex w-full" : "hidden md:flex"
-          } flex-1 min-w-0 bg-[#161F2D] rounded-2xl sm:rounded-3xl border border-[#2A3446] shadow-xl flex flex-col overflow-hidden h-full min-h-0`}
+          } flex-1 min-w-0 bg-[#161F2D]/85 backdrop-blur-2xl rounded-2xl sm:rounded-3xl border border-white/[0.08] shadow-2xl flex flex-col overflow-hidden h-full max-h-full min-h-0`}
         >
           {/* Header Bar */}
-          <div className="px-3 sm:px-6 py-3 border-b border-[#2A3446] flex items-center justify-between bg-[#161F2D] gap-2 shrink-0">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              {/* Back button on mobile to view channel list */}
+          <div className="px-3 sm:px-6 py-3.5 border-b border-[#2A3446] flex items-center justify-between bg-[#161F2D] gap-2 shrink-0">
+            <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+              {/* Back button on mobile to view contact list */}
               <button
                 type="button"
                 onClick={() => setMobileView("channels")}
                 className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#0B111C] hover:bg-[#2A3446] border border-[#2A3446] text-[#F1F5F9] font-bold text-xs shrink-0 transition-colors cursor-pointer"
-                title="View Channels"
+                title="View Contacts"
               >
                 <ArrowLeft className="size-3.5" />
-                <span className="hidden xs:inline">Channels</span>
+                <span className="hidden xs:inline">Contacts</span>
               </button>
 
-              <div className="size-8 sm:size-9 rounded-xl sm:rounded-2xl bg-[#7FA0D6]/15 text-[#7FA0D6] flex items-center justify-center font-black shrink-0">
-                {activeDm ? <User className="size-4" /> : <Hash className="size-4" />}
+              <div
+                className={`size-9 sm:size-10 rounded-2xl flex items-center justify-center font-black shrink-0 ${
+                  activeContact?.is_super_admin
+                    ? "bg-amber-400 text-amber-950 shadow-md shadow-amber-400/20"
+                    : "bg-[#7FA0D6] text-[#0B111C]"
+                }`}
+              >
+                {activeContact?.is_super_admin ? (
+                  <Crown className="size-5" />
+                ) : (
+                  (activeContact?.name || "U").slice(0, 2).toUpperCase()
+                )}
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="flex items-center gap-2">
                   <h2 className="text-sm sm:text-base font-black text-white truncate">
-                    {activeDm ? activeDm : `#${activeChannel}`}
+                    {activeContact?.name || "Select Contact"}
                   </h2>
-                  <span className="px-1.5 sm:px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold bg-[#161F2D] text-[#F1F5F9] shrink-0">
-                    {activeDm ? "DM" : "Channel"}
-                  </span>
+                  {activeContact?.is_super_admin ? (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0 flex items-center gap-1">
+                      <Shield className="size-3" />
+                      SUPER ADMIN
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#0B111C] text-[#7FA0D6] shrink-0">
+                      Direct 1-on-1
+                    </span>
+                  )}
                 </div>
-                <p className="text-[11px] sm:text-xs text-[#97A0B3] truncate hidden sm:block">
-                  {activeDm
-                    ? `Direct communication thread with ${activeDm}`
-                    : `Live sprint channel for ${podName}`}
+                <p className="text-[11px] sm:text-xs text-[#97A0B3] truncate flex items-center gap-2">
+                  <span>{activeContact?.role}</span>
+                  <span className="text-emerald-400 flex items-center gap-1">
+                    <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Online & Active
+                  </span>
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-              {/* Assign Task Button in Header */}
-              <button
-                onClick={() => setAssignTaskModalOpen(true)}
-                className="px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer"
-              >
-                <Sparkles className="size-3 sm:size-3.5" />
-                <span className="hidden sm:inline">Assign Task</span>
-                <span className="sm:hidden">Task</span>
-              </button>
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              {/* Quick Task Assign Button (Internal team to client/lead) */}
+              {!isClient && (
+                <button
+                  onClick={() => setAssignTaskModalOpen(true)}
+                  className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Sparkles className="size-3.5" />
+                  <span className="hidden sm:inline">Send Task</span>
+                </button>
+              )}
 
               <button
                 onClick={() => setCallModalOpen(true)}
-                className="size-8 sm:size-9 rounded-xl bg-[#161F2D] hover:bg-slate-700 text-[#F1F5F9] flex items-center justify-center cursor-pointer transition-colors"
-                title="Start Video Huddle"
+                className="size-8 sm:size-9 rounded-xl bg-[#0B111C] hover:bg-[#2A3446] text-[#F1F5F9] border border-[#2A3446] flex items-center justify-center cursor-pointer transition-colors"
+                title="Start 1-on-1 Call"
               >
-                <Video className="size-3.5 sm:size-4" />
+                <Video className="size-4" />
               </button>
             </div>
           </div>
 
           {/* Messages Feed */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 bg-[#0B111C]/90 backdrop-blur-xl flex flex-col">
-            {currentMessages.length === 0 ? (
+          <div
+            ref={messagesContainerRef}
+            className="flex-1 min-h-0 max-h-full overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 bg-[#0B111C]/90 backdrop-blur-xl flex flex-col"
+          >
+            {serverMessages.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-auto">
-                <div className="size-14 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-4 border border-blue-500/20">
-                  {activeDm ? <MessageSquare className="size-7" /> : <Hash className="size-7" />}
+                <div
+                  className={`size-16 rounded-3xl flex items-center justify-center mb-4 border ${
+                    activeContact?.is_super_admin
+                      ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                      : "bg-[#7FA0D6]/10 text-[#7FA0D6] border-[#7FA0D6]/20"
+                  }`}
+                >
+                  {activeContact?.is_super_admin ? (
+                    <Crown className="size-8" />
+                  ) : (
+                    <MessageSquare className="size-8" />
+                  )}
                 </div>
                 <h3 className="text-base font-black text-white">
-                  {activeDm ? `Conversation with ${activeDm}` : `Welcome to #${activeChannel}`}
+                  {activeContact?.is_super_admin
+                    ? "Direct Channel with Creo Super Administration"
+                    : `Direct Conversation with ${activeContact?.name}`}
                 </h3>
-                <p className="text-xs text-[#97A0B3] max-w-sm mt-1">
-                  {activeDm
-                    ? `This is the beginning of your direct message history with ${activeDm}. Send a message or assign a task.`
-                    : `This is the start of the #${activeChannel} channel for ${podName}. Post updates, drop deliverables, or assign sprint tasks.`}
+                <p className="text-xs text-[#97A0B3] max-w-md mt-1.5 leading-relaxed">
+                  {activeContact?.is_super_admin
+                    ? "This is your private, direct thread with Creo Executive Super Administration. Inquire about your creative pod, retainer adjustments, SLA escalations, or custom requests."
+                    : `This is the start of your direct 1-on-1 thread with ${activeContact?.name}. Drop project feedback, creative directions, or collaborate in real time.`}
                 </p>
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#161F2D] text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+                    Live 2-Way Sync Active
+                  </span>
+                </div>
               </div>
             ) : (
-              currentMessages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className="group relative p-3 sm:p-3.5 rounded-2xl hover:bg-[#161F2D]/90 border border-transparent hover:border-[#2A3446] transition-all flex items-start gap-2.5 sm:gap-3.5"
-                >
-                  {/* Avatar */}
-                  <div className={`size-8 sm:size-10 rounded-xl sm:rounded-2xl ${msg.avatarBg} text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs`}>
-                    {msg.avatar}
-                  </div>
-
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                      <span className="text-xs font-black text-white">{msg.sender}</span>
-                      <span className="text-[9px] sm:text-[10px] font-bold text-[#97A0B3] bg-[#161F2D] px-1.5 sm:px-2 py-0.5 rounded-md">
-                        {msg.role}
-                      </span>
-                      <span className="text-[10px] text-[#97A0B3] ml-auto">{msg.timestamp}</span>
+              serverMessages.map((msg) => {
+                const isUser = msg.sender === currentPersona || msg.sender === (user?.full_name || "You");
+                return (
+                  <div
+                    key={msg.id}
+                    className={`group relative p-3 sm:p-3.5 rounded-2xl transition-all flex items-start gap-2.5 sm:gap-3.5 ${
+                      isUser
+                        ? "bg-gradient-to-r from-[#7FA0D6]/10 via-blue-500/[0.05] to-transparent backdrop-blur-md border border-[#7FA0D6]/20 shadow-xs"
+                        : "hover:bg-white/[0.03] backdrop-blur-xs border border-transparent hover:border-white/[0.06]"
+                    }`}
+                  >
+                    {/* Avatar */}
+                    <div
+                      className={`size-8 sm:size-10 rounded-xl sm:rounded-2xl ${msg.avatarBg} text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs`}
+                    >
+                      {msg.avatar}
                     </div>
 
-                    {/* Message Content */}
-                    <div className="text-xs text-[#F1F5F9] leading-relaxed font-medium break-words">
-                      {msg.content}
-                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                        <span className="text-xs font-black text-white">{msg.sender}</span>
+                        <span className="text-[9px] sm:text-[10px] font-bold text-[#97A0B3] bg-[#161F2D] px-1.5 sm:px-2 py-0.5 rounded-md">
+                          {msg.role}
+                        </span>
+                        <span className="text-[10px] text-[#97A0B3] ml-auto">{msg.timestamp}</span>
+                      </div>
 
-                    {/* Task Card Embedded in Chat */}
-                    {msg.isTaskCard && msg.taskData && (
-                      <div className="mt-2.5 p-3.5 sm:p-4 rounded-2xl bg-[#161F2D] border border-[#7FA0D6]/30 shadow-sm hover-card-innovative space-y-2.5 w-full max-w-lg">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-mono font-bold text-[#7FA0D6] bg-[#7FA0D6]/20 px-2 py-0.5 rounded">
-                            {msg.taskData.id}
-                          </span>
-                          <span
-                            className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                              msg.taskData.priority === "P1 High"
-                                ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
-                                : "bg-[#7FA0D6]/20 text-[#7FA0D6]"
+                      {/* Message Content */}
+                      <div className="text-xs text-[#F1F5F9] leading-relaxed font-medium break-words">
+                        {msg.content}
+                      </div>
+
+                      {/* Reactions Bar */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        {msg.reactions.map((r, i) => (
+                          <button
+                            key={i}
+                            onClick={() => handleAddReaction(msg.id, r.emoji)}
+                            className={`text-[11px] px-2 py-0.5 rounded-lg border flex items-center gap-1 transition cursor-pointer ${
+                              r.users.includes(currentPersona)
+                                ? "bg-blue-600/20 border-blue-500 text-blue-300 font-bold"
+                                : "bg-[#161F2D] border-[#2A3446] text-slate-300 hover:bg-slate-800"
                             }`}
                           >
-                            {msg.taskData.priority}
-                          </span>
-                        </div>
-
-                        <div>
-                          <h4 className="text-xs font-black text-white">{msg.taskData.title}</h4>
-                          <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#F1F5F9] mt-1">
-                            <span>👤 Assignee: <strong>{msg.taskData.assignee}</strong></span>
-                            <span>•</span>
-                            <span>🏢 Client: <strong>{msg.taskData.client}</strong></span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-[10px] font-bold text-[#97A0B3]">
-                          <span>Due: {msg.taskData.deadline}</span>
-                          <span className="text-emerald-400">● {msg.taskData.status}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Reactions Bar */}
-                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      {msg.reactions.map((r, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handleAddReaction(msg.id, r.emoji)}
-                          className={`text-[11px] px-2 py-0.5 rounded-lg border flex items-center gap-1 transition cursor-pointer ${
-                            r.users.includes(currentPersona)
-                              ? "bg-blue-600/20 border-blue-500 text-blue-300 font-bold"
-                              : "bg-[#161F2D] border-[#2A3446] text-slate-300 hover:bg-slate-800"
-                          }`}
-                        >
-                          <span>{r.emoji}</span>
-                          <span>{r.count}</span>
-                        </button>
-                      ))}
-
-                      {/* WhatsApp Floating Reaction Bar on Hover */}
-                      <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-0.5 ml-2 bg-[#0B111C] border border-[#2A3446] rounded-full px-1.5 py-0.5 shadow-lg">
-                        {["👍", "❤️", "😂", "😮", "😢", "🙏", "🚀", "🔥"].map((emoji) => (
-                          <button
-                            key={emoji}
-                            type="button"
-                            onClick={() => handleAddReaction(msg.id, emoji)}
-                            className="size-6 rounded-full hover:bg-[#161F2D] flex items-center justify-center text-xs transition-transform hover:scale-125 cursor-pointer"
-                            title={`React with ${emoji}`}
-                          >
-                            {emoji}
+                            <span>{r.emoji}</span>
+                            <span>{r.count}</span>
                           </button>
                         ))}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPickerTargetMsgId(msg.id);
-                            setShowEmojiPicker(true);
-                          }}
-                          className="size-5.5 rounded-full bg-[#161F2D] hover:bg-[#7FA0D6] hover:text-white text-[#97A0B3] border border-[#2A3446] flex items-center justify-center text-xs font-bold transition-all cursor-pointer ml-0.5"
-                          title="Choose any WhatsApp emoji reaction"
-                        >
-                          +
-                        </button>
+
+                        {/* WhatsApp Floating Reaction Bar on Hover */}
+                        <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-0.5 ml-2 bg-[#0B111C] border border-[#2A3446] rounded-full px-1.5 py-0.5 shadow-lg">
+                          {["👍", "❤️", "😂", "😮", "😢", "🙏", "🚀", "🔥"].map((emoji) => (
+                            <button
+                              key={emoji}
+                              type="button"
+                              onClick={() => handleAddReaction(msg.id, emoji)}
+                              className="size-6 rounded-full hover:bg-[#161F2D] flex items-center justify-center text-xs transition-transform hover:scale-125 cursor-pointer"
+                              title={`React with ${emoji}`}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPickerTargetMsgId(msg.id);
+                              setShowEmojiPicker(true);
+                            }}
+                            className="size-5.5 rounded-full bg-[#161F2D] hover:bg-[#7FA0D6] hover:text-white text-[#97A0B3] border border-[#2A3446] flex items-center justify-center text-xs font-bold transition-all cursor-pointer ml-0.5"
+                            title="Choose reaction"
+                          >
+                            +
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
             <div ref={chatEndRef} />
           </div>
@@ -893,7 +908,7 @@ export function SlackChatPage() {
                   <div className="flex items-center gap-2">
                     <Smile className="size-4 text-[#7FA0D6]" />
                     <span className="text-xs font-black text-white">
-                      {pickerTargetMsgId ? "React with Emoji" : "WhatsApp Emoji Suite"}
+                      {pickerTargetMsgId ? "React with Emoji" : "Emoji Suite"}
                     </span>
                   </div>
                   <button
@@ -991,7 +1006,7 @@ export function SlackChatPage() {
                   type="text"
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  placeholder={`Message #${activeChannel}...`}
+                  placeholder={`Message ${activeContact?.name || "Direct Message"}... (Enter to send)`}
                   className="w-full bg-[#0B111C] border border-[#2A3446] rounded-2xl pl-4 pr-32 py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-[#7FA0D6] transition-colors"
                 />
                 <div className="absolute right-2 flex items-center gap-1">
@@ -999,7 +1014,7 @@ export function SlackChatPage() {
                     type="button"
                     onClick={() => setShowEmojiPicker((prev) => !prev)}
                     className="p-1.5 text-[#97A0B3] hover:text-[#7FA0D6] rounded-lg transition-colors cursor-pointer"
-                    title="Add Emoji (WhatsApp)"
+                    title="Add Emoji"
                   >
                     <Smile className="size-4" />
                   </button>
@@ -1014,7 +1029,7 @@ export function SlackChatPage() {
                   <button
                     type="submit"
                     disabled={!messageText.trim()}
-                    className="p-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-600 disabled:opacity-40 text-white transition cursor-pointer"
+                    className="p-2 rounded-xl bg-[#7FA0D6] hover:bg-white text-[#0B111C] disabled:opacity-40 transition cursor-pointer font-bold"
                   >
                     <Send className="size-4" />
                   </button>
@@ -1038,7 +1053,7 @@ export function SlackChatPage() {
             <div className="flex items-center justify-between pb-3 border-b border-[#2A3446]">
               <div className="flex items-center gap-2">
                 <Sparkles className="size-5 text-[#7FA0D6]" />
-                <h3 className="text-base font-black text-white">Assign Task in Chat</h3>
+                <h3 className="text-base font-black text-white">Send Task to {activeContact?.name}</h3>
               </div>
               <button onClick={() => setAssignTaskModalOpen(false)} className="text-[#97A0B3] hover:text-white">
                 <X className="size-5" />
@@ -1056,49 +1071,6 @@ export function SlackChatPage() {
                   placeholder="e.g. Hero Kinetic Reel Animation"
                   className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold bg-[#0B111C] text-white"
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Assignee</label>
-                  <NativeSelect
-                    value={taskAssignee}
-                    onChange={(e) => setTaskAssignee(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold bg-[#0B111C] text-white"
-                  >
-                    {(!podData?.members || podData.members.length === 0) ? (
-                      <option value="">No specialists registered</option>
-                    ) : (
-                      podData.members.map((m) => {
-                        const name = m.name || m.full_name || "Specialist";
-                        return (
-                          <option key={m.id} value={name}>
-                            {name} ({m.role})
-                          </option>
-                        );
-                      })
-                    )}
-                  </NativeSelect>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-[#F1F5F9] mb-1">Client Pod</label>
-                  <NativeSelect
-                    value={taskClient}
-                    onChange={(e) => setTaskClient(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold bg-[#0B111C] text-white"
-                  >
-                    {(!podData?.clients || podData.clients.length === 0) ? (
-                      <option value="">No clients assigned</option>
-                    ) : (
-                      podData.clients.map((c) => (
-                        <option key={c.id} value={c.name}>
-                          {c.name}
-                        </option>
-                      ))
-                    )}
-                  </NativeSelect>
-                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1148,9 +1120,9 @@ export function SlackChatPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 cursor-pointer"
+                  className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-white text-[#0B111C] font-black cursor-pointer shadow-md"
                 >
-                  Confirm & Post Task
+                  Send Task in DM
                 </button>
               </div>
             </form>
@@ -1172,9 +1144,9 @@ export function SlackChatPage() {
               <Video className="size-6" />
             </div>
             <div>
-              <h3 className="text-base font-black text-white">Start #{activeChannel} Huddle</h3>
+              <h3 className="text-base font-black text-white">Start 1-on-1 Call</h3>
               <p className="text-xs text-[#97A0B3] mt-1">
-                Instantly connect with everyone active in this channel via HD video & screen share.
+                Direct connection with <strong>{activeContact?.name}</strong>.
               </p>
             </div>
 
@@ -1190,11 +1162,11 @@ export function SlackChatPage() {
                 type="button"
                 onClick={() => {
                   setCallModalOpen(false);
-                  showToast(`Started video huddle in #${activeChannel}!`);
+                  showToast(`Started direct call with ${activeContact?.name}!`);
                 }}
-                className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-white text-[#0B111C] font-black text-xs shadow-md cursor-pointer"
               >
-                Launch Huddle
+                Connect Now
               </button>
             </div>
           </div>
