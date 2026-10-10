@@ -533,47 +533,69 @@ async def assign_pod(db: AsyncSession, client_id: uuid.UUID) -> dict[str, Any]:
             "designer_id": designer.id, "designer_name": designer.full_name or designer.email,
         }
     # 1. Select Team Lead (Fewest active clients + longest since last assigned, prioritizing agency team)
-    tl_query = text("""
-        SELECT
-            u.id, u.full_name, u.email,
-            COUNT(ca.id) AS active_clients,
-            MAX(ca.created_at) AS last_assigned_at
-        FROM users u
-        LEFT JOIN client_assignments ca ON ca.user_id = u.id AND ca.role = 'team_lead'
-        WHERE u.role = 'team_lead'
-          AND u.agency_id IS NOT DISTINCT FROM CAST(:agency_id AS UUID)
-          AND u.account_status = 'active'
-        GROUP BY u.id, u.full_name, u.email
-        ORDER BY 
-            active_clients ASC,
-            last_assigned_at ASC NULLS FIRST, u.id ASC;
-    """)
-    tl_res = await db.execute(tl_query, {"agency_id": client.agency_id})
-    tl_candidates = tl_res.fetchall()
+    tl_stmt = (
+        select(
+            User.id,
+            User.full_name,
+            User.email,
+            func.count(ClientAssignment.id).label("active_clients"),
+            func.max(ClientAssignment.created_at).label("last_assigned_at")
+        )
+        .outerjoin(
+            ClientAssignment,
+            (ClientAssignment.user_id == User.id) & (ClientAssignment.role == "team_lead")
+        )
+        .where(User.role == "team_lead")
+        .where(User.agency_id.is_not_distinct_from(client.agency_id))
+        .where(User.account_status == "active")
+        .group_by(User.id, User.full_name, User.email)
+        .order_by(
+            func.count(ClientAssignment.id).asc(),
+            func.max(ClientAssignment.created_at).asc().nulls_first(),
+            User.id.asc()
+        )
+    )
+    tl_res = await db.execute(tl_stmt)
+    tl_candidates = tl_res.all()
 
     if tl_candidates:
         best_tl_id = tl_candidates[0][0]
         best_tl_name = tl_candidates[0][1] or tl_candidates[0][2]
     else:
+        logger.error("Failed to find team lead for client %s with agency %s", client.id, client.agency_id)
         raise Conflict("No active team lead available in this agency. Configure a creative team before onboarding.", code="POD_UNAVAILABLE")
 
     # 2. Select Video Editor & Graphic Designer by lowest client assignment count
-    staff_query = text("""
-        SELECT
-            u.id, u.full_name, u.email, u.role, sp.department, sp.skills, sp.team_lead_id,
-            COUNT(ca.id) AS client_count
-        FROM users u
-        JOIN staff_profiles sp ON sp.user_id = u.id
-        LEFT JOIN client_assignments ca ON ca.user_id = u.id
-        WHERE u.account_status = 'active'
-          AND u.role IN ('editor', 'designer')
-          AND u.agency_id IS NOT DISTINCT FROM CAST(:agency_id AS UUID)
-          AND sp.is_accepting_work = TRUE
-        GROUP BY u.id, u.full_name, u.email, u.role, sp.department, sp.skills, sp.team_lead_id
-        ORDER BY 
-            client_count ASC, u.id ASC;
-    """)
-    staff_rows = (await db.execute(staff_query, {"agency_id": client.agency_id})).fetchall()
+    staff_stmt = (
+        select(
+            User.id,
+            User.full_name,
+            User.email,
+            User.role,
+            StaffProfile.department,
+            StaffProfile.skills,
+            StaffProfile.team_lead_id,
+            func.count(ClientAssignment.id).label("client_count")
+        )
+        .join(StaffProfile, StaffProfile.user_id == User.id)
+        .outerjoin(
+            ClientAssignment,
+            ClientAssignment.user_id == User.id
+        )
+        .where(User.account_status == "active")
+        .where(User.role.in_(["editor", "designer"]))
+        .where(User.agency_id.is_not_distinct_from(client.agency_id))
+        .where(StaffProfile.is_accepting_work.is_(True))
+        .group_by(
+            User.id, User.full_name, User.email, User.role,
+            StaffProfile.department, StaffProfile.skills, StaffProfile.team_lead_id
+        )
+        .order_by(
+            func.count(ClientAssignment.id).asc(),
+            User.id.asc()
+        )
+    )
+    staff_rows = (await db.execute(staff_stmt)).all()
 
     def is_video_capable(s: Any) -> bool:
         role = str(s[3]).lower()
