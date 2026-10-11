@@ -97,21 +97,22 @@ function TagBadge({
   );
 }
 
-function ColorSwatch({ color, index }: { color: string; index?: number }) {
+function ColorSwatch({ color, index }: { color: string | any; index?: number }) {
   const labels = ["Primary Brand", "Secondary Accent", "Highlight Tone", "Surface Tone", "Accent Tone"];
-  const label = index !== undefined && labels[index] ? labels[index] : "Brand Tone";
+  const hex = typeof color === "string" ? color : (color?.hex || color?.color || "#0F172A");
+  const name = typeof color === "object" && color?.name ? color.name : (index !== undefined && labels[index] ? labels[index] : "Brand Tone");
   return (
     <div className="flex items-center gap-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] px-3 py-2 min-w-[130px] shadow-xs">
       <div
         className="size-6 rounded-lg border border-white/20 shadow-inner shrink-0"
-        style={{ backgroundColor: color }}
+        style={{ backgroundColor: hex }}
       />
       <div className="flex flex-col min-w-0">
         <span className="text-[10px] font-semibold text-[#97A0B3] truncate">
-          {label}
+          {name}
         </span>
         <span className="font-mono text-xs font-bold text-white uppercase truncate">
-          {color}
+          {hex}
         </span>
       </div>
     </div>
@@ -136,16 +137,20 @@ export function AdminClientBrandPage() {
 
   const client: ClientBrandProfile = serverClient;
 
-  const dna = client.brand_dna || {};
-  const tone = (dna.tone || {}) as Record<string, any>;
-  const voiceWords: string[] = Array.isArray(tone.voice_words)
-    ? tone.voice_words
-    : [];
+  const dna = (client.brand_dna && typeof client.brand_dna === "object") ? client.brand_dna : {};
+  const tone = (typeof dna.tone === "object" && dna.tone !== null) ? (dna.tone as Record<string, any>) : {};
+  const voiceWords: string[] = Array.isArray(tone.voice_words) && tone.voice_words.length > 0
+    ? tone.voice_words.map((w: any) => (typeof w === "string" ? w : (w?.word || w?.name || String(w))))
+    : Array.isArray(dna.tone_keywords) && dna.tone_keywords.length > 0
+      ? dna.tone_keywords.map((w: any) => (typeof w === "string" ? w : (w?.word || w?.name || String(w))))
+      : typeof dna.tone === "string" && dna.tone.trim()
+        ? dna.tone.split(",").map((s: string) => s.trim()).filter(Boolean)
+        : [];
   const antiVoice: string[] = Array.isArray(tone.anti_voice_words)
-    ? tone.anti_voice_words
+    ? tone.anti_voice_words.map((w: any) => (typeof w === "string" ? w : (w?.word || w?.name || String(w))))
     : [];
   const writingRules: string[] = Array.isArray(tone.writing_rules)
-    ? tone.writing_rules
+    ? tone.writing_rules.map((r: any) => (typeof r === "string" ? r : (r?.rule || r?.text || String(r))))
     : [];
   const audiences: any[] = Array.isArray(dna.audience_segments)
     ? dna.audience_segments
@@ -153,21 +158,27 @@ export function AdminClientBrandPage() {
   const pillars: any[] = Array.isArray(dna.content_pillars)
     ? dna.content_pillars
     : [];
-  const visualDir = (dna.visual_direction || {}) as Record<string, any>;
-  const palette: string[] = Array.isArray(visualDir.primary_colors)
+  const visualDir = (typeof dna.visual_direction === "object" && dna.visual_direction !== null)
+    ? (dna.visual_direction as Record<string, any>)
+    : {};
+  const palette: any[] = Array.isArray(visualDir.primary_colors) && visualDir.primary_colors.length > 0
     ? visualDir.primary_colors
-    : Array.isArray(dna.palette)
+    : Array.isArray(dna.palette) && dna.palette.length > 0
       ? dna.palette
-      : [];
+      : ["#0B111C", "#7FA0D6", "#38BDF8", "#F8FAFC"];
   const visualStyles: string[] = Array.isArray(visualDir.styles)
-    ? visualDir.styles
+    ? visualDir.styles.map((s: any) => (typeof s === "string" ? s : (s?.name || String(s))))
     : [];
-  const doNotRules: string[] = Array.isArray(dna.do_not) ? dna.do_not : [];
-  const production = (dna.production || {}) as Record<string, any>;
+  const doNotRules: string[] = Array.isArray(dna.do_not)
+    ? dna.do_not.map((r: any) => (typeof r === "string" ? r : (r?.rule || r?.text || String(r))))
+    : [];
+  const production = (typeof dna.production === "object" && dna.production !== null)
+    ? (dna.production as Record<string, any>)
+    : {};
   const formats: string[] = Array.isArray(production.feasible_formats)
-    ? production.feasible_formats
+    ? production.feasible_formats.map((f: any) => (typeof f === "string" ? f : (f?.name || String(f))))
     : Array.isArray(dna.recommended_formats)
-      ? dna.recommended_formats
+      ? dna.recommended_formats.map((f: any) => (typeof f === "string" ? f : (f?.name || String(f))))
       : [];
   const reelStyle: string =
     production.default_reel_style || "talking_head";
@@ -242,7 +253,7 @@ export function AdminClientBrandPage() {
                   {client.subscription && (
                     <StatusBadge status={client.subscription.status} />
                   )}
-                  {client.onboarding_stage >= 5 && (
+                  {(client.onboarding_stage ?? 0) >= 5 && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
                       <Sparkles className="size-3" /> Onboarded
                     </span>
@@ -265,7 +276,7 @@ export function AdminClientBrandPage() {
                       <Shield className="size-3.5 text-cyan-400" />
                       {client.subscription.plan_display_name}
                       {client.subscription.monthly_price
-                        ? ` · ₹${client.subscription.monthly_price.toLocaleString()}/mo`
+                        ? ` · ₹${Number(client.subscription.monthly_price).toLocaleString()}/mo`
                         : ""}
                     </span>
                   )}
@@ -294,19 +305,19 @@ export function AdminClientBrandPage() {
                 {[
                   {
                     label: "Total Tasks",
-                    value: client.task_stats.total,
+                    value: client.task_stats?.total ?? 0,
                     icon: CheckSquare,
                     color: "text-[#7FA0D6]",
                   },
                   {
                     label: "Pending",
-                    value: client.task_stats.pending,
+                    value: client.task_stats?.pending ?? 0,
                     icon: Clock,
                     color: "text-amber-400",
                   },
                   {
                     label: "Completed",
-                    value: client.task_stats.completed,
+                    value: client.task_stats?.completed ?? 0,
                     icon: TrendingUp,
                     color: "text-emerald-400",
                   },
@@ -577,7 +588,7 @@ export function AdminClientBrandPage() {
             </div>
 
             {/* Quota usage */}
-            {client.quota_usage.length > 0 && (
+            {Array.isArray(client.quota_usage) && client.quota_usage.length > 0 && (
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
                   Monthly Quota Usage
@@ -616,7 +627,7 @@ export function AdminClientBrandPage() {
       </div>
 
       {/* ── Assigned Pod Team ──────────────────────────────── */}
-      {client.assigned_team.length > 0 && (
+      {Array.isArray(client.assigned_team) && client.assigned_team.length > 0 && (
         <SectionCard title="Assigned Creative Pod" icon={Users}>
           <div className="overflow-x-auto -mx-1 -mr-2">
             <table className="w-full text-xs">
@@ -683,7 +694,7 @@ export function AdminClientBrandPage() {
           )}
         </div>
         <span className="text-[9px] uppercase tracking-wider text-[#97A0B3]">
-          Client ID: {client.client_id.slice(0, 8)}
+          Client ID: {(client.client_id || "").slice(0, 8)}
         </span>
       </div>
       </motion.main>

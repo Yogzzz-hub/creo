@@ -286,12 +286,12 @@ export function AdminClientsPage() {
 
     const monthlyFee = sc.monthly_price || (tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000);
     
-    const postsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.quota || 0;
-    const postsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "posts")?.used || 0;
-    const reelsQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.quota || 0;
-    const reelsDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "reels")?.used || 0;
-    const storiesQuota = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.quota || 0;
-    const storiesDelivered = sc.quota_usage.find((q) => q.kind.toLowerCase() === "stories")?.used || 0;
+    const postsQuota = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "posts")?.quota || 0;
+    const postsDelivered = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "posts")?.used || 0;
+    const reelsQuota = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "reels")?.quota || 0;
+    const reelsDelivered = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "reels")?.used || 0;
+    const storiesQuota = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "stories")?.quota || 0;
+    const storiesDelivered = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "stories")?.used || 0;
 
     // Check for match with existing baseline client
     const existingKey = Object.keys(mergedClientsData).find(
@@ -420,8 +420,8 @@ export function AdminClientsPage() {
         (key) =>
           key.toLowerCase() === urlClientId.toLowerCase() ||
           mergedClientsData[key]?.id?.toLowerCase() === urlClientId.toLowerCase() ||
-          mergedClientsData[key]?.name.toLowerCase() === urlClientId.toLowerCase() ||
-          mergedClientsData[key]?.contact.email.toLowerCase() === urlClientId.toLowerCase() ||
+          mergedClientsData[key]?.name?.toLowerCase() === urlClientId.toLowerCase() ||
+          mergedClientsData[key]?.contact?.email?.toLowerCase() === urlClientId.toLowerCase() ||
           key.includes(urlClientId) ||
           urlClientId.includes(key)
       );
@@ -435,9 +435,9 @@ export function AdminClientsPage() {
     ? mergedClientsData[selectedClientId] ||
       clientList.find(
         (c) =>
-          c.id.toLowerCase() === selectedClientId.toLowerCase() ||
-          c.name.toLowerCase() === selectedClientId.toLowerCase() ||
-          c.contact.email.toLowerCase() === selectedClientId.toLowerCase()
+          c.id?.toLowerCase() === selectedClientId.toLowerCase() ||
+          c.name?.toLowerCase() === selectedClientId.toLowerCase() ||
+          c.contact?.email?.toLowerCase() === selectedClientId.toLowerCase()
       ) ||
       clientList[0] ||
       null
@@ -520,39 +520,58 @@ export function AdminClientsPage() {
         "Surface / Neutral",
         "Accent 5",
       ];
-      return raw.map((hex: string, idx: number) => ({
-        name: labels[idx] || `Brand Tone ${idx + 1}`,
-        hex,
-      }));
+      return raw.map((item: any, idx: number) => {
+        const hex = typeof item === "string" ? item : (item?.hex || item?.color || "#0F172A");
+        const name = typeof item === "object" && item?.name ? item.name : (labels[idx] || `Brand Tone ${idx + 1}`);
+        return { name: String(name), hex: String(hex) };
+      });
     }
-    return (
-      activeClient?.brand.colors || [
-        { name: "Brand Primary", hex: "#0F172A" },
-        { name: "Brand Accent", hex: "#2563EB" },
-      ]
-    );
-  }, [liveBrandProfile, activeClient?.brand.colors]);
+    const fallback = activeClient?.brand?.colors || [
+      { name: "Brand Primary", hex: "#0F172A" },
+      { name: "Brand Accent", hex: "#2563EB" },
+    ];
+    return fallback.map((item: any, idx: number) => {
+      const hex = typeof item === "string" ? item : (item?.hex || item?.color || "#0F172A");
+      const name = typeof item === "object" && item?.name ? item.name : `Brand Tone ${idx + 1}`;
+      return { name: String(name), hex: String(hex) };
+    });
+  }, [liveBrandProfile, activeClient]);
 
   const realTypography = useMemo(() => {
     const vis = liveBrandProfile?.brand_dna?.visual_direction;
+    const headings = vis?.headings_font || activeClient?.brand?.headingsFont || "Plus Jakarta Sans";
+    const body = vis?.body_font || activeClient?.brand?.bodyFont || "Inter Sans";
     return {
-      headingsFont: vis?.headings_font || activeClient?.brand.headingsFont || "Plus Jakarta Sans",
-      bodyFont: vis?.body_font || activeClient?.brand.bodyFont || "Inter Sans",
+      headingsFont: typeof headings === "string" ? headings : "Plus Jakarta Sans",
+      bodyFont: typeof body === "string" ? body : "Inter Sans",
       monoFont: "JetBrains Mono",
     };
-  }, [liveBrandProfile, activeClient?.brand]);
+  }, [liveBrandProfile, activeClient]);
 
   const realTone = useMemo(() => {
-    const tone = liveBrandProfile?.brand_dna?.tone || {};
-    const tags = Array.isArray(tone.voice_words) && tone.voice_words.length > 0
-      ? tone.voice_words
-      : (activeClient?.brand.toneTags || ["Conversion Authority", "High Polish"]);
-    const summary =
+    const tone = liveBrandProfile?.brand_dna?.tone;
+    const toneObj = typeof tone === "object" && tone !== null ? tone : {};
+    const rawTags =
+      Array.isArray(toneObj.voice_words) && toneObj.voice_words.length > 0
+        ? toneObj.voice_words
+        : Array.isArray(liveBrandProfile?.brand_dna?.tone_keywords) && liveBrandProfile.brand_dna.tone_keywords.length > 0
+          ? liveBrandProfile.brand_dna.tone_keywords
+          : typeof tone === "string" && tone.trim()
+            ? tone.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : (activeClient?.brand?.toneTags || ["Conversion Authority", "High Polish"]);
+
+    const tags = Array.isArray(rawTags)
+      ? rawTags.map((t: any) => (typeof t === "string" ? t : (t?.name || t?.word || String(t))))
+      : ["Conversion Authority", "High Polish"];
+
+    const rawSummary =
       liveBrandProfile?.brand_dna?.summary_line ||
       liveBrandProfile?.brand_summary ||
       liveBrandProfile?.brand_dna?.positioning ||
-      activeClient?.brand.toneSummary ||
-      `Engineered brand identity for ${activeClient?.name}.`;
+      activeClient?.brand?.toneSummary ||
+      `Engineered brand identity for ${activeClient?.name || "Client"}.`;
+
+    const summary = typeof rawSummary === "string" ? rawSummary : String(rawSummary || "");
     return { summary, tags };
   }, [liveBrandProfile, activeClient]);
 
@@ -578,14 +597,14 @@ export function AdminClientsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const filteredDeliverables = liveDeliverables.filter((d) => {
+  const filteredDeliverables = (liveDeliverables || []).filter((d) => {
     if (!deliverableSearch.trim()) return true;
-    return (
-      d.title.toLowerCase().includes(deliverableSearch.toLowerCase()) ||
-      d.description.toLowerCase().includes(deliverableSearch.toLowerCase()) ||
-      d.assignedTo.toLowerCase().includes(deliverableSearch.toLowerCase())
-    );
-  }) || [];
+    const searchLower = deliverableSearch.toLowerCase();
+    const title = (d.title || "").toLowerCase();
+    const desc = (d.description || "").toLowerCase();
+    const assigned = (d.assignedTo || d.assigned_name || "").toLowerCase();
+    return title.includes(searchLower) || desc.includes(searchLower) || assigned.includes(searchLower);
+  });
 
   return (
     <div data-surface="ops" className="w-full min-h-screen font-sans bg-[#0B111C] flex flex-col">
@@ -694,21 +713,21 @@ export function AdminClientsPage() {
                     <div className="p-3 bg-[#0B111C]/80 rounded-2xl space-y-1.5 text-xs text-[#F1F5F9] border border-[#2A3446]">
                       <div className="flex justify-between">
                         <span className="font-medium text-[#97A0B3]">Retainer:</span>
-                        <span className="font-bold text-white">₹{client.monthlyFee.toLocaleString()}/mo</span>
+                        <span className="font-bold text-white">₹{(client.monthlyFee ?? 0).toLocaleString()}/mo</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-[#97A0B3]">Assigned Pod:</span>
-                        <span className="font-bold text-[#7FA0D6]">{client.pod.name} ({client.pod.tagline})</span>
+                        <span className="font-bold text-[#7FA0D6]">{client.pod?.name || "Pod"} ({client.pod?.tagline || "Creative Strategy"})</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-[#97A0B3]">Primary Contact:</span>
-                        <span className="font-semibold text-white">{client.contact.name}</span>
+                        <span className="font-semibold text-white">{client.contact?.name || client.name}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                    <span className="text-[#97A0B3] font-medium">{client.deliverables.length} Deliverables Active</span>
+                    <span className="text-[#97A0B3] font-medium">{(client.deliverables || []).length} Deliverables Active</span>
                     <span className="text-[#7FA0D6] font-bold group-hover:underline flex items-center gap-1">
                       View Client Detail View &rarr;
                     </span>
@@ -716,6 +735,21 @@ export function AdminClientsPage() {
                 </div>
               ))}
             </div>
+          </div>
+        ) : !activeClient ? (
+          <div className="py-20 text-center space-y-4">
+            <div className="inline-block p-4 rounded-2xl bg-[#161F2D] border border-[#2A3446]">
+              <Clock className="w-8 h-8 text-[#7FA0D6] mx-auto animate-pulse" />
+            </div>
+            <h3 className="text-base font-bold text-white">Loading Client Details...</h3>
+            <p className="text-xs text-[#97A0B3]">Synchronizing live roster and brand profile.</p>
+            <button
+              type="button"
+              onClick={() => setSelectedClientId(null)}
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all cursor-pointer"
+            >
+              Back to Client Roster
+            </button>
           </div>
         ) : (
           /* ═════════════════════════════════════════════════════════════════════
@@ -735,7 +769,7 @@ export function AdminClientsPage() {
                 <span>/</span>
                 <span className="text-[#97A0B3]">Client Details</span>
                 <span>/</span>
-                <span className="text-white font-black">{activeClient?.name}</span>
+                <span className="text-white font-black">{activeClient?.name || "Client"}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -751,37 +785,37 @@ export function AdminClientsPage() {
               <div className="flex flex-col gap-6">
                 <div className="flex items-start gap-4 min-w-0">
                   <div className="w-16 h-16 rounded-2xl bg-[#0B111C] text-white font-black text-2xl flex items-center justify-center shadow-lg shrink-0">
-                    {activeClient?.initials}
+                    {activeClient?.initials || activeClient?.name?.[0] || "C"}
                   </div>
                   <div className="space-y-1.5 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2.5">
                       <h1 className="text-2xl font-black text-white tracking-tight break-words">
-                        {activeClient?.name}
+                        {activeClient?.name || "Client"}
                       </h1>
                       <CheckCircle2 className="w-5 h-5 text-[#7FA0D6] fill-blue-600 text-white" />
                       <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-[10px] font-black uppercase tracking-wider">
-                        {activeClient?.tierBadge}
+                        {activeClient?.tierBadge || "ACTIVE"}
                       </span>
                       <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        {activeClient?.status}
+                        {activeClient?.status || "ACTIVE"}
                       </span>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-[#97A0B3] font-medium">
                       <span className="flex items-center gap-1">
                         <Folder className="w-3.5 h-3.5 text-[#97A0B3]" />
-                        {activeClient?.industry}
+                        {activeClient?.industry || "Digital Growth"}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-[#97A0B3]" />
-                        {activeClient?.timezone}
+                        {activeClient?.timezone || "IST (UTC+5:30)"}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5 text-[#97A0B3]" />
-                        {activeClient?.activeSince}
+                        {activeClient?.activeSince || "Active Retainer"}
                       </span>
                     </div>
                   </div>
@@ -836,11 +870,11 @@ export function AdminClientsPage() {
 
                   <div className="flex items-center gap-3.5">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-base flex items-center justify-center shadow-md">
-                      {activeClient?.contact.name[0]}
+                      {activeClient?.contact?.name?.[0] || activeClient?.name?.[0] || "C"}
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-white">{activeClient?.contact.name}</h3>
-                      <p className="text-xs text-[#97A0B3] font-medium">{activeClient?.contact.title}</p>
+                      <h3 className="text-base font-bold text-white">{activeClient?.contact?.name || activeClient?.name || "Authorized Contact"}</h3>
+                      <p className="text-xs text-[#97A0B3] font-medium">{activeClient?.contact?.title || "Account Owner & Authorized Contact"}</p>
                     </div>
                   </div>
 
@@ -850,8 +884,8 @@ export function AdminClientsPage() {
                         <Mail className="w-4 h-4 text-[#97A0B3]" />
                         <span>Email</span>
                       </div>
-                      <a href={`mailto:${activeClient?.contact.email}`} className="text-[#7FA0D6] font-bold hover:underline">
-                        {activeClient?.contact.email}
+                      <a href={`mailto:${activeClient?.contact?.email || ""}`} className="text-[#7FA0D6] font-bold hover:underline">
+                        {activeClient?.contact?.email || "N/A"}
                       </a>
                     </div>
 
@@ -860,7 +894,7 @@ export function AdminClientsPage() {
                         <Phone className="w-4 h-4 text-[#97A0B3]" />
                         <span>Direct Phone</span>
                       </div>
-                      <span className="font-bold text-white font-mono">{activeClient?.contact.phone}</span>
+                      <span className="font-bold text-white font-mono">{activeClient?.contact?.phone || "+91 98401 23890"}</span>
                     </div>
                   </div>
                 </div>
@@ -868,9 +902,9 @@ export function AdminClientsPage() {
                 <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
                   <span className="flex items-center gap-1 text-emerald-700 font-semibold">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    Contract renewed: {activeClient?.contact.renewedDate}
+                    Contract renewed: {activeClient?.contact?.renewedDate || "Current Sprint"}
                   </span>
-                  <span>Term: {activeClient?.contact.termMonths} Mo</span>
+                  <span>Term: {activeClient?.contact?.termMonths ?? 12} Mo</span>
                 </div>
               </div>
 
@@ -888,7 +922,7 @@ export function AdminClientsPage() {
 
                   <div className="flex items-baseline justify-between">
                     <div>
-                      <span className="text-3xl font-black text-white">₹{activeClient?.monthlyFee.toLocaleString()}</span>
+                      <span className="text-3xl font-black text-white">₹{(activeClient?.monthlyFee ?? 0).toLocaleString()}</span>
                       <span className="text-xs font-bold text-[#97A0B3]"> /mo</span>
                     </div>
                     {activeClient?.addon && (
@@ -900,7 +934,7 @@ export function AdminClientsPage() {
                   </div>
 
                   <p className="text-xs text-[#97A0B3]">
-                    Next billing scheduled for {activeClient?.nextBilling} via {activeClient?.billingMethod}.
+                    Next billing scheduled for {activeClient?.nextBilling || "Next Month"} via {activeClient?.billingMethod || "Direct ACH"}.
                   </p>
 
                   {/* Monthly Output Burn bar */}
@@ -908,8 +942,8 @@ export function AdminClientsPage() {
                     <div className="flex items-center justify-between text-xs font-bold">
                       <span className="text-[#F1F5F9]">Monthly Output Burn</span>
                       <span className="text-[#7FA0D6]">
-                        {activeClient?.totalAssetsDelivered} / {activeClient?.totalAssetsQuota} Assets Delivered (
-                        {Math.round(((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100)}%)
+                        {activeClient?.totalAssetsDelivered ?? 0} / {activeClient?.totalAssetsQuota ?? 0} Assets Delivered (
+                        {Math.round((((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100))}%)
                       </span>
                     </div>
                     <div className="w-full bg-[#161F2D] rounded-full h-2.5 overflow-hidden">
@@ -929,19 +963,19 @@ export function AdminClientsPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 pt-1">
                     <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
                       <span className="text-sm font-black text-white">
-                        {activeClient?.postsDelivered}/{activeClient?.postsQuota}
+                        {activeClient?.postsDelivered ?? 0}/{activeClient?.postsQuota ?? 0}
                       </span>
                       <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">POSTS</span>
                     </div>
                     <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
                       <span className="text-sm font-black text-white">
-                        {activeClient?.reelsDelivered}/{activeClient?.reelsQuota}
+                        {activeClient?.reelsDelivered ?? 0}/{activeClient?.reelsQuota ?? 0}
                       </span>
                       <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">REELS</span>
                     </div>
                     <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
                       <span className="text-sm font-black text-white">
-                        {activeClient?.storiesDelivered}/{activeClient?.storiesQuota}
+                        {activeClient?.storiesDelivered ?? 0}/{activeClient?.storiesQuota ?? 0}
                       </span>
                       <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">STORIES</span>
                     </div>
@@ -949,7 +983,7 @@ export function AdminClientsPage() {
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
-                  <span>Sprint {activeClient?.sprintNumber}: {activeClient?.daysRemainingInSprint} days remaining</span>
+                  <span>Sprint {activeClient?.sprintNumber ?? 1}: {activeClient?.daysRemainingInSprint ?? 14} days remaining</span>
                   <button
                     type="button"
                     onClick={() => showToast("Opening Client Quota Ledger...")}
@@ -970,7 +1004,7 @@ export function AdminClientsPage() {
                     </h2>
                   </div>
                   <span className="px-2.5 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold">
-                    {activeClient?.brand.kitVersion}
+                    {activeClient?.brand?.kitVersion || "Design Kit v2.4"}
                   </span>
                 </div>
 
@@ -1007,8 +1041,8 @@ export function AdminClientsPage() {
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      {realTone.tags.map((tag: string) => (
-                        <span key={tag} className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[10px] font-bold text-[#F1F5F9] shadow-2xs">
+                      {realTone.tags.map((tag: string, tagIdx: number) => (
+                        <span key={`${tag}-${tagIdx}`} className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[10px] font-bold text-[#F1F5F9] shadow-2xs">
                           {tag}
                         </span>
                       ))}
@@ -1022,8 +1056,8 @@ export function AdminClientsPage() {
                     APPROVED COLOR SPECTRUM
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-2.5">
-                    {realColors.map((c) => (
-                      <div key={c.hex} className="rounded-2xl border border-[#2A3446] overflow-hidden bg-[#161F2D] shadow-2xs space-y-1.5 pb-2">
+                    {realColors.map((c, cIdx) => (
+                      <div key={`${c.hex}-${cIdx}`} className="rounded-2xl border border-[#2A3446] overflow-hidden bg-[#161F2D] shadow-2xs space-y-1.5 pb-2">
                         <div className="h-10 w-full" style={{ backgroundColor: c.hex }} />
                         <div className="px-2.5">
                           <span className="text-[11px] font-bold text-white block truncate">{c.name}</span>
@@ -1045,7 +1079,7 @@ export function AdminClientsPage() {
                         <span className="font-bold text-xs text-white">
                           {liveBrandProfile?.instagram_username
                             ? `@${liveBrandProfile.instagram_username}`
-                            : activeClient?.brand.social.handle}
+                            : (activeClient?.brand?.social?.handle || `@${(liveBrandProfile?.company_name || activeClient?.name || "client").toLowerCase().replace(/[^a-z0-9]/g, "")}`)}
                         </span>
                         <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[9px] font-extrabold uppercase">
                           CONNECTED
@@ -1059,7 +1093,7 @@ export function AdminClientsPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      const handle = (liveBrandProfile?.instagram_username || activeClient?.brand.social.handle || "").replace("@", "");
+                      const handle = (liveBrandProfile?.instagram_username || activeClient?.brand?.social?.handle || "").replace("@", "");
                       if (handle) window.open(`https://instagram.com/${handle}`, "_blank");
                     }}
                     className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] shadow-2xs cursor-pointer"
@@ -1071,21 +1105,21 @@ export function AdminClientsPage() {
                 <div className="flex flex-wrap items-center justify-between text-xs text-[#97A0B3] font-medium pt-3 border-t border-[#2A3446] gap-2">
                   <div className="flex items-center gap-3 text-[#7FA0D6] font-bold">
                     <span className="cursor-pointer hover:underline flex items-center gap-1">
-                      <Folder className="w-3.5 h-3.5" /> {activeClient?.brand.brandVaultLink}
+                      <Folder className="w-3.5 h-3.5" /> {activeClient?.brand?.brandVaultLink || "Client Brand Vault Drive"}
                     </span>
                     <span>•</span>
                     <span className="cursor-pointer hover:underline flex items-center gap-1">
-                      <ExternalLink className="w-3.5 h-3.5" /> {activeClient?.brand.figmaLink}
+                      <ExternalLink className="w-3.5 h-3.5" /> {activeClient?.brand?.figmaLink || "Figma Master Design Kit"}
                     </span>
                     <span>•</span>
                     <Link
-                    to={`/admin/clients/${activeClient?.id || ""}/brand`}
+                      to={`/admin/clients/${activeClient?.id || ""}/brand`}
                       className="cursor-pointer hover:underline flex items-center gap-1 text-[#7FA0D6]"
                     >
                       Brand DNA & Brief →
                     </Link>
                   </div>
-                  <span>Last audit {activeClient?.brand.lastAuditDate}</span>
+                  <span>Last audit {activeClient?.brand?.lastAuditDate || "This Sprint"}</span>
                 </div>
               </div>
 
@@ -1100,7 +1134,7 @@ export function AdminClientsPage() {
                       </h2>
                     </div>
                     <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold border border-[#7FA0D6]/30">
-                      {activeClient?.pod.name}: {activeClient?.pod.tagline}
+                      {activeClient?.pod?.name || "Pod A"}: {activeClient?.pod?.tagline || "Creative Strategy"}
                     </span>
                   </div>
 
@@ -1112,16 +1146,16 @@ export function AdminClientsPage() {
                     <div className="p-3 bg-[#0B111C]/70 rounded-2xl flex items-center justify-between border border-[#2A3446]">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
-                          {activeClient?.pod.leadAvatar}
+                          {activeClient?.pod?.leadAvatar || "CD"}
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-white">{activeClient?.pod.leadName}</h4>
-                          <span className="text-[11px] text-[#97A0B3]">{activeClient?.pod.leadTitle}</span>
+                          <h4 className="text-xs font-bold text-white">{activeClient?.pod?.leadName || "Pod Creative Director"}</h4>
+                          <span className="text-[11px] text-[#97A0B3]">{activeClient?.pod?.leadTitle || "Lead Producer"}</span>
                         </div>
                       </div>
                       <button
                         type="button"
-                        onClick={() => showToast(`Connecting to ${activeClient?.pod.leadName} via Slack/Creo Chat...`)}
+                        onClick={() => showToast(`Connecting to ${activeClient?.pod?.leadName || "Pod Lead"} via Slack/Creo Chat...`)}
                         className="p-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] shadow-2xs cursor-pointer"
                         title="Chat with Pod Lead"
                       >
@@ -1136,11 +1170,11 @@ export function AdminClientsPage() {
                       SQUAD MEMBERS
                     </span>
                     <div className="space-y-1.5">
-                      {activeClient?.pod.squad.map((member) => (
-                        <div key={member.name} className="p-2.5 bg-[#0B111C]/50 rounded-xl flex items-center justify-between text-xs border border-[#2A3446]">
+                      {(activeClient?.pod?.squad || []).map((member, mIdx) => (
+                        <div key={`${member.name || mIdx}`} className="p-2.5 bg-[#0B111C]/50 rounded-xl flex items-center justify-between text-xs border border-[#2A3446]">
                           <div className="flex items-center gap-2.5">
                             <div className="w-7 h-7 rounded-full bg-gray-200 text-[#F1F5F9] font-bold text-[10px] flex items-center justify-center">
-                              {member.avatar}
+                              {member.avatar || "PS"}
                             </div>
                             <div>
                               <span className="font-bold text-white block leading-tight">{member.name}</span>
@@ -1158,26 +1192,26 @@ export function AdminClientsPage() {
                     <div className="flex items-center justify-between text-xs font-bold">
                       <span className="text-[#F1F5F9]">Pod Capacity Commitment</span>
                       <span className="text-[#7FA0D6] font-mono">
-                        {activeClient?.pod.capacityAllocatedHrs} hrs/week allocated
+                        {activeClient?.pod?.capacityAllocatedHrs ?? 32} hrs/week allocated
                       </span>
                     </div>
                     <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
                       <div
                         className="bg-[#7FA0D6] h-full rounded-full transition-all"
-                        style={{ width: `${activeClient?.pod.bandwidthPercent}%` }}
+                        style={{ width: `${activeClient?.pod?.bandwidthPercent ?? 80}%` }}
                       />
                     </div>
                     <span className="text-[11px] text-[#97A0B3] font-medium block">
-                      Sprint {activeClient?.sprintNumber} • {activeClient?.pod.bandwidthPercent}% bandwidth filled
+                      Sprint {activeClient?.sprintNumber ?? 1} • {activeClient?.pod?.bandwidthPercent ?? 80}% bandwidth filled
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
-                  <span>Daily Sync: {activeClient?.pod.dailySyncTime}</span>
+                  <span>Daily Sync: {activeClient?.pod?.dailySyncTime || "11:00 AM IST"}</span>
                   <button
                     type="button"
-                    onClick={() => showToast(`Opening Pod Reallocation Studio for ${activeClient?.pod.name}...`)}
+                    onClick={() => showToast(`Opening Pod Reallocation Studio for ${activeClient?.pod?.name || "Pod"}...`)}
                     className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
                   >
                     Reallocate Pod Hours
@@ -1212,7 +1246,7 @@ export function AdminClientsPage() {
                       placeholder="Filter deliverable..."
                       value={deliverableSearch}
                       onChange={(e) => setDeliverableSearch(e.target.value)}
-                      className="pl-8 pr-3 py-1.5 rounded-xl border border-[#2A3446] text-xs bg-[#0B111C] focus:bg-[#161F2D] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="pl-8 pr-3 py-1.5 rounded-xl border border-[#2A3446] text-xs bg-[#0B111C] focus:bg-[#161F2D] focus:outline-none focus:ring-1 focus:ring-blue-500 text-white"
                     />
                   </div>
                   <button
@@ -1233,145 +1267,162 @@ export function AdminClientsPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
-                  {filteredDeliverables.map((deliv) => (
-                  <div
-                    key={deliv.id}
-                    className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_2px_15px_rgba(0,0,0,0.03)] p-5 space-y-4 flex flex-col justify-between hover:shadow-lg hover:border-[#7FA0D6]/30 transition-all"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${deliv.statusColor}`}>
-                          {deliv.status}
-                        </span>
-                        <span className="text-[10px] font-mono text-[#97A0B3] font-bold">{deliv.code}</span>
-                      </div>
+                  {filteredDeliverables.map((deliv, delivIdx) => {
+                    const statusUpper = (deliv.status || "").toUpperCase();
+                    const isReview = statusUpper === "IN REVIEW" || statusUpper === "PENDING_APPROVAL" || statusUpper === "INTERNAL_QA" || statusUpper === "READY FOR REVIEW";
+                    const isProduction = statusUpper === "IN PRODUCTION" || statusUpper === "IN_PRODUCTION";
+                    const isApproved = statusUpper === "APPROVED";
+                    const isReadyForReview = statusUpper === "READY FOR REVIEW";
 
-                      <div>
-                        <h4 className="text-sm font-black text-white leading-snug">{deliv.title}</h4>
-                        <p className="text-[11px] text-[#97A0B3] mt-1 line-clamp-2 leading-relaxed">
-                          {deliv.description}
-                        </p>
-                      </div>
-
-                      <div className="p-3 bg-[#0B111C]/70 rounded-2xl space-y-1.5 text-[11px] text-[#F1F5F9] border border-[#2A3446]">
-                        <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Format:</span>
-                          <span className="font-bold text-white">{deliv.format}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Due Date:</span>
-                          <span className="font-bold text-rose-600">{deliv.dueDate}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#97A0B3]">Assigned:</span>
-                          <span className="font-semibold text-white">{deliv.assignedTo}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="space-y-2 pt-2 border-t border-[#2A3446]">
-                      {deliv.status === "IN REVIEW" && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleApproveDeliverable(deliv.id, deliv.title)}
-                            className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
-                          >
-                            <Check className="w-3.5 h-3.5 stroke-[3]" /> Approve
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeclineDeliverable(deliv.id, deliv.title)}
-                            className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
-                          >
-                            <X className="w-3.5 h-3.5" /> Decline
-                          </button>
-                        </div>
-                      )}
-
-                      {deliv.status === "IN PRODUCTION" && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setPreviewDeliverable(deliv)}
-                            className="w-full py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
-                          >
-                            <Eye className="w-3.5 h-3.5" /> Preview Canvas
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => showToast(`Revision request sent for "${deliv.title}".`)}
-                            className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold cursor-pointer transition-colors"
-                          >
-                            Request Revisions
-                          </button>
-                        </div>
-                      )}
-
-                      {deliv.status === "APPROVED" && (
-                        <div className="space-y-1.5">
-                          <button
-                            type="button"
-                            className="w-full py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold flex items-center justify-center gap-1 border border-emerald-200 cursor-default"
-                          >
-                            <Lock className="w-3.5 h-3.5" /> Auto-Publish Locked
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => showToast("Viewing scheduled metadata...")}
-                            className="w-full py-1.5 text-center text-[11px] font-bold text-[#97A0B3] hover:text-white cursor-pointer"
-                          >
-                            View Scheduled Meta
-                          </button>
-                        </div>
-                      )}
-
-                      {deliv.status === "READY FOR REVIEW" && (
-                        <div className="space-y-1.5">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleApproveDeliverable(deliv.id, deliv.title)}
-                              className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
-                            >
-                              <Check className="w-3.5 h-3.5 stroke-[3]" /> Approve
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => showToast(`Feedback notes opened for "${deliv.title}".`)}
-                              className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" /> Notes
-                            </button>
+                    return (
+                      <div
+                        key={deliv.id || delivIdx}
+                        className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_2px_15px_rgba(0,0,0,0.03)] p-5 space-y-4 flex flex-col justify-between hover:shadow-lg hover:border-[#7FA0D6]/30 transition-all"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                              deliv.statusColor ||
+                              (isApproved
+                                ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                                : isReview
+                                ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                                : "bg-blue-500/15 text-blue-400 border-blue-500/30")
+                            }`}>
+                              {(deliv.status || "IN PRODUCTION").replace(/_/g, " ")}
+                            </span>
+                            <span className="text-[10px] font-mono text-[#97A0B3] font-bold">
+                              {deliv.code || `DEL-${deliv.id ? deliv.id.slice(0, 4) : String(delivIdx + 1).padStart(2, "0")}`}
+                            </span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => setPreviewDeliverable(deliv)}
-                            className="w-full py-1.5 text-center text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer flex items-center justify-center gap-1"
-                          >
-                            <FileText className="w-3.5 h-3.5" /> Open Full Presentation
-                          </button>
-                        </div>
-                      )}
 
-                      {deliv.actions.some((a: string) => a.includes("Preview Video Draft")) && (
-                        <button
-                          type="button"
-                          onClick={() => setPreviewDeliverable(deliv)}
-                          className="w-full py-1.5 text-center text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer flex items-center justify-center gap-1"
-                        >
-                          <Play className="w-3 h-3 fill-blue-600" /> Preview Video Draft (0:45)
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                          <div>
+                            <h4 className="text-sm font-black text-white leading-snug">{deliv.title}</h4>
+                            <p className="text-[11px] text-[#97A0B3] mt-1 line-clamp-2 leading-relaxed">
+                              {deliv.description || "Production asset managed through Creo creative pod."}
+                            </p>
+                          </div>
+
+                          <div className="p-3 bg-[#0B111C]/70 rounded-2xl space-y-1.5 text-[11px] text-[#F1F5F9] border border-[#2A3446]">
+                            <div className="flex justify-between">
+                              <span className="text-[#97A0B3]">Format:</span>
+                              <span className="font-bold text-white">{deliv.format || deliv.type || deliv.deliverable_type || "Asset"}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[#97A0B3]">Due Date:</span>
+                              <span className="font-bold text-rose-500">{deliv.dueDate || deliv.date || "Next Cycle"}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-[#97A0B3]">Assigned:</span>
+                              <span className="font-semibold text-white">{deliv.assignedTo || deliv.assigned_name || "Creative Squad"}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="space-y-2 pt-2 border-t border-[#2A3446]">
+                          {isReview && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleApproveDeliverable(deliv.id, deliv.title)}
+                                className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
+                              >
+                                <Check className="w-3.5 h-3.5 stroke-[3]" /> Approve
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeclineDeliverable(deliv.id, deliv.title)}
+                                className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                              >
+                                <X className="w-3.5 h-3.5" /> Decline
+                              </button>
+                            </div>
+                          )}
+
+                          {isProduction && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setPreviewDeliverable(deliv)}
+                                className="w-full py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                              >
+                                <Eye className="w-3.5 h-3.5" /> Preview Canvas
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => showToast(`Revision request sent for "${deliv.title}".`)}
+                                className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold cursor-pointer transition-colors"
+                              >
+                                Request Revisions
+                              </button>
+                            </div>
+                          )}
+
+                          {isApproved && (
+                            <div className="space-y-1.5">
+                              <button
+                                type="button"
+                                className="w-full py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold flex items-center justify-center gap-1 border border-emerald-200 cursor-default"
+                              >
+                                <Lock className="w-3.5 h-3.5" /> Auto-Publish Locked
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => showToast("Viewing scheduled metadata...")}
+                                className="w-full py-1.5 text-center text-[11px] font-bold text-[#97A0B3] hover:text-white cursor-pointer"
+                              >
+                                View Scheduled Meta
+                              </button>
+                            </div>
+                          )}
+
+                          {isReadyForReview && (
+                            <div className="space-y-1.5">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleApproveDeliverable(deliv.id, deliv.title)}
+                                  className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-xs"
+                                >
+                                  <Check className="w-3.5 h-3.5 stroke-[3]" /> Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => showToast(`Feedback notes opened for "${deliv.title}".`)}
+                                  className="w-full py-2 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-bold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" /> Notes
+                                </button>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setPreviewDeliverable(deliv)}
+                                className="w-full py-1.5 text-center text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer flex items-center justify-center gap-1"
+                              >
+                                <FileText className="w-3.5 h-3.5" /> Open Full Presentation
+                              </button>
+                            </div>
+                          )}
+
+                          {(deliv.is_video || (Array.isArray(deliv.actions) && deliv.actions.some((a: string) => a.includes("Preview Video Draft")))) && (
+                            <button
+                              type="button"
+                              onClick={() => setPreviewDeliverable(deliv)}
+                              className="w-full py-1.5 text-center text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer flex items-center justify-center gap-1"
+                            >
+                              <Play className="w-3 h-3 fill-blue-600" /> Preview Video Draft (0:45)
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
         {/* ═════════════════════════════════════════════════════════════════
             MODALS
@@ -1523,7 +1574,7 @@ export function AdminClientsPage() {
                 </div>
                 <div className="flex justify-between pt-2 border-t border-[#2A3446] font-black text-sm">
                   <span>Total Amount:</span>
-                  <span className="text-[#7FA0D6]">₹{activeClient?.monthlyFee.toLocaleString()}.00</span>
+                  <span className="text-[#7FA0D6]">₹{(activeClient?.monthlyFee ?? 0).toLocaleString()}.00</span>
                 </div>
               </div>
               <button
@@ -1560,13 +1611,13 @@ export function AdminClientsPage() {
                 <div className="w-14 h-14 rounded-full bg-[#161F2D]/20 backdrop-blur-md flex items-center justify-center text-white mb-2 cursor-pointer hover:scale-110 transition-transform">
                   <Play className="w-6 h-6 fill-white ml-0.5" />
                 </div>
-                <span className="text-xs font-bold text-gray-200">{previewDeliverable.format} Preview</span>
-                <span className="text-[10px] text-[#97A0B3] mt-0.5">Assigned Specialist: {previewDeliverable.assignedTo}</span>
+                <span className="text-xs font-bold text-gray-200">{previewDeliverable?.format || "Asset"} Preview</span>
+                <span className="text-[10px] text-[#97A0B3] mt-0.5">Assigned Specialist: {previewDeliverable?.assignedTo || previewDeliverable?.assigned_name || "Creative Specialist"}</span>
               </div>
 
               <div className="p-3.5 bg-[#0B111C] rounded-2xl text-xs text-[#F1F5F9] space-y-1">
-                <div><strong>Creative Scope:</strong> {previewDeliverable.description}</div>
-                <div><strong>Target Delivery:</strong> {previewDeliverable.dueDate}</div>
+                <div><strong>Creative Scope:</strong> {previewDeliverable?.description || "Asset Scope"}</div>
+                <div><strong>Target Delivery:</strong> {previewDeliverable?.dueDate || previewDeliverable?.date || "Current Sprint"}</div>
               </div>
 
               <div className="flex items-center justify-end gap-2">
@@ -1580,7 +1631,7 @@ export function AdminClientsPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    handleApproveDeliverable(previewDeliverable.id, previewDeliverable.title);
+                    handleApproveDeliverable(previewDeliverable?.id, previewDeliverable?.title || "Asset");
                     setPreviewDeliverable(null);
                   }}
                   className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer"
@@ -1611,7 +1662,7 @@ export function AdminClientsPage() {
                   Are you sure you want to cancel the retainer plan for <strong className="text-white">{activeClient?.name}</strong>?
                 </p>
                 <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-300 font-semibold space-y-1">
-                  <div>• Monthly Retainer: ₹{activeClient?.monthlyFee.toLocaleString()}/mo</div>
+                  <div>• Monthly Retainer: ₹{(activeClient?.monthlyFee ?? 0).toLocaleString()}/mo</div>
                   <div>• Status: CANCELLED (Plan & Access Revoked)</div>
                 </div>
               </div>
