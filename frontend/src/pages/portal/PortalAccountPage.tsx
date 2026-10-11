@@ -127,7 +127,28 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           </div>
         </div>
       )}
-      {!brand && <section className="bg-[#161F2D] border border-[#2A3446] p-5 rounded-3xl space-y-3"><h2 className="font-bold">Password sign-in</h2><p className="text-sm text-[#97A0B3]">Verify your email to set or reset a Creo password. You can continue using Google sign-in.</p><button className="underline" onClick={() => setRecoveryOpen(true)}>Set or reset password</button></section>}
+      {!brand && (() => {
+        const methods = user?.sign_in_methods ?? [];
+        const hasPassword = methods.includes("password");
+        const hasGoogle = methods.includes("google");
+        return (
+          <section className="bg-[#161F2D] border border-[#2A3446] p-5 rounded-3xl space-y-3">
+            <h2 className="font-bold">Sign-in methods</h2>
+            <ul className="text-sm text-[#97A0B3] space-y-1">
+              <li>Google: <span className="text-white">{hasGoogle ? "Connected" : "Not connected"}</span></li>
+              <li>Email &amp; password: <span className="text-white">{hasPassword ? "On" : "Not set"}</span></li>
+            </ul>
+            <p className="text-sm text-[#97A0B3]">
+              {hasPassword
+                ? "Verify your email to change your password. Other signed-in devices will be signed out."
+                : "Add a password to sign in with your email as well. Google sign-in keeps working."}
+            </p>
+            <button className="underline" onClick={() => setRecoveryOpen(true)}>
+              {hasPassword ? "Change password" : "Set a password"}
+            </button>
+          </section>
+        );
+      })()}
       {recoveryOpen && <PasswordRecoveryModal initialEmail={user?.email || ""} onClose={() => setRecoveryOpen(false)} />}
       {query.data && (
         <>

@@ -72,8 +72,8 @@ export const MandatoryPasswordResetModal: React.FC = () => {
             Set your Creo password
           </h2>
           <p className="mt-2 text-sm text-[#97A0B3] leading-relaxed">
-            You accessed your account via a password reset code. For your security, you{" "}
-            <span className="text-[#7FA0D6] font-semibold">must set a new permanent password</span> before proceeding.
+            For your security, you{" "}
+            <span className="text-[#7FA0D6] font-semibold">must set a new permanent password</span> before continuing.
           </p>
         </div>
 

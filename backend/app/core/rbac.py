@@ -25,6 +25,7 @@ class Actor:
     client_id: uuid.UUID | None = None
     email: str | None = None
     agency_id: uuid.UUID | None = None
+    token_version: int | None = None
 
 
 async def get_current_actor(
@@ -79,12 +80,14 @@ async def get_current_actor(
                     agency_uuid = uuid.UUID(payload["agency_id"])
                 except ValueError:
                     pass
+            token_version = payload.get("tv")
             return Actor(
                 user_id=actor_id,
                 role=role,
                 client_id=client_uuid,
                 email=payload.get("email"),
                 agency_id=agency_uuid,
+                token_version=token_version if isinstance(token_version, int) else None,
             )
 
     # Allow automated test fixtures ONLY when running in test environment / pytest
