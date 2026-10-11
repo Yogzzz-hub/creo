@@ -70,7 +70,7 @@ async def send_notification_async(
                                 "https://api.resend.com/emails",
                                 headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
                                 json={
-                                    "from": "Creo Notifications <noreply@creo.network>",
+                                    "from": settings.RESEND_FROM_EMAIL,
                                     "to": [recipient_email or "client@example.com"],
                                     "subject": title,
                                     "text": message,

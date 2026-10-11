@@ -1,154 +1,11 @@
-"""Email service providing asynchronous SMTP delivery with Creo branding and high inbox deliverability."""
+"""Email service providing asynchronous email delivery via Resend HTTP API with Creo branding."""
 
 from __future__ import annotations
-
-import asyncio
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.utils import formataddr, formatdate, make_msgid
-import smtplib
-from typing import Any
 
 from app.config import settings
 from app.core.logging import get_logger
 
-import socket
-
 logger = get_logger(__name__)
-
-
-def _create_ipv4_connection(address: tuple[str, int], timeout: float = 10.0, source_address: Any = None) -> socket.socket:
-    """Force IPv4 (AF_INET) socket connection to prevent [Errno 101] Network is unreachable on cloud container networks."""
-    host, port = address
-    err = None
-    for res in socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM):
-        af, socktype, proto, canonname, sa = res
-        sock = None
-        try:
-            sock = socket.socket(af, socktype, proto)
-            if timeout:
-                sock.settimeout(timeout)
-            if source_address:
-                sock.bind(source_address)
-            sock.connect(sa)
-            return sock
-        except socket.error as e:
-            err = e
-            if sock is not None:
-                sock.close()
-    if err is not None:
-        raise err
-    raise socket.error(f"Could not resolve IPv4 for {host}:{port}")
-
-
-class IPv4SMTP(smtplib.SMTP):
-    def _get_socket(self, host: str, port: int, timeout: float) -> socket.socket:
-        return _create_ipv4_connection((host, port), timeout, self.source_address)
-
-
-class IPv4SMTP_SSL(smtplib.SMTP_SSL):
-    def _get_socket(self, host: str, port: int, timeout: float) -> socket.socket:
-        new_socket = _create_ipv4_connection((host, port), timeout, self.source_address)
-        server_hostname = getattr(self, "_host", host) or host
-        return self.context.wrap_socket(new_socket, server_hostname=server_hostname)
-
-
-def _send_smtp_sync(
-    to_email: str,
-    subject: str,
-    html_content: str,
-    text_content: str | None = None,
-) -> bool:
-    """Send an email synchronously over SSL or TLS via configured SMTP credentials with RFC-compliant anti-spam headers."""
-    smtp_pw = (settings.SMTP_PASSWORD or "").strip().strip('"').strip("'")
-    smtp_user = (settings.SMTP_USERNAME or "").strip()
-    sender_email = (settings.SMTP_FROM_EMAIL or smtp_user).strip()
-    clean_to = to_email.strip()
-
-    if not smtp_user or not smtp_pw or not sender_email:
-        logger.error("email_provider_not_configured")
-        return False
-
-    # Primary multipart/alternative container
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    # Use standard formataddr to avoid malformed header penalties
-    msg["From"] = formataddr(("Creo", sender_email))
-    msg["To"] = clean_to
-    msg["Reply-To"] = sender_email
-    msg["Date"] = formatdate(localtime=True)
-    
-    domain = sender_email.split("@")[-1] if "@" in sender_email else "creo.agency"
-    msg["Message-ID"] = make_msgid(domain=domain)
-    
-    # Anti-spam transactional email headers recognized by Google, Microsoft, Yahoo
-    msg["Auto-Submitted"] = "auto-generated"
-    msg["X-Auto-Response-Suppress"] = "All"
-    msg["X-Priority"] = "3"
-    msg["MIME-Version"] = "1.0"
-
-    # Always attach clean plain-text first (RFC alternative order requirement: plain text first, then html)
-    if text_content:
-        msg.attach(MIMEText(text_content, "plain", "utf-8"))
-    else:
-        msg.attach(MIMEText(subject, "plain", "utf-8"))
-
-    # HTML part second
-    msg.attach(MIMEText(html_content, "html", "utf-8"))
-
-    # Establish SMTP connection: direct SSL (port 465) or STARTTLS (port 587)
-    server = None
-    try:
-        if settings.SMTP_USE_SSL:
-            try:
-                server = IPv4SMTP_SSL(
-                    settings.SMTP_HOST,
-                    settings.SMTP_PORT,
-                    timeout=5,
-                )
-            except Exception as e_ipv4:
-                if isinstance(e_ipv4, (TimeoutError, socket.timeout)):
-                    raise e_ipv4
-                server = smtplib.SMTP_SSL(
-                    settings.SMTP_HOST,
-                    settings.SMTP_PORT,
-                    timeout=5,
-                )
-        else:
-            try:
-                server = IPv4SMTP(
-                    settings.SMTP_HOST,
-                    settings.SMTP_PORT,
-                    timeout=5,
-                )
-            except Exception as e_ipv4:
-                if isinstance(e_ipv4, (TimeoutError, socket.timeout)):
-                    raise e_ipv4
-                server = smtplib.SMTP(
-                    settings.SMTP_HOST,
-                    settings.SMTP_PORT,
-                    timeout=5,
-                )
-            server.starttls()
-
-        server.login(smtp_user, smtp_pw)
-        server.send_message(msg)
-        try:
-            server.quit()
-        except Exception:
-            pass
-        logger.info("smtp_email_sent_successfully", to_email=clean_to, subject=subject, port=settings.SMTP_PORT)
-        return True
-    except Exception as e_primary:
-        logger.warning("smtp_primary_attempt_failed", port=settings.SMTP_PORT, error=str(e_primary))
-    finally:
-        if server is not None:
-            try:
-                server.close()
-            except Exception:
-                pass
-
-    return False
 
 
 async def send_email(
@@ -157,37 +14,78 @@ async def send_email(
     html_content: str,
     text_content: str | None = None,
 ) -> bool:
-    """Non-blocking email delivery executing SMTP or Resend HTTP API on Port 443."""
-    if settings.RESEND_API_KEY:
-        try:
-            import httpx
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.post(
-                    "https://api.resend.com/emails",
-                    headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
-                    json={
-                        "from": settings.RESEND_FROM_EMAIL,
-                        "to": [to_email],
-                        "subject": subject,
-                        "html": html_content,
-                        "text": text_content,
-                    },
-                )
-                if resp.status_code < 400:
-                    logger.info("resend_email_sent_successfully", to_email=to_email)
-                    return True
-                else:
-                    logger.warning("resend_api_failed", status=resp.status_code, body=resp.text)
-        except Exception as e_resend:
-            logger.warning("resend_api_exception", error=str(e_resend))
+    """Send an email via Resend HTTP API.
 
-    return await asyncio.to_thread(
-        _send_smtp_sync,
-        to_email=to_email,
-        subject=subject,
-        html_content=html_content,
-        text_content=text_content,
-    )
+    Returns True on success, False on failure. Never raises — all errors are
+    caught, logged, and surfaced as a boolean so callers can decide what to do.
+    """
+    api_key = (settings.RESEND_API_KEY or "").strip()
+    from_email = (settings.RESEND_FROM_EMAIL or "").strip()
+    clean_to = to_email.strip()
+
+    if not api_key:
+        logger.error(
+            "resend_not_configured",
+            hint="Set RESEND_API_KEY in your environment variables",
+        )
+        return False
+
+    if not from_email:
+        logger.error(
+            "resend_from_email_missing",
+            hint="Set RESEND_FROM_EMAIL in your environment variables (e.g. 'Creo <noreply@yourdomain.com>')",
+        )
+        return False
+
+    payload: dict = {
+        "from": from_email,
+        "to": [clean_to],
+        "subject": subject,
+        "html": html_content,
+    }
+    if text_content:
+        payload["text"] = text_content
+
+    try:
+        import httpx
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+
+            if resp.status_code < 400:
+                resp_data = resp.json()
+                logger.info(
+                    "resend_email_sent",
+                    to_email=clean_to,
+                    subject=subject,
+                    resend_id=resp_data.get("id", "unknown"),
+                )
+                return True
+            else:
+                logger.error(
+                    "resend_api_error",
+                    status=resp.status_code,
+                    body=resp.text,
+                    to_email=clean_to,
+                    subject=subject,
+                )
+                return False
+
+    except Exception as exc:
+        logger.error(
+            "resend_api_exception",
+            error=str(exc),
+            to_email=clean_to,
+            subject=subject,
+        )
+        return False
 
 
 async def send_otp_email(to_email: str, otp_code: str) -> bool:
