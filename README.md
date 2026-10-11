@@ -143,6 +143,21 @@ npm run dev
 
 The frontend will run on `http://localhost:5173` (or `http://localhost:5174`), proxying `/api` requests to `http://localhost:8000`.
 
+### Verification email delivery (Resend)
+
+Registration and password verification send mail through the Resend HTTP API. For
+local signup tests, set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in
+`backend/.env` (see [`backend/.env.resend.example`](backend/.env.resend.example)).
+The local frontend sends requests to the local API, so Resend values configured
+only on Render do not apply to `localhost`.
+
+In Render, configure both variables on the API web service. Use a sender address
+at a domain verified in your Resend account, for example
+`Creo Verification <noreply@mail.yourdomain.com>`. The shared
+`onboarding@resend.dev` sender is for testing and cannot deliver verification
+messages to arbitrary users. Keep the API key in Render or the backend `.env`;
+never put it in a `VITE_*` frontend variable.
+
 ### 3. Build & Verify
 
 ```bash

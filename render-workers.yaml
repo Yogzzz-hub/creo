@@ -17,6 +17,16 @@ services:
         value: production
       - key: DB_USE_NULLPOOL
         value: "true"
+      - key: RESEND_API_KEY
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: RESEND_API_KEY
+      - key: RESEND_FROM_EMAIL
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: RESEND_FROM_EMAIL
       - key: JWT_SECRET
         fromService:
           type: web

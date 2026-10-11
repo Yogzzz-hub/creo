@@ -60,17 +60,23 @@ async def send_notification_async(
 
             # 2. Channel dispatch
             if channel == "email":
-                if not settings.RESEND_API_KEY:
-                    # Mock delivery in dev/test
-                    sent_at = datetime.now(UTC)
+                resend_api_key = (settings.RESEND_API_KEY or "").strip()
+                resend_from_email = (settings.RESEND_FROM_EMAIL or "").strip()
+                if not resend_api_key or not resend_from_email:
+                    if settings.ENVIRONMENT in ("development", "test"):
+                        # Keep local/test workflows usable without pretending a
+                        # production notification was delivered.
+                        sent_at = datetime.now(UTC)
+                    else:
+                        failed_reason = "Resend is not configured (missing API key or sender)."
                 else:
                     try:
                         async with httpx.AsyncClient(timeout=10.0) as client:
                             resp = await client.post(
                                 "https://api.resend.com/emails",
-                                headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+                                headers={"Authorization": f"Bearer {resend_api_key}"},
                                 json={
-                                    "from": settings.RESEND_FROM_EMAIL,
+                                    "from": resend_from_email,
                                     "to": [recipient_email or "client@example.com"],
                                     "subject": title,
                                     "text": message,

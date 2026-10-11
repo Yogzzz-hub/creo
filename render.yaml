@@ -40,7 +40,8 @@ services:
       - key: RESEND_API_KEY
         sync: false
       - key: RESEND_FROM_EMAIL
-        value: Creo Verification <onboarding@resend.dev>
+        # Set this in the Render dashboard to an address on a verified Resend domain.
+        sync: false
 
   # ── Creo Background Task Worker ───────────────────────────────────────
   - type: worker
@@ -64,6 +65,16 @@ services:
         value: "true"
       - key: ENVIRONMENT
         value: production
+      - key: RESEND_API_KEY
+        fromService:
+          name: creo-api
+          type: web
+          envVarKey: RESEND_API_KEY
+      - key: RESEND_FROM_EMAIL
+        fromService:
+          name: creo-api
+          type: web
+          envVarKey: RESEND_FROM_EMAIL
       - key: DATABASE_URL
         fromDatabase:
           name: creo-db
