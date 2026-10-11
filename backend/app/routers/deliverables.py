@@ -52,6 +52,7 @@ from app.db.session import get_db
 from app.models.enums import DeliverableStatus, UserRole
 from app.models.work import Deliverable, Task
 from app.repositories.base import DeliverableRepository, TenantScope
+from app.routers.publishing import ScheduleBody
 from app.services import deliverable_state, storage_service
 from app.services import deliverable_workflow as workflow
 from app.services.subscription_guard import check_client_subscription, require_active_subscription
@@ -293,9 +294,14 @@ class RequestChangesBody(BaseModel):
     rejection_comment: str = Field(min_length=1, max_length=4000)
 
 
+class ApproveDeliverableBody(BaseModel):
+    publishing_fingerprint: str | None = Field(default=None, min_length=64, max_length=64)
+
+
 @router.post("/{deliverable_id}/approve")
 async def approve_deliverable(
     deliverable_id: uuid.UUID,
+    payload: ApproveDeliverableBody | None = Body(default=None),
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
     idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
@@ -309,7 +315,8 @@ async def approve_deliverable(
         log.info("approve_idempotent", deliverable_id=str(deliverable_id), idempotency_key=idempotency_key)
         return {"status": d.status.value, "deliverable_id": str(d.id), "idempotent": "true"}
 
-    d = await workflow.client_approve(db, actor, d, request_id=idempotency_key)
+    d = await workflow.client_approve(db, actor, d, request_id=idempotency_key,
+        publishing_fingerprint=payload.publishing_fingerprint if payload else None)
     return {"status": d.status.value, "deliverable_id": str(d.id)}
 
 
@@ -341,26 +348,17 @@ async def request_changes(
 @router.post("/{deliverable_id}/schedule")
 async def schedule_deliverable(
     deliverable_id: uuid.UUID,
-    scheduled_at: datetime,
+    payload: ScheduleBody,
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
-) -> dict[str, str]:
-    """Staff schedules an approved deliverable. approved → scheduled."""
-    _require_team(actor)
-    d, _task = await workflow.get_deliverable_for_review(db, actor, deliverable_id)
-    d = await deliverable_state.transition(
-        db,
-        d,
-        DeliverableStatus.SCHEDULED,
-        actor_id=actor.user_id,
-        actor_role=actor.role,
-        scheduled_at=scheduled_at,
-    )
-    return {
-        "status": d.status.value,
-        "deliverable_id": str(d.id),
-        "scheduled_at": scheduled_at.isoformat(),
-    }
+) -> dict[str, Any]:
+    """Plan publication of an exact version; the production approval status is preserved."""
+    from app.services import publishing_service
+    d = await db.get(Deliverable, deliverable_id)
+    if d is None:
+        raise NotFound("Deliverable not found")
+    job = await publishing_service.schedule(db, actor, d, **payload.model_dump())
+    return publishing_service.serialize(job, d)
 
 
 # ── Version History ────────────────────────────────────────────────────────────

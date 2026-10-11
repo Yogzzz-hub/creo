@@ -190,10 +190,7 @@ export function Footer() {
         </div>
 
         {/* 3. Bottom Legal Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#97A0B3]">
-          <p>
-            &copy; {new Date().getFullYear()} CREO Technologies Inc. All rights reserved.
-          </p>
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4 text-xs text-[#97A0B3]">
           <ul className="flex items-center gap-6">
             {LEGAL_LINKS.map((link) => (
               <li key={link.href}>

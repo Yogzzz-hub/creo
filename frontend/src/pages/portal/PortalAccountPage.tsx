@@ -1,7 +1,8 @@
+import { InstagramConnection } from "../../components/portal/InstagramConnection";
 import { BrandGuidelines } from "../../components/portal/BrandGuidelines";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { request } from "../../lib/http";
 import { useAuth } from "../../lib/auth-context";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
@@ -78,6 +79,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
       setBusy(false);
     }
   }
+  if (tab === "instagram") return <InstagramConnection />;
   if (brand && gate.isReady && !gate.isComplete)
     return (
       <SubscriptionLockedState
@@ -86,6 +88,8 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
       />
     );
   const field = "w-full p-3 rounded-xl bg-[#0B111C] border border-[#2A3446] text-white";
+  const tabButton = (active: boolean) =>
+    `inline-flex min-h-10 items-center justify-center rounded-xl border px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B111C] cursor-pointer ${active ? "border-[#BCCCE6] bg-[#BCCCE6] text-[#0B111C] shadow-sm" : "border-[#2A3446] bg-[#0B111C] text-[#BCCCE6] hover:border-[#7FA0D6]/60 hover:bg-[#1A2433] hover:text-white"}`;
   return (
     <main className="text-white space-y-6 pb-12">
       <h1 className="text-3xl font-bold">{brand ? "Brand DNA" : "Account settings"}</h1>
@@ -143,7 +147,11 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
                 ? "Verify your email to change your password. Other signed-in devices will be signed out."
                 : "Add a password to sign in with your email as well. Google sign-in keeps working."}
             </p>
-            <button className="underline" onClick={() => setRecoveryOpen(true)}>
+            <button
+              type="button"
+              onClick={() => setRecoveryOpen(true)}
+              className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#2A3446] bg-[#0B111C] px-4 py-2 text-sm font-semibold text-[#BCCCE6] transition-colors hover:border-[#7FA0D6]/50 hover:bg-[#1A2433] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161F2D] cursor-pointer"
+            >
               {hasPassword ? "Change password" : "Set a password"}
             </button>
           </section>
@@ -152,10 +160,31 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
       {recoveryOpen && <PasswordRecoveryModal initialEmail={user?.email || ""} onClose={() => setRecoveryOpen(false)} />}
       {query.data && (
         <>
-          <div className="flex gap-5">
-            <button onClick={() => setParams({ tab: "settings" })}>Account</button>
-            <button onClick={() => setParams({ tab: "brand" })}>Brand DNA</button>
-          </div>
+          <nav className="flex flex-wrap gap-2" aria-label="Account sections">
+            <button
+              type="button"
+              aria-pressed={tab === "settings"}
+              onClick={() => setParams({ tab: "settings" })}
+              className={tabButton(tab === "settings")}
+            >
+              Account
+            </button>
+            <button
+              type="button"
+              aria-pressed={brand}
+              onClick={() => setParams({ tab: "brand" })}
+              className={tabButton(brand)}
+            >
+              Brand DNA
+            </button>
+            <Link
+              to="/portal/account/instagram"
+              aria-current={tab === "instagram" ? "page" : undefined}
+              className={tabButton(tab === "instagram")}
+            >
+              Instagram connection
+            </Link>
+          </nav>
           <form
             onSubmit={save}
             className="bg-[#161F2D] border border-[#2A3446] p-5 sm:p-8 rounded-3xl space-y-5"

@@ -14,10 +14,12 @@ import {
   HelpCircle,
   Settings,
   LogOut,
+  Lock,
   X,
   MessageSquare,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
+import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { useConfirm } from "../ui/ConfirmDialog";
 
 import { useAdminSidebar } from "../admin/AdminSidebarContext";
@@ -64,6 +66,8 @@ export function PortalSidebarNew() {
     return () => { document.body.style.overflow = old; window.removeEventListener("keydown", escape); };
   }, [mobileOpen, setMobileOpen]);
   const { user, logout } = useAuth();
+  const onboardingGate = useOnboardingGate();
+  const slackLocked = user?.role === "client" && (!onboardingGate.isReady || !onboardingGate.isComplete);
   const [loggingOut, setLoggingOut] = useState(false);
   const confirm = useConfirm();
   
@@ -170,6 +174,7 @@ export function PortalSidebarNew() {
               {BRAND_NAV.map((item) => {
                 const active = isActive(item.href, location.pathname, location.search);
                 const Icon = item.icon;
+                const isLocked = item.href === "/portal/slack" && slackLocked;
                 return (
                   <Link
                     key={item.href}
@@ -182,6 +187,14 @@ export function PortalSidebarNew() {
                   >
                     <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={active ? 2.2 : 1.8} />
                     <span className="flex-1">{item.label}</span>
+                    {isLocked && (
+                      <span
+                        aria-label="Locked until onboarding is complete"
+                        title="Locked until onboarding is complete"
+                      >
+                        <Lock aria-hidden="true" className="size-3.5 shrink-0 text-[#D8BF9B]" />
+                      </span>
+                    )}
                   </Link>
                 );
               })}

@@ -1,3 +1,4 @@
+import { PublishingControl, PublishingQueue } from "../../components/ops/PublishingPanel";
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
@@ -550,6 +551,7 @@ export function MemberTaskBoardPage() {
                       <p className="text-[11px] text-[#97A0B3]">
                         {formatLabel(task.deliverable_type)} · v{task.deliverable?.version ?? 1}
                       </p>
+                      {task.deliverable?.id && <PublishingControl deliverableId={task.deliverable.id} />}
                     </div>
                   );
                 })}
@@ -558,6 +560,7 @@ export function MemberTaskBoardPage() {
             </div>
           </div>
         )}
+        <PublishingQueue />
       </motion.main>
 
       {/* Upload & submit modal */}

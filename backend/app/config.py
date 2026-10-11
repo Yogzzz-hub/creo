@@ -93,7 +93,6 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = Field(default=False)
     SMTP_USE_SSL: bool = Field(default=True)
     SMTP_FROM_EMAIL: str = Field(default="")
-    ALLOW_FALLBACK_OTP: bool = Field(default=True)
 
     # Payment Gateways — Razorpay
     RAZORPAY_KEY_ID: str = Field(default="rzp_test_TO2r0YMjDZSpuC")
@@ -143,10 +142,15 @@ class Settings(BaseSettings):
     SUPABASE_SERVICE_ROLE_KEY: str = Field(default="")
 
     # External Integrations (Instagram, Notifications)
-    INSTAGRAM_CLIENT_MODE: str = Field(default="fake")  # "fake" or "real"
+    # fake disables runtime publishing; tests mock provider I/O.
+    INSTAGRAM_CLIENT_MODE: str = Field(default="fake")
     INSTAGRAM_APP_ID: str = Field(default="")
     INSTAGRAM_APP_SECRET: str = Field(default="")
-    INSTAGRAM_REDIRECT_URI: str = Field(default="http://localhost:3000/api/auth/callback/instagram")
+    META_GRAPH_API_VERSION: str = Field(default="v26.0", pattern=r"^v\d+\.0$")
+    INSTAGRAM_PUBLISHING_ENABLED: bool = Field(default=False)
+    INSTAGRAM_FFPROBE_PATH: str = Field(default="ffprobe")
+    INSTAGRAM_MAX_LATENESS_MINUTES: int = Field(default=30, ge=1, le=1440)
+    INSTAGRAM_REDIRECT_URI: str = Field(default="http://localhost:5173/portal/account/instagram")
     RESEND_API_KEY: str = Field(default="")
     RESEND_FROM_EMAIL: str = Field(default="")  # e.g. "Creo <noreply@yourdomain.com>"
     WHATSAPP_API_TOKEN: str = Field(default="")

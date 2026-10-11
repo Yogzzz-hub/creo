@@ -331,7 +331,7 @@ async def get_portal_profile(
         "phone": phone,
         "company_name": profile.company_name if profile else "",
         "instagram_username": profile.instagram_username if profile else "",
-        "instagram_connected": bool(profile.instagram_username or profile.instagram_user_id) if profile else False,
+        "instagram_connected": profile.ig_connection_status == "connected" if profile else False,
         "two_fa_enabled": two_fa,
         "brand_summary": profile.brand_summary if profile else "",
         "brand_dna": brand_dna_data,
@@ -462,56 +462,6 @@ async def toggle_two_factor(
         "status": "success",
         "two_fa_enabled": enabled,
         "message": "Two-factor authentication enabled." if enabled else "Two-factor authentication disabled.",
-    }
-
-
-@router.post("/integrations/instagram/connect", response_model=dict[str, Any])
-async def connect_instagram_integration(
-    body: dict[str, Any],
-    actor: Actor = Depends(get_current_actor),
-    db: AsyncSession = Depends(get_db),
-) -> dict[str, Any]:
-    """Connect Instagram Business account for automated publishing."""
-    client_id = actor.client_id or actor.user_id
-    username = body.get("username", "").strip() or "creo.creativestudio"
-    if not username.startswith("@"):
-        username = f"@{username}"
-
-    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
-    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
-    if profile:
-        profile.instagram_username = username
-        profile.instagram_user_id = f"ig_user_{uuid.uuid4().hex[:10]}"
-        await db.commit()
-
-    return {
-        "status": "success",
-        "instagram_connected": True,
-        "instagram_username": username,
-        "message": f"Instagram Business account connected as {username}.",
-    }
-
-
-@router.delete("/integrations/instagram", response_model=dict[str, Any])
-async def disconnect_instagram_integration(
-    actor: Actor = Depends(get_current_actor),
-    db: AsyncSession = Depends(get_db),
-) -> dict[str, Any]:
-    """Disconnect Instagram Business account."""
-    client_id = actor.client_id or actor.user_id
-
-    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
-    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
-    if profile:
-        profile.instagram_username = None
-        profile.instagram_user_id = None
-        profile.ig_token_encrypted = None
-        await db.commit()
-
-    return {
-        "status": "success",
-        "instagram_connected": False,
-        "message": "Instagram Business account disconnected successfully.",
     }
 
 

@@ -556,13 +556,15 @@ async def _team_recipients(db: AsyncSession, deliverable: Deliverable, task: Tas
 
 
 async def client_approve(
-    db: AsyncSession, actor: Actor, deliverable: Deliverable, *, request_id: str | None = None
+    db: AsyncSession, actor: Actor, deliverable: Deliverable, *, request_id: str | None = None,
+    publishing_fingerprint: str | None = None,
 ) -> Deliverable:
     """Journey 1 step 15: approval unlocks download and moves the task to ready-to-publish."""
     task = await db.get(Task, deliverable.task_id) if deliverable.task_id else None
     await deliverable_state.transition(
         db, deliverable, DeliverableStatus.APPROVED,
         actor_id=actor.user_id, actor_role=actor.role, request_id=request_id, commit=False,
+        publishing_fingerprint=publishing_fingerprint,
     )
     label = type_label(task, deliverable)
     client_label = await _client_label(db, deliverable.client_id)

@@ -182,7 +182,7 @@ export function PortalCreativePodPage() {
 
                 {/* Message Button */}
                 <Link
-                  to={`/portal/slack?dm=${encodeURIComponent(member.name)}`}
+                  to={`/portal/slack?dm=${encodeURIComponent(member.id || member.user_id || "")}`}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-[#2A3446] text-[#97A0B3] bg-[#161F2D]/60 text-[13px] font-medium cursor-pointer transition-all duration-200 hover:border-[#7FA0D6] hover:text-[#BCCCE6] hover:bg-[#7FA0D6]/[0.08] mt-auto"
                 >
                   <MessageCircle className="w-4 h-4" strokeWidth={1.8} />

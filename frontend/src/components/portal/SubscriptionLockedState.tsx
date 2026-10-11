@@ -21,11 +21,15 @@ import { PlanBargainCallModal } from "./PlanBargainCallModal";
 interface SubscriptionLockedStateProps {
   title?: string;
   description?: string;
+  showResumeAction?: boolean;
+  showSupportAction?: boolean;
 }
 
 export function SubscriptionLockedState({
   title,
   description,
+  showResumeAction = true,
+  showSupportAction = true,
 }: SubscriptionLockedStateProps) {
   const gate = useOnboardingGate();
   const { resume, isPaid, stage, completedSteps } = gate;
@@ -157,14 +161,16 @@ export function SubscriptionLockedState({
           {/* Call to Action Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2 w-full">
             {/* Primary Action: Resume Setup */}
-            <Link
-              to={resumeRoute}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#BCCCE6] px-6 py-3 text-sm font-bold text-[#0B111C] shadow-md hover:bg-white transition-all cursor-pointer"
-            >
-              <Zap className="size-4 text-[#0B111C]" />
-              <span>{resumeLabel}</span>
-              <ArrowRight className="size-3.5" />
-            </Link>
+            {showResumeAction && (
+              <Link
+                to={resumeRoute}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#BCCCE6] px-6 py-3 text-sm font-bold text-[#0B111C] shadow-md hover:bg-white transition-all cursor-pointer"
+              >
+                <Zap className="size-4 text-[#0B111C]" />
+                <span>{resumeLabel}</span>
+                <ArrowRight className="size-3.5" />
+              </Link>
+            )}
 
             {/* Negotiation & Bargain Button: Open PlanBargainCallModal */}
             <button
@@ -177,17 +183,19 @@ export function SubscriptionLockedState({
             </button>
 
             {/* Support Concierge */}
-            <button
-              type="button"
-              onClick={() => {
-                setSentSuccess(false);
-                setShowSupportModal(true);
-              }}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#2A3446] bg-[#0B111C] px-5 py-3 text-sm font-semibold text-[#97A0B3] hover:text-white hover:border-[#7FA0D6]/50 transition-all cursor-pointer shadow-sm"
-            >
-              <LifeBuoy className="size-4 text-[#7FA0D6]" />
-              <span>Need help? Contact Support</span>
-            </button>
+            {showSupportAction && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSentSuccess(false);
+                  setShowSupportModal(true);
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#2A3446] bg-[#0B111C] px-5 py-3 text-sm font-semibold text-[#97A0B3] hover:text-white hover:border-[#7FA0D6]/50 transition-all cursor-pointer shadow-sm"
+              >
+                <LifeBuoy className="size-4 text-[#7FA0D6]" />
+                <span>Need help? Contact Support</span>
+              </button>
+            )}
           </div>
 
           {/* Quick Navigation Links to Prevent Getting Trapped */}
@@ -199,10 +207,14 @@ export function SubscriptionLockedState({
             <Link to="/portal/payments" className="hover:text-white transition-colors underline-offset-4 hover:underline">
               Plans & Billing
             </Link>
-            <span>•</span>
-            <Link to="/portal/support" className="hover:text-white transition-colors underline-offset-4 hover:underline">
-              Support Desk
-            </Link>
+            {showSupportAction && (
+              <>
+                <span>•</span>
+                <Link to="/portal/support" className="hover:text-white transition-colors underline-offset-4 hover:underline">
+                  Support Desk
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

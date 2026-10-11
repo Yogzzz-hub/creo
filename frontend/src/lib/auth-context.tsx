@@ -62,6 +62,14 @@ export interface AuthUser {
   sign_in_methods?: string[];
 }
 
+export interface RegistrationCodeResult {
+  status: "sent";
+  message: string;
+  email: string;
+  email_delivered: true;
+  expires_in_seconds: number;
+}
+
 export interface PasswordResetVerification {
   reset_token: string;
   email: string;
@@ -76,8 +84,8 @@ interface AuthContextType {
   verifyOtp: (email: string, code: string, full_name?: string) => Promise<AuthUser>;
   loginWithPassword: (email: string, password: string) => Promise<AuthUser>;
   register: (email: string, password: string, full_name?: string) => Promise<AuthUser>;
-  registerIntent: (email: string, password: string, full_name?: string) => Promise<{ status: string; message: string }>;
-  resendRegistration: (email: string) => Promise<{ status: string; message: string }>;
+  registerIntent: (email: string, password: string, full_name?: string) => Promise<RegistrationCodeResult>;
+  resendRegistration: (email: string) => Promise<RegistrationCodeResult>;
   verifyRegistration: (email: string, code: string, password?: string, full_name?: string) => Promise<AuthUser>;
   forgotPassword: (email: string) => Promise<{ status: string; message: string }>;
   verifyResetOtp: (email: string, code: string) => Promise<PasswordResetVerification>;
@@ -205,14 +213,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const registerIntent = async (email: string, password: string, full_name?: string) => {
-    return await request<{ status: string; message: string }>("/api/v1/auth/register-intent", {
+    return await request<RegistrationCodeResult>("/api/v1/auth/register-intent", {
       method: "POST",
       body: JSON.stringify({ email, password, full_name }),
     });
   };
 
   const resendRegistration = async (email: string) => {
-    return await request<{ status: string; message: string }>("/api/v1/auth/resend-registration", {
+    return await request<RegistrationCodeResult>("/api/v1/auth/resend-registration", {
       method: "POST",
       body: JSON.stringify({ email }),
     });

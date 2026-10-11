@@ -2,6 +2,7 @@ import { NativeSelect } from "../../ui/NativeSelect";
 import { useAuth } from "../../lib/auth-context";
 import * as Dialog from "@radix-ui/react-dialog";
 import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
+import { PublishingControl } from "../../components/ops/PublishingPanel";
 import { resolveAssetUrl } from "../../lib/media";
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams, Navigate } from "react-router";
@@ -2068,6 +2069,7 @@ export function AdminDeliverablesPage() {
                 <h3 className="text-sm font-black text-white line-clamp-2 mb-1.5">
                   {item.title}
                 </h3>
+                <PublishingControl deliverableId={item.id} />
                 <p className="text-[11px] font-semibold text-[#97A0B3] flex items-center gap-1.5">
                   <Tag className="w-3 h-3 text-[#97A0B3]" />
                   {item.format}

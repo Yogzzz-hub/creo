@@ -32,12 +32,14 @@ export async function approveDeliverable(
   deliverableId: string,
   _clientId: string,
   idempotencyKey: string,
+  publishingFingerprint?: string,
 ): Promise<{ status: string; deliverable_id: string }> {
   return request<{ status: string; deliverable_id: string }>(
     `/api/v1/deliverables/${deliverableId}/approve`,
     {
       method: "POST",
       headers: { "Idempotency-Key": idempotencyKey },
+      body: JSON.stringify({ publishing_fingerprint: publishingFingerprint }),
     },
   );
 }

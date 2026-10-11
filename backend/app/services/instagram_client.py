@@ -1,157 +1,251 @@
-"""Instagram Graph API client service.
-
-Provides a unified interface with:
-1. FakeInstagramClient: Simulates video transcoding delays (returns IN_PROGRESS
-   for 3 polls, then FINISHED) and configurable error injection for tests.
-2. RealInstagramClient: Production client targeting the Meta Graph API v19.0.
-Switched via settings.INSTAGRAM_CLIENT_MODE, eliminating scattered conditionals.
-"""
+"""Facebook Login / Instagram Graph API adapter. Backend-only credentials."""
 
 from __future__ import annotations
 
-import secrets
-from typing import Any, Protocol
+import hashlib
+import hmac
+import logging
+from datetime import UTC, datetime
+from typing import Any
 
 import httpx
 
 from app.config import settings
+from app.core.errors import AppError
+
+SCOPES = {
+    "instagram_basic",
+    "instagram_content_publish",
+    "pages_show_list",
+    "pages_read_engagement",
+}
+# Debug-token query strings contain credentials; suppress HTTP client's request logging.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 
-class TransientIGError(Exception):
-    """Temporary Instagram API or network error eligible for Celery backoff retry."""
-
-
-class PermanentIGError(Exception):
-    """Fatal Instagram Graph API error (invalid media, unrecoverable container error)."""
-
-
-class InstagramClient(Protocol):
-    async def create_media_container(
+class InstagramError(AppError):
+    def __init__(
         self,
-        ig_user_id: str,
-        media_type: str,
-        file_url: str,
-        caption: str | None = None,
-        thumb_offset: int | None = None,
-        access_token: str | None = None,
-    ) -> str: ...
-
-    async def get_container_status(
-        self,
-        creation_id: str,
-        access_token: str | None = None,
-    ) -> str: ...
-
-    async def publish_container(
-        self,
-        ig_user_id: str,
-        creation_id: str,
-        access_token: str | None = None,
-    ) -> dict[str, str]: ...
-
-    async def get_content_publishing_limit(
-        self,
-        ig_user_id: str,
-        access_token: str | None = None,
-    ) -> dict[str, int]: ...
-
-    async def refresh_access_token(
-        self,
-        access_token: str,
-    ) -> dict[str, Any]: ...
+        message: str,
+        code: str = "PROVIDER_ERROR",
+        *,
+        retryable: bool = False,
+        ambiguous: bool = False,
+        reconnect: bool = False,
+        retry_after: int = 0,
+    ):
+        super().__init__(message, code=code, status_code=409)
+        self.code, self.retryable, self.ambiguous = code, retryable, ambiguous
+        self.reconnect, self.retry_after = reconnect, retry_after
 
 
-class FakeInstagramClient:
-    """Mock client simulating Instagram Graph API container lifecycle.
+class TransientIGError(InstagramError):
+    def __init__(self, message: str):
+        super().__init__(message, retryable=True)
 
-    - Simulates transcoding delay: first 3 polls return IN_PROGRESS, then FINISHED.
-    - Error hooks allow tests to force failures at container creation, polling, or publishing.
-    """
 
-    def __init__(self) -> None:
-        self._poll_counts: dict[str, int] = {}
-        self.simulate_fail_phase: str | None = None  # "container", "poll", "publish"
-        self.mock_quota_usage: int = 0
-        self.created_containers: list[str] = []
-        self.published_posts: list[dict[str, str]] = []
-
-    def reset(self) -> None:
-        self._poll_counts.clear()
-        self.simulate_fail_phase = None
-        self.mock_quota_usage = 0
-        self.created_containers.clear()
-        self.published_posts.clear()
-
-    async def create_media_container(
-        self,
-        ig_user_id: str,
-        media_type: str,
-        file_url: str,
-        caption: str | None = None,
-        thumb_offset: int | None = None,
-        access_token: str | None = None,
-    ) -> str:
-        if self.simulate_fail_phase == "container":
-            raise PermanentIGError("Simulated container creation error from Instagram Graph API")
-
-        creation_id = f"ig_container_{secrets.token_hex(8)}"
-        self._poll_counts[creation_id] = 0
-        self.created_containers.append(creation_id)
-        return creation_id
-
-    async def get_container_status(
-        self,
-        creation_id: str,
-        access_token: str | None = None,
-    ) -> str:
-        if self.simulate_fail_phase == "poll":
-            return "ERROR"
-
-        current_polls = self._poll_counts.get(creation_id, 0)
-        self._poll_counts[creation_id] = current_polls + 1
-
-        # Return IN_PROGRESS for 3 polls, then FINISHED (per BUILD-PROMPTS.md Phase 6)
-        if current_polls < 3:
-            return "IN_PROGRESS"
-        return "FINISHED"
-
-    async def publish_container(
-        self,
-        ig_user_id: str,
-        creation_id: str,
-        access_token: str | None = None,
-    ) -> dict[str, str]:
-        if self.simulate_fail_phase == "publish":
-            raise TransientIGError("Simulated publish timeout from Instagram Graph API")
-
-        media_id = f"ig_media_{secrets.token_hex(8)}"
-        slug = secrets.token_urlsafe(9)
-        permalink = f"https://www.instagram.com/reel/{slug}/"
-        result = {"media_id": media_id, "permalink": permalink}
-        self.published_posts.append(result)
-        return result
-
-    async def get_content_publishing_limit(
-        self,
-        ig_user_id: str,
-        access_token: str | None = None,
-    ) -> dict[str, int]:
-        return {"quota_usage": self.mock_quota_usage}
-
-    async def refresh_access_token(
-        self,
-        access_token: str,
-    ) -> dict[str, Any]:
-        return {
-            "access_token": f"refreshed_{secrets.token_hex(16)}",
-            "expires_in": 5184000,  # 60 days in seconds
-        }
+class PermanentIGError(InstagramError):
+    pass
 
 
 class RealInstagramClient:
-    """Production Meta Graph API client targeting graph.facebook.com/v19.0."""
+    def __init__(self, transport: httpx.AsyncBaseTransport | None = None):
+        self.transport = transport
 
-    BASE_URL = "https://graph.facebook.com/v19.0"
+    @property
+    def base_url(self) -> str:
+        return f"https://graph.facebook.com/{settings.META_GRAPH_API_VERSION}"
+
+    async def call(
+        self,
+        method: str,
+        path: str,
+        token: str | None = None,
+        *,
+        publishing: bool = False,
+        **params: Any,
+    ) -> dict[str, Any]:
+        headers = {}
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+            params["appsecret_proof"] = hmac.new(
+                settings.INSTAGRAM_APP_SECRET.encode(), token.encode(), hashlib.sha256
+            ).hexdigest()
+        try:
+            async with httpx.AsyncClient(timeout=30, transport=self.transport) as client:
+                response = await client.request(
+                    method,
+                    f"{self.base_url}/{path.lstrip('/')}",
+                    headers=headers,
+                    **({"params": params} if method == "GET" else {"data": params}),
+                )
+            body = response.json()
+            if not isinstance(body, dict):
+                raise ValueError("Invalid provider response")
+        except (httpx.HTTPError, ValueError):
+            raise InstagramError(
+                "Meta did not confirm the request. Try again later.",
+                "NETWORK_ERROR",
+                retryable=not publishing,
+                ambiguous=publishing,
+            ) from None
+        if response.is_error or "error" in body:
+            error = body.get("error")
+            code = error.get("code") if isinstance(error, dict) else None
+            reconnect = code in (10, 102, 190, 200, 294)
+            transient = (
+                response.status_code >= 500
+                or response.status_code == 429
+                or code in (1, 2, 4, 17, 32, 613)
+            )
+            try:
+                delay = min(86400, max(0, int(response.headers.get("Retry-After", "0"))))
+            except ValueError:
+                delay = 0
+            raise InstagramError(
+                "Reconnect Instagram and grant publishing permissions."
+                if reconnect
+                else "Meta rejected the request. Check account access and media requirements.",
+                "RECONNECT_REQUIRED" if reconnect else "META_REJECTED",
+                retryable=transient and not publishing,
+                ambiguous=publishing and (transient or code is None),
+                reconnect=reconnect,
+                retry_after=delay,
+            )
+        return body
+
+    async def debug_token(self, token: str) -> dict[str, Any]:
+        data = (
+            await self.call(
+                "GET",
+                "debug_token",
+                f"{settings.INSTAGRAM_APP_ID}|{settings.INSTAGRAM_APP_SECRET}",
+                input_token=token,
+            )
+        ).get("data", {})
+        expired = any(
+            data.get(key) and int(data[key]) <= datetime.now(UTC).timestamp()
+            for key in ("expires_at", "data_access_expires_at")
+        )
+        if (
+            not data.get("is_valid")
+            or expired
+            or str(data.get("app_id")) != settings.INSTAGRAM_APP_ID
+        ):
+            raise InstagramError(
+                "Instagram authorization expired or was revoked. Reconnect.",
+                "RECONNECT_REQUIRED",
+                reconnect=True,
+            )
+        return data
+
+    async def discover_accounts(self, code: str) -> list[dict[str, Any]]:
+        short = await self.call(
+            "POST",
+            "oauth/access_token",
+            client_id=settings.INSTAGRAM_APP_ID,
+            client_secret=settings.INSTAGRAM_APP_SECRET,
+            redirect_uri=settings.INSTAGRAM_REDIRECT_URI,
+            code=code,
+        )
+        long = await self.call(
+            "POST",
+            "oauth/access_token",
+            client_id=settings.INSTAGRAM_APP_ID,
+            client_secret=settings.INSTAGRAM_APP_SECRET,
+            grant_type="fb_exchange_token",
+            fb_exchange_token=short["access_token"],
+        )
+        token = long["access_token"]
+        debug = await self.debug_token(token)
+        permissions = await self.call("GET", "me/permissions", token)
+        granted = {
+            p["permission"] for p in permissions.get("data", []) if p.get("status") == "granted"
+        }
+        if not SCOPES.issubset(granted):
+            raise InstagramError(
+                "Grant all four requested publishing permissions.",
+                "MISSING_PERMISSIONS",
+                reconnect=True,
+            )
+        result, after = [], None
+        for _ in range(20):
+            pages = await self.call(
+                "GET",
+                "me/accounts",
+                token,
+                fields="id,name,access_token,tasks,instagram_business_account",
+                limit=100,
+                **({"after": after} if after else {}),
+            )
+            for page in pages.get("data", []):
+                ig_id, page_token = (
+                    page.get("instagram_business_account", {}).get("id"),
+                    page.get("access_token"),
+                )
+                if (
+                    not ig_id
+                    or not page_token
+                    or not set(page.get("tasks", [])).intersection(
+                        {"CREATE_CONTENT", "MANAGE", "PROFILE_PLUS_CREATE_CONTENT"}
+                    )
+                ):
+                    continue
+                account = await self.call(
+                    "GET", ig_id, page_token, fields="id,username,profile_picture_url"
+                )
+                await self.get_content_publishing_limit(ig_id, page_token)
+                result.append(
+                    {
+                        "id": ig_id,
+                        "username": account.get("username", ""),
+                        "picture": account.get("profile_picture_url"),
+                        # Facebook Login's IGUser schema omits Instagram Login's
+                        # account_type field. Story eligibility is provider-checked.
+                        "account_type": "PAGE_LINKED_PROFESSIONAL",
+                        "page_id": page["id"],
+                        "page_name": page.get("name", ""),
+                        "page_token": page_token,
+                        "user_token": token,
+                        "meta_user_id": debug.get("user_id"),
+                        "scopes": sorted(granted),
+                        "expires_at": debug.get("expires_at", 0),
+                        "data_access_expires_at": debug.get("data_access_expires_at", 0),
+                    }
+                )
+            after = pages.get("paging", {}).get("cursors", {}).get("after")
+            if not pages.get("paging", {}).get("next") or not after:
+                break
+        if not result:
+            raise InstagramError(
+                "No eligible Instagram Business account linked to a managed Facebook "
+                "Page was found.",
+                "NO_BUSINESS_ACCOUNT",
+            )
+        return result
+
+    async def verify_account(
+        self, account_id: str, page_id: str, credentials: dict[str, str]
+    ) -> dict[str, Any]:
+        debug = await self.debug_token(credentials["user_token"])
+        if not SCOPES.issubset(set(debug.get("scopes", []))):
+            raise InstagramError(
+                "Instagram publishing permissions were removed.",
+                "MISSING_PERMISSIONS",
+                reconnect=True,
+            )
+        page = await self.call(
+            "GET", page_id, credentials["page_token"], fields="instagram_business_account"
+        )
+        if str(page.get("instagram_business_account", {}).get("id")) != account_id:
+            raise InstagramError(
+                "The linked Instagram account changed. Reconnect and review schedules.",
+                "ACCOUNT_CHANGED",
+                reconnect=True,
+            )
+        await self.get_content_publishing_limit(account_id, credentials["page_token"])
+        return debug
 
     async def create_media_container(
         self,
@@ -161,118 +255,77 @@ class RealInstagramClient:
         caption: str | None = None,
         thumb_offset: int | None = None,
         access_token: str | None = None,
+        *,
+        is_video: bool = False,
     ) -> str:
-        payload: dict[str, Any] = {
-            "access_token": access_token,
-        }
-        if caption:
-            payload["caption"] = caption
+        params: dict[str, Any] = {"video_url" if is_video else "image_url": file_url}
+        if media_type != "IMAGE":
+            params["media_type"] = media_type
+        if caption and media_type != "STORIES":
+            params["caption"] = caption
+        try:
+            data = await self.call("POST", f"{ig_user_id}/media", access_token, **params)
+        except InstagramError as exc:
+            if media_type == "STORIES" and exc.code == "META_REJECTED" and not exc.retryable:
+                raise InstagramError(
+                    "Meta rejected this Story. Check account eligibility and Story media "
+                    "requirements.",
+                    "STORY_NOT_ELIGIBLE",
+                ) from None
+            raise
+        if not data.get("id"):
+            raise InstagramError("Meta returned no media container.", "NO_CONTAINER")
+        return str(data["id"])
 
-        mt = media_type.upper()
-        if mt == "REELS" or mt == "REEL":
-            payload["media_type"] = "REELS"
-            payload["video_url"] = file_url
-            if thumb_offset is not None:
-                payload["thumb_offset"] = thumb_offset
-        elif mt == "STORIES" or mt == "STORY":
-            payload["media_type"] = "STORIES"
-            if file_url.endswith((".mp4", ".mov")):
-                payload["video_url"] = file_url
-            else:
-                payload["image_url"] = file_url
-        else:
-            payload["image_url"] = file_url
-
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(f"{self.BASE_URL}/{ig_user_id}/media", data=payload)
-            if resp.status_code >= 400:
-                raise PermanentIGError(f"Container creation failed: {resp.text}")
-            data = resp.json()
-            return str(data["id"])
-
-    async def get_container_status(
-        self,
-        creation_id: str,
-        access_token: str | None = None,
-    ) -> str:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.get(
-                f"{self.BASE_URL}/{creation_id}",
-                params={"fields": "status_code,status", "access_token": access_token},
+    async def get_container_status(self, creation_id: str, access_token: str | None = None) -> str:
+        return str(
+            (await self.call("GET", creation_id, access_token, fields="status_code")).get(
+                "status_code", "IN_PROGRESS"
             )
-            if resp.status_code >= 400:
-                raise TransientIGError(f"Status check failed: {resp.text}")
-            data = resp.json()
-            return str(data.get("status_code", "IN_PROGRESS"))
+        )
 
     async def publish_container(
-        self,
-        ig_user_id: str,
-        creation_id: str,
-        access_token: str | None = None,
+        self, ig_user_id: str, creation_id: str, access_token: str | None = None
     ) -> dict[str, str]:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(
-                f"{self.BASE_URL}/{ig_user_id}/media_publish",
-                data={"creation_id": creation_id, "access_token": access_token},
+        data = await self.call(
+            "POST",
+            f"{ig_user_id}/media_publish",
+            access_token,
+            publishing=True,
+            creation_id=creation_id,
+        )
+        if not data.get("id"):
+            raise InstagramError(
+                "Meta did not return a published media ID.", "UNCONFIRMED", ambiguous=True
             )
-            if resp.status_code >= 400:
-                raise TransientIGError(f"Media publish failed: {resp.text}")
-            data = resp.json()
-            media_id = str(data["id"])
+        return {"media_id": str(data["id"])}
 
-            # Retrieve permalink
-            info_resp = await client.get(
-                f"{self.BASE_URL}/{media_id}",
-                params={"fields": "permalink", "access_token": access_token},
-            )
-            permalink = ""
-            if info_resp.status_code == 200:
-                permalink = info_resp.json().get("permalink", "")
-            return {"media_id": media_id, "permalink": permalink}
+    async def media_permalink(self, media_id: str, token: str) -> str | None:
+        return (await self.call("GET", media_id, token, fields="permalink")).get("permalink")
 
     async def get_content_publishing_limit(
-        self,
-        ig_user_id: str,
-        access_token: str | None = None,
+        self, ig_user_id: str, access_token: str | None = None
     ) -> dict[str, int]:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.get(
-                f"{self.BASE_URL}/{ig_user_id}/content_publishing_limit",
-                params={"fields": "quota_usage,config", "access_token": access_token},
+        data = await self.call(
+            "GET",
+            f"{ig_user_id}/content_publishing_limit",
+            access_token,
+            fields="quota_usage,config",
+        )
+        rows = data.get("data", [])
+        if not rows or not rows[0].get("config", {}).get("quota_total"):
+            raise InstagramError(
+                "Meta publishing quota is unavailable.", "QUOTA_UNAVAILABLE", retryable=True
             )
-            if resp.status_code >= 400:
-                return {"quota_usage": 0}
-            data = resp.json()
-            quota_usage = 0
-            for item in data.get("data", []):
-                quota_usage = item.get("quota_usage", 0)
-            return {"quota_usage": quota_usage}
+        return {
+            "quota_usage": int(rows[0].get("quota_usage", 0)),
+            "quota_total": int(rows[0]["config"]["quota_total"]),
+        }
 
-    async def refresh_access_token(
-        self,
-        access_token: str,
-    ) -> dict[str, Any]:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.get(
-                f"{self.BASE_URL}/refresh_access_token",
-                params={
-                    "grant_type": "ig_refresh_token",
-                    "access_token": access_token,
-                },
-            )
-            if resp.status_code >= 400:
-                raise TransientIGError(f"Token refresh failed: {resp.text}")
-            return resp.json()  # type: ignore[no-any-return]
+    async def revoke(self, credentials: dict[str, str]) -> None:
+        await self.call("DELETE", "me/permissions", credentials["user_token"])
 
 
-# Global fake client instance accessible in tests
-fake_instagram_client = FakeInstagramClient()
-real_instagram_client = RealInstagramClient()
-
-
-def get_instagram_client() -> InstagramClient:
-    """Return configured Instagram client based on INSTAGRAM_CLIENT_MODE."""
-    if settings.INSTAGRAM_CLIENT_MODE.lower() == "real":
-        return real_instagram_client
-    return fake_instagram_client
+def get_instagram_client() -> RealInstagramClient:
+    # Tests use MockTransport. Runtime code cannot manufacture publication success.
+    return RealInstagramClient()

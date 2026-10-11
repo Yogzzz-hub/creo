@@ -20,6 +20,11 @@ import { request } from "../../lib/http";
 import { useSearchParams } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useOnboardingGate } from "../../lib/useOnboardingGate";
+import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
+import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
+import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
+import { getAuthToken } from "../../lib/auth-token";
 
 // WhatsApp Emoji Categories
 const EMOJI_CATEGORIES = [
@@ -124,102 +129,57 @@ export function SlackChatPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const isClient = user?.role === "client";
+  const gate = useOnboardingGate();
+  const canUseChat = !isClient || gate.isComplete;
   const [searchParams] = useSearchParams();
   const urlDm = searchParams.get("dm");
 
   // Fetch DM contacts from backend
-  const { data: serverContacts = [] } = useQuery<ChatContact[]>({
+  const contactsQuery = useQuery<ChatContact[]>({
     queryKey: ["chat_contacts", user?.id],
     queryFn: () => request<ChatContact[]>("/api/v1/chat/contacts"),
-    enabled: !!user?.id,
+    enabled: !!user?.id && canUseChat,
     staleTime: 15_000,
   });
-
-  // Fallback contacts if offline or before loading
-  const fallbackContacts: ChatContact[] = useMemo(() => {
-    return [
-      {
-        id: "646f6d6e-3479-42c5-b275-9fcd212453f6",
-        name: "Creo Super Admin",
-        role: "Super Admin & Executive Support",
-        email: "admin@creo.agency",
-        is_super_admin: true,
-        online: true,
-      },
-      {
-        id: "00000000-0000-0000-0000-0000000000b1",
-        name: "Sarah Connor (Lead - Pod B)",
-        role: "Team Lead & Account Director",
-        email: "lead.beta@creo.agency",
-        online: true,
-      },
-      {
-        id: "00000000-0000-0000-0000-0000000000b2",
-        name: "David Kim (Editor - Pod B)",
-        role: "Lead Video Editor (Reels & Motion)",
-        email: "editor.beta@creo.agency",
-        online: true,
-      },
-      {
-        id: "00000000-0000-0000-0000-0000000000b3",
-        name: "Elena Rostova (Designer - Pod B)",
-        role: "Lead Graphic Designer (Posters & Carousels)",
-        email: "designer.beta@creo.agency",
-        online: true,
-      },
-    ];
-  }, []);
-
-  const contactsList: ChatContact[] = useMemo(() => {
-    if (serverContacts && serverContacts.length > 0) {
-      return serverContacts;
-    }
-    return fallbackContacts;
-  }, [serverContacts, fallbackContacts]);
+  const contactsList = useMemo(() => contactsQuery.data ?? [], [contactsQuery.data]);
 
   // Active contact selection
-  const [activeContactId, setActiveContactId] = useState<string>(() => {
-    if (urlDm) {
-      const match = contactsList.find(
-        (c) =>
-          c.id === urlDm ||
-          c.name.toLowerCase().includes(urlDm.toLowerCase()) ||
-          (urlDm.toLowerCase() === "super-admin" && c.is_super_admin)
-      );
-      if (match) return match.id;
-    }
-    return contactsList[0]?.id || "646f6d6e-3479-42c5-b275-9fcd212453f6";
-  });
+  const [activeContactId, setActiveContactId] = useState("");
+  const appliedUrlDm = useRef<string | null>(null);
 
-  // Sync activeContactId if URL param changes or contacts load
+  // Resolve deep links only to real contacts returned by the server.
   useEffect(() => {
-    if (urlDm && contactsList.length > 0) {
-      const match = contactsList.find(
-        (c) =>
-          c.id === urlDm ||
-          c.name.toLowerCase().includes(urlDm.toLowerCase()) ||
-          (urlDm.toLowerCase() === "super-admin" && c.is_super_admin)
-      );
-      if (match) {
-        setActiveContactId(match.id);
+    if (contactsQuery.isPending) return;
+
+    if (appliedUrlDm.current !== urlDm) {
+      appliedUrlDm.current = urlDm;
+      const match = urlDm
+        ? contactsList.find(
+            (contact) =>
+              contact.id === urlDm ||
+              (urlDm === "super-admin" && contact.is_super_admin),
+          )
+        : undefined;
+      if (urlDm) {
+        setActiveContactId(match?.id ?? "");
+        return;
       }
-    } else if (!activeContactId && contactsList.length > 0 && contactsList[0]?.id) {
-      setActiveContactId(contactsList[0].id);
     }
-  }, [urlDm, contactsList, activeContactId]);
+
+    if (urlDm) return;
+
+    if (!contactsList.some((contact) => contact.id === activeContactId)) {
+      setActiveContactId(contactsList[0]?.id ?? "");
+    }
+  }, [urlDm, contactsQuery.isPending, contactsList, activeContactId]);
 
   const activeContact = useMemo(() => {
-    return (
-      contactsList.find((c) => c.id === activeContactId) ||
-      contactsList[0] || {
-        id: "646f6d6e-3479-42c5-b275-9fcd212453f6",
-        name: "Creo Super Admin",
-        role: "Super Admin & Executive Support",
-        is_super_admin: true,
-        online: true,
-      }
-    );
+    return contactsList.find((contact) => contact.id === activeContactId) ?? null;
   }, [contactsList, activeContactId]);
+  const superAdminContact = useMemo(
+    () => contactsList.find((contact) => contact.is_super_admin) ?? null,
+    [contactsList],
+  );
 
   // Mobile view toggle ('channels' or 'chat')
   const [mobileView, setMobileView] = useState<"channels" | "chat">("chat");
@@ -276,27 +236,28 @@ export function SlackChatPage() {
 
   // 1-on-1 Messages Query (Live Polling every 1000ms with background sync)
   const { data: serverMessages = [], refetch: refetchMessages } = useQuery<ChatMessage[]>({
-    queryKey: ["chat_messages", activeContact?.id],
+    queryKey: ["chat_messages", activeContact?.id ?? null],
     queryFn: async () => {
-      if (!activeContact?.id) return [];
-      const res = await request<any[]>(`/api/v1/chat/messages?other_user_id=${activeContact.id}`);
+      const contact = activeContact;
+      if (!contact) return [];
+      const res = await request<any[]>(`/api/v1/chat/messages?other_user_id=${contact.id}`);
       return (res || []).map((m: any) => {
         const isSelf = m.sender_id === user?.id;
-        const senderName = isSelf ? (user?.full_name || "You") : (m.sender_name || activeContact.name);
+        const senderName = isSelf ? (user?.full_name || "You") : (m.sender_name || contact.name);
         const senderRole = isSelf
           ? (user?.role === "super_admin" || user?.role === "admin"
               ? "Super Admin"
               : user?.role === "client"
               ? (user?.company_name || "Client")
               : "Specialist")
-          : activeContact.role;
+          : contact.role;
 
         return {
           id: m.id,
           sender: senderName,
           role: senderRole,
           avatar: (senderName || "U").slice(0, 2).toUpperCase(),
-          avatarBg: isSelf ? "bg-[#7FA0D6]" : (activeContact.is_super_admin ? "bg-amber-500" : "bg-[#64748B]"),
+          avatarBg: isSelf ? "bg-[#7FA0D6]" : (contact.is_super_admin ? "bg-amber-500" : "bg-[#64748B]"),
           content: m.message,
           timestamp: m.created_at
             ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -305,15 +266,17 @@ export function SlackChatPage() {
         };
       });
     },
-    enabled: !!activeContact?.id,
-    refetchInterval: 1000,
+    enabled: canUseChat && !!activeContact?.id,
+    refetchInterval: canUseChat && activeContact ? 1000 : false,
     refetchIntervalInBackground: true,
     staleTime: 0,
   });
 
   // WebSocket Live Real-Time Connection
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !canUseChat) return;
+    const token = getAuthToken();
+    if (!token) return;
 
     let ws: WebSocket | null = null;
     let pingInterval: any = null;
@@ -321,7 +284,7 @@ export function SlackChatPage() {
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const host = window.location.host;
-      ws = new WebSocket(`${protocol}//${host}/api/v1/chat/ws/${user.id}`);
+      ws = new WebSocket(`${protocol}//${host}/api/v1/chat/ws/${user.id}`, ["creo-chat", token]);
 
       ws.onopen = () => {
         pingInterval = setInterval(() => {
@@ -354,7 +317,7 @@ export function SlackChatPage() {
       if (pingInterval) clearInterval(pingInterval);
       if (ws) ws.close();
     };
-  }, [user?.id, queryClient, refetchMessages]);
+  }, [user?.id, canUseChat, queryClient, refetchMessages]);
 
   // BroadcastChannel multi-tab instant sync
   useEffect(() => {
@@ -381,7 +344,8 @@ export function SlackChatPage() {
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!messageText.trim() || !activeContact?.id) return;
+    const contact = activeContact;
+    if (!messageText.trim() || !contact) return;
 
     const text = messageText.trim();
     setMessageText("");
@@ -391,13 +355,13 @@ export function SlackChatPage() {
       await request("/api/v1/chat/messages", {
         method: "POST",
         body: JSON.stringify({
-          recipient_id: activeContact.id,
+          recipient_id: contact.id,
           message: text,
           thread_type: "direct",
         }),
       });
 
-      queryClient.invalidateQueries({ queryKey: ["chat_messages", activeContact.id] });
+      queryClient.invalidateQueries({ queryKey: ["chat_messages", contact.id] });
       refetchMessages();
 
       try {
@@ -444,6 +408,8 @@ export function SlackChatPage() {
   const handleConfirmAssignTask = async (e: React.FormEvent) => {
     e.preventDefault();
     setAssignTaskModalOpen(false);
+    const contact = activeContact;
+    if (!contact) return;
 
     const resolvedTitle = taskTitle || "Priority Sprint Request";
     const taskContent = `⚡ New Sprint Task: **${resolvedTitle}**\n- Priority: ${taskPriority}\n- Due: ${taskDeadline}${taskScope ? `\n- Scope: ${taskScope}` : ""}`;
@@ -452,13 +418,13 @@ export function SlackChatPage() {
       await request("/api/v1/chat/messages", {
         method: "POST",
         body: JSON.stringify({
-          recipient_id: activeContact.id,
+          recipient_id: contact.id,
           message: taskContent,
           thread_type: "direct",
         }),
       });
       refetchMessages();
-      showToast(`Task "${resolvedTitle}" sent directly to ${activeContact.name}!`);
+      showToast(`Task "${resolvedTitle}" sent directly to ${contact.name}!`);
       setTaskTitle("");
       setTaskScope("");
     } catch (err) {
@@ -466,13 +432,38 @@ export function SlackChatPage() {
     }
   };
 
+  if (isClient && gate.error) {
+    return (
+      <div role="alert" className="p-6 text-sm text-[#BCCCE6]">
+        Could not verify onboarding status. <button type="button" className="underline" onClick={() => void gate.refetch()}>Retry</button>
+      </div>
+    );
+  }
+
+  if (isClient && !gate.isReady) {
+    return <CreoLoadingScreen fullScreen={false} label="Checking workspace access" className="min-h-[45vh]" />;
+  }
+
+  if (isClient && !gate.isComplete) {
+    return (
+      <div className="flex flex-1 min-h-0 flex-col py-2 sm:py-4">
+        <ResumeOnboardingBanner variant="compact" />
+        <div className="flex flex-1 items-center justify-center py-6 sm:py-10">
+          <SubscriptionLockedState
+            title="Direct Chat Locked"
+            description="Your private chat with the assigned creative pod unlocks after you complete workspace setup. Resume setup above to continue where you left off."
+            showResumeAction={false}
+            showSupportAction={false}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-[calc(100vh-5.5rem)] min-h-[550px] overflow-hidden -mx-4 sm:-mx-6 -my-6 sm:-my-8">
+    <div className={`flex flex-col ${isClient ? "flex-1 min-h-0" : "h-[calc(100vh-5.5rem)] min-h-[550px]"} overflow-hidden -mx-4 sm:-mx-6 -my-6 sm:-my-8`}>
       {/* ── Top Header Context Bar ── */}
-      <AdminTopHeader
-        title="Direct Chat Hub"
-        activeTab="Direct Chat"
-      />
+      {!isClient && <AdminTopHeader title="Direct Chat Hub" activeTab="Direct Chat" />}
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -546,15 +537,12 @@ export function SlackChatPage() {
           </div>
 
           {/* Quick Message Super Admin Button for Clients (Glassmorphism) */}
-          {isClient && (
+          {isClient && superAdminContact && (
             <div className="px-3 pt-3 shrink-0">
               <button
                 onClick={() => {
-                  const sa = contactsList.find((c) => c.is_super_admin) || contactsList[0];
-                  if (sa) {
-                    setActiveContactId(sa.id);
-                    setMobileView("chat");
-                  }
+                  setActiveContactId(superAdminContact.id);
+                  setMobileView("chat");
                 }}
                 className={`w-full py-2.5 px-3 rounded-2xl flex items-center justify-between text-xs font-black transition-all cursor-pointer shadow-md ${
                   activeContact?.is_super_admin
@@ -607,9 +595,15 @@ export function SlackChatPage() {
               <span className="text-[#97A0B3]">{filteredContacts.length}</span>
             </div>
 
-            {filteredContacts.length === 0 ? (
+            {contactsQuery.isError ? (
+              <div role="alert" className="px-3 py-6 text-center text-[#97A0B3] text-xs">
+                Could not load your assigned contacts. <button type="button" className="underline" onClick={() => void contactsQuery.refetch()}>Retry</button>
+              </div>
+            ) : contactsQuery.isPending ? (
+              <div role="status" className="px-3 py-6 text-center text-[#97A0B3] text-xs">Loading assigned contacts…</div>
+            ) : filteredContacts.length === 0 ? (
               <div className="px-3 py-6 text-center text-[#97A0B3] text-xs">
-                No matching contacts
+                {contactSearch ? "No matching contacts" : "No assigned teammates are available yet. Contact support if this continues."}
               </div>
             ) : (
               filteredContacts.map((contact) => {
@@ -672,7 +666,7 @@ export function SlackChatPage() {
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                      <span className={`size-2 rounded-full ${isSelected ? "bg-emerald-400 ring-2 ring-emerald-400/30 animate-pulse" : "bg-emerald-400/70"}`} />
+                      <span className={`text-[9px] font-semibold ${isSA ? "text-amber-300" : "text-[#7FA0D6]"}`}>{isSA ? "Support" : "Assigned"}</span>
                       <ChevronRight className="size-3.5 opacity-40 md:hidden text-[#97A0B3]" />
                     </div>
                   </button>
@@ -739,18 +733,19 @@ export function SlackChatPage() {
                       <Shield className="size-3" />
                       SUPER ADMIN
                     </span>
-                  ) : (
+                  ) : activeContact ? (
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#0B111C] text-[#7FA0D6] shrink-0">
                       Direct 1-on-1
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#0B111C] text-[#97A0B3] shrink-0">
+                      No contact selected
                     </span>
                   )}
                 </div>
                 <p className="text-[11px] sm:text-xs text-[#97A0B3] truncate flex items-center gap-2">
-                  <span>{activeContact?.role}</span>
-                  <span className="text-emerald-400 flex items-center gap-1">
-                    <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Online & Active
-                  </span>
+                  <span>{activeContact?.role || "Select a contact from your assigned list"}</span>
+                  {activeContact && <span className="text-[#7FA0D6]">{activeContact.is_super_admin ? "Executive support" : "Assigned to your workspace"}</span>}
                 </p>
               </div>
             </div>
@@ -767,13 +762,13 @@ export function SlackChatPage() {
                 </button>
               )}
 
-              <button
+              {activeContact && <button
                 onClick={() => setCallModalOpen(true)}
                 className="size-8 sm:size-9 rounded-xl bg-[#0B111C] hover:bg-[#2A3446] text-[#F1F5F9] border border-[#2A3446] flex items-center justify-center cursor-pointer transition-colors"
                 title="Start 1-on-1 Call"
               >
                 <Video className="size-4" />
-              </button>
+              </button>}
             </div>
           </div>
 
@@ -782,7 +777,7 @@ export function SlackChatPage() {
             ref={messagesContainerRef}
             className="flex-1 min-h-0 max-h-full overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 bg-[#0B111C]/90 backdrop-blur-xl flex flex-col"
           >
-            {serverMessages.length === 0 ? (
+            {!activeContact || serverMessages.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-auto">
                 <div
                   className={`size-16 rounded-3xl flex items-center justify-center mb-4 border ${
@@ -798,21 +793,33 @@ export function SlackChatPage() {
                   )}
                 </div>
                 <h3 className="text-base font-black text-white">
-                  {activeContact?.is_super_admin
+                  {!activeContact
+                    ? contactsQuery.isPending
+                      ? "Loading assigned contacts"
+                      : contactsQuery.isError
+                        ? "Assigned contacts unavailable"
+                        : "No assigned teammate selected"
+                    : activeContact.is_super_admin
                     ? "Direct Channel with Creo Super Administration"
-                    : `Direct Conversation with ${activeContact?.name}`}
+                    : `Direct Conversation with ${activeContact.name}`}
                 </h3>
                 <p className="text-xs text-[#97A0B3] max-w-md mt-1.5 leading-relaxed">
-                  {activeContact?.is_super_admin
+                  {!activeContact
+                    ? contactsQuery.isPending
+                      ? "Your assigned team contacts are loading."
+                      : contactsQuery.isError
+                        ? "Retry the contact list to load your assigned chat contacts."
+                        : "Your chat list only includes your assigned team and executive support contact."
+                    : activeContact.is_super_admin
                     ? "This is your private, direct thread with Creo Executive Super Administration. Inquire about your creative pod, retainer adjustments, SLA escalations, or custom requests."
-                    : `This is the start of your direct 1-on-1 thread with ${activeContact?.name}. Drop project feedback, creative directions, or collaborate in real time.`}
+                    : `This is the start of your direct 1-on-1 thread with ${activeContact.name}. Drop project feedback, creative directions, or collaborate in real time.`}
                 </p>
-                <div className="mt-4 flex items-center gap-2">
+                {activeContact && <div className="mt-4 flex items-center gap-2">
                   <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#161F2D] text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
                     <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
                     Live 2-Way Sync Active
                   </span>
-                </div>
+                </div>}
               </div>
             ) : (
               serverMessages.map((msg) => {
@@ -1004,31 +1011,34 @@ export function SlackChatPage() {
               <div className="relative flex items-center">
                 <input
                   type="text"
+                  disabled={!activeContact}
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  placeholder={`Message ${activeContact?.name || "Direct Message"}... (Enter to send)`}
-                  className="w-full bg-[#0B111C] border border-[#2A3446] rounded-2xl pl-4 pr-32 py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-[#7FA0D6] transition-colors"
+                  placeholder={activeContact ? `Message ${activeContact.name}... (Enter to send)` : "Select an assigned contact to start a chat"}
+                  className="w-full bg-[#0B111C] border border-[#2A3446] rounded-2xl pl-4 pr-32 py-3 text-xs sm:text-sm text-white focus:outline-none focus:border-[#7FA0D6] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 <div className="absolute right-2 flex items-center gap-1">
                   <button
                     type="button"
+                    disabled={!activeContact}
                     onClick={() => setShowEmojiPicker((prev) => !prev)}
-                    className="p-1.5 text-[#97A0B3] hover:text-[#7FA0D6] rounded-lg transition-colors cursor-pointer"
+                    className="p-1.5 text-[#97A0B3] hover:text-[#7FA0D6] rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                     title="Add Emoji"
                   >
                     <Smile className="size-4" />
                   </button>
                   <button
                     type="button"
+                    disabled={!activeContact}
                     onClick={() => showToast("Attachment upload ready", "info")}
-                    className="p-1.5 text-[#97A0B3] hover:text-white rounded-lg transition-colors cursor-pointer"
+                    className="p-1.5 text-[#97A0B3] hover:text-white rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                     title="Attach file"
                   >
                     <Paperclip className="size-4" />
                   </button>
                   <button
                     type="submit"
-                    disabled={!messageText.trim()}
+                    disabled={!activeContact || !messageText.trim()}
                     className="p-2 rounded-xl bg-[#7FA0D6] hover:bg-white text-[#0B111C] disabled:opacity-40 transition cursor-pointer font-bold"
                   >
                     <Send className="size-4" />

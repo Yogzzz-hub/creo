@@ -562,6 +562,7 @@ export function App() {
                 <Route path="support/:ticketId" element={<ClientTicketDetailPage />} />
 
                 <Route path="account" element={<PortalAccountPage />} />
+                <Route path="account/instagram" element={<PortalAccountPage defaultTab="instagram" />} />
                 <Route path="brand" element={<PortalBrandDNAPage />} />
                 <Route path="brand-dna" element={<PortalBrandDNAPage />} />
                 <Route path="library" element={<PortalLibraryPage />} />

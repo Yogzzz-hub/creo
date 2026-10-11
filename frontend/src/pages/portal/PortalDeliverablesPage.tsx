@@ -1,3 +1,4 @@
+import { PublishingPanel } from "../../components/ops/PublishingPanel";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -224,10 +225,12 @@ export function PortalDeliverablesPage() {
     queryClient.invalidateQueries({ queryKey: ["portal-dashboard"] });
     queryClient.invalidateQueries({ queryKey: ["portal-dashboard-deliverables"] });
     queryClient.invalidateQueries({ queryKey: ["portal-library"] });
+    queryClient.invalidateQueries({ queryKey: ["publishing"] });
   };
 
+  const [publishingReview, setPublishingReview] = useState<{ id: string; fingerprint: string } | null>(null);
   const approveMutation = useMutation({
-    mutationFn: (id: string) => approveDeliverable(id, clientId, crypto.randomUUID()),
+    mutationFn: (id: string) => approveDeliverable(id, clientId, crypto.randomUUID(), publishingReview?.id === id ? publishingReview.fingerprint : undefined),
     onSuccess: () => {
       refresh();
       setActionError(null);
@@ -451,6 +454,7 @@ export function PortalDeliverablesPage() {
                         : "In your content calendar"}
                   </p>
                   <h2 className="text-2xl font-normal text-white break-words">{shownItem.title}</h2>
+                  <PublishingPanel key={shownItem.id} deliverableId={shownItem.id} onReview={setPublishingReview} />
                   <div className="mt-2"><StatusBadge item={shownItem} /></div>
                 </div>
 

@@ -1,6 +1,7 @@
 """Models package exporting all ORM models."""
 
 from app.models.auth import IdempotencyKey, RefreshToken
+from app.models.publishing import InstagramOAuth, PublishingJob
 from app.models.billing import (
     PaymentEvent,
     Plan,
@@ -72,6 +73,8 @@ __all__ = [
     "Deliverable",
     "ContentCalendar",
     "ClientAssignment",
+    "InstagramOAuth",
+    "PublishingJob",
     # Calendar Engine
     "ClientCycle",
     "ShootDay",

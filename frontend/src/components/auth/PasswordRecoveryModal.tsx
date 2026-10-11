@@ -101,6 +101,8 @@ export function PasswordRecoveryModal({
 	const field =
 		"w-full bg-[#0A0F18] border border-[#222F44] rounded-xl px-3 py-3 text-sm text-white focus:outline-none focus:border-[#7FA0D6]";
 	const label = "block text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] mb-1.5";
+	const secondaryButton =
+		"inline-flex min-h-10 items-center justify-center rounded-xl border border-[#2A3446] bg-[#0A0F18] px-3.5 py-2 text-sm font-semibold text-[#BCCCE6] transition-colors hover:border-[#7FA0D6]/60 hover:bg-[#1A2433] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] disabled:cursor-not-allowed disabled:opacity-45";
 
 	const title =
 		step === "password" && !hasPassword
@@ -123,7 +125,7 @@ export function PasswordRecoveryModal({
 					: `You can now sign in with your email and password${hasGoogle ? " or with Google" : ""}.`;
 
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+		<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B111C]/80 backdrop-blur-md">
 			<section
 				role="dialog"
 				aria-modal="true"
@@ -255,17 +257,22 @@ export function PasswordRecoveryModal({
 					</form>
 				)}
 				{step === "code" && (
-					<div className="flex flex-wrap gap-4 text-sm">
-						<button type="button" disabled={busy || cooldown > 0} onClick={() => void send()}>
+					<div className="flex flex-wrap gap-2">
+						<button
+							type="button"
+							disabled={busy || cooldown > 0}
+							onClick={() => void send()}
+							className={secondaryButton}
+						>
 							{cooldown ? `Resend in ${cooldown}s` : "Resend code"}
 						</button>
-						<button type="button" disabled={busy} onClick={startOver}>
+						<button type="button" disabled={busy} onClick={startOver} className={secondaryButton}>
 							Change email
 						</button>
 					</div>
 				)}
 				{step === "password" && (
-					<button type="button" disabled={busy} onClick={startOver} className="text-sm text-[#97A0B3]">
+					<button type="button" disabled={busy} onClick={startOver} className={secondaryButton}>
 						Start over
 					</button>
 				)}
@@ -274,7 +281,7 @@ export function PasswordRecoveryModal({
 						type="button"
 						disabled={busy}
 						onClick={onClose}
-						className="block text-sm text-[#97A0B3]"
+						className={secondaryButton}
 					>
 						Cancel
 					</button>
