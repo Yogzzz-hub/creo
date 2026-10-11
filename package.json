@@ -2,14 +2,8 @@
   "name": "creo",
   "version": "0.1.0",
   "private": true,
-  "workspaces": [
-    "frontend"
-  ],
   "scripts": {
-    "build": "npm run build --workspace=frontend",
+    "build": "cd frontend && npm install && npm run build",
     "deploy": "wrangler deploy"
-  },
-  "devDependencies": {
-    "wrangler": "^3.114.17"
   }
 }
