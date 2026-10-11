@@ -3716,11 +3716,16 @@ async def get_pod_dashboard(
             # Check by actor user_id matching any staff_profile lead
             selected_pod = POD_DEFINITIONS[1]  # Default to Pod Beta (Sarah Connor)
     else:
-        # Admin or super admin
+        # Admin, super admin, or creative team member
         if pod:
             pod_key = pod.lower().replace("pod-", "").replace("pod ", "").strip()
             for pdef in POD_DEFINITIONS:
                 if pdef["key"] == pod_key or pdef["id"] == pod or pdef["letter"].lower() == pod_key:
+                    selected_pod = pdef
+                    break
+        if not selected_pod:
+            for pdef in POD_DEFINITIONS:
+                if actor_email in (pdef.get("lead_email"), pdef.get("lead_alias_email"), pdef.get("editor_email"), pdef.get("designer_email")):
                     selected_pod = pdef
                     break
         if not selected_pod:
