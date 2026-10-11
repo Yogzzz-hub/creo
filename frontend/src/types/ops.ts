@@ -25,6 +25,7 @@ export interface AdminDashboardData {
 export interface ClientRosterItem {
   client_id: string;
   email: string;
+  full_name?: string | null;
   account_status: string;
   company_name: string | null;
   instagram_username: string | null;

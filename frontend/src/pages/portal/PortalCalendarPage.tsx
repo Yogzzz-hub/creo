@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router";
 import {
@@ -78,7 +79,7 @@ const DEFAULT_TYPE_CONFIG: TypeConfig = {
 const TYPE_CONFIG: Record<string, TypeConfig> = {
   reel: {
     label: "Reel",
-    icon: Video,
+    icon: Film,
     badgeBg: "bg-purple-600",
     badgeText: "text-white",
     border: "border-purple-500/30",
@@ -86,9 +87,10 @@ const TYPE_CONFIG: Record<string, TypeConfig> = {
     pillBg: "bg-purple-500/15 text-purple-400 border border-purple-500/30",
   },
   poster: DEFAULT_TYPE_CONFIG,
+  static_post: DEFAULT_TYPE_CONFIG,
   story: {
     label: "Story",
-    icon: Layers,
+    icon: Sparkles,
     badgeBg: "bg-amber-600",
     badgeText: "text-white",
     border: "border-amber-500/30",
@@ -384,10 +386,10 @@ export function PortalCalendarPage() {
   return (
     <div className="flex flex-col gap-6 w-full max-w-[1440px] mx-auto px-4 md:px-8 pb-10 font-sans text-white bg-[#0B111C]">
       {/* ── Bento Grid Layout ──────────────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">
         
         {/* Left Column: Calendar View (xl:col-span-2) */}
-        <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-2 sm:p-4 lg:p-6 min-w-0 flex-col">
+        <div className="flex xl:col-span-2 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-4 sm:p-6 lg:p-7 min-w-0 flex-col h-full">
           {/* Calendar Header */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-3">
@@ -420,12 +422,20 @@ export function PortalCalendarPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2 mb-4 text-xs text-slate-300" aria-label="Monthly content totals">
+          <div className="flex flex-wrap items-center gap-2 mb-4 text-xs text-slate-300 min-h-[30px]" aria-label="Monthly content totals">
             {["reel", "poster", "story", "carousel"].map((kind) => {
-              const count = monthEntries.filter(entry => entry.type === kind).length;
-              return count > 0 ? <span key={kind} className="rounded-lg border border-[#2A3446] px-2 py-1">{count} {getTypeConfig(kind).label}{count > 1 ? "s" : ""}</span> : null;
+              const count = monthEntries.filter(entry => (entry.type || entry.slot_kind) === kind).length;
+              const config = getTypeConfig(kind);
+              const Icon = config.icon;
+              const pluralLabel = count > 1 ? (kind === "story" ? "Stories" : `${config.label}s`) : config.label;
+              return count > 0 ? (
+                <span key={kind} className="inline-flex items-center gap-1.5 rounded-lg border border-[#2A3446] bg-[#0B111C]/60 px-2.5 py-1 font-semibold text-slate-200">
+                  <Icon className="size-3.5 shrink-0 stroke-[2.2] text-[#7FA0D6]" />
+                  <span>{count} {pluralLabel}</span>
+                </span>
+              ) : null;
             })}
-            <span className="px-2 py-1">{monthEntries.length} planned this month</span>
+            <span className="px-2 py-1 text-[#97A0B3]">{monthEntries.length} planned this month</span>
           </div>
           {scheduleMessage && <p role="status" className="mb-4 text-sm text-slate-300">{scheduleMessage}</p>}
 
@@ -474,16 +484,26 @@ export function PortalCalendarPage() {
                       {day}
                     </span>
                     
-                    <div className="mt-auto flex flex-col gap-1.5 w-full">
+                    <div className="mt-auto flex flex-col gap-1 w-full">
                       {Object.entries(dayEntries.reduce<Record<string, number>>((counts, entry) => {
-                        const label = getTypeConfig(entry.type).label;
-                        counts[label] = (counts[label] || 0) + 1;
+                        const kind = entry.type || entry.slot_kind || "poster";
+                        counts[kind] = (counts[kind] || 0) + 1;
                         return counts;
-                      }, {})).map(([label, count]) => (
-                        <span key={label} className="rounded-md bg-blue-500/15 text-[#BCCCE6] px-0.5 sm:px-1 py-1 text-[9px] sm:text-[11px] font-bold leading-tight break-words" title={`${count} ${label}${count > 1 ? "s" : ""}`}>
-                          {count} {label}{count > 1 ? "s" : ""}
-                        </span>
-                      ))}
+                      }, {})).map(([kind, count]) => {
+                        const config = getTypeConfig(kind);
+                        const Icon = config.icon;
+                        const pluralLabel = count > 1 ? (kind === "story" ? "Stories" : `${config.label}s`) : config.label;
+                        return (
+                          <span
+                            key={kind}
+                            className="inline-flex items-center gap-1 rounded-md bg-blue-500/15 text-[#BCCCE6] px-1 sm:px-1.5 py-0.5 sm:py-1 text-[9px] sm:text-[11px] font-bold leading-tight truncate hover:bg-blue-500/25 transition-colors border border-blue-500/20"
+                            title={`${count} ${pluralLabel}`}
+                          >
+                            <Icon className="size-2.5 sm:size-3 shrink-0 stroke-[2.2] text-[#7FA0D6]" />
+                            <span className="truncate">{count} {pluralLabel}</span>
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 );
@@ -493,9 +513,9 @@ export function PortalCalendarPage() {
         </div>
 
         {/* Right Column: Dispatch Queue (xl:col-span-1) */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-6 lg:p-8 flex flex-col min-h-[500px]">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-[18px] font-black text-white tracking-tight">
+        <div className="xl:col-span-1 bg-[#161F2D] border border-[#2A3446] rounded-[2rem] shadow-[0_4px_24px_rgba(0,0,0,0.2)] p-4 sm:p-6 lg:p-7 flex flex-col h-full min-w-0">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[20px] font-black text-white tracking-tight">
               {selectedDate ? `Task Queue for ${selectedDate}th` : "Today's Dispatch Queue"}
             </h3>
             {(() => {
@@ -509,14 +529,30 @@ export function PortalCalendarPage() {
             })()}
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+          {(() => {
+            const activeDay = selectedDate || (isCurrentMonth ? today.getDate() : 1);
+            const tasks = getDayEntries(activeDay);
+            return (
+              <div className="flex flex-wrap items-center gap-2 mb-4 text-xs text-slate-300 min-h-[30px]" aria-label="Daily deliverables summary">
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#2A3446] px-2.5 py-1 font-semibold text-[#7FA0D6] bg-[#0B111C]/60">
+                  <Sparkles className="size-3.5 shrink-0 stroke-[2.2] text-[#7FA0D6]" />
+                  <span>{tasks.length} {tasks.length === 1 ? 'Deliverable' : 'Deliverables'}</span>
+                </span>
+                <span className="px-2 py-1 text-[#97A0B3]">
+                  {new Date(currentYear, currentMonth, activeDay).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
+                </span>
+              </div>
+            );
+          })()}
+
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1 min-h-0">
             {(() => {
               const activeDay = selectedDate || (isCurrentMonth ? today.getDate() : 1);
               let tasks = getDayEntries(activeDay);
               
               if (tasks.length === 0) {
                 return (
-                  <div className="flex flex-col items-center justify-center min-h-[220px] p-8 text-[#97A0B3] text-sm font-bold bg-[#0B111C]/60 rounded-[1.5rem] border-2 border-dashed border-[#2A3446] text-center shadow-inner space-y-2">
+                  <div className="flex flex-col items-center justify-center flex-1 min-h-[260px] h-full p-8 text-[#97A0B3] text-sm font-bold bg-[#0B111C]/60 rounded-[1.5rem] border-2 border-dashed border-[#2A3446] text-center shadow-inner space-y-2">
                     <div className="w-10 h-10 rounded-full bg-[#161F2D] border border-[#2A3446] flex items-center justify-center text-[#7FA0D6] mb-1">
                       <Clock className="w-5 h-5" />
                     </div>
@@ -539,11 +575,24 @@ export function PortalCalendarPage() {
                     onClick={() => openEntryModal(entry)}
                     className="p-5 rounded-[1.5rem] border border-[#2A3446] hover:border-[#7FA0D6]/50 bg-[#0B111C]/70 hover:bg-[#0B111C] transition-all cursor-pointer shadow-xs group space-y-3"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black text-[#7FA0D6] uppercase tracking-wider">
-                        {podLabel}
-                      </span>
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${isApproved ? "bg-blue-600/30 text-[#BCCCE6] border-blue-500/30" : "bg-blue-950/80 text-blue-300 border-blue-700/50"}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {(() => {
+                          const kind = entry.type || entry.slot_kind || "poster";
+                          const cfg = getTypeConfig(kind);
+                          const CardIcon = cfg.icon;
+                          return (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-500/15 text-[#BCCCE6] border border-blue-500/30 shrink-0">
+                              <CardIcon className="size-3 shrink-0 stroke-[2.2] text-[#7FA0D6]" />
+                              <span>{cfg.label}</span>
+                            </span>
+                          );
+                        })()}
+                        <span className="text-[10px] font-black text-[#7FA0D6] uppercase tracking-wider truncate">
+                          {podLabel}
+                        </span>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border shrink-0 ${isApproved ? "bg-blue-600/30 text-[#BCCCE6] border-blue-500/30" : "bg-blue-950/80 text-blue-300 border-blue-700/50"}`}>
                          {statusLabel}
                       </span>
                     </div>
@@ -573,22 +622,26 @@ export function PortalCalendarPage() {
         </div>
       </div>
       {/* ── Creative Intelligence Blueprint & Deliverable Review Modal ────── */}
-      {previewEntry && (
+      {previewEntry && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center bg-[#0B111C]/80 backdrop-blur-md p-3 sm:p-6 overflow-y-auto"
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200"
           onClick={() => setPreviewEntry(null)}
         >
           <div
-            className="w-full max-w-2xl max-h-[92vh] rounded-3xl bg-[#161F2D] border border-[#2A3446] text-white shadow-2xl overflow-y-auto animate-page-in my-auto"
+            className="w-full max-w-2xl max-h-[90vh] rounded-3xl bg-[#161F2D] border border-[#2A3446] text-white shadow-2xl overflow-y-auto flex flex-col relative m-auto animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
             <div className="sticky top-0 bg-[#161F2D]/95 backdrop-blur-sm z-10 flex items-center justify-between p-4 sm:p-5 border-b border-[#2A3446]">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${
                   getTypeConfig(previewEntry.type).pillBg
                 }`}>
-                  {previewEntry.format_label || "Deliverable"}
+                  {(() => {
+                    const ModalIcon = getTypeConfig(previewEntry.type).icon;
+                    return <ModalIcon className="size-3.5 shrink-0 stroke-[2.2]" />;
+                  })()}
+                  <span>{previewEntry.format_label || getTypeConfig(previewEntry.type).label}</span>
                 </span>
 
                 {previewEntry.slot_strategy === "flex" || previewEntry.slot_strategy === "swapped" ? (
@@ -684,7 +737,7 @@ export function PortalCalendarPage() {
                       value={flexTheme}
                       onChange={(e) => setFlexTheme(e.target.value)}
                       placeholder="e.g. Breaking AI regulation impact or flash founder update..."
-                      className="flex-1 text-xs px-3 py-2 rounded-xl border border-amber-300 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      className="flex-1 text-xs px-3 py-2 rounded-xl border border-amber-500/40 bg-[#0B111C] text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                     <button
                       type="button"
@@ -701,10 +754,10 @@ export function PortalCalendarPage() {
 
               {/* Topic and Publication Details */}
               <div>
-                <h3 className="text-lg font-black text-[#0B111C]">
+                <h3 className="text-lg font-black text-white">
                   {previewEntry.topic}
                 </h3>
-                <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                <p className="text-xs text-[#97A0B3] mt-1 flex items-center gap-1.5">
                   <Clock className="size-3.5 text-[#7FA0D6]" />
                   <span>Scheduled Publication: {previewEntry.date} at {previewEntry.scheduled_time || "11:00 AM"}</span>
                 </p>
@@ -789,10 +842,10 @@ export function PortalCalendarPage() {
                             )}
                           </div>
 
-                          <p className="text-xs font-bold text-[#0B111C] leading-snug">
+                          <p className="text-xs font-bold text-white leading-snug">
                             &ldquo;{hook.text}&rdquo;
                           </p>
-                          <p className="text-[11px] text-slate-500 mt-1 italic">
+                          <p className="text-[11px] text-[#97A0B3] mt-1 italic">
                             Why it works: {hook.rationale}
                           </p>
                         </div>
@@ -917,7 +970,8 @@ export function PortalCalendarPage() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

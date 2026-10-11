@@ -79,14 +79,17 @@ async def create_order(
     )
     active_sub = (await db.execute(active_sub_stmt)).scalar_one_or_none()
     if active_sub:
-        raise Conflict(
-            "You already have an active subscription retainer. You can select or change plans after your current billing cycle expires.",
-            code="ACTIVE_SUBSCRIPTION_EXISTS",
-            details={
-                "current_subscription_id": str(active_sub.id),
-                "current_period_end": active_sub.current_period_end.isoformat(),
-            },
-        )
+        # If client already has the exact same plan active and we are in production, prevent duplicate purchase
+        is_prod = getattr(settings, "ENVIRONMENT", "development") in ("production", "prod")
+        if active_sub.plan_id == plan.id and is_prod:
+            raise Conflict(
+                "You already have this active subscription retainer. You can upgrade or change plans after your current billing cycle expires.",
+                code="ACTIVE_SUBSCRIPTION_EXISTS",
+                details={
+                    "current_subscription_id": str(active_sub.id),
+                    "current_period_end": active_sub.current_period_end.isoformat(),
+                },
+            )
 
     sub_id = uuid.uuid4()
 
@@ -140,6 +143,16 @@ async def _activate_subscription(db: AsyncSession, subscription: Subscription) -
     user = (await db.execute(user_stmt)).scalar_one_or_none()
     if user:
         user.account_status = AccountStatus.ACTIVE
+
+    # Supersede any previous active subscriptions for this client when switching/upgrading plans
+    prev_subs_stmt = select(Subscription).where(
+        Subscription.client_id == subscription.client_id,
+        Subscription.id != subscription.id,
+        Subscription.status.in_([SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING]),
+    )
+    prev_subs = (await db.execute(prev_subs_stmt)).scalars().all()
+    for prev in prev_subs:
+        prev.status = SubscriptionStatus.CANCELED
 
     plan_stmt = select(Plan).where(Plan.id == subscription.plan_id)
     plan = (await db.execute(plan_stmt)).scalar_one_or_none()

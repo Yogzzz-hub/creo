@@ -362,7 +362,7 @@ async def verify_registration(
 
     # Check agency limits and status
     from app.models.tenant import Agency
-    from sqlalchemy import text
+    from sqlalchemy import select, text
     agency_id_str = await db.scalar(text("SELECT current_setting('app.agency_id', true)"))
     if agency_id_str:
         agency = await db.get(Agency, uuid.UUID(agency_id_str))
@@ -370,6 +370,11 @@ async def verify_registration(
             if agency.status == "past_due":
                 raise HTTPException(403, "Agency account is past due. New client registration is blocked.")
             # Could also enforce client limits here, but we have capacity_service
+    else:
+        default_agency = await db.scalar(select(Agency.id).where(Agency.status == "active").order_by(Agency.created_at.asc()).limit(1))
+        if not default_agency:
+            default_agency = await db.scalar(select(Agency.id).limit(1))
+        agency_id_str = str(default_agency) if default_agency else "00000000-0000-0000-0000-000000000001"
             
     user = User(
         auth_id=f"auth-pwd-{uuid.uuid4().hex[:12]}",

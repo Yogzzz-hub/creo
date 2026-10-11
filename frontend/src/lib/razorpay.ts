@@ -9,7 +9,7 @@ export interface RazorpayOptions {
   currency: string;
   name: string;
   description: string;
-  order_id: string;
+  order_id?: string;
   prefill?: {
     name?: string;
     email?: string;
@@ -112,19 +112,33 @@ export async function openRazorpayCheckout(
     observer.disconnect();
   };
 
+  const checkoutOptions: any = { ...options };
+
+  // Sanitize order_id: Razorpay Orders API IDs strictly begin with "order_".
+  // If an invalid or client-generated prefix (e.g. "addon_", "auth_") is passed,
+  // strip order_id so Razorpay standard checkout initializes directly without a 400 lookup failure.
+  if (checkoutOptions.order_id && !checkoutOptions.order_id.startsWith("order_")) {
+    delete checkoutOptions.order_id;
+  }
+
+  // Ensure minimum valid amount (at least 100 paise / ₹1) to prevent amount validation errors
+  if (!checkoutOptions.amount || checkoutOptions.amount <= 0) {
+    checkoutOptions.amount = 100;
+  }
+
   const rzp = new Razorpay({
-    ...options,
-    backdrop_color: options.backdrop_color || "rgba(5, 8, 16, 0.82)",
+    ...checkoutOptions,
+    backdrop_color: checkoutOptions.backdrop_color || "rgba(5, 8, 16, 0.82)",
     theme: {
       color: "#7FA0D6",
       backdrop_color: "rgba(5, 8, 16, 0.82)",
-      ...options.theme,
+      ...checkoutOptions.theme,
     },
     modal: {
       backdropclose: false,
       escape: true,
       animation: true,
-      ...options.modal,
+      ...checkoutOptions.modal,
       ondismiss: () => {
         cleanup();
         onDismiss?.();
@@ -134,6 +148,11 @@ export async function openRazorpayCheckout(
       cleanup();
       onSuccess(response);
     },
+  });
+
+  rzp.on("payment.failed", (response: any) => {
+    cleanup();
+    console.warn("Razorpay payment failed or cancelled:", response?.error);
   });
 
   rzp.open();

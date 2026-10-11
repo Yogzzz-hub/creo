@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { Link } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
-import { MessageCircle, Send, Check, X, AlertCircle } from "lucide-react";
+import { MessageCircle, MessageSquare, Check, AlertCircle, X } from "lucide-react";
 
 interface TeamMember {
   id?: string;
@@ -37,13 +38,8 @@ function getRoleDesc(role: string): string {
 
 export function PortalCreativePodPage() {
   const { user } = useAuth();
-  const [chatMessage, setChatMessage] = useState("");
-  const [modalMessage, setModalMessage] = useState("");
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
-  const [activeRecipientId, setActiveRecipientId] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const queryClient = useQueryClient();
 
   const showToast = (text: string, type: "success" | "error" = "success") => {
     setToastMessage({ type, text });
@@ -69,70 +65,12 @@ export function PortalCreativePodPage() {
     return slots;
   })();
 
-  const clientChannel = `client-${(user?.full_name || "client").toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
   const gate = useOnboardingGate();
-
-  const { data: messages = [] } = useQuery({
-    queryKey: ["chat_messages", activeRecipientId || clientChannel],
-    queryFn: async () => {
-      if (activeRecipientId) {
-        return request<any[]>(`/api/v1/chat/messages?other_user_id=${activeRecipientId}`);
-      }
-      return request<any[]>(`/api/v1/chat/messages?channel=${clientChannel}`);
-    },
-    enabled: gate.isComplete,
-    refetchInterval: 5000,
-    staleTime: 5000,
-  });
-
-  const handleSendMessage = async (isModal = false) => {
-    const isModalContext = typeof isModal === "boolean" ? isModal : false;
-    const msg = isModalContext ? modalMessage : chatMessage;
-    
-    console.log("Dispatching drawer message:", { 
-      recipientId: activeRecipientId, 
-      channel: !activeRecipientId ? clientChannel : undefined,
-      message: msg.trim(),
-      isModal: isModalContext
-    });
-
-    if (!msg.trim()) return;
-
-    try {
-      const payload: any = { message: msg.trim(), client_id: user?.id, thread_type: "direct" };
-      if (activeRecipientId) {
-        payload.recipient_id = activeRecipientId;
-      } else {
-        payload.channel = clientChannel;
-      }
-
-      await request("/api/v1/chat/messages", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-      if (isModalContext) {
-        setModalMessage("");
-      } else {
-        setChatMessage("");
-      }
-      queryClient.invalidateQueries({ queryKey: ["chat_messages", activeRecipientId || clientChannel] });
-    } catch (err: any) {
-      console.error("Failed to send message", err);
-      showToast(err?.message || "Failed to send message. Please try again.", "error");
-    }
-  };
-
-  const openDirectMessage = (recipientId: string, memberName: string) => {
-    setActiveRecipientId(recipientId);
-    setChatMessage(`@${memberName} `);
-    setTimeout(() => {
-      document.getElementById("pod-chat-input")?.focus();
-    }, 50);
-  };
 
   const handleBookSlot = (slotId: string) => {
     if (!bookedSlots.includes(slotId)) {
       setBookedSlots(prev => [...prev, slotId]);
+      showToast("Call scheduled with your pod lead! Calendar invite sent.", "success");
     }
   };
 
@@ -146,11 +84,6 @@ export function PortalCreativePodPage() {
   const assignedTeam = podData?.assigned_team || [];
   const podLead = assignedTeam.find((m) => m.is_primary || m.raw_role === "team_lead" || m.raw_role === "creative_lead");
   const allMembers = podLead ? [podLead, ...assignedTeam.filter((m) => m.id !== podLead.id)] : assignedTeam;
-
-  // Set default active recipient to pod lead once loaded
-  useEffect(() => {
-    if (!activeRecipientId && podLead) setActiveRecipientId(podLead.id || podLead.user_id || null);
-  }, [activeRecipientId, podLead]);
 
   // Avatar color palette
   const AVATAR_COLORS = [
@@ -248,86 +181,63 @@ export function PortalCreativePodPage() {
                 </p>
 
                 {/* Message Button */}
-                <button
-                  onClick={() => openDirectMessage(memberId, member.name)}
+                <Link
+                  to={`/portal/slack?dm=${encodeURIComponent(member.name)}`}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-[#2A3446] text-[#97A0B3] bg-[#161F2D]/60 text-[13px] font-medium cursor-pointer transition-all duration-200 hover:border-[#7FA0D6] hover:text-[#BCCCE6] hover:bg-[#7FA0D6]/[0.08] mt-auto"
                 >
                   <MessageCircle className="w-4 h-4" strokeWidth={1.8} />
                   Message {member.name.split(" ")[0]}
-                </button>
+                </Link>
               </div>
             );
           })
         )}
       </div>
 
-      {/* ── Bottom Section: Chat + Booking ── */}
+      {/* ── Bottom Section: Slack Hub Access + Booking ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chat (2 cols) */}
-        <div className="lg:col-span-2 bg-[#161F2D] rounded-2xl border border-[#2A3446] flex flex-col" style={{ minHeight: "400px" }}>
-          {/* Chat Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#2A3446]">
-            <h3 className="text-base font-semibold text-white">Chat with your pod</h3>
-            <span className="text-[13px] text-[#97A0B3]">average reply 1h 50m</span>
-          </div>
-
-          {/* Messages Area */}
-          <div className="flex-1 px-6 py-4 space-y-4 overflow-y-auto scrollbar-hide flex flex-col justify-center">
-            {messages.length === 0 ? (
-              <div className="py-12 text-center text-[#97A0B3]">
-                <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-30 text-white" />
-                <p className="text-sm font-medium text-white/80">No messages yet</p>
-                <p className="text-xs text-[#97A0B3] mt-1">Send a message to start communicating directly with your pod.</p>
-              </div>
-            ) : (
-              messages.map((msg: any) => {
-                const isUser = msg.sender_id === user?.id;
-                const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-                const nameInitial = msg.sender_name?.charAt(0)?.toUpperCase() || "U";
-                return (
-                <div key={msg.id} className={`flex gap-3 max-w-[80%] ${isUser ? "ml-auto flex-row-reverse" : ""}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 mt-0.5 ${isUser ? "bg-[#BCCCE6] text-[#0B111C]" : "bg-gradient-to-br from-pink-500 to-orange-400 text-white"}`}>
-                    {nameInitial}
-                  </div>
-                  <div className={isUser ? "text-right" : ""}>
-                    <div className={`p-3 rounded-2xl text-sm inline-block text-left ${isUser ? "bg-[#BCCCE6] text-[#0B111C] rounded-tr-sm" : "bg-[#161F2D] text-white rounded-tl-sm"}`}>
-                      {msg.message}
-                    </div>
-                    <span className={`text-[11px] text-[#97A0B3] mt-1 block ${isUser ? "text-right" : ""}`}>
-                      {timeStr}
-                    </span>
-                  </div>
-                </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* Chat Input */}
-          <div className="px-4 py-3 border-t border-[#2A3446]">
-            <div className="flex items-center gap-2 bg-[#0B111C] rounded-full px-4 py-2 border border-white/[0.06]">
-              <input
-                id="pod-chat-input"
-                type="text"
-                value={chatMessage}
-                onChange={(e) => setChatMessage(e.target.value)}
-                placeholder="Type a message..."
-                className="flex-1 bg-transparent text-sm text-white placeholder-[#97A0B3] outline-none"
-              />
-              <button onClick={() => handleSendMessage(false)} className="px-4 py-1.5 bg-[#BCCCE6] text-[#0B111C] rounded-full text-[13px] font-medium hover:bg-white transition-colors flex items-center gap-1.5 shrink-0">
-                <Send className="w-3.5 h-3.5" />
-                Send
-              </button>
+        {/* Slack Hub Banner (2 cols) */}
+        <div className="lg:col-span-2 bg-gradient-to-br from-[#161F2D] to-[#0D1522] rounded-2xl p-6 sm:p-8 border border-[#2A3446] flex flex-col justify-between shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#7FA0D6]/5 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7FA0D6]/10 border border-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold mb-4">
+              <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+              Real-Time Collaboration Hub
             </div>
+            <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mb-2">
+              Creo Slack Hub
+            </h3>
+            <p className="text-sm text-[#97A0B3] max-w-lg leading-relaxed mb-6">
+              Connect directly with your dedicated Creative Specialists, Pod Lead, and <strong className="text-white">Super Admin</strong>. Post sprint requests, share assets, and receive live instant updates.
+            </p>
+          </div>
+
+          <div className="relative z-10 flex flex-wrap items-center gap-3 pt-4 border-t border-[#2A3446]/60">
+            <Link
+              to="/portal/slack"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-black bg-[#7FA0D6] hover:bg-white text-[#0B111C] shadow-lg shadow-[#7FA0D6]/20 transition-all cursor-pointer active:scale-95"
+            >
+              <MessageSquare className="size-4" />
+              <span>Open Slack Workspace Hub &rarr;</span>
+            </Link>
+            <Link
+              to="/portal/slack?dm=super-admin"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#161F2D] hover:bg-[#2A3446] text-[#BCCCE6] border border-[#2A3446] transition-all cursor-pointer"
+            >
+              <span>⚡ Direct Line to Super Admin</span>
+            </Link>
           </div>
         </div>
 
         {/* Booking (1 col) */}
-        <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446]">
-          <h3 className="text-base font-semibold text-white mb-1">Book a call</h3>
-          <p className="text-[13px] text-[#97A0B3] mb-5">15-minute slots with your pod lead</p>
+        <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] flex flex-col overflow-hidden shadow-sm">
+          <div className="shrink-0">
+            <h3 className="text-base font-semibold text-white mb-1">Book a call</h3>
+            <p className="text-[13px] text-[#97A0B3] mb-5">15-minute slots with your pod lead</p>
+          </div>
 
-          <div className="space-y-0 divide-y divide-white/[0.05]">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-0 divide-y divide-white/[0.05] pr-1 scrollbar-thin scrollbar-thumb-[#2A3446]">
             {upcomingSlots.map((slot) => {
               const isBooked = bookedSlots.includes(slot.id);
               return (
@@ -350,115 +260,6 @@ export function PortalCreativePodPage() {
           </div>
         </div>
       </div>
-
-      {/* 1-on-1 Direct Chat Modal (Slide-over) */}
-      {isModalOpen && (() => {
-        const activeRecipient = allMembers.find(m => (m.id || m.user_id) === activeRecipientId);
-        const recipientInitials = activeRecipient?.name.split(" ").filter(w => w.length > 0).map(w => w[0]).join("").toUpperCase().slice(0, 2) || "U";
-        const recipientName = activeRecipient?.name || "Team Member";
-        const recipientRole = activeRecipient?.role || "Specialist";
-        const recipientColorIndex = activeRecipient ? allMembers.findIndex(m => (m.id || m.user_id) === activeRecipientId) : 0;
-        const recipientColor = AVATAR_COLORS[recipientColorIndex % AVATAR_COLORS.length] || "bg-[#7FA0D6]";
-
-        return (
-          <div className="fixed inset-0 z-50 flex justify-end">
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setIsModalOpen(false)} />
-            <div className="relative w-full max-w-md bg-[#161F2D]/95 backdrop-blur-md border-l border-[#2A3446] h-full flex flex-col shadow-2xl shadow-[#050810]/80 animate-in slide-in-from-right duration-300">
-              
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between px-6 py-5 border-b border-[#2A3446] bg-[#050810]/40">
-                <div className="flex items-center gap-3">
-                  <div className="relative shrink-0">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold ${recipientColor}`}>
-                      {recipientInitials}
-                    </div>
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#7FA0D6] border-2 border-[#161F2D] rounded-full"></span>
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-white flex items-center gap-2">
-                      <span className="truncate max-w-[140px]">{recipientName}</span>
-                      <span className="px-1.5 py-0.5 rounded-md bg-[#2A3446] text-[10px] font-medium text-[#BCCCE6] uppercase tracking-wider whitespace-nowrap">{recipientRole}</span>
-                    </h3>
-                    <p className="text-[11px] text-[#97A0B3] mt-0.5">Direct 1-on-1 Channel · Mon-Fri, 10am-7pm IST</p>
-                  </div>
-                </div>
-                <button onClick={() => setIsModalOpen(false)} className="p-1.5 rounded-md text-[#97A0B3] hover:text-[#BCCCE6] hover:border-[#2A3446] border border-transparent transition-colors cursor-pointer shrink-0">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              
-              {/* Drawer Messages Thread */}
-              <div className="flex-1 p-6 overflow-y-auto space-y-4 scrollbar-hide">
-                {messages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center px-4">
-                    <div className="w-12 h-12 rounded-full border border-[#2A3446] bg-[#0B111C] flex items-center justify-center mb-4">
-                      <MessageCircle className="w-5 h-5 text-[#7FA0D6]" />
-                    </div>
-                    <h4 className="text-sm font-semibold text-[#BCCCE6] mb-4">Start a conversation with {recipientName.split(" ")[0]}</h4>
-                    <div className="flex flex-col gap-2 w-full max-w-[240px]">
-                      <button 
-                        onClick={() => setModalMessage("Checking on the latest draft status")}
-                        className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium text-[#97A0B3] hover:text-[#BCCCE6] hover:border-[#7FA0D6] hover:bg-[#7FA0D6]/[0.08] transition-all duration-200 cursor-pointer text-left"
-                      >
-                        "Checking on the latest draft status"
-                      </button>
-                      <button 
-                        onClick={() => setModalMessage("Have a question about my brand brief")}
-                        className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] text-xs font-medium text-[#97A0B3] hover:text-[#BCCCE6] hover:border-[#7FA0D6] hover:bg-[#7FA0D6]/[0.08] transition-all duration-200 cursor-pointer text-left"
-                      >
-                        "Have a question about my brand brief"
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  messages.map((msg: any) => {
-                    const isUser = msg.sender_id === user?.id;
-                    const timeStr = new Date(msg.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-                    return (
-                      <div key={msg.id} className={`flex gap-3 max-w-[85%] ${isUser ? "ml-auto flex-row-reverse" : ""}`}>
-                        <div className={isUser ? "text-right" : "text-left"}>
-                          <div className={`p-3 rounded-2xl text-sm inline-block text-left ${isUser ? "bg-[#7FA0D6]/15 border border-[#7FA0D6]/20 text-white rounded-br-sm" : "bg-[#0B111C] border border-[#2A3446] text-[#BCCCE6] rounded-bl-sm"}`}>
-                            {msg.message}
-                          </div>
-                          <span className={`text-[11px] text-[#97A0B3] mt-1.5 block ${isUser ? "text-right" : "text-left"}`}>
-                            {timeStr}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Drawer Input */}
-              <div className="p-4 border-t border-[#2A3446] bg-[#050810]">
-                <div className="flex items-center gap-2 bg-[#0B111C] rounded-xl px-4 py-2 border border-[#2A3446] focus-within:ring-1 focus-within:ring-[#7FA0D6] focus-within:border-[#7FA0D6] transition-all">
-                  <input
-                    type="text"
-                    value={modalMessage}
-                    onChange={(e) => setModalMessage(e.target.value)}
-                    placeholder="Type a direct message..."
-                    className="flex-1 bg-transparent text-sm text-white placeholder-[#97A0B3] outline-none py-1.5"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage(true);
-                      }
-                    }}
-                  />
-                  <button 
-                    onClick={() => handleSendMessage(true)} 
-                    disabled={!modalMessage.trim()}
-                    className="p-1.5 bg-[#7FA0D6] text-[#050810] rounded-lg hover:bg-white transition-colors cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 shrink-0"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 }

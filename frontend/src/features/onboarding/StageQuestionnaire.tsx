@@ -2,7 +2,7 @@ import { NativeSelect } from "../../ui/NativeSelect";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type AllocationStatus, PodAllocationModal } from "./PodAllocationModal";
 import { useSearchParams } from "react-router";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import {
   Sparkles,
@@ -23,6 +23,9 @@ import {
   CheckCircle2,
   Check,
   RefreshCw,
+  Search,
+  Pipette,
+  X,
 } from "lucide-react";
 
 import {
@@ -32,6 +35,345 @@ import {
   completeOnboarding,
 } from "../../lib/onboarding-api";
 import type { AssignedTeamMember } from "../../types/api";
+interface PaletteColor {
+  name: string;
+  hex: string;
+  category: "Core & Tech" | "Vibrant & Pop" | "Luxury & Gold" | "Fresh & Nature" | "Warm & Earth" | "Neutrals";
+}
+
+const CURATED_PALETTE: PaletteColor[] = [
+  // Core & Tech
+  { name: "Creo Nebula Blue", hex: "#7FA0D6", category: "Core & Tech" },
+  { name: "Deep Space Navy", hex: "#0D2137", category: "Core & Tech" },
+  { name: "Electric Indigo", hex: "#6366F1", category: "Core & Tech" },
+  { name: "Cobalt Blue", hex: "#2563EB", category: "Core & Tech" },
+  { name: "Royal Sapphire", hex: "#1D4ED8", category: "Core & Tech" },
+  { name: "Cyber Cyan", hex: "#06B6D4", category: "Core & Tech" },
+  { name: "Sky Glaze", hex: "#38BDF8", category: "Core & Tech" },
+  { name: "Deep Violet", hex: "#7C3AED", category: "Core & Tech" },
+  { name: "Hyper Purple", hex: "#8B5CF6", category: "Core & Tech" },
+
+  // Vibrant & Pop
+  { name: "Crimson Rose", hex: "#E11D48", category: "Vibrant & Pop" },
+  { name: "Electric Coral", hex: "#F43F5E", category: "Vibrant & Pop" },
+  { name: "Sunset Orange", hex: "#F97316", category: "Vibrant & Pop" },
+  { name: "Amber Blaze", hex: "#F59E0B", category: "Vibrant & Pop" },
+  { name: "Neon Lime", hex: "#84CC16", category: "Vibrant & Pop" },
+  { name: "Fuchsia Punch", hex: "#D946EF", category: "Vibrant & Pop" },
+  { name: "Hot Magenta", hex: "#EC4899", category: "Vibrant & Pop" },
+  { name: "Bright Vermilion", hex: "#EF4444", category: "Vibrant & Pop" },
+
+  // Luxury & Gold
+  { name: "Champagne Gold", hex: "#D4AF37", category: "Luxury & Gold" },
+  { name: "Desert Sand", hex: "#D8BF9B", category: "Luxury & Gold" },
+  { name: "Warm Ochre", hex: "#C59B27", category: "Luxury & Gold" },
+  { name: "Rose Quartz", hex: "#E0A899", category: "Luxury & Gold" },
+  { name: "Rich Bronze", hex: "#8C6239", category: "Luxury & Gold" },
+  { name: "Imperial Burgundy", hex: "#4C1D24", category: "Luxury & Gold" },
+  { name: "Tuscan Terracotta", hex: "#C86446", category: "Luxury & Gold" },
+
+  // Fresh & Nature
+  { name: "Emerald Prime", hex: "#10B981", category: "Fresh & Nature" },
+  { name: "Forest Pine", hex: "#047857", category: "Fresh & Nature" },
+  { name: "Deep Teal", hex: "#0D9488", category: "Fresh & Nature" },
+  { name: "Mint Crisp", hex: "#34D399", category: "Fresh & Nature" },
+  { name: "Sage Mist", hex: "#84A98C", category: "Fresh & Nature" },
+  { name: "Olive Green", hex: "#65A30D", category: "Fresh & Nature" },
+  { name: "Seafoam Cyan", hex: "#2DD4BF", category: "Fresh & Nature" },
+
+  // Warm & Earth
+  { name: "Raw Terracotta", hex: "#9A3412", category: "Warm & Earth" },
+  { name: "Clay Brown", hex: "#78350F", category: "Warm & Earth" },
+  { name: "Caramel Toffee", hex: "#B45309", category: "Warm & Earth" },
+  { name: "Apricot Peach", hex: "#FB923C", category: "Warm & Earth" },
+  { name: "Warm Almond", hex: "#E5D4C0", category: "Warm & Earth" },
+  { name: "Mustard Spice", hex: "#D97706", category: "Warm & Earth" },
+
+  // Neutrals & Monochrome
+  { name: "Pure Snow White", hex: "#FFFFFF", category: "Neutrals" },
+  { name: "Off White / Chalk", hex: "#F8FAFC", category: "Neutrals" },
+  { name: "Light Slate", hex: "#E2E8F0", category: "Neutrals" },
+  { name: "Cool Grey", hex: "#94A3B8", category: "Neutrals" },
+  { name: "Muted Steel", hex: "#64748B", category: "Neutrals" },
+  { name: "Graphite Charcoal", hex: "#334155", category: "Neutrals" },
+  { name: "Dark Slate Navy", hex: "#1E293B", category: "Neutrals" },
+  { name: "Creo Deep Dark", hex: "#161F2D", category: "Neutrals" },
+  { name: "Midnight Obsidian", hex: "#0B111C", category: "Neutrals" },
+  { name: "Pitch Black", hex: "#000000", category: "Neutrals" },
+];
+
+interface PalettePopoverProps {
+  currentHex?: string;
+  title?: string;
+  onSelect: (hex: string) => void;
+  onClose: () => void;
+}
+
+function PalettePopover({
+  currentHex = "#7FA0D6",
+  title = "Brand Palette & Color Search",
+  onSelect,
+  onClose,
+}: PalettePopoverProps) {
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState<string>("All");
+  const [enteredHex, setEnteredHex] = useState(currentHex);
+
+  useEffect(() => {
+    setEnteredHex(currentHex || "#7FA0D6");
+  }, [currentHex]);
+
+  const categories = [
+    "All",
+    "Core & Tech",
+    "Vibrant & Pop",
+    "Luxury & Gold",
+    "Fresh & Nature",
+    "Warm & Earth",
+    "Neutrals",
+  ];
+
+  // Filter palette based on search query and category
+  const filteredPalette = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return CURATED_PALETTE.filter((item) => {
+      const matchesCat = category === "All" || item.category === category;
+      if (!matchesCat) return false;
+      if (!q) return true;
+      return (
+        item.name.toLowerCase().includes(q) ||
+        item.hex.toLowerCase().includes(q) ||
+        item.category.toLowerCase().includes(q)
+      );
+    });
+  }, [search, category]);
+
+  // Check if search query itself is a valid hex code
+  const searchAsHex = useMemo(() => {
+    const clean = search.trim();
+    if (!clean) return null;
+    const withHash = clean.startsWith("#") ? clean : `#${clean}`;
+    if (/^#[0-9A-Fa-f]{6}$/.test(withHash) || /^#[0-9A-Fa-f]{3}$/.test(withHash)) {
+      return withHash.toUpperCase();
+    }
+    return null;
+  }, [search]);
+
+  const handleApplyHex = (val: string) => {
+    let clean = val.trim();
+    if (!clean.startsWith("#")) clean = `#${clean}`;
+    if (/^#[0-9A-Fa-f]{3,8}$/.test(clean)) {
+      onSelect(clean.toUpperCase());
+      setEnteredHex(clean.toUpperCase());
+    }
+  };
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div className="absolute z-50 mt-2 top-full left-0 sm:left-auto sm:right-0 bg-[#0B111C] p-3.5 rounded-2xl border border-[#2A3446] shadow-2xl space-y-3 w-[330px] sm:w-[370px] max-w-[92vw]">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-[#2A3446] pb-2">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-white uppercase tracking-wider">
+            <Palette className="w-3.5 h-3.5 text-[#7FA0D6]" />
+            <span>{title}</span>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[#97A0B3] hover:text-white p-1 rounded-md cursor-pointer transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Direct Color Entry Row */}
+        <div className="bg-[#161F2D] p-2.5 rounded-xl border border-[#2A3446] space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-[#97A0B3]">
+            <span>Enter Custom Hex or Pick Color:</span>
+            <span className="font-mono text-white text-xs">{enteredHex || currentHex}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Native Color Picker button */}
+            <label className="relative cursor-pointer group shrink-0">
+              <input
+                type="color"
+                value={(enteredHex || currentHex).startsWith("#") ? (enteredHex || currentHex) : "#0D2137"}
+                onChange={(e) => {
+                  const val = e.target.value.toUpperCase();
+                  setEnteredHex(val);
+                  onSelect(val);
+                }}
+                className="absolute inset-0 opacity-0 w-8 h-8 cursor-pointer"
+              />
+              <div
+                className="w-8 h-8 rounded-lg border border-white/20 shadow-inner flex items-center justify-center transition-transform group-hover:scale-105"
+                style={{ backgroundColor: enteredHex || currentHex }}
+                title="Click for full spectrum color wheel"
+              >
+                <Pipette className="w-3.5 h-3.5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
+              </div>
+            </label>
+
+            {/* Hex input */}
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={enteredHex}
+                onChange={(e) => {
+                  setEnteredHex(e.target.value);
+                  if (/^#?[0-9A-Fa-f]{6}$/.test(e.target.value.trim())) {
+                    handleApplyHex(e.target.value);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleApplyHex(enteredHex);
+                  }
+                }}
+                placeholder="#7FA0D6"
+                className="w-full bg-[#0B111C] border border-[#2A3446] text-white text-xs px-2.5 py-1.5 rounded-lg font-mono uppercase focus:outline-none focus:border-[#7FA0D6]"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleApplyHex(enteredHex)}
+              className="px-2.5 py-1.5 bg-[#7FA0D6] hover:bg-[#9BB7E2] text-[#0B111C] text-xs font-bold rounded-lg cursor-pointer transition-colors shrink-0"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+
+        {/* Search Input in that Palette */}
+        <div className="relative">
+          <Search className="w-3.5 h-3.5 text-[#97A0B3] absolute left-2.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search colors in palette (e.g. blue, gold, #F43F5E)..."
+            className="w-full pl-8 pr-7 py-1.5 text-xs bg-[#161F2D] border border-[#2A3446] text-white rounded-xl placeholder-[#97A0B3] focus:outline-none focus:border-[#7FA0D6]"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-white"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+
+        {/* Category Filter Pills */}
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 text-[10px]">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setCategory(cat)}
+              className={`px-2 py-0.5 rounded-lg whitespace-nowrap font-medium transition-colors cursor-pointer ${
+                category === cat
+                  ? "bg-[#7FA0D6] text-[#0B111C]"
+                  : "bg-[#161F2D] text-[#97A0B3] hover:text-white hover:bg-[#2A3446]"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* If search query is a custom hex code, offer direct apply card */}
+        {searchAsHex && (
+          <div
+            onClick={() => {
+              onSelect(searchAsHex);
+              setEnteredHex(searchAsHex);
+            }}
+            className="flex items-center justify-between p-2 rounded-xl bg-[#161F2D] border border-[#7FA0D6]/40 hover:border-[#7FA0D6] cursor-pointer transition-all"
+          >
+            <div className="flex items-center gap-2">
+              <div
+                className="w-5 h-5 rounded-full border border-white/20 shadow-sm"
+                style={{ backgroundColor: searchAsHex }}
+              />
+              <span className="text-xs font-bold text-white">Use Custom Hex: {searchAsHex}</span>
+            </div>
+            <span className="text-[10px] text-[#7FA0D6] font-semibold">Select ➔</span>
+          </div>
+        )}
+
+        {/* Scrollable Palette Colors Grid */}
+        <div className="max-h-48 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+          {filteredPalette.length === 0 && !searchAsHex ? (
+            <div className="text-center py-6 text-xs text-[#97A0B3]">
+              No palette colors match "{search}". Try another term or enter a custom hex code above.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-1.5">
+              {filteredPalette.map((item) => {
+                const isSelected = (currentHex || "").toUpperCase() === item.hex.toUpperCase();
+                return (
+                  <button
+                    key={item.hex + item.name}
+                    type="button"
+                    onClick={() => {
+                      onSelect(item.hex);
+                      setEnteredHex(item.hex);
+                    }}
+                    className={`flex items-center gap-2 p-1.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-[#7FA0D6]/20 border-[#7FA0D6] text-white"
+                        : "bg-[#161F2D]/70 border-[#2A3446] text-[#BCCCE6] hover:bg-[#161F2D] hover:border-[#7FA0D6]/50"
+                    }`}
+                  >
+                    <div
+                      className="w-5 h-5 rounded-lg border border-white/20 shadow-sm shrink-0 flex items-center justify-center"
+                      style={{ backgroundColor: item.hex }}
+                    >
+                      {isSelected && <Check className="w-3 h-3 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-medium truncate leading-tight text-white">{item.name}</p>
+                      <p className="text-[9px] font-mono text-[#97A0B3] uppercase leading-tight">{item.hex}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Quick Brand Presets row */}
+        <div className="pt-2 border-t border-[#2A3446]">
+          <div className="flex items-center justify-between mb-1.5 text-[10px] text-[#97A0B3]">
+            <span>Quick Presets:</span>
+            <span>7 popular tones</span>
+          </div>
+          <div className="flex items-center justify-between gap-1">
+            {["#0D2137", "#7FA0D6", "#161F2D", "#F8FAFC", "#D8BF9B", "#E11D48", "#10B981"].map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => {
+                  onSelect(preset);
+                  setEnteredHex(preset);
+                }}
+                className="w-6 h-6 rounded-lg border border-white/20 transition-transform hover:scale-110 active:scale-95 shadow-sm"
+                style={{ backgroundColor: preset }}
+                title={preset}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function AdvancedColorPicker({ color, onChange }: { color: string; onChange: (hex: string) => void }) {
   const currentHex = color || "#0D2137";
   const [open, setOpen] = useState(false);
@@ -39,46 +381,48 @@ function AdvancedColorPicker({ color, onChange }: { color: string; onChange: (he
   return (
     <div className="relative flex items-center">
       <div
-        className="w-8 h-8 rounded-lg cursor-pointer border border-[#2A3446] shadow-sm relative z-10 transition-transform hover:scale-105"
+        className="w-8 h-8 rounded-lg cursor-pointer border border-[#2A3446] shadow-sm relative z-10 transition-transform hover:scale-105 active:scale-95"
         style={{ backgroundColor: currentHex }}
         onClick={() => setOpen(!open)}
-        title="Click to open color picker"
+        title="Click to open color palette and search"
       />
       {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute z-50 mt-2 top-full left-0 bg-[#0B111C] p-3 rounded-xl border border-[#2A3446] shadow-2xl space-y-2.5 min-w-[200px]">
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={currentHex.startsWith("#") ? currentHex : "#0D2137"}
-                onChange={(e) => onChange(e.target.value)}
-                className="w-10 h-10 rounded cursor-pointer bg-transparent border-0"
-              />
-              <input
-                type="text"
-                value={currentHex}
-                onChange={(e) => onChange(e.target.value)}
-                className="flex-1 bg-[#161F2D] border border-[#2A3446] text-white text-xs px-2.5 py-1.5 rounded-lg font-mono focus:outline-none focus:border-[#7FA0D6]"
-                placeholder="#0D2137"
-              />
-            </div>
-            <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-[#2A3446]">
-              {["#0D2137", "#7FA0D6", "#161F2D", "#F8FAFC", "#D8BF9B", "#E11D48", "#10B981"].map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => {
-                    onChange(preset);
-                    setOpen(false);
-                  }}
-                  className="w-5 h-5 rounded-full border border-white/20 transition-transform hover:scale-110"
-                  style={{ backgroundColor: preset }}
-                />
-              ))}
-            </div>
-          </div>
-        </>
+        <PalettePopover
+          currentHex={currentHex}
+          title="Edit Brand Color"
+          onSelect={(hex) => {
+            onChange(hex);
+          }}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function AddColorPaletteButton({ onAddColor }: { onAddColor: (hex: string) => void }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="px-3.5 py-2 border border-dashed border-[#2A3446] hover:border-[#7FA0D6] rounded-xl text-xs font-bold text-[#7FA0D6] hover:text-[#BCCCE6] flex items-center gap-1.5 cursor-pointer transition-all hover:bg-[#161F2D] active:scale-95 shadow-sm"
+      >
+        <Plus className="w-3.5 h-3.5" /> Add Color
+      </button>
+
+      {open && (
+        <PalettePopover
+          currentHex="#7FA0D6"
+          title="Pick Color to Add"
+          onSelect={(hex) => {
+            onAddColor(hex);
+            setOpen(false);
+          }}
+          onClose={() => setOpen(false)}
+        />
       )}
     </div>
   );
@@ -215,35 +559,417 @@ const CTA_DESTINATION_OPTIONS = [
   { value: "no_destination_awareness_only", label: "No Destination (Awareness Only)" },
 ];
 
-function generateTonePreview(humour: number, formality: number, respectfulness: number, energy: number): string {
-  let opener = "We are pleased to introduce our newest collection.";
-  if (formality > 6 && humour > 6) {
-    opener = "Okay don't panic, but our latest drop just landed and it's ridiculously good.";
-  } else if (formality > 6) {
-    opener = "Hey everyone! Our new release is officially live and ready for you.";
-  } else if (humour > 6) {
-    opener = "We promised ourselves we wouldn't hype this up, but honestly? Just look at it.";
-  } else if (formality < 4 && humour < 4) {
-    opener = "We are privileged to announce the immediate release of our verified collection.";
+function generateTonePreview(
+  humour: number,
+  formality: number,
+  respectfulness: number,
+  energy: number,
+  voiceWords: string[] = [],
+  antiVoiceWords: string[] = []
+): string {
+  const words = (voiceWords || []).map((w) => w.toLowerCase().trim());
+  const anti = (antiVoiceWords || []).map((w) => w.toLowerCase().trim());
+
+  const wordMap: Record<string, { opener: string; middle: string; closer: string }> = {
+    bold: {
+      opener: humour > 6
+        ? "We promised ourselves we wouldn't show off, but when you craft something this bold? You don't whisper."
+        : formality < 4
+        ? "Make no mistake: our latest breakthrough is here, built without hesitation or apology."
+        : "Make no mistake: we didn't come to play small. This is pure, unapologetic impact.",
+      middle: "Forged with razor-sharp conviction, raw power, and an unyielding refusal to compromise.",
+      closer: energy > 6
+        ? "Take your stand right now — the old rules no longer apply!"
+        : "Own the outcome. Settle for nothing less.",
+    },
+    premium: {
+      opener: formality < 4
+        ? "We are privileged to present an extraordinary collection of bespoke distinction."
+        : "Where masterclass artistry meets effortless luxury: welcome to something truly bespoke.",
+      middle: "Meticulously finished with hand-selected materials, quiet elegance, and peerless attention to nuance.",
+      closer: energy > 6
+        ? "Experience world-class distinction right now — elevate your standard to the pinnacle it deserves!"
+        : "An enduring testament to subtle luxury and flawless refinement.",
+    },
+    warm: {
+      opener: humour > 6
+        ? "Like catching up with an old friend who brought the best treats: we made this specially for you."
+        : "Welcome to something crafted with genuine heart, open arms, and deep intention.",
+      middle: "Thoughtfully created to bring comforting ease, heartfelt connection, and dependable daily delight.",
+      closer: energy > 6
+        ? "Come on in — let's share in something wonderful together today!"
+        : "We are truly honored to share this with you. Welcome home.",
+    },
+    witty: {
+      opener: formality < 4
+        ? "We must observe, with appropriate discretion: this drop is rather scandalously clever."
+        : "We tried keeping a straight face about this drop, but honestly? It's ridiculously good.",
+      middle: "Clever enough to do all the heavy lifting, sharp enough to keep you grinning the whole time.",
+      closer: energy > 6
+        ? "Go ahead, take all the credit — your secret is safe with us!"
+        : "Plot twist: it actually delivers on every single promise.",
+    },
+    calm: {
+      opener: "A breath of tranquil clarity in an otherwise loud, chaotic world.",
+      middle: "Engineered for peaceful dependability, effortless poise, and soothing, long-term harmony.",
+      closer: "Breathe easy. Everything is taken care of with quiet precision.",
+    },
+    authoritative: {
+      opener: "The definitive benchmark in modern execution, validated by industry leaders worldwide.",
+      middle: "Built on rigorous empirical evidence, masterclass methodology, and zero margin for error.",
+      closer: energy > 6
+        ? "Command your domain with verified excellence — start leading the future now!"
+        : "The definitive standard for decision-makers who accept only verified outcomes.",
+    },
+    playful: {
+      opener: "Who said serious results can't be an absolute blast? Say hello to your newest obsession!",
+      middle: "Bursting with vibrant energy, bright ideas, and delightfully unexpected smiles at every step.",
+      closer: "Jump right in — let's turn the everyday grind into pure celebration!",
+    },
+    minimal: {
+      opener: "Essential form. Zero clutter.",
+      middle: "Stripped of every milligram of excess noise so only pure, unadulterated purpose remains.",
+      closer: "Clean. Timeless. Effective.",
+    },
+    friendly: {
+      opener: "Hey there! We are thrilled to share our latest creation with you.",
+      middle: "Made with genuine smiles, approachable simplicity, and a helping hand ready at every turn.",
+      closer: "Reach out anytime — we're always right here in your corner!",
+    },
+    direct: {
+      opener: "Straight to the point: here is what matters and why it works.",
+      middle: "We eliminated the runaround and engineered the exact high-impact outcome you need.",
+      closer: "No fluff. No delays. Get straight to work.",
+    },
+    aspirational: {
+      opener: "Designed for who you are becoming, not just where you currently stand.",
+      middle: "Igniting monumental momentum and elevating your highest ambitions into tangible reality.",
+      closer: "Step into tomorrow. Build the legacy you were meant for.",
+    },
+    technical: {
+      opener: "Architected with sub-millisecond precision, robust fault tolerance, and deterministic throughput.",
+      middle: "Calibrated to exceed stringent engineering specifications across all mission-critical workloads.",
+      closer: "Deploy with absolute confidence and verified operational integrity.",
+    },
+    nurturing: {
+      opener: "We meet you right where you are, with deep empathy and thoughtful care.",
+      middle: "Gently designed to support, sustain, and cultivate your growth through every milestone.",
+      closer: "You're never alone on this path — we're right beside you, every step of the way.",
+    },
+    rebellious: {
+      opener: "Tear up the standard handbook. We threw it out the window.",
+      middle: "Raw, unapologetic disruption built specifically for those who refuse to fit into neat little boxes.",
+      closer: "Rules were meant to be broken. Welcome to the other side.",
+    },
+    trustworthy: {
+      opener: "Founded on ironclad integrity, complete transparency, and steadfast dependability.",
+      middle: "Tested without compromise, built without shortcuts, and proven to perform when it matters most.",
+      closer: "Count on us to always deliver on our word — without exception.",
+    },
+    energetic: {
+      opener: "Ignite your momentum with electrifying, high-voltage speed!",
+      middle: "Powered by relentless drive and unstoppable horsepower that propels you lightyears ahead!",
+      closer: "Turn the dial to eleven and feel the surge right now!",
+    },
+  };
+
+  let opener = "";
+  let middle = "";
+  let closer = "";
+
+  if (words.length > 0) {
+    const firstWord = words[0];
+    const secondWord = words[1];
+    const thirdWord = words[2];
+    const primary = firstWord ? wordMap[firstWord] : undefined;
+    const secondary = secondWord ? wordMap[secondWord] : undefined;
+    const tertiary = thirdWord ? wordMap[thirdWord] : undefined;
+
+    if (primary) {
+      opener = primary.opener;
+      middle = secondary ? secondary.middle : primary.middle;
+      closer = tertiary ? tertiary.closer : (secondary ? secondary.closer : primary.closer);
+
+      // Signature multi-word blended combos
+      if (words.includes("bold") && words.includes("premium")) {
+        opener = "Uncompromising luxury meets fearless conviction: welcome to our finest creation yet.";
+        middle = "Forged with bespoke artistry, hand-selected materials, and razor-sharp performance.";
+        closer = "For those who demand the pinnacle and settle for nothing less — step into world-class distinction.";
+      } else if (words.includes("warm") && words.includes("premium")) {
+        opener = "Welcome to something truly rare: heartfelt hospitality met with bespoke refinement.";
+        middle = "Designed with gracious care for those who appreciate quiet, enduring luxury.";
+        closer = "An invitation to experience understated elegance, crafted warmly just for you.";
+      } else if (words.includes("witty") && words.includes("bold")) {
+        opener = "They told us not to brag. We decided not to listen. Behold our latest drop.";
+        middle = "Engineered with shameless audacity, razor-sharp intellect, and pure craft.";
+        closer = "Go ahead, make your competition sweat — check it out right now.";
+      } else if (words.includes("minimal") && words.includes("direct")) {
+        opener = "No fluff. No excuses. Pure utility.";
+        middle = "Stripped of every distraction to deliver immediate, verified results.";
+        closer = "Simple. Honest. Ready when you are.";
+      } else if (words.includes("rebellious") && words.includes("energetic")) {
+        opener = "Forget the rules and hit the gas! High-octane disruption has arrived.";
+        middle = "Built to shatter the status quo with relentless speed and unapologetic power.";
+        closer = "Jump in right now — the old way is officially over!";
+      } else if (words.includes("warm") && words.includes("friendly")) {
+        opener = "Hey! Come on in — we're so genuinely excited to show you what we've made.";
+        middle = "Crafted with open arms, thoughtful details, and a welcoming smile at every turn.";
+        closer = "We're always right here to help — let's build something wonderful together!";
+      } else if (words.includes("calm") && words.includes("trustworthy")) {
+        opener = "A quiet sanctuary of dependable craftsmanship, founded on steadfast transparency.";
+        middle = "Engineered for peaceful certainty, enduring reliability, and effortless peace of mind.";
+        closer = "Breathe easy knowing you're in safe, verified hands.";
+      }
+    }
   }
 
-  let middle = "Formulated for reliable, high-standard daily performance.";
-  if (energy > 7) {
-    middle = "Built with relentless speed, uncompromising power, and pure craft!";
-  } else if (energy < 4) {
-    middle = "Quietly engineered for understated, long-term dependability.";
+  // Base fallback if no words or words not in map
+  if (!opener) {
+    opener = "We are pleased to introduce our newest collection.";
+    if (formality > 6 && humour > 6) {
+      opener = "Okay don't panic, but our latest drop just landed and it's ridiculously good.";
+    } else if (formality > 6) {
+      opener = "Hey everyone! Our new release is officially live and ready for you.";
+    } else if (humour > 6) {
+      opener = "We promised ourselves we wouldn't hype this up, but honestly? Just look at it.";
+    } else if (formality < 4 && humour < 4) {
+      opener = "We are privileged to announce the immediate release of our verified collection.";
+    }
   }
 
-  let closer = "Available now via the link.";
-  if (respectfulness > 7) {
-    closer = "Rules were made to be bent. Grab yours before everyone else catches on.";
-  } else if (respectfulness < 3) {
-    closer = "We remain at your service and invite your esteemed feedback.";
-  } else if (energy > 6) {
-    closer = "Check it out right now — let's build something extraordinary together!";
+  if (!middle) {
+    middle = "Formulated for reliable, high-standard daily performance.";
+    if (energy > 7) {
+      middle = "Built with relentless speed, uncompromising power, and pure craft!";
+    } else if (energy < 4) {
+      middle = "Quietly engineered for understated, long-term dependability.";
+    }
   }
 
-  return `"${opener} ${middle} ${closer}"`;
+  if (!closer) {
+    closer = "Available now via the link.";
+    if (respectfulness > 7) {
+      closer = "Rules were made to be bent. Grab yours before everyone else catches on.";
+    } else if (respectfulness < 3) {
+      closer = "We remain at your service and invite your esteemed feedback.";
+    } else if (energy > 6) {
+      closer = "Check it out right now — let's build something extraordinary together!";
+    }
+  }
+
+  // Modulate punctuation and accents if energy or humour is high
+  if (words.length > 0) {
+    if (energy > 8 && !closer.endsWith("!")) {
+      closer = closer.replace(/\.$/, "") + "!";
+    }
+    if (humour > 7 && !opener.startsWith("Honestly?") && !opener.startsWith("We promised")) {
+      opener = "Honestly? " + opener;
+    }
+  }
+
+  // Append anti-tone constraints if selected
+  const antiNotes: string[] = [];
+  if (anti.includes("salesy")) antiNotes.push("Zero hype, no pushy sales pitches");
+  if (anti.includes("corporate")) antiNotes.push("Zero corporate jargon");
+  if (anti.includes("preachy")) antiNotes.push("No unsolicited preaching");
+  if (anti.includes("gimmicky")) antiNotes.push("Zero cheap gimmicks");
+  if (anti.includes("desperate")) antiNotes.push("No fake urgency");
+  if (anti.includes("cutesy")) antiNotes.push("No childish sugarcoating");
+
+  let guardrailSuffix = "";
+  if (antiNotes.length > 0) {
+    guardrailSuffix = ` [Constraint: ${antiNotes.slice(0, 2).join("; ")}.]`;
+  }
+
+  return `"${opener} ${middle} ${closer}"${guardrailSuffix}`;
+}
+
+interface VisualPreviewData {
+  headline: string;
+  creativeDirective: string;
+  designPillars: string[];
+  executionCues: {
+    typography: string;
+    layout: string;
+    lighting: string;
+    motion: string;
+  };
+}
+
+function generateVisualDirectionPreview(
+  directions: string[] = [],
+  _colours: Array<{ hex: string; label: string }> = [],
+  font: string = ""
+): VisualPreviewData {
+  const selected = directions || [];
+
+  if (selected.length === 0) {
+    return {
+      headline: "Awaiting Visual Direction",
+      creativeDirective:
+        "Select up to 3 visual styles below (e.g. Clean & Minimalist, Bold Graphic, Luxury Elegance) to synthesize how our creative directors and animators will craft your brand's visual identity.",
+      designPillars: ["Flexible Grid", "Custom Color Harmony", "Adaptive Styling"],
+      executionCues: {
+        typography: font ? `Font: ${font}` : "Modern Balanced Sans",
+        layout: "Standard Responsive Grid",
+        lighting: "Neutral Commercial",
+        motion: "Smooth Standard Transitions",
+      },
+    };
+  }
+
+  // Signature Triple & Dual Combos
+  if (selected.includes("clean_minimal") && selected.includes("bold_graphic") && selected.includes("luxury_restrained")) {
+    return {
+      headline: "Haute Minimalism: Bold Scale, Pure Space & Luxury Restraint",
+      creativeDirective:
+        "A compelling synthesis of opposites: heavy, commanding typography grounded in vast Swiss negative space, punctuated by restrained luxury detailing and immaculate architectural composition.",
+      designPillars: ["Expansive Negative Space", "High Contrast Typographic Anchors", "Subtle Refined Accents"],
+      executionCues: {
+        typography: font ? `${font} (High Contrast Weights)` : "Architectural Monospace & High-Contrast Sans",
+        layout: "Rigid Asymmetric Swiss Grid with generous margins",
+        lighting: "High-key directional with razor-sharp shadow falloff",
+        motion: "Slow, deliberate camera tracks and precise geometric cuts",
+      },
+    };
+  }
+
+  if (selected.includes("clean_minimal") && selected.includes("luxury_restrained")) {
+    return {
+      headline: "Understated Elegance & Architectural Clarity",
+      creativeDirective:
+        "Bespoke minimalism where every pixel breathes. Distilled typographic elegance, quiet neutral palettes, and refined proportions that convey effortless prestige without ostentation.",
+      designPillars: ["Breathable Margins", "Subtle Warm Accents", "Bespoke Kerning & Proportions"],
+      executionCues: {
+        typography: font || "Refined Editorial Serif & Clean Geometric Sans",
+        layout: "Minimalist Gallery Grid with generous breathing room",
+        lighting: "Soft diffuse studio illumination with subtle natural highlights",
+        motion: "Gentle ease-in-out floats and seamless editorial dissolves",
+      },
+    };
+  }
+
+  if (selected.includes("bold_graphic") && selected.includes("cinematic_moody")) {
+    return {
+      headline: "Dramatic Noir & High-Impact Graphic Punch",
+      creativeDirective:
+        "Deep cinematic shadows pierced by high-contrast graphic elements and punchy typography. Atmospheric depth and raw graphic authority command full viewer attention.",
+      designPillars: ["Anamorphic Shadow Depth", "Saturated Graphic Highlights", "Heavy Typographic Blocks"],
+      executionCues: {
+        typography: font || "Condensed Heavyweight Grotesk",
+        layout: "Full-bleed widescreen frames with overlapping graphic overlays",
+        lighting: "Moody low-key with focused rim lighting and rich blacks",
+        motion: "Dynamic kinetic speed ramps with deep parallax depth",
+      },
+    };
+  }
+
+  if (selected.includes("bright_playful") && selected.includes("bold_graphic")) {
+    return {
+      headline: "High-Voltage Graphic Pop & Vibrant Energy",
+      creativeDirective:
+        "Electrifying visual rhythm bursting with bold typographic scales, saturated color clashes, and buoyant kinetic micro-animations engineered to immediately stop thumbs on social feeds.",
+      designPillars: ["Punchy Contrast Ratios", "Elastic Kinetic Curves", "Vibrant Accent Pops"],
+      executionCues: {
+        typography: font || "Expressive Rounded Sans & Bold Display Weights",
+        layout: "Dynamic modular collage with unexpected sticker badges",
+        lighting: "Vibrant high-key daylight with saturated bounce",
+        motion: "Spring-physics pops, snappy zooms, and energetic cuts",
+      },
+    };
+  }
+
+  if (selected.includes("warm_editorial") && selected.includes("documentary_raw")) {
+    return {
+      headline: "Authentic Human Warmth & Candid Documentary Soul",
+      creativeDirective:
+        "Unvarnished, candid storytelling illuminated by golden-hour sunlight and analog texture. Intimate close-ups, genuine interactions, and honest behind-the-scenes presence.",
+      designPillars: ["Analog Film Grain", "Natural Golden Ambient Light", "Unstaged Human Moments"],
+      executionCues: {
+        typography: font || "Humanist Sans & Warm Vintage Serif",
+        layout: "Organic scrapbook & editorial journal layouts",
+        lighting: "Warm golden-hour daylight with natural lens flares",
+        motion: "Handheld camera drift with organic natural pacing",
+      },
+    };
+  }
+
+  if (selected.includes("cinematic_moody") && selected.includes("luxury_restrained")) {
+    return {
+      headline: "Atmospheric Luxury & Filmic Distinction",
+      creativeDirective:
+        "Velvety blacks, cinematic depth-of-field, and bespoke typographic detailing. Evoking the world of high-end cinema and luxury fashion editorial campaigns.",
+      designPillars: ["Chiaroscuro Contrast", "Filmic 2.39:1 Framing", "Bespoke Quiet Opulence"],
+      executionCues: {
+        typography: font || "High-End Modern Editorial Serif",
+        layout: "Cinematic letterbox framing with restrained typography",
+        lighting: "Volumetric mood lighting with soft highlights",
+        motion: "Slow, sweeping gimbal glides and lingering hero holds",
+      },
+    };
+  }
+
+  const traitMap: Record<string, { label: string; text: string; cue: string }> = {
+    clean_minimal: {
+      label: "Minimalist Space",
+      text: "generous negative space and disciplined Swiss grid alignment",
+      cue: "uncluttered clean layouts",
+    },
+    bold_graphic: {
+      label: "Bold Graphics",
+      text: "heavy kinetic typography and razor-sharp contrast anchors",
+      cue: "punchy visual hierarchy",
+    },
+    warm_editorial: {
+      label: "Warm Editorial",
+      text: "golden-hour warmth, analog filmic textures, and candid intimacy",
+      cue: "editorial photojournalism",
+    },
+    cinematic_moody: {
+      label: "Cinematic Mood",
+      text: "atmospheric low-key shadows and rich widescreen color grading",
+      cue: "dramatic film lighting",
+    },
+    bright_playful: {
+      label: "Playful Pop",
+      text: "vibrant saturated color pops and buoyant elastic motion curves",
+      cue: "energetic lively motion",
+    },
+    luxury_restrained: {
+      label: "Restrained Luxury",
+      text: "bespoke understated proportions and quiet luxury craftsmanship",
+      cue: "subtle prestige detailing",
+    },
+    documentary_raw: {
+      label: "Raw Authenticity",
+      text: "handheld kinetic honesty, natural available lighting, and unfiltered reality",
+      cue: "honest candid capture",
+    },
+    retro_nostalgic: {
+      label: "Retro Nostalgia",
+      text: "subtle vintage halation, 35mm grain emulation, and mid-century warmth",
+      cue: "analog retro warmth",
+    },
+  };
+
+  const activeTraits = selected
+    .map((s) => traitMap[s])
+    .filter((t): t is { label: string; text: string; cue: string } => Boolean(t));
+  const titleWords = activeTraits.map((t) => t.label).join(" × ");
+  const textSummary = activeTraits.map((t) => t.text).join(", balanced with ");
+  const cues = activeTraits.map((t) => t.cue).join(" · ");
+
+  return {
+    headline: titleWords,
+    creativeDirective: `Crafted around ${textSummary}. Engineered to give your brand an unmistakable visual identity that cuts through feed noise.`,
+    designPillars: activeTraits.map((t) => t.label),
+    executionCues: {
+      typography: font ? `Primary Font: ${font}` : "Curated Custom Typography",
+      layout: cues,
+      lighting: selected.includes("cinematic_moody") ? "Low-key Dramatic" : "Polished High-standard",
+      motion: selected.includes("bright_playful") ? "Dynamic & Spring-based" : "Smooth & Measured",
+    },
+  };
 }
 
 export function StageQuestionnaire({ userId, initialSection, onComplete }: StageQuestionnaireProps) {
@@ -679,12 +1405,30 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
   // Tone preview calculation
   const liveSentencePreview = useMemo(() => {
     return generateTonePreview(
-      Number(secC.humour || 0),
-      Number(secC.formality || 0),
-      Number(secC.respectfulness || 0),
-      Number(secC.energy || 0)
+      Number(secC.humour ?? 5),
+      Number(secC.formality ?? 5),
+      Number(secC.respectfulness ?? 5),
+      Number(secC.energy ?? 5),
+      secC.voice_words || [],
+      secC.anti_voice_words || []
     );
-  }, [secC.humour, secC.formality, secC.respectfulness, secC.energy]);
+  }, [
+    secC.humour,
+    secC.formality,
+    secC.respectfulness,
+    secC.energy,
+    secC.voice_words,
+    secC.anti_voice_words,
+  ]);
+
+  // Visual direction preview calculation
+  const visualPreview = useMemo(() => {
+    return generateVisualDirectionPreview(
+      secD.visual_direction || [],
+      secD.colours || [],
+      secD.fonts || ""
+    );
+  }, [secD.visual_direction, secD.colours, secD.fonts]);
 
   // Handle Save & Continue with strict validation, background async saving, and section progression
   const handleNextSection = async () => {
@@ -1432,14 +2176,55 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             </div>
 
             {/* Live Preview Box */}
-            <div className="bg-[#0B111C] text-white rounded-xl p-4 border border-[#2A3446] shadow-md">
-              <div className="flex items-center gap-1.5 text-xs font-mono text-[#7FA0D6] mb-1 uppercase tracking-wider">
-                <Sliders className="w-3.5 h-3.5" />
-                <span>Live Voice Synthesizer Preview</span>
+            <div className="bg-[#0B111C] text-white rounded-xl p-4.5 border border-[#2A3446] shadow-xl relative overflow-hidden transition-all duration-300 hover:border-[#7FA0D6]/50">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono mb-2.5">
+                <div className="flex items-center gap-2 text-[#7FA0D6] uppercase tracking-wider font-semibold">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#7FA0D6] opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#7FA0D6]"></span>
+                  </span>
+                  <Sliders className="w-3.5 h-3.5" />
+                  <span>Live Voice Synthesizer Preview</span>
+                </div>
+
+                {/* Active Blend indicators */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {(secC.voice_words || []).map((w: string) => (
+                    <span
+                      key={w}
+                      className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/40 uppercase tracking-wider shadow-[0_0_8px_rgba(127,160,214,0.2)]"
+                    >
+                      ✦ {w}
+                    </span>
+                  ))}
+                  {(secC.anti_voice_words || []).map((w: string) => (
+                    <span
+                      key={w}
+                      className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-950/50 text-rose-300 border border-rose-800/50 uppercase tracking-wider"
+                    >
+                      🛡️ no {w}
+                    </span>
+                  ))}
+                  {(!secC.voice_words || secC.voice_words.length === 0) && (
+                    <span className="text-[10px] text-[#97A0B3] italic">
+                      Pick voice words below to dynamically synthesize tone
+                    </span>
+                  )}
+                </div>
               </div>
-              <p className="text-sm font-medium italic text-[#BCCCE6] mt-1">
-                {liveSentencePreview}
-              </p>
+
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={liveSentencePreview}
+                  initial={{ opacity: 0, y: 5, scale: 0.99, filter: "blur(2px)" }}
+                  animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, y: -4, scale: 0.99, filter: "blur(2px)" }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  className="text-sm sm:text-base font-medium italic text-[#E2E8F0] leading-relaxed"
+                >
+                  {liveSentencePreview}
+                </motion.p>
+              </AnimatePresence>
             </div>
 
             {/* 4 Sliders */}
@@ -1539,10 +2324,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                         }
                         clearFieldError("voice_words");
                       }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer transform active:scale-95 hover:scale-[1.02] ${
                         isSelected
-                          ? "bg-[#7FA0D6] text-[#0B111C] border-[#7FA0D6]"
-                          : "bg-[#0B111C] text-[#BCCCE6] border-[#2A3446] hover:border-[#7FA0D6]/60"
+                          ? "bg-[#7FA0D6] text-[#0B111C] border-[#7FA0D6] shadow-[0_0_12px_rgba(127,160,214,0.45)] ring-1 ring-[#7FA0D6]"
+                          : "bg-[#0B111C] text-[#BCCCE6] border-[#2A3446] hover:border-[#7FA0D6]/60 hover:text-white"
                       }`}
                     >
                       {word}
@@ -1584,10 +2369,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                         }
                         clearFieldError("anti_voice_words");
                       }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer transform active:scale-95 hover:scale-[1.02] ${
                         isSelected
-                          ? "bg-rose-600 text-white border-rose-500 shadow-sm"
-                          : "bg-[#161F2D] text-rose-200 border-rose-900/50 hover:border-rose-700"
+                          ? "bg-rose-600 text-white border-rose-500 shadow-[0_0_12px_rgba(225,29,72,0.4)] ring-1 ring-rose-400"
+                          : "bg-[#161F2D] text-rose-200 border-rose-900/50 hover:border-rose-700 hover:text-rose-100"
                       }`}
                     >
                       {word}
@@ -1720,13 +2505,15 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                     )}
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => setSecD({ ...secD, colours: [...secD.colours, { hex: "#7FA0D6", label: "accent" }] })}
-                  className="px-3.5 py-2 border border-dashed border-[#2A3446] hover:border-[#7FA0D6] rounded-xl text-xs font-bold text-[#7FA0D6] hover:text-[#BCCCE6] flex items-center gap-1.5 cursor-pointer transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Add Color
-                </button>
+                <AddColorPaletteButton
+                  onAddColor={(newHex) => {
+                    setSecD({
+                      ...secD,
+                      colours: [...(secD.colours || []), { hex: newHex, label: "accent" }],
+                    });
+                    clearFieldError("colours");
+                  }}
+                />
               </div>
               {fieldErrors.colours && (
                 <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
@@ -1736,8 +2523,8 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
             </div>
 
             {/* D6: Visual Direction */}
-            <div id="field-visual_direction">
-              <div className="flex justify-between items-center mb-1.5">
+            <div id="field-visual_direction" className="space-y-4">
+              <div className="flex justify-between items-center mb-1">
                 <label className="text-xs font-semibold text-[#F1F5F9]">
                   D6: Visual Direction (Pick up to 3) <span className="text-rose-400 font-bold">*</span>
                 </label>
@@ -1745,6 +2532,109 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                   {secD.visual_direction?.length || 0}/3 selected
                 </span>
               </div>
+
+              {/* LIVE VISUAL DIRECTION SYNTHESIZER PREVIEW BOX */}
+              <div className="bg-[#0B111C] rounded-2xl p-4.5 border border-[#2A3446] shadow-xl relative overflow-hidden transition-all duration-300 hover:border-[#7FA0D6]/50">
+                {/* Ambient glow from user's primary brand color */}
+                <div
+                  className="absolute -top-16 -right-16 w-44 h-44 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-500"
+                  style={{ backgroundColor: secD.colours?.[0]?.hex || "#7FA0D6" }}
+                />
+
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono mb-2.5">
+                  <div className="flex items-center gap-2 text-[#7FA0D6] uppercase tracking-wider font-semibold">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#7FA0D6] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#7FA0D6]"></span>
+                    </span>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Live Visual Direction & Style Preview</span>
+                  </div>
+
+                  {/* Active Visual Direction Badges */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {(secD.visual_direction || []).map((vVal: string) => {
+                      const opt = VISUAL_DIRECTION_OPTIONS.find((o) => o.value === vVal);
+                      return (
+                        <span
+                          key={vVal}
+                          className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/40 uppercase tracking-wider shadow-[0_0_8px_rgba(127,160,214,0.2)]"
+                        >
+                          ✦ {opt?.label || vVal}
+                        </span>
+                      );
+                    })}
+                    {(!secD.visual_direction || secD.visual_direction.length === 0) && (
+                      <span className="text-[10px] text-[#97A0B3] italic">
+                        Select styles below to synthesize art direction
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Animated Creative Directive Text */}
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={(secD.visual_direction || []).join("-") + (secD.fonts || "") + (secD.colours || []).map((c) => c.hex).join("-")}
+                    initial={{ opacity: 0, y: 5, filter: "blur(2px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, y: -4, filter: "blur(2px)" }}
+                    transition={{ duration: 0.22, ease: "easeOut" }}
+                    className="space-y-3"
+                  >
+                    <div className="border-l-2 border-[#7FA0D6] pl-3 py-0.5">
+                      <h4 className="text-sm font-bold text-white tracking-wide">
+                        {visualPreview.headline}
+                      </h4>
+                      <p className="text-xs text-[#BCCCE6] mt-1 leading-relaxed italic">
+                        "{visualPreview.creativeDirective}"
+                      </p>
+                    </div>
+
+                    {/* Miniature Live Creative Canvas / Mockup Banner */}
+                    <div className="p-3 rounded-xl border border-[#2A3446] bg-[#161F2D]/70 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-[#97A0B3]">Brand Harmony:</span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {secD.colours?.map((c, i) => (
+                              <div
+                                key={i}
+                                className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#0B111C] border border-white/10 text-[10px] font-mono text-white"
+                              >
+                                <span className="w-2.5 h-2.5 rounded-full border border-white/20" style={{ backgroundColor: c.hex }} />
+                                <span>{c.hex}</span>
+                                <span className="text-[9px] text-[#97A0B3] lowercase">({c.label})</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {secD.fonts && (
+                          <div className="flex items-center gap-1.5 text-[10px] text-[#97A0B3] font-mono">
+                            <span>Primary Font:</span>
+                            <span className="text-[#7FA0D6] font-semibold">{secD.fonts}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Execution tags */}
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {visualPreview.designPillars.map((pillar, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-[#0B111C] text-[#BCCCE6] border border-[#2A3446]"
+                          >
+                            {pillar}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              {/* D6 Buttons */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {VISUAL_DIRECTION_OPTIONS.map((vd) => {
                   const isSelected = secD.visual_direction?.includes(vd.value);
@@ -1761,9 +2651,9 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
                         }
                         clearFieldError("visual_direction");
                       }}
-                      className={`p-3 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer ${
+                      className={`p-3 rounded-xl border text-left text-xs font-bold transition-all cursor-pointer transform active:scale-95 hover:scale-[1.02] ${
                         isSelected
-                          ? "bg-[#7FA0D6] text-[#0B111C] border-[#7FA0D6] shadow-sm"
+                          ? "bg-[#7FA0D6] text-[#0B111C] border-[#7FA0D6] shadow-[0_0_12px_rgba(127,160,214,0.45)] ring-1 ring-[#7FA0D6]"
                           : "bg-[#0B111C] text-[#BCCCE6] border-[#2A3446] hover:border-[#7FA0D6]/60 hover:text-white"
                       }`}
                     >
