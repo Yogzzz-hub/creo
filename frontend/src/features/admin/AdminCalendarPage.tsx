@@ -1,12 +1,28 @@
 import { NativeSelect } from "../../ui/NativeSelect";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, RefreshCw, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw, Calendar as CalendarIcon, Plus, Edit3, CheckCircle2, Clock, AlertTriangle, FileText } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
+import { StoryApprovalModal } from "../../components/ops/StoryApprovalModal";
 
-type CalendarEvent = { id: string; title: string; client_name: string; date: string; time: string; type: string; status: string };
+type CalendarEvent = {
+  id: string;
+  client_id?: string;
+  title: string;
+  client_name: string;
+  date: string;
+  time: string;
+  type: string;
+  status: string;
+  caption?: string;
+  story_description?: string;
+  approval_type?: string;
+  team_notes?: string;
+  client_feedback?: string;
+  concept_status?: string;
+};
 
 export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } = {}) {
   const Container = embedded ? "section" : "main";
@@ -15,6 +31,9 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
   const [month, setMonth] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), 1); });
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
   const [client, setClient] = useState("all");
+  const [storyModalOpen, setStoryModalOpen] = useState(false);
+  const [selectedSlotForEdit, setSelectedSlotForEdit] = useState<CalendarEvent | null>(null);
+
   const year = month.getFullYear();
   const monthNumber = month.getMonth() + 1;
   const query = useQuery({
@@ -39,16 +58,28 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
             <CalendarIcon className="size-5 sm:size-6 text-[#7FA0D6]" />
             Content Calendar
           </Heading>
-          <p className="text-xs sm:text-sm text-[#97A0B3] font-medium mt-0.5">Scheduled publications and deliverables</p>
+          <p className="text-xs sm:text-sm text-[#97A0B3] font-medium mt-0.5">Scheduled publications and client approvals</p>
         </div>
-        <button
-          onClick={() => void query.refetch()}
-          disabled={query.isFetching}
-          className="min-h-10 px-3.5 sm:px-4 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] hover:border-[#7FA0D6]/50 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 transition-all cursor-pointer shadow-2xs"
-        >
-          <RefreshCw size={15} className={query.isFetching ? "animate-spin text-[#7FA0D6]" : "text-[#7FA0D6]"} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setSelectedSlotForEdit(null);
+              setStoryModalOpen(true);
+            }}
+            className="min-h-10 px-3.5 sm:px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 transition-all cursor-pointer shadow-sm"
+          >
+            <Plus size={16} />
+            <span>Schedule Story & Approval</span>
+          </button>
+          <button
+            onClick={() => void query.refetch()}
+            disabled={query.isFetching}
+            className="min-h-10 px-3.5 sm:px-4 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] hover:border-[#7FA0D6]/50 text-white text-xs sm:text-sm font-bold inline-flex items-center gap-2 transition-all cursor-pointer shadow-2xs"
+          >
+            <RefreshCw size={15} className={query.isFetching ? "animate-spin text-[#7FA0D6]" : "text-[#7FA0D6]"} />
+            Refresh
+          </button>
+        </div>
       </header>
 
       {/* Month Navigation & Client Filter */}
@@ -155,26 +186,89 @@ export function AdminCalendarPage({ embedded = false }: { embedded?: boolean } =
         {!query.isPending && !query.isError && selected.length === 0 && (
           <p className="text-xs sm:text-sm text-[#97A0B3]">No events scheduled for this day.</p>
         )}
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {selected.map((event) => (
-            <article key={event.id} className="rounded-xl bg-[#0B111C] border border-[#2A3446] p-3 sm:p-4 break-words space-y-1 hover:border-[#7FA0D6]/40 transition-colors">
+            <article key={event.id} className="rounded-2xl bg-[#0B111C] border border-[#2A3446] p-3.5 sm:p-4 break-words space-y-2.5 hover:border-[#7FA0D6]/40 transition-colors">
               <div className="flex items-center justify-between gap-2 flex-wrap">
-                <h3 className="font-bold text-sm text-white">{event.title}</h3>
-                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
-                  {event.status.replaceAll("_", " ")}
-                </span>
+                <h3 className="font-bold text-sm sm:text-base text-white">{event.title}</h3>
+                {event.concept_status === "concept_approved" ? (
+                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                    <CheckCircle2 className="size-3" /> Concept Approved
+                  </span>
+                ) : event.concept_status === "pending_approval" || event.status === "pending_approval" ? (
+                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                    <Clock className="size-3" /> Awaiting Client Approval
+                  </span>
+                ) : event.concept_status === "revision_requested" ? (
+                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center gap-1">
+                    <AlertTriangle className="size-3" /> Client Requested Changes
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                    {event.status.replaceAll("_", " ")}
+                  </span>
+                )}
               </div>
-              <p className="text-xs text-[#97A0B3] flex items-center gap-1.5 flex-wrap">
+
+              <div className="flex items-center gap-2 flex-wrap text-xs text-[#97A0B3]">
                 <span className="text-white font-medium">{event.client_name}</span>
                 <span>•</span>
                 <span>{event.time}</span>
                 <span>•</span>
                 <span className="text-[#BCCCE6]">{event.type}</span>
-              </p>
+                {event.approval_type && (
+                  <>
+                    <span>•</span>
+                    <span className="text-[11px] font-semibold text-[#7FA0D6] bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">
+                      For: {event.approval_type}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {event.story_description && (
+                <div className="bg-[#161F2D] p-3 rounded-xl border border-[#2A3446] text-xs text-slate-300 space-y-1">
+                  <div className="text-[10px] font-extrabold text-[#7FA0D6] uppercase tracking-wider flex items-center gap-1">
+                    <FileText className="size-3" />
+                    <span>Story Outline & Premise</span>
+                  </div>
+                  <p className="line-clamp-2 leading-relaxed text-slate-200">{event.story_description}</p>
+                </div>
+              )}
+
+              {event.client_feedback && (
+                <div className="bg-rose-500/10 p-2.5 rounded-xl border border-rose-500/30 text-xs text-rose-300">
+                  <span className="text-[10px] font-bold uppercase block mb-0.5">Client Feedback:</span>
+                  <p className="italic">&ldquo;{event.client_feedback}&rdquo;</p>
+                </div>
+              )}
+
+              <div className="pt-1 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSlotForEdit(event);
+                    setStoryModalOpen(true);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] hover:border-[#7FA0D6]/50 text-white text-xs font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Edit3 className="size-3.5 text-[#7FA0D6]" />
+                  <span>Fill Story & Approval Details</span>
+                </button>
+              </div>
             </article>
           ))}
         </div>
       </section>
+
+      {/* Story & Approval Modal */}
+      <StoryApprovalModal
+        isOpen={storyModalOpen}
+        onClose={() => setStoryModalOpen(false)}
+        onSuccess={() => void query.refetch()}
+        initialSlot={selectedSlotForEdit}
+        defaultDate={`${year}-${String(monthNumber).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`}
+      />
     </div>
   );
 

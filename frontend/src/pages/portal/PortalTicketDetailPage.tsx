@@ -9,7 +9,6 @@ import {
   Clock,
   Send,
   MessageSquare,
-  Calendar,
   FileCheck,
   Check,
   ChevronRight,
@@ -581,17 +580,6 @@ export function ClientTicketDetailPage() {
                 <div className="flex items-center gap-2.5">
                   <MessageSquare className="size-4 text-[#7FA0D6]" />
                   <span>Open Pod Slack Chat</span>
-                </div>
-                <ChevronRight className="size-3.5 text-[#97A0B3] group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-
-              <Link
-                to="/portal/creative-pod"
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-[#0B111C] hover:bg-[#2A3446] border border-white/[0.04] text-xs font-semibold text-white transition-colors cursor-pointer group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Calendar className="size-4 text-[#7FA0D6]" />
-                  <span>Meet Your Creative Pod</span>
                 </div>
                 <ChevronRight className="size-3.5 text-[#97A0B3] group-hover:translate-x-0.5 transition-transform" />
               </Link>

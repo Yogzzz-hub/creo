@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+import asyncio
+import io
+import mimetypes
+import os
 import uuid
+from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -437,6 +442,9 @@ async def change_password(
 
 
 @router.patch("/2fa", response_model=dict[str, Any])
+@router.post("/2fa", response_model=dict[str, Any])
+@router.patch("/profile/2fa", response_model=dict[str, Any])
+@router.post("/profile/2fa", response_model=dict[str, Any])
 async def toggle_two_factor(
     body: dict[str, Any],
     actor: Actor = Depends(get_current_actor),
@@ -448,9 +456,12 @@ async def toggle_two_factor(
 
     profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
     profile = (await db.execute(profile_stmt)).scalar_one_or_none()
-    if profile:
-        profile.brand_dna = {**(profile.brand_dna or {}), "two_fa_enabled": enabled}
-        await db.commit()
+    if not profile:
+        profile = ClientProfile(user_id=client_id)
+        db.add(profile)
+
+    profile.brand_dna = {**(profile.brand_dna or {}), "two_fa_enabled": enabled}
+    await db.commit()
 
     return {
         "status": "success",
@@ -572,6 +583,109 @@ async def regenerate_brand_dna_profile(
         "brand_dna": new_dna.model_dump(),
         "brand_summary": new_dna.summary_line,
         "message": "Brand strategy regenerated successfully.",
+    }
+
+
+@router.post("/brand/upload", response_model=dict[str, Any])
+async def upload_brand_asset(
+    file: UploadFile = File(...),
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Upload a brand asset (vector mark, font, guideline PDF, image) to client profile."""
+    client_id = actor.client_id or actor.user_id
+    if not client_id:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    from app.services import storage_service
+
+    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
+    if not profile:
+        profile = ClientProfile(user_id=client_id)
+        db.add(profile)
+
+    file_bytes = await file.read()
+    size = len(file_bytes)
+    if size == 0:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    mime_type = file.content_type or "application/octet-stream"
+    if mime_type == "application/octet-stream" and file.filename:
+        guessed, _ = mimetypes.guess_type(file.filename)
+        if guessed:
+            mime_type = guessed
+
+    # Clean filename
+    orig_name = os.path.basename(file.filename or "brand_asset")
+    safe_name = "".join(c for c in orig_name if c.isalnum() or c in "._- ") or "brand_asset"
+    storage_key = f"brand_assets/{client_id}/{uuid.uuid4().hex[:10]}_{safe_name}"
+
+    try:
+        fileobj = io.BytesIO(file_bytes)
+        stored = await asyncio.to_thread(
+            storage_service.put_object, storage_key, fileobj, mime_type, size
+        )
+    except Exception as exc:
+        relative = os.path.join("uploads", "brand_assets", str(client_id), f"{uuid.uuid4().hex[:8]}_{safe_name}")
+        destination = os.path.join(storage_service._LOCAL_STATIC_DIR, relative)
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
+        with open(destination, "wb") as out:
+            out.write(file_bytes)
+        stored = "/static/" + relative.replace(os.sep, "/")
+
+    size_str = f"{size / (1024 * 1024):.1f} MB" if size >= 1024 * 1024 else f"{max(1, round(size / 1024))} KB"
+
+    file_record = {
+        "id": str(uuid.uuid4()),
+        "name": safe_name,
+        "url": stored,
+        "file_url": stored,
+        "size": size_str,
+        "size_bytes": size,
+        "mime_type": mime_type,
+        "uploaded_at": datetime.now(UTC).isoformat(),
+    }
+
+    dna = dict(profile.brand_dna or {})
+    existing_files = list(dna.get("files") or [])
+    existing_files.insert(0, file_record)
+    dna["files"] = existing_files
+    profile.brand_dna = dna
+
+    await db.commit()
+
+    return {
+        "status": "success",
+        "message": f"'{safe_name}' uploaded successfully.",
+        "file": file_record,
+        "files": existing_files,
+    }
+
+
+@router.delete("/brand/files/{file_id}", response_model=dict[str, Any])
+async def delete_brand_asset(
+    file_id: str,
+    actor: Actor = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Remove an uploaded brand asset from the client profile."""
+    client_id = actor.client_id or actor.user_id
+    profile_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    profile = (await db.execute(profile_stmt)).scalar_one_or_none()
+    if not profile or not profile.brand_dna:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    dna = dict(profile.brand_dna or {})
+    files_list = [f for f in (dna.get("files") or []) if f.get("id") != file_id]
+    dna["files"] = files_list
+    profile.brand_dna = dna
+    await db.commit()
+
+    return {
+        "status": "success",
+        "message": "File removed successfully.",
+        "files": files_list,
     }
 
 

@@ -31,6 +31,7 @@ import {
   validateUploadFile,
 } from "../../lib/deliverables-api";
 import { fetchPodDashboard, type PodDashboardData, type PodTask } from "../../lib/ops-api";
+import { StoryApprovalModal } from "../../components/ops/StoryApprovalModal";
 
 type Column = "assigned" | "production" | "qa" | "review";
 
@@ -209,6 +210,7 @@ export function MemberTaskBoardPage() {
 
   // ── New task modal ──
   const [createOpen, setCreateOpen] = useState(false);
+  const [storyApprovalModalOpen, setStoryApprovalModalOpen] = useState(false);
   const [newClientId, setNewClientId] = useState("");
   const [newType, setNewType] = useState("reel");
   const [newTitle, setNewTitle] = useState("");
@@ -373,6 +375,14 @@ export function MemberTaskBoardPage() {
                   <span>Add Task</span>
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => setStoryApprovalModalOpen(true)}
+                className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#2A3446] hover:border-[#7FA0D6]/50 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shadow-2xs"
+              >
+                <Sparkles className="size-3.5 text-[#7FA0D6]" />
+                <span>Story & Approval Request</span>
+              </button>
             </div>
           </div>
         </div>
@@ -797,6 +807,14 @@ export function MemberTaskBoardPage() {
           </form>
         </div>
       )}
+
+      {/* Story & Approval Modal */}
+      <StoryApprovalModal
+        isOpen={storyApprovalModalOpen}
+        onClose={() => setStoryApprovalModalOpen(false)}
+        onSuccess={() => refreshBoard()}
+        defaultClientId={clients[0]?.id}
+      />
     </div>
   );
 }

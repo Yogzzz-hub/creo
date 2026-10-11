@@ -3330,13 +3330,21 @@ async def get_admin_calendar(
 
         title = cal.caption or f"{format_label} · {client_name}"
 
+        bp = cal.blueprint or {}
+        c_status = getattr(cal, "concept_status", "approved")
         events.append({
             "id": str(cal.id),
+            "client_id": str(cal.client_id),
             "deliverable_id": str(d.id) if d else None,
             "client_name": client_name,
             "title": title,
             "type": format_label,
-            "status": status_str,
+            "status": "pending_approval" if c_status in ["pending_approval", "concept_pending"] else "revision_requested" if c_status == "revision_requested" else status_str,
+            "concept_status": c_status,
+            "story_description": bp.get("story_description") or bp.get("premise") or "",
+            "approval_type": bp.get("approval_type") or "Story Concept & Topic",
+            "team_notes": bp.get("team_notes") or "",
+            "client_feedback": bp.get("client_feedback") or "",
             "date": cal.publish_date.strftime("%Y-%m-%d"),
             "day": cal.publish_date.day,
             "month": cal.publish_date.month,
