@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { request } from "../../lib/http";
-import { useLocation, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
