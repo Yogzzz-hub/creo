@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 
@@ -124,13 +125,13 @@ export function PasswordRecoveryModal({
 						: `Add a password to ${sentEmail} so you can sign in with email and password${hasGoogle ? " as well as Google" : ""}.`
 					: `You can now sign in with your email and password${hasGoogle ? " or with Google" : ""}.`;
 
-	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B111C]/80 backdrop-blur-md">
-			<section
-				role="dialog"
+	return createPortal(
+		<div className="fixed inset-0 z-[1000] grid min-h-dvh place-items-center overflow-y-auto p-4 sm:p-6 bg-[#0B111C]/80 backdrop-blur-md">
+			<dialog
+				open
 				aria-modal="true"
 				aria-labelledby="recovery-title"
-				className="w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto bg-[#121926] border border-[#222F44] rounded-2xl p-6 text-white space-y-4"
+				className="static m-0 w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto bg-[#121926] border border-[#222F44] rounded-2xl p-6 text-white space-y-4"
 			>
 				<h2 id="recovery-title" className="text-lg font-bold">
 					{title}
@@ -286,7 +287,8 @@ export function PasswordRecoveryModal({
 						Cancel
 					</button>
 				)}
-			</section>
-		</div>
+			</dialog>
+		</div>,
+		document.body,
 	);
 }

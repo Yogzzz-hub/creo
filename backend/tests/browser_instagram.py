@@ -180,6 +180,15 @@ async def main():
             await page.get_by_role("button", name="Approve this version and caption").count() == 0
         )
         await page.screenshot(path=str(output / "instagram-settings.png"), full_page=True)
+        await page.goto(BASE + "/portal/account")
+        await page.get_by_role("button", name="Set a password").click()
+        dialog = page.get_by_role("dialog", name="Reset or set your password")
+        await expect(dialog).to_be_visible()
+        bounds = await dialog.bounding_box()
+        viewport = page.viewport_size
+        assert bounds and viewport
+        assert abs(bounds["x"] + bounds["width"] / 2 - viewport["width"] / 2) <= 2
+        assert abs(bounds["y"] + bounds["height"] / 2 - viewport["height"] / 2) <= 2
         assert not errors, errors
         assert any(method == "DELETE" and path.endswith("/instagram") for method, path in calls)
         await browser.close()
