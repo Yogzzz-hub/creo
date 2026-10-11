@@ -10,10 +10,11 @@ interface SlaPerformanceWidgetProps {
 export function SlaPerformanceWidget({ slas }: SlaPerformanceWidgetProps) {
   const navigate = useNavigate();
   const activeAlerts = slas.length;
-  const overallSla = activeAlerts > 0 ? Math.max(75.0, 100 - activeAlerts * 5) : 100.0;
-  const responseSla = activeAlerts > 0 ? Math.max(80.0, 100 - activeAlerts * 4) : 100.0;
-  const resolutionSla = activeAlerts > 0 ? Math.max(70.0, 100 - activeAlerts * 6) : 100.0;
-
+  // Without historical SLA metrics from the backend, we calculate a baseline score
+  // based on active queue alerts.
+  const isOptimal = activeAlerts === 0;
+  const overallSla = isOptimal ? 100.0 : Math.max(60.0, 100 - (activeAlerts * 2.5));
+  
   return (
     <div
       onClick={() => navigate("/admin/sla")}
@@ -23,11 +24,11 @@ export function SlaPerformanceWidget({ slas }: SlaPerformanceWidgetProps) {
         <div className="flex items-center gap-2">
           <h2 className="text-[17px] font-black text-white group-hover:text-[#7FA0D6] transition-colors tracking-tight">SLA Performance</h2>
           <span className="text-[9px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 py-0.5 rounded-full border border-[#7FA0D6]/30 shadow-2xs">
-            Goal 98.0%
+            {isOptimal ? "Goal Met" : "Requires Attention"}
           </span>
         </div>
-        <span className="text-[9px] font-bold text-[#7FA0D6] bg-[#7FA0D6]/15 px-2 py-0.5 rounded-full shadow-2xs">
-          Optimal
+        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full shadow-2xs ${isOptimal ? "text-emerald-400 bg-emerald-400/15" : "text-rose-400 bg-rose-400/15"}`}>
+          {isOptimal ? "Optimal" : "Breached"}
         </span>
       </div>
       <p className="text-[11px] text-[#97A0B3] font-medium mb-3">Daily metrics on response & resolution deadlines</p>
@@ -56,24 +57,15 @@ export function SlaPerformanceWidget({ slas }: SlaPerformanceWidgetProps) {
           </div>
         </div>
 
-        {/* Linear Bars */}
-        <div className="flex flex-col gap-2 flex-1">
+        {/* Dynamic Metric Display */}
+        <div className="flex flex-col gap-2 flex-1 justify-center">
           <div className="flex flex-col gap-1">
             <div className="flex justify-between text-[11px] font-bold tracking-tight">
-              <span className="text-[#97A0B3]">Response SLA</span>
-              <span className="text-[#7FA0D6]">{responseSla}%</span>
+              <span className="text-[#97A0B3]">Current SLA Score</span>
+              <span className={isOptimal ? "text-emerald-400" : "text-rose-400"}>{overallSla.toFixed(1)}%</span>
             </div>
             <div className="w-full h-[5px] bg-[#2A3446] rounded-full overflow-hidden">
-              <div className="h-full bg-[#7FA0D6] rounded-full" style={{ width: `${responseSla}%` }} />
-            </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <div className="flex justify-between text-[11px] font-bold tracking-tight">
-              <span className="text-[#97A0B3]">Resolution SLA</span>
-              <span className="text-cyan-500">{resolutionSla}%</span>
-            </div>
-            <div className="w-full h-[5px] bg-[#2A3446] rounded-full overflow-hidden">
-              <div className="h-full bg-cyan-500 rounded-full" style={{ width: `${resolutionSla}%` }} />
+              <div className={`h-full rounded-full ${isOptimal ? "bg-emerald-400" : "bg-rose-400"}`} style={{ width: `${overallSla}%` }} />
             </div>
           </div>
         </div>
@@ -101,10 +93,10 @@ export function SlaPerformanceWidget({ slas }: SlaPerformanceWidgetProps) {
                   </div>
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <span className="text-xs font-black text-white truncate tracking-tight">
-                      Response time approaching breach on #{sla.id.slice(0, 4)}
+                      SLA breached on {sla.deliverable_type?.replace("_", " ") || "Task"} #{sla.id.slice(0, 4)}
                     </span>
                     <span className="text-[10px] text-[#97A0B3] font-medium">
-                      {sla.client_company} · {sla.sla_due_at ? "Breached" : "18m remaining"}
+                      {sla.client_company || "Client"} · Past Due
                     </span>
                   </div>
                 </div>
@@ -131,7 +123,7 @@ export function SlaPerformanceWidget({ slas }: SlaPerformanceWidgetProps) {
       </div>
 
       <div className="mt-3 pt-3 border-t border-[#2A3446] flex items-center justify-between text-[11px] text-[#97A0B3] font-medium" onClick={(e) => e.stopPropagation()}>
-        <span>Updated 2 mins ago</span>
+        <span>Live Metrics</span>
         <button
           onClick={(e) => {
             e.stopPropagation();

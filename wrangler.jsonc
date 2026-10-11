@@ -6,6 +6,9 @@
   "observability": {
     "enabled": true
   },
+  "build": {
+    "command": "npm run build --workspace=frontend"
+  },
   "assets": {
     "directory": "frontend/dist",
     "binding": "ASSETS",

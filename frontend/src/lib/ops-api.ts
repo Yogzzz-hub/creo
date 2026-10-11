@@ -69,6 +69,10 @@ export async function fetchPlansSummary(): Promise<PlansSummaryData> {
   return request<PlansSummaryData>("/api/v1/admin/plans-summary");
 }
 
+export async function fetchAdminTransactions(): Promise<any[]> {
+  return request<any[]>("/api/v1/admin/transactions");
+}
+
 export async function fetchAdminDashboard(
   _userId?: string,
   _role = "admin",

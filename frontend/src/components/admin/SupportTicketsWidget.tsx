@@ -70,6 +70,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
           const clientName = st.client || "Client";
           const shortId = String(st.id).length > 8 ? String(st.id).slice(0, 8).toUpperCase() : String(st.id);
 
+          const agentName = st.assignee?.full_name || st.assignee_name || "Unassigned";
           return {
             id: shortId,
             title: st.title || st.subject || "Support Inquiry",
@@ -77,9 +78,9 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
             clientInitials: clientName[0].toUpperCase(),
             avatarBg: "bg-[#0B111C]",
             priority,
-            timeLog: st.time || "Logged recently",
-            agent: st.assignee_name || "Support Lead",
-            pod: "Pod A",
+            timeLog: st.created_at ? new Date(st.created_at).toLocaleDateString() : "Recently",
+            agent: agentName,
+            pod: st.tier || "Active",
             status,
           };
         });
@@ -367,7 +368,7 @@ export function SupportTicketsWidget({ slas }: SupportTicketsWidgetProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <span className="flex items-center gap-1 font-semibold text-[#F1F5F9]">
-          Avg response: <strong className="text-[#7FA0D6]">8.4m</strong> (Target &lt;15m)
+          Total Tickets: <strong className="text-[#7FA0D6]">{tickets.length}</strong>
         </span>
         <button
           type="button"
