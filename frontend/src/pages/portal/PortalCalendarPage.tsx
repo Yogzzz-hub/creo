@@ -1,4 +1,3 @@
-import { PublishingQueue } from "../../components/ops/PublishingPanel";
 import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -386,7 +385,6 @@ export function PortalCalendarPage() {
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-[1440px] mx-auto px-4 md:px-8 pb-10 font-sans text-white bg-[#0B111C]">
-      <PublishingQueue readOnly />
       {/* ── Bento Grid Layout ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">
         

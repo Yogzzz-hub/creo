@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
+import { PublishingQueue } from "../ops/PublishingPanel";
 import { useConfirm } from "../ui/ConfirmDialog";
 
 interface Connection {
@@ -133,125 +134,137 @@ export function InstagramConnection() {
     return <p>Only the client account holder can manage Instagram authorization.</p>;
   const data = query.data;
   return (
-    <section className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-7 text-white space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-bold">Instagram connection</h2>
-        <Link to="/portal/account" className="text-sm underline">
-          Account
-        </Link>
-      </div>
-      <p className="text-sm text-[#97A0B3]">
-        Connect an Instagram Business account linked to a Facebook Page you manage. Approve content
-        in Creo, then your authorized team schedules it. Your Instagram password is never shared
-        with the team.
-      </p>
-      {query.isPending && <output>Checking connection…</output>}
-      {query.isError && (
-        <p role="alert">
-          {query.error.message}{" "}
-          <button type="button" className={button} onClick={() => void query.refetch()}>
-            Retry
-          </button>
+    <div className="space-y-5">
+      <section className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-5 sm:p-7 text-white space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-xl font-bold">Instagram connection</h2>
+          <Link
+            to="/portal/account"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#2A3446] bg-[#0B111C] px-4 py-2 text-sm font-semibold text-[#BCCCE6] transition-colors hover:border-[#7FA0D6]/50 hover:bg-[#1A2433] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]"
+          >
+            Account settings
+          </Link>
+        </div>
+        <p className="text-sm text-[#97A0B3]">
+          Connect an Instagram Business account linked to a Facebook Page you manage. Approve
+          content in Creo, then your authorized team schedules it. Your Instagram password is never
+          shared with the team.
         </p>
-      )}
-      {message && <output className="text-sm break-words">{message}</output>}
-      {data && (
-        <>
-          <div className="flex gap-3 items-center">
-            {data.picture && (
-              <img
-                src={data.picture}
-                alt="Instagram profile"
-                referrerPolicy="no-referrer"
-                className="size-12 rounded-full"
-              />
-            )}
-            <div>
-              <p className="font-semibold">
-                {data.username ? `@${data.username}` : "No connected account"}
-              </p>
-              <p className="text-sm capitalize text-[#97A0B3]">
-                {data.status.replaceAll("_", " ")}
-              </p>
+        {query.isPending && <output>Checking connection…</output>}
+        {query.isError && (
+          <p role="alert">
+            {query.error.message}{" "}
+            <button type="button" className={button} onClick={() => void query.refetch()}>
+              Retry
+            </button>
+          </p>
+        )}
+        {message && <output className="text-sm break-words">{message}</output>}
+        {data && (
+          <>
+            <div className="flex gap-3 items-center">
+              {data.picture && (
+                <img
+                  src={data.picture}
+                  alt="Instagram profile"
+                  referrerPolicy="no-referrer"
+                  className="size-12 rounded-full"
+                />
+              )}
+              <div>
+                <p className="font-semibold">
+                  {data.username ? `@${data.username}` : "No connected account"}
+                </p>
+                <p className="text-sm capitalize text-[#97A0B3]">
+                  {data.status.replaceAll("_", " ")}
+                </p>
+              </div>
             </div>
-          </div>
-          {data.account_id && (
-            <p className="text-xs text-[#97A0B3] break-all">
-              Account {data.account_id} · {data.page_name}
-            </p>
-          )}
-          {data.last_verified_at && (
-            <p className="text-xs text-[#97A0B3]">
-              Last verified: {new Date(data.last_verified_at).toLocaleString()}
-            </p>
-          )}
-          {data.error && (
-            <p role="alert" className="text-amber-300 text-sm">
-              {data.error}
-            </p>
-          )}
-          {!data.configured && (
-            <p className="text-sm text-amber-300">
-              Instagram connection is awaiting administrator setup.
-            </p>
-          )}
-          {!data.publishing_enabled && (
-            <p className="text-sm text-[#97A0B3]">
-              Automatic publishing is currently disabled. Approved content remains in Creo.
-            </p>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className={button}
-              disabled={busy || !data.configured}
-              onClick={() => void perform("connect")}
-            >
-              {busy ? "Please wait…" : data.connected ? "Reconnect Instagram" : "Connect Instagram"}
-            </button>
-            {data.connected && (
+            {data.account_id && (
+              <p className="text-xs text-[#97A0B3] break-all">
+                Account {data.account_id} · {data.page_name}
+              </p>
+            )}
+            {data.last_verified_at && (
+              <p className="text-xs text-[#97A0B3]">
+                Last verified: {new Date(data.last_verified_at).toLocaleString()}
+              </p>
+            )}
+            {data.error && (
+              <p role="alert" className="text-amber-300 text-sm">
+                {data.error}
+              </p>
+            )}
+            {!data.configured && (
+              <p className="text-sm text-amber-300">
+                Instagram connection is unavailable until the API is configured with a Meta App ID,
+                Meta App Secret, valid encryption key, and the exact HTTPS callback URL registered
+                in Meta.
+              </p>
+            )}
+            {!data.publishing_enabled && (
+              <p className="text-sm text-[#97A0B3]">
+                Automatic publishing is currently disabled. Approved content remains in Creo.
+              </p>
+            )}
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                className={button}
-                disabled={busy}
-                onClick={() => void perform("verify")}
+                className={`${button} ${data.configured ? "bg-[#BCCCE6] text-[#0B111C] hover:bg-white" : ""}`}
+                disabled={busy || !data.configured}
+                onClick={() => void perform("connect")}
               >
-                Verify connection
+                {busy
+                  ? "Please wait…"
+                  : data.connected
+                    ? "Reconnect Instagram"
+                    : "Connect Instagram"}
               </button>
-            )}
-            {data.status !== "disconnected" && (
+              {data.connected && (
+                <button
+                  type="button"
+                  className={button}
+                  disabled={busy}
+                  onClick={() => void perform("verify")}
+                >
+                  Verify connection
+                </button>
+              )}
+              {data.status !== "disconnected" && (
+                <button
+                  type="button"
+                  className={button}
+                  disabled={busy}
+                  onClick={() => void perform("disconnect")}
+                >
+                  Disconnect
+                </button>
+              )}
+            </div>
+          </>
+        )}
+        {selection && (
+          <fieldset className="space-y-2">
+            <legend className="font-semibold mb-2">Choose the account for this client</legend>
+            {selection.accounts.map((a) => (
               <button
                 type="button"
-                className={button}
+                key={a.id}
                 disabled={busy}
-                onClick={() => void perform("disconnect")}
+                className={`${button} block w-full text-left`}
+                onClick={() => void perform("connect", a.id)}
               >
-                Disconnect
+                @{a.username} · {a.page_name}
               </button>
-            )}
-          </div>
-        </>
-      )}
-      {selection && (
-        <fieldset className="space-y-2">
-          <legend className="font-semibold mb-2">Choose the account for this client</legend>
-          {selection.accounts.map((a) => (
-            <button
-              type="button"
-              key={a.id}
-              disabled={busy}
-              className={`${button} block w-full text-left`}
-              onClick={() => void perform("connect", a.id)}
-            >
-              @{a.username} · {a.page_name}
-            </button>
-          ))}
-        </fieldset>
-      )}
-      <p className="text-xs text-[#97A0B3]">
-        You can revoke access here or in Facebook Business Integrations. Only you control
-        authorization. Stories require an eligible Business account.
-      </p>
-    </section>
+            ))}
+          </fieldset>
+        )}
+        <p className="text-xs text-[#97A0B3]">
+          You can revoke access here or in Facebook Business Integrations. Only you control
+          authorization. Stories require an eligible Business account.
+        </p>
+      </section>
+      <PublishingQueue readOnly />
+    </div>
   );
 }

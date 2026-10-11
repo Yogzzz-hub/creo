@@ -37,6 +37,24 @@ services:
         value: 15
       - key: REFRESH_TOKEN_DAYS
         value: 30
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: INSTAGRAM_APP_ID
+        sync: false
+      - key: INSTAGRAM_APP_SECRET
+        sync: false
+      - key: INSTAGRAM_REDIRECT_URI
+        value: https://creo.yogalakshmibaskar20.workers.dev/portal/account/instagram
+      - key: INSTAGRAM_CLIENT_MODE
+        value: fake
+      - key: INSTAGRAM_PUBLISHING_ENABLED
+        value: "false"
+      - key: META_GRAPH_API_VERSION
+        value: v26.0
+      - key: INSTAGRAM_FFPROBE_PATH
+        value: ffprobe
+      - key: INSTAGRAM_MAX_LATENESS_MINUTES
+        value: "30"
       - key: RESEND_API_KEY
         sync: false
       - key: RESEND_FROM_EMAIL
@@ -75,6 +93,51 @@ services:
           name: creo-api
           type: web
           envVarKey: RESEND_FROM_EMAIL
+      - key: ENCRYPTION_KEY
+        fromService:
+          name: creo-api
+          type: web
+          envVarKey: ENCRYPTION_KEY
+      - key: INSTAGRAM_APP_ID
+        fromService:
+          name: creo-api
+          type: web
+          envVarKey: INSTAGRAM_APP_ID
+      - key: INSTAGRAM_APP_SECRET
+        fromService:
+          name: creo-api
+          type: web
+          envVarKey: INSTAGRAM_APP_SECRET
+      - key: INSTAGRAM_REDIRECT_URI
+        fromService:
+          name: creo-api
+          type: web
+          envVarKey: INSTAGRAM_REDIRECT_URI
+      - key: INSTAGRAM_CLIENT_MODE
+        fromService:
+          name: creo-api
+          type: web
+          envVarKey: INSTAGRAM_CLIENT_MODE
+      - key: INSTAGRAM_PUBLISHING_ENABLED
+        fromService:
+          name: creo-api
+          type: web
+          envVarKey: INSTAGRAM_PUBLISHING_ENABLED
+      - key: META_GRAPH_API_VERSION
+        fromService:
+          name: creo-api
+          type: web
+          envVarKey: META_GRAPH_API_VERSION
+      - key: INSTAGRAM_FFPROBE_PATH
+        fromService:
+          name: creo-api
+          type: web
+          envVarKey: INSTAGRAM_FFPROBE_PATH
+      - key: INSTAGRAM_MAX_LATENESS_MINUTES
+        fromService:
+          name: creo-api
+          type: web
+          envVarKey: INSTAGRAM_MAX_LATENESS_MINUTES
       - key: DATABASE_URL
         fromDatabase:
           name: creo-db

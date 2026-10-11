@@ -54,17 +54,31 @@ def unseal(value: bytes | None):
 
 
 def configured() -> bool:
-    uri = urlparse(settings.INSTAGRAM_REDIRECT_URI)
-    return bool(
-        settings.INSTAGRAM_APP_ID
-        and settings.INSTAGRAM_APP_SECRET
-        and settings.ENCRYPTION_KEY
-        and uri.path == "/portal/account/instagram"
-        and (
-            uri.scheme == "https"
-            or (settings.ENVIRONMENT != "production" and uri.hostname in ("localhost", "127.0.0.1"))
+    try:
+        uri = urlparse(settings.INSTAGRAM_REDIRECT_URI.strip())
+        callback_is_safe = (
+            uri.path == "/portal/account/instagram"
+            and not uri.query
+            and not uri.fragment
+            and not uri.username
+            and not uri.password
+            and (
+                (uri.scheme == "https" and bool(uri.hostname))
+                or (
+                    settings.ENVIRONMENT != "production"
+                    and uri.scheme == "http"
+                    and uri.hostname in ("localhost", "127.0.0.1")
+                )
+            )
         )
-    )
+        if not settings.INSTAGRAM_APP_ID.strip() or not settings.INSTAGRAM_APP_SECRET.strip():
+            return False
+        if not callback_is_safe:
+            return False
+        Fernet(settings.ENCRYPTION_KEY.strip().encode())
+        return True
+    except (AttributeError, TypeError, ValueError):
+        return False
 
 
 def require_configuration() -> None:

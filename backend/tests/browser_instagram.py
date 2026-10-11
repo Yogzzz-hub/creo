@@ -169,6 +169,9 @@ async def main():
         ).to_be_visible()
         await page.set_viewport_size({"width": 1440, "height": 1000})
         await page.goto(BASE + "/portal/calendar")
+        await expect(page.get_by_text("Production Horizon")).to_be_visible()
+        assert await page.get_by_role("heading", name="Instagram publishing queue").count() == 0
+        await page.goto(BASE + "/portal/account/instagram")
         await expect(page.get_by_role("heading", name="Instagram publishing queue")).to_be_visible()
         await page.get_by_role("button", name="ABC Restaurant · Weekend poster").click()
         await expect(page.get_by_text("Weekend menu", exact=True)).to_be_visible()
@@ -176,13 +179,13 @@ async def main():
         assert (
             await page.get_by_role("button", name="Approve this version and caption").count() == 0
         )
-        await page.screenshot(path=str(output / "instagram-calendar.png"), full_page=True)
+        await page.screenshot(path=str(output / "instagram-settings.png"), full_page=True)
         assert not errors, errors
         assert any(method == "DELETE" and path.endswith("/instagram") for method, path in calls)
         await browser.close()
         print(
             "PASS: connection, OAuth selection, disconnect, mobile layout, "
-            "read-only calendar; no real API calls"
+            "read-only settings queue; no real API calls"
         )
 
 

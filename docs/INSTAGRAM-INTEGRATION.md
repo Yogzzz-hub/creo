@@ -73,8 +73,9 @@ Deliverable production status remains **approved** while the independent publish
 status moves through `pending_approval`, `needs_schedule`, `scheduled`, `processing`,
 `published`, `failed`, `paused`, `canceled`, or `uncertain`. Approval never sends a
 Celery task or invokes Meta. Historical content is never enrolled automatically.
-Client calendars show a read-only publishing queue; existing editorial planning
-and concept-review controls retain their original meaning.
+Clients see their read-only publishing queue under Account settings > Instagram
+connection; the editorial calendar remains focused on production dates and
+concept-review controls.
 
 Staff scheduling uses the existing client-pod/task assignment checks. Admins are
 restricted to their agency, and super admins retain platform access. Only the
@@ -161,9 +162,10 @@ member task, pod lead, admin client and calendar pages.
    It does not enqueue or alter historical deliverables. Deploy the schema before
    the new application because ClientProfile now includes the added columns.
 2. Create/configure a Meta app for Instagram API **with Facebook Login**. Configure
-   the exact HTTPS frontend callback `/portal/account/instagram` as a valid redirect
-   and configure app domains. The frontend must serve SPA routes directly on refresh.
-   Keep this separate from Creo's Google/password login callback configuration.
+   `https://creo.yogalakshmibaskar20.workers.dev/portal/account/instagram` as an exact
+   valid OAuth redirect and add `creo.yogalakshmibaskar20.workers.dev` to app domains.
+   The frontend must serve SPA routes directly on refresh. Keep this separate from
+   Creo's Google/password login callback configuration.
 3. Request the four documented permissions with required access levels. Complete
    Meta App Review and any required business verification for accounts outside app
    roles. Supply reviewer credentials, a flow recording and test Business/Page setup.
@@ -171,10 +173,17 @@ member task, pod lead, admin client and calendar pages.
    the product's support process for deletion requests. There is no public signed
    deauthorization/data-deletion webhook in this change; daily verification and
    pre-execution verification detect revocation.
-4. Copy the relevant values from `backend/.env.instagram.example` into the existing
-   secret-managed deployment environment. Generate a Fernet key with
+4. On the deployed API service (`creo-api-singapore`), set `INSTAGRAM_APP_ID`,
+   `INSTAGRAM_APP_SECRET`, and `INSTAGRAM_REDIRECT_URI` to the Meta app values and
+   the exact HTTPS frontend callback above. The live API must also have a valid,
+   persistent Fernet `ENCRYPTION_KEY`; the `creo-worker-singapore` and Beat services
+   must receive the same key and Instagram settings. The Render blueprints declare
+   these worker bindings. Copy remaining values from `backend/.env.instagram.example`
+   into the secret-managed API environment. Generate a Fernet key with
    `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`.
-   Preserve it across restarts and use the same key in API and workers. Do not
+   Preserve it across restarts and use the same key in API and workers. Keep
+   `INSTAGRAM_CLIENT_MODE=fake` and `INSTAGRAM_PUBLISHING_ENABLED=false` until Meta
+   access, permissions and storage are verified. Do not
    overwrite an existing encryption key without migrating encrypted credentials.
    App secrets/tokens must never be put in `VITE_*` variables or request logs.
 5. Configure existing S3/R2 or Supabase private media storage. Signed HTTPS read URLs
@@ -225,7 +234,7 @@ lint already contains unrelated findings; this change does not attempt a cleanup
 
 Browser smoke coverage uses Chromium with all API responses mocked and external
 network blocked: OAuth callback/account selection, disconnect, 390px mobile layout,
-and the read-only client publishing calendar. To repeat, run Vite on
+and the read-only client publishing queue in Instagram settings. To repeat, run Vite on
 `127.0.0.1:4174`, install Python Playwright/Chromium in your test environment, and
 run `python tests/browser_instagram.py` from `backend`. Screenshots go to ignored
 `backend/scratch/`. This checks frontend behavior independently of live Meta.

@@ -20,6 +20,28 @@ from app.services.instagram_media import validate_metadata
 
 
 class ApprovalAndTimeTests(unittest.TestCase):
+    def test_connection_configuration_requires_production_callback_and_valid_key(self):
+        secure_callback = "https://creo.yogalakshmibaskar20.workers.dev/portal/account/instagram"
+        with (
+            patch.object(settings, "ENVIRONMENT", "production"),
+            patch.object(settings, "INSTAGRAM_APP_ID", "meta-app-id"),
+            patch.object(settings, "INSTAGRAM_APP_SECRET", "meta-app-secret"),
+            patch.object(settings, "INSTAGRAM_REDIRECT_URI", secure_callback),
+            patch.object(settings, "ENCRYPTION_KEY", Fernet.generate_key().decode()),
+        ):
+            self.assertTrue(connection.configured())
+            with patch.object(settings, "ENCRYPTION_KEY", "not-a-fernet-key"):
+                self.assertFalse(connection.configured())
+            with patch.object(settings, "ENCRYPTION_KEY", Fernet.generate_key().decode()):
+                for callback in (
+                    "http://localhost:5173/portal/account/instagram",
+                    secure_callback + "?next=https://attacker.invalid",
+                    "https:///portal/account/instagram",
+                ):
+                    with self.subTest(callback=callback):
+                        with patch.object(settings, "INSTAGRAM_REDIRECT_URI", callback):
+                            self.assertFalse(connection.configured())
+
     def setUp(self):
         self.d = SimpleNamespace(
             id=uuid.uuid4(),

@@ -112,6 +112,31 @@ services:
           type: web
           name: creo-api-singapore
           envVarKey: INSTAGRAM_CLIENT_MODE
+      - key: INSTAGRAM_PUBLISHING_ENABLED
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: INSTAGRAM_PUBLISHING_ENABLED
+      - key: INSTAGRAM_REDIRECT_URI
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: INSTAGRAM_REDIRECT_URI
+      - key: META_GRAPH_API_VERSION
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: META_GRAPH_API_VERSION
+      - key: INSTAGRAM_FFPROBE_PATH
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: INSTAGRAM_FFPROBE_PATH
+      - key: INSTAGRAM_MAX_LATENESS_MINUTES
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: INSTAGRAM_MAX_LATENESS_MINUTES
       - key: SUPABASE_URL
         fromService:
           type: web
