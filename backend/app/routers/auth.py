@@ -15,21 +15,26 @@ from fastapi.responses import RedirectResponse
 import httpx
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.core.errors import Conflict, Forbidden, Unauthorized
 from app.core.logging import get_logger
 from app.core.cache import get_redis
 from app.core.rbac import Actor, get_current_actor
 from app.core.security import (
     create_access_token,
+    create_password_reset_token,
     create_refresh_token,
+    decode_token,
     hash_password,
     validate_password_strength,
     verify_password,
 )
 from app.db.session import get_db
 from app.models.enums import AccountStatus, UserRole
+from app.models.tenant import Agency
 from app.models.user import ClientProfile, User
 from app.services.email_service import send_otp_email
 
@@ -165,6 +170,121 @@ def _check_rate_limit(key: str, max_requests: int, window_seconds: int) -> bool:
     return True
 
 
+# ── Account identity ──────────────────────────────────────────────────────────
+# One person is one users row, keyed by lowercase email. Password and Google are
+# sign-in methods attached to that row, never separate accounts.
+
+
+def _normalize_email(email: str) -> str:
+    return email.strip().lower()
+
+
+async def _get_user_by_email(db: AsyncSession, email: str) -> User | None:
+    """Case-insensitive lookup; the oldest row wins if legacy case-variant duplicates exist."""
+    stmt = (
+        select(User)
+        .where(func.lower(User.email) == _normalize_email(email))
+        .order_by(User.created_at.asc())
+        .limit(1)
+    )
+    return (await db.execute(stmt)).scalar_one_or_none()
+
+
+def _sign_in_methods(user: User) -> list[str]:
+    methods = []
+    if user.hashed_password:
+        methods.append("password")
+    if user.google_sub or user.auth_id.startswith("auth-google-"):
+        methods.append("google")
+    return methods
+
+
+def _password_not_set_error(user: User) -> Unauthorized:
+    methods = _sign_in_methods(user)
+    if "google" in methods:
+        message = (
+            "This account uses Google sign-in and doesn't have a CREO password yet. "
+            "Continue with Google, or use 'Forgot password?' to set one."
+        )
+    else:
+        message = "This account doesn't have a password yet. Use 'Forgot password?' to set one."
+    return Unauthorized(message, code="PASSWORD_NOT_SET", details={"sign_in_methods": methods})
+
+
+def _account_exists_error(user: User) -> Conflict:
+    methods = _sign_in_methods(user)
+    if "password" in methods:
+        message = "An account with this email already exists. Please sign in instead."
+    elif "google" in methods:
+        message = (
+            "This email is already registered with Google sign-in. Continue with Google, "
+            "or use 'Forgot password?' to add a password."
+        )
+    else:
+        message = "An account with this email already exists. Use 'Forgot password?' to set a password."
+    return Conflict(message, code="ACCOUNT_EXISTS", details={"sign_in_methods": methods})
+
+
+async def _default_signup_agency_id(db: AsyncSession) -> uuid.UUID | None:
+    """Agency that self-service sign-ups join: the oldest active agency, else the oldest one."""
+    return await db.scalar(
+        select(Agency.id)
+        .order_by((Agency.status == "active").desc(), Agency.created_at.asc())
+        .limit(1)
+    )
+
+
+def _apply_new_password(user: User, new_password: str) -> None:
+    """Store a new password and end every session issued before it."""
+    user.hashed_password = hash_password(new_password)
+    user.must_reset_password = False
+    user.token_version += 1
+
+
+def _user_payload(user: User, stage: int) -> dict[str, Any]:
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "role": user.role.value,
+        "account_status": user.account_status.value,
+        "must_reset_password": bool(user.must_reset_password),
+        "onboarding_stage": stage,
+        "sign_in_methods": _sign_in_methods(user),
+    }
+
+
+def _access_token_for(user: User) -> str:
+    return create_access_token(
+        subject=user.id,
+        role=user.role.value,
+        email=user.email,
+        client_id=user.id if user.role == UserRole.CLIENT else None,
+        agency_id=user.agency_id,
+        extra_claims={"must_reset_password": bool(user.must_reset_password)},
+        token_version=user.token_version,
+    )
+
+
+async def _issue_session(db: AsyncSession, user: User) -> dict[str, Any]:
+    """Single exit point for every sign-in method, so all of them apply the same rules."""
+    if user.account_status == AccountStatus.SUSPENDED:
+        raise HTTPException(
+            status_code=403,
+            detail="Your account has been suspended. Please contact support.",
+        )
+
+    from app.services.onboarding_service import get_current_stage
+    stage = await get_current_stage(db, user.id) if user.role == UserRole.CLIENT else 5
+
+    return {
+        "access_token": _access_token_for(user),
+        "refresh_token": create_refresh_token(subject=user.id, token_version=user.token_version),
+        "token_type": "bearer",
+        "user": _user_payload(user, stage),
+    }
+
+
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
@@ -212,6 +332,11 @@ class VerifyResetOtpRequest(BaseModel):
     code: str = Field(..., min_length=4, max_length=8)
 
 
+class ResetPasswordRequest(BaseModel):
+    reset_token: str
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
 class SetMandatoryPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=128)
 
@@ -227,7 +352,7 @@ async def register_intent(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Validate email uniqueness, password strength, rate limit, and dispatch 6-digit verification code to email."""
-    email_clean = payload.email.strip().lower()
+    email_clean = _normalize_email(payload.email)
 
     # Rate limiting: Max 5 registration attempts per 10 minutes per email
     if not _check_rate_limit(f"reg_intent:{email_clean}", max_requests=5, window_seconds=600):
@@ -241,16 +366,9 @@ async def register_intent(
     if not valid:
         raise HTTPException(status_code=400, detail=err)
 
-    # Check if user already exists
-    stmt = select(User).where(func.lower(User.email) == email_clean)
-    res = await db.execute(stmt)
-    existing_user = res.scalar_one_or_none()
-
+    existing_user = await _get_user_by_email(db, email_clean)
     if existing_user:
-        raise HTTPException(
-            status_code=400,
-            detail="An account with this email address already exists. Please sign in instead.",
-        )
+        raise _account_exists_error(existing_user)
 
     # Generate cryptographically secure 6-digit OTP
     otp_code = f"{secrets.randbelow(900000) + 100000}"
@@ -278,7 +396,7 @@ async def resend_registration(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Resend registration OTP without requiring the password after refresh."""
-    email_clean = payload.email.strip().lower()
+    email_clean = _normalize_email(payload.email)
     if not _check_rate_limit(f"reg_resend:{email_clean}", max_requests=5, window_seconds=600):
         raise HTTPException(
             status_code=429,
@@ -292,9 +410,9 @@ async def resend_registration(
             detail="Registration session expired. Please enter your details again.",
         )
 
-    existing = await db.execute(select(User.id).where(func.lower(User.email) == email_clean))
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="This account already exists. Please sign in.")
+    existing_user = await _get_user_by_email(db, email_clean)
+    if existing_user:
+        raise _account_exists_error(existing_user)
 
     otp_code = f"{secrets.randbelow(900000) + 100000}"
     expires_at = time.time() + 600.0
@@ -316,7 +434,7 @@ async def verify_registration(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Verify OTP and complete user account creation with hashed password."""
-    email_clean = payload.email.strip().lower()
+    email_clean = _normalize_email(payload.email)
     store_key = f"reg:{email_clean}"
     stored = await _load_otp(store_key)
     pending_registration = await _load_pending_registration(email_clean)
@@ -352,78 +470,38 @@ async def verify_registration(
         hashed_pw = hash_password(payload.password)
         resolved_name = payload.full_name or email_clean.split("@")[0].capitalize()
 
-    stmt = select(User).where(func.lower(User.email) == email_clean)
-    res = await db.execute(stmt)
-    if res.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="An account with this email address already exists.")
+    existing_user = await _get_user_by_email(db, email_clean)
+    if existing_user:
+        raise _account_exists_error(existing_user)
 
     # Public registration is strictly CLIENT; staff/admin must be invited or provisioned
-    assigned_role = UserRole.CLIENT
-
-    # Check agency limits and status
-    from app.models.tenant import Agency
-    from sqlalchemy import select, text
-    agency_id_str = await db.scalar(text("SELECT current_setting('app.agency_id', true)"))
-    if agency_id_str:
-        agency = await db.get(Agency, uuid.UUID(agency_id_str))
-        if agency:
-            if agency.status == "past_due":
-                raise HTTPException(403, "Agency account is past due. New client registration is blocked.")
-            # Could also enforce client limits here, but we have capacity_service
-    else:
-        default_agency = await db.scalar(select(Agency.id).where(Agency.status == "active").order_by(Agency.created_at.asc()).limit(1))
-        if not default_agency:
-            default_agency = await db.scalar(select(Agency.id).limit(1))
-        agency_id_str = str(default_agency) if default_agency else "00000000-0000-0000-0000-000000000001"
-            
     user = User(
         auth_id=f"auth-pwd-{uuid.uuid4().hex[:12]}",
         email=email_clean,
         full_name=resolved_name,
         hashed_password=hashed_pw,
-        role=assigned_role,
+        role=UserRole.CLIENT,
         account_status=AccountStatus.ACTIVE,
         email_verified_at=datetime.now(timezone.utc),
         must_reset_password=False,
-        agency_id=uuid.UUID(agency_id_str) if agency_id_str else None,
+        agency_id=await _default_signup_agency_id(db),
     )
     db.add(user)
-    await db.flush()
-
-    profile = ClientProfile(user_id=user.id)
-    db.add(profile)
-    await db.commit()
+    try:
+        await db.flush()
+        db.add(ClientProfile(user_id=user.id))
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="An account with this email address already exists. Please sign in instead.",
+        ) from exc
     await db.refresh(user)
     await _delete_otp(store_key)
     await _delete_pending_registration(email_clean)
 
-    access_token = create_access_token(
-        subject=user.id,
-        role=user.role.value,
-        email=user.email,
-        client_id=user.id if user.role == UserRole.CLIENT else None,
-        agency_id=user.agency_id,
-        extra_claims={"must_reset_password": False},
-    )
-    refresh_token = create_refresh_token(subject=user.id)
-
-    from app.services.onboarding_service import get_current_stage
-    stage = await get_current_stage(db, user.id) if user.role == UserRole.CLIENT else 5
-
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "user": {
-            "id": str(user.id),
-            "email": user.email,
-            "full_name": user.full_name,
-            "role": user.role.value,
-            "account_status": user.account_status.value,
-            "must_reset_password": False,
-            "onboarding_stage": stage,
-        },
-    }
+    return await _issue_session(db, user)
 
 
 @router.post("/forgot-password", response_model=dict[str, Any])
@@ -432,7 +510,7 @@ async def forgot_password(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Generate and dispatch OTP to user email for password reset."""
-    email_clean = payload.email.strip().lower()
+    email_clean = _normalize_email(payload.email)
 
     if not _check_rate_limit(f"forgot:{email_clean}", max_requests=5, window_seconds=600):
         raise HTTPException(
@@ -440,10 +518,7 @@ async def forgot_password(
             detail="Too many password reset requests. Please wait a few minutes before trying again.",
         )
 
-    stmt = select(User).where(func.lower(User.email) == email_clean)
-    res = await db.execute(stmt)
-    user = res.scalar_one_or_none()
-
+    user = await _get_user_by_email(db, email_clean)
     if not user:
         raise HTTPException(status_code=404, detail="No account found with this email address.")
 
@@ -466,8 +541,8 @@ async def verify_reset_otp(
     payload: VerifyResetOtpRequest,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Verify reset OTP, authenticate user, and flag account with must_reset_password=True."""
-    email_clean = payload.email.strip().lower()
+    """Verify a reset OTP and return a single-use token for choosing the new password."""
+    email_clean = _normalize_email(payload.email)
     store_key = f"reset:{email_clean}"
     stored = await _load_otp(store_key)
 
@@ -489,45 +564,62 @@ async def verify_reset_otp(
 
     await _delete_otp(store_key)
 
-    stmt = select(User).where(func.lower(User.email) == email_clean)
-    res = await db.execute(stmt)
-    user = res.scalar_one_or_none()
-
+    user = await _get_user_by_email(db, email_clean)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    if user.account_status == AccountStatus.SUSPENDED:
+        raise HTTPException(status_code=403, detail="Your account has been suspended. Please contact support.")
 
-    # Flag user for mandatory password reset
-    user.must_reset_password = True
+    return {
+        "status": "verified",
+        "email": user.email,
+        "reset_token": create_password_reset_token(user.id, user.token_version),
+        "expires_in_seconds": 900,
+        "sign_in_methods": _sign_in_methods(user),
+    }
+
+
+@router.post("/reset-password", response_model=dict[str, Any])
+async def reset_password(
+    payload: ResetPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Set a new password with a verified reset token and start a fresh session.
+
+    Works the same for password and Google-only accounts: for the latter it adds
+    password sign-in alongside Google.
+    """
+    try:
+        data = decode_token(payload.reset_token, expected_type="password_reset")
+        user_id = uuid.UUID(str(data.get("sub")))
+    except (Unauthorized, ValueError) as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="This reset session has expired. Please request a new verification code.",
+        ) from exc
+
+    user = (
+        await db.execute(select(User).where(User.id == user_id).with_for_update())
+    ).scalar_one_or_none()
+    if not user or data.get("tv") != user.token_version:
+        raise HTTPException(
+            status_code=400,
+            detail="This reset session was already used. Please request a new verification code.",
+        )
+    if user.account_status == AccountStatus.SUSPENDED:
+        raise HTTPException(status_code=403, detail="Your account has been suspended. Please contact support.")
+
+    valid, err = validate_password_strength(payload.new_password)
+    if not valid:
+        raise HTTPException(status_code=400, detail=err)
+
+    _apply_new_password(user, payload.new_password)
+    if user.email_verified_at is None:
+        user.email_verified_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(user)
 
-    access_token = create_access_token(
-        subject=user.id,
-        role=user.role.value,
-        email=user.email,
-        client_id=user.id if user.role == UserRole.CLIENT else None,
-        agency_id=user.agency_id,
-        extra_claims={"must_reset_password": True},
-    )
-    refresh_token = create_refresh_token(subject=user.id)
-
-    from app.services.onboarding_service import get_current_stage
-    stage = await get_current_stage(db, user.id) if user.role == UserRole.CLIENT else 5
-
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "user": {
-            "id": str(user.id),
-            "email": user.email,
-            "full_name": user.full_name,
-            "role": user.role.value,
-            "account_status": user.account_status.value,
-            "must_reset_password": True,
-            "onboarding_stage": stage,
-        },
-    }
+    return await _issue_session(db, user)
 
 
 @router.post("/set-mandatory-password", response_model=dict[str, Any])
@@ -536,52 +628,33 @@ async def set_mandatory_password(
     actor: Actor = Depends(get_current_actor),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Set new password for current user and unlock account by unsetting must_reset_password."""
-    user_id = actor.user_id
+    """Complete a forced password change for an account flagged with must_reset_password."""
+    user = (
+        await db.execute(select(User).where(User.id == actor.user_id).with_for_update())
+    ).scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    # Validate password strength
+    # Without the flag this would let any live session replace the password unverified.
+    if not user.must_reset_password:
+        raise Forbidden(
+            "Changing your password requires a verification code. Use 'Forgot password?' to continue.",
+            code="RESET_VERIFICATION_REQUIRED",
+        )
+
     valid, err = validate_password_strength(payload.new_password)
     if not valid:
         raise HTTPException(status_code=400, detail=err)
 
-    stmt = select(User).where(User.id == user_id)
-    res = await db.execute(stmt)
-    user = res.scalar_one_or_none()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user.hashed_password = hash_password(payload.new_password)
-    user.must_reset_password = False
+    _apply_new_password(user, payload.new_password)
     await db.commit()
     await db.refresh(user)
 
-    # Issue refreshed token with must_reset_password = False
-    new_access_token = create_access_token(
-        subject=user.id,
-        role=user.role.value,
-        email=user.email,
-        client_id=user.id if user.role == UserRole.CLIENT else None,
-        agency_id=user.agency_id,
-        extra_claims={"must_reset_password": False},
-    )
-
-    from app.services.onboarding_service import get_current_stage
-    stage = await get_current_stage(db, user.id) if user.role == UserRole.CLIENT else 5
-
+    session = await _issue_session(db, user)
     return {
         "status": "success",
         "message": "Password updated successfully. Account unlocked.",
-        "access_token": new_access_token,
-        "user": {
-            "id": str(user.id),
-            "email": user.email,
-            "full_name": user.full_name,
-            "role": user.role.value,
-            "account_status": user.account_status.value,
-            "must_reset_password": False,
-            "onboarding_stage": stage,
-        },
+        **session,
     }
 
 
@@ -603,7 +676,7 @@ async def login(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Authenticate with email and password with brute-force rate limit protection."""
-    email_clean = payload.email.strip().lower()
+    email_clean = _normalize_email(payload.email)
 
     # Rate limiting: Max 10 attempts per 15 minutes
     if not _check_rate_limit(f"login:{email_clean}", max_requests=10, window_seconds=900):
@@ -612,55 +685,25 @@ async def login(
             detail="Too many sign-in attempts. For your security, this account is temporarily locked for 15 minutes.",
         )
 
-    stmt = select(User).where(func.lower(User.email) == email_clean)
-    res = await db.execute(stmt)
-    user = res.scalar_one_or_none()
-
+    user = await _get_user_by_email(db, email_clean)
     if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid email or password. Please check your credentials.",
+        raise Unauthorized(
+            "Invalid email or password. Please check your credentials.",
+            code="INVALID_CREDENTIALS",
         )
 
-    if not user.hashed_password or not verify_password(payload.password, user.hashed_password):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid email or password. Please check your credentials.",
+    # Accounts created through Google (or email codes) have no password until the
+    # owner sets one; say so instead of reporting a wrong password.
+    if not user.hashed_password:
+        raise _password_not_set_error(user)
+
+    if not verify_password(payload.password, user.hashed_password):
+        raise Unauthorized(
+            "Invalid email or password. Please check your credentials.",
+            code="INVALID_CREDENTIALS",
         )
 
-    if user.account_status == AccountStatus.SUSPENDED:
-        raise HTTPException(
-            status_code=403,
-            detail="Your account has been suspended. Please contact support.",
-        )
-
-    access_token = create_access_token(
-        subject=user.id,
-        role=user.role.value,
-        email=user.email,
-        client_id=user.id if user.role == UserRole.CLIENT else None,
-        agency_id=user.agency_id,
-        extra_claims={"must_reset_password": bool(getattr(user, "must_reset_password", False))},
-    )
-    refresh_token = create_refresh_token(subject=user.id)
-
-    from app.services.onboarding_service import get_current_stage
-    stage = await get_current_stage(db, user.id) if user.role == UserRole.CLIENT else 5
-
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "user": {
-            "id": str(user.id),
-            "email": user.email,
-            "full_name": user.full_name,
-            "role": user.role.value,
-            "account_status": user.account_status.value,
-            "must_reset_password": bool(getattr(user, "must_reset_password", False)),
-            "onboarding_stage": stage,
-        },
-    }
+    return await _issue_session(db, user)
 
 
 @router.post("/reset-admin-seed", response_model=dict[str, Any])
@@ -672,7 +715,7 @@ async def reset_admin_seed(db: AsyncSession = Depends(get_db)) -> dict[str, Any]
 @router.post("/send-otp", response_model=dict[str, Any])
 async def send_otp(payload: SendOtpRequest, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
     """Send 6-digit verification code to email via Google SMTP with rate limiting."""
-    email_clean = payload.email.strip().lower()
+    email_clean = _normalize_email(payload.email)
 
     if not _check_rate_limit(f"send_otp:{email_clean}", max_requests=5, window_seconds=600):
         raise HTTPException(
@@ -701,7 +744,7 @@ async def verify_otp(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Verify OTP and return authenticated user session & token."""
-    email_key = payload.email.strip().lower()
+    email_key = _normalize_email(payload.email)
     stored = await _load_otp(email_key)
 
     if not stored:
@@ -722,57 +765,37 @@ async def verify_otp(
 
     await _delete_otp(email_key)
 
-    # Lookup or create user
-    stmt = select(User).where(User.email == email_key)
-    res = await db.execute(stmt)
-    user = res.scalar_one_or_none()
+    # Case-insensitive, so a code for "Name@x.com" signs into the same account as "name@x.com"
+    user = await _get_user_by_email(db, email_key)
+    now = datetime.now(timezone.utc)
 
     if not user:
-        email_lower = email_key
-        assigned_role = UserRole.CLIENT
-
         user = User(
             auth_id=f"auth-otp-{uuid.uuid4().hex[:12]}",
-            email=email_lower,
-            full_name=payload.full_name or email_lower.split("@")[0].capitalize(),
-            role=assigned_role,
+            email=email_key,
+            full_name=payload.full_name or email_key.split("@")[0].capitalize(),
+            role=UserRole.CLIENT,
             account_status=AccountStatus.ACTIVE,
+            email_verified_at=now,
+            agency_id=await _default_signup_agency_id(db),
         )
         db.add(user)
-        await db.flush()
-
-        profile = ClientProfile(user_id=user.id)
-        db.add(profile)
+        try:
+            await db.flush()
+            db.add(ClientProfile(user_id=user.id))
+            await db.commit()
+            await db.refresh(user)
+        except IntegrityError as exc:
+            await db.rollback()
+            user = await _get_user_by_email(db, email_key)
+            if not user:
+                raise HTTPException(status_code=500, detail="Could not create user account.") from exc
+    elif user.email_verified_at is None:
+        user.email_verified_at = now
         await db.commit()
         await db.refresh(user)
 
-    access_token = create_access_token(
-        subject=user.id,
-        role=user.role.value,
-        email=user.email,
-        client_id=user.id if user.role == UserRole.CLIENT else None,
-        agency_id=user.agency_id,
-        extra_claims={"must_reset_password": bool(getattr(user, "must_reset_password", False))},
-    )
-    refresh_token = create_refresh_token(subject=user.id)
-
-    from app.services.onboarding_service import get_current_stage
-    stage = await get_current_stage(db, user.id) if user.role == UserRole.CLIENT else 5
-
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "user": {
-            "id": str(user.id),
-            "email": user.email,
-            "full_name": user.full_name,
-            "role": user.role.value,
-            "account_status": user.account_status.value,
-            "must_reset_password": bool(getattr(user, "must_reset_password", False)),
-            "onboarding_stage": stage,
-        },
-    }
+    return await _issue_session(db, user)
 
 
 @router.get("/me", response_model=dict[str, Any])
@@ -795,6 +818,11 @@ async def get_me(
         raise HTTPException(status_code=401, detail="User session not found")
     user, profile = row
 
+    # /me renews the access token, so it must not renew one issued before a password
+    # change or suspension (both bump token_version). Tokens predating the claim pass.
+    if actor.token_version is not None and actor.token_version != user.token_version:
+        raise Unauthorized("Your session has ended. Please sign in again.", code="SESSION_REVOKED")
+
     from app.services.onboarding_service import get_current_stage
     stage = await get_current_stage(db, user.id) if user.role == UserRole.CLIENT else 5
 
@@ -805,15 +833,8 @@ async def get_me(
         has_active_sub = sub_check["is_active"]
 
     refreshed_token = None
-    if not bool(getattr(user, "must_reset_password", False)):
-        refreshed_token = create_access_token(
-            subject=user.id,
-            role=user.role.value,
-            email=user.email,
-            client_id=user.id if user.role == UserRole.CLIENT else None,
-            agency_id=user.agency_id,
-            extra_claims={"must_reset_password": False},
-        )
+    if not user.must_reset_password:
+        refreshed_token = _access_token_for(user)
 
     return {
         "id": str(user.id),
@@ -821,8 +842,9 @@ async def get_me(
         "full_name": user.full_name or user.email.split("@")[0],
         "role": user.role.value,
         "account_status": user.account_status.value,
-        "must_reset_password": bool(getattr(user, "must_reset_password", False)),
+        "must_reset_password": bool(user.must_reset_password),
         "onboarding_stage": stage,
+        "sign_in_methods": _sign_in_methods(user),
         "terms_accepted": profile.terms_accepted_at is not None if profile else False,
         "has_active_subscription": has_active_sub,
         "access_token": refreshed_token,
@@ -891,19 +913,23 @@ async def get_google_auth_url(redirect_uri: str | None = None) -> dict[str, Any]
     return {"url": url, "state": state, "client_id": client_id}
 
 
-async def _process_google_code(
-    code: str,
-    redirect_uri: str,
-    db: AsyncSession,
-) -> dict[str, Any]:
-    """Internal helper to exchange Google code and issue JWT tokens."""
-    if code == "mock_code" and settings.ENVIRONMENT != "test":
-        raise HTTPException(status_code=400, detail="Invalid Google authorization code")
+async def _fetch_google_profile(code: str, redirect_uri: str) -> dict[str, Any]:
+    """Exchange a Google authorization code for the account's userinfo profile."""
+    if code == "mock_code":
+        if settings.ENVIRONMENT != "test":
+            raise HTTPException(status_code=400, detail="Invalid Google authorization code")
+        return {
+            "id": "mock-google-sub",
+            "email": "demo-client@example.com",
+            "verified_email": True,
+            "name": "Demo Client",
+        }
+
     client_id = settings.GOOGLE_CLIENT_ID
     client_secret = settings.GOOGLE_CLIENT_SECRET
     user_info: dict[str, Any] = {}
 
-    if client_id and client_secret and code != "mock_code":
+    if client_id and client_secret:
         # Check primary redirect URI and candidate fallback URIs in case
         # Google Console registered the root or api path
         candidate_uris = [redirect_uri]
@@ -947,83 +973,98 @@ async def _process_google_code(
         except Exception as e:
             logger.warning("google_oauth_exchange_failed", error=str(e))
 
-    # Verify that we actually received valid Google user profile
-    if not user_info or not user_info.get("email"):
-        if code == "mock_code":
-            email = "demo-client@example.com"
-            full_name = "Demo Client"
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="Failed to authenticate with Google or authorization code has expired. Please try signing in again.",
-            )
-    else:
-        email = user_info["email"].strip().lower()
-        full_name = (
-            user_info.get("name")
-            or f"{user_info.get('given_name', '')} {user_info.get('family_name', '')}".strip()
-            or email.split("@")[0].capitalize()
+    return user_info
+
+
+async def _process_google_code(
+    code: str,
+    redirect_uri: str,
+    db: AsyncSession,
+) -> dict[str, Any]:
+    """Sign in with Google, linking to the existing account for the same email.
+
+    Resolution order: the Google account ID already linked to a user, then a
+    case-insensitive email match (which links Google to that account), and only
+    then a new account. A password account and a Google sign-in for the same
+    address therefore always land on the same user.
+    """
+    user_info = await _fetch_google_profile(code, redirect_uri)
+    if not user_info.get("email"):
+        raise HTTPException(
+            status_code=400,
+            detail="Failed to authenticate with Google or authorization code has expired. Please try signing in again.",
         )
 
-    # Lookup or create user (case-insensitive)
-    stmt = select(User).where(func.lower(User.email) == email)
-    res = await db.execute(stmt)
-    user = res.scalar_one_or_none()
+    # Linking by email is only safe when Google vouches for the address.
+    if user_info.get("verified_email", user_info.get("email_verified")) not in (True, "true"):
+        raise HTTPException(
+            status_code=400,
+            detail="Your Google account's email address isn't verified. Verify it with Google, then try again.",
+        )
 
-    if not user:
-        try:
-            user = User(
-                auth_id=f"auth-google-{uuid.uuid4().hex[:12]}",
-                email=email,
-                full_name=full_name,
-                role=UserRole.CLIENT,
-                account_status=AccountStatus.ACTIVE,
+    email = _normalize_email(user_info["email"])
+    google_sub = str(user_info.get("id") or user_info.get("sub") or "") or None
+    full_name = (
+        user_info.get("name")
+        or f"{user_info.get('given_name', '')} {user_info.get('family_name', '')}".strip()
+        or email.split("@")[0].capitalize()
+    )
+    now = datetime.now(timezone.utc)
+
+    user: User | None = None
+    if google_sub:
+        user = (
+            await db.execute(select(User).where(User.google_sub == google_sub))
+        ).scalar_one_or_none()
+    if user is None:
+        user = await _get_user_by_email(db, email)
+        if user is not None and google_sub and user.google_sub and user.google_sub != google_sub:
+            raise Conflict(
+                "This email is linked to a different Google account. Sign in with that Google "
+                "account, or use your email and password.",
+                code="GOOGLE_ACCOUNT_MISMATCH",
             )
-            db.add(user)
-            await db.flush()
 
-            profile = ClientProfile(user_id=user.id)
-            db.add(profile)
+    if user is None:
+        user = User(
+            auth_id=f"auth-google-{uuid.uuid4().hex[:12]}",
+            email=email,
+            full_name=full_name,
+            google_sub=google_sub,
+            role=UserRole.CLIENT,
+            account_status=AccountStatus.ACTIVE,
+            email_verified_at=now,
+            agency_id=await _default_signup_agency_id(db),
+        )
+        db.add(user)
+        try:
+            await db.flush()
+            db.add(ClientProfile(user_id=user.id))
             await db.commit()
             await db.refresh(user)
-        except Exception:
+        except IntegrityError as exc:
             await db.rollback()
-            # If concurrent request already inserted, re-fetch
-            stmt = select(User).where(func.lower(User.email) == email)
-            res = await db.execute(stmt)
-            user = res.scalar_one_or_none()
+            # A concurrent sign-in for the same address created the account first
+            user = await _get_user_by_email(db, email)
             if not user:
-                raise HTTPException(status_code=500, detail="Could not create user account.")
+                raise HTTPException(status_code=500, detail="Could not create user account.") from exc
     else:
-        # Existing user: ensure full_name reflects real Google name if currently generic
+        changed = False
+        if google_sub and not user.google_sub:
+            user.google_sub = google_sub
+            changed = True
+        if user.email_verified_at is None:
+            user.email_verified_at = now
+            changed = True
+        # Ensure full_name reflects real Google name if currently generic
         if full_name and (not user.full_name or user.full_name.lower().startswith("google-user") or user.full_name.lower().startswith("user-")):
             user.full_name = full_name
+            changed = True
+        if changed:
             await db.commit()
             await db.refresh(user)
 
-    access_token = create_access_token(
-        subject=user.id,
-        role=user.role.value,
-        email=user.email,
-        client_id=user.id if user.role == UserRole.CLIENT else None,
-        agency_id=user.agency_id,
-    )
-    refresh_token = create_refresh_token(subject=user.id)
-
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "user": {
-            "id": str(user.id),
-            "email": user.email,
-            "full_name": user.full_name,
-            "role": user.role.value,
-            "account_status": user.account_status.value,
-            "must_reset_password": bool(getattr(user, "must_reset_password", False)),
-        },
-    }
-
+    return await _issue_session(db, user)
 
 @router.post("/google/callback", response_model=dict[str, Any])
 async def google_auth_callback(
@@ -1047,9 +1088,10 @@ async def google_auth_callback_get(
     data = await _process_google_code(code, resolved_redirect, db)
     token = data["access_token"]
 
-    # If state contains frontend origin or default to frontend origin
-    frontend_base = "http://localhost:5173"
-    if state and (state.startswith("http://") or state.startswith("https://")):
+    # The token travels in the redirect URL, so only send it to a known frontend origin.
+    allowed_origins = {origin.rstrip("/") for origin in [settings.FRONTEND_URL, *settings.CORS_ORIGINS] if origin}
+    frontend_base = settings.FRONTEND_URL.rstrip("/")
+    if state and state.rstrip("/") in allowed_origins:
         frontend_base = state.rstrip("/")
 
     target_url = f"{frontend_base}/auth/google/callback?token={urllib.parse.quote(token)}"
@@ -1066,27 +1108,19 @@ async def refresh_access_token(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Exchange valid refresh token for a new access token."""
-    from app.core.security import decode_token
+    data = decode_token(payload.refresh_token, expected_type="refresh")
 
-    data = decode_token(payload.refresh_token)
-    if data.get("type") != "refresh":
-        raise HTTPException(status_code=400, detail="Invalid token type for refresh")
-
-    user_id = uuid.UUID(data["sub"])
-    stmt = select(User).where(User.id == user_id)
-    user = (await db.execute(stmt)).scalar_one_or_none()
+    user = await db.get(User, uuid.UUID(data["sub"]))
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    # Refresh tokens from before a password change or suspension are revoked.
+    if data.get("tv") != user.token_version:
+        raise Unauthorized("Your session has ended. Please sign in again.", code="SESSION_REVOKED")
+    if user.account_status == AccountStatus.SUSPENDED:
+        raise HTTPException(status_code=403, detail="Your account has been suspended. Please contact support.")
 
-    new_access_token = create_access_token(
-        subject=user.id,
-        role=user.role.value,
-        email=user.email,
-        client_id=user.id if user.role == UserRole.CLIENT else None,
-        agency_id=user.agency_id,
-    )
     return {
-        "access_token": new_access_token,
+        "access_token": _access_token_for(user),
         "token_type": "bearer",
     }
 
