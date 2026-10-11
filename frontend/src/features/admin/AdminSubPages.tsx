@@ -3,7 +3,7 @@ import { useAuth } from "../../lib/auth-context";
 import * as Dialog from "@radix-ui/react-dialog";
 import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
 import { resolveAssetUrl } from "../../lib/media";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useParams, useSearchParams, Navigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "../../lib/http";
@@ -22,6 +22,8 @@ import {
   fetchAdminKPIs,
   fetchRevenueTrend,
   fetchAdminTransactions,
+  fetchClientBrandProfile,
+  updateClientProfile,
 } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem, PlanSummaryItem } from "../../lib/ops-api";
 import type { ClientRosterItem } from "../../types/ops";
@@ -187,7 +189,6 @@ export function AdminClientsPage() {
   // Active Modals
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
-  const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
   const [isCancelClientModalOpen, setIsCancelClientModalOpen] = useState(false);
   const [isOnboardClientModalOpen, setIsOnboardClientModalOpen] = useState(false);
   const [isRemoveClientModalOpen, setIsRemoveClientModalOpen] = useState(false);
@@ -201,12 +202,17 @@ export function AdminClientsPage() {
   const [removedClientIds, setRemovedClientIds] = useState<Set<string>>(new Set());
   const [previewDeliverable, setPreviewDeliverable] = useState<any | null>(null);
 
-  const [newRequestForm, setNewRequestForm] = useState({
-    title: "",
-    type: "Reel",
-    priority: "Standard",
-    notes: "",
+  const [editFormData, setEditFormData] = useState({
+    companyName: "",
+    industry: "",
+    signerName: "",
+    signerEmail: "",
+    instagram: "",
+    timezone: "Asia/Kolkata",
+    brandSummary: "",
   });
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [editProfileError, setEditProfileError] = useState<string | null>(null);
 
   const offboardClient = async (id: string, name: string) => {
     if (removingClient) return;
@@ -451,6 +457,105 @@ export function AdminClientsPage() {
     }
   }, [activeClient?.id]);
 
+  const activeClientId = activeClient?.id;
+  const clientBrandQuery = useQuery({
+    queryKey: ["admin-client-brand-profile", activeClientId],
+    queryFn: () => fetchClientBrandProfile(activeClientId!),
+    enabled: !!activeClientId,
+  });
+  const liveBrandProfile = clientBrandQuery.data;
+
+  useEffect(() => {
+    if (isEditProfileOpen && activeClient) {
+      setEditFormData({
+        companyName: liveBrandProfile?.company_name || activeClient.name || "",
+        industry: liveBrandProfile?.industry || activeClient.industry || "",
+        signerName: liveBrandProfile?.full_name || activeClient.contact.name || "",
+        signerEmail: liveBrandProfile?.email || activeClient.contact.email || "",
+        instagram: liveBrandProfile?.instagram_username || "",
+        timezone: liveBrandProfile?.timezone || "Asia/Kolkata",
+        brandSummary: liveBrandProfile?.brand_summary || liveBrandProfile?.brand_dna?.summary_line || "",
+      });
+      setEditProfileError(null);
+    }
+  }, [isEditProfileOpen, activeClient, liveBrandProfile]);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeClient) return;
+    setIsSavingProfile(true);
+    setEditProfileError(null);
+    try {
+      await updateClientProfile(activeClient.id, {
+        company_name: editFormData.companyName.trim() || undefined,
+        industry: editFormData.industry.trim() || undefined,
+        full_name: editFormData.signerName.trim() || undefined,
+        email: editFormData.signerEmail.trim().toLowerCase() || undefined,
+        instagram_username: editFormData.instagram.trim() || undefined,
+        timezone: editFormData.timezone.trim() || undefined,
+        brand_summary: editFormData.brandSummary.trim() || undefined,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["admin-client-brand-profile", activeClient.id] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-client-roster", user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ["client-brand-profile", activeClient.id] });
+      showToast("Client profile updated successfully.");
+      setIsEditProfileOpen(false);
+    } catch (err) {
+      setEditProfileError(err instanceof Error ? err.message : "Failed to update profile.");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const realColors = useMemo(() => {
+    const raw =
+      liveBrandProfile?.brand_dna?.visual_direction?.primary_colors ||
+      liveBrandProfile?.brand_dna?.palette ||
+      [];
+    if (Array.isArray(raw) && raw.length > 0) {
+      const labels = [
+        "Primary Brand",
+        "Secondary Accent",
+        "Highlight Tone",
+        "Surface / Neutral",
+        "Accent 5",
+      ];
+      return raw.map((hex: string, idx: number) => ({
+        name: labels[idx] || `Brand Tone ${idx + 1}`,
+        hex,
+      }));
+    }
+    return (
+      activeClient?.brand.colors || [
+        { name: "Brand Primary", hex: "#0F172A" },
+        { name: "Brand Accent", hex: "#2563EB" },
+      ]
+    );
+  }, [liveBrandProfile, activeClient?.brand.colors]);
+
+  const realTypography = useMemo(() => {
+    const vis = liveBrandProfile?.brand_dna?.visual_direction;
+    return {
+      headingsFont: vis?.headings_font || activeClient?.brand.headingsFont || "Plus Jakarta Sans",
+      bodyFont: vis?.body_font || activeClient?.brand.bodyFont || "Inter Sans",
+      monoFont: "JetBrains Mono",
+    };
+  }, [liveBrandProfile, activeClient?.brand]);
+
+  const realTone = useMemo(() => {
+    const tone = liveBrandProfile?.brand_dna?.tone || {};
+    const tags = Array.isArray(tone.voice_words) && tone.voice_words.length > 0
+      ? tone.voice_words
+      : (activeClient?.brand.toneTags || ["Conversion Authority", "High Polish"]);
+    const summary =
+      liveBrandProfile?.brand_dna?.summary_line ||
+      liveBrandProfile?.brand_summary ||
+      liveBrandProfile?.brand_dna?.positioning ||
+      activeClient?.brand.toneSummary ||
+      `Engineered brand identity for ${activeClient?.name}.`;
+    return { summary, tags };
+  }, [liveBrandProfile, activeClient]);
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
@@ -462,14 +567,6 @@ export function AdminClientsPage() {
 
   const handleDeclineDeliverable = (_delivId: string, title: string) => {
     showToast(`Revision requested for "${title}". Assigned specialist notified.`);
-  };
-
-  const handleCreateRequest = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newRequestForm.title.trim()) return;
-    showToast(`New request "${newRequestForm.title}" submitted to ${activeClient?.pod.name}.`);
-    setIsNewRequestOpen(false);
-    setNewRequestForm({ title: "", type: "Reel", priority: "Standard", notes: "" });
   };
 
   const filteredClientList = clientList.filter((c) => {
@@ -693,7 +790,7 @@ export function AdminClientsPage() {
                 {/* Header Action Buttons */}
                 <div className="flex flex-wrap items-center gap-2.5 w-full border-t border-[#2A3446] pt-4">
                   <Link
-                    to={`/admin/clients/${activeClient?.id || ""}/brand`}
+                    to={`/admin/clients/${liveBrandProfile?.client_id || activeClient?.id || ""}/brand`}
                     className="px-4 py-2.5 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-xs font-bold text-[#7FA0D6] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
                     <ExternalLink className="w-3.5 h-3.5 text-[#7FA0D6]" /> Brand Brief & Profile
@@ -711,13 +808,6 @@ export function AdminClientsPage() {
                     className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
                   >
                     <FileText className="w-3.5 h-3.5 text-[#97A0B3]" /> Monthly Invoice
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsNewRequestOpen(true)}
-                    className="px-4 py-2.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-500/20 cursor-pointer transition-all"
-                  >
-                    <Plus className="w-4 h-4 stroke-[3]" /> New Request
                   </button>
                   <button
                     type="button"
@@ -893,15 +983,15 @@ export function AdminClientsPage() {
                     <div className="space-y-1 text-[#F1F5F9]">
                       <div className="flex justify-between">
                         <span className="text-[#97A0B3]">Headings:</span>
-                        <span className="font-bold">{activeClient?.brand.headingsFont}</span>
+                        <span className="font-bold text-white">{realTypography.headingsFont}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-[#97A0B3]">Body & Data:</span>
-                        <span className="font-medium">{activeClient?.brand.bodyFont}</span>
+                        <span className="font-medium text-white">{realTypography.bodyFont}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-[#97A0B3]">Monospace:</span>
-                        <span className="font-mono">{activeClient?.brand.monoFont}</span>
+                        <span className="font-mono text-white">{realTypography.monoFont}</span>
                       </div>
                     </div>
                   </div>
@@ -913,11 +1003,11 @@ export function AdminClientsPage() {
                         PERSONA & VOICE TONE
                       </span>
                       <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed">
-                        {activeClient?.brand.toneSummary}
+                        {realTone.summary}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      {activeClient?.brand.toneTags.map((tag) => (
+                      {realTone.tags.map((tag: string) => (
                         <span key={tag} className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[10px] font-bold text-[#F1F5F9] shadow-2xs">
                           {tag}
                         </span>
@@ -932,7 +1022,7 @@ export function AdminClientsPage() {
                     APPROVED COLOR SPECTRUM
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-2.5">
-                    {activeClient?.brand.colors.map((c) => (
+                    {realColors.map((c) => (
                       <div key={c.hex} className="rounded-2xl border border-[#2A3446] overflow-hidden bg-[#161F2D] shadow-2xs space-y-1.5 pb-2">
                         <div className="h-10 w-full" style={{ backgroundColor: c.hex }} />
                         <div className="px-2.5">
@@ -952,19 +1042,26 @@ export function AdminClientsPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs text-white">{activeClient?.brand.social.handle}</span>
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-extrabold uppercase">
-                          {activeClient?.brand.social.status}
+                        <span className="font-bold text-xs text-white">
+                          {liveBrandProfile?.instagram_username
+                            ? `@${liveBrandProfile.instagram_username}`
+                            : activeClient?.brand.social.handle}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[9px] font-extrabold uppercase">
+                          CONNECTED
                         </span>
                       </div>
                       <span className="text-[11px] text-[#97A0B3]">
-                        {activeClient?.brand.social.followers} • Live Sync active ({activeClient?.brand.social.syncInterval})
+                        Real-time Profile Connected • Verified Brand DNA
                       </span>
                     </div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => showToast(`Opening ${activeClient?.brand.social.handle} live analytics...`)}
+                    onClick={() => {
+                      const handle = (liveBrandProfile?.instagram_username || activeClient?.brand.social.handle || "").replace("@", "");
+                      if (handle) window.open(`https://instagram.com/${handle}`, "_blank");
+                    }}
                     className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] shadow-2xs cursor-pointer"
                   >
                     Launch Channel
@@ -1285,46 +1382,112 @@ export function AdminClientsPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
             <div className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
               <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <h3 className="text-base font-black text-white">Edit Client Profile: {activeClient?.name}</h3>
+                <div>
+                  <h3 className="text-base font-black text-white">Edit Client Profile</h3>
+                  <p className="text-xs text-[#97A0B3]">Updating profile & brand parameters for {activeClient?.name}</p>
+                </div>
                 <button type="button" onClick={() => setIsEditProfileOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </div>
-              <div className="space-y-3 text-xs text-[#F1F5F9]">
+
+              {editProfileError && (
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+                  {editProfileError}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveProfile} className="space-y-3.5 text-xs text-[#F1F5F9]">
                 <div>
-                  <label className="block font-bold mb-1">Company / Brand Name</label>
-                  <input type="text" defaultValue={activeClient?.name} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
+                  <label className="block font-bold mb-1 text-white">Company / Brand Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editFormData.companyName}
+                    onChange={(e) => setEditFormData({ ...editFormData, companyName: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
+                  />
                 </div>
                 <div>
-                  <label className="block font-bold mb-1">Industry / Category</label>
-                  <input type="text" defaultValue={activeClient?.industry} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
+                  <label className="block font-bold mb-1 text-white">Industry / Category</label>
+                  <input
+                    type="text"
+                    value={editFormData.industry}
+                    onChange={(e) => setEditFormData({ ...editFormData, industry: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
+                  />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-bold mb-1">Primary Signer</label>
-                    <input type="text" defaultValue={activeClient?.contact.name} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
+                    <label className="block font-bold mb-1 text-white">Primary Signer Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={editFormData.signerName}
+                      onChange={(e) => setEditFormData({ ...editFormData, signerName: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
+                    />
                   </div>
                   <div>
-                    <label className="block font-bold mb-1">Signer Email</label>
-                    <input type="email" defaultValue={activeClient?.contact.email} className="w-full px-3 py-2 rounded-xl border border-[#2A3446]" />
+                    <label className="block font-bold mb-1 text-white">Signer Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={editFormData.signerEmail}
+                      onChange={(e) => setEditFormData({ ...editFormData, signerEmail: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
+                    />
                   </div>
                 </div>
-              </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="px-4 py-2 rounded-xl border text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer">
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    showToast("Client profile updated successfully.");
-                    setIsEditProfileOpen(false);
-                  }}
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer"
-                >
-                  Save Changes
-                </button>
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold mb-1 text-white">Instagram Username</label>
+                    <input
+                      type="text"
+                      placeholder="@handle"
+                      value={editFormData.instagram}
+                      onChange={(e) => setEditFormData({ ...editFormData, instagram: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold mb-1 text-white">Client Timezone</label>
+                    <input
+                      type="text"
+                      value={editFormData.timezone}
+                      onChange={(e) => setEditFormData({ ...editFormData, timezone: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-bold mb-1 text-white">Brand Summary / Positioning Line</label>
+                  <textarea
+                    rows={2}
+                    value={editFormData.brandSummary}
+                    onChange={(e) => setEditFormData({ ...editFormData, brandSummary: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
+                    placeholder="Short summary of brand value proposition..."
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3 border-t border-[#2A3446]">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditProfileOpen(false)}
+                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSavingProfile}
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer disabled:opacity-50 shadow-md shadow-blue-500/20"
+                  >
+                    {isSavingProfile ? "Saving Changes…" : "Save Changes"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
@@ -1377,91 +1540,7 @@ export function AdminClientsPage() {
           </div>
         )}
 
-        {/* 3. New Request Modal */}
-        {isNewRequestOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <div>
-                  <h3 className="text-base font-black text-white">New Content Request</h3>
-                  <p className="text-xs text-[#97A0B3]">Submitting to {activeClient?.pod.name} for {activeClient?.name}</p>
-                </div>
-                <button type="button" onClick={() => setIsNewRequestOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
 
-              <form onSubmit={handleCreateRequest} className="space-y-3.5">
-                <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Asset Title</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Q4 Executive Product Video Hook"
-                    value={newRequestForm.title}
-                    onChange={(e) => setNewRequestForm({ ...newRequestForm, title: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Deliverable Type</label>
-                    <NativeSelect
-                      value={newRequestForm.type}
-                      onChange={(e) => setNewRequestForm({ ...newRequestForm, type: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
-                    >
-                      <option value="Reel">🎬 Reel / Short</option>
-                      <option value="Carousel">🎨 Carousel (3-5 slides)</option>
-                      <option value="Static Post">🖼️ Static Hero Graphic</option>
-                      <option value="Deck">📊 Presentation Deck</option>
-                    </NativeSelect>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Priority</label>
-                    <NativeSelect
-                      value={newRequestForm.priority}
-                      onChange={(e) => setNewRequestForm({ ...newRequestForm, priority: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-medium"
-                    >
-                      <option value="Standard">Standard (3-4 Days)</option>
-                      <option value="Expedited">Expedited (48 Hours)</option>
-                      <option value="Urgent">Urgent (24 Hours)</option>
-                    </NativeSelect>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-[#F1F5F9] mb-1">Creative Brief Notes</label>
-                  <textarea
-                    rows={3}
-                    placeholder="Specify key talking points, hooks, or assets to reference..."
-                    value={newRequestForm.notes}
-                    onChange={(e) => setNewRequestForm({ ...newRequestForm, notes: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs focus:outline-none"
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
-                  <button
-                    type="button"
-                    onClick={() => setIsNewRequestOpen(false)}
-                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm cursor-pointer"
-                  >
-                    Submit to Production
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
 
         {/* 4. Preview Canvas / Video Modal */}
         {previewDeliverable && (

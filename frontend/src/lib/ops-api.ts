@@ -277,6 +277,7 @@ export interface ClientBrandProfile {
   };
   quota_usage: { kind: string; quota: number; used: number }[];
   timezone: string;
+  industry?: string | null;
   created_at: string | null;
 }
 
@@ -284,6 +285,28 @@ export async function fetchClientBrandProfile(
   clientId: string,
 ): Promise<ClientBrandProfile> {
   return request<ClientBrandProfile>(`/api/v1/admin/clients/${clientId}`);
+}
+
+export interface UpdateClientProfilePayload {
+  company_name?: string | null;
+  full_name?: string | null;
+  email?: string | null;
+  instagram_username?: string | null;
+  timezone?: string | null;
+  industry?: string | null;
+  brand_summary?: string | null;
+  brand_dna?: Record<string, any>;
+}
+
+export async function updateClientProfile(
+  clientId: string,
+  payload: UpdateClientProfilePayload,
+): Promise<ClientBrandProfile> {
+  return request<ClientBrandProfile>(`/api/v1/admin/clients/${clientId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+    headers: { "Content-Type": "application/json" },
+  });
 }
 
 // Pod Dashboard Types & Functions
