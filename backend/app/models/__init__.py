@@ -43,6 +43,7 @@ from app.models.tenant import Agency, Team, TeamMember
 from app.models.user import ClientProfile, ClientRoleRequirement, StaffProfile, User
 from app.models.work import ClientAssignment, ContentCalendar, Deliverable, Task
 from app.models.chat import DirectMessage
+from app.models.pod_call import PodCallBooking
 
 __all__ = [
     # Enums
@@ -73,6 +74,7 @@ __all__ = [
     "Deliverable",
     "ContentCalendar",
     "ClientAssignment",
+    "PodCallBooking",
     "InstagramOAuth",
     "PublishingJob",
     # Calendar Engine

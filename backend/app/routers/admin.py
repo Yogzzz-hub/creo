@@ -4122,11 +4122,10 @@ async def list_plan_negotiations(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict[str, Any]]:
     """List all plan negotiation requests for admin review."""
-    stmt = (
-        select(PlanNegotiation)
-        .order_by(PlanNegotiation.created_at.desc())
-        .limit(200)
-    )
+    stmt = select(PlanNegotiation).order_by(PlanNegotiation.created_at.desc())
+    if actor.role != UserRole.SUPER_ADMIN:
+        stmt = stmt.where(PlanNegotiation.agency_id == actor.agency_id)
+    stmt = stmt.limit(200)
     res = await db.execute(stmt)
     rows = res.scalars().all()
 

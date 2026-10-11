@@ -20,6 +20,7 @@ import { useAuth } from "../../lib/auth-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "../../lib/http";
 import { useAdminSidebar } from "./AdminSidebarContext";
+import { useConfirm } from "../ui/ConfirmDialog";
 
 interface AdminTopHeaderProps {
   title?: string;
@@ -55,6 +56,7 @@ export function AdminTopHeader({
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const { toggleMobile, mobileOpen } = useAdminSidebar();
 
@@ -568,11 +570,20 @@ export function AdminTopHeader({
                   <button
                     type="button"
                     onClick={async () => {
+                      const shouldLogout = await confirm({
+                        title: "Log out of Creo?",
+                        description: "You will need to sign in again to access your workspace.",
+                        confirmText: "Log out",
+                        cancelText: "Stay signed in",
+                        tone: "warning",
+                        icon: "logout",
+                      });
+                      if (!shouldLogout) return;
                       setProfileDropdownOpen(false);
                       try {
                         await logout();
                       } catch {
-                        // ignore
+                        // Continue to the sign-in page even if the server session has expired.
                       }
                       navigate("/auth");
                     }}
