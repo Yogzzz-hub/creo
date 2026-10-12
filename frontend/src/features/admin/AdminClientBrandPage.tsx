@@ -163,11 +163,28 @@ export function AdminClientBrandPage() {
   const visualDir = (typeof dna.visual_direction === "object" && dna.visual_direction !== null)
     ? (dna.visual_direction as Record<string, any>)
     : {};
+  const isPaid = !!(
+    (client.subscription && ["active", "trialing", "paid"].includes(client.subscription.status.toLowerCase())) ||
+    ((client.subscription?.monthly_price ?? 0) > 0)
+  );
+  const isOnboarded = !!(
+    client.onboarding_completed_at ||
+    (typeof client.onboarding_stage === "number" && client.onboarding_stage >= 4)
+  );
+  const lifecycleStatus: "not_paid_not_onboarded" | "paid_not_onboarded" | "onboarded" =
+    isOnboarded
+      ? "onboarded"
+      : isPaid
+        ? "paid_not_onboarded"
+        : "not_paid_not_onboarded";
+
   const palette: any[] = Array.isArray(dna.palette) && dna.palette.length > 0
     ? dna.palette
     : Array.isArray(visualDir.primary_colors) && visualDir.primary_colors.length > 0
       ? visualDir.primary_colors
-      : ["#0B111C", "#7FA0D6", "#38BDF8", "#F8FAFC"];
+      : isOnboarded
+        ? ["#0B111C", "#7FA0D6", "#38BDF8", "#F8FAFC"]
+        : [];
   const visualStyles: string[] = Array.isArray(visualDir.styles)
     ? visualDir.styles.map((s: any) => (typeof s === "string" ? s : (s?.name || String(s))))
     : [];
@@ -252,15 +269,58 @@ export function AdminClientBrandPage() {
                   <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
                     {displayName}
                   </h1>
-                  {client.subscription && (
-                    <StatusBadge status={client.subscription.status} />
-                  )}
-                  {(client.onboarding_stage ?? 0) >= 5 && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
-                      <Sparkles className="size-3" /> Onboarded
+                  {lifecycleStatus === "onboarded" ? (
+                    <>
+                      {client.subscription && (
+                        <StatusBadge status={client.subscription.status} />
+                      )}
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
+                        <Sparkles className="size-3" /> Onboarded
+                      </span>
+                    </>
+                  ) : lifecycleStatus === "paid_not_onboarded" ? (
+                    <>
+                      {client.subscription && (
+                        <StatusBadge status={client.subscription.status} />
+                      )}
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 text-[10px] font-bold border border-sky-500/30">
+                        user paid but not onboarded
+                      </span>
+                    </>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[10px] font-bold border border-amber-500/30">
+                      user not paid and not onboarded yet
                     </span>
                   )}
                 </div>
+
+                {/* Status Alert Banner for Un-onboarded Clients */}
+                {lifecycleStatus === "not_paid_not_onboarded" && (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 flex items-start gap-3 my-2">
+                    <AlertTriangle className="size-5 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-bold text-amber-300">
+                        user not paid and not onboarded yet
+                      </p>
+                      <p className="text-[11px] text-[#C5CEE0] leading-relaxed">
+                        This client has registered/logged in but has not completed payment or the brand onboarding intake questionnaire. Mock deliverables and assets are disabled.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {lifecycleStatus === "paid_not_onboarded" && (
+                  <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 p-3.5 flex items-start gap-3 my-2">
+                    <AlertTriangle className="size-5 text-sky-400 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-bold text-sky-300">
+                        user paid but not onboarded
+                      </p>
+                      <p className="text-[11px] text-[#C5CEE0] leading-relaxed">
+                        Subscription payment is verified and active. However, the client has not finalized their brand onboarding questionnaire yet. Brand DNA and creative pod assignment are pending.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[#97A0B3]">
                   <span className="inline-flex items-center gap-1.5 font-medium text-[#F1F5F9]">
@@ -307,19 +367,19 @@ export function AdminClientBrandPage() {
                 {[
                   {
                     label: "Total Tasks",
-                    value: client.task_stats?.total ?? 0,
+                    value: isOnboarded ? (client.task_stats?.total ?? 0) : 0,
                     icon: CheckSquare,
                     color: "text-[#7FA0D6]",
                   },
                   {
                     label: "Pending",
-                    value: client.task_stats?.pending ?? 0,
+                    value: isOnboarded ? (client.task_stats?.pending ?? 0) : 0,
                     icon: Clock,
                     color: "text-amber-400",
                   },
                   {
                     label: "Completed",
-                    value: client.task_stats?.completed ?? 0,
+                    value: isOnboarded ? (client.task_stats?.completed ?? 0) : 0,
                     icon: TrendingUp,
                     color: "text-emerald-400",
                   },

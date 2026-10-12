@@ -584,7 +584,8 @@ async def get_client_roster(
             cp.timezone,
             cp.brand_summary,
             cp.brand_dna,
-            q.answers AS quest_answers
+            q.answers AS quest_answers,
+            cp.onboarding_completed_at
         FROM users u
         LEFT JOIN client_profiles cp ON cp.user_id = u.id
         LEFT JOIN subscriptions s ON s.client_id = u.id AND s.status IN ('trialing', 'active')
@@ -675,6 +676,10 @@ async def get_client_roster(
         dna_dict["industry"] = ind_val
         dna_dict["category"] = ind_val
 
+        onboarding_completed_val = (
+            r[16].isoformat() if len(r) > 16 and r[16] else None
+        )
+
         clients.append(
             {
                 "client_id": str(r[0]),
@@ -693,6 +698,7 @@ async def get_client_roster(
                 "brand_summary": r[13] or dna_dict.get("summary_line") or "",
                 "brand_dna": dna_dict,
                 "industry": ind_val,
+                "onboarding_completed_at": onboarding_completed_val,
             }
         )
     return clients

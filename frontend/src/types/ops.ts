@@ -43,6 +43,7 @@ export interface ClientRosterItem {
   brand_summary?: string | null;
   industry?: string | null;
   brand_dna?: Record<string, any> | null;
+  onboarding_completed_at?: string | null;
 }
 
 export interface StaffQueueItem {

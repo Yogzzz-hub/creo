@@ -79,6 +79,7 @@ import {
   ShieldCheck,
   Columns2,
   Maximize2,
+  Sparkles,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CustomSelect } from "../../components/ui/CustomSelect";
@@ -96,6 +97,10 @@ export interface ClientDetailData {
   tier: string;
   tierBadge: string;
   status: string;
+  isPaid?: boolean;
+  isOnboarded?: boolean;
+  lifecycleStatus?: "not_paid_not_onboarded" | "paid_not_onboarded" | "onboarded";
+  lifecycleLabel?: string;
   monthlyFee: number;
   addon?: string;
   nextBilling: string;
@@ -227,12 +232,40 @@ export function AdminClientsPage() {
       : rawEmailPart;
     const formattedName = rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1) : "Client Account";
     const initials = formattedName.charAt(0).toUpperCase();
-    const tierName = sc.plan_display_name || sc.plan_name || "Enterprise Retainer";
+
+    // Determine lifecycle status:
+    const isPaid = Boolean(
+      (sc.subscription_status && ["active", "trialing", "paid"].includes(sc.subscription_status.toLowerCase())) ||
+      (sc.plan_name && sc.monthly_price && sc.monthly_price > 0)
+    );
+
+    const isOnboarded = Boolean(
+      sc.onboarding_completed_at ||
+      (typeof sc.onboarding_stage === "number" && sc.onboarding_stage >= 4)
+    );
+
+    const lifecycleStatus: "not_paid_not_onboarded" | "paid_not_onboarded" | "onboarded" = 
+      !isOnboarded
+        ? (!isPaid ? "not_paid_not_onboarded" : "paid_not_onboarded")
+        : "onboarded";
+
+    const lifecycleLabel =
+      lifecycleStatus === "not_paid_not_onboarded"
+        ? "user not paid and not onboarded yet"
+        : lifecycleStatus === "paid_not_onboarded"
+          ? "user paid but not onboarded"
+          : "Active Retainer";
+
+    const tierName = isPaid
+      ? (sc.plan_display_name || sc.plan_name || "Enterprise Retainer")
+      : "No Active Plan";
     const tier = tierName.toLowerCase();
+    const tierBadge = isPaid
+      ? (sc.plan_display_name || sc.plan_name || "ACTIVE").toUpperCase()
+      : "UNPAID";
     
     const podConfigs = [
       {
-        letter: "A",
         name: "Pod A",
         tagline: "Enterprise Brand Strategy & Video",
         leadName: "Vikram Malhotra",
@@ -242,9 +275,11 @@ export function AdminClientsPage() {
           { name: "Karthik Raja", role: "Video Editor", hoursPerWeek: 16, avatar: "KR" },
           { name: "Ananya Deshmukh", role: "Graphic Designer", hoursPerWeek: 16, avatar: "AD" },
         ],
+        capacityAllocatedHrs: 32,
+        bandwidthPercent: 80,
+        dailySyncTime: "11:00 AM IST",
       },
       {
-        letter: "B",
         name: "Pod B",
         tagline: "Performance Creative & Motion Ops",
         leadName: "Sarah Connor",
@@ -254,9 +289,11 @@ export function AdminClientsPage() {
           { name: "Karthik Raja", role: "Video Editor", hoursPerWeek: 16, avatar: "KR" },
           { name: "Elena Rostova", role: "Graphic Designer", hoursPerWeek: 16, avatar: "ER" },
         ],
+        capacityAllocatedHrs: 32,
+        bandwidthPercent: 80,
+        dailySyncTime: "11:30 AM IST",
       },
       {
-        letter: "C",
         name: "Pod C",
         tagline: "3D Motion & Visual Design",
         leadName: "Rohan Mehta",
@@ -266,12 +303,31 @@ export function AdminClientsPage() {
           { name: "Tanvi Sen", role: "Video Editor", hoursPerWeek: 16, avatar: "TS" },
           { name: "Arjun Nair", role: "Graphic Designer", hoursPerWeek: 16, avatar: "AN" },
         ],
+        capacityAllocatedHrs: 32,
+        bandwidthPercent: 80,
+        dailySyncTime: "12:00 PM IST",
       },
     ];
     const podIdx = Math.abs(formattedName.charCodeAt(0) || 0) % podConfigs.length;
-    const pod = (podConfigs[podIdx] || podConfigs[0])!;
+    const basePod = (podConfigs[podIdx] || podConfigs[0])!;
 
-    const monthlyFee = sc.monthly_price || (tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000);
+    const assignedPod = !isOnboarded
+      ? {
+          name: isPaid ? "Awaiting Onboarding" : "Not Assigned",
+          tagline: isPaid ? "Intake questionnaire in progress" : "Pending payment & onboarding",
+          leadName: isPaid ? "To be assigned" : "Not Assigned",
+          leadTitle: isPaid ? "Pod Lead Pending" : "Creative Lead Pending",
+          leadAvatar: "—",
+          squad: [],
+          capacityAllocatedHrs: 0,
+          bandwidthPercent: 0,
+          dailySyncTime: "—",
+        }
+      : basePod;
+
+    const monthlyFee = isPaid
+      ? (sc.monthly_price || (tier.includes("starter") ? 25000 : tier.includes("growth") || tier.includes("brand") ? 50000 : 95000))
+      : 0;
     
     const postsQuota = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "posts")?.quota || 0;
     const postsDelivered = (sc.quota_usage || []).find((q) => q?.kind?.toLowerCase() === "posts")?.used || 0;
@@ -294,13 +350,20 @@ export function AdminClientsPage() {
       ? (sc as any).brand_dna.palette
       : Array.isArray((sc as any).brand_dna?.visual_direction?.primary_colors) && (sc as any).brand_dna.visual_direction.primary_colors.length > 0
         ? (sc as any).brand_dna.visual_direction.primary_colors
-        : ["#0B111C", "#7FA0D6", "#38BDF8", "#F8FAFC"];
+        : (isOnboarded ? ["#0B111C", "#7FA0D6", "#38BDF8", "#F8FAFC"] : []);
     const scColorLabels = ["Primary Brand", "Accent Royal", "Cyan Highlight", "Clean Neutral", "Tone 5"];
     const resolvedColors = scPalette.map((col: any, idx: number) => {
       const hex = typeof col === "string" ? col : (col?.hex || "#0B111C");
       const name = typeof col === "object" && col?.name ? col.name : (scColorLabels[idx] || `Brand Tone ${idx + 1}`);
       return { name, hex };
     });
+
+    const clientStatus =
+      lifecycleStatus === "not_paid_not_onboarded"
+        ? "user not paid and not onboarded yet"
+        : lifecycleStatus === "paid_not_onboarded"
+          ? "user paid but not onboarded"
+          : (sc.subscription_status || sc.account_status || "ACTIVE RETAINER").toUpperCase();
 
     if (existing) {
       const updated: ClientDetailData = {
@@ -310,19 +373,28 @@ export function AdminClientsPage() {
         name: existing.name || formattedName,
         industry: (sc as any).industry || (sc as any).brand_dna?.industry || existing.industry || "Digital Growth & Direct-to-Consumer",
         timezone: (sc as any).timezone || existing.timezone || "Client Time: IST (UTC+5:30)",
-        status: (sc.subscription_status || sc.account_status || existing.status).toUpperCase(),
-        totalAssetsDelivered: postsDelivered + reelsDelivered + storiesDelivered,
-        totalAssetsQuota: postsQuota + reelsQuota + storiesQuota,
-        postsDelivered,
-        postsQuota,
-        reelsDelivered,
-        reelsQuota,
-        storiesDelivered,
-        storiesQuota,
+        status: clientStatus,
+        isPaid,
+        isOnboarded,
+        lifecycleStatus,
+        lifecycleLabel,
+        tier: tierName,
+        tierBadge,
+        monthlyFee,
+        pod: assignedPod,
+        totalAssetsDelivered: isOnboarded ? (postsDelivered + reelsDelivered + storiesDelivered) : 0,
+        totalAssetsQuota: isOnboarded ? (postsQuota + reelsQuota + storiesQuota) : 0,
+        postsDelivered: isOnboarded ? postsDelivered : 0,
+        postsQuota: isOnboarded ? postsQuota : 0,
+        reelsDelivered: isOnboarded ? reelsDelivered : 0,
+        reelsQuota: isOnboarded ? reelsQuota : 0,
+        storiesDelivered: isOnboarded ? storiesDelivered : 0,
+        storiesQuota: isOnboarded ? storiesQuota : 0,
         contact: {
           ...existing.contact,
           name: sc.full_name || existing.contact.name || formattedName,
           email: sc.email || existing.contact.email,
+          phone: isOnboarded && existing.contact.phone && existing.contact.phone !== "+91 98401 23890" ? existing.contact.phone : "Not provided yet",
         },
         brand: {
           ...existing.brand,
@@ -341,61 +413,76 @@ export function AdminClientsPage() {
         initials,
         industry: (sc as any).industry || (sc as any).brand_dna?.industry || "Digital Growth & Direct-to-Consumer",
         timezone: (sc as any).timezone || "Client Time: IST (UTC+5:30)",
-        activeSince: "Active Client",
+        activeSince: isOnboarded ? "Active Client" : isPaid ? "Payment Confirmed" : "Registered Client",
         tier: tierName,
-        tierBadge: tierName.toUpperCase(),
-        status: (sc.subscription_status || sc.account_status || "ACTIVE RETAINER").toUpperCase(),
+        tierBadge,
+        status: clientStatus,
+        isPaid,
+        isOnboarded,
+        lifecycleStatus,
+        lifecycleLabel,
         monthlyFee,
-        addon: "Add-on: Creative Pod",
-        nextBilling: "Next Month Cycle",
-        billingMethod: "Direct ACH / Razorpay",
-        totalAssetsDelivered: postsDelivered + reelsDelivered + storiesDelivered,
-        totalAssetsQuota: postsQuota + reelsQuota + storiesQuota,
-        postsDelivered,
-        postsQuota,
-        reelsDelivered,
-        reelsQuota,
-        storiesDelivered,
-        storiesQuota,
-        sprintNumber: 44,
-        daysRemainingInSprint: 14,
+        addon: isPaid && isOnboarded ? "Add-on: Creative Pod" : undefined,
+        nextBilling: isPaid ? "Next Month Cycle" : "—",
+        billingMethod: isPaid ? "Direct ACH / Razorpay" : "Unpaid",
+        totalAssetsDelivered: isOnboarded ? (postsDelivered + reelsDelivered + storiesDelivered) : 0,
+        totalAssetsQuota: isOnboarded ? (postsQuota + reelsQuota + storiesQuota) : 0,
+        postsDelivered: isOnboarded ? postsDelivered : 0,
+        postsQuota: isOnboarded ? postsQuota : 0,
+        reelsDelivered: isOnboarded ? reelsDelivered : 0,
+        reelsQuota: isOnboarded ? reelsQuota : 0,
+        storiesDelivered: isOnboarded ? storiesDelivered : 0,
+        storiesQuota: isOnboarded ? storiesQuota : 0,
+        sprintNumber: isOnboarded ? 44 : 0,
+        daysRemainingInSprint: isOnboarded ? 14 : 0,
         contact: {
           name: sc.full_name || formattedName,
           title: "Account Owner & Authorized Contact",
           email: sc.email,
-          phone: "+91 98401 23890",
-          renewedDate: "Current Sprint",
-          termMonths: 12,
+          phone: "Not provided yet",
+          renewedDate: !isPaid ? "Pending Subscription" : isOnboarded ? "Current Sprint" : "Payment Confirmed",
+          termMonths: isPaid ? 12 : 0,
         },
-        brand: {
-          kitVersion: "Design Kit v2.4",
-          headingsFont: "Plus Jakarta Sans",
-          bodyFont: "Inter Sans",
-          monoFont: "JetBrains Mono",
-          toneSummary: (sc as any).brand_summary || (sc as any).brand_dna?.summary_line || `Dynamic, high-impact social media creatives engineered for ${formattedName}. High-clarity typography with conversion-optimized video hooks.`,
-          toneTags: ["High Conversion", "Brand Authority", "Visual Polish"],
-          colors: resolvedColors,
-          social: {
-            handle: sc.instagram_username ? `@${sc.instagram_username}` : `@${emailParts[0] || "client"}`,
-            followers: "API Connected",
-            status: "API CONNECTED",
-            syncInterval: "15m refresh",
-          },
-          brandVaultLink: "Client Brand Vault Drive",
-          figmaLink: "Figma Master Design Kit",
-          lastAuditDate: "This Sprint",
-        },
-        pod: {
-          name: pod.name,
-          tagline: pod.tagline,
-          leadName: pod.leadName,
-          leadTitle: pod.leadTitle,
-          leadAvatar: pod.leadAvatar,
-          squad: pod.squad,
-          capacityAllocatedHrs: 32,
-          bandwidthPercent: 80,
-          dailySyncTime: "11:00 AM IST",
-        },
+        brand: !isOnboarded
+          ? {
+              kitVersion: isPaid ? "Pending Intake Form" : "Pending Onboarding",
+              headingsFont: "Pending Onboarding",
+              bodyFont: "Pending Onboarding",
+              monoFont: "Pending Onboarding",
+              toneSummary: isPaid
+                ? `user paid but not onboarded. Intake questionnaire is in progress for ${formattedName}. Brand guidelines and assets will be generated upon completion.`
+                : `user not paid and not onboarded yet. Brand guidelines and assets will be generated once ${formattedName} subscribes and completes onboarding.`,
+              toneTags: isPaid ? ["Payment Confirmed", "Awaiting Intake"] : ["Unpaid", "Not Onboarded"],
+              colors: isPaid && resolvedColors.length > 0 ? resolvedColors : [],
+              social: {
+                handle: sc.instagram_username ? `@${sc.instagram_username}` : "Not connected",
+                followers: isPaid ? "Awaiting Sync" : "Not Connected",
+                status: isPaid ? "AWAITING SYNC" : "NOT CONNECTED",
+                syncInterval: "—",
+              },
+              brandVaultLink: "Pending Onboarding",
+              figmaLink: "Pending Onboarding",
+              lastAuditDate: "—",
+            }
+          : {
+              kitVersion: "Design Kit v2.4",
+              headingsFont: "Plus Jakarta Sans",
+              bodyFont: "Inter Sans",
+              monoFont: "JetBrains Mono",
+              toneSummary: (sc as any).brand_summary || (sc as any).brand_dna?.summary_line || `Dynamic, high-impact social media creatives engineered for ${formattedName}. High-clarity typography with conversion-optimized video hooks.`,
+              toneTags: ["High Conversion", "Brand Authority", "Visual Polish"],
+              colors: resolvedColors,
+              social: {
+                handle: sc.instagram_username ? `@${sc.instagram_username}` : `@${emailParts[0] || "client"}`,
+                followers: "API Connected",
+                status: "API CONNECTED",
+                syncInterval: "15m refresh",
+              },
+              brandVaultLink: "Client Brand Vault Drive",
+              figmaLink: "Figma Master Design Kit",
+              lastAuditDate: "This Sprint",
+            },
+        pod: assignedPod,
         deliverables: [],
       };
     }
@@ -554,7 +641,19 @@ export function AdminClientsPage() {
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.industry.toLowerCase().includes(search.toLowerCase()) ||
       c.contact.email.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "all" || c.status.toLowerCase().includes(statusFilter.toLowerCase());
+    
+    let matchesStatus = true;
+    if (statusFilter === "all") {
+      matchesStatus = true;
+    } else if (statusFilter === "active") {
+      matchesStatus = c.lifecycleStatus === "onboarded";
+    } else if (statusFilter === "paid_not_onboarded") {
+      matchesStatus = c.lifecycleStatus === "paid_not_onboarded";
+    } else if (statusFilter === "not_paid_not_onboarded") {
+      matchesStatus = c.lifecycleStatus === "not_paid_not_onboarded";
+    } else {
+      matchesStatus = c.status.toLowerCase().includes(statusFilter.toLowerCase());
+    }
     return matchesSearch && matchesStatus;
   });
 
@@ -605,9 +704,9 @@ export function AdminClientsPage() {
                 />
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 shrink-0">
+                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20 shrink-0">
                   <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-                  {clientList.length} Active Retainers
+                  {clientList.filter(c => c.lifecycleStatus === "onboarded").length} Active · {clientList.length} Total Clients
                 </span>
                 <div className="flex items-center gap-1.5">
                   <Filter className="size-4 text-[#97A0B3]" />
@@ -618,8 +717,8 @@ export function AdminClientsPage() {
                     options={[
                       { value: "all", label: "All Statuses" },
                       { value: "active", label: "Active Retainers" },
-                      { value: "enterprise", label: "Enterprise Retainers" },
-                      { value: "growth", label: "Growth Retainers" },
+                      { value: "paid_not_onboarded", label: "User Paid • Not Onboarded" },
+                      { value: "not_paid_not_onboarded", label: "User Not Paid • Not Onboarded" },
                     ]}
                   />
                 </div>
@@ -642,59 +741,90 @@ export function AdminClientsPage() {
 
             {/* Client Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6">
-              {filteredClientList.map((client) => (
-                <div
-                  key={client.id}
-                  onClick={() => setSelectedClientId(client.id)}
-                  className="bg-[#161F2D]/80 backdrop-blur-xl rounded-3xl p-4 sm:p-6 border border-[#2A3446]/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between"
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-[#0B111C] text-white font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
-                          {client.initials}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <h3 className="font-bold text-base text-white group-hover:text-[#7FA0D6] transition-colors">
-                              {client.name}
-                            </h3>
-                            <CheckCircle2 className="w-4 h-4 text-[#7FA0D6] fill-blue-600 text-white" />
+              {filteredClientList.map((client) => {
+                const isNotPaidNotOnboarded = client.lifecycleStatus === "not_paid_not_onboarded";
+                const isPaidNotOnboarded = client.lifecycleStatus === "paid_not_onboarded";
+                const isOnboarded = client.lifecycleStatus === "onboarded";
+
+                return (
+                  <div
+                    key={client.id}
+                    onClick={() => setSelectedClientId(client.id)}
+                    className="bg-[#161F2D]/80 backdrop-blur-xl rounded-3xl p-4 sm:p-6 border border-[#2A3446]/80 shadow-xl space-y-5 hover:shadow-2xl hover:border-[#7FA0D6]/40 transition-all cursor-pointer group flex flex-col justify-between"
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-12 h-12 rounded-2xl bg-[#0B111C] text-white font-black text-lg flex items-center justify-center shadow-md group-hover:scale-105 transition-transform shrink-0">
+                            {client.initials}
                           </div>
-                          <span className="text-[11px] text-[#97A0B3] font-medium block truncate max-w-[200px]">
-                            {client.industry}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <h3 className="font-bold text-base text-white group-hover:text-[#7FA0D6] transition-colors truncate">
+                                {client.name}
+                              </h3>
+                              {isOnboarded && (
+                                <CheckCircle2 className="w-4 h-4 text-[#7FA0D6] fill-blue-600 text-white shrink-0" />
+                              )}
+                            </div>
+                            <span className="text-[11px] text-[#97A0B3] font-medium block truncate max-w-[200px]">
+                              {client.industry}
+                            </span>
+                          </div>
+                        </div>
+
+                        {isNotPaidNotOnboarded ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/15 text-amber-400 border border-amber-500/30 shrink-0 whitespace-nowrap">
+                            user not paid and not onboarded yet
+                          </span>
+                        ) : isPaidNotOnboarded ? (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-500/15 text-sky-400 border border-sky-500/30 shrink-0 whitespace-nowrap">
+                            user paid but not onboarded
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+                            {client.status.replace(" RETAINER", "") || "ACTIVE"}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="p-3 bg-[#0B111C]/80 rounded-2xl space-y-1.5 text-xs text-[#F1F5F9] border border-[#2A3446]">
+                        <div className="flex justify-between">
+                          <span className="font-medium text-[#97A0B3]">Retainer:</span>
+                          <span className="font-bold text-white">
+                            {isNotPaidNotOnboarded ? "₹0 (Unpaid)" : `₹${(client.monthlyFee ?? 0).toLocaleString()}/mo`}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium text-[#97A0B3]">Assigned Pod:</span>
+                          <span className={`font-bold ${isOnboarded ? "text-[#7FA0D6]" : "text-[#97A0B3]"}`}>
+                            {client.pod?.name || (isPaidNotOnboarded ? "Awaiting Onboarding" : "Not Assigned")}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium text-[#97A0B3]">Primary Contact:</span>
+                          <span className="font-semibold text-white truncate max-w-[170px]">
+                            {client.contact?.name || client.name}
                           </span>
                         </div>
                       </div>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                        {client.status.replace(" RETAINER", "")}
+                    </div>
+
+                    <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
+                      <span className="text-[#97A0B3] font-medium">
+                        {isOnboarded
+                          ? `${(client.deliverables || []).length} Deliverables Active`
+                          : isPaidNotOnboarded
+                          ? "Awaiting Onboarding Form"
+                          : "Account Not Onboarded"}
+                      </span>
+                      <span className="text-[#7FA0D6] font-bold group-hover:underline flex items-center gap-1">
+                        View Client Detail View &rarr;
                       </span>
                     </div>
-
-                    <div className="p-3 bg-[#0B111C]/80 rounded-2xl space-y-1.5 text-xs text-[#F1F5F9] border border-[#2A3446]">
-                      <div className="flex justify-between">
-                        <span className="font-medium text-[#97A0B3]">Retainer:</span>
-                        <span className="font-bold text-white">₹{(client.monthlyFee ?? 0).toLocaleString()}/mo</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-[#97A0B3]">Assigned Pod:</span>
-                        <span className="font-bold text-[#7FA0D6]">{client.pod?.name || "Pod"} ({client.pod?.tagline || "Creative Strategy"})</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-[#97A0B3]">Primary Contact:</span>
-                        <span className="font-semibold text-white">{client.contact?.name || client.name}</span>
-                      </div>
-                    </div>
                   </div>
-
-                  <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                    <span className="text-[#97A0B3] font-medium">{(client.deliverables || []).length} Deliverables Active</span>
-                    <span className="text-[#7FA0D6] font-bold group-hover:underline flex items-center gap-1">
-                      View Client Detail View &rarr;
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ) : !activeClient ? (
@@ -720,6 +850,24 @@ export function AdminClientsPage() {
             const displaySignerEmail = liveBrandProfile?.email || activeClient?.contact?.email || "";
             const displayInitials = (displayName || "C").trim().split(/\s+/).filter(Boolean).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase() || "C";
 
+            const isClientPaid = Boolean(
+              (liveBrandProfile?.subscription?.status && ["active", "trialing", "paid"].includes(liveBrandProfile.subscription.status.toLowerCase())) ||
+              activeClient?.isPaid ||
+              (activeClient?.monthlyFee && activeClient.monthlyFee > 0)
+            );
+            const isClientOnboarded = Boolean(
+              liveBrandProfile?.onboarding_completed_at ||
+              (typeof liveBrandProfile?.onboarding_stage === "number" && liveBrandProfile.onboarding_stage >= 4) ||
+              activeClient?.isOnboarded
+            );
+            const detailLifecycleStatus: "not_paid_not_onboarded" | "paid_not_onboarded" | "onboarded" = 
+              !isClientOnboarded
+                ? (!isClientPaid ? "not_paid_not_onboarded" : "paid_not_onboarded")
+                : "onboarded";
+
+            const isNotPaidNotOnboarded = detailLifecycleStatus === "not_paid_not_onboarded";
+            const isPaidNotOnboarded = detailLifecycleStatus === "paid_not_onboarded";
+
             return (
           <div className="space-y-4 sm:space-y-6 animate-fade-in">
             {/* Top Breadcrumb & Live Status */}
@@ -739,12 +887,53 @@ export function AdminClientsPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#161F2D] text-white border border-[#2A3446] flex items-center gap-1.5 shadow-2xs">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Live Client • v2.4
-                </span>
+                {isNotPaidNotOnboarded ? (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1.5 shadow-2xs">
+                    <span className="w-2 h-2 rounded-full bg-amber-400" />
+                    user not paid and not onboarded yet
+                  </span>
+                ) : isPaidNotOnboarded ? (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-sky-500/15 text-sky-400 border border-sky-500/30 flex items-center gap-1.5 shadow-2xs">
+                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+                    user paid but not onboarded
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#161F2D] text-white border border-[#2A3446] flex items-center gap-1.5 shadow-2xs">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Live Client • Onboarded
+                  </span>
+                )}
               </div>
             </div>
+
+            {/* Lifecycle Notification Banner */}
+            {isNotPaidNotOnboarded && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-start gap-3.5 shadow-sm">
+                <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h3 className="text-sm font-black uppercase tracking-wider text-amber-400">
+                    user not paid and not onboarded yet
+                  </h3>
+                  <p className="text-xs text-[#F1F5F9] leading-relaxed">
+                    This client account has logged in but has not subscribed or paid for any retainer plan and has not completed the onboarding intake. Mock data has been disabled: retainer fee is ₹0, and no creative pod or design assets are assigned.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {isPaidNotOnboarded && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-300 flex items-start gap-3.5 shadow-sm">
+                <Sparkles className="w-5 h-5 text-sky-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h3 className="text-sm font-black uppercase tracking-wider text-sky-400">
+                    user paid but not onboarded
+                  </h3>
+                  <p className="text-xs text-[#F1F5F9] leading-relaxed">
+                    Subscription payment is verified and active ({activeClient?.tier || "Paid Plan"}). However, the client has not finalized their brand onboarding questionnaire yet (Stage {liveBrandProfile?.onboarding_stage || 1} of 4). Creative Pod and Brand DNA will be generated once intake is completed.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Client Header Card matching Screenshot */}
             <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.03)] space-y-4">
@@ -758,14 +947,38 @@ export function AdminClientsPage() {
                       <h1 className="text-2xl font-black text-white tracking-tight break-words">
                         {displayName}
                       </h1>
-                      <CheckCircle2 className="w-5 h-5 text-[#7FA0D6] fill-blue-600 text-white" />
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-[10px] font-black uppercase tracking-wider">
-                        {activeClient?.tierBadge || "ACTIVE"}
-                      </span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        {activeClient?.status || "ACTIVE"}
-                      </span>
+                      {isNotPaidNotOnboarded ? (
+                        <>
+                          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider">
+                            UNPAID
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-black tracking-wider flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            user not paid and not onboarded yet
+                          </span>
+                        </>
+                      ) : isPaidNotOnboarded ? (
+                        <>
+                          <span className="px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 text-[10px] font-black uppercase tracking-wider">
+                            {activeClient?.tierBadge || "PAID PLAN"}
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 text-[10px] font-black tracking-wider flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+                            user paid but not onboarded
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-5 h-5 text-[#7FA0D6] fill-blue-600 text-white" />
+                          <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-[10px] font-black uppercase tracking-wider">
+                            {activeClient?.tierBadge || "ACTIVE"}
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            {activeClient?.status || "ACTIVE"}
+                          </span>
+                        </>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-[#97A0B3] font-medium">
@@ -853,17 +1066,19 @@ export function AdminClientsPage() {
                         <Phone className="w-4 h-4 text-[#97A0B3]" />
                         <span>Direct Phone</span>
                       </div>
-                      <span className="font-bold text-white font-mono">{activeClient?.contact?.phone || "+91 98401 23890"}</span>
+                      <span className="font-bold text-white font-mono">
+                        {activeClient?.contact?.phone && activeClient.contact.phone !== "+91 98401 23890" ? activeClient.contact.phone : "Not provided yet"}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
-                  <span className="flex items-center gap-1 text-emerald-700 font-semibold">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    Contract renewed: {activeClient?.contact?.renewedDate || "Current Sprint"}
+                  <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    Contract: {isNotPaidNotOnboarded ? "Pending Subscription" : isPaidNotOnboarded ? "Payment Confirmed" : (activeClient?.contact?.renewedDate || "Current Sprint")}
                   </span>
-                  <span>Term: {activeClient?.contact?.termMonths ?? 12} Mo</span>
+                  <span>Term: {isNotPaidNotOnboarded ? "—" : `${activeClient?.contact?.termMonths ?? 12} Mo`}</span>
                 </div>
               </div>
 
@@ -874,17 +1089,21 @@ export function AdminClientsPage() {
                     <span className="text-[11px] font-extrabold text-[#97A0B3] uppercase tracking-wider">
                       TIER TERMS & SCOPE
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold border border-[#7FA0D6]/30">
-                      Active Cycle
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${isNotPaidNotOnboarded ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : isPaidNotOnboarded ? "bg-sky-500/15 text-sky-400 border-sky-500/30" : "bg-[#7FA0D6]/15 text-[#7FA0D6] border-[#7FA0D6]/30"}`}>
+                      {isNotPaidNotOnboarded ? "Unpaid" : isPaidNotOnboarded ? "Payment Verified" : "Active Cycle"}
                     </span>
                   </div>
 
                   <div className="flex items-baseline justify-between">
                     <div>
-                      <span className="text-3xl font-black text-white">₹{(activeClient?.monthlyFee ?? 0).toLocaleString()}</span>
-                      <span className="text-xs font-bold text-[#97A0B3]"> /mo</span>
+                      <span className="text-3xl font-black text-white">
+                        {isNotPaidNotOnboarded ? "₹0" : `₹${(activeClient?.monthlyFee ?? 0).toLocaleString()}`}
+                      </span>
+                      <span className="text-xs font-bold text-[#97A0B3]">
+                        {isNotPaidNotOnboarded ? " /mo (Unpaid Account)" : " /mo"}
+                      </span>
                     </div>
-                    {activeClient?.addon && (
+                    {activeClient?.addon && isClientOnboarded && (
                       <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 flex items-center gap-1">
                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                         {activeClient.addon}
@@ -893,48 +1112,61 @@ export function AdminClientsPage() {
                   </div>
 
                   <p className="text-xs text-[#97A0B3]">
-                    Next billing scheduled for {activeClient?.nextBilling || "Next Month"} via {activeClient?.billingMethod || "Direct ACH"}.
+                    {isNotPaidNotOnboarded
+                      ? "No active subscription billing scheduled. Client has not subscribed to any plan."
+                      : isPaidNotOnboarded
+                      ? "Subscription payment confirmed. Creative production starts once onboarding is submitted."
+                      : `Next billing scheduled for ${activeClient?.nextBilling || "Next Month"} via ${activeClient?.billingMethod || "Direct ACH"}.`}
                   </p>
 
                   {/* Monthly Output Burn bar */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-[#F1F5F9]">Monthly Output Burn</span>
-                      <span className="text-[#7FA0D6]">
-                        {activeClient?.totalAssetsDelivered ?? 0} / {activeClient?.totalAssetsQuota ?? 0} Assets Delivered (
-                        {Math.round((((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100))}%)
-                      </span>
+                  {!isClientOnboarded ? (
+                    <div className="p-3 bg-[#0B111C]/60 rounded-2xl border border-[#2A3446] text-xs text-[#97A0B3]">
+                      <span className="font-bold text-white block mb-0.5">Production Queue Inactive</span>
+                      {isPaidNotOnboarded
+                        ? "Asset deliveries and quota burn will activate as soon as onboarding intake is complete."
+                        : "Asset production and quota burn are inactive because user is not paid and not onboarded yet."}
                     </div>
-                    <div className="w-full bg-[#161F2D] rounded-full h-2.5 overflow-hidden">
-                      <div
-                        className="bg-[#7FA0D6] h-full rounded-full transition-all"
-                        style={{
-                          width: `${Math.min(
-                            (((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100),
-                            100
-                          )}%`,
-                        }}
-                      />
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="text-[#F1F5F9]">Monthly Output Burn</span>
+                        <span className="text-[#7FA0D6]">
+                          {activeClient?.totalAssetsDelivered ?? 0} / {activeClient?.totalAssetsQuota ?? 0} Assets Delivered (
+                          {Math.round((((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100))}%)
+                        </span>
+                      </div>
+                      <div className="w-full bg-[#161F2D] rounded-full h-2.5 overflow-hidden">
+                        <div
+                          className="bg-[#7FA0D6] h-full rounded-full transition-all"
+                          style={{
+                            width: `${Math.min(
+                              (((activeClient?.totalAssetsDelivered || 0) / (activeClient?.totalAssetsQuota || 1)) * 100),
+                              100
+                            )}%`,
+                          }}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  {/* 3 Metric Counters matching Screenshot */}
+                  {/* 3 Metric Counters */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 pt-1">
                     <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
                       <span className="text-sm font-black text-white">
-                        {activeClient?.postsDelivered ?? 0}/{activeClient?.postsQuota ?? 0}
+                        {isClientOnboarded ? `${activeClient?.postsDelivered ?? 0}/${activeClient?.postsQuota ?? 0}` : "0/0"}
                       </span>
                       <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">POSTS</span>
                     </div>
                     <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
                       <span className="text-sm font-black text-white">
-                        {activeClient?.reelsDelivered ?? 0}/{activeClient?.reelsQuota ?? 0}
+                        {isClientOnboarded ? `${activeClient?.reelsDelivered ?? 0}/${activeClient?.reelsQuota ?? 0}` : "0/0"}
                       </span>
                       <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">REELS</span>
                     </div>
                     <div className="p-3 bg-[#0B111C] rounded-2xl text-center space-y-0.5 border border-[#2A3446]">
                       <span className="text-sm font-black text-white">
-                        {activeClient?.storiesDelivered ?? 0}/{activeClient?.storiesQuota ?? 0}
+                        {isClientOnboarded ? `${activeClient?.storiesDelivered ?? 0}/${activeClient?.storiesQuota ?? 0}` : "0/0"}
                       </span>
                       <span className="text-[10px] font-bold text-[#97A0B3] block uppercase">STORIES</span>
                     </div>
@@ -942,10 +1174,14 @@ export function AdminClientsPage() {
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
-                  <span>Sprint {activeClient?.sprintNumber ?? 1}: {activeClient?.daysRemainingInSprint ?? 14} days remaining</span>
+                  <span>
+                    {isClientOnboarded
+                      ? `Sprint ${activeClient?.sprintNumber ?? 1}: ${activeClient?.daysRemainingInSprint ?? 14} days remaining`
+                      : "Sprint: Awaiting Onboarding"}
+                  </span>
                   <button
                     type="button"
-                    onClick={() => showToast("Opening Client Quota Ledger...")}
+                    onClick={() => showToast(isClientOnboarded ? "Opening Client Quota Ledger..." : "Quota ledger unavailable for un-onboarded client.")}
                     className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
                   >
                     View Quota Log
@@ -954,229 +1190,313 @@ export function AdminClientsPage() {
               </div>
 
               {/* CARD 3: CLIENT BRAND ECOSYSTEM & GUIDELINES */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5">
-                <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                  <div className="flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-[#7FA0D6]" />
-                    <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                      Client Brand Ecosystem & Guidelines
-                    </h2>
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold">
-                    {activeClient?.brand?.kitVersion || "Design Kit v2.4"}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Typography */}
-                  <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs">
-                    <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
-                      TYPOGRAPHY HIERARCHY
-                    </span>
-                    <div className="space-y-1 text-[#F1F5F9]">
-                      <div className="flex justify-between">
-                        <span className="text-[#97A0B3]">Headings:</span>
-                        <span className="font-bold text-white">{realTypography.headingsFont}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#97A0B3]">Body & Data:</span>
-                        <span className="font-medium text-white">{realTypography.bodyFont}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#97A0B3]">Monospace:</span>
-                        <span className="font-mono text-white">{realTypography.monoFont}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Persona & Voice Tone */}
-                  <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs flex flex-col justify-between">
-                    <div>
-                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
-                        PERSONA & VOICE TONE
-                      </span>
-                      <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed">
-                        {realTone.summary}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {realTone.tags.map((tag: string, tagIdx: number) => (
-                        <span key={`${tag}-${tagIdx}`} className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[10px] font-bold text-[#F1F5F9] shadow-2xs">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Approved Color Spectrum */}
-                <div className="space-y-2">
-                  <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
-                    APPROVED COLOR SPECTRUM
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-2.5">
-                    {realColors.map((c, cIdx) => (
-                      <div key={`${c.hex}-${cIdx}`} className="rounded-2xl border border-[#2A3446] overflow-hidden bg-[#161F2D] shadow-2xs space-y-1.5 pb-2">
-                        <div className="h-10 w-full" style={{ backgroundColor: c.hex }} />
-                        <div className="px-2.5">
-                          <span className="text-[11px] font-bold text-white block truncate">{c.name}</span>
-                          <span className="text-[10px] font-mono text-[#97A0B3]">{c.hex}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Social Channel */}
-                <div className="p-3.5 bg-[#0B111C]/80 rounded-2xl border border-[#2A3446] flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center shadow-xs">
-                      <Instagram className="w-5 h-5" />
-                    </div>
-                    <div>
+              {!isClientOnboarded ? (
+                <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs text-white">
-                          {liveBrandProfile?.instagram_username
-                            ? `@${liveBrandProfile.instagram_username}`
-                            : (activeClient?.brand?.social?.handle || `@${(liveBrandProfile?.company_name || activeClient?.name || "client").toLowerCase().replace(/[^a-z0-9]/g, "")}`)}
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[9px] font-extrabold uppercase">
-                          CONNECTED
-                        </span>
+                        <Palette className={`w-4 h-4 ${isPaidNotOnboarded ? "text-sky-400" : "text-amber-400"}`} />
+                        <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
+                          Client Brand Ecosystem & Guidelines
+                        </h2>
                       </div>
-                      <span className="text-[11px] text-[#97A0B3]">
-                        Real-time Profile Connected • Verified Brand DNA
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${isPaidNotOnboarded ? "bg-sky-500/15 text-sky-400 border-sky-500/30" : "bg-amber-500/15 text-amber-400 border-amber-500/30"}`}>
+                        {isPaidNotOnboarded ? "Awaiting Intake Questionnaire" : "Pending Onboarding"}
                       </span>
                     </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const handle = (liveBrandProfile?.instagram_username || activeClient?.brand?.social?.handle || "").replace("@", "");
-                      if (handle) window.open(`https://instagram.com/${handle}`, "_blank");
-                    }}
-                    className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] shadow-2xs cursor-pointer"
-                  >
-                    Launch Channel
-                  </button>
-                </div>
 
-                <div className="flex flex-wrap items-center justify-between text-xs text-[#97A0B3] font-medium pt-3 border-t border-[#2A3446] gap-2">
-                  <div className="flex items-center gap-3 text-[#7FA0D6] font-bold">
-                    <span className="cursor-pointer hover:underline flex items-center gap-1">
-                      <Folder className="w-3.5 h-3.5" /> {activeClient?.brand?.brandVaultLink || "Client Brand Vault Drive"}
-                    </span>
-                    <span>•</span>
-                    <span className="cursor-pointer hover:underline flex items-center gap-1">
-                      <ExternalLink className="w-3.5 h-3.5" /> {activeClient?.brand?.figmaLink || "Figma Master Design Kit"}
-                    </span>
-                    <span>•</span>
+                    <div className="p-8 text-center space-y-3 bg-[#0B111C]/60 rounded-2xl border border-[#2A3446]">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto border ${isPaidNotOnboarded ? "bg-sky-500/10 border-sky-500/20 text-sky-400" : "bg-amber-500/10 border-amber-500/20 text-amber-400"}`}>
+                        <Palette className="w-6 h-6" />
+                      </div>
+                      <h4 className="text-sm font-bold text-white">
+                        {isPaidNotOnboarded ? "Brand DNA Brief In Progress" : "Brand DNA Not Available"}
+                      </h4>
+                      <p className="text-xs text-[#97A0B3] max-w-md mx-auto leading-relaxed">
+                        {isPaidNotOnboarded
+                          ? "The client has paid for their subscription. Approved brand color palette, typography hierarchy, tone voice, and asset vault will be generated once they complete the onboarding questionnaire."
+                          : "user not paid and not onboarded yet. Brand guidelines, visual spectrum, and drive vaults will be configured after plan activation and onboarding completion."}
+                      </p>
+                      {isPaidNotOnboarded && (
+                        <span className="inline-block mt-2 px-3 py-1 rounded-full text-[11px] font-bold bg-[#161F2D] text-sky-300 border border-sky-500/30">
+                          Onboarding Progress: Stage {liveBrandProfile?.onboarding_stage || 1} of 4
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between text-xs text-[#97A0B3] font-medium pt-3 border-t border-[#2A3446] gap-2">
+                    <span className="text-[#97A0B3]">Brand Kit Status: {isPaidNotOnboarded ? "Awaiting Submission" : "Not Initialized"}</span>
                     <Link
-                      to={`/admin/clients/${activeClient?.id || ""}/brand`}
-                      className="cursor-pointer hover:underline flex items-center gap-1 text-[#7FA0D6]"
+                      to={`/admin/clients/${liveBrandProfile?.client_id || activeClient?.id || ""}/brand`}
+                      className="text-[#7FA0D6] font-bold hover:underline flex items-center gap-1"
                     >
-                      Brand DNA & Brief →
+                      View Brand Intake Overview &rarr;
                     </Link>
                   </div>
-                  <span>Last audit {activeClient?.brand?.lastAuditDate || "This Sprint"}</span>
                 </div>
-              </div>
-
-              {/* CARD 4: ASSIGNED CREATIVE POD */}
-              <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
-                <div className="space-y-4">
+              ) : (
+                <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5">
                   <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-[#7FA0D6]" />
+                      <Palette className="w-4 h-4 text-[#7FA0D6]" />
                       <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
-                        Assigned creative pod
+                        Client Brand Ecosystem & Guidelines
                       </h2>
                     </div>
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold border border-[#7FA0D6]/30">
-                      {activeClient?.pod?.name || "Pod A"}: {activeClient?.pod?.tagline || "Creative Strategy"}
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#161F2D] text-[#F1F5F9] text-[10px] font-bold">
+                      {activeClient?.brand?.kitVersion || "Design Kit v2.4"}
                     </span>
                   </div>
 
-                  {/* Pod Lead */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
-                      POD LEAD & CREATIVE DIRECTOR
-                    </span>
-                    <div className="p-3 bg-[#0B111C]/70 rounded-2xl flex items-center justify-between border border-[#2A3446]">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
-                          {activeClient?.pod?.leadAvatar || "CD"}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Typography */}
+                    <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                        TYPOGRAPHY HIERARCHY
+                      </span>
+                      <div className="space-y-1 text-[#F1F5F9]">
+                        <div className="flex justify-between">
+                          <span className="text-[#97A0B3]">Headings:</span>
+                          <span className="font-bold text-white">{realTypography.headingsFont}</span>
                         </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-white">{activeClient?.pod?.leadName || "Pod Creative Director"}</h4>
-                          <span className="text-[11px] text-[#97A0B3]">{activeClient?.pod?.leadTitle || "Lead Producer"}</span>
+                        <div className="flex justify-between">
+                          <span className="text-[#97A0B3]">Body & Data:</span>
+                          <span className="font-medium text-white">{realTypography.bodyFont}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-[#97A0B3]">Monospace:</span>
+                          <span className="font-mono text-white">{realTypography.monoFont}</span>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => showToast(`Connecting to ${activeClient?.pod?.leadName || "Pod Lead"} via Slack/Creo Chat...`)}
-                        className="p-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] shadow-2xs cursor-pointer"
-                        title="Chat with Pod Lead"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                      </button>
+                    </div>
+
+                    {/* Persona & Voice Tone */}
+                    <div className="p-3.5 bg-[#0B111C]/70 rounded-2xl space-y-2 border border-[#2A3446] text-xs flex flex-col justify-between">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                          PERSONA & VOICE TONE
+                        </span>
+                        <p className="text-[11px] text-[#F1F5F9] mt-1 leading-relaxed">
+                          {realTone.summary}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {realTone.tags.map((tag: string, tagIdx: number) => (
+                          <span key={`${tag}-${tagIdx}`} className="px-2 py-0.5 rounded-md bg-[#161F2D] border border-[#2A3446] text-[10px] font-bold text-[#F1F5F9] shadow-2xs">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Squad Members */}
+                  {/* Approved Color Spectrum */}
                   <div className="space-y-2">
                     <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
-                      SQUAD MEMBERS
+                      APPROVED COLOR SPECTRUM
                     </span>
-                    <div className="space-y-1.5">
-                      {(activeClient?.pod?.squad || []).map((member, mIdx) => (
-                        <div key={`${member.name || mIdx}`} className="p-2.5 bg-[#0B111C]/50 rounded-xl flex items-center justify-between text-xs border border-[#2A3446]">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-gray-200 text-[#F1F5F9] font-bold text-[10px] flex items-center justify-center">
-                              {member.avatar || "PS"}
-                            </div>
-                            <div>
-                              <span className="font-bold text-white block leading-tight">{member.name}</span>
-                              <span className="text-[10px] text-[#97A0B3]">{member.role}</span>
-                            </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-2.5">
+                      {realColors.map((c, cIdx) => (
+                        <div key={`${c.hex}-${cIdx}`} className="rounded-2xl border border-[#2A3446] overflow-hidden bg-[#161F2D] shadow-2xs space-y-1.5 pb-2">
+                          <div className="h-10 w-full" style={{ backgroundColor: c.hex }} />
+                          <div className="px-2.5">
+                            <span className="text-[11px] font-bold text-white block truncate">{c.name}</span>
+                            <span className="text-[10px] font-mono text-[#97A0B3]">{c.hex}</span>
                           </div>
-                          <span className="font-mono font-bold text-[11px] text-[#F1F5F9]">{member.hoursPerWeek}h/wk</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Pod Capacity Commitment */}
-                  <div className="space-y-2 pt-1">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-[#F1F5F9]">Pod Capacity Commitment</span>
-                      <span className="text-[#7FA0D6] font-mono">
-                        {activeClient?.pod?.capacityAllocatedHrs ?? 32} hrs/week allocated
+                  {/* Social Channel */}
+                  <div className="p-3.5 bg-[#0B111C]/80 rounded-2xl border border-[#2A3446] flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 text-white flex items-center justify-center shadow-xs">
+                        <Instagram className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-xs text-white">
+                            {liveBrandProfile?.instagram_username
+                              ? `@${liveBrandProfile.instagram_username}`
+                              : (activeClient?.brand?.social?.handle || `@${(liveBrandProfile?.company_name || activeClient?.name || "client").toLowerCase().replace(/[^a-z0-9]/g, "")}`)}
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[9px] font-extrabold uppercase">
+                            CONNECTED
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-[#97A0B3]">
+                          Real-time Profile Connected • Verified Brand DNA
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const handle = (liveBrandProfile?.instagram_username || activeClient?.brand?.social?.handle || "").replace("@", "");
+                        if (handle) window.open(`https://instagram.com/${handle}`, "_blank");
+                      }}
+                      className="px-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] shadow-2xs cursor-pointer"
+                    >
+                      Launch Channel
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between text-xs text-[#97A0B3] font-medium pt-3 border-t border-[#2A3446] gap-2">
+                    <div className="flex items-center gap-3 text-[#7FA0D6] font-bold">
+                      <span className="cursor-pointer hover:underline flex items-center gap-1">
+                        <Folder className="w-3.5 h-3.5" /> {activeClient?.brand?.brandVaultLink || "Client Brand Vault Drive"}
                       </span>
+                      <span>•</span>
+                      <span className="cursor-pointer hover:underline flex items-center gap-1">
+                        <ExternalLink className="w-3.5 h-3.5" /> {activeClient?.brand?.figmaLink || "Figma Master Design Kit"}
+                      </span>
+                      <span>•</span>
+                      <Link
+                        to={`/admin/clients/${activeClient?.id || ""}/brand`}
+                        className="cursor-pointer hover:underline flex items-center gap-1 text-[#7FA0D6]"
+                      >
+                        Brand DNA & Brief →
+                      </Link>
                     </div>
-                    <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-[#7FA0D6] h-full rounded-full transition-all"
-                        style={{ width: `${activeClient?.pod?.bandwidthPercent ?? 80}%` }}
-                      />
-                    </div>
-                    <span className="text-[11px] text-[#97A0B3] font-medium block">
-                      Sprint {activeClient?.sprintNumber ?? 1} • {activeClient?.pod?.bandwidthPercent ?? 80}% bandwidth filled
-                    </span>
+                    <span>Last audit {activeClient?.brand?.lastAuditDate || "This Sprint"}</span>
                   </div>
                 </div>
+              )}
 
-                <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
-                  <span>Daily Sync: {activeClient?.pod?.dailySyncTime || "11:00 AM IST"}</span>
-                  <button
-                    type="button"
-                    onClick={() => showToast(`Opening Pod Reallocation Studio for ${activeClient?.pod?.name || "Pod"}...`)}
-                    className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
-                  >
-                    Reallocate Pod Hours
-                  </button>
+              {/* CARD 4: ASSIGNED CREATIVE POD */}
+              {!isClientOnboarded ? (
+                <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                      <div className="flex items-center gap-2">
+                        <Users className={`w-4 h-4 ${isPaidNotOnboarded ? "text-sky-400" : "text-amber-400"}`} />
+                        <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
+                          Assigned creative pod
+                        </h2>
+                      </div>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${isPaidNotOnboarded ? "bg-sky-500/15 text-sky-400 border-sky-500/30" : "bg-amber-500/15 text-amber-400 border-amber-500/30"}`}>
+                        {isPaidNotOnboarded ? "Pending Allocation" : "Not Assigned"}
+                      </span>
+                    </div>
+
+                    <div className="p-8 text-center space-y-3 bg-[#0B111C]/60 rounded-2xl border border-[#2A3446]">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto border ${isPaidNotOnboarded ? "bg-sky-500/10 border-sky-500/20 text-sky-400" : "bg-amber-500/10 border-amber-500/20 text-amber-400"}`}>
+                        <Users className="w-6 h-6" />
+                      </div>
+                      <h4 className="text-sm font-bold text-white">
+                        {isPaidNotOnboarded ? "Creative Pod Allocation in Progress" : "No Creative Pod Allocated"}
+                      </h4>
+                      <p className="text-xs text-[#97A0B3] max-w-md mx-auto leading-relaxed">
+                        {isPaidNotOnboarded
+                          ? "Pod Lead (Creative Director), Video Editor, and Graphic Designer will be allocated to this client once their onboarding brand requirements are submitted."
+                          : "user not paid and not onboarded yet. Creative Pod squad specialists are assigned upon active plan subscription and onboarding intake completion."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
+                    <span>Pod Allocation: {isPaidNotOnboarded ? "Awaiting Onboarding" : "Not Started"}</span>
+                    <span className="text-[#97A0B3] font-mono">0 hrs/wk committed</span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-[#161F2D] rounded-3xl p-6 border border-[#2A3446] shadow-[0_4px_25px_rgba(0,0,0,0.03)] space-y-5 flex flex-col justify-between">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-[#7FA0D6]" />
+                        <h2 className="text-xs font-extrabold text-white uppercase tracking-wider">
+                          Assigned creative pod
+                        </h2>
+                      </div>
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] text-[10px] font-bold border border-[#7FA0D6]/30">
+                        {activeClient?.pod?.name || "Pod A"}: {activeClient?.pod?.tagline || "Creative Strategy"}
+                      </span>
+                    </div>
+
+                    {/* Pod Lead */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                        POD LEAD & CREATIVE DIRECTOR
+                      </span>
+                      <div className="p-3 bg-[#0B111C]/70 rounded-2xl flex items-center justify-between border border-[#2A3446]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shadow-xs">
+                            {activeClient?.pod?.leadAvatar || "CD"}
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-white">{activeClient?.pod?.leadName || "Pod Creative Director"}</h4>
+                            <span className="text-[11px] text-[#97A0B3]">{activeClient?.pod?.leadTitle || "Lead Producer"}</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => showToast(`Connecting to ${activeClient?.pod?.leadName || "Pod Lead"} via Slack/Creo Chat...`)}
+                          className="p-2 rounded-xl bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] hover:text-[#7FA0D6] shadow-2xs cursor-pointer"
+                          title="Chat with Pod Lead"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Squad Members */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-extrabold text-[#97A0B3] uppercase tracking-wider block">
+                        SQUAD MEMBERS
+                      </span>
+                      <div className="space-y-1.5">
+                        {(activeClient?.pod?.squad || []).map((member, mIdx) => (
+                          <div key={`${member.name || mIdx}`} className="p-2.5 bg-[#0B111C]/50 rounded-xl flex items-center justify-between text-xs border border-[#2A3446]">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-7 h-7 rounded-full bg-gray-200 text-[#F1F5F9] font-bold text-[10px] flex items-center justify-center">
+                                {member.avatar || "PS"}
+                              </div>
+                              <div>
+                                <span className="font-bold text-white block leading-tight">{member.name}</span>
+                                <span className="text-[10px] text-[#97A0B3]">{member.role}</span>
+                              </div>
+                            </div>
+                            <span className="font-mono font-bold text-[11px] text-[#F1F5F9]">{member.hoursPerWeek}h/wk</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Pod Capacity Commitment */}
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center justify-between text-xs font-bold">
+                        <span className="text-[#F1F5F9]">Pod Capacity Commitment</span>
+                        <span className="text-[#7FA0D6] font-mono">
+                          {activeClient?.pod?.capacityAllocatedHrs ?? 32} hrs/week allocated
+                        </span>
+                      </div>
+                      <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-[#7FA0D6] h-full rounded-full transition-all"
+                          style={{ width: `${activeClient?.pod?.bandwidthPercent ?? 80}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] text-[#97A0B3] font-medium block">
+                        Sprint {activeClient?.sprintNumber ?? 1} • {activeClient?.pod?.bandwidthPercent ?? 80}% bandwidth filled
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-[#97A0B3] pt-3 border-t border-[#2A3446] font-medium">
+                    <span>Daily Sync: {activeClient?.pod?.dailySyncTime || "11:00 AM IST"}</span>
+                    <button
+                      type="button"
+                      onClick={() => showToast(`Opening Pod Reallocation Studio for ${activeClient?.pod?.name || "Pod"}...`)}
+                      className="text-[#7FA0D6] font-bold hover:underline cursor-pointer"
+                    >
+                      Reallocate Pod Hours
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ═════════════════════════════════════════════════════════════════
@@ -1221,8 +1541,20 @@ export function AdminClientsPage() {
               {filteredDeliverables.length === 0 ? (
                 <div className="py-12 border border-dashed border-[#2A3446] rounded-2xl text-center space-y-2">
                   <CheckCircle2 className="size-8 text-[#97A0B3] mx-auto opacity-40" />
-                  <p className="text-sm font-bold text-white">No Deliverables in Queue</p>
-                  <p className="text-xs text-[#97A0B3]">No active deliverables requiring attention for this client.</p>
+                  <p className="text-sm font-bold text-white">
+                    {!isClientOnboarded
+                      ? isPaidNotOnboarded
+                        ? "Deliverables Awaiting Onboarding Form"
+                        : "Deliverables Inactive"
+                      : "No Deliverables in Queue"}
+                  </p>
+                  <p className="text-xs text-[#97A0B3]">
+                    {!isClientOnboarded
+                      ? isPaidNotOnboarded
+                        ? "Creative asset drafting begins once the client completes their onboarding intake questionnaire."
+                        : "User not paid and not onboarded yet. Creative deliverables will be scheduled after plan purchase."
+                      : "No active deliverables requiring attention for this client."}
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
