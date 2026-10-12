@@ -196,30 +196,6 @@ function OnboardingPageWrapper() {
             </div>
           </Link>
 
-          <div className="flex items-center gap-3 sm:gap-4 text-xs font-semibold">
-            <Link
-              to="/"
-              className="text-[#97A0B3] hover:text-white transition-colors hidden sm:inline-flex items-center gap-1.5"
-            >
-              ← Back to Home
-            </Link>
-            <a
-              href="https://wa.me/919941999415"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="whitespace-nowrap text-[#97A0B3] hover:text-[#7FA0D6] transition-colors inline-flex items-center gap-1.5"
-            >
-              <span className="sm:hidden">Help</span>
-              <span className="hidden sm:inline">Need Help?</span>
-            </a>
-            <Link
-              to="/portal"
-              className="whitespace-nowrap inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#161F2D] text-[#BCCCE6] hover:bg-[#2A3446] border border-[#2A3446] transition-colors"
-            >
-              <span className="sm:hidden">Portal →</span>
-              <span className="hidden sm:inline">Go to Portal →</span>
-            </Link>
-          </div>
         </div>
       </header>
 
