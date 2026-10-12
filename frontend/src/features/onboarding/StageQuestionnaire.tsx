@@ -1050,7 +1050,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
     );
   }, [activeSection, userId, setSearchParams, isActive]);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [autosaveAttempt, setAutosaveAttempt] = useState(0);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [coreUnlocked, setCoreUnlocked] = useState(false);
   const [completedSections, setCompletedSections] = useState<Set<SectionKey>>(new Set());
@@ -1068,7 +1068,6 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // JSON of what the server last acknowledged per section; unchanged sections are never re-sent
   const lastSavedRef = useRef<Partial<Record<SectionKey, string>>>({});
-  const serverSectionsRef = useRef<Set<SectionKey>>(new Set());
   const baselineTakenRef = useRef(false);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const formTopRef = useRef<HTMLDivElement | null>(null);
@@ -1156,13 +1155,6 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
   useEffect(() => {
     if (qState && !dataInitialized) {
       const completed = new Set<SectionKey>();
-      const allKeys: SectionKey[] = ["a", "b", "c", "d", "e", "f", "g"];
-      serverSectionsRef.current = new Set(
-        allKeys.filter((k) => {
-          const section = qState[`section_${k}` as keyof typeof qState];
-          return Boolean(section && typeof section === "object" && Object.keys(section).length > 0);
-        }),
-      );
 
       if (qState.section_a && Object.keys(qState.section_a).length > 0) {
         setSecA((prev) => ({ ...prev, ...qState.section_a }));
@@ -1256,11 +1248,11 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
     }
   };
 
-  // Once restored answers are in state, treat the sections the server already has as saved
+  // Establish the restored baseline so untouched defaults are not submitted as edits.
   useEffect(() => {
     if (!dataInitialized || baselineTakenRef.current) return;
     baselineTakenRef.current = true;
-    for (const key of serverSectionsRef.current) {
+    for (const { key } of SECTIONS) {
       lastSavedRef.current[key] = JSON.stringify(getCurrentSectionData(key));
     }
   }, [dataInitialized]);
@@ -1305,15 +1297,27 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
       clearTimeout(autosaveTimerRef.current);
     }
 
-    autosaveTimerRef.current = setTimeout(() => {
-      if (!isSectionDirty(activeSection)) return;
-      persistSection(activeSection).catch((err) => console.warn("Autosave notification:", err));
-    }, 1500);
+    autosaveTimerRef.current = setTimeout(async () => {
+      const dirtySections = SECTIONS.filter(({ key }) => isSectionDirty(key));
+      if (!dirtySections.length) return;
+      const results = await Promise.allSettled(dirtySections.map(({ key }) => persistSection(key)));
+      const failedIndex = results.findIndex(result => result.status === "rejected");
+      const failed = dirtySections[failedIndex];
+      if (failed) {
+        setFailedSection(failed.key);
+        setApiError("Your latest answers haven't reached the server yet. We'll retry automatically; please keep this page open.");
+        setAutosaveAttempt(attempt => attempt + 1);
+      } else {
+        setApiError(null);
+        setFailedSection(null);
+        setAutosaveAttempt(0);
+      }
+    }, Math.min(1500 * 2 ** Math.min(autosaveAttempt, 5), 30_000));
 
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [activeSection, secA, secB, secC, secD, secE, secF, secG, dataInitialized, isSaving, isSynthesizing, userId]);
+  }, [activeSection, secA, secB, secC, secD, secE, secF, secG, dataInitialized, isSaving, isSynthesizing, userId, autosaveAttempt]);
 
   // Clear errors when changing field or section
   const clearFieldError = (fieldName: string) => {
@@ -1493,13 +1497,12 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
     setFailedSection(null);
     try {
       await persistSection(secKey);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 1200);
+      setAutosaveAttempt(0);
     } catch (err) {
       console.error("Save & Continue API failure:", err);
       setFailedSection(secKey);
       setApiError(
-        `We couldn't save Section ${secKey.toUpperCase()} yet. Your answers are kept on this page — click Retry, or they'll be saved when you finish.`,
+        `We couldn't save Section ${secKey.toUpperCase()} yet. Your answers are kept on this page and will retry automatically.`,
       );
     } finally {
       setIsSaving(false);
@@ -3038,49 +3041,14 @@ export function StageQuestionnaire({ userId, initialSection, onComplete, isActiv
           </button>
 
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
-            <button
-              type="button"
-              onClick={async () => {
-                setIsSaving(true);
-                try {
-                  await persistSection(activeSection);
-                  setSaveSuccess(true);
-                  setTimeout(() => setSaveSuccess(false), 2000);
-                } catch (e) {
-                  console.error(e);
-                } finally {
-                  setIsSaving(false);
-                }
-              }}
-              disabled={isSaving}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:bg-[#161F2D] hover:border-[#7FA0D6] text-xs font-bold text-[#BCCCE6] hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
-            >
-              {isSaving ? (
-                <Loader2 className="size-3.5 animate-spin text-[#7FA0D6]" />
-              ) : saveSuccess ? (
-                <Check className="size-3.5 text-emerald-400" />
-              ) : (
-                <RefreshCw className="size-3.5 text-[#7FA0D6]" />
-              )}
-              <span>{isSaving ? "Syncing..." : saveSuccess ? "Synced ✓" : "Sync Draft"}</span>
-            </button>
             {activeSection !== "g" ? (
               <button
                 type="button"
                 onClick={handleNextSection}
                 className="w-full sm:w-auto min-w-[200px] px-6 py-3 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-sm font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
-                {saveSuccess ? (
-                  <>
-                    <Check className="w-4 h-4 text-[#0B111C]" />
-                    <span>Saved ✓</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Save & Continue</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
+                <span>Continue</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             ) : (
               <button
