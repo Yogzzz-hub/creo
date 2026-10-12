@@ -173,8 +173,8 @@ export function GoogleCallbackPage() {
           {/* Status: Loading */}
           {status === "loading" && (
             <div className="flex flex-col items-center w-full">
-              <div className="relative flex items-center justify-center size-12 rounded-full bg-[#0B111C] border border-[#2A3446] mb-6 shadow-xs">
-                <Loader2 className="size-5 text-[#7FA0D6] animate-spin" />
+              <div className="relative flex items-center justify-center size-14 rounded-full bg-[#0B111C] border border-[#2A3446] mb-6 shadow-xs">
+                <Loader2 className="size-6 text-[#7FA0D6] animate-spin" />
               </div>
 
               <h1 className="text-[30px] sm:text-[32px] font-semibold text-[#F8FAFC] tracking-tight leading-tight">
@@ -185,13 +185,6 @@ export function GoogleCallbackPage() {
                 {step === 2 && "Synchronizing workspace credentials & profile…"}
                 {step >= 3 && "Configuring authenticated session…"}
               </p>
-
-              <div className="inline-flex items-center gap-2.5 h-11 sm:h-12 px-5 sm:px-6 rounded-full bg-[#0B111C] border border-[#2A3446] mt-6 shadow-xs">
-                <Loader2 className="size-4 animate-spin text-[#7FA0D6]" />
-                <span className="text-[13px] sm:text-[14px] font-semibold text-[#BCCCE6]">
-                  Authenticating session…
-                </span>
-              </div>
             </div>
           )}
 
