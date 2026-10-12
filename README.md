@@ -143,20 +143,33 @@ npm run dev
 
 The frontend will run on `http://localhost:5173` (or `http://localhost:5174`), proxying `/api` requests to `http://localhost:8000`.
 
-### Verification email delivery (Resend)
+### Verification email delivery (Brevo)
 
-Registration and password verification send mail through the Resend HTTP API. For
-local signup tests, set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in
-`backend/.env` (see [`backend/.env.resend.example`](backend/.env.resend.example)).
-The local frontend sends requests to the local API, so Resend values configured
+Registration, password verification, and worker notifications use the same Brevo
+HTTPS API service. Standard SMTP ports are blocked on Render's free web services.
+For local signup tests, set `BREVO_API_KEY`, `BREVO_FROM_EMAIL`, and
+`BREVO_FROM_NAME` in `backend/.env` (see
+[`backend/.env.brevo.example`](backend/.env.brevo.example)).
+The local frontend sends requests to the local API, so Brevo values configured
 only on Render do not apply to `localhost`.
 
-In Render, configure both variables on the API web service. Use a sender address
-at a domain verified in your Resend account, for example
-`Creo Verification <noreply@mail.yourdomain.com>`. The shared
-`onboarding@resend.dev` sender is for testing and cannot deliver verification
-messages to arbitrary users. Keep the API key in Render or the backend `.env`;
-never put it in a `VITE_*` frontend variable.
+In Render, configure these variables on the API web service and any email worker.
+Use a Brevo **API key**, not an SMTP key, and a sender verified in your Brevo
+account. The sender can be a plain address or `Creo <address@example.com>`.
+`BREVO_FROM_NAME` defaults to `Creo`. No sender address is invented when the
+configuration is missing. Keep the API key in Render or the backend `.env`;
+never put it in a `VITE_*` frontend variable. Remove old `RESEND_*` variables
+after configuring Brevo, then deploy the API and workers together.
+
+The Cloudflare frontend defaults to `https://creo-api-singapore.onrender.com`
+unless its build sets `VITE_API_URL`. `render.yaml` describes a separate `creo-api`
+deployment; it is not evidence that those services exist in the live dashboard.
+`render-workers.yaml` references the Singapore API for its worker environment.
+Do not delete an apparent duplicate service before checking its clients,
+database, OAuth callbacks, and worker dependencies.
+
+Confirm live delivery with a signup/password OTP and Brevo's transactional logs.
+An API `messageId` confirms submission; inbox delivery must be checked separately.
 
 ### 3. Build & Verify
 

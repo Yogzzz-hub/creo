@@ -1,8 +1,10 @@
-"""Email service providing asynchronous email delivery via Resend HTTP API with Creo branding."""
+"""Asynchronous transactional email delivery via Brevo's HTTPS API."""
 
 from __future__ import annotations
 
-from app.config import DEFAULT_RESEND_FROM_EMAIL, settings
+from email.utils import parseaddr
+
+from app.config import settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -14,69 +16,76 @@ async def send_email(
     html_content: str,
     text_content: str | None = None,
 ) -> bool:
-    """Send an email via Resend HTTP API.
+    """Submit an email to Brevo's transactional API.
 
     Returns True on success, False on failure. Never raises — all errors are
     caught, logged, and surfaced as a boolean so callers can decide what to do.
     """
-    api_key = (settings.RESEND_API_KEY or "").strip()
-    from_email = (settings.RESEND_FROM_EMAIL or "").strip() or DEFAULT_RESEND_FROM_EMAIL
+    api_key = (settings.BREVO_API_KEY or "").strip()
+    display_name, from_email = parseaddr((settings.BREVO_FROM_EMAIL or "").strip())
+    from_name = display_name or settings.BREVO_FROM_NAME.strip() or "Creo"
     clean_to = to_email.strip()
 
-    if not api_key:
+    if not api_key or not from_email:
         logger.error(
-            "resend_not_configured",
-            hint="Set RESEND_API_KEY in your environment variables",
+            "brevo_not_configured",
+            hint="Set BREVO_API_KEY and BREVO_FROM_EMAIL to a verified Brevo sender",
         )
         return False
 
+    if not clean_to:
+        logger.error("email_recipient_missing")
+        return False
+
     payload: dict = {
-        "from": from_email,
-        "to": [clean_to],
+        "sender": {"name": from_name, "email": from_email},
+        "to": [{"email": clean_to}],
         "subject": subject,
-        "html": html_content,
+        "htmlContent": html_content,
     }
     if text_content:
-        payload["text"] = text_content
+        payload["textContent"] = text_content
 
     try:
         import httpx
 
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(
-                "https://api.resend.com/emails",
+                "https://api.brevo.com/v3/smtp/email",
                 headers={
-                    "Authorization": f"Bearer {api_key}",
+                    "api-key": api_key,
+                    "Accept": "application/json",
                     "Content-Type": "application/json",
                 },
                 json=payload,
             )
 
-            if resp.status_code < 400:
+            if 200 <= resp.status_code < 300:
                 resp_data = resp.json()
+                message_id = resp_data.get("messageId")
+                if not message_id:
+                    logger.error("brevo_message_id_missing", status=resp.status_code)
+                    return False
                 logger.info(
-                    "resend_email_sent",
+                    "brevo_email_accepted",
                     to_email=clean_to,
-                    subject=subject,
-                    resend_id=resp_data.get("id", "unknown"),
+                    message_id=message_id,
                 )
                 return True
             else:
                 logger.error(
-                    "resend_api_error",
+                    "brevo_api_error",
                     status=resp.status_code,
                     body=resp.text,
                     to_email=clean_to,
-                    subject=subject,
                 )
                 return False
 
     except Exception as exc:
         logger.error(
-            "resend_api_exception",
+            "brevo_api_exception",
             error=str(exc),
             to_email=clean_to,
-            subject=subject,
         )
         return False
 

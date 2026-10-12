@@ -584,7 +584,7 @@ Fake and real Instagram adapters exist; configuration defaults to fake mode. The
 
 Celery defines `default` and `publish` queues, late acknowledgment, worker-loss rejection, prefetch 1, and 900/840-second hard/soft limits. These configuration values do not establish that workers are currently running. The Windows launcher starts the API and frontend, not the full worker/beat/database stack.
 
-Notification delivery supports stored in-app records and external channel handling. Auth OTP mail uses SMTP; worker email delivery uses Resend configuration. These are distinct delivery paths.
+Notification delivery supports stored in-app records and external channel handling. Auth OTP and worker email delivery share the Brevo HTTPS email service and verified sender configuration.
 
 ## 9. Client dashboard and all portal pages
 

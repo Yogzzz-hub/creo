@@ -55,11 +55,13 @@ services:
         value: ffprobe
       - key: INSTAGRAM_MAX_LATENESS_MINUTES
         value: "30"
-      - key: RESEND_API_KEY
+      - key: BREVO_API_KEY
         sync: false
-      - key: RESEND_FROM_EMAIL
-        # Set this in the Render dashboard to an address on a verified Resend domain.
+      - key: BREVO_FROM_EMAIL
+        # Set this to a sender verified in Brevo.
         sync: false
+      - key: BREVO_FROM_NAME
+        value: Creo
 
   # ── Creo Background Task Worker ───────────────────────────────────────
   - type: worker
@@ -83,16 +85,21 @@ services:
         value: "true"
       - key: ENVIRONMENT
         value: production
-      - key: RESEND_API_KEY
+      - key: BREVO_API_KEY
         fromService:
           name: creo-api
           type: web
-          envVarKey: RESEND_API_KEY
-      - key: RESEND_FROM_EMAIL
+          envVarKey: BREVO_API_KEY
+      - key: BREVO_FROM_EMAIL
         fromService:
           name: creo-api
           type: web
-          envVarKey: RESEND_FROM_EMAIL
+          envVarKey: BREVO_FROM_EMAIL
+      - key: BREVO_FROM_NAME
+        fromService:
+          name: creo-api
+          type: web
+          envVarKey: BREVO_FROM_NAME
       - key: ENCRYPTION_KEY
         fromService:
           name: creo-api

@@ -1,4 +1,4 @@
-"""Notification worker tasks for Email (Resend), WhatsApp, and In-App alerts.
+"""Notification worker tasks for Email (Brevo), WhatsApp, and In-App alerts.
 
 Records all outbound notifications in the notifications table with sent_at or failed_reason.
 """
@@ -9,15 +9,17 @@ import asyncio
 import concurrent.futures
 import uuid
 from datetime import UTC, datetime
+from html import escape
 from typing import Any
 
 import httpx
 from sqlalchemy import select
 
-from app.config import DEFAULT_RESEND_FROM_EMAIL, settings
+from app.config import settings
 from app.db.session import async_session_factory
 from app.models.ops import Notification
 from app.models.user import User
+from app.services.email_service import send_email
 
 
 def run_async_safe(coro: Any) -> Any:
@@ -60,36 +62,19 @@ async def send_notification_async(
 
             # 2. Channel dispatch
             if channel == "email":
-                resend_api_key = (settings.RESEND_API_KEY or "").strip()
-                resend_from_email = (
-                    (settings.RESEND_FROM_EMAIL or "").strip() or DEFAULT_RESEND_FROM_EMAIL
-                )
-                if not resend_api_key:
-                    if settings.ENVIRONMENT in ("development", "test"):
-                        # Keep local/test workflows usable without pretending a
-                        # production notification was delivered.
+                if not recipient_email:
+                    failed_reason = "Email recipient is missing."
+                else:
+                    delivered = await send_email(
+                        recipient_email,
+                        title,
+                        f"<p>{escape(message).replace(chr(10), '<br>')}</p>",
+                        message,
+                    )
+                    if delivered:
                         sent_at = datetime.now(UTC)
                     else:
-                        failed_reason = "Resend is not configured (missing API key)."
-                else:
-                    try:
-                        async with httpx.AsyncClient(timeout=10.0) as client:
-                            resp = await client.post(
-                                "https://api.resend.com/emails",
-                                headers={"Authorization": f"Bearer {resend_api_key}"},
-                                json={
-                                    "from": resend_from_email,
-                                    "to": [recipient_email or "client@example.com"],
-                                    "subject": title,
-                                    "text": message,
-                                },
-                            )
-                            if resp.status_code >= 400:
-                                failed_reason = f"Resend API error: {resp.text}"
-                            else:
-                                sent_at = datetime.now(UTC)
-                    except Exception as e:
-                        failed_reason = f"Email delivery exception: {e!s}"
+                        failed_reason = "Brevo email delivery failed. Check email service logs."
 
             elif channel == "whatsapp":
                 if not settings.WHATSAPP_API_TOKEN or not settings.WHATSAPP_PHONE_NUMBER_ID:

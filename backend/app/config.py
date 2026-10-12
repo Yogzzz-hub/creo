@@ -8,8 +8,6 @@ from typing import Any
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-DEFAULT_RESEND_FROM_EMAIL = "Creo <onboarding@resend.dev>"
-
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=(".env", "../.env"),
@@ -85,7 +83,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = Field(default="")
     GOOGLE_REDIRECT_URI: str = Field(default="https://creo-dsxr.onrender.com")
 
-    # Legacy SMTP settings (kept for backward compat; Resend API is primary)
+    # Legacy SMTP settings (kept for backward compatibility; Brevo HTTPS API is primary)
     SMTP_SERVER: str = Field(default="smtp.gmail.com")
     SMTP_HOST: str = Field(default="smtp.gmail.com")
     SMTP_PORT: int = Field(default=465)
@@ -152,10 +150,10 @@ class Settings(BaseSettings):
     INSTAGRAM_FFPROBE_PATH: str = Field(default="ffprobe")
     INSTAGRAM_MAX_LATENESS_MINUTES: int = Field(default=30, ge=1, le=1440)
     INSTAGRAM_REDIRECT_URI: str = Field(default="http://localhost:5173/portal/account/instagram")
-    RESEND_API_KEY: str = Field(default="")
-    # Resend's sandbox sender only delivers to the Resend account owner's email.
-    # Override with a verified-domain sender for customer email delivery.
-    RESEND_FROM_EMAIL: str = Field(default=DEFAULT_RESEND_FROM_EMAIL)
+    # HTTPS transactional delivery works without outbound SMTP ports on Render.
+    BREVO_API_KEY: str = Field(default="")
+    BREVO_FROM_EMAIL: str = Field(default="")  # Must be a verified Brevo sender.
+    BREVO_FROM_NAME: str = Field(default="Creo")
     WHATSAPP_API_TOKEN: str = Field(default="")
     WHATSAPP_PHONE_NUMBER_ID: str = Field(default="")
 

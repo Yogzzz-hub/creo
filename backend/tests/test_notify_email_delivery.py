@@ -49,8 +49,8 @@ def test_unconfigured_production_email_is_recorded_as_failed(monkeypatch: Any) -
         lambda *_args, **_kwargs: FakeAsyncContext(session),
     )
     monkeypatch.setattr(settings, "ENVIRONMENT", "production")
-    monkeypatch.setattr(settings, "RESEND_API_KEY", "")
-    monkeypatch.setattr(settings, "RESEND_FROM_EMAIL", "")
+    monkeypatch.setattr(settings, "BREVO_API_KEY", "")
+    monkeypatch.setattr(settings, "BREVO_FROM_EMAIL", "")
 
     result = asyncio.run(
         notify.send_notification_async(
@@ -63,12 +63,12 @@ def test_unconfigured_production_email_is_recorded_as_failed(monkeypatch: Any) -
     )
 
     assert result["sent_at"] is None
-    assert result["failed_reason"] == "Resend is not configured (missing API key)."
+    assert result["failed_reason"] == "Brevo email delivery failed. Check email service logs."
     assert session.notification.sent_at is None
 
 
-@pytest.mark.parametrize("response_status", [200, 403])
-def test_production_notification_uses_default_sender_and_records_delivery_result(
+@pytest.mark.parametrize("response_status", [201, 403])
+def test_production_notification_uses_brevo_and_records_delivery_result(
     monkeypatch: Any, response_status: int
 ) -> None:
     session = FakeSession()
@@ -78,13 +78,14 @@ def test_production_notification_uses_default_sender_and_records_delivery_result
         lambda *_args, **_kwargs: FakeAsyncContext(session),
     )
     monkeypatch.setattr(settings, "ENVIRONMENT", "production")
-    monkeypatch.setattr(settings, "RESEND_API_KEY", "re_test_key")
-    monkeypatch.setattr(settings, "RESEND_FROM_EMAIL", "   ")
+    monkeypatch.setattr(settings, "BREVO_API_KEY", "test-brevo-key")
+    monkeypatch.setattr(settings, "BREVO_FROM_EMAIL", "verify@example.com")
+    monkeypatch.setattr(settings, "BREVO_FROM_NAME", "Creo")
     requests = []
 
     async def fake_post(_client: Any, _url: str, **kwargs: Any) -> httpx.Response:
         requests.append(kwargs["json"])
-        return httpx.Response(response_status, json={"id": "test-id"})
+        return httpx.Response(response_status, json={"messageId": "test-id"})
 
     monkeypatch.setattr(httpx.AsyncClient, "post", fake_post)
     result = asyncio.run(
@@ -97,6 +98,7 @@ def test_production_notification_uses_default_sender_and_records_delivery_result
         )
     )
 
-    assert requests[0]["from"] == "Creo <onboarding@resend.dev>"
-    assert (result["sent_at"] is not None) is (response_status == 200)
+    assert requests[0]["sender"] == {"name": "Creo", "email": "verify@example.com"}
+    assert requests[0]["to"] == [{"email": "owner@example.net"}]
+    assert (result["sent_at"] is not None) is (response_status == 201)
     assert (result["failed_reason"] is not None) is (response_status == 403)

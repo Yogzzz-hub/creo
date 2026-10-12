@@ -17,16 +17,21 @@ services:
         value: production
       - key: DB_USE_NULLPOOL
         value: "true"
-      - key: RESEND_API_KEY
+      - key: BREVO_API_KEY
         fromService:
           type: web
           name: creo-api-singapore
-          envVarKey: RESEND_API_KEY
-      - key: RESEND_FROM_EMAIL
+          envVarKey: BREVO_API_KEY
+      - key: BREVO_FROM_EMAIL
         fromService:
           type: web
           name: creo-api-singapore
-          envVarKey: RESEND_FROM_EMAIL
+          envVarKey: BREVO_FROM_EMAIL
+      - key: BREVO_FROM_NAME
+        fromService:
+          type: web
+          name: creo-api-singapore
+          envVarKey: BREVO_FROM_NAME
       - key: JWT_SECRET
         fromService:
           type: web

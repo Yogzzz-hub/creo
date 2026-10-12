@@ -1,4 +1,4 @@
-"""Authentication router: OTP with Resend API delivery, Google OAuth, Instagram OAuth, and session management."""
+"""Authentication router: OTP with Brevo API delivery, Google OAuth, Instagram OAuth, and session management."""
 
 from __future__ import annotations
 
@@ -707,7 +707,7 @@ async def reset_admin_seed(db: AsyncSession = Depends(get_db)) -> dict[str, Any]
 
 @router.post("/send-otp", response_model=dict[str, Any])
 async def send_otp(payload: SendOtpRequest, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
-    """Send 6-digit verification code to email via Resend API with rate limiting."""
+    """Send 6-digit verification code to email via Brevo API with rate limiting."""
     email_clean = _normalize_email(payload.email)
 
     if not _check_rate_limit(f"send_otp:{email_clean}", max_requests=5, window_seconds=600):
