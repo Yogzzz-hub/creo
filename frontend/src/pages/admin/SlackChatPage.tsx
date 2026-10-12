@@ -424,7 +424,7 @@ export function SlackChatPage() {
   }, [isClient, isAdmin, isTeamLead, isTeamMember, clientChannelSlug]);
 
   // Fetch DM contacts from backend
-  const { data: serverContacts } = useQuery<ChatContact[]>({
+  const { data: serverContacts = [] } = useQuery<ChatContact[]>({
     queryKey: ["chat_contacts", user?.id],
     queryFn: () => request<ChatContact[]>("/api/v1/chat/contacts"),
     enabled: !!user?.id && canUseChat,

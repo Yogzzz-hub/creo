@@ -11,7 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rbac import Actor, get_current_actor
 from app.db.session import get_db
-from app.models.billing import PaymentEvent, Plan, Subscription, UsageCounter
+import uuid
+from decimal import Decimal
+from app.models.billing import PaymentEvent, Plan, PlanNegotiation, Subscription, UsageCounter
 from app.models.enums import SubscriptionStatus
 from app.schemas.billing import (
     ConfirmPaymentRequest,
@@ -22,14 +24,112 @@ from app.schemas.billing import (
 )
 from app.services import payment_service
 
+from fastapi import APIRouter, Depends, HTTPException, Request
+
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
 
 @router.get("/plans", response_model=list[PlanResponse])
 async def list_plans(
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> list[PlanResponse]:
-    """Retrieve all available subscription plans."""
+    """Retrieve all available subscription plans.
+    If the authenticated client has an approved or counter-offered custom negotiation,
+    returns ONLY that client's custom negotiated plan (the 3 standard tiers are hidden).
+    """
+    client_id: uuid.UUID | None = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:].strip()
+        try:
+            from app.core.security import decode_token
+            payload = decode_token(token, expected_type="access")
+            client_id = uuid.UUID(payload["sub"])
+        except Exception:
+            pass
+
+    query_cid = request.query_params.get("client_id")
+    if not client_id and query_cid:
+        try:
+            client_id = uuid.UUID(query_cid)
+        except Exception:
+            pass
+
+    if client_id:
+        custom_plan_stmt = select(Plan).where(
+            Plan.name == f"custom_{client_id.hex[:8]}",
+            Plan.is_active.is_(True),
+        )
+        custom_plan = (await db.execute(custom_plan_stmt)).scalar_one_or_none()
+
+        # If custom plan not yet generated, check if client has an Accepted or Counter Offered negotiation
+        if not custom_plan:
+            neg_stmt = (
+                select(PlanNegotiation)
+                .where(
+                    PlanNegotiation.client_id == client_id,
+                    PlanNegotiation.status.in_(["Accepted", "Counter Offered", "APPROVED"]),
+                )
+                .order_by(PlanNegotiation.created_at.desc())
+                .limit(1)
+            )
+            neg = (await db.execute(neg_stmt)).scalar_one_or_none()
+            if neg:
+                final_amt = neg.counter_price or neg.agreed_amount
+                if not final_amt and neg.proposed_offer:
+                    digits = "".join(c for c in str(neg.proposed_offer) if c.isdigit())
+                    if digits:
+                        try:
+                            final_amt = int(digits)
+                        except Exception:
+                            pass
+                if not final_amt or final_amt <= 0:
+                    final_amt = 35000
+
+                reel_q = neg.reel_quota or 8
+                poster_q = neg.poster_quota or 12
+                story_q = neg.story_quota or 15
+                display_name = (
+                    f"Agency Counter Proposal ({neg.client_name})"
+                    if neg.status == "Counter Offered"
+                    else f"Custom Negotiated Retainer ({neg.client_name})"
+                )
+                highlights = [
+                    f"{reel_q} Custom Reels",
+                    f"{poster_q} Static Posters",
+                    f"{story_q} Stories / Carousels",
+                    "Negotiated Strategy Agreement",
+                    "Dedicated Creative Pod Lead",
+                ]
+
+                custom_plan = Plan(
+                    id=uuid.uuid4(),
+                    agency_id=neg.agency_id,
+                    name=f"custom_{client_id.hex[:8]}",
+                    display_name=display_name,
+                    monthly_price=Decimal(final_amt),
+                    price_minor=int(final_amt * 100),
+                    currency="INR",
+                    reel_quota=reel_q,
+                    poster_quota=poster_q,
+                    story_quota=story_q,
+                    revision_rounds=2,
+                    has_dedicated_manager=True,
+                    highlights=highlights,
+                    is_active=True,
+                )
+                db.add(custom_plan)
+                await db.commit()
+                await db.refresh(custom_plan)
+
+        # STRICT ISOLATION & REQUIREMENT:
+        # If client has a customized negotiated package, ONLY return that custom plan.
+        # The 3 standard tiers MUST NOT be shown to this client!
+        if custom_plan:
+            return [PlanResponse.model_validate(custom_plan)]
+
+    # Standard public tiers ONLY for clients without custom negotiations
     stmt = (
         select(Plan)
         .where(

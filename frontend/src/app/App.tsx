@@ -302,6 +302,7 @@ const dashboardRoutes = {
   "/admin/leaves": AdminLeaveApprovalsPage,
   "/admin/revenue": AdminRevenuePage,
   "/admin/plans": AdminPlansPage,
+  "/admin/plans-and-negotiations": AdminPlansPage,
   "/admin/sales": AdminSalesPage,
   "/admin/pod-dashboard": PodLeadDashboardPage,
   "/admin/pod": PodLeadDashboardPage,
@@ -574,7 +575,9 @@ export function App() {
                   path="/admin/clients"
                   element={
                     <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                      <AdminClientsPage />
+                      <SimpleErrorBoundary name="Admin Clients">
+                        <AdminClientsPage />
+                      </SimpleErrorBoundary>
                     </ProtectedRoute>
                   }
                 />
@@ -582,13 +585,19 @@ export function App() {
                   path="/admin/clients/:clientId"
                   element={
                     <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
-                      <AdminClientsPage />
+                      <SimpleErrorBoundary name="Admin Clients">
+                        <AdminClientsPage />
+                      </SimpleErrorBoundary>
                     </ProtectedRoute>
                   }
                 />
                 <Route
                   path="/admin/clients/:clientId/brand"
-                  element={<AdminClientBrandPage />}
+                  element={
+                    <SimpleErrorBoundary name="Admin Client Brand Brief">
+                      <AdminClientBrandPage />
+                    </SimpleErrorBoundary>
+                  }
                 />
                 <Route path="/admin/calendar" element={<AdminCalendarPage />} />
                 <Route path="/admin/deliverables" element={<AdminDeliverablesPage />} />
@@ -630,6 +639,14 @@ export function App() {
                 />
                 <Route
                   path="/admin/plans"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <AdminPlansPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/plans-and-negotiations"
                   element={
                     <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
                       <AdminPlansPage />
@@ -720,7 +737,9 @@ export function App() {
                   path="/team-lead/clients/:clientId"
                   element={
                     <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer"]}>
-                      <AdminClientBrandPage />
+                      <SimpleErrorBoundary name="Team Lead Client Details">
+                        <AdminClientBrandPage />
+                      </SimpleErrorBoundary>
                     </ProtectedRoute>
                   }
                 />
@@ -769,7 +788,9 @@ export function App() {
                   path="/lead/clients/:clientId"
                   element={
                     <ProtectedRoute allowedRoles={["admin", "super_admin", "team_lead", "team_member", "editor", "designer"]}>
-                      <AdminClientBrandPage />
+                      <SimpleErrorBoundary name="Lead Client Details">
+                        <AdminClientBrandPage />
+                      </SimpleErrorBoundary>
                     </ProtectedRoute>
                   }
                 />

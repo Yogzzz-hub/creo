@@ -250,6 +250,10 @@ class PlanNegotiation(Base, UUIDPrimaryKeyMixin):
     )
     counter_price: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     counter_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    agreed_amount: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    reel_quota: Mapped[int | None] = mapped_column(Integer, nullable=True, default=8)
+    poster_quota: Mapped[int | None] = mapped_column(Integer, nullable=True, default=12)
+    story_quota: Mapped[int | None] = mapped_column(Integer, nullable=True, default=15)
     decline_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     reviewed_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),

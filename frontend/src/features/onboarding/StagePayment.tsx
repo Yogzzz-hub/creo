@@ -182,6 +182,11 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
 
   useEffect(() => {
     if (plans && plans.length > 0 && !selectedPlanId) {
+      const first = plans[0];
+      if (plans.length === 1 && first) {
+        setSelectedPlanId(first.id);
+        return;
+      }
       const params = new URLSearchParams(window.location.search);
       const rawPlan = params.get("plan")?.toLowerCase() || (params.get("intent") === "sample" ? "starter" : null);
       if (rawPlan) {
@@ -197,6 +202,8 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
       const recommended = plans.find((p) => p.is_recommended);
       if (recommended) {
         setSelectedPlanId(recommended.id);
+      } else if (first) {
+        setSelectedPlanId(first.id);
       }
     }
   }, [plans, selectedPlanId]);
@@ -474,12 +481,32 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
         </div>
       )}
 
-      {/* Plan Cards Grid: Equal Heights across all 3 cards */}
+      {/* Plan Cards Grid: Dedicated single-card layout for custom negotiated plans, or 3-column grid for standard tiers */}
       {plansLoading ? (
         <div role="status" className="rounded-2xl border border-[#2A3446] bg-[#161F2D] p-12 text-center text-[#97A0B3]">
           <Loader2 aria-hidden="true" className="size-7 animate-spin text-[#7FA0D6] mx-auto mb-3 motion-reduce:animate-none" />
           <p className="text-xs font-medium">Loading pricing plans…</p>
         </div>
+      ) : plans && plans.length === 1 && plans[0] ? (
+        (() => {
+          const singlePlan = plans[0]!;
+          return (
+            <div className="max-w-xl mx-auto w-full space-y-3">
+              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="leading-relaxed">
+                  <strong>Approved Commercial Agreement:</strong> Your requested retainer and custom deliverable quota have been approved by Creo leadership. Standard tiers are omitted for your account.
+                </span>
+              </div>
+              <PlanCard
+                plan={singlePlan}
+                selected={selectedPlanId === singlePlan.id}
+                onSelect={() => setSelectedPlanId(singlePlan.id)}
+                disabled={phase === "processing" || phase === "polling" || phase === "confirmed"}
+              />
+            </div>
+          );
+        })()
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {(plans ?? []).map((plan) => (

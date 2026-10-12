@@ -520,6 +520,7 @@ async def get_messages(
                 .order_by(DirectMessage.created_at.asc())
                 .limit(200)
             )
+            await _require_completed_onboarding(actor, db)
         else:
             effective_client_id = client_id
             if effective_client_id is None and channel and channel.startswith("client-"):
