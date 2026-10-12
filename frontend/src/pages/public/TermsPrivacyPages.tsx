@@ -286,63 +286,63 @@ export function TermsPage() {
   });
 
   return (
-    <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#7FA0D6]/30">
+    <div className="w-full bg-[#050A1A] text-[#F4F7FF] min-h-screen font-sans selection:bg-[#4F7BFF]/30">
       {/* Hero Header */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#0B111C] via-[#050810] to-[#050810] pt-10 pb-10 sm:pt-14 sm:pb-14 border-b border-[#222F44]">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#7FA0D6]/10 rounded-full blur-3xl pointer-events-none" />
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#070E24] via-[#050A1A] to-[#050A1A] pt-10 pb-10 sm:pt-14 sm:pb-14 border-b border-[#18244A]">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#4F7BFF]/10 rounded-full blur-3xl pointer-events-none" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="mb-4">
             <Link
               to="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#97A0B3] hover:text-[#7FA0D6] transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#93A0BF] hover:text-[#4F7BFF] transition-colors"
             >
               <ArrowLeft className="size-3.5" />
               <span>Back to Home</span>
             </Link>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] px-3.5 py-1 text-xs font-bold text-[#7FA0D6] border border-[#2A3446] mb-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#0F1A3A] px-3.5 py-1 text-xs font-bold text-[#4F7BFF] border border-[#223058] mb-4">
             <ShieldCheck className="size-3.5" />
             <span>Official Legal Governance</span>
           </div>
 
-          <h1 className="text-3xl font-black tracking-tight text-[#F8FAFC] sm:text-5xl">
+          <h1 className="text-3xl font-black tracking-tight text-[#F4F7FF] sm:text-5xl">
             Terms &amp; Conditions
           </h1>
-          <p className="mt-2 text-xs sm:text-sm text-[#97A0B3] font-medium">
+          <p className="mt-2 text-xs sm:text-sm text-[#93A0BF] font-medium">
             Last updated: June 29, 2026 &bull; Effective for all active client retainers
           </p>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#97A0B3] sm:text-base">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#93A0BF] sm:text-base">
             Transparent, founder-friendly terms governing our monthly production retainers, guaranteed turnaround SLAs, revision cycles, and client portal access.
           </p>
 
           {/* Quick SLA Highlights */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#BCCCE6]">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446]">
-              <Clock className="size-3.5 text-[#7FA0D6]" /> 7-Day First Batch SLA
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#DCE8FF]">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0F1A3A] border border-[#223058]">
+              <Clock className="size-3.5 text-[#4F7BFF]" /> 7-Day First Batch SLA
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446]">
-              <RefreshCw className="size-3.5 text-[#7FA0D6]" /> 2 Revision Rounds Included
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0F1A3A] border border-[#223058]">
+              <RefreshCw className="size-3.5 text-[#4F7BFF]" /> 2 Revision Rounds Included
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446]">
-              <CreditCard className="size-3.5 text-emerald-400" /> Month-to-Month. Cancel Anytime.
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0F1A3A] border border-[#223058]">
+              <CreditCard className="size-3.5 text-[#7DA2FF]" /> Month-to-Month. Cancel Anytime.
             </span>
           </div>
 
           {/* In-Page Search */}
           <div className="mt-8 max-w-lg mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-[#97A0B3]" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-[#93A0BF]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search terms, SLAs, revisions, quotas..."
-              className="w-full rounded-2xl border border-[#2A3446] bg-[#0B111C] pl-11 pr-10 py-3 text-sm text-[#F8FAFC] placeholder-[#97A0B3]/50 shadow-xs focus:ring-2 focus:ring-[#7FA0D6]/30 focus:border-[#7FA0D6] outline-none transition-all"
+              className="w-full rounded-2xl border border-[#223058] bg-[#070E24] pl-11 pr-10 py-3 text-sm text-[#F4F7FF] placeholder-[#93A0BF]/50 shadow-xs focus:ring-2 focus:ring-[#4F7BFF]/30 focus:border-[#4F7BFF] outline-none transition-all"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-[#F8FAFC] cursor-pointer"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#93A0BF] hover:text-[#F4F7FF] cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -354,22 +354,22 @@ export function TermsPage() {
       {/* Main Content Area: TOC + Sections */}
       <section className="py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <details className="mb-6 rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 lg:hidden">
-            <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-[#BCCCE6]">Jump to a section</summary>
+          <details className="mb-6 rounded-2xl border border-[#223058] bg-[#0F1A3A] p-4 lg:hidden">
+            <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-[#DCE8FF]">Jump to a section</summary>
             <nav aria-label="Page sections" className="mt-3 grid gap-1">
               {filtered.map((section) => (
-                <a key={section.id} href={`#${section.id}`} className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-[#97A0B3] hover:bg-[#0B111C] hover:text-white">{section.title}</a>
+                <a key={section.id} href={`#${section.id}`} className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-[#93A0BF] hover:bg-[#070E24] hover:text-white">{section.title}</a>
               ))}
             </nav>
           </details>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Table of Contents Sidebar */}
-            <aside className="lg:col-span-4 sticky top-24 rounded-3xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-6 shadow-xl hidden lg:block">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#222F44]">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#7FA0D6]">
+            <aside className="lg:col-span-4 sticky top-24 rounded-3xl border border-[#223058] bg-[#0F1A3A] p-4 sm:p-6 shadow-xl hidden lg:block">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#18244A]">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#4F7BFF]">
                   Table of Contents
                 </span>
-                <span className="text-[11px] font-semibold text-[#97A0B3]">
+                <span className="text-[11px] font-semibold text-[#93A0BF]">
                   {TERMS_SECTIONS.length} Clauses
                 </span>
               </div>
@@ -381,8 +381,8 @@ export function TermsPage() {
                     onClick={() => setActiveSection(s.id)}
                     className={`block px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                       activeSection === s.id
-                        ? "bg-[#0B111C] text-[#7FA0D6] font-bold border border-[#7FA0D6]/30"
-                        : "text-[#97A0B3] hover:bg-[#0B111C]/60 hover:text-[#F8FAFC]"
+                        ? "bg-[#070E24] text-[#4F7BFF] font-bold border border-[#4F7BFF]/30"
+                        : "text-[#93A0BF] hover:bg-[#070E24]/60 hover:text-[#F4F7FF]"
                     }`}
                   >
                     {s.title}
@@ -390,17 +390,17 @@ export function TermsPage() {
                 ))}
               </nav>
 
-              <div className="mt-6 pt-4 border-t border-[#222F44] flex flex-col gap-2">
+              <div className="mt-6 pt-4 border-t border-[#18244A] flex flex-col gap-2">
                 <Link
                   to="/privacy"
-                  className="inline-flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-semibold text-[#97A0B3] hover:border-[#7FA0D6]/40 hover:text-[#7FA0D6] transition-colors"
+                  className="inline-flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#070E24] border border-[#223058] text-xs font-semibold text-[#93A0BF] hover:border-[#4F7BFF]/40 hover:text-[#4F7BFF] transition-colors"
                 >
                   <span>View Privacy Policy</span>
                   <ChevronRight className="size-3.5" />
                 </Link>
                 <Link
                   to="/pricing"
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#BCCCE6] text-[#050810] hover:bg-white text-xs font-bold transition-all shadow-sm"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#DCE8FF] text-[#050A1A] hover:bg-white text-xs font-bold transition-all shadow-sm"
                 >
                   <span>Explore Retainer Plans</span>
                   <ArrowRight className="size-3.5" />
@@ -411,16 +411,16 @@ export function TermsPage() {
             {/* Clauses Content */}
             <main className="lg:col-span-8 space-y-6">
               {filtered.length === 0 ? (
-                <div className="rounded-3xl border border-[#2A3446] bg-[#161F2D] p-12 text-center shadow-xl">
-                  <FileText className="size-10 text-[#97A0B3]/40 mx-auto mb-3" />
-                  <h3 className="text-base font-bold text-[#F8FAFC]">No matching clauses found</h3>
-                  <p className="text-xs text-[#97A0B3] mt-1">
+                <div className="rounded-3xl border border-[#223058] bg-[#0F1A3A] p-12 text-center shadow-xl">
+                  <FileText className="size-10 text-[#93A0BF]/40 mx-auto mb-3" />
+                  <h3 className="text-base font-bold text-[#F4F7FF]">No matching clauses found</h3>
+                  <p className="text-xs text-[#93A0BF] mt-1">
                     Try searching with another keyword or reset the search filter.
                   </p>
                   <button
                     type="button"
                     onClick={() => setSearch("")}
-                    className="mt-4 px-4 py-2 rounded-xl bg-[#7FA0D6] text-[#050810] text-xs font-bold hover:bg-[#7FA0D6] transition-colors cursor-pointer"
+                    className="mt-4 px-4 py-2 rounded-xl bg-[#4F7BFF] text-[#050A1A] text-xs font-bold hover:bg-[#4F7BFF] transition-colors cursor-pointer"
                   >
                     Reset Search
                   </button>
@@ -430,20 +430,20 @@ export function TermsPage() {
                   <article
                     key={section.id}
                     id={section.id}
-                    className="scroll-mt-24 rounded-3xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-8 shadow-xl hover:border-[#7FA0D6]/40 transition-colors"
+                    className="scroll-mt-24 rounded-3xl border border-[#223058] bg-[#0F1A3A] p-4 sm:p-8 shadow-xl hover:border-[#4F7BFF]/40 transition-colors"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-[#222F44]">
-                      <h2 className="text-lg sm:text-xl font-bold text-[#F8FAFC]">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-[#18244A]">
+                      <h2 className="text-lg sm:text-xl font-bold text-[#F4F7FF]">
                         {section.title}
                       </h2>
                       {section.badge && (
-                        <span className="rounded-full bg-[#0B111C] border border-[#7FA0D6]/30 px-3 py-0.5 text-[10px] font-bold text-[#7FA0D6]">
+                        <span className="rounded-full bg-[#070E24] border border-[#4F7BFF]/30 px-3 py-0.5 text-[10px] font-bold text-[#4F7BFF]">
                           {section.badge}
                         </span>
                       )}
                     </div>
 
-                    <div className="space-y-3.5 text-sm leading-relaxed text-[#97A0B3]">
+                    <div className="space-y-3.5 text-sm leading-relaxed text-[#93A0BF]">
                       {section.content.map((p, idx) => (
                         <p key={idx}>{p}</p>
                       ))}
@@ -453,19 +453,19 @@ export function TermsPage() {
               )}
 
               {/* Bottom Support Banner */}
-              <div className="rounded-3xl border border-[#2A3446] bg-[#121926] p-4 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
+              <div className="rounded-3xl border border-[#223058] bg-[#0D1530] p-4 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
                 <div>
-                  <h4 className="text-base font-bold text-[#F8FAFC]">
+                  <h4 className="text-base font-bold text-[#F4F7FF]">
                     Need Clarification on Our Retainer Terms?
                   </h4>
-                  <p className="text-xs text-[#97A0B3] mt-1">
+                  <p className="text-xs text-[#93A0BF] mt-1">
                     Our team is available to explain deliverable SLAs, revision cycles, or custom enterprise contracts.
                   </p>
                 </div>
                 <div className="flex items-center gap-2.5 shrink-0">
                   <Link
                     to="/pricing"
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-bold text-[#F8FAFC] hover:border-[#7FA0D6]/40 hover:text-[#7FA0D6] transition-colors shadow-2xs"
+                    className="px-4 py-2.5 rounded-xl border border-[#223058] bg-[#070E24] text-xs font-bold text-[#F4F7FF] hover:border-[#4F7BFF]/40 hover:text-[#4F7BFF] transition-colors shadow-2xs"
                   >
                     Explore Plans
                   </Link>
@@ -473,7 +473,7 @@ export function TermsPage() {
                     href="https://wa.me/919941999415"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-5 py-2.5 rounded-xl bg-[#BCCCE6] text-[#050810] hover:bg-white text-xs font-bold transition-all shadow-sm"
+                    className="px-5 py-2.5 rounded-xl bg-[#DCE8FF] text-[#050A1A] hover:bg-white text-xs font-bold transition-all shadow-sm"
                   >
                     Contact Legal Desk
                   </a>
@@ -498,63 +498,63 @@ export function PrivacyPage() {
   });
 
   return (
-    <div className="w-full bg-[#050810] text-[#F8FAFC] min-h-screen font-sans selection:bg-[#7FA0D6]/30">
+    <div className="w-full bg-[#050A1A] text-[#F4F7FF] min-h-screen font-sans selection:bg-[#4F7BFF]/30">
       {/* Hero Header */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#0B111C] via-[#050810] to-[#050810] pt-10 pb-10 sm:pt-14 sm:pb-14 border-b border-[#222F44]">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#7FA0D6]/10 rounded-full blur-3xl pointer-events-none" />
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#070E24] via-[#050A1A] to-[#050A1A] pt-10 pb-10 sm:pt-14 sm:pb-14 border-b border-[#18244A]">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#4F7BFF]/10 rounded-full blur-3xl pointer-events-none" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="mb-4">
             <Link
               to="/"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#97A0B3] hover:text-[#7FA0D6] transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#93A0BF] hover:text-[#4F7BFF] transition-colors"
             >
               <ArrowLeft className="size-3.5" />
               <span>Back to Home</span>
             </Link>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#161F2D] px-3.5 py-1 text-xs font-bold text-[#7FA0D6] border border-[#2A3446] mb-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#0F1A3A] px-3.5 py-1 text-xs font-bold text-[#4F7BFF] border border-[#223058] mb-4">
             <Lock className="size-3.5" />
             <span>Zero-Trust Data Protection</span>
           </div>
 
-          <h1 className="text-3xl font-black tracking-tight text-[#F8FAFC] sm:text-5xl">
+          <h1 className="text-3xl font-black tracking-tight text-[#F4F7FF] sm:text-5xl">
             Privacy Policy &amp; Data Security
           </h1>
-          <p className="mt-2 text-xs sm:text-sm text-[#97A0B3] font-medium">
+          <p className="mt-2 text-xs sm:text-sm text-[#93A0BF] font-medium">
             Last updated: June 29, 2026 &bull; Compliant with Global Privacy Regulations
           </p>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#97A0B3] sm:text-base">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#93A0BF] sm:text-base">
             How Creo encrypts, isolates, and protects your brand assets, Instagram tokens, and financial records with multi-tenant database isolation.
           </p>
 
           {/* Quick Security Highlights */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#BCCCE6]">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446]">
-              <ShieldCheck className="size-3.5 text-[#7FA0D6]" /> PostgreSQL Row-Level Security
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#DCE8FF]">
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0F1A3A] border border-[#223058]">
+              <ShieldCheck className="size-3.5 text-[#4F7BFF]" /> PostgreSQL Row-Level Security
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446]">
-              <Lock className="size-3.5 text-[#7FA0D6]" /> AES-256 Storage &amp; Fernet Tokens
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0F1A3A] border border-[#223058]">
+              <Lock className="size-3.5 text-[#4F7BFF]" /> AES-256 Storage &amp; Fernet Tokens
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#161F2D] border border-[#2A3446]">
-              <CheckCircle2 className="size-3.5 text-emerald-400" /> Never Sold. Never Scraped.
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0F1A3A] border border-[#223058]">
+              <CheckCircle2 className="size-3.5 text-[#7DA2FF]" /> Never Sold. Never Scraped.
             </span>
           </div>
 
           {/* In-Page Search */}
           <div className="mt-8 max-w-lg mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-[#97A0B3]" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-[#93A0BF]" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search encryption, tokens, retention, rights..."
-              className="w-full rounded-2xl border border-[#2A3446] bg-[#0B111C] pl-11 pr-10 py-3 text-sm text-[#F8FAFC] placeholder-[#97A0B3]/50 shadow-xs focus:ring-2 focus:ring-[#7FA0D6]/30 focus:border-[#7FA0D6] outline-none transition-all"
+              className="w-full rounded-2xl border border-[#223058] bg-[#070E24] pl-11 pr-10 py-3 text-sm text-[#F4F7FF] placeholder-[#93A0BF]/50 shadow-xs focus:ring-2 focus:ring-[#4F7BFF]/30 focus:border-[#4F7BFF] outline-none transition-all"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#97A0B3] hover:text-[#F8FAFC] cursor-pointer"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#93A0BF] hover:text-[#F4F7FF] cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -566,22 +566,22 @@ export function PrivacyPage() {
       {/* Main Content Area */}
       <section className="py-12 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <details className="mb-6 rounded-2xl border border-[#2A3446] bg-[#161F2D] p-4 lg:hidden">
-            <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-[#BCCCE6]">Jump to a section</summary>
+          <details className="mb-6 rounded-2xl border border-[#223058] bg-[#0F1A3A] p-4 lg:hidden">
+            <summary className="min-h-11 cursor-pointer content-center text-sm font-semibold text-[#DCE8FF]">Jump to a section</summary>
             <nav aria-label="Page sections" className="mt-3 grid gap-1">
               {filtered.map((section) => (
-                <a key={section.id} href={`#${section.id}`} className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-[#97A0B3] hover:bg-[#0B111C] hover:text-white">{section.title}</a>
+                <a key={section.id} href={`#${section.id}`} className="flex min-h-11 items-center rounded-lg px-3 py-2 text-sm text-[#93A0BF] hover:bg-[#070E24] hover:text-white">{section.title}</a>
               ))}
             </nav>
           </details>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Table of Contents Sidebar */}
-            <aside className="lg:col-span-4 sticky top-24 rounded-3xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-6 shadow-xl hidden lg:block">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#222F44]">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#7FA0D6]">
+            <aside className="lg:col-span-4 sticky top-24 rounded-3xl border border-[#223058] bg-[#0F1A3A] p-4 sm:p-6 shadow-xl hidden lg:block">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#18244A]">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#4F7BFF]">
                   Privacy Index
                 </span>
-                <span className="text-[11px] font-semibold text-[#97A0B3]">
+                <span className="text-[11px] font-semibold text-[#93A0BF]">
                   {PRIVACY_SECTIONS.length} Clauses
                 </span>
               </div>
@@ -593,8 +593,8 @@ export function PrivacyPage() {
                     onClick={() => setActiveSection(s.id)}
                     className={`block px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                       activeSection === s.id
-                        ? "bg-[#0B111C] text-[#7FA0D6] font-bold border border-[#7FA0D6]/30"
-                        : "text-[#97A0B3] hover:bg-[#0B111C]/60 hover:text-[#F8FAFC]"
+                        ? "bg-[#070E24] text-[#4F7BFF] font-bold border border-[#4F7BFF]/30"
+                        : "text-[#93A0BF] hover:bg-[#070E24]/60 hover:text-[#F4F7FF]"
                     }`}
                   >
                     {s.title}
@@ -602,17 +602,17 @@ export function PrivacyPage() {
                 ))}
               </nav>
 
-              <div className="mt-6 pt-4 border-t border-[#222F44] flex flex-col gap-2">
+              <div className="mt-6 pt-4 border-t border-[#18244A] flex flex-col gap-2">
                 <Link
                   to="/terms"
-                  className="inline-flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#0B111C] border border-[#2A3446] text-xs font-semibold text-[#97A0B3] hover:border-[#7FA0D6]/40 hover:text-[#7FA0D6] transition-colors"
+                  className="inline-flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#070E24] border border-[#223058] text-xs font-semibold text-[#93A0BF] hover:border-[#4F7BFF]/40 hover:text-[#4F7BFF] transition-colors"
                 >
                   <span>View Terms &amp; Conditions</span>
                   <ChevronRight className="size-3.5" />
                 </Link>
                 <Link
                   to="/pricing"
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#BCCCE6] text-[#050810] hover:bg-white text-xs font-bold transition-all shadow-sm"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#DCE8FF] text-[#050A1A] hover:bg-white text-xs font-bold transition-all shadow-sm"
                 >
                   <span>Explore Retainer Plans</span>
                   <ArrowRight className="size-3.5" />
@@ -623,16 +623,16 @@ export function PrivacyPage() {
             {/* Clauses Content */}
             <main className="lg:col-span-8 space-y-6">
               {filtered.length === 0 ? (
-                <div className="rounded-3xl border border-[#2A3446] bg-[#161F2D] p-12 text-center shadow-xl">
-                  <Lock className="size-10 text-[#97A0B3]/40 mx-auto mb-3" />
-                  <h3 className="text-base font-bold text-[#F8FAFC]">No matching clauses found</h3>
-                  <p className="text-xs text-[#97A0B3] mt-1">
+                <div className="rounded-3xl border border-[#223058] bg-[#0F1A3A] p-12 text-center shadow-xl">
+                  <Lock className="size-10 text-[#93A0BF]/40 mx-auto mb-3" />
+                  <h3 className="text-base font-bold text-[#F4F7FF]">No matching clauses found</h3>
+                  <p className="text-xs text-[#93A0BF] mt-1">
                     Try searching with another keyword or reset the search filter.
                   </p>
                   <button
                     type="button"
                     onClick={() => setSearch("")}
-                    className="mt-4 px-4 py-2 rounded-xl bg-[#7FA0D6] text-[#050810] text-xs font-bold hover:bg-[#7FA0D6] transition-colors cursor-pointer"
+                    className="mt-4 px-4 py-2 rounded-xl bg-[#4F7BFF] text-[#050A1A] text-xs font-bold hover:bg-[#4F7BFF] transition-colors cursor-pointer"
                   >
                     Reset Search
                   </button>
@@ -642,20 +642,20 @@ export function PrivacyPage() {
                   <article
                     key={section.id}
                     id={section.id}
-                    className="scroll-mt-24 rounded-3xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-8 shadow-xl hover:border-[#7FA0D6]/40 transition-colors"
+                    className="scroll-mt-24 rounded-3xl border border-[#223058] bg-[#0F1A3A] p-4 sm:p-8 shadow-xl hover:border-[#4F7BFF]/40 transition-colors"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-[#222F44]">
-                      <h2 className="text-lg sm:text-xl font-bold text-[#F8FAFC]">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-[#18244A]">
+                      <h2 className="text-lg sm:text-xl font-bold text-[#F4F7FF]">
                         {section.title}
                       </h2>
                       {section.badge && (
-                        <span className="rounded-full bg-[#0B111C] border border-[#7FA0D6]/30 px-3 py-0.5 text-[10px] font-bold text-[#7FA0D6]">
+                        <span className="rounded-full bg-[#070E24] border border-[#4F7BFF]/30 px-3 py-0.5 text-[10px] font-bold text-[#4F7BFF]">
                           {section.badge}
                         </span>
                       )}
                     </div>
 
-                    <div className="space-y-3.5 text-sm leading-relaxed text-[#97A0B3]">
+                    <div className="space-y-3.5 text-sm leading-relaxed text-[#93A0BF]">
                       {section.content.map((p, idx) => (
                         <p key={idx}>{p}</p>
                       ))}
@@ -665,19 +665,19 @@ export function PrivacyPage() {
               )}
 
               {/* Bottom Privacy Banner */}
-              <div className="rounded-3xl border border-[#2A3446] bg-[#121926] p-4 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
+              <div className="rounded-3xl border border-[#223058] bg-[#0D1530] p-4 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xl">
                 <div>
-                  <h4 className="text-base font-bold text-[#F8FAFC]">
+                  <h4 className="text-base font-bold text-[#F4F7FF]">
                     Questions Regarding Your Data or Instagram Access?
                   </h4>
-                  <p className="text-xs text-[#97A0B3] mt-1">
+                  <p className="text-xs text-[#93A0BF] mt-1">
                     Contact our dedicated Privacy and Security Officer for data exports, token revocations, or compliance audits.
                   </p>
                 </div>
                 <div className="flex items-center gap-2.5 shrink-0">
                   <a
                     href="mailto:privacy@getcreo.in"
-                    className="px-5 py-2.5 rounded-xl bg-[#BCCCE6] text-[#050810] hover:bg-white text-xs font-bold transition-all shadow-sm"
+                    className="px-5 py-2.5 rounded-xl bg-[#DCE8FF] text-[#050A1A] hover:bg-white text-xs font-bold transition-all shadow-sm"
                   >
                     Email Privacy Officer
                   </a>

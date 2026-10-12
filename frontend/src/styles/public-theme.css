@@ -1,0 +1,291 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Creo public site theme — midnight navy, electric blue, ice.
+   Scoped to .public-site so the portal and admin surfaces are untouched.
+
+     Midnight   #050A1A  page background
+     Abyss      #030714  footer
+     Surface    #0F1A3A  cards / glass base
+     Line       #223058  borders
+     Mist       #93A0BF  secondary copy
+     Ink        #F4F7FF  headings
+     Electric   #4F7BFF  brand blue (#3B6BFF in fills)
+     Ice        #DCE8FF  light pair
+     Sky        #7DD3FC  secondary light accent
+───────────────────────────────────────────────────────────────────────────── */
+
+.public-site {
+  --creo-bg: #050a1a;
+  --creo-abyss: #030714;
+  --creo-surface: #0f1a3a;
+  --creo-line: #223058;
+  --creo-mist: #93a0bf;
+  --creo-ink: #f4f7ff;
+  --creo-blue: #4f7bff;
+  --creo-blue-deep: #3b6bff;
+  --creo-ice: #dce8ff;
+  --creo-sky: #7dd3fc;
+  --creo-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  position: relative;
+  isolation: isolate;
+  background-color: var(--creo-bg);
+  color: var(--creo-ink);
+}
+
+/* Ambient light that sits behind every public page */
+.public-site::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 85% -10%, rgba(59, 107, 255, 0.16), transparent 60%),
+    radial-gradient(50rem 36rem at -10% 30%, rgba(125, 211, 252, 0.07), transparent 60%),
+    radial-gradient(70rem 50rem at 50% 120%, rgba(59, 107, 255, 0.1), transparent 60%);
+}
+
+.public-site ::selection {
+  background: rgba(79, 123, 255, 0.35);
+  color: #fff;
+}
+
+/* ── Glass ─────────────────────────────────────────────────────────────── */
+
+.creo-glass {
+  background:
+    linear-gradient(180deg, rgba(28, 44, 96, 0.42), rgba(10, 18, 44, 0.32)) padding-box,
+    linear-gradient(180deg, rgba(220, 232, 255, 0.22), rgba(79, 123, 255, 0.08) 45%, rgba(220, 232, 255, 0.06)) border-box;
+  border: 1px solid transparent;
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
+  backdrop-filter: blur(18px) saturate(170%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 18px 48px -20px rgba(1, 4, 16, 0.85);
+}
+
+.creo-glass-strong {
+  background:
+    linear-gradient(180deg, rgba(22, 36, 82, 0.72), rgba(7, 13, 34, 0.66)) padding-box,
+    linear-gradient(180deg, rgba(220, 232, 255, 0.26), rgba(79, 123, 255, 0.12) 45%, rgba(220, 232, 255, 0.08)) border-box;
+  border: 1px solid transparent;
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 24px 60px -24px rgba(1, 4, 16, 0.95),
+    0 0 0 1px rgba(79, 123, 255, 0.05);
+}
+
+/* Without backdrop-filter support, fall back to a solid tinted panel */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .creo-glass,
+  .creo-glass-strong {
+    background-color: rgba(9, 16, 40, 0.96);
+  }
+}
+
+/* ── Type ─────────────────────────────────────────────────────────────── */
+
+.creo-text-gradient {
+  background: linear-gradient(100deg, #7da2ff 0%, #dce8ff 45%, #7dd3fc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.creo-text-shine {
+  background: linear-gradient(
+    110deg,
+    #f4f7ff 0%,
+    #f4f7ff 40%,
+    #9db8ff 50%,
+    #f4f7ff 60%,
+    #f4f7ff 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: creoShine 6s var(--creo-ease) infinite;
+}
+
+@keyframes creoShine {
+  0% {
+    background-position: 100% 0;
+  }
+  60%,
+  100% {
+    background-position: -50% 0;
+  }
+}
+
+.creo-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.9rem 0.4rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--creo-ice);
+  background: rgba(79, 123, 255, 0.08);
+  border: 1px solid rgba(79, 123, 255, 0.28);
+}
+
+.creo-eyebrow::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--creo-blue);
+  box-shadow: 0 0 12px 2px rgba(79, 123, 255, 0.7);
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────── */
+
+.creo-btn-primary {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(180deg, #5a85ff 0%, #3b6bff 55%, #2f5cf0 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 0 0 1px rgba(79, 123, 255, 0.55),
+    0 12px 32px -10px rgba(59, 107, 255, 0.75);
+  transition:
+    box-shadow 0.4s var(--creo-ease),
+    transform 0.4s var(--creo-ease),
+    filter 0.4s var(--creo-ease);
+}
+
+.creo-btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.9s var(--creo-ease);
+}
+
+.creo-btn-primary:hover {
+  filter: brightness(1.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 0 0 1px rgba(125, 162, 255, 0.8),
+    0 18px 44px -10px rgba(59, 107, 255, 0.9);
+}
+
+.creo-btn-primary:hover::after {
+  transform: translateX(120%);
+}
+
+.creo-btn-ghost {
+  color: var(--creo-ink);
+  background: rgba(220, 232, 255, 0.04);
+  border: 1px solid rgba(220, 232, 255, 0.14);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  transition:
+    background-color 0.35s var(--creo-ease),
+    border-color 0.35s var(--creo-ease);
+}
+
+.creo-btn-ghost:hover {
+  background: rgba(220, 232, 255, 0.08);
+  border-color: rgba(125, 162, 255, 0.55);
+}
+
+/* ── Masks & textures ─────────────────────────────────────────────────── */
+
+/* Fine blueprint grid; pair with a mask to fade it out */
+.creo-grid-bg {
+  background-image:
+    linear-gradient(rgba(125, 162, 255, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 162, 255, 0.09) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+/* Grid that is only visible inside a soft circle following the cursor
+   (--mx / --my are set from JS; defaults keep it centred) */
+.creo-spotlight-grid {
+  background-image:
+    linear-gradient(rgba(125, 162, 255, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 162, 255, 0.22) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(320px circle at var(--mx, 70%) var(--my, 40%), #000 0%, transparent 70%);
+  mask-image: radial-gradient(320px circle at var(--mx, 70%) var(--my, 40%), #000 0%, transparent 70%);
+}
+
+/* Let the spotlight centre glide after the cursor instead of snapping */
+@property --mx {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 70%;
+}
+@property --my {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 40%;
+}
+.creo-spotlight-grid {
+  transition:
+    --mx 0.7s var(--creo-ease),
+    --my 0.7s var(--creo-ease);
+}
+
+@keyframes creoScrollCue {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(200%);
+  }
+}
+
+/* Soft seam between sections instead of hard borders */
+.creo-seam {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(79, 123, 255, 0.45), rgba(220, 232, 255, 0.35), rgba(79, 123, 255, 0.45), transparent);
+}
+
+.creo-glow-ring {
+  box-shadow:
+    0 0 0 1px rgba(79, 123, 255, 0.35),
+    0 30px 80px -30px rgba(59, 107, 255, 0.55);
+}
+
+/* Rotating gradient edge for the recommended plan (--creo-angle lives in tokens.css) */
+.creo-featured-border {
+  background:
+    linear-gradient(180deg, #101e4c, #0a1334) padding-box,
+    conic-gradient(from var(--creo-angle), #4f7bff, #dce8ff 18%, #223058 38%, #7dd3fc 58%, #3b6bff 78%, #4f7bff) border-box;
+  border: 1.5px solid transparent;
+  animation: creoSpinAngle 6s linear infinite;
+}
+
+/* Editorial serif for italic accents */
+.public-site .font-serif {
+  font-family: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  font-weight: 400;
+}
+
+/* Native scrollbar that matches the palette */
+.public-site,
+.public-site * {
+  scrollbar-color: #2b3d78 transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .creo-text-shine,
+  .creo-featured-border {
+    animation: none;
+  }
+  .creo-btn-primary::after {
+    display: none;
+  }
+}

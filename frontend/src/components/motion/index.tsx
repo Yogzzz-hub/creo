@@ -7,6 +7,7 @@
 import {
   type MotionValue,
   animate,
+  easeIn,
   motion,
   useInView,
   useMotionTemplate,
@@ -21,11 +22,14 @@ import {
   type PointerEvent,
   type ReactNode,
   useEffect,
+  useId,
   useRef,
   useState,
 } from "react";
 
 export const EASE_OUT_EXPO = [0.16, 1, 0.3, 1] as const;
+/** Symmetric, weighty ease used for mask wipes and curtains */
+export const EASE_IN_OUT_QUART = [0.76, 0, 0.24, 1] as const;
 
 /** True on devices with a precise pointer that can hover (mouse / trackpad). */
 export function useFinePointer(): boolean {
@@ -140,7 +144,7 @@ export function SplitText({
   delay = 0,
   as: Tag = "span",
   accent,
-  accentClassName = "text-[#7FA0D6]",
+  accentClassName = "creo-text-gradient",
   animateOnMount = false,
 }: {
   text: string;
@@ -155,6 +159,8 @@ export function SplitText({
 }) {
   const reduce = useReducedMotion();
   const words = text.split(" ");
+  const bare = (w: string) => w.replace(/[.,!?]/g, "");
+  const accentWords = accent?.map(bare);
   const trigger = animateOnMount
     ? { animate: "show" as const }
     : { whileInView: "show" as const, viewport: { once: true, margin: "0px 0px -10% 0px" } };
@@ -178,7 +184,7 @@ export function SplitText({
           >
             <motion.span
               className={`inline-block will-change-transform ${wordClassName ?? ""} ${
-                accent?.includes(word.replace(/[.,!?]/g, "")) ? accentClassName : ""
+                accentWords?.includes(bare(word)) ? accentClassName : ""
               }`}
               variants={{
                 hidden: { y: "110%", rotate: 4 },
@@ -358,7 +364,7 @@ export function ScrollProgressBar() {
   return (
     <motion.div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-gradient-to-r from-[#7FA0D6] via-[#BCCCE6] to-[#D8BF9B]"
+      className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-gradient-to-r from-[#4F7BFF] via-[#DCE8FF] to-[#7DD3FC]"
       style={{ scaleX }}
     />
   );
@@ -428,5 +434,300 @@ export function Marquee({
         </div>
       ))}
     </div>
+  );
+}
+
+// ── Masking ─────────────────────────────────────────────────────────────────
+
+type MaskFrom = "bottom" | "top" | "left" | "right" | "center";
+
+const MASK_HIDDEN: Record<MaskFrom, string> = {
+  bottom: "inset(100% 0% 0% 0%)",
+  top: "inset(0% 0% 100% 0%)",
+  left: "inset(0% 100% 0% 0%)",
+  right: "inset(0% 0% 0% 100%)",
+  center: "inset(50% 50% 50% 50%)",
+};
+
+/**
+ * Wipes its content in through a clip-path mask while the content itself
+ * settles from a slight zoom, like a photo being unveiled.
+ */
+export function MaskReveal({
+  children,
+  className = "",
+  innerClassName = "",
+  from = "bottom",
+  delay = 0,
+  duration = 1.25,
+  zoom = 1.18,
+  animateOnMount = false,
+}: {
+  children: ReactNode;
+  className?: string;
+  innerClassName?: string;
+  from?: MaskFrom;
+  delay?: number;
+  duration?: number;
+  /** Starting scale of the inner content (1 disables the zoom) */
+  zoom?: number;
+  /** Play immediately (hero) instead of waiting for the element to scroll in */
+  animateOnMount?: boolean;
+}) {
+  const reduce = useReducedMotion();
+  const trigger = animateOnMount
+    ? { animate: "show" as const }
+    : { whileInView: "show" as const, viewport: { once: true, margin: "0px 0px -12% 0px" } };
+  return (
+    <motion.div
+      className={className}
+      initial={reduce ? false : "hidden"}
+      {...trigger}
+      variants={{
+        hidden: { clipPath: MASK_HIDDEN[from] },
+        show: {
+          clipPath: "inset(0% 0% 0% 0%)",
+          // Drop the clip once revealed so 3D hover effects inside aren't flattened
+          transitionEnd: { clipPath: "none" },
+          transition: { duration, delay, ease: EASE_IN_OUT_QUART },
+        },
+      }}
+    >
+      <motion.div
+        className={innerClassName}
+        variants={{
+          hidden: { scale: zoom },
+          show: { scale: 1, transition: { duration: duration + 0.35, delay, ease: EASE_OUT_EXPO } },
+        }}
+      >
+        {children}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/**
+ * Scroll-linked section transition: the panel starts as an inset rounded card
+ * and opens out to its full width as it scrolls into view.
+ */
+export function ScrollMask({
+  children,
+  className = "",
+  inset = 6,
+  radius = 40,
+  endRadius = 0,
+}: {
+  children: ReactNode;
+  className?: string;
+  /** Horizontal inset (%) at the start of the transition */
+  inset?: number;
+  radius?: number;
+  endRadius?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "start 0.3"] });
+  const p = useSpring(scrollYProgress, { stiffness: 140, damping: 30, mass: 0.35 });
+  const x = useTransform(p, [0, 1], [inset, 0]);
+  const r = useTransform(p, [0, 1], [radius, endRadius]);
+  const clipPath = useMotionTemplate`inset(0% ${x}% 0% ${x}% round ${r}px)`;
+  return (
+    <motion.div ref={ref} className={className} style={reduce ? undefined : { clipPath }}>
+      {children}
+    </motion.div>
+  );
+}
+
+/**
+ * Grid texture that only shows inside a soft circle following the cursor.
+ * Place inside a `relative` parent; it listens to pointer moves on that parent.
+ */
+export function CursorSpotlight({ className = "" }: { className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const fine = useFinePointer();
+  const reduce = useReducedMotion();
+
+  useEffect(() => {
+    const el = ref.current;
+    const host = el?.parentElement;
+    if (!el || !host || !fine || reduce) return;
+    let raf = 0;
+    const onMove = (e: globalThis.PointerEvent) => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const r = host.getBoundingClientRect();
+        el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+        el.style.setProperty("--my", `${e.clientY - r.top}px`);
+      });
+    };
+    host.addEventListener("pointermove", onMove, { passive: true });
+    return () => {
+      host.removeEventListener("pointermove", onMove);
+      cancelAnimationFrame(raf);
+    };
+  }, [fine, reduce]);
+
+  return (
+    <div
+      ref={ref}
+      aria-hidden="true"
+      className={`creo-spotlight-grid pointer-events-none absolute inset-0 ${className}`}
+    />
+  );
+}
+
+/** Marker-style highlight that sweeps in behind a word or phrase. */
+export function HighlightSweep({
+  children,
+  delay = 0,
+  className = "",
+}: {
+  children: ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+  return (
+    <span className={`relative isolate inline-block ${className}`}>
+      <motion.span
+        aria-hidden="true"
+        className="absolute -inset-x-[0.04em] bottom-[0.01em] -z-10 h-[0.09em] origin-left rounded-full bg-gradient-to-r from-[#3B6BFF] via-[#7DA2FF] to-[#7DD3FC]"
+        initial={reduce ? false : { scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{ duration: 1.1, delay, ease: EASE_IN_OUT_QUART }}
+      />
+      {children}
+    </span>
+  );
+}
+
+/**
+ * Pinned scroll scene: a giant word is cut out of the page like a stencil, with
+ * a photo showing through it. Scrolling zooms the stencil until the photo
+ * fills the screen, then the caption rises in.
+ */
+export function MaskedTextZoom({
+  text,
+  image,
+  imageAlt,
+  children,
+  eyebrow,
+}: {
+  text: string;
+  image: string;
+  imageAlt: string;
+  children?: ReactNode;
+  eyebrow?: string;
+}) {
+  const ref = useRef<HTMLElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const maskId = `creo-mask-${useId().replace(/:/g, "")}`;
+  const reduce = useReducedMotion();
+  const [box, setBox] = useState({ w: 1600, h: 900 });
+
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry?.contentRect ?? { width: 0, height: 0 };
+      if (width && height) setBox({ w: Math.round(width), h: Math.round(height) });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const p = useSpring(scrollYProgress, { stiffness: 160, damping: 34, mass: 0.3 });
+  const textScale = useTransform(p, [0.04, 0.72], [1, 9], { ease: easeIn });
+  const veil = useTransform(p, [0.4, 0.7], [1, 0]);
+  const imageScale = useTransform(p, [0, 1], [1.3, 1]);
+  const hint = useTransform(p, [0, 0.1], [1, 0]);
+  const captionOpacity = useTransform(p, [0.66, 0.84], [0, 1]);
+  const captionY = useTransform(p, [0.66, 0.9], [48, 0]);
+  const shade = useTransform(p, [0.6, 0.9], [0, 1]);
+
+  // Size the word to most of the stage width (Inter Black ≈ 0.5em/char); phones get a bit more
+  const widthShare = box.w < 640 ? 0.94 : 0.8;
+  const fontSize = Math.min(box.h * 0.6, (box.w * widthShare) / Math.max(text.length * 0.5, 1));
+
+  if (reduce) {
+    return (
+      <section ref={ref} className="relative isolate overflow-hidden">
+        <img src={image} alt={imageAlt} className="absolute inset-0 -z-20 size-full object-cover" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#050A1A] via-[#050A1A]/70 to-[#050A1A]/40" />
+        <div className="mx-auto flex min-h-[80svh] max-w-[1440px] items-end px-6 py-24 sm:px-8 lg:px-12">
+          {children}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section ref={ref} className="relative h-[240vh]" aria-label={text}>
+      <div ref={stageRef} className="sticky top-0 h-[100svh] overflow-hidden">
+        <motion.img
+          src={image}
+          alt={imageAlt}
+          loading="lazy"
+          style={{ scale: imageScale }}
+          className="absolute inset-0 size-full object-cover"
+        />
+        {/* Cool blue grade so the photo sits inside the palette */}
+        <div className="absolute inset-0 bg-[#0B1E5C]/35 mix-blend-multiply" />
+        <motion.div
+          style={{ opacity: shade }}
+          className="absolute inset-0 bg-gradient-to-t from-[#050A1A] via-[#050A1A]/55 to-[#050A1A]/10"
+        />
+
+        {/* The stencil */}
+        <motion.svg
+          aria-hidden="true"
+          className="absolute inset-0 size-full"
+          viewBox={`0 0 ${box.w} ${box.h}`}
+          preserveAspectRatio="none"
+          style={{ opacity: veil }}
+        >
+          <defs>
+            <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width={box.w} height={box.h}>
+              <rect width={box.w} height={box.h} fill="#fff" />
+              <motion.text
+                x={box.w / 2}
+                y={box.h / 2}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={fontSize}
+                fontWeight={900}
+                letterSpacing="-0.05em"
+                fontFamily="Inter, system-ui, sans-serif"
+                fill="#000"
+                style={{ scale: textScale, transformBox: "fill-box", originX: 0.5, originY: 0.5 }}
+              >
+                {text}
+              </motion.text>
+            </mask>
+          </defs>
+          <rect width={box.w} height={box.h} fill="#050A1A" mask={`url(#${maskId})`} />
+        </motion.svg>
+
+        {eyebrow && (
+          <motion.div
+            style={{ opacity: hint }}
+            className="absolute inset-x-0 bottom-10 flex flex-col items-center gap-3 text-[11px] font-bold uppercase tracking-[0.3em] text-[#93A0BF]"
+          >
+            {eyebrow}
+            <span className="relative h-10 w-px overflow-hidden bg-[#223058]">
+              <span className="absolute inset-x-0 top-0 h-1/2 animate-[creoScrollCue_1.8s_ease-in-out_infinite] bg-[#4F7BFF]" />
+            </span>
+          </motion.div>
+        )}
+
+        <motion.div
+          style={{ opacity: captionOpacity, y: captionY }}
+          className="absolute inset-x-0 bottom-0 mx-auto max-w-[1440px] px-6 pb-16 sm:px-8 sm:pb-20 lg:px-12 lg:pb-24"
+        >
+          {children}
+        </motion.div>
+      </div>
+    </section>
   );
 }

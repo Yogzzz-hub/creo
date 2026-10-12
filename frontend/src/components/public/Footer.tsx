@@ -1,210 +1,290 @@
 import { Link } from "react-router";
-import { Phone, MessageCircle, MapPin, ArrowRight, ArrowUpRight } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { ArrowRight, ArrowUp, ArrowUpRight, Check, Clock, MapPin, MessageCircle, Phone } from "lucide-react";
+import { MaskReveal, SplitText } from "../motion";
+import { smoothScrollTo } from "../motion/SmoothScroll";
 
-const QUICK_LINKS = [
-  { label: "Home", href: "/" },
-  { label: "About Us", href: "/about" },
-  { label: "Pricing & Plans", href: "/pricing" },
+const WHATSAPP_URL = "https://wa.me/919941999415";
+
+const LINK_GROUPS = [
+  {
+    title: "Explore",
+    links: [
+      { label: "Home", href: "/" },
+      { label: "Our work", href: "/work" },
+      { label: "Clients", href: "/clients" },
+      { label: "Pricing & plans", href: "/pricing" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { label: "About us", href: "/about" },
+      { label: "FAQ", href: "/faq" },
+      { label: "Privacy policy", href: "/privacy" },
+      { label: "Terms & conditions", href: "/terms" },
+    ],
+  },
+  {
+    title: "Get started",
+    links: [
+      { label: "Free sample batch", href: "/signup?intent=sample" },
+      { label: "Create an account", href: "/signup" },
+      { label: "Log in", href: "/login" },
+      { label: "Client portal", href: "/portal" },
+    ],
+  },
 ];
 
-const LEGAL_LINKS = [
-  { label: "Privacy Policy", href: "/privacy" },
-  { label: "Terms & Conditions", href: "/terms" },
+const SOCIALS = [
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/creotool26?igsh=NjN0eWxwZ2VqbWJ3",
+    path: "M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z",
+  },
+  {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/in/creo-tool-3bb3b841b?utm_source=share_via&utm_content=profile&utm_medium=member_android",
+    path: "M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z",
+  },
+  {
+    label: "Facebook",
+    href: "https://www.facebook.com/share/1GKDeenkvC/",
+    path: "M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z",
+  },
+  {
+    label: "X (Twitter)",
+    href: "https://x.com/creotool",
+    path: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z",
+  },
 ];
+
+/** Oversized wordmark that rises out of a mask when the footer comes into view. */
+function FooterWordmark() {
+  const reduce = useReducedMotion();
+
+  return (
+    <div aria-hidden="true" className="relative select-none overflow-hidden">
+      <motion.div
+        initial={reduce ? false : { y: "70%", opacity: 0 }}
+        whileInView={{ y: "0%", opacity: 1 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+        className="bg-gradient-to-b from-[#3A56B8] via-[#1B2C6E] to-[#030714] bg-clip-text text-center text-[27vw] font-black leading-[0.78] tracking-[-0.07em] text-transparent lg:text-[22rem]"
+      >
+        creo.
+      </motion.div>
+    </div>
+  );
+}
+
+function FooterLink({ href, children }: { href: string; children: string }) {
+  return (
+    <Link
+      to={href}
+      className="group inline-flex items-center gap-1.5 text-sm text-[#93A0BF] transition-colors duration-300 hover:text-[#F4F7FF]"
+    >
+      <span className="bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-left-bottom bg-no-repeat pb-0.5 transition-[background-size] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:bg-[length:100%_1px]">
+        {children}
+      </span>
+      <ArrowUpRight className="size-3 -translate-x-1 text-[#4F7BFF] opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
+    </Link>
+  );
+}
 
 export function Footer() {
+  const year = new Date().getFullYear();
+
   return (
-    <footer data-footer className="w-full bg-[#050810] text-[#F8FAFC] border-t border-[#222F44] py-10 sm:py-12 selection:bg-[#7FA0D6]/30">
-      <div className="mx-auto max-w-[1440px] px-6 sm:px-8 lg:px-12">
-        
-        {/* 1. Pre-Footer Conversion Bento Banner */}
-        <div className="bg-[#121926] border border-[#222F44] rounded-3xl p-6 sm:p-10 text-center mb-10 sm:mb-12 shadow-2xl relative overflow-hidden">
-          <div className="relative z-10">
-            <h2 className="text-2xl sm:text-4xl font-black text-[#F8FAFC] tracking-tight">
-              Stop managing the chaos. Start operating the momentum.
-            </h2>
-            <p className="text-xs sm:text-sm text-[#97A0B3] mt-3 mb-8 max-w-xl mx-auto font-medium leading-relaxed">
-              Join 50+ modern creative agencies running content production, client sign-offs, and unit economics on CREO OS.
+    <footer data-footer className="relative isolate overflow-hidden bg-[#030714] text-[#F4F7FF]">
+      <div aria-hidden="true" className="creo-seam absolute inset-x-0 top-0" />
+      <div
+        aria-hidden="true"
+        className="absolute left-1/2 top-[-180px] -z-10 h-[460px] w-[min(1000px,120vw)] -translate-x-1/2 rounded-full bg-[#3B6BFF]/[0.14] blur-[120px]"
+      />
+
+      <div className="mx-auto max-w-[1440px] px-6 pt-16 sm:px-8 sm:pt-24 lg:px-12">
+        {/* 1. Closing call to action */}
+        <MaskReveal from="bottom" zoom={1.04} duration={1.1} className="rounded-[32px]">
+          <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-[#10205A] via-[#0A1640] to-[#060C26] px-6 py-12 sm:px-12 sm:py-16 lg:px-16 lg:py-20">
+            <div
+              aria-hidden="true"
+              className="creo-grid-bg absolute inset-0 [mask-image:radial-gradient(70%_80%_at_85%_10%,#000,transparent)]"
+            />
+            <div
+              aria-hidden="true"
+              className="absolute -right-24 -top-24 size-[420px] rounded-full bg-[#4F7BFF]/30 blur-[100px]"
+            />
+            <div
+              aria-hidden="true"
+              className="absolute -bottom-32 left-10 size-[360px] rounded-full bg-[#7DD3FC]/10 blur-[100px]"
+            />
+
+            <div className="relative grid grid-cols-1 items-end gap-10 lg:grid-cols-12">
+              <div className="lg:col-span-7">
+                <span className="creo-eyebrow">Ready when you are</span>
+                <SplitText
+                  as="h2"
+                  text="Stop managing the chaos. Start operating the momentum."
+                  accent={["operating", "momentum."]}
+                  className="mt-6 block text-3xl font-black leading-[1.05] tracking-[-0.035em] text-[#F4F7FF] sm:text-5xl lg:text-[3.6rem]"
+                />
+                <p className="mt-5 max-w-xl text-sm leading-relaxed text-[#B4BFDA] sm:text-base">
+                  Join 50+ modern creative agencies running content production, client sign-offs, and
+                  unit economics on CREO OS.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-5 lg:col-span-5 lg:items-end">
+                <div className="flex w-full flex-col gap-3 sm:flex-row lg:justify-end">
+                  <Link
+                    to="/pricing"
+                    className="creo-btn-primary group inline-flex items-center justify-center gap-2 rounded-full px-7 py-4 text-sm font-semibold"
+                  >
+                    Deploy CREO in your agency
+                    <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </Link>
+                  <a
+                    href={WHATSAPP_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="creo-btn-ghost inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 text-sm font-semibold"
+                  >
+                    <MessageCircle className="size-4 text-[#7DD3FC]" />
+                    Schedule a live demo
+                  </a>
+                </div>
+                <ul className="flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-[#93A0BF] lg:justify-end">
+                  {["Month-to-month", "First batch in 7 days", "Pause or cancel anytime"].map((item) => (
+                    <li key={item} className="flex items-center gap-1.5">
+                      <Check className="size-3.5 text-[#7DA2FF]" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </MaskReveal>
+
+        {/* 2. Directory */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-12 py-16 sm:grid-cols-3 sm:py-20 lg:grid-cols-12 lg:gap-x-10">
+          <div className="col-span-2 sm:col-span-3 lg:col-span-4">
+            <Link to="/" aria-label="Creo home" className="inline-flex items-baseline text-3xl font-black tracking-[-0.04em]">
+              creo
+              <span className="ml-[1px] inline-block size-[0.34em] rounded-full bg-gradient-to-br from-[#7DA2FF] to-[#3B6BFF] shadow-[0_0_14px_2px_rgba(79,123,255,0.6)]" />
+            </Link>
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-[#93A0BF]">
+              Your creative growth engine. High-converting reels, studio carousels, and content
+              operations delivered on autopilot.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link 
-                to="/pricing" 
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#BCCCE6] text-[#050810] hover:bg-white font-bold transition-all shadow-sm px-7 py-3.5 rounded-full text-xs sm:text-sm"
-              >
-                <span>Deploy CREO in Your Agency</span>
-                <ArrowRight className="size-4" />
-              </Link>
-              <a 
-                href="https://wa.me/919941999415" 
-                target="_blank" 
+
+            <div className="mt-7 flex flex-col gap-2.5 sm:flex-row lg:flex-col xl:flex-row">
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#0A0F18] border border-[#222F44] text-[#F8FAFC] hover:bg-[#0B111C] transition-colors px-6 py-3.5 rounded-full text-xs sm:text-sm font-semibold"
+                className="group flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 transition-colors duration-300 hover:border-[#4F7BFF]/50 hover:bg-white/[0.05]"
               >
-                <MessageCircle className="size-4 text-emerald-400" />
-                <span>Schedule Live Demo</span>
+                <span className="flex size-9 items-center justify-center rounded-xl bg-[#4F7BFF]/15 text-[#7DA2FF] ring-1 ring-inset ring-[#4F7BFF]/30">
+                  <MessageCircle className="size-4" />
+                </span>
+                <span className="flex flex-col">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#93A0BF]">WhatsApp</span>
+                  <span className="text-sm font-semibold text-[#F4F7FF]">Chat with us</span>
+                </span>
+              </a>
+              <a
+                href="tel:+919941999415"
+                className="group flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 transition-colors duration-300 hover:border-[#4F7BFF]/50 hover:bg-white/[0.05]"
+              >
+                <span className="flex size-9 items-center justify-center rounded-xl bg-[#4F7BFF]/15 text-[#7DA2FF] ring-1 ring-inset ring-[#4F7BFF]/30">
+                  <Phone className="size-4" />
+                </span>
+                <span className="flex flex-col">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#93A0BF]">Call</span>
+                  <span className="text-sm font-semibold text-[#F4F7FF]">+91 99419 99415</span>
+                </span>
               </a>
             </div>
-          </div>
-        </div>
 
-        {/* 2. Main 4-Column Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12 pb-12 border-b border-[#222F44]">
-          {/* Column 1: Brand Info (4 Cols) */}
-          <div className="lg:col-span-4 space-y-4">
-            <Link to="/" className="inline-flex items-center gap-2 text-2xl font-black tracking-tight text-[#F8FAFC] flex items-baseline">
-              <span>creo</span>
-              <span className="text-[#7FA0D6] text-3xl leading-none">.</span>
-            </Link>
-            <p className="text-xs sm:text-sm text-[#97A0B3] leading-relaxed max-w-sm">
-              Your creative growth engine. High-converting reels, studio carousels, and content operations delivered on autopilot.
-            </p>
-            <div className="pt-2 text-xs text-[#97A0B3] flex items-center gap-2">
-              <MapPin className="size-3.5 text-[#7FA0D6] shrink-0" />
-              <span>Bangalore, India</span>
+            <div className="mt-6 flex flex-col gap-2 text-xs text-[#93A0BF]">
+              <span className="flex items-center gap-2">
+                <MapPin className="size-3.5 shrink-0 text-[#4F7BFF]" /> Bangalore, India
+              </span>
+              <span className="flex items-center gap-2">
+                <Clock className="size-3.5 shrink-0 text-[#4F7BFF]" /> Mon – Sat · 9:30 AM – 7:00 PM IST
+              </span>
             </div>
           </div>
 
-          {/* Column 2: Quick Links (3 Cols) */}
-          <div className="lg:col-span-3 space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-[#7FA0D6]">
-              Quick Links
-            </h3>
-            <ul className="space-y-2.5">
-              {QUICK_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    to={link.href}
-                    className="group inline-flex items-center gap-1.5 text-xs sm:text-sm text-[#97A0B3] hover:text-[#F8FAFC] transition-colors"
+          {LINK_GROUPS.map((group) => (
+            <nav key={group.title} aria-label={group.title} className="lg:col-span-2">
+              <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#F4F7FF]">{group.title}</h3>
+              <ul className="mt-5 flex flex-col gap-3">
+                {group.links.map((link) => (
+                  <li key={link.href}>
+                    <FooterLink href={link.href}>{link.label}</FooterLink>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
+
+          <div className="col-span-2 sm:col-span-3 lg:col-span-2">
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#F4F7FF]">Follow</h3>
+            <ul className="mt-5 flex flex-wrap gap-2.5">
+              {SOCIALS.map((social) => (
+                <li key={social.label}>
+                  <a
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={social.label}
+                    className="flex size-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-[#B4BFDA] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#4F7BFF]/60 hover:bg-[#4F7BFF]/15 hover:text-white hover:shadow-[0_8px_24px_-8px_rgba(79,123,255,0.7)]"
                   >
-                    <span className="group-hover:translate-x-1 transition-transform duration-200">
-                      {link.label}
-                    </span>
-                    <ArrowUpRight className="size-3 text-[#97A0B3] opacity-0 group-hover:opacity-100 group-hover:text-[#7FA0D6] transition-all duration-200" />
-                  </Link>
+                    <svg className="size-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d={social.path} />
+                    </svg>
+                    <span className="sr-only">{social.label}</span>
+                  </a>
                 </li>
               ))}
             </ul>
           </div>
-
-          {/* Column 3: Direct Contact (3 Cols) */}
-          <div className="lg:col-span-3 space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-[#7FA0D6]">
-              Direct Contact
-            </h3>
-            <ul className="space-y-3">
-              <li>
-                <a
-                  href="https://wa.me/919941999415"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group inline-flex items-center gap-2.5 text-xs sm:text-sm text-[#F8FAFC] hover:text-emerald-400 transition-colors"
-                >
-                  <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:bg-emerald-500/20 group-hover:scale-105 transition-all">
-                    <MessageCircle className="size-3.5" />
-                  </div>
-                  <span className="font-medium">WhatsApp Us</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href="tel:+919941999415"
-                  className="group inline-flex items-center gap-2.5 text-xs sm:text-sm text-[#F8FAFC] hover:text-[#7FA0D6] transition-colors"
-                >
-                  <div className="flex size-7 items-center justify-center rounded-lg bg-[#7FA0D6]/10 text-[#7FA0D6] border border-[#7FA0D6]/20 group-hover:bg-[#7FA0D6]/20 group-hover:scale-105 transition-all">
-                    <Phone className="size-3.5" />
-                  </div>
-                  <span className="font-medium">+91 9941999415</span>
-                </a>
-              </li>
-            </ul>
-            <div className="pt-1 text-[11px] text-[#97A0B3] leading-relaxed">
-              <span className="font-semibold text-[#F8FAFC]">Support Hours:</span>
-              <br />
-              Mon – Sat · 9:30 AM – 7:00 PM IST
-            </div>
-          </div>
-
-          {/* Column 4: Follow Us (2 Cols) */}
-          <div className="lg:col-span-2 space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-[#7FA0D6]">
-              Follow Us
-            </h3>
-            <div className="flex flex-wrap gap-2.5">
-              {/* Instagram */}
-              <a
-                href="https://www.instagram.com/creotool26?igsh=NjN0eWxwZ2VqbWJ3"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex size-11 sm:size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-gradient-to-tr hover:from-amber-500 hover:via-rose-500 hover:to-purple-600 hover:border-transparent transition-all shadow-xs"
-                aria-label="Instagram"
-                title="Instagram"
-              >
-                <svg className="size-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
-                </svg>
-              </a>
-
-              {/* LinkedIn */}
-              <a
-                href="https://www.linkedin.com/in/creo-tool-3bb3b841b?utm_source=share_via&utm_content=profile&utm_medium=member_android"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex size-11 sm:size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-[#7FA0D6] hover:border-transparent transition-all shadow-xs"
-                aria-label="LinkedIn"
-                title="LinkedIn"
-              >
-                <svg className="size-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                </svg>
-              </a>
-
-              {/* Facebook */}
-              <a
-                href="https://www.facebook.com/share/1GKDeenkvC/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex size-11 sm:size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-[#7FA0D6] hover:border-transparent transition-all shadow-xs"
-                aria-label="Facebook"
-                title="Facebook"
-              >
-                <svg className="size-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-              </a>
-
-              {/* X / Twitter */}
-              <a
-                href="https://x.com/creotool"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex size-11 sm:size-9 items-center justify-center rounded-xl border border-[#222F44] bg-[#0A0F18] text-[#97A0B3] hover:text-white hover:bg-black hover:border-slate-700 transition-all shadow-xs"
-                aria-label="Twitter / X"
-                title="X (Twitter)"
-              >
-                <svg className="size-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-              </a>
-            </div>
-          </div>
         </div>
+      </div>
 
-        {/* 3. Bottom Legal Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4 text-xs text-[#97A0B3]">
+      {/* 3. Signature wordmark */}
+      <div className="mx-auto max-w-[1440px] px-2 sm:px-6">
+        <FooterWordmark />
+      </div>
+
+      {/* 4. Legal bar */}
+      <div className="border-t border-white/[0.07]">
+        <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-4 px-6 py-6 text-xs text-[#93A0BF] sm:flex-row sm:justify-between sm:px-8 lg:px-12">
+          <p>© {year} Creo. All rights reserved.</p>
           <ul className="flex items-center gap-6">
-            {LEGAL_LINKS.map((link) => (
-              <li key={link.href}>
-                <Link
-                  to={link.href}
-                  className="hover:text-[#F8FAFC] transition-colors"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
+            <li>
+              <Link to="/privacy" className="transition-colors hover:text-[#F4F7FF]">Privacy</Link>
+            </li>
+            <li>
+              <Link to="/terms" className="transition-colors hover:text-[#F4F7FF]">Terms</Link>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={() => smoothScrollTo(0)}
+                className="group inline-flex cursor-pointer items-center gap-2 transition-colors hover:text-[#F4F7FF]"
+              >
+                Back to top
+                <span className="flex size-7 items-center justify-center rounded-full border border-white/10 transition-colors group-hover:border-[#4F7BFF]/60 group-hover:bg-[#4F7BFF]/15">
+                  <ArrowUp className="size-3.5 transition-transform duration-300 group-hover:-translate-y-0.5" />
+                </span>
+              </button>
+            </li>
           </ul>
         </div>
-
       </div>
     </footer>
   );

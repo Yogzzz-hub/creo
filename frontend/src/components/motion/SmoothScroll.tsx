@@ -2,6 +2,19 @@ import Lenis from "lenis";
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router";
 
+let activeLenis: Lenis | null = null;
+
+/** Scroll to a position or element, routed through Lenis when it is running. */
+export function smoothScrollTo(target: number | HTMLElement) {
+  if (activeLenis) {
+    activeLenis.scrollTo(target, { duration: 1.4 });
+    return;
+  }
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const top = typeof target === "number" ? target : target.getBoundingClientRect().top + window.scrollY;
+  window.scrollTo({ top, behavior: reduce ? "auto" : "smooth" });
+}
+
 /**
  * Inertial smooth scrolling (Lenis) for the marketing pages.
  * Skipped entirely for users who prefer reduced motion and on touch devices,
@@ -27,9 +40,11 @@ export function SmoothScroll() {
         node.closest("[data-lenis-prevent], [role='dialog'], .overflow-x-auto") !== null,
     });
     lenisRef.current = lenis;
+    activeLenis = lenis;
     return () => {
       lenis.destroy();
       lenisRef.current = null;
+      if (activeLenis === lenis) activeLenis = null;
     };
   }, []);
 

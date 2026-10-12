@@ -56,7 +56,7 @@ const FRAGMENT = /* glsl */ `
     if (r > 0.5) discard;
     float soft = smoothstep(0.5, 0.0, r);
     vec3 col = mix(uBlue, uMist, smoothstep(-0.6, 1.2, vHeight));
-    // A sparse set of warm glints so it doesn't read as a stock blue gradient
+    // A sparse set of sky-blue glints so it doesn't read as a stock blue gradient
     col = mix(col, uGold, step(0.965, vSeed) * 0.85);
     float alpha = soft * vFade * (0.35 + 0.45 * smoothstep(-0.8, 1.4, vHeight));
     gl_FragColor = vec4(col, alpha);
@@ -121,9 +121,9 @@ export default function HeroWaveScene({ className = "" }: { className?: string }
       uPointer: { value: [0, 0] as [number, number] },
       uScroll: { value: 0 },
       uPixelRatio: { value: pixelRatio },
-      uBlue: { value: new Color("#7FA0D6") },
-      uMist: { value: new Color("#BCCCE6") },
-      uGold: { value: new Color("#D8BF9B") },
+      uBlue: { value: new Color("#4F7BFF") },
+      uMist: { value: new Color("#DCE8FF") },
+      uGold: { value: new Color("#7DD3FC") },
     };
     const material = new ShaderMaterial({
       vertexShader: VERTEX,
