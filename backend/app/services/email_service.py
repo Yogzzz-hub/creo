@@ -10,13 +10,82 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 
+async def _send_via_smtp(
+    to_email: str,
+    subject: str,
+    html_content: str,
+    text_content: str | None = None,
+    from_email: str = "",
+    from_name: str = "Creo",
+) -> bool:
+    """Send transactional email via SMTP relay (sync wrapped in asyncio.to_thread)."""
+    import asyncio
+    import smtplib
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+
+    host = (settings.SMTP_SERVER or settings.SMTP_HOST or "smtp-relay.brevo.com").strip()
+    port = int(settings.SMTP_PORT or 587)
+    username = (settings.SMTP_USERNAME or "").strip()
+    password = (settings.SMTP_PASSWORD or "").strip()
+
+    # If BREVO_API_KEY was passed an SMTP key (starts with xsmtpsib-), use it for SMTP
+    if not password and (settings.BREVO_API_KEY or "").startswith("xsmtpsib-"):
+        password = settings.BREVO_API_KEY.strip()
+    if not username and password.startswith("xsmtpsib-"):
+        username = (settings.SMTP_USERNAME or "bcf038001@smtp-brevo.com").strip()
+
+    sender_email = from_email or (settings.SMTP_FROM_EMAIL or "").strip() or username
+    if not password or not sender_email:
+        logger.error(
+            "smtp_not_configured",
+            hint="Set SMTP_SERVER, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, and SMTP_FROM_EMAIL",
+        )
+        return False
+
+    def _sync_smtp_send() -> bool:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"{from_name} <{sender_email}>" if from_name else sender_email
+        msg["To"] = to_email
+
+        if text_content:
+            msg.attach(MIMEText(text_content, "plain", "utf-8"))
+        if html_content:
+            msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+        use_ssl = (port == 465) or settings.SMTP_USE_SSL
+        use_tls = (port == 587) or settings.SMTP_USE_TLS
+
+        try:
+            if use_ssl:
+                server = smtplib.SMTP_SSL(host, port, timeout=12.0)
+            else:
+                server = smtplib.SMTP(host, port, timeout=12.0)
+                if use_tls:
+                    server.starttls()
+
+            if username and password:
+                server.login(username, password)
+
+            server.sendmail(sender_email, [to_email], msg.as_string())
+            server.quit()
+            logger.info("smtp_email_sent", to_email=to_email, host=host)
+            return True
+        except Exception as exc:
+            logger.error("smtp_email_failed", error=str(exc), to_email=to_email, host=host)
+            return False
+
+    return await asyncio.to_thread(_sync_smtp_send)
+
+
 async def send_email(
     to_email: str,
     subject: str,
     html_content: str,
     text_content: str | None = None,
 ) -> bool:
-    """Submit an email to Brevo's transactional API.
+    """Submit an email to Brevo's transactional API or SMTP relay.
 
     Returns True on success, False on failure. Never raises — all errors are
     caught, logged, and surfaced as a boolean so callers can decide what to do.
@@ -26,15 +95,36 @@ async def send_email(
     from_name = display_name or settings.BREVO_FROM_NAME.strip() or "Creo"
     clean_to = to_email.strip()
 
+    if not clean_to:
+        logger.error("email_recipient_missing")
+        return False
+
+    # If the provided key is an SMTP key (starts with xsmtpsib-), or SMTP_PASSWORD is set without API key, use SMTP relay
+    if api_key.startswith("xsmtpsib-") or (not api_key and (settings.SMTP_PASSWORD or "").strip()):
+        return await _send_via_smtp(
+            clean_to,
+            subject,
+            html_content,
+            text_content,
+            from_email=from_email,
+            from_name=from_name,
+        )
+
     if not api_key or not from_email:
+        # Check if SMTP is configured as fallback
+        if (settings.SMTP_PASSWORD or "").strip() or (settings.SMTP_USERNAME or "").strip():
+            return await _send_via_smtp(
+                clean_to,
+                subject,
+                html_content,
+                text_content,
+                from_email=from_email,
+                from_name=from_name,
+            )
         logger.error(
             "brevo_not_configured",
             hint="Set BREVO_API_KEY and BREVO_FROM_EMAIL to a verified Brevo sender",
         )
-        return False
-
-    if not clean_to:
-        logger.error("email_recipient_missing")
         return False
 
     payload: dict = {

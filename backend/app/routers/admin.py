@@ -4284,3 +4284,297 @@ async def update_plan_negotiation(
     return {"status": "success", "message": msg, "negotiation_id": str(neg.id), "new_status": neg.status}
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# MANUAL & OFFLINE PAYMENT BYPASS SYSTEM
+# ─────────────────────────────────────────────────────────────────────────────
+
+async def _activate_manual_subscription(
+    db: AsyncSession,
+    client_id: uuid.UUID,
+    plan_id: uuid.UUID,
+    payment_method: str,
+    amount: Decimal,
+    actor_id: uuid.UUID,
+    admin_notes: str | None = None,
+) -> Subscription:
+    """Helper to activate manual subscription, mark terms accepted, initialize usage quota, and notify client."""
+    now = datetime.now(UTC)
+    plan_stmt = select(Plan).where(Plan.id == plan_id)
+    plan_res = await db.execute(plan_stmt)
+    plan = plan_res.scalar_one_or_none()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+    # Cancel any existing active subscriptions for this client
+    existing_sub_stmt = select(Subscription).where(
+        Subscription.client_id == client_id,
+        Subscription.status.in_([SubscriptionStatus.TRIALING, SubscriptionStatus.ACTIVE]),
+    )
+    existing_sub = (await db.execute(existing_sub_stmt)).scalar_one_or_none()
+    if existing_sub:
+        existing_sub.status = SubscriptionStatus.CANCELED
+
+    # Create new active manual subscription
+    sub = Subscription(
+        id=uuid.uuid4(),
+        client_id=client_id,
+        plan_id=plan.id,
+        status=SubscriptionStatus.ACTIVE,
+        gateway=PaymentProvider.MANUAL,
+        gateway_subscription_id=f"manual_{payment_method}_{uuid.uuid4().hex[:8]}",
+        amount=amount,
+        current_period_start=now,
+        current_period_end=now + timedelta(days=30),
+    )
+    db.add(sub)
+    await db.flush()
+
+    # Ensure terms accepted so v_client_onboarding derives stage 3
+    cp_stmt = select(ClientProfile).where(ClientProfile.user_id == client_id)
+    cp = (await db.execute(cp_stmt)).scalar_one_or_none()
+    if not cp:
+        cp = ClientProfile(
+            user_id=client_id,
+            company_name="Client Workspace",
+            terms_accepted_at=now,
+        )
+        db.add(cp)
+    elif cp.terms_accepted_at is None:
+        cp.terms_accepted_at = now
+
+    # Initialize monthly UsageCounter
+    today = now.date()
+    m_start = date(today.year, today.month, 1)
+    if today.month == 12:
+        m_end = date(today.year + 1, 1, 1) - timedelta(days=1)
+    else:
+        m_end = date(today.year, today.month + 1, 1) - timedelta(days=1)
+
+    uc_stmt = select(UsageCounter).where(
+        UsageCounter.client_id == client_id,
+        UsageCounter.period_start == m_start,
+    )
+    uc = (await db.execute(uc_stmt)).scalar_one_or_none()
+    if not uc:
+        uc = UsageCounter(
+            id=uuid.uuid4(),
+            client_id=client_id,
+            subscription_id=sub.id,
+            period_start=m_start,
+            period_end=m_end,
+            posters_used=0,
+            reels_used=0,
+            stories_used=0,
+            revisions_used=0,
+        )
+        db.add(uc)
+
+    # Invalidate session caches
+    try:
+        await invalidate_user_session(client_id)
+    except Exception:
+        pass
+
+    # Notify client
+    notif = Notification(
+        user_id=client_id,
+        title="Payment Verified & Retainer Activated",
+        message=f"Your offline payment for {plan.display_name} has been approved by agency admin. Step 3 (Payment) has been bypassed! You can now proceed to your Brand Questionnaire.",
+        type="billing",
+        link="/onboarding?step=4",
+    )
+    db.add(notif)
+
+    return sub
+
+
+@router.get("/manual-payments")
+async def list_manual_payment_requests(
+    actor: Actor = AdminActor,
+    db: AsyncSession = Depends(get_db),
+) -> list[dict[str, Any]]:
+    """List all client offline/manual payment requests with status, client details, and plan info."""
+    res = await db.execute(text("""
+        SELECT r.id, r.client_id, r.plan_id, r.payment_method, r.amount, r.reference_note,
+               r.status, r.reviewed_at, r.admin_notes, r.created_at,
+               p.name as plan_name, p.display_name as plan_display_name,
+               u.full_name, u.email,
+               reviewer.full_name as reviewer_name
+        FROM manual_payment_requests r
+        JOIN plans p ON p.id = r.plan_id
+        JOIN users u ON u.id = r.client_id
+        LEFT JOIN users reviewer ON reviewer.id = r.reviewed_by
+        ORDER BY CASE WHEN r.status = 'PENDING' THEN 0 ELSE 1 END, r.created_at DESC
+    """))
+    items = []
+    for row in res.all():
+        items.append({
+            "id": str(row[0]),
+            "client_id": str(row[1]),
+            "plan_id": str(row[2]),
+            "payment_method": row[3],
+            "amount": float(row[4]),
+            "reference_note": row[5],
+            "status": row[6],
+            "reviewed_at": row[7].isoformat() if row[7] else None,
+            "admin_notes": row[8],
+            "created_at": row[9].isoformat() if row[9] else None,
+            "plan_name": row[10],
+            "plan_display_name": row[11],
+            "client_name": row[12] or "Client",
+            "client_email": row[13],
+            "reviewer_name": row[14],
+        })
+    return items
+
+
+@router.post("/manual-payments/{request_id}/approve")
+async def approve_manual_payment_request(
+    request_id: uuid.UUID,
+    payload: dict[str, Any] | None = None,
+    actor: Actor = AdminActor,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Admin approves offline payment, activates manual subscription, and bypasses Step 3."""
+    res = await db.execute(text("""
+        SELECT id, client_id, plan_id, payment_method, amount, status
+        FROM manual_payment_requests
+        WHERE id = :rid
+    """), {"rid": request_id})
+    row = res.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Payment request not found")
+
+    client_id = row[1]
+    plan_id = row[2]
+    payment_method = row[3]
+    amount = Decimal(str(row[4]))
+    admin_notes = (payload or {}).get("admin_notes", "Approved by Agency Admin")
+
+    now = datetime.now(UTC)
+
+    # 1. Update manual_payment_requests status
+    await db.execute(text("""
+        UPDATE manual_payment_requests
+        SET status = 'APPROVED', reviewed_by = :aid, reviewed_at = :now, admin_notes = :notes, updated_at = :now
+        WHERE id = :rid
+    """), {
+        "aid": actor.user_id,
+        "now": now,
+        "notes": admin_notes,
+        "rid": request_id,
+    })
+
+    # 2. Activate subscription and advance client to Step 4
+    sub = await _activate_manual_subscription(
+        db, client_id, plan_id, payment_method, amount, actor.user_id, admin_notes,
+    )
+    await db.commit()
+
+    return {
+        "status": "success",
+        "message": "Manual payment approved. Client subscription activated and Step 3 bypassed.",
+        "subscription_id": str(sub.id),
+        "client_id": str(client_id),
+    }
+
+
+@router.post("/manual-payments/{request_id}/reject")
+async def reject_manual_payment_request(
+    request_id: uuid.UUID,
+    payload: dict[str, Any] | None = None,
+    actor: Actor = AdminActor,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Admin declines offline payment request."""
+    admin_notes = (payload or {}).get("admin_notes", "Declined by Agency Admin")
+    now = datetime.now(UTC)
+
+    res = await db.execute(text("""
+        SELECT id, client_id FROM manual_payment_requests WHERE id = :rid
+    """), {"rid": request_id})
+    row = res.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Payment request not found")
+
+    client_id = row[1]
+
+    await db.execute(text("""
+        UPDATE manual_payment_requests
+        SET status = 'REJECTED', reviewed_by = :aid, reviewed_at = :now, admin_notes = :notes, updated_at = :now
+        WHERE id = :rid
+    """), {
+        "aid": actor.user_id,
+        "now": now,
+        "notes": admin_notes,
+        "rid": request_id,
+    })
+
+    # Notify client
+    notif = Notification(
+        user_id=client_id,
+        title="Offline Payment Verification Declined",
+        message=f"Your offline payment request was declined: {admin_notes}. Please review or proceed with online checkout.",
+        type="billing",
+        link="/onboarding?step=3",
+    )
+    db.add(notif)
+    await db.commit()
+
+    return {"status": "success", "message": "Manual payment request declined"}
+
+
+@router.post("/clients/{client_id}/bypass-payment")
+async def direct_bypass_client_payment(
+    client_id: uuid.UUID,
+    payload: dict[str, Any],
+    actor: Actor = AdminActor,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Direct Admin override to bypass payment for any client (assigns plan, activates manual sub, advances to Step 4)."""
+    raw_plan_id = payload.get("plan_id")
+    if not raw_plan_id:
+        raise HTTPException(status_code=422, detail="plan_id is required")
+    plan_id = uuid.UUID(str(raw_plan_id))
+    payment_method = payload.get("payment_method", "cash")
+    notes = payload.get("notes", "Directly bypassed by Agency Admin")
+
+    plan_stmt = select(Plan).where(Plan.id == plan_id)
+    plan_res = await db.execute(plan_stmt)
+    plan = plan_res.scalar_one_or_none()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Selected plan does not exist")
+
+    now = datetime.now(UTC)
+
+    # Record or update manual_payment_requests row
+    req_id = uuid.uuid4()
+    await db.execute(text("""
+        INSERT INTO manual_payment_requests (id, client_id, plan_id, payment_method, amount, reference_note, status, reviewed_by, reviewed_at, admin_notes, created_at, updated_at)
+        VALUES (:id, :cid, :pid, :pm, :amt, :rn, 'APPROVED', :aid, :now, :notes, :now, :now)
+    """), {
+        "id": req_id,
+        "cid": client_id,
+        "pid": plan.id,
+        "pm": payment_method,
+        "amt": float(plan.monthly_price),
+        "rn": notes,
+        "aid": actor.user_id,
+        "now": now,
+        "notes": notes,
+    })
+
+    sub = await _activate_manual_subscription(
+        db, client_id, plan.id, payment_method, plan.monthly_price, actor.user_id, notes,
+    )
+    await db.commit()
+
+    return {
+        "status": "success",
+        "message": f"Payment successfully bypassed for client on {plan.display_name}. Subscription activated.",
+        "subscription_id": str(sub.id),
+        "client_id": str(client_id),
+    }
+
+
+

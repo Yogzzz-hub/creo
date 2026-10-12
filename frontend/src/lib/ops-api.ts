@@ -515,3 +515,51 @@ export async function fetchAdminDeliverables(clientId?: string): Promise<any[]> 
   const url = clientId ? `/api/v1/admin/deliverables?client_id=${clientId}` : `/api/v1/admin/deliverables`;
   return request<any[]>(url);
 }
+
+// ── Manual & Offline Payment Bypass (Admin) ──────────────────────────────────
+import type { ManualPaymentRequest } from "./onboarding-api";
+export type { ManualPaymentRequest };
+
+export async function fetchAdminManualPayments(): Promise<ManualPaymentRequest[]> {
+  return request<ManualPaymentRequest[]>("/api/v1/admin/manual-payments");
+}
+
+export async function approveManualPayment(
+  requestId: string,
+  adminNotes?: string,
+): Promise<{ status: string; message: string; subscription_id: string; client_id: string }> {
+  return request<{ status: string; message: string; subscription_id: string; client_id: string }>(
+    `/api/v1/admin/manual-payments/${requestId}/approve`,
+    {
+      method: "POST",
+      body: JSON.stringify({ admin_notes: adminNotes }),
+    },
+  );
+}
+
+export async function rejectManualPayment(
+  requestId: string,
+  adminNotes?: string,
+): Promise<{ status: string; message: string }> {
+  return request<{ status: string; message: string }>(
+    `/api/v1/admin/manual-payments/${requestId}/reject`,
+    {
+      method: "POST",
+      body: JSON.stringify({ admin_notes: adminNotes }),
+    },
+  );
+}
+
+export async function directBypassClientPayment(
+  clientId: string,
+  data: { plan_id: string; payment_method?: string; notes?: string },
+): Promise<{ status: string; message: string; subscription_id: string; client_id: string }> {
+  return request<{ status: string; message: string; subscription_id: string; client_id: string }>(
+    `/api/v1/admin/clients/${clientId}/bypass-payment`,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    },
+  );
+}
+

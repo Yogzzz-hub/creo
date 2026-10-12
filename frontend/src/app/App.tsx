@@ -48,9 +48,7 @@ import { PortalLayout } from "../components/portal/PortalLayout";
 
 // Ops Layout & Features
 import { OpsLayout } from "../components/ops/OpsLayout";
-const HomePage = lazyModule(() =>
-  import("../pages/public/HomePage").then(m => ({ default: m.HomePage }))
-);
+import { HomePage } from "../pages/public/HomePage";
 
 const AdminDashboard = lazyModule(() =>
   import("../features/admin/AdminDashboard").then((m) => ({ default: m.AdminDashboard }))

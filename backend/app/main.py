@@ -103,7 +103,26 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             """))
             await db.execute(text("CREATE INDEX IF NOT EXISTS idx_negotiations_client_id ON plan_negotiations(client_id);"))
             await db.execute(text("CREATE INDEX IF NOT EXISTS idx_negotiations_status ON plan_negotiations(status);"))
-            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_negotiations_created_at ON plan_negotiations(created_at);"))
+            # Ensure manual_payment_requests table exists
+            await db.execute(text("""
+                CREATE TABLE IF NOT EXISTS manual_payment_requests (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    client_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    plan_id UUID NOT NULL REFERENCES plans(id) ON DELETE CASCADE,
+                    payment_method VARCHAR(50) NOT NULL DEFAULT 'cash',
+                    amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+                    reference_note TEXT,
+                    status VARCHAR(50) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED')),
+                    reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+                    reviewed_at TIMESTAMP WITH TIME ZONE,
+                    admin_notes TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+                );
+            """))
+            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_manual_payments_client_id ON manual_payment_requests(client_id);"))
+            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_manual_payments_status ON manual_payment_requests(status);"))
+            await db.execute(text("CREATE INDEX IF NOT EXISTS idx_manual_payments_created_at ON manual_payment_requests(created_at);"))
             await db.commit()
     except Exception as e:
         logger.warning("admin_bootstrap_warning", error=str(e))
