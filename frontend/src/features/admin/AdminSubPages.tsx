@@ -210,6 +210,7 @@ export function AdminClientsPage() {
     instagram: "",
     timezone: "Asia/Kolkata",
     brandSummary: "",
+    colors: [] as string[],
   });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [editProfileError, setEditProfileError] = useState<string | null>(null);
@@ -303,12 +304,26 @@ export function AdminClientsPage() {
 
     const existing = existingKey ? mergedClientsData[existingKey] : undefined;
 
+    const scPalette = Array.isArray((sc as any).brand_dna?.palette) && (sc as any).brand_dna.palette.length > 0
+      ? (sc as any).brand_dna.palette
+      : Array.isArray((sc as any).brand_dna?.visual_direction?.primary_colors) && (sc as any).brand_dna.visual_direction.primary_colors.length > 0
+        ? (sc as any).brand_dna.visual_direction.primary_colors
+        : ["#0B111C", "#7FA0D6", "#38BDF8", "#F8FAFC"];
+    const scColorLabels = ["Primary Brand", "Accent Royal", "Cyan Highlight", "Clean Neutral", "Tone 5"];
+    const resolvedColors = scPalette.map((col: any, idx: number) => {
+      const hex = typeof col === "string" ? col : (col?.hex || "#0B111C");
+      const name = typeof col === "object" && col?.name ? col.name : (scColorLabels[idx] || `Brand Tone ${idx + 1}`);
+      return { name, hex };
+    });
+
     if (existing) {
       const updated: ClientDetailData = {
         ...existing,
         id: sc.client_id || existing.id,
         initials: existing.initials || initials,
         name: existing.name || formattedName,
+        industry: (sc as any).industry || (sc as any).brand_dna?.industry || existing.industry || "Digital Growth & Direct-to-Consumer",
+        timezone: (sc as any).timezone || existing.timezone || "Client Time: IST (UTC+5:30)",
         status: (sc.subscription_status || sc.account_status || existing.status).toUpperCase(),
         totalAssetsDelivered: postsDelivered + reelsDelivered + storiesDelivered,
         totalAssetsQuota: postsQuota + reelsQuota + storiesQuota,
@@ -320,7 +335,13 @@ export function AdminClientsPage() {
         storiesQuota,
         contact: {
           ...existing.contact,
+          name: sc.full_name || existing.contact.name || formattedName,
           email: sc.email || existing.contact.email,
+        },
+        brand: {
+          ...existing.brand,
+          colors: resolvedColors.length > 0 ? resolvedColors : existing.brand.colors,
+          toneSummary: (sc as any).brand_summary || (sc as any).brand_dna?.summary_line || existing.brand.toneSummary,
         },
       };
       if (existingKey) {
@@ -332,8 +353,8 @@ export function AdminClientsPage() {
         id: sc.client_id,
         name: formattedName,
         initials,
-        industry: "Digital Growth & Direct-to-Consumer",
-        timezone: "Client Time: IST (UTC+5:30)",
+        industry: (sc as any).industry || (sc as any).brand_dna?.industry || "Digital Growth & Direct-to-Consumer",
+        timezone: (sc as any).timezone || "Client Time: IST (UTC+5:30)",
         activeSince: "Active Client",
         tier: tierName,
         tierBadge: tierName.toUpperCase(),
@@ -353,7 +374,7 @@ export function AdminClientsPage() {
         sprintNumber: 44,
         daysRemainingInSprint: 14,
         contact: {
-          name: formattedName,
+          name: sc.full_name || formattedName,
           title: "Account Owner & Authorized Contact",
           email: sc.email,
           phone: "+91 98401 23890",
@@ -365,14 +386,9 @@ export function AdminClientsPage() {
           headingsFont: "Plus Jakarta Sans",
           bodyFont: "Inter Sans",
           monoFont: "JetBrains Mono",
-          toneSummary: `Dynamic, high-impact social media creatives engineered for ${formattedName}. High-clarity typography with conversion-optimized video hooks.`,
+          toneSummary: (sc as any).brand_summary || (sc as any).brand_dna?.summary_line || `Dynamic, high-impact social media creatives engineered for ${formattedName}. High-clarity typography with conversion-optimized video hooks.`,
           toneTags: ["High Conversion", "Brand Authority", "Visual Polish"],
-          colors: [
-            { name: "Primary Deep Navy", hex: "#0B111C" },
-            { name: "Accent Royal Blue", hex: "#7FA0D6" },
-            { name: "Cyan Highlight", hex: "#7FA0D6" },
-            { name: "Clean Neutral", hex: "#F8FAFC", isLight: true },
-          ],
+          colors: resolvedColors,
           social: {
             handle: sc.instagram_username ? `@${sc.instagram_username}` : `@${emailParts[0] || "client"}`,
             followers: "API Connected",
@@ -467,14 +483,22 @@ export function AdminClientsPage() {
 
   useEffect(() => {
     if (isEditProfileOpen && activeClient) {
+      const initialColors = (
+        liveBrandProfile?.brand_dna?.palette ||
+        liveBrandProfile?.brand_dna?.visual_direction?.primary_colors ||
+        activeClient?.brand?.colors?.map((c: any) => c.hex) ||
+        ["#0F172A", "#2563EB", "#38BDF8"]
+      ).map((c: any) => (typeof c === "string" ? c : c?.hex || "#0F172A"));
+
       setEditFormData({
         companyName: liveBrandProfile?.company_name || activeClient.name || "",
         industry: liveBrandProfile?.industry || activeClient.industry || "",
-        signerName: liveBrandProfile?.full_name || activeClient.contact.name || "",
-        signerEmail: liveBrandProfile?.email || activeClient.contact.email || "",
+        signerName: liveBrandProfile?.full_name || activeClient.contact?.name || activeClient.name || "",
+        signerEmail: liveBrandProfile?.email || activeClient.contact?.email || "",
         instagram: liveBrandProfile?.instagram_username || "",
         timezone: liveBrandProfile?.timezone || "Asia/Kolkata",
         brandSummary: liveBrandProfile?.brand_summary || liveBrandProfile?.brand_dna?.summary_line || "",
+        colors: initialColors,
       });
       setEditProfileError(null);
     }
@@ -486,15 +510,55 @@ export function AdminClientsPage() {
     setIsSavingProfile(true);
     setEditProfileError(null);
     try {
-      await updateClientProfile(activeClient.id, {
+      const cleanColors = editFormData.colors
+        .map((c) => c.trim().toUpperCase())
+        .filter((c) => /^#[0-9A-Fa-f]{3,8}$/.test(c));
+
+      const updatedProfile = await updateClientProfile(activeClient.id, {
         company_name: editFormData.companyName.trim() || undefined,
         industry: editFormData.industry.trim() || undefined,
         full_name: editFormData.signerName.trim() || undefined,
         email: editFormData.signerEmail.trim().toLowerCase() || undefined,
-        instagram_username: editFormData.instagram.trim() || undefined,
+        instagram_username: editFormData.instagram.trim().replace(/^@/, "") || undefined,
         timezone: editFormData.timezone.trim() || undefined,
         brand_summary: editFormData.brandSummary.trim() || undefined,
+        palette: cleanColors.length > 0 ? cleanColors : undefined,
+        colors: cleanColors.length > 0 ? cleanColors : undefined,
       });
+
+      // Instantly update query cache
+      if (updatedProfile) {
+        queryClient.setQueryData(["admin-client-brand-profile", activeClient.id], updatedProfile);
+      }
+
+      // Instantly update local state so UI updates without waiting for network refetch
+      setServerClients((prev) =>
+        prev.map((c) => {
+          if (c.client_id === activeClient.id) {
+            return {
+              ...c,
+              company_name: editFormData.companyName.trim() || c.company_name,
+              email: editFormData.signerEmail.trim().toLowerCase() || c.email,
+              full_name: editFormData.signerName.trim() || c.full_name,
+              instagram_username: editFormData.instagram.trim().replace(/^@/, "") || c.instagram_username,
+              timezone: editFormData.timezone.trim() || c.timezone,
+              brand_summary: editFormData.brandSummary.trim() || c.brand_summary,
+              industry: editFormData.industry.trim() || c.industry,
+              brand_dna: {
+                ...(c.brand_dna || {}),
+                palette: cleanColors.length > 0 ? cleanColors : c.brand_dna?.palette,
+                visual_direction: {
+                  ...((c.brand_dna as any)?.visual_direction || {}),
+                  primary_colors: cleanColors.length > 0 ? cleanColors : undefined,
+                },
+              },
+            };
+          }
+          return c;
+        })
+      );
+
+      // Invalidate queries in background
       await queryClient.invalidateQueries({ queryKey: ["admin-client-brand-profile", activeClient.id] });
       await queryClient.invalidateQueries({ queryKey: ["admin-client-roster", user?.id] });
       await queryClient.invalidateQueries({ queryKey: ["client-brand-profile", activeClient.id] });
@@ -509,8 +573,9 @@ export function AdminClientsPage() {
 
   const realColors = useMemo(() => {
     const raw =
-      liveBrandProfile?.brand_dna?.visual_direction?.primary_colors ||
       liveBrandProfile?.brand_dna?.palette ||
+      liveBrandProfile?.brand_dna?.visual_direction?.primary_colors ||
+      activeClient?.brand?.colors?.map((c: any) => c.hex) ||
       [];
     if (Array.isArray(raw) && raw.length > 0) {
       const labels = [
@@ -751,10 +816,15 @@ export function AdminClientsPage() {
               Back to Client Roster
             </button>
           </div>
-        ) : (
-          /* ═════════════════════════════════════════════════════════════════════
-              VIEW 2: DEDICATED CLIENT DETAIL VIEW (MATCHING USER SCREENSHOT)
-          ═════════════════════════════════════════════════════════════════════ */
+        ) : (() => {
+            const displayName = liveBrandProfile?.company_name || activeClient?.name || "Client";
+            const displayIndustry = liveBrandProfile?.industry || activeClient?.industry || "Digital Growth & Direct-to-Consumer";
+            const displayTimezone = liveBrandProfile?.timezone || activeClient?.timezone || "Client Time: IST (UTC+5:30)";
+            const displaySignerName = liveBrandProfile?.full_name || activeClient?.contact?.name || activeClient?.name || "Authorized Contact";
+            const displaySignerEmail = liveBrandProfile?.email || activeClient?.contact?.email || "";
+            const displayInitials = (displayName || "C").trim().split(/\s+/).filter(Boolean).map((w: string) => w[0]).slice(0, 2).join("").toUpperCase() || "C";
+
+            return (
           <div className="space-y-4 sm:space-y-6 animate-fade-in">
             {/* Top Breadcrumb & Live Status */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -769,7 +839,7 @@ export function AdminClientsPage() {
                 <span>/</span>
                 <span className="text-[#97A0B3]">Client Details</span>
                 <span>/</span>
-                <span className="text-white font-black">{activeClient?.name || "Client"}</span>
+                <span className="text-white font-black">{displayName}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -785,12 +855,12 @@ export function AdminClientsPage() {
               <div className="flex flex-col gap-6">
                 <div className="flex items-start gap-4 min-w-0">
                   <div className="w-16 h-16 rounded-2xl bg-[#0B111C] text-white font-black text-2xl flex items-center justify-center shadow-lg shrink-0">
-                    {activeClient?.initials || activeClient?.name?.[0] || "C"}
+                    {displayInitials}
                   </div>
                   <div className="space-y-1.5 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2.5">
                       <h1 className="text-2xl font-black text-white tracking-tight break-words">
-                        {activeClient?.name || "Client"}
+                        {displayName}
                       </h1>
                       <CheckCircle2 className="w-5 h-5 text-[#7FA0D6] fill-blue-600 text-white" />
                       <span className="px-2.5 py-0.5 rounded-full bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 text-[10px] font-black uppercase tracking-wider">
@@ -805,12 +875,12 @@ export function AdminClientsPage() {
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-[#97A0B3] font-medium">
                       <span className="flex items-center gap-1">
                         <Folder className="w-3.5 h-3.5 text-[#97A0B3]" />
-                        {activeClient?.industry || "Digital Growth"}
+                        {displayIndustry}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5 text-[#97A0B3]" />
-                        {activeClient?.timezone || "IST (UTC+5:30)"}
+                        {displayTimezone}
                       </span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
@@ -870,10 +940,10 @@ export function AdminClientsPage() {
 
                   <div className="flex items-center gap-3.5">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-base flex items-center justify-center shadow-md">
-                      {activeClient?.contact?.name?.[0] || activeClient?.name?.[0] || "C"}
+                      {displayInitials[0] || "C"}
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-white">{activeClient?.contact?.name || activeClient?.name || "Authorized Contact"}</h3>
+                      <h3 className="text-base font-bold text-white">{displaySignerName}</h3>
                       <p className="text-xs text-[#97A0B3] font-medium">{activeClient?.contact?.title || "Account Owner & Authorized Contact"}</p>
                     </div>
                   </div>
@@ -884,8 +954,8 @@ export function AdminClientsPage() {
                         <Mail className="w-4 h-4 text-[#97A0B3]" />
                         <span>Email</span>
                       </div>
-                      <a href={`mailto:${activeClient?.contact?.email || ""}`} className="text-[#7FA0D6] font-bold hover:underline">
-                        {activeClient?.contact?.email || "N/A"}
+                      <a href={`mailto:${displaySignerEmail}`} className="text-[#7FA0D6] font-bold hover:underline">
+                        {displaySignerEmail || "N/A"}
                       </a>
                     </div>
 
@@ -1422,7 +1492,8 @@ export function AdminClientsPage() {
               )}
             </div>
           </div>
-        )}
+            );
+          })()}
 
         {/* ═════════════════════════════════════════════════════════════════
             MODALS
@@ -1520,6 +1591,60 @@ export function AdminClientsPage() {
                     className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
                     placeholder="Short summary of brand value proposition..."
                   />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block font-bold text-white">Brand Color Palette</label>
+                    <button
+                      type="button"
+                      onClick={() => setEditFormData({ ...editFormData, colors: [...editFormData.colors, "#3B82F6"] })}
+                      className="text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer"
+                    >
+                      + Add Color
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    {editFormData.colors.map((hex, idx) => (
+                      <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-[#0B111C] border border-[#2A3446]">
+                        <input
+                          type="color"
+                          value={hex.startsWith("#") && hex.length === 7 ? hex : "#0B111C"}
+                          onChange={(e) => {
+                            const newCols = [...editFormData.colors];
+                            newCols[idx] = e.target.value.toUpperCase();
+                            setEditFormData({ ...editFormData, colors: newCols });
+                          }}
+                          className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 p-0 shrink-0"
+                        />
+                        <input
+                          type="text"
+                          value={hex}
+                          onChange={(e) => {
+                            const newCols = [...editFormData.colors];
+                            newCols[idx] = e.target.value.toUpperCase();
+                            setEditFormData({ ...editFormData, colors: newCols });
+                          }}
+                          placeholder="#000000"
+                          className="w-full text-xs font-mono font-bold text-white bg-transparent focus:outline-none"
+                        />
+                        {editFormData.colors.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newCols = editFormData.colors.filter((_, i) => i !== idx);
+                              setEditFormData({ ...editFormData, colors: newCols });
+                            }}
+                            className="text-[#97A0B3] hover:text-rose-400 p-1 cursor-pointer"
+                            title="Remove color"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-[#97A0B3] mt-1">Changes are synced across the Client Brief and Content Studio.</p>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-3 border-t border-[#2A3446]">

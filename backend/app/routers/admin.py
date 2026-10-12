@@ -580,22 +580,37 @@ async def get_client_roster(
                     )
                 ) FILTER (WHERE uc.id IS NOT NULL),
                 '[]'::json
-            ) AS quota_usage
+            ) AS quota_usage,
+            cp.timezone,
+            cp.brand_summary,
+            cp.brand_dna,
+            q.answers AS quest_answers
         FROM users u
         LEFT JOIN client_profiles cp ON cp.user_id = u.id
         LEFT JOIN subscriptions s ON s.client_id = u.id AND s.status IN ('trialing', 'active')
         LEFT JOIN plans p ON p.id = s.plan_id
         LEFT JOIN usage_counters uc ON uc.client_id = u.id
+        LEFT JOIN questionnaires q ON q.user_id = u.id
         WHERE u.role = 'client'
         GROUP BY
             u.id, u.email, u.full_name, u.account_status, cp.company_name, cp.instagram_username,
             cp.onboarding_completed_at, cp.terms_accepted_at, u.email_verified_at,
-            p.name, p.display_name, p.monthly_price, s.status, s.id
+            p.name, p.display_name, p.monthly_price, s.status, s.id,
+            cp.timezone, cp.brand_summary, cp.brand_dna, q.answers
         ORDER BY u.created_at DESC;
     """)
 
     res = await db.execute(sql)
     rows = res.fetchall()
+
+    curated_palettes = [
+        ["#0F172A", "#2563EB", "#38BDF8", "#F8FAFC"],
+        ["#18181B", "#D97706", "#FBBF24", "#FAFAFA"],
+        ["#1E1B4B", "#7C3AED", "#C084FC", "#F5F3FF"],
+        ["#064E3B", "#059669", "#34D399", "#ECFDF5"],
+        ["#831843", "#DB2777", "#F472B6", "#FDF2F8"],
+        ["#1E293B", "#0D9488", "#2DD4BF", "#F0FDFA"],
+    ]
 
     clients = []
     for r in rows:
@@ -604,6 +619,61 @@ async def get_client_roster(
             quota_usage = json.loads(quota_raw)
         else:
             quota_usage = list(quota_raw or [])
+
+        dna_raw = r[14] if len(r) > 14 and r[14] else {}
+        if isinstance(dna_raw, str):
+            try:
+                dna_dict = json.loads(dna_raw)
+            except Exception:
+                dna_dict = {}
+        else:
+            dna_dict = dict(dna_raw or {})
+
+        quest_raw = r[15] if len(r) > 15 and r[15] else {}
+        if isinstance(quest_raw, str):
+            try:
+                q_dict = json.loads(quest_raw)
+            except Exception:
+                q_dict = {}
+        else:
+            q_dict = dict(quest_raw or {})
+
+        # Extract authentic questionnaire colors
+        q_colors = []
+        raw_cands = q_dict.get("hex_codes") or q_dict.get("colours") or q_dict.get("color_palette") or []
+        if isinstance(raw_cands, list):
+            for c in raw_cands:
+                if isinstance(c, str) and c.strip().startswith("#"):
+                    q_colors.append(c.strip().upper())
+                elif isinstance(c, dict) and c.get("hex"):
+                    q_colors.append(str(c["hex"]).strip().upper())
+
+        # If questionnaire has colors, prioritize them over seed/template brand_dna
+        if q_colors:
+            dna_dict["palette"] = q_colors
+            vis = dna_dict.get("visual_direction")
+            if not isinstance(vis, dict):
+                vis = {}
+            vis["primary_colors"] = q_colors
+            dna_dict["visual_direction"] = vis
+        elif not dna_dict.get("palette"):
+            # Deterministic fallback based on UUID
+            cid_int = abs(int(uuid.UUID(str(r[0])).int)) % len(curated_palettes)
+            dna_dict["palette"] = curated_palettes[cid_int]
+            vis = dna_dict.get("visual_direction")
+            if not isinstance(vis, dict):
+                vis = {}
+            vis["primary_colors"] = curated_palettes[cid_int]
+            dna_dict["visual_direction"] = vis
+
+        ind_val = (
+            dna_dict.get("industry")
+            or dna_dict.get("category")
+            or q_dict.get("niche")
+            or "Digital Growth & Direct-to-Consumer"
+        )
+        dna_dict["industry"] = ind_val
+        dna_dict["category"] = ind_val
 
         clients.append(
             {
@@ -619,6 +689,10 @@ async def get_client_roster(
                 "monthly_price": float(r[9]) if r[9] is not None else 0.0,
                 "subscription_status": r[10],
                 "quota_usage": quota_usage,
+                "timezone": r[12] or "Asia/Kolkata",
+                "brand_summary": r[13] or dna_dict.get("summary_line") or "",
+                "brand_dna": dna_dict,
+                "industry": ind_val,
             }
         )
     return clients
@@ -760,44 +834,89 @@ async def get_client_brand_profile(
     ]
 
     # 8. Build response
-    brand_dna = profile.brand_dna if profile and profile.brand_dna else {}
+    brand_dna = dict(profile.brand_dna or {}) if profile else {}
 
-    # If brand_dna is missing or lacking visual_direction, attempt to synthesize from questionnaire
-    if not brand_dna or not brand_dna.get("visual_direction"):
-        q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_uuid)
-        quest = (await db.execute(q_stmt)).scalar_one_or_none()
-        if quest and quest.answers and any(k in quest.answers for k in ("a", "b", "c", "d", "e")):
-            from app.services import brand_dna as brand_dna_service
-            try:
-                synthesized = brand_dna_service.generate_deterministic_brand_dna(quest.answers)
-                brand_dna = synthesized.model_dump()
-                if profile:
-                    profile.brand_dna = brand_dna
-                    profile.brand_summary = profile.brand_summary or brand_dna.get("summary_line")
-                    await db.commit()
-            except Exception as e:
-                logger.warning(f"Failed to auto-synthesize brand DNA: {e}")
+    # Check questionnaire for client's actual onboarding answers
+    q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_uuid)
+    quest = (await db.execute(q_stmt)).scalar_one_or_none()
 
-    # Ensure visual_direction and colors are present and accurate
-    if brand_dna:
-        vis = brand_dna.get("visual_direction")
-        if not isinstance(vis, dict):
-            vis = {}
-            brand_dna["visual_direction"] = vis
-        if not vis.get("primary_colors") and brand_dna.get("palette"):
-            vis["primary_colors"] = brand_dna["palette"]
-        if not vis.get("primary_colors"):
-            # Provide an authentic, distinct palette derived from client identity rather than identical mock values
-            hash_val = abs(hash(str(client_uuid))) % 6
-            curated_palettes = [
-                ["#0F172A", "#2563EB", "#38BDF8", "#F8FAFC"],
-                ["#18181B", "#D97706", "#FBBF24", "#FAFAFA"],
-                ["#1E1B4B", "#7C3AED", "#C084FC", "#F5F3FF"],
-                ["#064E3B", "#059669", "#34D399", "#ECFDF5"],
-                ["#831843", "#DB2777", "#F472B6", "#FDF2F8"],
-                ["#1E293B", "#0D9488", "#2DD4BF", "#F0FDFA"],
+    # Extract authentic colors chosen by the client
+    chosen_palette: list[str] = []
+    if quest:
+        q_ans = quest.answers or {}
+        sec_d = quest.section_d or q_ans.get("d") or {}
+        raw_candidates = (
+            q_ans.get("hex_codes")
+            or sec_d.get("colours")
+            or sec_d.get("color_palette")
+            or q_ans.get("color_palette")
+            or q_ans.get("colours")
+            or []
+        )
+        if isinstance(raw_candidates, list):
+            for c in raw_candidates:
+                if isinstance(c, str) and c.strip().startswith("#"):
+                    chosen_palette.append(c.strip().upper())
+                elif isinstance(c, dict) and c.get("hex"):
+                    chosen_palette.append(str(c["hex"]).strip().upper())
+
+        # Also extract niche / industry if not already set
+        if not brand_dna.get("industry") and not brand_dna.get("category"):
+            niche = q_ans.get("niche") or (quest.section_a or {}).get("category")
+            if niche:
+                brand_dna["industry"] = str(niche)
+                brand_dna["category"] = str(niche)
+
+        # Also extract content pillars if not present
+        if not brand_dna.get("content_pillars") and q_ans.get("pillars"):
+            brand_dna["content_pillars"] = [
+                {"name": str(p), "funnel_stage": "authority", "rationale": f"Core pillar covering {p}"}
+                for p in q_ans.get("pillars")
             ]
-            vis["primary_colors"] = curated_palettes[hash_val]
+
+    # If brand_dna already has a palette explicitly set by client or admin, consider it
+    direct_dna_palette: list[str] = []
+    if isinstance(brand_dna.get("palette"), list):
+        for c in brand_dna["palette"]:
+            if isinstance(c, str) and c.strip().startswith("#"):
+                direct_dna_palette.append(c.strip().upper())
+            elif isinstance(c, dict) and c.get("hex"):
+                direct_dna_palette.append(str(c["hex"]).strip().upper())
+
+    # Prioritize:
+    # 1. Questionnaire's explicit hex_codes/colours chosen during onboarding
+    # 2. Or direct palette from brand_dna if set
+    final_palette = chosen_palette if chosen_palette else direct_dna_palette
+
+    if not final_palette:
+        vis_colors = []
+        vis_existing = brand_dna.get("visual_direction")
+        if isinstance(vis_existing, dict) and isinstance(vis_existing.get("primary_colors"), list):
+            for c in vis_existing["primary_colors"]:
+                if isinstance(c, str) and c.strip().startswith("#"):
+                    vis_colors.append(c.strip().upper())
+        if vis_colors:
+            final_palette = vis_colors
+
+    if not final_palette:
+        hash_val = abs(int(uuid.UUID(str(client_uuid)).int)) % 6
+        curated_palettes = [
+            ["#0F172A", "#2563EB", "#38BDF8", "#F8FAFC"],
+            ["#18181B", "#D97706", "#FBBF24", "#FAFAFA"],
+            ["#1E1B4B", "#7C3AED", "#C084FC", "#F5F3FF"],
+            ["#064E3B", "#059669", "#34D399", "#ECFDF5"],
+            ["#831843", "#DB2777", "#F472B6", "#FDF2F8"],
+            ["#1E293B", "#0D9488", "#2DD4BF", "#F0FDFA"],
+        ]
+        final_palette = curated_palettes[hash_val]
+
+    # Ensure brand_dna has both palette and visual_direction aligned to final_palette
+    brand_dna["palette"] = final_palette
+    vis = brand_dna.get("visual_direction")
+    if not isinstance(vis, dict):
+        vis = {}
+    vis["primary_colors"] = final_palette
+    brand_dna["visual_direction"] = vis
 
     # Derive onboarding stage
     has_sub = subscription_data is not None
@@ -853,6 +972,8 @@ class UpdateClientProfileRequest(BaseModel):
     timezone: str | None = None
     industry: str | None = None
     brand_summary: str | None = None
+    palette: list[str] | None = None
+    colors: list[str] | None = None
     brand_dna: dict[str, Any] | None = None
 
 
@@ -863,7 +984,7 @@ async def update_client_profile(
     db: AsyncSession = Depends(get_db),
     actor: Actor = TeamLeadActor,
 ) -> dict[str, Any]:
-    """Update client profile attributes (company name, signer, brand summary, timezone, etc.)."""
+    """Update client profile attributes (company name, signer, brand summary, timezone, colors, etc.)."""
     from app.core.client_scope import ensure_client_access
     from app.core.dashboard_cache import invalidate_dashboard_cache
 
@@ -932,13 +1053,41 @@ async def update_client_profile(
         brand_dna_data["category"] = payload.industry.strip()
         brand_dna_data["industry"] = payload.industry.strip()
 
+    new_colors = payload.palette or payload.colors
+    if new_colors is not None and isinstance(new_colors, list) and len(new_colors) > 0:
+        clean_colors = [str(c).strip().upper() for c in new_colors if str(c).strip().startswith("#")]
+        if clean_colors:
+            brand_dna_data["palette"] = clean_colors
+            vis = brand_dna_data.get("visual_direction")
+            if not isinstance(vis, dict):
+                vis = {}
+            vis["primary_colors"] = clean_colors
+            brand_dna_data["visual_direction"] = vis
+
     if payload.brand_dna is not None:
         brand_dna_data.update(payload.brand_dna)
 
     profile.brand_dna = brand_dna_data
 
+    # Also sync questionnaire if present
+    q_stmt = select(Questionnaire).where(Questionnaire.user_id == client_uuid)
+    quest = (await db.execute(q_stmt)).scalar_one_or_none()
+    if quest:
+        q_ans = dict(quest.answers or {})
+        if new_colors:
+            clean_colors = [str(c).strip().upper() for c in new_colors if str(c).strip().startswith("#")]
+            if clean_colors:
+                q_ans["hex_codes"] = clean_colors
+        if payload.industry:
+            q_ans["niche"] = payload.industry.strip()
+        quest.answers = q_ans
+
     await db.commit()
+    await db.refresh(profile)
+    await db.refresh(client_user)
     await invalidate_dashboard_cache()
+
+    return await get_client_brand_profile(str(client_uuid), db=db, actor=actor)
 
     return await get_client_brand_profile(str(client_uuid), db=db, actor=actor)
 

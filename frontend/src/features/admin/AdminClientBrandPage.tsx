@@ -152,19 +152,21 @@ export function AdminClientBrandPage() {
   const writingRules: string[] = Array.isArray(tone.writing_rules)
     ? tone.writing_rules.map((r: any) => (typeof r === "string" ? r : (r?.rule || r?.text || String(r))))
     : [];
-  const audiences: any[] = Array.isArray(dna.audience_segments)
+  const audiences: any[] = Array.isArray(dna.audience_segments) && dna.audience_segments.length > 0
     ? dna.audience_segments
-    : [];
+    : typeof dna.target_audience === "string" && dna.target_audience
+      ? [{ name: "Target Audience", description: dna.target_audience }]
+      : [];
   const pillars: any[] = Array.isArray(dna.content_pillars)
     ? dna.content_pillars
     : [];
   const visualDir = (typeof dna.visual_direction === "object" && dna.visual_direction !== null)
     ? (dna.visual_direction as Record<string, any>)
     : {};
-  const palette: any[] = Array.isArray(visualDir.primary_colors) && visualDir.primary_colors.length > 0
-    ? visualDir.primary_colors
-    : Array.isArray(dna.palette) && dna.palette.length > 0
-      ? dna.palette
+  const palette: any[] = Array.isArray(dna.palette) && dna.palette.length > 0
+    ? dna.palette
+    : Array.isArray(visualDir.primary_colors) && visualDir.primary_colors.length > 0
+      ? visualDir.primary_colors
       : ["#0B111C", "#7FA0D6", "#38BDF8", "#F8FAFC"];
   const visualStyles: string[] = Array.isArray(visualDir.styles)
     ? visualDir.styles.map((s: any) => (typeof s === "string" ? s : (s?.name || String(s))))
@@ -426,7 +428,7 @@ export function AdminClientBrandPage() {
                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
                   Brand Color Palette
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {palette.map((c, idx) => (
                     <ColorSwatch key={`${c}-${idx}`} color={c} index={idx} />
                   ))}
@@ -473,7 +475,7 @@ export function AdminClientBrandPage() {
                     </p>
                   )}
                   {typeof a === "object" && a.core_pain_point && (
-                    <p className="text-[11px] text-rose-600 mt-1.5 font-medium">
+                    <p className="text-[11px] text-rose-400 mt-1.5 font-medium">
                       <strong>Pain Point:</strong> {a.core_pain_point}
                     </p>
                   )}

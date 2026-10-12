@@ -295,6 +295,8 @@ export interface UpdateClientProfilePayload {
   timezone?: string | null;
   industry?: string | null;
   brand_summary?: string | null;
+  palette?: string[] | null;
+  colors?: string[] | null;
   brand_dna?: Record<string, any>;
 }
 

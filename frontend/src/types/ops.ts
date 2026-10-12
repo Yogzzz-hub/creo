@@ -39,6 +39,10 @@ export interface ClientRosterItem {
     quota: number;
     used: number;
   }>;
+  timezone?: string | null;
+  brand_summary?: string | null;
+  industry?: string | null;
+  brand_dna?: Record<string, any> | null;
 }
 
 export interface StaffQueueItem {
