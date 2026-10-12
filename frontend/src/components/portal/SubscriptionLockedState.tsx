@@ -139,7 +139,7 @@ export function SubscriptionLockedState({
             <button
               type="button"
               onClick={() => setBargainModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/10 px-5 py-3 text-sm font-semibold text-[#BCCCE6] hover:bg-[#7FA0D6]/20 transition-all cursor-pointer shadow-sm"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/10 px-5 py-3 text-sm font-semibold text-[#BCCCE6] cursor-pointer transition-colors enabled:hover:bg-[#293D58] enabled:hover:border-[#9CB8E5] enabled:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161F2D] shadow-sm"
             >
               <PhoneCall className="size-4" />
               <span>Call & Bargain / Custom Retainer</span>

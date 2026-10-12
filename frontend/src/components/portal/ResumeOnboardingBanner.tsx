@@ -123,7 +123,7 @@ export function ResumeOnboardingBanner({
                 <button
                   type="button"
                   onClick={() => setBargainOpen(true)}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/10 px-5 py-3 text-sm font-semibold text-[#BCCCE6] transition-colors hover:bg-[#7FA0D6]/20"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#7FA0D6]/40 bg-[#7FA0D6]/10 px-5 py-3 text-sm font-semibold text-[#BCCCE6] cursor-pointer transition-colors enabled:hover:bg-[#293D58] enabled:hover:border-[#9CB8E5] enabled:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161F2D]"
                 >
                   <PhoneCall className="size-4" />
                   Call & bargain a custom plan

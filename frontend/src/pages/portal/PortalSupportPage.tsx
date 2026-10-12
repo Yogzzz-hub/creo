@@ -164,7 +164,7 @@ export function PortalSupportPage() {
             <button
               type="button"
               onClick={() => setBargainModalOpen(true)}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] hover:text-white hover:border-[#7FA0D6]/50 text-xs font-bold transition-colors cursor-pointer"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#0B111C] border border-[#2A3446] text-[#7FA0D6] text-xs font-bold cursor-pointer transition-colors enabled:hover:bg-[#293D58] enabled:hover:border-[#9CB8E5] enabled:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#161F2D]"
             >
               <PhoneCall className="size-3.5" />
               <span>Call & Bargain</span>
