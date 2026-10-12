@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, useLayoutEffect } from "react";
 import { Outlet, useLocation } from "react-router";
 import { useRouteMemory } from "../../lib/useRouteMemory";
 import { PortalSidebarNew } from "./PortalSidebarNew";
@@ -12,6 +12,10 @@ export function PortalLayout() {
   // Passively save current route to sessionStorage on every navigation
   useRouteMemory();
   const { pathname } = useLocation();
+  // Start each page below its header rather than retaining the previous page's scroll.
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
   // The dashboard and plan pages render the larger resume card themselves instead of the strip
   const hasHeroResume =
     pathname === "/portal" || pathname === "/portal/" || pathname.startsWith("/portal/payments");

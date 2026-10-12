@@ -19,7 +19,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
-import { useOnboardingGate } from "../../lib/useOnboardingGate";
+import { usePortalNavigationLocks } from "../../lib/usePortalNavigationLocks";
 import { useConfirm } from "../ui/ConfirmDialog";
 
 import { useAdminSidebar } from "../admin/AdminSidebarContext";
@@ -66,8 +66,7 @@ export function PortalSidebarNew() {
     return () => { document.body.style.overflow = old; window.removeEventListener("keydown", escape); };
   }, [mobileOpen, setMobileOpen]);
   const { user, logout } = useAuth();
-  const onboardingGate = useOnboardingGate();
-  const slackLocked = user?.role === "client" && (!onboardingGate.isReady || !onboardingGate.isComplete);
+  const lockReason = usePortalNavigationLocks();
   const [loggingOut, setLoggingOut] = useState(false);
   const confirm = useConfirm();
   
@@ -110,7 +109,7 @@ export function PortalSidebarNew() {
     <>
       {mobileOpen && <button aria-label="Close navigation overlay" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-[9998] bg-black/70 xl:hidden" />}
       <aside aria-label="Client navigation" className={`fixed inset-y-0 left-0 z-[9999] xl:z-40 flex w-[280px] max-w-[85vw] flex-col border-r border-white/[0.06] transition-transform duration-300 xl:translate-x-0 ${mobileOpen ? "translate-x-0 visible" : "-translate-x-full invisible xl:visible"}`}>
-        <button aria-label="Close navigation sidebar" onClick={() => setMobileOpen(false)} className="absolute right-3 top-3 xl:hidden p-2 text-white"><X className="size-5" /></button>
+        <button aria-label="Close navigation sidebar" onClick={() => setMobileOpen(false)} className="absolute right-3 top-3 xl:hidden rounded-lg p-2 text-white transition-colors hover:bg-white/10 cursor-pointer"><X className="size-5" /></button>
       <div className="flex flex-1 flex-col bg-[#0B111C] overflow-y-auto">
         {/* Logo */}
         <div className="px-7 pt-7 pb-2">
@@ -137,12 +136,13 @@ export function PortalSidebarNew() {
         </div>
 
         {/* Main Navigation */}
-        <nav className="flex-1 flex flex-col px-3 pt-2">
+        <nav className="flex-1 flex flex-col px-3 pt-2 pb-5">
           {/* Main Links */}
           <div className="space-y-0.5">
             {MAIN_NAV.map((item) => {
               const active = isActive(item.href, location.pathname, location.search);
               const Icon = item.icon;
+              const reason = lockReason(item.href);
               return (
                 <Link
                   key={item.href}
@@ -155,7 +155,8 @@ export function PortalSidebarNew() {
                 >
                   <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={active ? 2.2 : 1.8} />
                   <span className="flex-1">{item.label}</span>
-                  {item.id === "review" && dashboardData?.pending_deliverable_count > 0 && (
+                  {reason && <span aria-label={reason} title={reason}><Lock aria-hidden="true" className={`size-3.5 shrink-0 ${active ? "text-[#0B111C]" : "text-[#D8BF9B]"}`} /></span>}
+                  {!reason && item.id === "review" && dashboardData?.pending_deliverable_count > 0 && (
                     <span className="flex items-center justify-center min-w-6 h-6 px-1.5 rounded-full bg-[#7FA0D6] text-white text-[11px] font-bold">
                       {dashboardData.pending_deliverable_count}
                     </span>
@@ -174,7 +175,7 @@ export function PortalSidebarNew() {
               {BRAND_NAV.map((item) => {
                 const active = isActive(item.href, location.pathname, location.search);
                 const Icon = item.icon;
-                const isLocked = item.href === "/portal/slack" && slackLocked;
+                const reason = lockReason(item.href);
                 return (
                   <Link
                     key={item.href}
@@ -187,12 +188,12 @@ export function PortalSidebarNew() {
                   >
                     <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={active ? 2.2 : 1.8} />
                     <span className="flex-1">{item.label}</span>
-                    {isLocked && (
+                    {reason && (
                       <span
-                        aria-label="Locked until onboarding is complete"
-                        title="Locked until onboarding is complete"
+                        aria-label={reason}
+                        title={reason}
                       >
-                        <Lock aria-hidden="true" className="size-3.5 shrink-0 text-[#D8BF9B]" />
+                        <Lock aria-hidden="true" className={`size-3.5 shrink-0 ${active ? "text-[#0B111C]" : "text-[#D8BF9B]"}`} />
                       </span>
                     )}
                   </Link>
@@ -230,7 +231,7 @@ export function PortalSidebarNew() {
               <button
                 onClick={handleLogout}
                 disabled={loggingOut}
-                className="group w-full flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium rounded-full transition-all duration-150 mx-1 text-[#97A0B3] hover:text-white hover:bg-white/[0.04] cursor-pointer"
+                className="group w-[calc(100%-0.5rem)] flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium rounded-full transition-all duration-150 mx-1 text-[#97A0B3] hover:text-white hover:bg-white/[0.04] cursor-pointer"
               >
                 <LogOut className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
                 <span className="flex-1 text-left">{loggingOut ? "Signing out..." : "Log out"}</span>
@@ -240,7 +241,7 @@ export function PortalSidebarNew() {
               {(user?.role === "admin" || user?.role === "super_admin") && (
                 <Link
                   to="/admin"
-                  className="group w-full flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium rounded-full transition-all duration-150 mx-1 mt-2 bg-nebula-glow/10 text-nebula-glow hover:bg-nebula-glow/20 border border-nebula-glow/30 cursor-pointer"
+                  className="group w-[calc(100%-0.5rem)] flex items-center gap-3 px-4 py-2.5 text-[13px] font-medium rounded-full transition-all duration-150 mx-1 mt-2 bg-nebula-glow/10 text-nebula-glow hover:bg-nebula-glow/20 border border-nebula-glow/30 cursor-pointer"
                 >
                   <LayoutDashboard className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
                   <span className="flex-1 text-left">Admin Dashboard</span>

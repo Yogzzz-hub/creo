@@ -118,7 +118,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
   const tabButton = (active: boolean) =>
     `inline-flex min-h-10 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B111C] cursor-pointer ${active ? "bg-[#BCCCE6] text-[#0B111C] shadow-[0_4px_16px_rgba(127,160,214,0.18)]" : "text-[#97A0B3] hover:bg-white/[0.05] hover:text-white"}`;
   return (
-    <main className="mx-auto w-full max-w-[1440px] space-y-6 pb-12 text-white">
+    <div className="w-full min-w-0 space-y-6 text-white">
       <header className="flex flex-col gap-5 rounded-3xl border border-[#2A3446] bg-[radial-gradient(ellipse_at_top_left,rgba(127,160,214,0.12),transparent_55%),#111927] p-5 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#7FA0D6]/20 bg-[#7FA0D6]/[0.08] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#9CB8E5]">
@@ -262,7 +262,7 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
               ? ["company", "instagram", "summary"]
               : ["name", "company", "phone"]
             ).map((key) => (
-              <label key={key} className={`block space-y-2 ${key === "company" || key === "summary" ? "sm:col-span-2" : ""}`}>
+              <label key={key} className={`block min-w-0 space-y-2 ${key === "phone" || key === "summary" ? "sm:col-span-2" : ""}`}>
                 <span className="text-xs font-semibold text-[#C5CDDA]">
                   {
                     {
@@ -372,6 +372,6 @@ export function PortalAccountPage({ defaultTab = "settings" }: { defaultTab?: st
           )}
         </>
       )}
-    </main>
+    </div>
   );
 }

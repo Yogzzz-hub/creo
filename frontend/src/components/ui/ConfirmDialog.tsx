@@ -233,14 +233,14 @@ export function ConfirmDialog({
   const getConfirmButtonStyle = () => {
     switch (tone) {
       case "success":
-        return "bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-md shadow-emerald-600/25";
+        return "bg-[#BCCCE6] text-[#0B111C] enabled:hover:bg-[#D2DDF0] shadow-md";
       case "warning":
-        return "bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white shadow-md shadow-amber-600/25";
+        return "bg-[#D8BF9B] text-[#0B111C] enabled:hover:bg-[#E8D3B5] shadow-md";
       case "info":
-        return "bg-gradient-to-r from-[#7FA0D6] to-[#7FA0D6] hover:brightness-110 text-white shadow-md shadow-blue-500/25";
+        return "bg-[#BCCCE6] text-[#0B111C] enabled:hover:bg-[#D2DDF0] shadow-md";
       case "danger":
       default:
-        return "bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white shadow-md shadow-rose-600/25";
+        return "bg-[#D8BF9B] text-[#0B111C] enabled:hover:bg-[#E8D3B5] shadow-md";
     }
   };
 
@@ -338,7 +338,7 @@ export function ConfirmDialog({
               type="button"
               onClick={onClose}
               disabled={isProcessing}
-              className="rounded-xl border border-[#2A3446] bg-[#0B111C] px-4 py-2 text-xs font-bold text-[#BCCCE6] transition-all hover:bg-[#222D3E] active:scale-95 cursor-pointer"
+              className="rounded-xl border border-[#2A3446] bg-[#0B111C] min-h-11 px-4 py-2 text-sm font-bold text-[#BCCCE6] transition-all hover:bg-[#222D3E] active:scale-95 cursor-pointer"
             >
               {cancelText}
             </button>
@@ -348,7 +348,7 @@ export function ConfirmDialog({
             onClick={onConfirm}
             disabled={isProcessing}
             autoFocus
-            className={`px-5 py-2.5 rounded-xl text-xs font-bold active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`px-5 py-2.5 min-h-11 rounded-xl text-sm font-bold disabled:opacity-50 enabled:active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               isAlertOnly ? "w-full" : ""
             } ${getConfirmButtonStyle()}`}
           >
