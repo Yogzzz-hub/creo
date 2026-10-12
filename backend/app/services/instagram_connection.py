@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.errors import Conflict, Forbidden
+from app.core.logging import get_logger
 from app.core.rbac import Actor
 from app.models.enums import AccountStatus, UserRole
 from app.models.ops import AuditLog, Notification
@@ -23,10 +24,11 @@ from app.models.publishing import InstagramOAuth, PublishingJob
 from app.models.user import ClientProfile, User
 from app.services.instagram_client import SCOPES, InstagramError, get_instagram_client
 
+logger = get_logger(__name__)
 
 def cipher() -> Fernet:
     try:
-        return Fernet(settings.ENCRYPTION_KEY.encode())
+        return Fernet(settings.ENCRYPTION_KEY.strip().encode())
     except (ValueError, TypeError):
         raise Conflict(
             "Instagram encryption is not configured. Contact your administrator.",
@@ -83,6 +85,11 @@ def configured() -> bool:
 
 def require_configuration() -> None:
     if not configured():
+        logger.error(
+            "instagram_not_configured",
+            hint="Set INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET, a Fernet ENCRYPTION_KEY, "
+            "and the exact HTTPS INSTAGRAM_REDIRECT_URI registered with Meta.",
+        )
         raise Conflict(
             "Instagram authorization is not configured. Contact your administrator.",
             code="INSTAGRAM_NOT_CONFIGURED",

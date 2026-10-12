@@ -38,7 +38,8 @@ services:
       - key: REFRESH_TOKEN_DAYS
         value: 30
       - key: ENCRYPTION_KEY
-        generateValue: true
+        # Must be Fernet.generate_key(), not Render's generic generated secret.
+        sync: false
       - key: INSTAGRAM_APP_ID
         sync: false
       - key: INSTAGRAM_APP_SECRET
@@ -46,7 +47,7 @@ services:
       - key: INSTAGRAM_REDIRECT_URI
         value: https://creo.yogalakshmibaskar20.workers.dev/portal/account/instagram
       - key: INSTAGRAM_CLIENT_MODE
-        value: fake
+        value: real
       - key: INSTAGRAM_PUBLISHING_ENABLED
         value: "false"
       - key: META_GRAPH_API_VERSION

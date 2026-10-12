@@ -35,6 +35,29 @@ version-specific limits and App Review access in Meta before enabling live use.
 
 ## Implemented workflow
 
+### Connection setup troubleshooting
+
+Use `backend/.env.instagram.example` for the server settings. `ENCRYPTION_KEY`
+must be a URL-safe Fernet key; Render's generic `generateValue` secret does not
+satisfy that format. Generate it once with
+`python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`
+and securely set the same value on the API and publishing workers. Preserve an
+existing valid key so stored account credentials remain readable.
+
+Register exactly
+`https://creo.yogalakshmibaskar20.workers.dev/portal/account/instagram`
+as the Meta Facebook Login redirect and `INSTAGRAM_REDIRECT_URI`. Connect remains
+clickable even when cached status says setup is incomplete: the backend validates
+the current configuration on every attempt and returns a clear error. The API logs
+`instagram_not_configured` for deployment troubleshooting without exposing secrets.
+
+An Instagram profile URL identifies an account but cannot authorize it. The client
+must sign in through Meta and select the intended Page-linked professional account.
+App credential acceptance does not prove Page access, approved permissions, client
+authorization, or successful publishing. Confirm the connected username in Settings,
+then verify a client-approved scheduled asset and its actual Instagram permalink.
+The client queue stays read-only in Settings; staff manage publishing schedules.
+
 The client opens `/portal/account/instagram`. Facebook Login returns to that exact
 SPA route; the authenticated browser forwards the code to the backend. A ten-minute,
 single-use state record is bound to the signed-in client and a browser-held verifier.

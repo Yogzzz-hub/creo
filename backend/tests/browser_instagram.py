@@ -33,7 +33,7 @@ async def main():
     state = {
         "status": "disconnected",
         "connected": False,
-        "configured": True,
+        "configured": False,
         "publishing_enabled": False,
     }
     calls = []
@@ -71,6 +71,16 @@ async def main():
             body = {"is_active": True, "subscription": {"status": "active"}}
         elif path.endswith("/portal/profile"):
             body = {**USER, "company_name": "ABC Restaurant"}
+        elif path.endswith("/instagram/connect"):
+            state["configured"] = True
+            return await request_route.fulfill(
+                status=409,
+                json={"detail": "Instagram authorization is not configured. Contact your administrator."},
+                headers={
+                    "Access-Control-Allow-Origin": BASE,
+                    "Access-Control-Allow-Credentials": "true",
+                },
+            )
         elif path.endswith("/instagram/callback"):
             submitted = request.post_data_json
             assert submitted["verifier"] == "v" * 32 and submitted["state"] == "s" * 32
@@ -142,6 +152,9 @@ async def main():
         await expect(
             page.get_by_role("button", name="Connect Instagram", exact=True)
         ).to_be_enabled()
+        await page.get_by_role("button", name="Connect Instagram", exact=True).click()
+        await expect(page.get_by_text("Instagram authorization is not configured. Contact your administrator.")).to_be_visible()
+        assert any(method == "POST" and path.endswith("/instagram/connect") for method, path in calls)
         await page.evaluate(
             "sessionStorage.setItem('creo-instagram-oauth', JSON.stringify({"
             f"state: '{'s' * 32}', verifier: '{'v' * 32}', userId: '{CLIENT_ID}'"
