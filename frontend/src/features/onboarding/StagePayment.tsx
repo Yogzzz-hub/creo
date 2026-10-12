@@ -23,7 +23,6 @@ import { useConfirm } from "../../components/ui/ConfirmDialog";
 import type { Plan } from "../../types/api";
 import {
   Check,
-  Calendar,
   Zap,
   ArrowLeft,
   ArrowRight,
@@ -414,33 +413,6 @@ export function StagePayment({ userId, onPaymentComplete, onBack, isAlreadyPaid 
       animate={{ opacity: 1, y: 0 }}
       className="w-full space-y-4 sm:space-y-5"
     >
-      {/* Header Card */}
-      <div className="rounded-xl border border-[#2A3446] bg-[#161F2D] p-4 sm:p-6 shadow-xl">
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#7FA0D6]/20 border border-[#7FA0D6]/30 text-[#BCCCE6] text-[11px] font-bold uppercase tracking-wider mb-3 shadow-sm">
-              Step 3 of 5
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight mb-2">
-              Choose Your Retainer Plan
-            </h2>
-            <p className="text-sm text-[#97A0B3] leading-relaxed max-w-xl">
-              Select the subscription tier that matches your creative growth ambition. Upgrade, downgrade, or cancel anytime.
-            </p>
-          </div>
-          
-          <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#2A3446] bg-[#0B111C] text-[#7FA0D6] text-[11px] font-bold shadow-xs">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>30-Day Production Cycle</span>
-            </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-800/50 bg-emerald-950/40 text-emerald-300 text-[11px] font-bold shadow-xs">
-              <Zap className="w-3.5 h-3.5 fill-emerald-400 text-emerald-400" />
-              <span>Instant Pod Provisioning</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Confirmation Banner overlay/compact state (never replacing the page with an empty box) */}
       <AnimatePresence>
