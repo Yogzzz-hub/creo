@@ -49,6 +49,8 @@ def test_unconfigured_production_email_is_recorded_as_failed(monkeypatch: Any) -
         lambda *_args, **_kwargs: FakeAsyncContext(session),
     )
     monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr(settings, "SMTP_PASSWORD", "")
+    monkeypatch.setattr(settings, "SMTP_USERNAME", "")
     monkeypatch.setattr(settings, "BREVO_API_KEY", "")
     monkeypatch.setattr(settings, "BREVO_FROM_EMAIL", "")
 

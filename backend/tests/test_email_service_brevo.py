@@ -33,6 +33,8 @@ class FakeAsyncClient:
 
 @pytest.fixture(autouse=True)
 def configured_brevo(monkeypatch: Any) -> None:
+    monkeypatch.setattr(settings, "SMTP_PASSWORD", "")
+    monkeypatch.setattr(settings, "SMTP_USERNAME", "")
     monkeypatch.setattr(settings, "BREVO_API_KEY", "test-brevo-key")
     monkeypatch.setattr(settings, "BREVO_FROM_EMAIL", "verify@example.com")
     monkeypatch.setattr(settings, "BREVO_FROM_NAME", "Creo")
