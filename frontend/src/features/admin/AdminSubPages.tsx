@@ -23,7 +23,6 @@ import {
   fetchRevenueTrend,
   fetchAdminTransactions,
   fetchClientBrandProfile,
-  updateClientProfile,
 } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem, PlanSummaryItem } from "../../lib/ops-api";
 import type { ClientRosterItem } from "../../types/ops";
@@ -187,7 +186,6 @@ export function AdminClientsPage() {
   }, [rosterQuery.data]);
 
   // Active Modals
-  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [isCancelClientModalOpen, setIsCancelClientModalOpen] = useState(false);
   const [isOnboardClientModalOpen, setIsOnboardClientModalOpen] = useState(false);
@@ -201,19 +199,6 @@ export function AdminClientsPage() {
   const [removeError, setRemoveError] = useState<string | null>(null);
   const [removedClientIds, setRemovedClientIds] = useState<Set<string>>(new Set());
   const [previewDeliverable, setPreviewDeliverable] = useState<any | null>(null);
-
-  const [editFormData, setEditFormData] = useState({
-    companyName: "",
-    industry: "",
-    signerName: "",
-    signerEmail: "",
-    instagram: "",
-    timezone: "Asia/Kolkata",
-    brandSummary: "",
-    colors: [] as string[],
-  });
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [editProfileError, setEditProfileError] = useState<string | null>(null);
 
   const offboardClient = async (id: string, name: string) => {
     if (removingClient) return;
@@ -480,96 +465,6 @@ export function AdminClientsPage() {
     enabled: !!activeClientId,
   });
   const liveBrandProfile = clientBrandQuery.data;
-
-  useEffect(() => {
-    if (isEditProfileOpen && activeClient) {
-      const initialColors = (
-        liveBrandProfile?.brand_dna?.palette ||
-        liveBrandProfile?.brand_dna?.visual_direction?.primary_colors ||
-        activeClient?.brand?.colors?.map((c: any) => c.hex) ||
-        ["#0F172A", "#2563EB", "#38BDF8"]
-      ).map((c: any) => (typeof c === "string" ? c : c?.hex || "#0F172A"));
-
-      setEditFormData({
-        companyName: liveBrandProfile?.company_name || activeClient.name || "",
-        industry: liveBrandProfile?.industry || activeClient.industry || "",
-        signerName: liveBrandProfile?.full_name || activeClient.contact?.name || activeClient.name || "",
-        signerEmail: liveBrandProfile?.email || activeClient.contact?.email || "",
-        instagram: liveBrandProfile?.instagram_username || "",
-        timezone: liveBrandProfile?.timezone || "Asia/Kolkata",
-        brandSummary: liveBrandProfile?.brand_summary || liveBrandProfile?.brand_dna?.summary_line || "",
-        colors: initialColors,
-      });
-      setEditProfileError(null);
-    }
-  }, [isEditProfileOpen, activeClient, liveBrandProfile]);
-
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeClient) return;
-    setIsSavingProfile(true);
-    setEditProfileError(null);
-    try {
-      const cleanColors = editFormData.colors
-        .map((c) => c.trim().toUpperCase())
-        .filter((c) => /^#[0-9A-Fa-f]{3,8}$/.test(c));
-
-      const updatedProfile = await updateClientProfile(activeClient.id, {
-        company_name: editFormData.companyName.trim() || undefined,
-        industry: editFormData.industry.trim() || undefined,
-        full_name: editFormData.signerName.trim() || undefined,
-        email: editFormData.signerEmail.trim().toLowerCase() || undefined,
-        instagram_username: editFormData.instagram.trim().replace(/^@/, "") || undefined,
-        timezone: editFormData.timezone.trim() || undefined,
-        brand_summary: editFormData.brandSummary.trim() || undefined,
-        palette: cleanColors.length > 0 ? cleanColors : undefined,
-        colors: cleanColors.length > 0 ? cleanColors : undefined,
-      });
-
-      // Instantly update query cache
-      if (updatedProfile) {
-        queryClient.setQueryData(["admin-client-brand-profile", activeClient.id], updatedProfile);
-      }
-
-      // Instantly update local state so UI updates without waiting for network refetch
-      setServerClients((prev) =>
-        prev.map((c) => {
-          if (c.client_id === activeClient.id) {
-            return {
-              ...c,
-              company_name: editFormData.companyName.trim() || c.company_name,
-              email: editFormData.signerEmail.trim().toLowerCase() || c.email,
-              full_name: editFormData.signerName.trim() || c.full_name,
-              instagram_username: editFormData.instagram.trim().replace(/^@/, "") || c.instagram_username,
-              timezone: editFormData.timezone.trim() || c.timezone,
-              brand_summary: editFormData.brandSummary.trim() || c.brand_summary,
-              industry: editFormData.industry.trim() || c.industry,
-              brand_dna: {
-                ...(c.brand_dna || {}),
-                palette: cleanColors.length > 0 ? cleanColors : c.brand_dna?.palette,
-                visual_direction: {
-                  ...((c.brand_dna as any)?.visual_direction || {}),
-                  primary_colors: cleanColors.length > 0 ? cleanColors : undefined,
-                },
-              },
-            };
-          }
-          return c;
-        })
-      );
-
-      // Invalidate queries in background
-      await queryClient.invalidateQueries({ queryKey: ["admin-client-brand-profile", activeClient.id] });
-      await queryClient.invalidateQueries({ queryKey: ["admin-client-roster", user?.id] });
-      await queryClient.invalidateQueries({ queryKey: ["client-brand-profile", activeClient.id] });
-      showToast("Client profile updated successfully.");
-      setIsEditProfileOpen(false);
-    } catch (err) {
-      setEditProfileError(err instanceof Error ? err.message : "Failed to update profile.");
-    } finally {
-      setIsSavingProfile(false);
-    }
-  };
 
   const realColors = useMemo(() => {
     const raw =
@@ -899,13 +794,6 @@ export function AdminClientsPage() {
                   >
                     <ExternalLink className="w-3.5 h-3.5 text-[#7FA0D6]" /> Brand Brief & Profile
                   </Link>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditProfileOpen(true)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-xs font-bold text-[#F1F5F9] flex items-center gap-1.5 shadow-2xs cursor-pointer transition-all"
-                  >
-                    <Edit3 className="w-3.5 h-3.5 text-[#97A0B3]" /> Edit Profile
-                  </button>
                   <button
                     type="button"
                     onClick={() => setIsInvoiceModalOpen(true)}
@@ -1499,174 +1387,7 @@ export function AdminClientsPage() {
             MODALS
         ═════════════════════════════════════════════════════════════════ */}
 
-        {/* 1. Edit Profile Modal */}
-        {isEditProfileOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-[#161F2D] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-[#2A3446]">
-              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
-                <div>
-                  <h3 className="text-base font-black text-white">Edit Client Profile</h3>
-                  <p className="text-xs text-[#97A0B3]">Updating profile & brand parameters for {activeClient?.name}</p>
-                </div>
-                <button type="button" onClick={() => setIsEditProfileOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
 
-              {editProfileError && (
-                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold">
-                  {editProfileError}
-                </div>
-              )}
-
-              <form onSubmit={handleSaveProfile} className="space-y-3.5 text-xs text-[#F1F5F9]">
-                <div>
-                  <label className="block font-bold mb-1 text-white">Company / Brand Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={editFormData.companyName}
-                    onChange={(e) => setEditFormData({ ...editFormData, companyName: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold mb-1 text-white">Industry / Category</label>
-                  <input
-                    type="text"
-                    value={editFormData.industry}
-                    onChange={(e) => setEditFormData({ ...editFormData, industry: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-bold mb-1 text-white">Primary Signer Full Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={editFormData.signerName}
-                      onChange={(e) => setEditFormData({ ...editFormData, signerName: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-bold mb-1 text-white">Signer Email</label>
-                    <input
-                      type="email"
-                      required
-                      value={editFormData.signerEmail}
-                      onChange={(e) => setEditFormData({ ...editFormData, signerEmail: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-bold mb-1 text-white">Instagram Username</label>
-                    <input
-                      type="text"
-                      placeholder="@handle"
-                      value={editFormData.instagram}
-                      onChange={(e) => setEditFormData({ ...editFormData, instagram: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-bold mb-1 text-white">Client Timezone</label>
-                    <input
-                      type="text"
-                      value={editFormData.timezone}
-                      onChange={(e) => setEditFormData({ ...editFormData, timezone: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block font-bold mb-1 text-white">Brand Summary / Positioning Line</label>
-                  <textarea
-                    rows={2}
-                    value={editFormData.brandSummary}
-                    onChange={(e) => setEditFormData({ ...editFormData, brandSummary: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white focus:outline-none focus:border-[#7FA0D6]"
-                    placeholder="Short summary of brand value proposition..."
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block font-bold text-white">Brand Color Palette</label>
-                    <button
-                      type="button"
-                      onClick={() => setEditFormData({ ...editFormData, colors: [...editFormData.colors, "#3B82F6"] })}
-                      className="text-[11px] font-bold text-[#7FA0D6] hover:underline cursor-pointer"
-                    >
-                      + Add Color
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    {editFormData.colors.map((hex, idx) => (
-                      <div key={idx} className="flex items-center gap-2 p-2 rounded-xl bg-[#0B111C] border border-[#2A3446]">
-                        <input
-                          type="color"
-                          value={hex.startsWith("#") && hex.length === 7 ? hex : "#0B111C"}
-                          onChange={(e) => {
-                            const newCols = [...editFormData.colors];
-                            newCols[idx] = e.target.value.toUpperCase();
-                            setEditFormData({ ...editFormData, colors: newCols });
-                          }}
-                          className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0 p-0 shrink-0"
-                        />
-                        <input
-                          type="text"
-                          value={hex}
-                          onChange={(e) => {
-                            const newCols = [...editFormData.colors];
-                            newCols[idx] = e.target.value.toUpperCase();
-                            setEditFormData({ ...editFormData, colors: newCols });
-                          }}
-                          placeholder="#000000"
-                          className="w-full text-xs font-mono font-bold text-white bg-transparent focus:outline-none"
-                        />
-                        {editFormData.colors.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newCols = editFormData.colors.filter((_, i) => i !== idx);
-                              setEditFormData({ ...editFormData, colors: newCols });
-                            }}
-                            className="text-[#97A0B3] hover:text-rose-400 p-1 cursor-pointer"
-                            title="Remove color"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-[10px] text-[#97A0B3] mt-1">Changes are synced across the Client Brief and Content Studio.</p>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-3 border-t border-[#2A3446]">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditProfileOpen(false)}
-                    className="px-4 py-2.5 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSavingProfile}
-                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer disabled:opacity-50 shadow-md shadow-blue-500/20"
-                  >
-                    {isSavingProfile ? "Saving Changes…" : "Save Changes"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
 
         {/* 2. Monthly Invoice Modal */}
         {isInvoiceModalOpen && (
