@@ -328,6 +328,7 @@ const dashboardRoutes = {
   "/admin/leaves": AdminLeaveApprovalsPage,
   "/admin/revenue": AdminRevenuePage,
   "/admin/plans": AdminPlansPage,
+  "/admin/plans-and-negotiations": AdminPlansPage,
   "/admin/sales": AdminSalesPage,
   "/admin/pod-dashboard": PodLeadDashboardPage,
   "/admin/pod": PodLeadDashboardPage,
@@ -663,6 +664,14 @@ export function App() {
                 />
                 <Route
                   path="/admin/plans"
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                      <AdminPlansPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/plans-and-negotiations"
                   element={
                     <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
                       <AdminPlansPage />

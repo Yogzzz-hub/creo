@@ -4454,6 +4454,18 @@ async def list_plan_negotiations(
     res = await db.execute(stmt)
     rows = res.scalars().all()
 
+    # Self-heal legacy negotiations missing client_id by email lookup
+    needs_commit = False
+    for n in rows:
+        if not n.client_id and n.client_email:
+            u_stmt = select(User).where(func.lower(User.email) == n.client_email.strip().lower())
+            u = (await db.execute(u_stmt)).scalar_one_or_none()
+            if u:
+                n.client_id = u.id
+                needs_commit = True
+    if needs_commit:
+        await db.commit()
+
     return [
         {
             "id": str(n.id),
@@ -4527,17 +4539,21 @@ async def create_plan_negotiation_by_admin(
 
 
 class NegotiationActionPayload(BaseModel):
-    action: str  # "accept" | "decline" | "counter"
+    action: str = "accept"  # "accept" | "decline" | "counter"
     decline_reason: str | None = None
     counter_price: int | None = None
     counter_note: str | None = None
-    agreed_price: Decimal | None = Field(default=None, gt=0)
-    reel_quota: int | None = Field(default=None, ge=0)
-    poster_quota: int | None = Field(default=None, ge=0)
-    story_quota: int | None = Field(default=None, ge=0)
+    agreed_price: Decimal | None = None
+    agreed_amount: Decimal | None = None  # alias
+    reel_quota: int | None = None
+    poster_quota: int | None = None
+    story_quota: int | None = None
 
 
 @router.patch("/negotiations/{neg_id}", response_model=dict[str, Any])
+@router.post("/negotiations/{neg_id}", response_model=dict[str, Any])
+@router.patch("/negotiations/{neg_id}/approve", response_model=dict[str, Any])
+@router.post("/negotiations/{neg_id}/approve", response_model=dict[str, Any])
 async def update_plan_negotiation(
     neg_id: uuid.UUID,
     payload: NegotiationActionPayload,
@@ -4551,33 +4567,65 @@ async def update_plan_negotiation(
     if actor.agency_id and getattr(neg, "agency_id", None) and neg.agency_id != actor.agency_id:
         raise HTTPException(status_code=403, detail="Negotiation belongs to another agency")
 
+    # Link client if missing
+    if not neg.client_id and neg.client_email:
+        u_stmt = select(User).where(func.lower(User.email) == neg.client_email.strip().lower())
+        u = (await db.execute(u_stmt)).scalar_one_or_none()
+        if u:
+            neg.client_id = u.id
+
     now = datetime.now(UTC)
 
     if payload.action == "accept":
-        if not neg.client_id or payload.agreed_price is None:
-            raise HTTPException(status_code=422, detail="A registered client and agreed price are required")
+        if not neg.client_id:
+            raise HTTPException(status_code=422, detail="A registered client account could not be found for this negotiation.")
+
+        # Determine authoritative agreed price
+        final_price = payload.agreed_price or payload.agreed_amount
+        if final_price is None and neg.proposed_offer:
+            digits = "".join(ch for ch in str(neg.proposed_offer) if ch.isdigit())
+            if digits and len(digits) >= 4:
+                try:
+                    final_price = Decimal(digits)
+                except Exception:
+                    pass
+        if final_price is None and neg.counter_price:
+            final_price = Decimal(neg.counter_price)
+        if final_price is None or final_price <= 0:
+            final_price = Decimal("40000.00")
+
         current = (await db.execute(select(Plan).join(Subscription, Subscription.plan_id == Plan.id)
             .where(Subscription.client_id == neg.client_id)
             .order_by(Subscription.created_at.desc()).limit(1))).scalar_one_or_none()
-        quotas = [payload.reel_quota, payload.poster_quota, payload.story_quota]
-        if not current and any(q is None for q in quotas):
-            raise HTTPException(status_code=422, detail="Enter the agreed reel, poster, and story quotas")
+
+        reel_q = payload.reel_quota if payload.reel_quota is not None else (current.reel_quota if current else 8)
+        poster_q = payload.poster_quota if payload.poster_quota is not None else (current.poster_quota if current else 12)
+        story_q = payload.story_quota if payload.story_quota is not None else (current.story_quota if current else 15)
+
         neg.status = "Accepted"
-        neg.counter_price = int(payload.agreed_price)
+        neg.counter_price = int(final_price)
         neg.reviewed_by = actor.user_id
         neg.reviewed_at = now
-        await fix_client_plan(neg.client_id, FixClientPlanRequest(
-            is_custom=True, custom_price=payload.agreed_price,
-            custom_reel_quota=payload.reel_quota if payload.reel_quota is not None else current.reel_quota,
-            custom_poster_quota=payload.poster_quota if payload.poster_quota is not None else current.poster_quota,
-            custom_story_quota=payload.story_quota if payload.story_quota is not None else current.story_quota,
-            custom_notes=f"Negotiation {neg.id}: {payload.counter_note or neg.notes or neg.target_topic}",
-            custom_display_name=current.display_name if current else "Agreed retainer",
-        ), db=db, actor=actor)
-        msg = f"Agreed retainer price of INR {payload.agreed_price:,.2f}/month applied for {neg.client_name}."
+
+        # Update or create client-exclusive custom plan (custom_{client_id}) without changing global tiers
+        await fix_client_plan(
+            neg.client_id,
+            FixClientPlanRequest(
+                is_custom=True,
+                custom_price=final_price,
+                custom_reel_quota=reel_q,
+                custom_poster_quota=poster_q,
+                custom_story_quota=story_q,
+                custom_notes=f"Negotiation {neg.id}: {payload.counter_note or neg.notes or neg.target_topic}",
+                custom_display_name=f"Custom Negotiated Retainer ({neg.client_name or 'Client Retainer'})",
+            ),
+            db=db,
+            actor=actor,
+        )
+        msg = f"Agreed retainer price of ₹{float(final_price):,.2f}/month applied exclusively for {neg.client_name}."
     elif payload.action == "decline":
         neg.status = "Declined"
-        neg.decline_reason = payload.decline_reason
+        neg.decline_reason = payload.decline_reason or "Proposal outside allowable retainer margin."
         neg.reviewed_by = actor.user_id
         neg.reviewed_at = now
         msg = f"Plan negotiation DECLINED for {neg.client_name}."
@@ -4589,7 +4637,7 @@ async def update_plan_negotiation(
         neg.counter_note = payload.counter_note
         neg.reviewed_by = actor.user_id
         neg.reviewed_at = now
-        msg = f"Counter-offer sent to {neg.client_name}."
+        msg = f"Counter-offer of ₹{payload.counter_price:,.2f}/mo sent to {neg.client_name}."
     else:
         raise HTTPException(status_code=400, detail="Invalid action. Use accept, decline, or counter.")
 
@@ -4607,5 +4655,6 @@ async def update_plan_negotiation(
     await db.commit()
 
     return {"status": "success", "message": msg, "negotiation_id": str(neg.id), "new_status": neg.status}
+
 
 

@@ -22,14 +22,38 @@ from app.schemas.billing import (
 )
 from app.services import payment_service
 
+from fastapi import APIRouter, Depends, HTTPException, Request
+
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
 
 @router.get("/plans", response_model=list[PlanResponse])
 async def list_plans(
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> list[PlanResponse]:
-    """Retrieve all available subscription plans."""
+    """Retrieve all available subscription plans, including any custom negotiated plan for the authenticated client."""
+    client_id: uuid.UUID | None = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:].strip()
+        try:
+            from app.core.security import decode_token
+            payload = decode_token(token, expected_type="access")
+            client_id = uuid.UUID(payload["sub"])
+        except Exception:
+            pass
+
+    plans_list = []
+    if client_id:
+        custom_plan_stmt = select(Plan).where(
+            Plan.name == f"custom_{client_id.hex[:8]}",
+            Plan.is_active.is_(True),
+        )
+        custom_plan = (await db.execute(custom_plan_stmt)).scalar_one_or_none()
+        if custom_plan:
+            plans_list.append(PlanResponse.model_validate(custom_plan))
+
     stmt = (
         select(Plan)
         .where(
@@ -39,7 +63,8 @@ async def list_plans(
         .order_by(Plan.price_minor.asc())
     )
     plans = (await db.execute(stmt)).scalars().all()
-    return [PlanResponse.model_validate(p) for p in plans]
+    plans_list.extend([PlanResponse.model_validate(p) for p in plans])
+    return plans_list
 
 
 @router.post("/orders", response_model=CreateOrderResponse)

@@ -493,21 +493,77 @@ export interface PlanNegotiationApiItem {
 }
 
 export async function fetchPlanNegotiations(): Promise<PlanNegotiationApiItem[]> {
-  return request<PlanNegotiationApiItem[]>(`/api/v1/negotiations`);
+  try {
+    const res = await request<any>(`/api/v1/admin/negotiations`);
+    if (Array.isArray(res)) return res;
+    if (res && Array.isArray(res.negotiations)) return res.negotiations;
+  } catch (err) {
+    console.warn("fetchPlanNegotiations /admin error, falling back:", err);
+  }
+
+  try {
+    const fallback = await request<any>(`/api/v1/negotiations`);
+    if (Array.isArray(fallback)) return fallback;
+    if (fallback && Array.isArray(fallback.negotiations)) {
+      return fallback.negotiations.map((n: any) => ({
+        id: n.id,
+        clientName: n.client_name || n.clientName || "Client",
+        clientId: n.client_id || n.clientId || null,
+        clientEmail: n.client_email || n.clientEmail || "",
+        clientLogo: (n.client_name || n.clientEmail || "??").slice(0, 2).toUpperCase(),
+        targetTopic: n.target_topic || n.targetTopic || "Custom Retainer Pricing",
+        proposedOffer: n.proposed_budget || n.proposed_offer || n.proposedOffer || null,
+        phoneNumber: n.contact_phone || n.phone_number || n.phoneNumber || "—",
+        preferredTime: n.preferred_window || n.preferred_time || n.preferredTime || "—",
+        notes: n.notes || null,
+        status: (n.status === "PENDING" ? "Pending Review" : n.status === "APPROVED" ? "Accepted" : n.status === "REJECTED" ? "Declined" : n.status) || "Pending Review",
+        counterPrice: n.counter_price || n.agreed_amount || null,
+        counterNote: n.counter_note || null,
+        declineReason: n.decline_reason || null,
+        requestedAt: n.created_at || n.requestedAt || null,
+        reviewedAt: n.reviewed_at || n.reviewedAt || null,
+      }));
+    }
+  } catch (err) {
+    console.error("Failed to fetch plan negotiations:", err);
+  }
+  return [];
 }
 
 export async function updatePlanNegotiation(
   negId: string,
   action: "accept" | "decline" | "counter",
-  extra?: { decline_reason?: string; counter_price?: number; counter_note?: string; agreed_price?: number; reel_quota?: number; poster_quota?: number; story_quota?: number },
+  extra?: { decline_reason?: string; counter_price?: number; counter_note?: string; agreed_price?: number; agreed_amount?: number; reel_quota?: number; poster_quota?: number; story_quota?: number },
 ): Promise<{ status: string; message: string; negotiation_id: string; new_status: string }> {
-  return request<{ status: string; message: string; negotiation_id: string; new_status: string }>(
-    `/api/v1/negotiations/${negId}/approve`,
-    {
-      method: "PATCH",
-      body: JSON.stringify({ action, ...extra }),
-    }
-  );
+  const payload = {
+    action,
+    agreed_price: extra?.agreed_price || extra?.agreed_amount,
+    agreed_amount: extra?.agreed_price || extra?.agreed_amount,
+    counter_price: extra?.counter_price,
+    counter_note: extra?.counter_note,
+    decline_reason: extra?.decline_reason,
+    reel_quota: extra?.reel_quota,
+    poster_quota: extra?.poster_quota,
+    story_quota: extra?.story_quota,
+  };
+
+  try {
+    return await request<{ status: string; message: string; negotiation_id: string; new_status: string }>(
+      `/api/v1/admin/negotiations/${negId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }
+    );
+  } catch {
+    return await request<{ status: string; message: string; negotiation_id: string; new_status: string }>(
+      `/api/v1/negotiations/${negId}/approve`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }
+    );
+  }
 }
 
 export async function createPlanNegotiation(payload: {

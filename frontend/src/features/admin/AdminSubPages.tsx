@@ -174,6 +174,11 @@ export function AdminClientsPage() {
     queryFn: () => fetchClientRoster(),
     enabled: !!user,
   });
+  const negotiationsQuery = useQuery({
+    queryKey: ["admin-plan-negotiations-roster"],
+    queryFn: () => fetchPlanNegotiations(),
+    refetchInterval: 30000,
+  });
   const { clientId } = useParams<{ clientId?: string }>();
   const [searchParams] = useSearchParams();
   const urlClientId = clientId || searchParams.get("clientId") || searchParams.get("client");
@@ -532,6 +537,17 @@ export function AdminClientsPage() {
       null
     : null;
 
+  const activeClientPendingNeg = useMemo(() => {
+    if (!negotiationsQuery.data || !activeClient) return null;
+    return negotiationsQuery.data.find(
+      (n) =>
+        n.status === "Pending Review" &&
+        ((n.clientId && n.clientId.toLowerCase() === activeClient.id.toLowerCase()) ||
+         (n.clientEmail && activeClient.contact?.email && n.clientEmail.toLowerCase() === activeClient.contact.email.toLowerCase()) ||
+         (n.clientName && activeClient.name && n.clientName.toLowerCase() === activeClient.name.toLowerCase()))
+    );
+  }, [negotiationsQuery.data, activeClient]);
+
   
   const [liveDeliverables, setLiveDeliverables] = useState<any[]>([]);
   useEffect(() => {
@@ -808,6 +824,32 @@ export function AdminClientsPage() {
                           </span>
                         </div>
                       </div>
+
+                      {(() => {
+                        const cardNeg = (negotiationsQuery.data || []).find(
+                          (n) =>
+                            n.status === "Pending Review" &&
+                            ((n.clientId && n.clientId.toLowerCase() === client.id.toLowerCase()) ||
+                             (n.clientEmail && client.contact?.email && n.clientEmail.toLowerCase() === client.contact.email.toLowerCase()) ||
+                             (n.clientName && client.name && n.clientName.toLowerCase() === client.name.toLowerCase()))
+                        );
+                        if (!cardNeg) return null;
+                        return (
+                          <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[11px] font-bold">
+                            <span className="flex items-center gap-1.5 truncate">
+                              <Zap className="size-3 text-purple-400 animate-pulse shrink-0" />
+                              <span className="truncate">Negotiation: {cardNeg.proposedOffer || "Pending"}</span>
+                            </span>
+                            <Link
+                              to={`/admin/plans?negId=${cardNeg.id}&clientId=${client.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-purple-300 hover:text-white underline text-[10px] font-black shrink-0 ml-1"
+                            >
+                              Review &rarr;
+                            </Link>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
@@ -907,6 +949,40 @@ export function AdminClientsPage() {
             </div>
 
             {/* Lifecycle Notification Banner */}
+            {activeClientPendingNeg && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-[#161F2D] to-blue-950/40 border-2 border-purple-500/50 text-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg animate-fade-in">
+                <div className="flex items-start gap-3.5">
+                  <div className="size-9 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0 mt-0.5">
+                    <Zap className="size-5 text-purple-400 animate-pulse" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-black uppercase tracking-wider text-purple-300">
+                        Client Plan Negotiation Action Required
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-black">
+                        Offer: {activeClientPendingNeg.proposedOffer || "Custom Offer"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#F1F5F9]">
+                      This client requested custom pricing terms for: <strong>{activeClientPendingNeg.targetTopic}</strong>.
+                      {activeClientPendingNeg.notes && (
+                        <span className="text-[#97A0B3] italic block mt-0.5">
+                          "{activeClientPendingNeg.notes}"
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  to={`/admin/plans?negId=${activeClientPendingNeg.id}&clientId=${activeClient?.id}`}
+                  className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shrink-0 shadow-md transition-all hover:scale-105 active:scale-95"
+                >
+                  Review & Accept Retainer <ArrowUpRight className="w-4 h-4" />
+                </Link>
+              </div>
+            )}
+
             {isNotPaidNotOnboarded && (
               <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-start gap-3.5 shadow-sm">
                 <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
@@ -4997,6 +5073,7 @@ export interface TransactionItem {
 
 export interface PlanNegotiationItem {
   id: string;
+  clientId?: string | null;
   clientName: string;
   clientLogo: string;
   clientEmail?: string;
@@ -5697,6 +5774,9 @@ export function AdminRevenuePage() {
 // 9. ADMIN PLANS & PRICING TIERS PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 export function AdminPlansPage() {
+  const [searchParams] = useSearchParams();
+  const queryNegId = searchParams.get("negId") || searchParams.get("id");
+  const queryClientId = searchParams.get("clientId");
   const [toast, setToast] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filterTab, setFilterTab] = useState<"all" | "pending" | "accepted" | "counter" | "declined">("all");
@@ -5776,10 +5856,18 @@ export function AdminPlansPage() {
   const [editFeaturesInput, setEditFeaturesInput] = useState("");
 
   const [isNewProposalOpen, setIsNewProposalOpen] = useState(false);
+  const [acceptModalItem, setAcceptModalItem] = useState<PlanNegotiationItem | null>(null);
   const [counterModalItem, setCounterModalItem] = useState<PlanNegotiationItem | null>(null);
   const [declineModalItem, setDeclineModalItem] = useState<PlanNegotiationItem | null>(null);
 
   // Form Inputs
+  const [acceptPriceInput, setAcceptPriceInput] = useState("");
+  const [acceptReelsInput, setAcceptReelsInput] = useState("8");
+  const [acceptPostersInput, setAcceptPostersInput] = useState("12");
+  const [acceptStoriesInput, setAcceptStoriesInput] = useState("15");
+  const [acceptNotesInput, setAcceptNotesInput] = useState("");
+  const [isSubmittingAccept, setIsSubmittingAccept] = useState(false);
+
   const [counterPriceInput, setCounterPriceInput] = useState("");
   const [counterNoteInput, setCounterNoteInput] = useState("");
   const [declineReasonInput, setDeclineReasonInput] = useState("");
@@ -5802,6 +5890,7 @@ export function AdminPlansPage() {
         if (data && data.length > 0) {
           const mapped: PlanNegotiationItem[] = data.map((n) => ({
             id: n.id,
+            clientId: n.clientId,
             clientName: n.clientName,
             clientLogo: n.clientLogo,
             clientEmail: n.clientEmail,
@@ -5825,6 +5914,77 @@ export function AdminPlansPage() {
     return () => { cancelled = true; };
   }, []);
 
+  // Actions: OPEN Accept Client Plan Negotiation Modal
+  const handleOpenAcceptModal = (item: PlanNegotiationItem) => {
+    setAcceptModalItem(item);
+    const digits = (item.proposedOffer || "").replace(/[^\d.]/g, "");
+    const parsed = parseFloat(digits);
+    setAcceptPriceInput(parsed && !isNaN(parsed) ? String(parsed) : "35000");
+    setAcceptReelsInput("8");
+    setAcceptPostersInput("12");
+    setAcceptStoriesInput("15");
+    setAcceptNotesInput(`Custom negotiated retainer approved for ${item.clientName}. Scope terms confirmed.`);
+  };
+
+  // Auto-focus negotiation from URL query params (e.g. from notification deep-link)
+  useEffect(() => {
+    if ((queryNegId || queryClientId) && negotiations.length > 0) {
+      const match = negotiations.find(
+        (n) =>
+          (queryNegId && (n.id === queryNegId || String(n.id).includes(queryNegId))) ||
+          (queryClientId && (n.clientId === queryClientId || (n.clientEmail && n.clientEmail.toLowerCase() === queryClientId.toLowerCase())))
+      );
+      if (match) {
+        setFilterTab("all");
+        if (match.status === "Pending Review") {
+          handleOpenAcceptModal(match);
+        }
+      }
+    }
+  }, [queryNegId, queryClientId, negotiations]);
+
+  // Actions: CONFIRM Accept Client Plan Negotiation
+  const handleConfirmAccept = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!acceptModalItem) return;
+    const target = acceptModalItem;
+    const agreedPrice = parseFloat(acceptPriceInput) || 35000;
+    const reelQuota = parseInt(acceptReelsInput, 10) || 8;
+    const posterQuota = parseInt(acceptPostersInput, 10) || 12;
+    const storyQuota = parseInt(acceptStoriesInput, 10) || 15;
+
+    setIsSubmittingAccept(true);
+    try {
+      await updatePlanNegotiation(target.id, "accept", {
+        agreed_price: agreedPrice,
+        agreed_amount: agreedPrice,
+        reel_quota: reelQuota,
+        poster_quota: posterQuota,
+        story_quota: storyQuota,
+        counter_note: acceptNotesInput,
+      });
+
+      setNegotiations((prev) =>
+        prev.map((n) =>
+          n.id === target.id
+            ? { ...n, status: "Accepted", counterPrice: agreedPrice, counterNote: acceptNotesInput }
+            : n
+        )
+      );
+
+      setToast(
+        `Plan Negotiation ACCEPTED for ${target.clientName} at ₹${agreedPrice.toLocaleString('en-IN')}/mo! Custom plan assigned exclusively to this client.`
+      );
+      setAcceptModalItem(null);
+    } catch (err) {
+      console.error("Failed to approve negotiation:", err);
+      setToast(`Error accepting negotiation: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      setIsSubmittingAccept(false);
+      setTimeout(() => setToast(null), 5000);
+    }
+  };
+
   // Active Sales & Retainer Pipeline Deals
   const [deals, setDeals] = useState<
     Array<{
@@ -5840,20 +6000,6 @@ export function AdminPlansPage() {
       expectedClose: string;
     }>
   >([]);
-
-  // Actions: ACCEPT Client Plan Negotiation
-  const handleAcceptNegotiation = async (item: PlanNegotiationItem) => {
-    setNegotiations((prev) =>
-      prev.map((n) => (n.id === item.id ? { ...n, status: "Accepted" } : n))
-    );
-    setToast(`Plan Negotiation ACCEPTED for ${item.clientName}!`);
-    try {
-      await updatePlanNegotiation(item.id, "accept");
-    } catch (err) {
-      console.warn("Backend negotiation update notice:", err);
-    }
-    setTimeout(() => setToast(null), 4000);
-  };
 
   // Actions: DECLINE Client Plan Negotiation
   const handleConfirmDecline = async (e: React.FormEvent) => {
@@ -6286,72 +6432,89 @@ export function AdminPlansPage() {
                 <p className="text-xs font-bold">No plan negotiations found in this filter.</p>
               </div>
             ) : (
-              filteredNegotiations.map((item) => (
-                <div
-                  key={item.id}
-                  className="p-5 rounded-2xl border border-[#2A3446] bg-[#0B111C]/50 hover:bg-[#161F2D] hover:border-[#2A3446] transition-all shadow-2xs space-y-4"
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                    {/* Client Info */}
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-sm flex items-center justify-center shadow-md shrink-0">
-                        {item.clientLogo}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-white">{item.clientName}</h4>
-                          <span className="text-[10px] text-[#97A0B3] font-semibold">{item.requestedAt}</span>
-                        </div>
-                        <p className="text-xs text-[#F1F5F9] font-medium">{item.targetTopic}</p>
-                        {item.clientEmail && <p className="text-[10px] text-[#97A0B3]">{item.clientEmail}</p>}
-                      </div>
-                    </div>
+              filteredNegotiations.map((item) => {
+                const isHighlighted = Boolean(
+                  (queryNegId && (item.id === queryNegId || String(item.id).includes(queryNegId))) ||
+                  (queryClientId && item.clientId && item.clientId.toLowerCase() === queryClientId.toLowerCase()) ||
+                  (queryClientId && item.clientEmail && item.clientEmail.toLowerCase() === queryClientId.toLowerCase())
+                );
 
-                    {/* Negotiation Details */}
-                    <div className="flex items-center gap-4 bg-[#161F2D] p-3 rounded-xl border border-[#2A3446] flex-wrap">
-                      {item.proposedOffer && (
+                return (
+                  <div
+                    key={item.id}
+                    id={`neg-${item.id}`}
+                    className={`p-5 rounded-2xl border transition-all shadow-2xs space-y-4 ${
+                      isHighlighted
+                        ? "border-[#7FA0D6] bg-[#7FA0D6]/10 ring-2 ring-[#7FA0D6] shadow-lg shadow-blue-500/10"
+                        : "border-[#2A3446] bg-[#0B111C]/50 hover:bg-[#161F2D] hover:border-[#2A3446]"
+                    }`}
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      {/* Client Info */}
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-sm flex items-center justify-center shadow-md shrink-0">
+                          {item.clientLogo}
+                        </div>
                         <div>
-                          <span className="text-[10px] text-[#7FA0D6] uppercase block font-bold">Proposed Offer</span>
-                          <span className="text-sm font-black text-emerald-400">{item.proposedOffer}</span>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-sm text-white">{item.clientName}</h4>
+                            <span className="text-[10px] text-[#97A0B3] font-semibold">{item.requestedAt}</span>
+                            {isHighlighted && (
+                              <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-[#7FA0D6] border border-blue-500/30 text-[9px] font-black uppercase">
+                                Selected Target
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-[#F1F5F9] font-medium">{item.targetTopic}</p>
+                          {item.clientEmail && <p className="text-[10px] text-[#97A0B3]">{item.clientEmail}</p>}
                         </div>
-                      )}
-                      <div>
-                        <span className="text-[10px] text-[#97A0B3] uppercase block font-bold">Contact</span>
-                        <span className="text-xs font-bold text-white">{item.phoneNumber}</span>
                       </div>
-                      <div>
-                        <span className="text-[10px] text-[#97A0B3] uppercase block font-bold">Preferred Time</span>
-                        <span className="text-xs font-bold text-white">{item.preferredTime}</span>
+
+                      {/* Negotiation Details */}
+                      <div className="flex items-center gap-4 bg-[#161F2D] p-3 rounded-xl border border-[#2A3446] flex-wrap">
+                        {item.proposedOffer && (
+                          <div>
+                            <span className="text-[10px] text-[#7FA0D6] uppercase block font-bold">Proposed Offer</span>
+                            <span className="text-sm font-black text-emerald-400">{item.proposedOffer}</span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-[10px] text-[#97A0B3] uppercase block font-bold">Contact</span>
+                          <span className="text-xs font-bold text-white">{item.phoneNumber}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-[#97A0B3] uppercase block font-bold">Preferred Time</span>
+                          <span className="text-xs font-bold text-white">{item.preferredTime}</span>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Status & Actions */}
-                    <div className="flex flex-wrap items-center gap-2.5">
-                      <span
-                        className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
-                          item.status === "Accepted"
-                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                            : item.status === "Declined"
-                            ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
-                            : item.status === "Counter Offered"
-                            ? "bg-purple-500/15 text-purple-400 border border-purple-500/30"
-                            : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
-                        }`}
-                      >
-                        {item.status === "Pending Review" && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
-                        {item.status}
-                      </span>
+                      {/* Status & Actions */}
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <span
+                          className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                            item.status === "Accepted"
+                              ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                              : item.status === "Declined"
+                              ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                              : item.status === "Counter Offered"
+                              ? "bg-purple-500/15 text-purple-400 border border-purple-500/30"
+                              : "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                          }`}
+                        >
+                          {item.status === "Pending Review" && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />}
+                          {item.status}
+                        </span>
 
-                      {/* Functional ACCEPT, DECLINE, and COUNTER buttons */}
-                      {item.status === "Pending Review" && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleAcceptNegotiation(item)}
-                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
-                          >
-                            <Check className="w-3.5 h-3.5 stroke-[3]" /> ACCEPT
-                          </button>
+                        {/* Functional ACCEPT, DECLINE, and COUNTER buttons */}
+                        {item.status === "Pending Review" && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenAcceptModal(item)}
+                              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-md shadow-emerald-600/20 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                            >
+                              <Check className="w-3.5 h-3.5 stroke-[3]" /> ACCEPT
+                            </button>
                           <button
                             type="button"
                             onClick={() => setDeclineModalItem(item)}
@@ -6381,8 +6544,8 @@ export function AdminPlansPage() {
                     </div>
                   )}
                 </div>
-              ))
-            )}
+              );
+            }))}
           </div>
         </div>
 
@@ -6458,6 +6621,161 @@ export function AdminPlansPage() {
           </div>
         </div>
       </main>
+
+      {/* ─────────────────────────────────────────────────────────────────────────────
+          MODAL: ACCEPT CLIENT PLAN NEGOTIATION & CONFIGURE PER-CLIENT RETAINER
+      ───────────────────────────────────────────────────────────────────────────── */}
+      {acceptModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-lg rounded-3xl bg-[#161F2D] p-6 sm:p-7 shadow-2xl space-y-5 border border-[#2A3446] max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 font-black text-sm flex items-center justify-center">
+                  <Check className="w-5 h-5 stroke-[3]" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Accept Retainer Negotiation</h3>
+                  <p className="text-[11px] text-[#97A0B3]">Lock in negotiated price strictly for {acceptModalItem.clientName}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAcceptModalItem(null)}
+                className="p-1.5 text-[#97A0B3] hover:text-white rounded-lg hover:bg-[#0B111C]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Negotiation Overview Card */}
+            <div className="p-4 rounded-2xl bg-[#0B111C] border border-[#2A3446] space-y-2.5 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-[#97A0B3] font-medium">Client Account:</span>
+                <span className="font-bold text-white">{acceptModalItem.clientName} ({acceptModalItem.clientEmail || "—"})</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#97A0B3] font-medium">Scope Topic:</span>
+                <span className="font-bold text-[#7FA0D6]">{acceptModalItem.targetTopic}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#97A0B3] font-medium">Client Proposed Budget:</span>
+                <span className="font-black text-emerald-400 text-sm">{acceptModalItem.proposedOffer || "—"}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#97A0B3] font-medium">Contact / Slot:</span>
+                <span className="font-medium text-[#F1F5F9]">{acceptModalItem.phoneNumber} • {acceptModalItem.preferredTime}</span>
+              </div>
+              {acceptModalItem.notes && (
+                <div className="pt-2 border-t border-[#2A3446] text-[#97A0B3]">
+                  <strong className="text-[#F1F5F9]">Client Note:</strong> "{acceptModalItem.notes}"
+                </div>
+              )}
+            </div>
+
+            {/* ISOLATION GUARANTEE CALLOUT */}
+            <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs space-y-1">
+              <div className="flex items-center gap-1.5 font-black uppercase text-[10px] tracking-wider text-emerald-400">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Client Price Isolation Guarantee
+              </div>
+              <p className="text-[11px] text-[#F1F5F9] leading-relaxed">
+                This negotiated price will update <strong>ONLY for {acceptModalItem.clientName}</strong>. Standard agency tiers (Starter ₹25k, Growth ₹50k, Scale ₹1.2L) and all other client retainers remain completely unchanged.
+              </p>
+            </div>
+
+            <form onSubmit={handleConfirmAccept} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-white mb-1">
+                  Agreed Monthly Retainer (₹ INR / month) <span className="text-emerald-400">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white font-bold text-sm">₹</span>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    value={acceptPriceInput}
+                    onChange={(e) => setAcceptPriceInput(e.target.value)}
+                    className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                    placeholder="e.g. 35000"
+                  />
+                </div>
+              </div>
+
+              {/* Deliverable Quota Inputs */}
+              <div className="grid grid-cols-3 gap-2.5">
+                <div>
+                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Reels / mo</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={acceptReelsInput}
+                    onChange={(e) => setAcceptReelsInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Posters / mo</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={acceptPostersInput}
+                    onChange={(e) => setAcceptPostersInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-[#97A0B3] mb-1 text-[11px]">Stories / mo</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={acceptStoriesInput}
+                    onChange={(e) => setAcceptStoriesInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#F1F5F9] mb-1">
+                  Agreement Notes / Scope Terms
+                </label>
+                <textarea
+                  rows={2}
+                  value={acceptNotesInput}
+                  onChange={(e) => setAcceptNotesInput(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-white text-xs resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                  placeholder="e.g. Approved custom retainer. Valid for 12 months."
+                />
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-[#2A3446]">
+                <button
+                  type="button"
+                  onClick={() => setAcceptModalItem(null)}
+                  disabled={isSubmittingAccept}
+                  className="px-4 py-2.5 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingAccept}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs shadow-lg shadow-emerald-600/30 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                >
+                  {isSubmittingAccept ? (
+                    <span>Applying Retainer...</span>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 stroke-[3]" />
+                      Confirm & Assign Retainer (₹{Number(acceptPriceInput || 0).toLocaleString('en-IN')})
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ─────────────────────────────────────────────────────────────────────────────
           MODAL: EDIT TIER TERMS

@@ -38,7 +38,15 @@ class NegotiationSubmitRequest(BaseModel):
 
 
 class NegotiationApproveRequest(BaseModel):
-    agreed_amount: int = Field(gt=0, description="Agreed amount in INR (e.g. 35000)")
+    agreed_amount: int | None = Field(default=None, description="Agreed amount in INR (e.g. 35000)")
+    agreed_price: Decimal | None = Field(default=None, description="Agreed price alias")
+    action: str | None = "accept"
+    counter_price: int | None = None
+    counter_note: str | None = None
+    decline_reason: str | None = None
+    reel_quota: int | None = None
+    poster_quota: int | None = None
+    story_quota: int | None = None
 
 
 class NegotiationConfirmPaymentRequest(BaseModel):
@@ -51,19 +59,29 @@ class NegotiationConfirmPaymentRequest(BaseModel):
 def _format_negotiation(n: PlanNegotiation) -> dict[str, Any]:
     return {
         "id": str(n.id),
-        "client_id": str(n.client_id),
+        "client_id": str(n.client_id) if n.client_id else None,
+        "clientId": str(n.client_id) if n.client_id else None,
         "client_email": n.client_email,
+        "clientEmail": n.client_email,
         "client_name": n.client_name or n.client_email.split("@")[0],
+        "clientName": n.client_name or n.client_email.split("@")[0],
+        "clientLogo": ((n.client_name or n.client_email)[:2].upper()),
         "proposed_budget": n.proposed_budget,
+        "proposedOffer": n.proposed_budget,
         "contact_phone": n.contact_phone,
+        "phoneNumber": n.contact_phone,
         "preferred_window": n.preferred_window,
+        "preferredTime": n.preferred_window,
         "target_topic": n.target_topic,
+        "targetTopic": n.target_topic,
         "notes": n.notes,
         "status": n.status,
         "agreed_amount": n.agreed_amount,
+        "counterPrice": n.agreed_amount or n.counter_price if hasattr(n, "counter_price") else n.agreed_amount,
         "razorpay_custom_plan_id": n.razorpay_custom_plan_id,
         "order_id": n.order_id,
         "created_at": n.created_at.isoformat() if n.created_at else None,
+        "requestedAt": n.created_at.isoformat() if n.created_at else None,
         "updated_at": n.updated_at.isoformat() if n.updated_at else None,
     }
 
@@ -112,7 +130,7 @@ async def submit_negotiation(
     admin_res = await db.execute(admin_stmt)
     admin_ids = admin_res.scalars().all()
 
-    redirect_url = f"/admin/plans-and-negotiations?id={neg_id}"
+    redirect_url = f"/admin/plans?negId={neg_id}&clientId={client_user.id}"
 
     offer_detail = f" • Budget: {payload.proposed_budget}" if payload.proposed_budget else ""
     for aid in admin_ids:
@@ -158,6 +176,7 @@ async def submit_negotiation(
 
 
 @router.patch("/{negotiation_id}/approve", response_model=dict[str, Any])
+@router.post("/{negotiation_id}/approve", response_model=dict[str, Any])
 async def approve_negotiation(
     negotiation_id: uuid.UUID,
     payload: NegotiationApproveRequest,
@@ -169,11 +188,24 @@ async def approve_negotiation(
     if not neg:
         raise NotFound(f"Negotiation {negotiation_id} not found", code="NEGOTIATION_NOT_FOUND")
 
-    client_user = await db.get(User, neg.client_id)
+    client_user = await db.get(User, neg.client_id) if neg.client_id else None
+    if not client_user and neg.client_email:
+        client_user = (await db.execute(select(User).where(func.lower(User.email) == neg.client_email.strip().lower()))).scalar_one_or_none()
+        if client_user:
+            neg.client_id = client_user.id
     if not client_user:
         raise NotFound("Client user associated with negotiation not found", code="USER_NOT_FOUND")
 
-    agreed_amt = payload.agreed_amount
+    # Determine agreed amount
+    raw_amount = payload.agreed_amount or (int(payload.agreed_price) if payload.agreed_price else None)
+    if not raw_amount and neg.proposed_budget:
+        digits = "".join(c for c in str(neg.proposed_budget) if c.isdigit())
+        if digits and len(digits) >= 4:
+            raw_amount = int(digits)
+    if not raw_amount:
+        raw_amount = 40000
+
+    agreed_amt = raw_amount
     amount_minor = agreed_amt * 100
 
     # Razorpay Live Order Creation

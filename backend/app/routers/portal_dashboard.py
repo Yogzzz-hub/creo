@@ -629,7 +629,23 @@ async def book_plan_bargain_call(
     if not phone:
         raise HTTPException(status_code=400, detail="Phone number is required to schedule a call.")
 
-    # 1. Alert all active Admin and Super Admin users
+    # 1. Create PlanNegotiation record so admin can see it on Plans & Negotiations page
+    neg = PlanNegotiation(
+        agency_id=getattr(actor, "agency_id", None),
+        client_id=actor.user_id,
+        client_name=client_name,
+        client_email=client_user.email,
+        target_topic=payload.target_topic,
+        proposed_offer=payload.proposed_offer,
+        phone_number=phone,
+        preferred_time=payload.preferred_time,
+        notes=payload.notes,
+        status="Pending Review",
+    )
+    db.add(neg)
+    await db.flush()
+
+    # 2. Alert all active Admin and Super Admin users with direct link to this client's negotiation
     admin_stmt = select(User.id).where(
         User.role.in_([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
         User.account_status == "active",
@@ -640,19 +656,20 @@ async def book_plan_bargain_call(
     notifs = []
     offer_str = f" • Proposed Offer: {payload.proposed_offer}" if payload.proposed_offer else ""
     notes_str = f" • Notes: {payload.notes}" if payload.notes else ""
+    redirect_link = f"/admin/plans?negId={neg.id}&clientId={actor.user_id}"
     for aid in admin_ids:
         notifs.append(
             Notification(
                 user_id=aid,
                 title=f"📞 Plan Bargain Call: {client_name}",
                 message=f"{client_name} ({client_user.email}) requested a call to bargain plan: {payload.target_topic}. Contact: {phone} (Preferred: {payload.preferred_time}){offer_str}{notes_str}",
-                link="/admin/plans",
+                link=redirect_link,
             )
         )
     if notifs:
         db.add_all(notifs)
 
-    # 2. Add Audit Log
+    # 3. Add Audit Log
     db.add(
         AuditLog(
             agency_id=getattr(actor, "agency_id", None),
@@ -669,24 +686,11 @@ async def book_plan_bargain_call(
                 "offer": payload.proposed_offer,
                 "preferred_time": payload.preferred_time,
                 "notes": payload.notes,
+                "negotiation_id": str(neg.id),
+                "link": redirect_link,
             },
         )
     )
-
-    # 3. Create PlanNegotiation record so admin can see it on Plans & Negotiations page
-    neg = PlanNegotiation(
-        agency_id=getattr(actor, "agency_id", None),
-        client_id=actor.user_id,
-        client_name=client_name,
-        client_email=client_user.email,
-        target_topic=payload.target_topic,
-        proposed_offer=payload.proposed_offer,
-        phone_number=phone,
-        preferred_time=payload.preferred_time,
-        notes=payload.notes,
-        status="Pending Review",
-    )
-    db.add(neg)
 
     await db.commit()
 
