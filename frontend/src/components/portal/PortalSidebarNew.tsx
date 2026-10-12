@@ -21,6 +21,7 @@ import {
 import { useAuth } from "../../lib/auth-context";
 import { usePortalNavigationLocks } from "../../lib/usePortalNavigationLocks";
 import { useConfirm } from "../ui/ConfirmDialog";
+import { NotificationMenu } from "../ui/NotificationMenu";
 
 import { useAdminSidebar } from "../admin/AdminSidebarContext";
 
@@ -112,12 +113,13 @@ export function PortalSidebarNew() {
         <button aria-label="Close navigation sidebar" onClick={() => setMobileOpen(false)} className="absolute right-3 top-3 xl:hidden rounded-lg p-2 text-white transition-colors hover:bg-white/10 cursor-pointer"><X className="size-5" /></button>
       <div className="flex flex-1 flex-col bg-[#0B111C] overflow-y-auto">
         {/* Logo */}
-        <div className="px-7 pt-7 pb-2">
+        <div className="flex items-center justify-between gap-3 px-7 pt-7 pb-2">
           <Link to="/portal" className="inline-flex items-center">
             <span className="text-[22px] font-extrabold tracking-tight text-white">
               Creo<span className="text-[#BCCCE6]">.</span>
             </span>
           </Link>
+          <div className="hidden xl:block"><NotificationMenu placement="sidebar" /></div>
         </div>
 
         {/* Client Switcher Card */}
