@@ -136,7 +136,7 @@ export function PortalCreativePodPage() {
       <div className="w-full">
         <SubscriptionLockedState
           title="Creative Pod Access Locked"
-          description="Your dedicated creative specialists and lead producer will be provisioned once your account setup is completed."
+          description="Complete setup to meet your dedicated creative team."
         />
       </div>
     );

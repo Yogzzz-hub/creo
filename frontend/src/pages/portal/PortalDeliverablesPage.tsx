@@ -279,7 +279,7 @@ export function PortalDeliverablesPage() {
       <div className="w-full">
         <SubscriptionLockedState
           title="Deliverables Queue Locked"
-          description="Your creative deliverables queue and sign-off docks will activate as soon as your workspace setup is complete."
+          description="Complete setup to review and approve your deliverables."
         />
       </div>
     );

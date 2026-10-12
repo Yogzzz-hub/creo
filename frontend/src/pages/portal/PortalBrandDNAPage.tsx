@@ -197,7 +197,7 @@ export function PortalBrandDNAPage() {
       <div className="w-full">
         <SubscriptionLockedState
           title="Brand DNA Locked"
-          description="Complete your onboarding setup to manage your brand DNA, visual assets, and brand guidelines."
+          description="Complete setup to manage your brand assets and guidelines."
         />
       </div>
     );

@@ -447,7 +447,7 @@ export function SlackChatPage() {
     return (
       <SubscriptionLockedState
         title="Direct Chat Locked"
-        description="Your private chat with the assigned creative pod unlocks after you complete workspace setup. Resume setup to continue where you left off."
+        description="Complete setup to chat with your creative team."
       />
     );
   }

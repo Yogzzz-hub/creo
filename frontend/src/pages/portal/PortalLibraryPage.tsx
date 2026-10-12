@@ -67,7 +67,7 @@ export function PortalLibraryPage() {
       <div className="w-full">
         <SubscriptionLockedState
           title="Asset Library Locked"
-          description="Your finished master renders and brand assets library will activate once your onboarding setup is completed."
+          description="Complete setup to access your finished assets."
         />
       </div>
     );
