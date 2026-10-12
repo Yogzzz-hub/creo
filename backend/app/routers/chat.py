@@ -178,6 +178,10 @@ async def _require_direct_chat_access(actor: Actor, target: User, db: AsyncSessi
     if _is_admin_role(role) or _is_admin_role(target_role):
         return
 
+    # Internal agency team members (leads, specialists, designers, editors) can chat directly with each other
+    if role != UserRole.CLIENT.value and target_role != UserRole.CLIENT.value:
+        return
+
     from app.models.work import ClientAssignment
 
     shared_client = select(ClientAssignment.client_id).where(

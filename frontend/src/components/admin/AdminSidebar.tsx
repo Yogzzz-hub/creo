@@ -17,13 +17,15 @@ import {
   LifeBuoy,
   ShieldCheck,
   CreditCard,
-  ExternalLink
+  ExternalLink,
+  Settings
 } from "lucide-react";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useAuth } from "../../lib/auth-context";
 import { useAdminSidebar } from "./AdminSidebarContext";
 import { useConfirm } from "../ui/ConfirmDialog";
+import { NotificationMenu } from "../ui/NotificationMenu";
 
 interface NavItem {
   label: string;
@@ -108,6 +110,15 @@ export function AdminSidebar() {
     if (href === "/portal") return location.pathname === "/portal" || location.pathname === "/portal/";
     if (href === "/admin") return location.pathname === "/admin";
     if (href === "/workstation") return location.pathname === "/workstation" || location.pathname === "/workstation/overview";
+    if (href === "/slack" || href === "/workstation/slack") {
+      return (
+        location.pathname === "/slack" ||
+        location.pathname.startsWith("/slack/") ||
+        location.pathname === "/workstation/slack" ||
+        location.pathname === "/workstation/chat" ||
+        location.pathname === "/admin/slack"
+      );
+    }
     if (href === "/admin/support") return location.pathname === "/admin/support" || location.pathname.startsWith("/admin/support/tickets");
     if (location.pathname === href) return true;
     return location.pathname.startsWith(href + "/");
@@ -192,12 +203,18 @@ export function AdminSidebar() {
 
   const memberNavSections: NavSection[] = [
     {
-      label: "Workstation",
+      label: "",
       items: [
-        { label: "Workstation Overview", href: "/workstation", icon: LayoutDashboard },
-        { label: "My Production Tasks", href: "/workstation/tasks", icon: CheckSquare },
-        { label: "My Schedule & PTO", href: "/workstation/schedule", icon: Calendar },
-        { label: "Slack Workspace Hub", href: "/slack", icon: MessageSquare, badge: "Chat" },
+        { label: "Dashboard", href: "/workstation", icon: LayoutDashboard },
+        { label: "Tasks", href: "/workstation/tasks", icon: CheckSquare },
+        { label: "Leave Requests", href: "/workstation/schedule", icon: Calendar },
+        { label: "Slack Chat", href: "/workstation/slack", icon: MessageSquare, badge: "Chat" },
+      ],
+    },
+    {
+      label: "ACCOUNT",
+      items: [
+        { label: "Settings", href: "/workstation/settings", icon: Settings },
       ],
     },
   ];
@@ -249,38 +266,75 @@ export function AdminSidebar() {
     ? "/workstation"
     : "/portal";
 
+  const cleanedName = (user?.full_name || "").replace(/\(.*?\)/g, "").replace(/[^a-zA-Z0-9\s]/g, "").trim();
+  const nameParts = cleanedName.split(/\s+/).filter(Boolean);
+  const p0 = nameParts[0] || "";
+  const p1 = nameParts[1] || "";
+  const initials = nameParts.length >= 2
+    ? ((p0[0] || "") + (p1[0] || "")).toUpperCase()
+    : nameParts.length === 1
+    ? p0.slice(0, 2).toUpperCase()
+    : ((user?.email?.[0] || "") || (isClientRole ? "C" : isMemberRole ? "E" : "A")).toUpperCase();
+
+  const displayName =
+    user?.full_name ||
+    (isClientRole
+      ? (user?.company_name || "Client Account")
+      : isMemberRole
+      ? "Elena Rostova"
+      : user?.role === "team_lead"
+      ? "Pod Lead"
+      : "Creo Admin");
+
+  const roleSubtitle = isMemberRole
+    ? `${user?.role ? user.role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Specialist"} · Active Workstation`
+    : user?.role === "team_lead"
+    ? "Pod Lead · Operations"
+    : isClientRole
+    ? `${user?.company_name || "Client"} · Portal`
+    : "Operations Admin";
+
   const renderNavContent = (onItemClick?: () => void) => (
     <>
       {/* Brand Header */}
-      <div className="p-4 sm:p-5 border-b border-[#2A3446] flex items-center justify-between bg-[#0B111C]/60 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <Link
-            to={homeHref}
-            onClick={onItemClick}
-            className="flex items-center gap-0.5 font-black text-white text-xl tracking-tight"
-          >
-            creo<span className="text-[#7FA0D6] text-2xl leading-none">.</span>
-          </Link>
-          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30">
-            {user?.role === "client"
-              ? "Client Portal"
-              : isMemberRole
-              ? "Workstation"
-              : user?.role === "team_lead"
-              ? "Pod Lead"
-              : "Admin Ops"}
+      <div className="flex items-center justify-between gap-3 px-6 pt-6 pb-2 shrink-0">
+        <Link
+          to={homeHref}
+          onClick={onItemClick}
+          className="inline-flex items-center"
+        >
+          <span className="text-[22px] font-extrabold tracking-tight text-white">
+            Creo<span className="text-[#BCCCE6]">.</span>
           </span>
+        </Link>
+        <div className="flex items-center gap-1.5">
+          <NotificationMenu placement="sidebar" />
+          {onItemClick && (
+            <button
+              type="button"
+              onClick={onItemClick}
+              className="md:hidden size-8 rounded-xl flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] border border-transparent hover:border-[#2A3446] transition-colors cursor-pointer"
+              aria-label="Close navigation sidebar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
-        {onItemClick && (
-          <button
-            type="button"
-            onClick={onItemClick}
-            className="md:hidden size-8 rounded-xl flex items-center justify-center text-[#97A0B3] hover:text-white hover:bg-[#161F2D] border border-transparent hover:border-[#2A3446] transition-colors cursor-pointer"
-            aria-label="Close navigation sidebar"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        )}
+      </div>
+
+      {/* User Profile Card (matching PortalSidebarNew) */}
+      <div className="mx-4 mt-3 mb-2">
+        <div className="flex items-center gap-3 p-3 bg-[#161F2D] rounded-xl border border-[#2A3446]">
+          <div className="w-10 h-10 min-w-10 rounded-xl bg-[#7FA0D6] flex items-center justify-center text-white text-xs font-black shrink-0 overflow-hidden leading-none select-none text-center">
+            {initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-white truncate">{displayName}</p>
+            <p className="text-[11px] text-[#97A0B3] truncate">
+              {roleSubtitle}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Quick Return Banner for Staff/Admins inspecting Client Portal */}
@@ -311,11 +365,13 @@ export function AdminSidebar() {
 
       {/* Scrollable Navigation - All menus directly visible, zero hover */}
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-3.5 space-y-4 text-left [scrollbar-width:thin] [scrollbar-color:#2A3446_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-[#2A3446] [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-[#7FA0D6]/50">
-        {currentNavSections.map((section) => (
-          <div key={section.label} className="space-y-1">
-            <div className="px-3 pb-1 text-[10px] font-black uppercase tracking-wider text-[#7FA0D6]">
-              {section.label}
-            </div>
+        {currentNavSections.map((section, idx) => (
+          <div key={section.label || `section-${idx}`} className="space-y-1">
+            {section.label ? (
+              <div className="px-3 pb-1 text-[10px] font-black uppercase tracking-wider text-[#7FA0D6]">
+                {section.label}
+              </div>
+            ) : null}
             <div className="space-y-0.5">
               {section.items.map((item) => {
                 const Icon = item.icon;
@@ -352,30 +408,18 @@ export function AdminSidebar() {
         ))}
       </div>
 
-      {/* Footer: User Profile Card & Direct Sign Out */}
-      <div className="p-3 border-t border-[#2A3446] bg-[#0B111C]/80 shrink-0 space-y-2 text-left">
-        <div className="flex items-center gap-2.5 p-2 rounded-xl bg-[#161F2D] border border-[#2A3446]">
-          <div className="size-8 rounded-full bg-[#BCCCE6] text-[#0B111C] font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
-            {(user?.full_name?.[0] || user?.email?.[0] || (isClientRole ? "C" : isMemberRole ? "D" : "A")).toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <h4 className="text-xs font-bold text-white truncate">
-              {user?.full_name || (isClientRole ? (user?.company_name || "Client Account") : isMemberRole ? "Team Specialist" : user?.role === "team_lead" ? "Pod Lead" : "Creo Admin")}
-            </h4>
-            <p className="text-[10px] text-[#97A0B3] font-medium truncate">
-              {user?.email || (isClientRole ? "client@portal.creo" : isMemberRole ? "specialist@creo.agency" : "admin@creo.agency")}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => void handleLogout(onItemClick)}
-            className="p-1.5 rounded-lg text-[#97A0B3] hover:text-[#D8BF9B] hover:bg-[#D8BF9B]/10 transition-colors cursor-pointer"
-            title="Sign Out / Log Out"
-            aria-label="Sign Out"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
+      {/* Footer: Direct Sign Out */}
+      <div className="p-3 border-t border-[#2A3446] bg-[#0B111C]/80 shrink-0 text-left">
+        <button
+          type="button"
+          onClick={() => void handleLogout(onItemClick)}
+          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#97A0B3] hover:text-white hover:bg-[#161F2D] rounded-xl transition-colors cursor-pointer"
+          title="Sign Out / Log Out"
+          aria-label="Sign Out"
+        >
+          <LogOut className="w-4 h-4 shrink-0" />
+          <span>Log out</span>
+        </button>
       </div>
     </>
   );
@@ -386,7 +430,7 @@ export function AdminSidebar() {
       {typeof document !== "undefined" &&
         createPortal(
           <aside
-            className="hidden md:flex fixed top-0 bottom-0 left-0 w-64 lg:w-72 h-screen h-[100dvh] bg-[#161F2D] border-r border-[#2A3446] shadow-2xl z-30 flex-col overflow-hidden"
+            className="hidden md:flex fixed top-0 bottom-0 left-0 w-64 lg:w-72 h-screen h-[100dvh] bg-[#0B111C] border-r border-[#2A3446] shadow-2xl z-30 flex-col overflow-hidden"
             aria-label="Admin Navigation Sidebar"
           >
             {renderNavContent()}
@@ -406,7 +450,7 @@ export function AdminSidebar() {
               />
             )}
             <aside
-              className={`fixed top-0 bottom-0 left-0 h-screen h-[100dvh] w-72 max-w-[85vw] bg-[#161F2D] border-r border-[#2A3446] shadow-2xl z-[9999] flex flex-col md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+              className={`fixed top-0 bottom-0 left-0 h-screen h-[100dvh] w-72 max-w-[85vw] bg-[#0B111C] border-r border-[#2A3446] shadow-2xl z-[9999] flex flex-col md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
                 mobileOpen
                   ? "translate-x-0 opacity-100 visible"
                   : "-translate-x-full opacity-0 invisible pointer-events-none"
