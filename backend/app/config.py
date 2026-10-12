@@ -8,6 +8,7 @@ from typing import Any
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+DEFAULT_RESEND_FROM_EMAIL = "Creo <onboarding@resend.dev>"
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -152,7 +153,9 @@ class Settings(BaseSettings):
     INSTAGRAM_MAX_LATENESS_MINUTES: int = Field(default=30, ge=1, le=1440)
     INSTAGRAM_REDIRECT_URI: str = Field(default="http://localhost:5173/portal/account/instagram")
     RESEND_API_KEY: str = Field(default="")
-    RESEND_FROM_EMAIL: str = Field(default="")  # e.g. "Creo <noreply@yourdomain.com>"
+    # Resend's sandbox sender only delivers to the Resend account owner's email.
+    # Override with a verified-domain sender for customer email delivery.
+    RESEND_FROM_EMAIL: str = Field(default=DEFAULT_RESEND_FROM_EMAIL)
     WHATSAPP_API_TOKEN: str = Field(default="")
     WHATSAPP_PHONE_NUMBER_ID: str = Field(default="")
 

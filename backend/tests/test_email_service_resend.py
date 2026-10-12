@@ -3,6 +3,8 @@
 import asyncio
 from typing import Any
 
+import pytest
+
 from app.config import settings
 from app.services import email_service
 
@@ -82,3 +84,21 @@ def test_send_email_fails_closed_when_resend_is_unconfigured(monkeypatch: Any) -
     delivered = asyncio.run(email_service.send_email("client@example.net", "Verify", "Code"))
 
     assert delivered is False
+
+
+@pytest.mark.parametrize("sender", ["", "   "])
+@pytest.mark.parametrize("response_status", [200, 403])
+def test_default_sender_handles_resend_acceptance_and_rejection(
+    monkeypatch: Any, sender: str, response_status: int
+) -> None:
+    monkeypatch.setattr(settings, "RESEND_API_KEY", "re_test_key")
+    monkeypatch.setattr(settings, "RESEND_FROM_EMAIL", sender)
+    monkeypatch.setattr(FakeAsyncClient, "response_status", response_status)
+    monkeypatch.setattr(FakeAsyncClient, "request", None)
+    monkeypatch.setattr("httpx.AsyncClient", FakeAsyncClient)
+
+    delivered = asyncio.run(email_service.send_email("owner@example.net", "Verify", "Code"))
+
+    assert delivered is (response_status == 200)
+    assert FakeAsyncClient.request is not None
+    assert FakeAsyncClient.request["json"]["from"] == "Creo <onboarding@resend.dev>"

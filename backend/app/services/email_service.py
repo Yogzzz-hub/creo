@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from app.config import settings
+from app.config import DEFAULT_RESEND_FROM_EMAIL, settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -20,20 +20,13 @@ async def send_email(
     caught, logged, and surfaced as a boolean so callers can decide what to do.
     """
     api_key = (settings.RESEND_API_KEY or "").strip()
-    from_email = (settings.RESEND_FROM_EMAIL or "").strip()
+    from_email = (settings.RESEND_FROM_EMAIL or "").strip() or DEFAULT_RESEND_FROM_EMAIL
     clean_to = to_email.strip()
 
     if not api_key:
         logger.error(
             "resend_not_configured",
             hint="Set RESEND_API_KEY in your environment variables",
-        )
-        return False
-
-    if not from_email:
-        logger.error(
-            "resend_from_email_missing",
-            hint="Set RESEND_FROM_EMAIL in your environment variables (e.g. 'Creo <noreply@yourdomain.com>')",
         )
         return False
 

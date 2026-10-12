@@ -14,7 +14,7 @@ from typing import Any
 import httpx
 from sqlalchemy import select
 
-from app.config import settings
+from app.config import DEFAULT_RESEND_FROM_EMAIL, settings
 from app.db.session import async_session_factory
 from app.models.ops import Notification
 from app.models.user import User
@@ -61,14 +61,16 @@ async def send_notification_async(
             # 2. Channel dispatch
             if channel == "email":
                 resend_api_key = (settings.RESEND_API_KEY or "").strip()
-                resend_from_email = (settings.RESEND_FROM_EMAIL or "").strip()
-                if not resend_api_key or not resend_from_email:
+                resend_from_email = (
+                    (settings.RESEND_FROM_EMAIL or "").strip() or DEFAULT_RESEND_FROM_EMAIL
+                )
+                if not resend_api_key:
                     if settings.ENVIRONMENT in ("development", "test"):
                         # Keep local/test workflows usable without pretending a
                         # production notification was delivered.
                         sent_at = datetime.now(UTC)
                     else:
-                        failed_reason = "Resend is not configured (missing API key or sender)."
+                        failed_reason = "Resend is not configured (missing API key)."
                 else:
                     try:
                         async with httpx.AsyncClient(timeout=10.0) as client:
