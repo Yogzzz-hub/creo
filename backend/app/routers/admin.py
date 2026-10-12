@@ -4380,8 +4380,8 @@ async def _activate_manual_subscription(
         user_id=client_id,
         title="Payment Verified & Retainer Activated",
         message=f"Your offline payment for {plan.display_name} has been approved by agency admin. Step 3 (Payment) has been bypassed! You can now proceed to your Brand Questionnaire.",
-        type="billing",
         link="/onboarding?step=4",
+        is_read=False,
     )
     db.add(notif)
 
@@ -4482,8 +4482,8 @@ async def approve_manual_payment_request(
         user_id=client_id,
         title="🎉 Payment Verified & Approved",
         message=f"Your offline payment for {plan_display} (₹{int(amount):,}) has been verified and approved by the agency admin! You can now proceed directly to Step 4 (Brand DNA).",
-        type="billing",
         link="/onboarding?step=4",
+        is_read=False,
     )
     db.add(approval_notif)
     await db.commit()
@@ -4553,8 +4553,8 @@ async def reject_manual_payment_request(
         user_id=client_id,
         title="Offline Payment Verification Declined",
         message=f"Your offline payment request was declined: {admin_notes}. Please review or proceed with online checkout.",
-        type="billing",
         link="/onboarding?step=3",
+        is_read=False,
     )
     db.add(notif)
     await db.commit()
@@ -4628,8 +4628,8 @@ async def direct_bypass_client_payment(
         user_id=client_id,
         title="🎉 Account Activated by Agency Admin",
         message=f"Payment for {plan.display_name} has been verified and approved by the agency admin! You can now start Brand Onboarding.",
-        type="billing",
         link="/onboarding?step=4",
+        is_read=False,
     )
     db.add(direct_notif)
     await db.commit()
