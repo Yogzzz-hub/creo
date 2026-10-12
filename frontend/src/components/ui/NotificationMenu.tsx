@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Check, CheckCheck, CalendarCheck, DollarSign, Users, Clock, ExternalLink, ShieldCheck, Trash2 } from "lucide-react";
+import { Bell, Check, CheckCheck, CalendarCheck, DollarSign, Users, Clock, ExternalLink, ShieldCheck, Trash2, X, ArrowUpRight } from "lucide-react";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 
@@ -233,23 +233,23 @@ export function NotificationMenu({ placement = "header" }: { placement?: "header
 
             {/* Notification Dropdown Panel */}
             {notificationOpen && createPortal(
-              <div ref={panelRef} id="notification-menu-panel" role="dialog" aria-label="Notifications" className={`fixed z-[10000] w-[min(400px,calc(100vw-2rem))] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-3xl border border-[#2A3446] bg-[#161F2D] text-left shadow-[0_12px_40px_rgba(5,8,16,0.7)] animate-scale-up ${placement === "sidebar" ? "left-[292px] top-4" : "right-4 top-16 sm:right-6"}`}>
+              <div ref={panelRef} id="notification-menu-panel" role="dialog" aria-label="Notifications" className={`fixed z-[10000] flex flex-col w-[min(400px,calc(100vw-2rem))] max-h-[calc(100dvh-5rem)] overflow-hidden rounded-2xl border border-[#334155] bg-[#161F2D] text-left shadow-[0_24px_80px_rgba(0,0,0,0.5)] animate-scale-up ${placement === "sidebar" ? "right-4 top-16 lg:right-auto lg:left-[292px] lg:top-4" : "right-4 top-16 sm:right-6"}`}>
                 {/* Header */}
-                <div className="px-4 sm:px-5 py-3.5 border-b border-[#2A3446] flex items-center justify-between bg-[#0B111C]/60">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xs sm:text-sm font-bold text-white">Notifications</h3>
+                <div className="px-4 sm:px-5 py-4 border-b border-[#2A3446] flex items-start justify-between gap-3 bg-[#101724] shrink-0">
+                  <div className="space-y-1.5">
+                    <h3 className="text-base font-bold tracking-tight text-[#F8FAFC]">Notifications</h3>
                     {unreadCount > 0 ? (
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30">
-                        {unreadCount} Unread
+                        {unreadCount} unread
                       </span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#161F2D] text-[#97A0B3]">
-                        All Caught Up
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#7FA0D6]/20 bg-[#7FA0D6]/10 px-2 py-0.5 text-[11px] font-medium text-[#BCCCE6]">
+                        <CheckCheck className="size-3" /> All caught up
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2 pt-0.5">
                     {unreadCount > 0 && (
                       <button
                         onClick={handleMarkAllAsRead}
@@ -268,16 +268,27 @@ export function NotificationMenu({ placement = "header" }: { placement?: "header
                         <Trash2 className="w-3.5 h-3.5" /> Clear
                       </button>
                     )}
+                    <button
+                      type="button"
+                      aria-label="Close notifications"
+                      onClick={() => {
+                        setNotificationOpen(false);
+                        notifRef.current?.querySelector("button")?.focus();
+                      }}
+                      className="flex size-8 items-center justify-center rounded-lg text-[#97A0B3] hover:bg-[#2A3446] hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]"
+                    >
+                      <X className="size-4" />
+                    </button>
                   </div>
                 </div>
 
                 {/* Notification Items List */}
-                <div className="max-h-[340px] sm:max-h-[380px] overflow-y-auto divide-y divide-[#2A3446] scrollbar-thin">
+                <div className="min-h-0 max-h-[340px] sm:max-h-[380px] overflow-y-auto divide-y divide-[#2A3446] scrollbar-thin">
                   {notificationsList.map((item) => (
                     <div
                       key={item.id}
                       onClick={() => handleNotificationClick(item)}
-                      className={`p-3.5 sm:p-4 transition-colors cursor-pointer flex items-start gap-3 hover:bg-[#161F2D] group relative ${
+                      className={`p-3.5 sm:p-4 transition-colors cursor-pointer flex items-start gap-3 hover:bg-[#223047] group relative ${
                         !item.is_read ? "bg-[#7FA0D6]/10" : "bg-transparent opacity-85"
                       }`}
                     >
@@ -289,7 +300,7 @@ export function NotificationMenu({ placement = "header" }: { placement?: "header
                       {/* Content */}
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center justify-between gap-1">
-                          <h4 className={`text-xs truncate ${!item.is_read ? "font-bold text-white" : "font-medium text-[#F1F5F9]"}`}>
+                          <h4 className={`text-sm leading-5 ${!item.is_read ? "font-bold text-white" : "font-medium text-[#F1F5F9]"}`}>
                             {item.title}
                           </h4>
                           <div className="flex items-center gap-1.5 shrink-0">
@@ -318,7 +329,7 @@ export function NotificationMenu({ placement = "header" }: { placement?: "header
                           </div>
                         </div>
 
-                        <p className="text-[11px] text-[#97A0B3] line-clamp-2 leading-relaxed font-medium">
+                        <p className="text-xs text-[#A7B4C8] line-clamp-2 leading-relaxed">
                           {item.message}
                         </p>
 
@@ -338,23 +349,27 @@ export function NotificationMenu({ placement = "header" }: { placement?: "header
                   ))}
 
                   {notificationsList.length === 0 && (
-                    <div className="p-8 text-center text-[#97A0B3] space-y-2">
-                      <Bell className="w-8 h-8 text-[#2A3446] mx-auto" />
-                      <p className="text-xs font-bold text-white">No notifications</p>
-                      <p className="text-[11px] text-[#97A0B3]">You're all caught up with your workspace alerts.</p>
+                    <div className="px-6 py-9 text-center">
+                      <div className="relative mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl border border-[#7FA0D6]/20 bg-[#7FA0D6]/10">
+                        <Bell className="size-7 text-[#BCCCE6]" />
+                        <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full border-2 border-[#161F2D] bg-[#7FA0D6] text-[#0B111C]"><Check className="size-3.5" /></span>
+                      </div>
+                      <p className="text-base font-semibold text-[#F8FAFC]">You're all caught up</p>
+                      <p className="mx-auto mt-2 max-w-[260px] text-sm leading-6 text-[#A7B4C8]">New updates from your workspace will appear here.</p>
                     </div>
                   )}
                 </div>
 
                 {/* Footer */}
-                <div className="p-3 bg-[#0B111C]/60 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                  <span className="text-[11px] text-[#97A0B3] font-medium">Real-time alerts</span>
+                <div className="px-4 sm:px-5 py-3 bg-[#101724] border-t border-[#2A3446] flex items-center justify-between gap-3 text-xs shrink-0">
+                  <span className="text-xs text-[#97A0B3]">Workspace updates</span>
                   <Link
                     to={isClientRole ? "/portal/deliverables" : isMemberRole ? "/workstation/schedule" : "/admin/leaves"}
                     onClick={() => setNotificationOpen(false)}
-                    className="text-[11px] font-bold text-[#7FA0D6] hover:underline"
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold text-[#BCCCE6] hover:bg-[#2A3446] hover:text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]"
                   >
-                    {isClientRole ? "View Deliverables →" : isMemberRole ? "View Schedule →" : "View Approvals →"}
+                    {isClientRole ? "View deliverables" : isMemberRole ? "View schedule" : "View approvals"}
+                    <ArrowUpRight className="size-3.5" />
                   </Link>
                 </div>
               </div>, document.body

@@ -180,22 +180,25 @@ function OnboardingPageWrapper() {
   return (
     <div data-surface="review" className="bento-theme min-h-[100dvh] bg-[#0B111C] text-[#F8FAFC] flex flex-col overflow-x-hidden">
       {/* Top Header Bar */}
-      <header className="sticky top-0 z-30 border-b border-[#2A3446] bg-[#050810]/95 backdrop-blur-md px-4 sm:px-8 py-2.5 shadow-md shrink-0">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <span className="size-8 flex items-center justify-center rounded-xl bg-[#161F2D] border border-[#2A3446] font-mono text-sm font-bold text-[#7FA0D6] shadow-xs group-hover:scale-105 transition-transform">
-              C
-            </span>
-            <div className="flex flex-col">
-              <span className="text-base font-bold font-display tracking-tight text-white">
+      <header className="sticky top-0 z-30 border-b border-[#2A3446]/80 bg-[#0B111C]/95 backdrop-blur-md shrink-0">
+        <div className="max-w-6xl mx-auto flex min-h-16 items-center justify-between gap-4 px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-4 sm:gap-5">
+            <Link to="/" aria-label="Creo home" className="rounded-lg px-1 py-2 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6]">
+              <span className="text-2xl font-bold font-display tracking-tight text-white group-hover:text-[#BCCCE6] transition-colors">
                 creo<span className="text-[#7FA0D6]">.</span>
               </span>
-              <span className="text-[10px] font-semibold text-[#97A0B3] -mt-1 tracking-wider uppercase">
-                Client Onboarding
+            </Link>
+            <span className="h-6 w-px bg-[#2A3446]" aria-hidden="true" />
+            <span className="text-xs sm:text-sm font-medium text-[#A7B4C8]">Client onboarding</span>
+          </div>
+          {user && (
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="hidden sm:block max-w-40 truncate text-sm font-medium text-[#BCCCE6]">{user.full_name || user.email}</span>
+              <span aria-label="Your account" className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[#7FA0D6]/30 bg-[#7FA0D6]/15 text-xs font-semibold text-[#BCCCE6]">
+                {(user.full_name || user.email || "C").slice(0, 1).toUpperCase()}
               </span>
             </div>
-          </Link>
-
+          )}
         </div>
       </header>
 
