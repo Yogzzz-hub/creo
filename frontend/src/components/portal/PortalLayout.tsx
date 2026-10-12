@@ -49,8 +49,10 @@ export function PortalLayout() {
               : "flex-1 min-w-0 xl:pl-[280px] flex flex-col min-h-screen"
           }
         >
-          {/* Top Header with Hamburger (mobile), Page Title, Notification Bell & Profile */}
-          <AdminTopHeader showBackButton />
+          {/* Keep navigation available below the desktop sidebar breakpoint. */}
+          <div className="sticky top-0 z-40 shrink-0 xl:hidden">
+            <AdminTopHeader showBackButton />
+          </div>
 
           {/* Main Content Area — fixed height for Slack so internal scrollbars activate */}
           <main
