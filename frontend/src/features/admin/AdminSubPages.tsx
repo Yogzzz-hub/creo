@@ -66,7 +66,6 @@ import {
   Video,
   Scissors,
   Palette,
-  RefreshCw,
   Layers,
   Mail,
   Phone,
@@ -78,6 +77,8 @@ import {
   Folder,
   Lock,
   ShieldCheck,
+  Columns2,
+  Maximize2,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { CustomSelect } from "../../components/ui/CustomSelect";
@@ -4683,6 +4684,7 @@ export function AdminRevenuePage() {
   const [filter, setFilter] = useState<"all" | "paid" | "pending" | "overdue">("all");
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState<string | null>(null);
+  const [revenueLayout, setRevenueLayout] = useState<"split" | "enlarged">("split");
 
   // Modals
   const [selectedReceipt, setSelectedReceipt] = useState<TransactionItem | null>(null);
@@ -4740,20 +4742,9 @@ export function AdminRevenuePage() {
     refetchInterval: 60000,
   });
 
-  // Fetch real client roster for active retainer count and ARPU
-  const { data: rosterData } = useQuery({
-    queryKey: ["admin_clients_roster"],
-    queryFn: () => fetchClientRoster(),
-    refetchInterval: 60000,
-  });
-
   const totalMrr = kpis?.mrr_minor ? kpis.mrr_minor / 100 : 0;
   const totalCollected = totalMrr;
   const projectedArr = totalMrr * 12;
-  const activeCount = (rosterData && rosterData.length > 0)
-    ? rosterData.length
-    : (kpis?.active_clients || 3);
-  const arpu = activeCount > 0 ? Math.round(totalMrr / activeCount) : 0;
 
   // Chart Trend Data (Quarterly Trend)
   const chartData = (trendData?.points && trendData.points.length > 0)
@@ -4848,6 +4839,34 @@ export function AdminRevenuePage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {/* View Mode Toggle: Split View vs Enlarged Graph */}
+            <div className="flex items-center p-1 bg-[#161F2D] border border-[#2A3446] rounded-xl text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setRevenueLayout("split")}
+                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+                  revenueLayout === "split"
+                    ? "bg-[#7FA0D6] text-white shadow-xs font-black"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+                title="Side-by-side: Graph on left, History on right"
+              >
+                <Columns2 className="w-3.5 h-3.5" /> Split View
+              </button>
+              <button
+                type="button"
+                onClick={() => setRevenueLayout("enlarged")}
+                className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
+                  revenueLayout === "enlarged"
+                    ? "bg-[#7FA0D6] text-white shadow-xs font-black"
+                    : "text-[#97A0B3] hover:text-white"
+                }`}
+                title="Enlarge graph to full width"
+              >
+                <Maximize2 className="w-3.5 h-3.5" /> Enlarged Graph
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={handleExportCSV}
@@ -4914,37 +4933,38 @@ export function AdminRevenuePage() {
         </div>
 
         {/* ─────────────────────────────────────────────────────────────────────────────
-            CHARTS & TIER BREAKDOWN GRID
+            MAIN SECTION: REVENUE GROWTH GRAPH & TRANSACTION HISTORY
+            (Supports dynamic Split View or Full-Width Enlarged Graph)
         ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-6">
-          {/* Revenue Growth & Trajectory (2 Cols - Bar Chart matching Dashboard) */}
-          <div className="lg:col-span-2 bg-[#161F2D] rounded-3xl p-6 lg:p-8 border border-[#2A3446] shadow-xl space-y-6 flex flex-col justify-between">
+        <div className={revenueLayout === "split" ? "grid grid-cols-1 xl:grid-cols-2 gap-3.5 sm:gap-6 items-stretch" : "space-y-6"}>
+          {/* Revenue Growth & Trajectory Card */}
+          <div className={`bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-xl flex flex-col justify-between ${
+            revenueLayout === "split" ? "p-6 lg:p-7 space-y-6" : "p-6 lg:p-8 space-y-6"
+          }`}>
             <div>
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
                 <div>
                   <h3 className="text-lg font-bold text-white tracking-tight">Revenue Growth & Trajectory</h3>
                   <p className="text-xs text-[#97A0B3]">Live cash flow across retainers & client billing</p>
                 </div>
 
-                <div className="flex items-center gap-4 text-xs font-bold">
+                <div className="flex flex-wrap items-center gap-3 text-xs font-bold">
                   <span className="flex items-center gap-1.5 text-[#7FA0D6]">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#7FA0D6]" /> Actual Inflow
                   </span>
                   <span className="flex items-center gap-1.5 text-[#97A0B3]">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#2A3446]" /> Target Baseline
                   </span>
+                  <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-[#7FA0D6] text-white shadow-md ml-1" title="Monthly Recurring Revenue">
+                    ₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"} Current MRR
+                  </span>
                 </div>
               </div>
 
-              {/* Peak Marker Badge */}
-              <div className="flex justify-end mb-2">
-                <span className="px-3 py-1 rounded-full text-[11px] font-black bg-[#7FA0D6] text-white shadow-md" title="Monthly Recurring Revenue">
-                  ₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"} Current MRR
-                </span>
-              </div>
-
-              {/* Recharts Bar Chart (Matching Dashboard Bar Graph) */}
-              <div className="w-full h-64 bg-[#0B111C]/60 rounded-2xl p-4 border border-[#2A3446]/60">
+              {/* Recharts Bar Chart (Responsive Height & Width) */}
+              <div className={`w-full bg-[#0B111C]/60 rounded-2xl p-4 border border-[#2A3446]/60 ${
+                revenueLayout === "enlarged" ? "h-80 sm:h-88" : "h-72"
+              }`}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={chartData}
@@ -4975,7 +4995,7 @@ export function AdminRevenuePage() {
                       tick={{ fontSize: 10, fill: "#97A0B3" }}
                       axisLine={false}
                       tickLine={false}
-                      width={36}
+                      width={38}
                       tickFormatter={(v: number) => {
                         const val = v / 100;
                         return val >= 10000000
@@ -4994,7 +5014,7 @@ export function AdminRevenuePage() {
                       labelStyle={{ color: "#97A0B3", fontSize: "11px", fontWeight: "bold" }}
                       cursor={false}
                     />
-                    <Bar dataKey="revenue" radius={[8, 8, 3, 3]} maxBarSize={28}>
+                    <Bar dataKey="revenue" radius={[8, 8, 3, 3]} maxBarSize={revenueLayout === "enlarged" ? 44 : 32}>
                       {chartData.map((entry, index) => {
                         const maxVal = Math.max(...chartData.map((d) => d.revenue));
                         return (
@@ -5012,330 +5032,160 @@ export function AdminRevenuePage() {
             </div>
 
             {/* Bottom Metrics Bar */}
-            <div className="pt-4 border-t border-[#2A3446] grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center">
-              <div className="bg-[#0B111C] p-2 sm:p-3 rounded-2xl border border-[#2A3446]">
+            <div className="pt-4 border-t border-[#2A3446] grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-center">
+              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Invoiced</span>
                 <div className="text-sm font-black text-white">₹{totalMrr > 0 ? totalMrr.toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-2 sm:p-3 rounded-2xl border border-[#2A3446]">
+              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Direct UPI / Wire</span>
                 <div className="text-sm font-black text-white">₹{totalCollected > 0 ? totalCollected.toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-2 sm:p-3 rounded-2xl border border-[#2A3446]">
+              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Cards / Razorpay</span>
                 <div className="text-sm font-black text-white">₹{totalCollected > 0 ? (totalCollected * 0).toLocaleString('en-IN') : "0"}</div>
               </div>
-              <div className="bg-[#0B111C] p-2 sm:p-3 rounded-2xl border border-[#2A3446]">
+              <div className="bg-[#0B111C] p-2.5 sm:p-3 rounded-2xl border border-[#2A3446]">
                 <span className="text-[10px] font-bold text-[#97A0B3] uppercase">Disputed / Refunded</span>
                 <div className="text-sm font-black text-emerald-400">₹0</div>
               </div>
             </div>
           </div>
 
-          {/* Revenue Operations & Unit Economics (Bento Box Layout) */}
-          <div className="bg-[#161F2D] rounded-3xl p-6 lg:p-7 border border-[#2A3446] shadow-xl flex flex-col justify-between gap-4">
-            <div>
-              {/* Bento Header */}
-              <div className="flex items-center justify-between mb-4">
+          {/* Recent Transactions Card (Transaction History) */}
+          <div className={`bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-xl flex flex-col justify-between ${
+            revenueLayout === "split" ? "p-6 lg:p-7 space-y-4" : "p-6 lg:p-8 space-y-6"
+          }`}>
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <h3 className="text-lg font-bold text-white tracking-tight">Revenue Operations & Economics</h3>
-                  </div>
-                  <p className="text-xs text-[#97A0B3]">Real-time settlement telemetry & unit yield</p>
-                </div>
-                <button
-                  type="button"
-                  title="Refresh Metrics"
-                  onClick={() => {
-                    setToast("Revenue economics & telemetry refreshed.");
-                    setTimeout(() => setToast(null), 2500);
-                  }}
-                  className="p-2 rounded-xl hover:bg-[#0B111C] text-[#97A0B3] hover:text-[#F1F5F9] cursor-pointer transition-colors border border-transparent hover:border-[#2A3446]"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Bento Stack */}
-              <div className="space-y-3.5">
-                {/* Bento Tile 1: Cash Inflow & Settlement Velocity */}
-                <div className="bg-[#0B111C] rounded-2xl p-4 border border-[#2A3446] space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                        <ShieldCheck className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                          Inflow Velocity & Clearing
-                        </div>
-                        <span className="text-[10px] text-[#97A0B3] font-medium">T+0 Direct Settlement Cycle</span>
-                      </div>
-                    </div>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> 100% Cleared
-                    </span>
-                  </div>
-
-                  {/* Clearing Progress Rail */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-[#97A0B3] font-semibold">Realized Inflow vs Billed</span>
-                      <span className="text-white font-extrabold">₹{totalCollected.toLocaleString('en-IN')} / ₹{totalMrr.toLocaleString('en-IN')}</span>
-                    </div>
-                    <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden border border-[#2A3446]/60">
-                      <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-[#7FA0D6] to-[#BCCCE6]" style={{ width: "100%" }} />
-                    </div>
-                  </div>
-
-                  {/* Micro Status Badges */}
-                  <div className="grid grid-cols-3 gap-2 pt-1 text-center">
-                    <div className="bg-[#161F2D]/70 p-1.5 rounded-xl border border-[#2A3446]/60">
-                      <div className="text-[9px] uppercase font-bold text-[#97A0B3]">Disputes</div>
-                      <div className="text-[11px] font-black text-emerald-400">₹0 Risk</div>
-                    </div>
-                    <div className="bg-[#161F2D]/70 p-1.5 rounded-xl border border-[#2A3446]/60">
-                      <div className="text-[9px] uppercase font-bold text-[#97A0B3]">Invoicing</div>
-                      <div className="text-[11px] font-black text-white">Net 15</div>
-                    </div>
-                    <div className="bg-[#161F2D]/70 p-1.5 rounded-xl border border-[#2A3446]/60">
-                      <div className="text-[9px] uppercase font-bold text-[#97A0B3]">Retainers</div>
-                      <div className="text-[11px] font-black text-[#7FA0D6]">{activeCount} Active</div>
-                    </div>
-                  </div>
+                  <h3 className="text-xl font-black text-white tracking-tight">Recent Transactions</h3>
+                  <p className="text-xs text-[#97A0B3]">Client billing roster & payment settlements</p>
                 </div>
 
-                {/* Bento Tile 2: 2x2 Unit Economics Matrix */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-[11px] font-bold text-[#97A0B3] uppercase tracking-wider flex items-center gap-1.5">
-                      <TrendingUp className="w-3.5 h-3.5 text-[#7FA0D6]" /> Unit Economics & Yield
-                    </span>
-                    <span className="text-[10px] text-[#7FA0D6] font-semibold">Active Run Rate</span>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {/* Search */}
+                  <div className="relative min-w-[200px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
+                    <input
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search client or invoice..."
+                      className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs text-white focus:outline-none focus:border-blue-500"
+                    />
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {/* Cell 1: ARPU */}
-                    <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446] hover:border-[#7FA0D6]/40 transition-colors group">
-                      <span className="text-[10px] font-bold text-[#97A0B3] uppercase block mb-1">Avg Retainer (ARPU)</span>
-                      <div className="text-base font-black text-white group-hover:text-[#7FA0D6] transition-colors">
-                        ₹{arpu.toLocaleString('en-IN')}
-                      </div>
-                      <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-0.5 mt-0.5">
-                        <ArrowUpRight className="w-3 h-3" /> Per account / mo
-                      </span>
-                    </div>
 
-                    {/* Cell 2: Net Retention */}
-                    <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446] hover:border-emerald-500/40 transition-colors group">
-                      <span className="text-[10px] font-bold text-[#97A0B3] uppercase block mb-1">Net Retention (NRR)</span>
-                      <div className="text-base font-black text-emerald-400">
-                        100.0%
-                      </div>
-                      <span className="text-[10px] text-[#97A0B3] font-semibold block mt-0.5">
-                        0% Churn past 30d
-                      </span>
-                    </div>
-
-                    {/* Cell 3: Annualized Run Rate */}
-                    <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446] hover:border-[#7FA0D6]/40 transition-colors group">
-                      <span className="text-[10px] font-bold text-[#97A0B3] uppercase block mb-1">Projected ARR</span>
-                      <div className="text-base font-black text-white group-hover:text-[#7FA0D6] transition-colors">
-                        ₹{projectedArr.toLocaleString('en-IN')}
-                      </div>
-                      <span className="text-[10px] text-[#97A0B3] font-semibold block mt-0.5">
-                        12-mo forward pace
-                      </span>
-                    </div>
-
-                    {/* Cell 4: Settlement Rail */}
-                    <div className="bg-[#0B111C] p-3 rounded-2xl border border-[#2A3446] hover:border-[#7FA0D6]/40 transition-colors group">
-                      <span className="text-[10px] font-bold text-[#97A0B3] uppercase block mb-1">Clearing Rail</span>
-                      <div className="text-base font-black text-white">
-                        UPI / IMPS
-                      </div>
-                      <span className="text-[10px] text-[#97A0B3] font-semibold flex items-center gap-1 mt-0.5">
-                        <Zap className="w-3 h-3 text-amber-400" /> Auto-reconciled
-                      </span>
-                    </div>
+                  {/* Status Filter Pills */}
+                  <div className="flex items-center gap-1 bg-[#0B111C] p-1 rounded-xl text-xs font-bold border border-[#2A3446]">
+                    {(["all", "paid", "pending", "overdue"] as const).map((st) => (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => setFilter(st)}
+                        className={`px-2.5 py-1 rounded-lg capitalize transition-all cursor-pointer text-[11px] ${
+                          filter === st ? "bg-[#161F2D] text-white shadow-xs font-black" : "text-[#97A0B3] hover:text-white"
+                        }`}
+                      >
+                        {st}
+                      </button>
+                    ))}
                   </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Bento Tile 3: Add-on Asset Packages & High-Margin Ancillary */}
-            <div className="bg-[#0B111C] p-4 rounded-2xl border border-[#2A3446] space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-[#7FA0D6]/15 text-[#7FA0D6] border border-[#7FA0D6]/30 flex items-center justify-center font-bold shrink-0">
-                    <Layers className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-xs text-white">Ancillary & Add-ons Ledger</h4>
-                    <p className="text-[11px] text-[#97A0B3] font-medium">3 active creative sprint packages</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-base font-black text-[#7FA0D6] block">+₹45,000</span>
-                  <span className="text-[10px] text-emerald-400 font-semibold">18.4% of total</span>
-                </div>
-              </div>
-
-              {/* Revenue Share Split Bar */}
-              <div className="space-y-1">
-                <div className="w-full bg-[#161F2D] rounded-full h-2 overflow-hidden flex">
-                  <div
-                    className="bg-[#7FA0D6] h-full"
-                    style={{ width: `${totalMrr > 0 ? Math.max(0, Math.round(((totalMrr - 45000) / totalMrr) * 100)) : 82}%` }}
-                    title="Core Retainer Base"
-                  />
-                  <div
-                    className="bg-emerald-400 h-full"
-                    style={{ width: `${totalMrr > 0 ? Math.min(100, Math.round((45000 / totalMrr) * 100)) : 18}%` }}
-                    title="Add-on Packages"
-                  />
-                </div>
-                <div className="flex justify-between text-[10px] text-[#97A0B3] font-medium pt-0.5">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-[#7FA0D6]" /> Base Retainers (₹{Math.max(0, totalMrr - 45000).toLocaleString('en-IN')})
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" /> Add-ons (₹45,000)
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        {/* ─────────────────────────────────────────────────────────────────────────────
-            RECENT TRANSACTIONS ROSTER TABLE (Matching Image 2)
-        ───────────────────────────────────────────────────────────────────────────── */}
-        <div className="bg-[#161F2D] rounded-3xl border border-[#2A3446] shadow-[0_4px_30px_rgba(0,0,0,0.04)] p-6 lg:p-8 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h3 className="text-xl font-black text-white tracking-tight">Recent Transactions</h3>
-
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Search */}
-              <div className="relative min-w-[240px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#97A0B3]" />
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search client or invoice..."
-                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-[#2A3446] text-xs text-white focus:outline-none focus:border-blue-500"
-                />
-              </div>
-
-              {/* Status Filter Pills */}
-              <div className="flex items-center gap-1 bg-[#161F2D] p-1 rounded-xl text-xs font-bold">
-                {(["all", "paid", "pending", "overdue"] as const).map((st) => (
+                  {/* Export CSV Button */}
                   <button
-                    key={st}
                     type="button"
-                    onClick={() => setFilter(st)}
-                    className={`px-3 py-1.5 rounded-lg capitalize transition-all cursor-pointer ${
-                      filter === st ? "bg-[#161F2D] text-white shadow-xs font-black" : "text-[#97A0B3] hover:text-white"
-                    }`}
+                    onClick={handleExportCSV}
+                    className="px-3 py-1.5 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-[#7FA0D6]/30 transition-colors"
                   >
-                    {st}
+                    <Download className="w-3.5 h-3.5" /> CSV
                   </button>
-                ))}
+                </div>
               </div>
 
-              {/* Export CSV Button matching Image 2 */}
-              <button
-                type="button"
-                onClick={handleExportCSV}
-                className="px-3.5 py-2 rounded-xl bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-[#7FA0D6]/30 transition-colors"
-              >
-                <Download className="w-3.5 h-3.5" /> Export CSV
-              </button>
+              {/* Transactions Table with Scrollbar in Split View */}
+              <div className={`overflow-x-auto rounded-2xl border border-[#2A3446] ${
+                revenueLayout === "split" ? "max-h-[350px] overflow-y-auto" : ""
+              }`}>
+                <table className="w-full text-left text-xs text-white">
+                  <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3] sticky top-0 z-10">
+                    <tr>
+                      <th className="px-3 sm:px-4 py-3">CLIENT & SCOPE</th>
+                      <th className="px-3 sm:px-4 py-3">INVOICE #</th>
+                      <th className="px-3 sm:px-4 py-3">AMOUNT</th>
+                      <th className="px-3 sm:px-4 py-3">METHOD</th>
+                      <th className="px-3 sm:px-4 py-3">STATUS</th>
+                      <th className="px-3 sm:px-4 py-3 text-right">ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#2A3446]/40 font-medium bg-[#161F2D]/50">
+                    {filteredTx.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
+                          No transactions recorded yet
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredTx.map((tx) => (
+                        <tr key={tx.id} className="hover:bg-[#0B111C]/70 transition-colors">
+                          <td className="px-3 sm:px-4 py-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className={`w-8 h-8 rounded-xl ${tx.avatarBg} font-black text-xs flex items-center justify-center shrink-0`}>
+                                {tx.clientInitials}
+                              </div>
+                              <div className="truncate max-w-[140px]">
+                                <div className="font-bold text-xs text-white truncate">{tx.client}</div>
+                                <div className="text-[10px] text-[#97A0B3] truncate">{tx.scope}</div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="px-3 sm:px-4 py-3 font-mono font-bold text-[#F1F5F9] text-xs">{tx.id}</td>
+
+                          <td className="px-3 sm:px-4 py-3 font-black text-xs text-white">
+                            ₹{tx.amount.toLocaleString('en-IN')}
+                          </td>
+
+                          <td className="px-3 sm:px-4 py-3 text-[#F1F5F9] font-medium text-[11px]">{tx.method}</td>
+
+                          <td className="px-3 sm:px-4 py-3">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 w-fit ${tx.badgeClass}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]"}`} />
+                              {tx.status}
+                            </span>
+                          </td>
+
+                          <td className="px-3 sm:px-4 py-3 text-right">
+                            {tx.status === "Paid" ? (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedReceipt(tx)}
+                                className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer text-xs"
+                              >
+                                Receipt <ArrowUpRight className="w-3.5 h-3.5" />
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleSendReminder(tx)}
+                                className="px-2.5 py-1 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold text-[11px] inline-flex items-center gap-1 cursor-pointer"
+                              >
+                                <Play className="w-3 h-3 fill-current" /> Remind
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
 
-          {/* Table matching Image 2 */}
-          <div className="overflow-x-auto -mx-1 sm:mx-0">
-            <table className="w-full text-left text-xs text-white">
-              <thead className="bg-[#0B111C] border-b border-[#2A3446] text-[11px] font-extrabold uppercase tracking-wider text-[#97A0B3]">
-                <tr>
-                  <th className="px-3 sm:px-5 py-3 sm:py-4">CLIENT & SCOPE</th>
-                  <th className="px-3 sm:px-5 py-3 sm:py-4">INVOICE #</th>
-                  <th className="px-3 sm:px-5 py-3 sm:py-4">AMOUNT</th>
-                  <th className="px-3 sm:px-5 py-3 sm:py-4">PAYMENT METHOD</th>
-                  <th className="px-3 sm:px-5 py-3 sm:py-4">STATUS</th>
-                  <th className="px-5 py-4 text-right">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 font-medium">
-                {filteredTx.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-[#97A0B3] text-xs font-medium">
-                      No transactions recorded yet
-                    </td>
-                  </tr>
-                ) : (
-                  filteredTx.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-[#0B111C]/70 transition-colors">
-                    <td className="px-3 sm:px-5 py-3 sm:py-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-xl ${tx.avatarBg} font-black text-xs flex items-center justify-center shrink-0`}>
-                          {tx.clientInitials}
-                        </div>
-                        <div>
-                          <div className="font-bold text-sm text-white">{tx.client}</div>
-                          <div className="text-[11px] text-[#97A0B3]">{tx.scope}</div>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="px-5 py-4 font-mono font-bold text-[#F1F5F9]">{tx.id}</td>
-
-                    <td className="px-5 py-4 font-black text-sm text-white">
-                      ₹{tx.amount.toLocaleString('en-IN')}
-                    </td>
-
-                    <td className="px-5 py-4 text-[#F1F5F9] font-medium">{tx.method}</td>
-
-                    <td className="px-3 sm:px-5 py-3 sm:py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border flex items-center gap-1.5 w-fit ${tx.badgeClass}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${tx.status === "Paid" ? "bg-emerald-500" : "bg-[#7FA0D6]/150"}`} />
-                        {tx.status} ({tx.date})
-                      </span>
-                    </td>
-
-                    <td className="px-5 py-4 text-right">
-                      {tx.status === "Paid" ? (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedReceipt(tx)}
-                          className="text-[#7FA0D6] font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer text-xs"
-                        >
-                          Receipt <ArrowUpRight className="w-3.5 h-3.5" />
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleSendReminder(tx)}
-                          className="px-3 py-1.5 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
-                        >
-                          <Play className="w-3 h-3 fill-current" /> Remind
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Table Footer */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-[#2A3446] text-xs text-[#97A0B3] font-medium">
-            <span>Showing {filteredTx.length} of {transactions.length} transactions</span>
+            {/* Table Footer */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-[#2A3446] text-xs text-[#97A0B3] font-medium">
+              <span>Showing {filteredTx.length} of {transactions.length} transactions</span>
+            </div>
           </div>
         </div>
 
