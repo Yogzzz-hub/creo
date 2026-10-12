@@ -17,6 +17,7 @@ interface PendingRegistration {
   email: string;
   fullName: string;
   expiresAt: number;
+  emailDeliveryConfirmed: true;
 }
 
 function readPendingRegistration(): PendingRegistration | null {
@@ -24,7 +25,7 @@ function readPendingRegistration(): PendingRegistration | null {
     const raw = sessionStorage.getItem(PENDING_REGISTRATION_KEY);
     if (!raw) return null;
     const pending = JSON.parse(raw) as PendingRegistration;
-    if (!pending.email || pending.expiresAt <= Date.now()) {
+    if (!pending.email || pending.emailDeliveryConfirmed !== true || pending.expiresAt <= Date.now()) {
       sessionStorage.removeItem(PENDING_REGISTRATION_KEY);
       return null;
     }
@@ -39,6 +40,7 @@ function writePendingRegistration(email: string, fullName: string): void {
     email,
     fullName,
     expiresAt: Date.now() + 10 * 60_000,
+    emailDeliveryConfirmed: true,
   } satisfies PendingRegistration));
 }
 
@@ -159,7 +161,10 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
           navigate(roleHome, { replace: true });
         }
       } else {
-        await registerIntent(cleanEmail, password, cleanName);
+        const result = await registerIntent(cleanEmail, password, cleanName);
+        if (result.status !== "sent" || result.email_delivered !== true) {
+          throw new Error("We could not deliver the verification email. Please try again shortly.");
+        }
         writePendingRegistration(cleanEmail, cleanName);
         setRegistrationPending(true);
       }
@@ -214,9 +219,15 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
       setLoading(true);
       setError(null);
       if (password.trim()) {
-        await registerIntent(email.trim(), password.trim(), fullName.trim());
+        const result = await registerIntent(email.trim(), password.trim(), fullName.trim());
+        if (result.status !== "sent" || result.email_delivered !== true) {
+          throw new Error("We could not deliver the verification email. Please try again shortly.");
+        }
       } else {
-        await resendRegistration(email.trim());
+        const result = await resendRegistration(email.trim());
+        if (result.status !== "sent" || result.email_delivered !== true) {
+          throw new Error("We could not deliver the verification email. Please try again shortly.");
+        }
       }
       writePendingRegistration(email.trim(), fullName.trim());
       setOtpCode("");
@@ -251,10 +262,6 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
             <span>creo</span>
             <span className="text-[#7FA0D6] text-2xl leading-none">.</span>
           </Link>
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#121926] border border-[#222F44] text-[10px] font-semibold text-[#7FA0D6] uppercase tracking-wider">
-            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Agency OS v2.6
-          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -339,14 +346,6 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 pt-1 text-[11px] text-[#97A0B3]">
-              <span className="flex items-center gap-1.5 font-semibold text-[#F8FAFC]">
-                <ShieldCheck className="size-3.5 text-[#7FA0D6]" />
-                SOC-2 Type II Certified
-              </span>
-              <span>&bull;</span>
-              <span>Trusted by 52+ leading creative studios</span>
-            </div>
           </div>
 
           {/* Right Column: Auth Console Bento Card (Fits cleanly in vertical space) */}
@@ -672,7 +671,7 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                         setForgotOpen(true);
 
                       }}
-                      className="text-[#7FA0D6] hover:text-white transition focus:outline-none text-[11px] cursor-pointer"
+                      className="inline-flex min-h-9 items-center justify-center rounded-lg border border-[#222F44] bg-[#0A0F18] px-3 py-1.5 text-[11px] font-semibold text-[#BCCCE6] transition-colors hover:border-[#7FA0D6]/50 hover:bg-[#161F2D] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7FA0D6] cursor-pointer"
                     >
                       Forgot password?
                     </button>
@@ -724,33 +723,11 @@ export function AuthPage({ defaultView = "signin" }: { defaultView?: string }) {
                 </div>
               ) : null}
 
-              {/* Bottom security micro badge */}
-              <div className="pt-2 text-center text-[10px] text-[#97A0B3]/50 flex items-center justify-center gap-1.5">
-                <ShieldCheck className="size-3 text-[#7FA0D6]" />
-                <span>256-Bit Encrypted &bull; ISO/SOC-2 Standards</span>
-              </div>
-
             </div>
           </div>
 
         </div>
       </main>
-
-      {/* ── Slim Bottom Bar (Compact: 36px) ── */}
-      <footer className="relative z-20 min-h-12 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-10 py-4 border-t border-[#222F44]/40 bg-[#050810]/70 text-[10px] text-[#97A0B3]/60">
-        <div>
-          &copy; {new Date().getFullYear()} CREO Technologies Inc. All rights reserved.
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex items-center gap-1.5 text-emerald-400 font-medium">
-            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Systems nominal &bull; 24ms</span>
-          </div>
-          <Link to="/privacy" className="hover:text-[#F8FAFC] transition">Privacy</Link>
-          <Link to="/terms" className="hover:text-[#F8FAFC] transition">Terms</Link>
-        </div>
-      </footer>
 
       {/* ── Forgot Password Modal ── */}
       {forgotOpen && <PasswordRecoveryModal initialEmail={email} onClose={() => setForgotOpen(false)} />}

@@ -256,7 +256,7 @@ export function ClientTicketDetailPage() {
     ticketData?.status === "solved";
 
   return (
-    <div className="w-full max-w-[1100px] mx-auto space-y-6 pb-12 animate-fade-in text-[#F1F5F9]">
+    <div className="w-full min-w-0 space-y-4 animate-fade-in text-[#F1F5F9]">
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed top-20 right-6 z-[9999] bg-emerald-950/95 border border-emerald-500/50 text-emerald-300 px-4 py-2.5 rounded-xl text-xs font-bold shadow-2xl flex items-center gap-2">
@@ -284,7 +284,7 @@ export function ClientTicketDetailPage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className={`rounded-2xl sm:rounded-3xl p-6 sm:p-8 border shadow-xl relative overflow-hidden ${
+        className={`rounded-2xl sm:rounded-3xl p-5 sm:p-6 border shadow-xl relative overflow-hidden ${
           isSolved
             ? "bg-gradient-to-br from-emerald-950/80 via-[#161F2D] to-[#0B111C] border-emerald-500/40 shadow-emerald-950/30"
             : "bg-gradient-to-br from-blue-950/70 via-[#161F2D] to-[#0B111C] border-blue-500/30 shadow-blue-950/20"
@@ -406,11 +406,11 @@ export function ClientTicketDetailPage() {
       </motion.div>
 
       {/* ── 2. MAIN DETAILS & CONVERSATION GRID ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Left Column: Your Original Report & Conversation (2 Cols) */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4">
           {/* Your Original Request Card */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] shadow-sm space-y-4">
+          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] shadow-sm space-y-4">
             <div className="flex items-start justify-between gap-4 border-b border-[#2A3446] pb-4">
               <div>
                 <span className="text-[11px] font-bold text-[#7FA0D6] uppercase tracking-wider block mb-1">
@@ -436,7 +436,7 @@ export function ClientTicketDetailPage() {
           </div>
 
           {/* Conversation & Pod Responses */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] shadow-sm space-y-4">
+          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <MessageSquare className="size-4 text-[#7FA0D6]" />
@@ -516,9 +516,9 @@ export function ClientTicketDetailPage() {
         </div>
 
         {/* Right Column: Resolution Summary & Help Card (1 Col) */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Resolution Result Summary Card */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] shadow-sm space-y-4">
+          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] shadow-sm space-y-4">
             <h3 className="text-sm font-bold text-white flex items-center gap-2 border-b border-[#2A3446] pb-3">
               <ShieldCheck className="size-4 text-[#7FA0D6]" />
               <span>Resolution Status</span>
@@ -562,7 +562,7 @@ export function ClientTicketDetailPage() {
           </div>
 
           {/* Direct Support Options */}
-          <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] shadow-sm space-y-3">
+          <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] shadow-sm space-y-3">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <HelpCircle className="size-4 text-[#7FA0D6]" />
               <span>Direct Assistance</span>

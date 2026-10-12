@@ -8,7 +8,6 @@ from typing import Any
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=(".env", "../.env"),
@@ -84,16 +83,15 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = Field(default="")
     GOOGLE_REDIRECT_URI: str = Field(default="https://creo-dsxr.onrender.com")
 
-    # Legacy SMTP settings (kept for backward compat; Resend API is primary)
-    SMTP_SERVER: str = Field(default="smtp.gmail.com")
-    SMTP_HOST: str = Field(default="smtp.gmail.com")
-    SMTP_PORT: int = Field(default=465)
+    # Brevo SMTP relay; an explicit Brevo HTTPS API key takes precedence.
+    SMTP_SERVER: str = Field(default="smtp-relay.brevo.com")
+    SMTP_HOST: str = Field(default="smtp-relay.brevo.com")
+    SMTP_PORT: int = Field(default=2525)
     SMTP_USERNAME: str = Field(default="")
     SMTP_PASSWORD: str = Field(default="")
-    SMTP_USE_TLS: bool = Field(default=False)
-    SMTP_USE_SSL: bool = Field(default=True)
+    SMTP_USE_TLS: bool = Field(default=True)
+    SMTP_USE_SSL: bool = Field(default=False)
     SMTP_FROM_EMAIL: str = Field(default="")
-    ALLOW_FALLBACK_OTP: bool = Field(default=True)
 
     # Payment Gateways — Razorpay
     RAZORPAY_KEY_ID: str = Field(default="rzp_test_TO2r0YMjDZSpuC")
@@ -143,12 +141,19 @@ class Settings(BaseSettings):
     SUPABASE_SERVICE_ROLE_KEY: str = Field(default="")
 
     # External Integrations (Instagram, Notifications)
-    INSTAGRAM_CLIENT_MODE: str = Field(default="fake")  # "fake" or "real"
+    # fake disables runtime publishing; tests mock provider I/O.
+    INSTAGRAM_CLIENT_MODE: str = Field(default="fake")
     INSTAGRAM_APP_ID: str = Field(default="")
     INSTAGRAM_APP_SECRET: str = Field(default="")
-    INSTAGRAM_REDIRECT_URI: str = Field(default="http://localhost:3000/api/auth/callback/instagram")
-    RESEND_API_KEY: str = Field(default="")
-    RESEND_FROM_EMAIL: str = Field(default="")  # e.g. "Creo <noreply@yourdomain.com>"
+    META_GRAPH_API_VERSION: str = Field(default="v26.0", pattern=r"^v\d+\.0$")
+    INSTAGRAM_PUBLISHING_ENABLED: bool = Field(default=False)
+    INSTAGRAM_FFPROBE_PATH: str = Field(default="ffprobe")
+    INSTAGRAM_MAX_LATENESS_MINUTES: int = Field(default=30, ge=1, le=1440)
+    INSTAGRAM_REDIRECT_URI: str = Field(default="http://localhost:5173/portal/account/instagram")
+    # HTTPS transactional delivery works without outbound SMTP ports on Render.
+    BREVO_API_KEY: str = Field(default="")
+    BREVO_FROM_EMAIL: str = Field(default="")  # Must be a verified Brevo sender.
+    BREVO_FROM_NAME: str = Field(default="Creo")
     WHATSAPP_API_TOKEN: str = Field(default="")
     WHATSAPP_PHONE_NUMBER_ID: str = Field(default="")
 
@@ -214,7 +219,7 @@ class Settings(BaseSettings):
             if self.SMTP_PORT == 465:
                 self.SMTP_USE_SSL = True
                 self.SMTP_USE_TLS = False
-            elif self.SMTP_PORT == 587:
+            elif self.SMTP_PORT in (587, 2525):
                 self.SMTP_USE_SSL = False
                 self.SMTP_USE_TLS = True
 

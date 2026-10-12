@@ -84,7 +84,7 @@ export function Navbar() {
           : "h-16 bg-deep-surface border-b border-hairline"
       }`}
     >
-      <nav className="mx-auto flex w-full max-w-[1240px] h-full items-center justify-between px-4 sm:px-6">
+      <nav className="mx-auto flex w-full max-w-[1440px] h-full items-center justify-between px-6 sm:px-8 lg:px-12">
         <div className="flex items-center">
           <Link to="/" className="group text-2xl font-black tracking-tight text-off-white flex items-baseline">
             creo

@@ -105,6 +105,11 @@ def validate_media(mime_type: str, file_size_bytes: int) -> None:
     limit = max_size_for(mime_type)
     if file_size_bytes <= 0 or file_size_bytes > limit:
         raise FileTooLarge(file_size_bytes, limit)
+    if mime_type.startswith("video/") and file_size_bytes < 1024:
+        raise StorageError(
+            f"Video file is corrupt or too small ({file_size_bytes} bytes; minimum 1KB required)",
+            code="INVALID_VIDEO_FILE",
+        )
 
 
 class ObjectNotFound(StorageError):
@@ -135,8 +140,39 @@ def make_storage_key(owner_id: uuid.UUID, mime_type: str, prefix: str = "clients
     return f"{prefix}/{owner_id}/{now.year}/{now.month:02d}/{file_uuid}.{ext}"
 
 
+_s3_healthy: bool | None = None
+
+
+def mark_s3_unhealthy(reason: str) -> None:
+    global _s3_healthy
+    _s3_healthy = False
+    log.warning("s3_marked_unhealthy_using_supabase", reason=reason)
+
+
+def _check_s3_health() -> bool:
+    global _s3_healthy
+    if _s3_healthy is not None:
+        return _s3_healthy
+    if not (settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY):
+        _s3_healthy = False
+        return False
+    try:
+        s3 = _get_s3_client()
+        s3.head_bucket(Bucket=settings.STORAGE_BUCKET)
+        _s3_healthy = True
+        return True
+    except Exception as exc:
+        error_str = str(exc)
+        if "403" in error_str or "AccessDenied" in error_str or "Forbidden" in error_str:
+            _s3_healthy = False
+            log.warning("s3_access_denied_defaulting_to_supabase", error=error_str)
+            return False
+        _s3_healthy = True
+        return True
+
+
 def _is_s3_configured() -> bool:
-    return bool(settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY)
+    return _check_s3_health()
 
 
 def _is_supabase_configured() -> bool:
@@ -330,6 +366,8 @@ def confirm_upload(storage_key: str, declared_size_bytes: int) -> dict[str, obje
             error_str = str(exc)
             if "404" in error_str or "NoSuchKey" in error_str or "Not Found" in error_str:
                 raise ObjectNotFound(storage_key) from exc
+            if "403" in error_str or "AccessDenied" in error_str or "Forbidden" in error_str:
+                mark_s3_unhealthy(error_str)
             log.warning("r2_confirm_failed", error=str(exc))
             if not _is_supabase_configured():
                 if settings.ENVIRONMENT in ("development", "test"):
@@ -509,6 +547,9 @@ def put_object(storage_key: str, fileobj: IO[bytes], mime_type: str, size_bytes:
             log.info("r2_server_upload_stored", storage_key=storage_key, size_bytes=size_bytes)
             return f"r2://{storage_key}"
         except Exception as exc:
+            error_str = str(exc)
+            if "403" in error_str or "AccessDenied" in error_str or "Forbidden" in error_str:
+                mark_s3_unhealthy(error_str)
             log.error("r2_server_upload_failed", error=str(exc), storage_key=storage_key)
             if not _is_supabase_configured():
                 raise StorageError(f"Upload to storage failed: {exc}") from exc
@@ -525,7 +566,7 @@ def put_object(storage_key: str, fileobj: IO[bytes], mime_type: str, size_bytes:
             **_supabase_headers(),
             "Content-Type": mime_type,
             "Content-Length": str(size_bytes),
-            "x-upsert": "false",
+            "x-upsert": "true",
         }
         try:
             with httpx.Client(timeout=300.0) as client:

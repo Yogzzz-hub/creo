@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
 import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
+import { PublishingControl } from "../../components/ops/PublishingPanel";
 import { useAuth } from "../../lib/auth-context";
 import { qaApproveDeliverable, qaRejectDeliverable } from "../../lib/deliverables-api";
 import { fetchPodDashboard, type PodDashboardData, type PodTask } from "../../lib/ops-api";
@@ -257,6 +258,7 @@ export function PodDeliverablesReviewPage() {
                   >
                     <DeliverableMedia url={deliverable.file_url} isVideo={deliverable.is_video} title={titleOf(current)} className="w-full h-full" />
                   </div>
+                  <PublishingControl deliverableId={deliverable.id} />
                   {deliverable.file_url && (
                     <a
                       href={deliverable.file_url}

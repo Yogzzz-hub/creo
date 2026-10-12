@@ -102,3 +102,46 @@ class OnboardingCompleteResponse(BaseModel):
     onboarding_completed_at: datetime
     assigned_team: list[dict[str, Any]]
 
+
+class ManualPaymentRequestCreate(BaseModel):
+    """Client request for offline payment verification (cash, bank transfer, etc.)."""
+
+    plan_id: uuid.UUID
+    payment_method: str = Field(default="cash", description="cash | bank_transfer | upi | cheque | existing_contract | other")
+    reference_note: str | None = Field(default=None, max_length=1000)
+
+
+class ManualPaymentRequestResponse(BaseModel):
+    """Response detailing a manual payment verification request."""
+
+    id: uuid.UUID
+    client_id: uuid.UUID
+    client_name: str | None = None
+    client_email: str | None = None
+    plan_id: uuid.UUID
+    plan_name: str | None = None
+    plan_display_name: str | None = None
+    payment_method: str
+    amount: float
+    reference_note: str | None = None
+    status: str
+    reviewed_at: datetime | None = None
+    admin_notes: str | None = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ManualPaymentReviewRequest(BaseModel):
+    """Admin review decision (approve / reject)."""
+
+    admin_notes: str | None = Field(default=None, max_length=1000)
+
+
+class DirectBypassRequest(BaseModel):
+    """Admin direct override bypass for a client."""
+
+    plan_id: uuid.UUID
+    payment_method: str = Field(default="cash")
+    notes: str | None = Field(default="Bypassed by Agency Admin", max_length=1000)
+

@@ -497,21 +497,6 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
             />
           )}
 
-          {currentStep === 4 && (
-            <StageQuestionnaire
-              key="questionnaire"
-              userId={userId}
-              initialSection={(searchParams.get("section") as any) || (status?.resume_section as any) || undefined}
-              onComplete={(team) => {
-                if (team && team.length > 0) {
-                  setAssignedTeam(team);
-                }
-                markStageReached(8);
-                handleSelectStep(5);
-              }}
-            />
-          )}
-
           {currentStep === 5 && (
             <StageComplete
               key="complete"
@@ -521,6 +506,28 @@ export function OnboardingView({ userId, onPortalLaunch }: OnboardingViewProps) 
             />
           )}
         </AnimatePresence></Suspense>
+
+        {/* Keep paid clients' answers in memory during back/next navigation.
+            A separate boundary lets this step load ahead without blocking earlier steps. */}
+        {(backendStage >= 3 || currentStep === 4) && (
+          <div hidden={currentStep !== 4}>
+            <Suspense fallback={currentStep === 4 ? <CreoInlineLoader /> : null}>
+              <StageQuestionnaire
+                key={userId}
+                userId={userId}
+                isActive={currentStep === 4}
+                initialSection={(searchParams.get("section") as any) || (status?.resume_section as any) || undefined}
+                onComplete={(team) => {
+                  if (team && team.length > 0) {
+                    setAssignedTeam(team);
+                  }
+                  markStageReached(8);
+                  handleSelectStep(5);
+                }}
+              />
+            </Suspense>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -23,6 +23,7 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useAuth } from "../../lib/auth-context";
 import { useAdminSidebar } from "./AdminSidebarContext";
+import { useConfirm } from "../ui/ConfirmDialog";
 
 interface NavItem {
   label: string;
@@ -41,6 +42,26 @@ export function AdminSidebar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { mobileOpen, setMobileOpen } = useAdminSidebar();
+  const confirm = useConfirm();
+
+  const handleLogout = async (onItemClick?: () => void) => {
+    const shouldLogout = await confirm({
+      title: "Log out of Creo?",
+      description: "You will need to sign in again to access your workspace.",
+      confirmText: "Log out",
+      cancelText: "Stay signed in",
+      tone: "warning",
+      icon: "logout",
+    });
+    if (!shouldLogout) return;
+    onItemClick?.();
+    try {
+      await logout();
+    } catch {
+      // Continue to the sign-in page even if the server session has expired.
+    }
+    navigate("/auth");
+  };
 
   const isAdminOrSuper = user?.role === "admin" || user?.role === "super_admin";
   const isTeamLead = user?.role === "team_lead";
@@ -347,15 +368,7 @@ export function AdminSidebar() {
           </div>
           <button
             type="button"
-            onClick={async () => {
-              if (onItemClick) onItemClick();
-              try {
-                await logout();
-              } catch {
-                // ignore
-              }
-              navigate("/auth");
-            }}
+            onClick={() => void handleLogout(onItemClick)}
             className="p-1.5 rounded-lg text-[#97A0B3] hover:text-[#D8BF9B] hover:bg-[#D8BF9B]/10 transition-colors cursor-pointer"
             title="Sign Out / Log Out"
             aria-label="Sign Out"

@@ -19,6 +19,10 @@ import { request } from "../../lib/http";
 import { useSearchParams } from "react-router";
 import { useAuth } from "../../lib/auth-context";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useOnboardingGate } from "../../lib/useOnboardingGate";
+import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
+import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
+import { getAuthToken } from "../../lib/auth-token";
 
 // WhatsApp & Modern Emoji Categories
 const EMOJI_CATEGORIES = [
@@ -417,10 +421,10 @@ export function SlackChatPage() {
   }, [isClient, isAdmin, isTeamLead, isTeamMember, clientChannelSlug]);
 
   // Fetch DM contacts from backend
-  const { data: serverContacts = [] } = useQuery<ChatContact[]>({
+  const contactsQuery = useQuery<ChatContact[]>({
     queryKey: ["chat_contacts", user?.id],
     queryFn: () => request<ChatContact[]>("/api/v1/chat/contacts"),
-    enabled: !!user?.id,
+    enabled: !!user?.id && canUseChat,
     staleTime: 15_000,
   });
 
@@ -545,17 +549,12 @@ export function SlackChatPage() {
 
   // Active contact object
   const activeContact = useMemo(() => {
-    return (
-      contactsList.find((c) => c.id === activeContactId) ||
-      contactsList[0] || {
-        id: "646f6d6e-3479-42c5-b275-9fcd212453f6",
-        name: "Creo Super Admin",
-        role: "Super Admin & Executive Support",
-        is_super_admin: true,
-        online: true,
-      }
-    );
+    return contactsList.find((contact) => contact.id === activeContactId) ?? null;
   }, [contactsList, activeContactId]);
+  const superAdminContact = useMemo(
+    () => contactsList.find((contact) => contact.is_super_admin) ?? null,
+    [contactsList],
+  );
 
   // Active channel object
   const activeChannel = useMemo(() => {
@@ -746,7 +745,9 @@ export function SlackChatPage() {
 
   // WebSocket Live Real-Time Connection
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !canUseChat) return;
+    const token = getAuthToken();
+    if (!token) return;
 
     let ws: WebSocket | null = null;
     let pingInterval: any = null;
@@ -754,7 +755,7 @@ export function SlackChatPage() {
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const host = window.location.host;
-      ws = new WebSocket(`${protocol}//${host}/api/v1/chat/ws/${user.id}`);
+      ws = new WebSocket(`${protocol}//${host}/api/v1/chat/ws/${user.id}`, ["creo-chat", token]);
 
       ws.onopen = () => {
         pingInterval = setInterval(() => {
@@ -787,7 +788,7 @@ export function SlackChatPage() {
       if (pingInterval) clearInterval(pingInterval);
       if (ws) ws.close();
     };
-  }, [user?.id, queryClient, refetchMessages]);
+  }, [user?.id, canUseChat, queryClient, refetchMessages]);
 
   // BroadcastChannel multi-tab instant sync
   useEffect(() => {
@@ -900,6 +901,8 @@ export function SlackChatPage() {
   const handleConfirmAssignTask = async (e: React.FormEvent) => {
     e.preventDefault();
     setAssignTaskModalOpen(false);
+    const contact = activeContact;
+    if (!contact) return;
 
     const resolvedTitle = taskTitle || "Priority Sprint Request";
     const taskContent = `⚡ New Sprint Task: **${resolvedTitle}**\n- Priority: ${taskPriority}\n- Due: ${taskDeadline}${taskScope ? `\n- Scope: ${taskScope}` : ""}`;
@@ -1306,7 +1309,7 @@ export function SlackChatPage() {
             ref={messagesContainerRef}
             className="flex-1 min-h-0 max-h-full overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-4 bg-[#0B111C]/90 backdrop-blur-xl flex flex-col"
           >
-            {serverMessages.length === 0 ? (
+            {!activeContact || serverMessages.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-auto">
                 <div
                   className={`size-16 rounded-3xl flex items-center justify-center mb-4 border ${
@@ -1328,14 +1331,14 @@ export function SlackChatPage() {
                     ? `Welcome to #${activeChannel.label}`
                     : activeContact?.is_super_admin
                     ? "Direct Channel with Creo Super Administration"
-                    : `Direct Conversation with ${activeContact?.name}`}
+                    : `Direct Conversation with ${activeContact.name}`}
                 </h3>
                 <p className="text-xs text-[#97A0B3] max-w-md mt-1.5 leading-relaxed">
                   {activeMode === "channel"
                     ? `This is the start of the #${activeChannel.label} channel. Collaborate with your creative team, drop project notes, or review revisions in real time.`
                     : activeContact?.is_super_admin
                     ? "This is your private, direct thread with Creo Executive Super Administration. Inquire about your creative pod, retainer adjustments, SLA escalations, or custom requests."
-                    : `This is the start of your direct 1-on-1 thread with ${activeContact?.name}. Drop project feedback, creative directions, or collaborate in real time.`}
+                    : `This is the start of your direct 1-on-1 thread with ${activeContact.name}. Drop project feedback, creative directions, or collaborate in real time.`}
                 </p>
               </div>
             ) : (
@@ -1485,6 +1488,7 @@ export function SlackChatPage() {
               <div className="relative flex items-center">
                 <input
                   type="text"
+                  disabled={!activeContact}
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   placeholder={
@@ -1497,23 +1501,25 @@ export function SlackChatPage() {
                 <div className="absolute right-2 flex items-center gap-1">
                   <button
                     type="button"
+                    disabled={!activeContact}
                     onClick={() => setShowEmojiPicker((prev) => !prev)}
-                    className="p-1.5 text-[#97A0B3] hover:text-[#7FA0D6] rounded-lg transition-colors cursor-pointer"
+                    className="p-1.5 text-[#97A0B3] hover:text-[#7FA0D6] rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                     title="Add Emoji"
                   >
                     <Smile className="size-4" />
                   </button>
                   <button
                     type="button"
+                    disabled={!activeContact}
                     onClick={() => showToast("Attachment upload ready", "info")}
-                    className="p-1.5 text-[#97A0B3] hover:text-white rounded-lg transition-colors cursor-pointer"
+                    className="p-1.5 text-[#97A0B3] hover:text-white rounded-lg transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                     title="Attach file"
                   >
                     <Paperclip className="size-4" />
                   </button>
                   <button
                     type="submit"
-                    disabled={!messageText.trim()}
+                    disabled={!activeContact || !messageText.trim()}
                     className="p-2 rounded-xl bg-[#7FA0D6] hover:bg-white text-[#0B111C] disabled:opacity-40 transition cursor-pointer font-bold"
                   >
                     <Send className="size-4" />

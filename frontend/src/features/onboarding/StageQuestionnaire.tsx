@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 
 import {
+  type QuestionnaireState,
   fetchQuestionnaireState,
   saveQuestionnaireSection,
   saveQuestionnaireSections,
@@ -429,6 +430,7 @@ function AddColorPaletteButton({ onAddColor }: { onAddColor: (hex: string) => vo
 }
 
 interface StageQuestionnaireProps {
+  isActive?: boolean;
   userId: string;
   initialSection?: SectionKey;
   onComplete: (assignedTeam?: AssignedTeamMember[]) => void;
@@ -972,7 +974,7 @@ function generateVisualDirectionPreview(
   };
 }
 
-export function StageQuestionnaire({ userId, initialSection, onComplete }: StageQuestionnaireProps) {
+export function StageQuestionnaire({ userId, initialSection, onComplete, isActive = true }: StageQuestionnaireProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const validSections: SectionKey[] = ["a", "b", "c", "d", "e", "f", "g"];
 
@@ -1023,9 +1025,10 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
   };
 
   const [activeSection, setActiveSection] = useState<SectionKey>(() => getSavedSection() || "a");
+  const [dataInitialized, setDataInitialized] = useState(false);
 
   useEffect(() => {
-    if (!activeSection) return;
+    if (!activeSection || !isActive || !dataInitialized) return;
     try {
       if (typeof window !== "undefined") {
         sessionStorage.setItem("creo_active_section", activeSection);
@@ -1046,13 +1049,11 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
       },
       { replace: true }
     );
-  }, [activeSection, userId, setSearchParams]);
+  }, [activeSection, userId, setSearchParams, isActive, dataInitialized]);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [autosaveAttempt, setAutosaveAttempt] = useState(0);
   const [isSynthesizing, setIsSynthesizing] = useState(false);
-  const [coreUnlocked, setCoreUnlocked] = useState(false);
   const [completedSections, setCompletedSections] = useState<Set<SectionKey>>(new Set());
-  const [dataInitialized, setDataInitialized] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [validationBanner, setValidationBanner] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -1066,7 +1067,6 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // JSON of what the server last acknowledged per section; unchanged sections are never re-sent
   const lastSavedRef = useRef<Partial<Record<SectionKey, string>>>({});
-  const serverSectionsRef = useRef<Set<SectionKey>>(new Set());
   const baselineTakenRef = useRef(false);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const formTopRef = useRef<HTMLDivElement | null>(null);
@@ -1154,74 +1154,45 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
   useEffect(() => {
     if (qState && !dataInitialized) {
       const completed = new Set<SectionKey>();
-      const allKeys: SectionKey[] = ["a", "b", "c", "d", "e", "f", "g"];
-      serverSectionsRef.current = new Set(
-        allKeys.filter((k) => {
-          const section = qState[`section_${k}` as keyof typeof qState];
-          return Boolean(section && typeof section === "object" && Object.keys(section).length > 0);
-        }),
-      );
 
       if (qState.section_a && Object.keys(qState.section_a).length > 0) {
         setSecA((prev) => ({ ...prev, ...qState.section_a }));
-        if (qState.section_a.brand_name) completed.add("a");
+
       }
       if (qState.section_b && Object.keys(qState.section_b).length > 0) {
         setSecB((prev) => ({ ...prev, ...qState.section_b }));
-        if (qState.section_b.ideal_customer) completed.add("b");
+
       }
       if (qState.section_c && Object.keys(qState.section_c).length > 0) {
         setSecC((prev) => ({ ...prev, ...qState.section_c }));
-        if (qState.section_c.voice_words?.length) completed.add("c");
+
       }
       if (qState.section_d && Object.keys(qState.section_d).length > 0) {
         setSecD((prev) => ({ ...prev, ...qState.section_d }));
-        if (qState.section_d.visual_direction?.length) completed.add("d");
+
       }
       if (qState.section_e && Object.keys(qState.section_e).length > 0) {
         setSecE((prev) => ({ ...prev, ...qState.section_e }));
-        if (qState.section_e.shoot_city) completed.add("e");
+
       }
       if (qState.section_f && Object.keys(qState.section_f).length > 0) {
         setSecF((prev) => ({ ...prev, ...qState.section_f }));
-        completed.add("f");
+        if (qState.section_f.what_failed || qState.section_f.best_posts?.some((post: any) => post.post_url?.trim()) || qState.section_f.worst_posts?.some((post: any) => post.post_url?.trim())) completed.add("f");
       }
       if (qState.section_g && Object.keys(qState.section_g).length > 0) {
         setSecG((prev) => ({ ...prev, ...qState.section_g }));
-        completed.add("g");
+        if (Object.values(qState.section_g).some(value => typeof value === "string" && value.trim())) completed.add("g");
       }
 
+      // Drafts are not completed sections. Apply the same validation used by Continue
+      // before trusting a saved URL, browser storage, or the server resume hint.
+      for (const section of SECTIONS.filter(section => section.isCore)) {
+        const restored = { ...getCurrentSectionData(section.key), ...qState[`section_${section.key}`] };
+        if (validateCurrentSection(section.key, restored).valid) completed.add(section.key);
+      }
       setCompletedSections(completed);
-
-      const isCoreDone = Boolean(
-        qState.core_completed ||
-        (qState.section_a && (qState.section_a.brand_name || qState.section_a.one_liner) &&
-         qState.section_b && qState.section_b.ideal_customer &&
-         qState.section_c && (qState.section_c.humour !== undefined || qState.section_c.voice_words?.length) &&
-         qState.section_d && (qState.section_d.visual_direction?.length || qState.section_d.colours?.length) &&
-         qState.section_e && (qState.section_e.shoot_city || qState.section_e.on_camera?.length))
-      );
-
-      if (isCoreDone) {
-        setCoreUnlocked(true);
-      }
-
-      // Resume at first incomplete section if core is not completed
-      const validSections: SectionKey[] = ["a", "b", "c", "d", "e", "f", "g"];
+      const firstIncomplete = SECTIONS.find(section => section.isCore && !completed.has(section.key))?.key;
       const effectiveInitial = initialSection && validSections.includes(initialSection) ? initialSection : null;
-
-      const a = qState.section_a;
-      const b = qState.section_b;
-      const c = qState.section_c;
-      const d = qState.section_d;
-      const e = qState.section_e;
-
-      const firstIncomplete: SectionKey =
-        (!a || (!a.brand_name && !a.one_liner)) ? "a" :
-        (!b || !b.ideal_customer) ? "b" :
-        (!c || (!c.humour && !c.voice_words?.length)) ? "c" :
-        (!d || (!d.visual_direction?.length && !d.colours?.length)) ? "d" :
-        (!e || (!e.shoot_city && !e.on_camera?.length)) ? "e" : "f";
 
       if (!dataInitialized) {
         const savedSec = getSavedSection();
@@ -1229,12 +1200,12 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
         const validServerLast = serverLast && validSections.includes(serverLast) ? serverLast : null;
         const preferredSec = savedSec || validServerLast || effectiveInitial;
 
-        if (preferredSec && validSections.includes(preferredSec)) {
-          setActiveSection(preferredSec);
-        } else if (!isCoreDone) {
+        const preferredIndex = SECTIONS.findIndex(section => section.key === preferredSec);
+        const incompleteIndex = SECTIONS.findIndex(section => section.key === firstIncomplete);
+        if (firstIncomplete && preferredIndex > incompleteIndex) {
           setActiveSection(firstIncomplete);
         } else {
-          setActiveSection("a");
+          setActiveSection(preferredSec || firstIncomplete || "a");
         }
         setDataInitialized(true);
       }
@@ -1254,11 +1225,11 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
     }
   };
 
-  // Once restored answers are in state, treat the sections the server already has as saved
+  // Establish the restored baseline so untouched defaults are not submitted as edits.
   useEffect(() => {
     if (!dataInitialized || baselineTakenRef.current) return;
     baselineTakenRef.current = true;
-    for (const key of serverSectionsRef.current) {
+    for (const { key } of SECTIONS) {
       lastSavedRef.current[key] = JSON.stringify(getCurrentSectionData(key));
     }
   }, [dataInitialized]);
@@ -1277,7 +1248,17 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
       if (lastSavedRef.current[secKey] === serialized) return;
       const res = await saveQuestionnaireSection(userId, secKey, data);
       lastSavedRef.current[secKey] = serialized;
-      if (res.core_completed) setCoreUnlocked(true);
+      // Returning from another route should restore the latest acknowledged save,
+      // rather than the snapshot fetched before the client edited their answers.
+      queryClient.setQueryData<QuestionnaireState>(["questionnaire-state", userId], (previous) =>
+        previous ? {
+          ...previous,
+          [`section_${secKey}`]: data,
+          core_completed: res.core_completed,
+          extended_completed: res.extended_completed,
+          version: res.version,
+        } : previous,
+      );
     };
     const queued = saveQueueRef.current.then(run, run);
     saveQueueRef.current = queued.catch(() => {});
@@ -1292,15 +1273,27 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
       clearTimeout(autosaveTimerRef.current);
     }
 
-    autosaveTimerRef.current = setTimeout(() => {
-      if (!isSectionDirty(activeSection)) return;
-      persistSection(activeSection).catch((err) => console.warn("Autosave notification:", err));
-    }, 1500);
+    autosaveTimerRef.current = setTimeout(async () => {
+      const dirtySections = SECTIONS.filter(({ key }) => isSectionDirty(key));
+      if (!dirtySections.length) return;
+      const results = await Promise.allSettled(dirtySections.map(({ key }) => persistSection(key)));
+      const failedIndex = results.findIndex(result => result.status === "rejected");
+      const failed = dirtySections[failedIndex];
+      if (failed) {
+        setFailedSection(failed.key);
+        setApiError("Your latest answers haven't reached the server yet. We'll retry automatically; please keep this page open.");
+        setAutosaveAttempt(attempt => attempt + 1);
+      } else {
+        setApiError(null);
+        setFailedSection(null);
+        setAutosaveAttempt(0);
+      }
+    }, Math.min(1500 * 2 ** Math.min(autosaveAttempt, 5), 30_000));
 
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [activeSection, secA, secB, secC, secD, secE, secF, secG, dataInitialized, isSaving, isSynthesizing, userId]);
+  }, [activeSection, secA, secB, secC, secD, secE, secF, secG, dataInitialized, isSaving, isSynthesizing, userId, autosaveAttempt]);
 
   // Clear errors when changing field or section
   const clearFieldError = (fieldName: string) => {
@@ -1315,7 +1308,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
   };
 
   // Section Client-Side Validation Rules
-  const validateCurrentSection = (secKey: SectionKey): { valid: boolean; errors: Record<string, string>; firstKey?: string } => {
+  const validateCurrentSection = (secKey: SectionKey, data: Record<string, any> = getCurrentSectionData(secKey)): { valid: boolean; errors: Record<string, string>; firstKey?: string } => {
     const errors: Record<string, string> = {};
     let firstKey: string | undefined;
 
@@ -1325,71 +1318,71 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
     };
 
     if (secKey === "a") {
-      if (!secA.brand_name || secA.brand_name.trim().length < 2) {
+      if (!data.brand_name || data.brand_name.trim().length < 2) {
         addErr("brand_name", "Please enter your brand name (at least 2 characters).");
       }
-      const igHandle = secA.instagram_handle.trim();
+      const igHandle = (data.instagram_handle || "").trim();
       const igRegex = /^@?[a-zA-Z0-9._]{1,30}$/;
       if (!igHandle || !igRegex.test(igHandle)) {
         addErr("instagram_handle", "Please enter a valid Instagram handle (e.g. @yourbrand).");
       }
-      if (!secA.one_liner || secA.one_liner.trim().length < 10) {
+      if (!data.one_liner || data.one_liner.trim().length < 10) {
         addErr("one_liner", "Please describe what your brand does in one concise sentence (min 10 characters).");
       }
-      if (!secA.category) {
+      if (!data.category) {
         addErr("category", "Please select a primary category.");
       }
-      if (!secA.primary_goal) {
+      if (!data.primary_goal) {
         addErr("primary_goal", "Please select the single outcome that matters most.");
       }
-      const firstProdName = secA.products?.[0]?.name?.trim();
+      const firstProdName = data.products?.[0]?.name?.trim();
       if (!firstProdName) {
         addErr("products", "Please enter at least one primary product or service offering.");
       }
     } else if (secKey === "b") {
-      if (!secB.ideal_customer || secB.ideal_customer.trim().length < 10) {
+      if (!data.ideal_customer || data.ideal_customer.trim().length < 10) {
         addErr("ideal_customer", "Please describe your ideal customer profile (min 10 characters).");
       }
-      if (!secB.problem || secB.problem.trim().length < 10) {
+      if (!data.problem || data.problem.trim().length < 10) {
         addErr("problem", "Please describe the core friction point or problem you solve.");
       }
-      if (!secB.why_chosen || secB.why_chosen.trim().length < 10) {
+      if (!data.why_chosen || data.why_chosen.trim().length < 10) {
         addErr("why_chosen", "Please explain why customers choose you over alternatives.");
       }
-      if (!secB.languages || secB.languages.length === 0) {
+      if (!data.languages || data.languages.length === 0) {
         addErr("languages", "Please select at least one primary audience language.");
       }
-      if (!secB.caption_script) {
+      if (!data.caption_script) {
         addErr("caption_script", "Please select a caption and script format.");
       }
     } else if (secKey === "c") {
-      if (!secC.voice_words || secC.voice_words.length < 2) {
+      if (!data.voice_words || data.voice_words.length < 2) {
         addErr("voice_words", "Please select at least 2 words that describe your brand voice.");
       }
-      if (!secC.anti_voice_words || secC.anti_voice_words.length < 1) {
+      if (!data.anti_voice_words || data.anti_voice_words.length < 1) {
         addErr("anti_voice_words", "Please select at least 1 word your brand voice must NEVER be.");
       }
     } else if (secKey === "d") {
-      if (!secD.brand_guidelines) {
+      if (!data.brand_guidelines) {
         addErr("brand_guidelines", "Please indicate if you have existing brand guidelines.");
       }
-      if (!secD.colours || secD.colours.length === 0) {
+      if (!data.colours || data.colours.length === 0) {
         addErr("colours", "Please provide at least one brand colour.");
       }
-      if (!secD.visual_direction || secD.visual_direction.length === 0) {
+      if (!data.visual_direction || data.visual_direction.length === 0) {
         addErr("visual_direction", "Please select at least 1 visual direction style.");
       }
     } else if (secKey === "e") {
-      if (!secE.on_camera || secE.on_camera.length === 0) {
+      if (!data.on_camera || data.on_camera.length === 0) {
         addErr("on_camera", "Please select at least one option for who can appear on camera.");
       }
-      if (!secE.shoot_locations || secE.shoot_locations.length === 0) {
+      if (!data.shoot_locations || data.shoot_locations.length === 0) {
         addErr("shoot_locations", "Please select at least one shoot location.");
       }
-      if (!secE.shoot_city || secE.shoot_city.trim().length < 2) {
+      if (!data.shoot_city || data.shoot_city.trim().length < 2) {
         addErr("shoot_city", "Please enter the city for physical shoots.");
       }
-      if (!secE.cta_destination) {
+      if (!data.cta_destination) {
         addErr("cta_destination", "Please select a CTA destination.");
       }
     }
@@ -1401,6 +1394,13 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
       firstKey,
     };
   };
+
+  const coreUnlocked = dataInitialized && SECTIONS.filter(section => section.isCore)
+    .every(section => validateCurrentSection(section.key).valid);
+  const canOpenSection = (targetKey: SectionKey) => dataInitialized && SECTIONS
+    .slice(0, SECTIONS.findIndex(section => section.key === targetKey))
+    .filter(section => section.isCore)
+    .every(section => validateCurrentSection(section.key).valid);
 
   // Tone preview calculation
   const liveSentencePreview = useMemo(() => {
@@ -1480,13 +1480,12 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
     setFailedSection(null);
     try {
       await persistSection(secKey);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 1200);
+      setAutosaveAttempt(0);
     } catch (err) {
       console.error("Save & Continue API failure:", err);
       setFailedSection(secKey);
       setApiError(
-        `We couldn't save Section ${secKey.toUpperCase()} yet. Your answers are kept on this page — click Retry, or they'll be saved when you finish.`,
+        `We couldn't save Section ${secKey.toUpperCase()} yet. Your answers are kept on this page and will retry automatically.`,
       );
     } finally {
       setIsSaving(false);
@@ -1506,27 +1505,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
   };
 
   const handleSelectSectionTab = (targetKey: SectionKey) => {
-    const inMemoryCore = Boolean(
-      (secA.brand_name || secA.one_liner) &&
-      secB.ideal_customer &&
-      (secC.humour !== undefined || secC.voice_words?.length) &&
-      (secD.visual_direction?.length || secD.colours?.length) &&
-      (secE.shoot_city || secE.on_camera?.length)
-    );
-
-    if ((targetKey === "f" || targetKey === "g") && !coreUnlocked && !inMemoryCore) {
-      setValidationBanner("Please complete mandatory Sections A–E before proceeding to optional creative enrichment.");
-      return;
-    }
-
-    if (inMemoryCore && !coreUnlocked) {
-      setCoreUnlocked(true);
-    }
-
-    const targetIdx = SECTIONS.findIndex((s) => s.key === targetKey);
-    const currentIdx = SECTIONS.findIndex((s) => s.key === activeSection);
-
-    if (targetIdx <= currentIdx || completedSections.has(targetKey) || coreUnlocked || inMemoryCore) {
+    if (canOpenSection(targetKey)) {
       setFieldErrors({});
       setValidationBanner(null);
       setApiError(null);
@@ -1537,7 +1516,8 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
       formTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
       // Trying to jump ahead into an unfinished mandatory section
-      setValidationBanner(`Please complete Section ${activeSection.toUpperCase()} before jumping forward.`);
+      const missing = SECTIONS.find(section => section.isCore && !validateCurrentSection(section.key).valid);
+      setValidationBanner(`Please complete Section ${missing?.key.toUpperCase() || "A"} before jumping forward.`);
     }
   };
 
@@ -1622,7 +1602,7 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
   );
   const allocationOutcome = labelFor(GOAL_OPTIONS, secA.primary_goal, "your primary goal");
 
-  if (isLoading) {
+  if (isLoading || (qState && !dataInitialized)) {
     return (
       <div className="flex flex-col items-center justify-center p-16 space-y-4">
         <Loader2 className="w-8 h-8 animate-spin text-[#7FA0D6]" />
@@ -1673,7 +1653,8 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
         {SECTIONS.map((sec) => {
           const isActive = activeSection === sec.key;
-          const isDone = completedSections.has(sec.key);
+          const isDone = sec.isCore ? dataInitialized && validateCurrentSection(sec.key).valid : completedSections.has(sec.key);
+          const isUnlocked = canOpenSection(sec.key);
           const Icon = sec.icon;
 
           return (
@@ -1681,7 +1662,8 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
               key={sec.key}
               type="button"
               onClick={() => handleSelectSectionTab(sec.key)}
-              className={`flex flex-col items-start p-3 rounded-xl border text-left w-full transition-all cursor-pointer select-none ${
+              disabled={!isUnlocked}
+              className={`flex flex-col items-start p-3 rounded-xl border text-left w-full transition-all disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer select-none ${
                 isActive
                   ? "bg-[#161F2D] border-2 border-[#BCCCE6] text-white shadow-lg ring-2 ring-[#BCCCE6]/20"
                   : isDone
@@ -3025,49 +3007,14 @@ export function StageQuestionnaire({ userId, initialSection, onComplete }: Stage
           </button>
 
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
-            <button
-              type="button"
-              onClick={async () => {
-                setIsSaving(true);
-                try {
-                  await persistSection(activeSection);
-                  setSaveSuccess(true);
-                  setTimeout(() => setSaveSuccess(false), 2000);
-                } catch (e) {
-                  console.error(e);
-                } finally {
-                  setIsSaving(false);
-                }
-              }}
-              disabled={isSaving}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#2A3446] bg-[#0B111C] hover:bg-[#161F2D] hover:border-[#7FA0D6] text-xs font-bold text-[#BCCCE6] hover:text-white transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
-            >
-              {isSaving ? (
-                <Loader2 className="size-3.5 animate-spin text-[#7FA0D6]" />
-              ) : saveSuccess ? (
-                <Check className="size-3.5 text-emerald-400" />
-              ) : (
-                <RefreshCw className="size-3.5 text-[#7FA0D6]" />
-              )}
-              <span>{isSaving ? "Syncing..." : saveSuccess ? "Synced ✓" : "Sync Draft"}</span>
-            </button>
             {activeSection !== "g" ? (
               <button
                 type="button"
                 onClick={handleNextSection}
                 className="w-full sm:w-auto min-w-[200px] px-6 py-3 rounded-xl bg-[#BCCCE6] hover:bg-white text-[#0B111C] text-sm font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
               >
-                {saveSuccess ? (
-                  <>
-                    <Check className="w-4 h-4 text-[#0B111C]" />
-                    <span>Saved ✓</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Save & Continue</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
+                <span>Continue</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             ) : (
               <button

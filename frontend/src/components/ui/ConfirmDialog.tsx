@@ -219,34 +219,34 @@ export function ConfirmDialog({
   const getToneBadgeStyle = () => {
     switch (tone) {
       case "success":
-        return "bg-emerald-50 border-emerald-200 text-emerald-600";
+        return "bg-emerald-500/10 border-emerald-500/20 text-emerald-300";
       case "warning":
-        return "bg-amber-50 border-amber-200 text-amber-600";
+        return "bg-amber-500/10 border-amber-500/20 text-amber-300";
       case "info":
-        return "bg-blue-50 border-blue-200 text-[#7FA0D6]";
+        return "bg-[#7FA0D6]/10 border-[#7FA0D6]/20 text-[#BCCCE6]";
       case "danger":
       default:
-        return "bg-rose-50 border-rose-200 text-rose-600";
+        return "bg-rose-500/10 border-rose-500/20 text-rose-300";
     }
   };
 
   const getConfirmButtonStyle = () => {
     switch (tone) {
       case "success":
-        return "bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white shadow-md shadow-emerald-600/25";
+        return "bg-[#BCCCE6] text-[#0B111C] enabled:hover:bg-[#D2DDF0] shadow-md";
       case "warning":
-        return "bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white shadow-md shadow-amber-600/25";
+        return "bg-[#D8BF9B] text-[#0B111C] enabled:hover:bg-[#E8D3B5] shadow-md";
       case "info":
-        return "bg-gradient-to-r from-[#7FA0D6] to-[#7FA0D6] hover:brightness-110 text-white shadow-md shadow-blue-500/25";
+        return "bg-[#BCCCE6] text-[#0B111C] enabled:hover:bg-[#D2DDF0] shadow-md";
       case "danger":
       default:
-        return "bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white shadow-md shadow-rose-600/25";
+        return "bg-[#D8BF9B] text-[#0B111C] enabled:hover:bg-[#E8D3B5] shadow-md";
     }
   };
 
   return createPortal(
     <div
-      className="fixed inset-0 w-screen h-screen z-[99999] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md transition-opacity duration-200 overflow-y-auto"
+      className="fixed inset-0 z-[99999] flex min-h-dvh items-center justify-center overflow-y-auto bg-[#05080E]/75 p-4 backdrop-blur-md transition-opacity duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget && !isProcessing) {
           onClose();
@@ -254,7 +254,7 @@ export function ConfirmDialog({
       }}
     >
       <div
-        className="relative w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-slate-200/90 text-left transition-all duration-200 transform scale-100"
+        className="relative w-full max-w-md rounded-3xl border border-[#2A3446] bg-[#161F2D] p-6 text-left text-white shadow-2xl shadow-black/40 transition-all duration-200 scale-100"
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
@@ -264,7 +264,7 @@ export function ConfirmDialog({
           type="button"
           onClick={onClose}
           disabled={isProcessing}
-          className="absolute top-4 right-4 size-8 rounded-full bg-slate-100/80 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full bg-[#0B111C] text-[#97A0B3] transition-colors hover:bg-[#222D3E] hover:text-white cursor-pointer"
           aria-label="Close dialog"
         >
           <X className="size-4" />
@@ -281,13 +281,13 @@ export function ConfirmDialog({
           <div className="flex-1 pr-4">
             <h3
               id="confirm-dialog-title"
-              className="text-base sm:text-lg font-black text-[#0B111C] tracking-tight leading-snug"
+              className="text-base sm:text-lg font-black text-white tracking-tight leading-snug"
             >
               {title}
             </h3>
 
             {description && (
-              <p className="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#97A0B3] mt-1.5 leading-relaxed">
                 {description}
               </p>
             )}
@@ -299,18 +299,18 @@ export function ConfirmDialog({
           <div
             className={`mt-4 rounded-2xl p-3.5 border ${
               tone === "danger"
-                ? "bg-rose-50/50 border-rose-100"
+                ? "bg-rose-950/30 border-rose-900/60"
                 : tone === "warning"
-                ? "bg-amber-50/50 border-amber-100"
+                ? "bg-amber-950/30 border-amber-900/60"
                 : tone === "success"
-                ? "bg-emerald-50/50 border-emerald-100"
-                : "bg-blue-50/40 border-blue-100"
+                ? "bg-emerald-950/30 border-emerald-900/60"
+                : "bg-[#0B111C] border-[#2A3446]"
             }`}
           >
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#97A0B3] mb-2">
               Action Summary & Impacts:
             </p>
-            <ul className="space-y-1.5 text-xs text-slate-700">
+            <ul className="space-y-1.5 text-xs text-[#BCCCE6]">
               {details.map((detail, idx) => (
                 <li key={idx} className="flex items-start gap-2">
                   <span
@@ -338,7 +338,7 @@ export function ConfirmDialog({
               type="button"
               onClick={onClose}
               disabled={isProcessing}
-              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100/80 active:scale-95 text-xs font-bold transition-all cursor-pointer"
+              className="rounded-xl border border-[#2A3446] bg-[#0B111C] min-h-11 px-4 py-2 text-sm font-bold text-[#BCCCE6] transition-all hover:bg-[#222D3E] active:scale-95 cursor-pointer"
             >
               {cancelText}
             </button>
@@ -348,7 +348,7 @@ export function ConfirmDialog({
             onClick={onConfirm}
             disabled={isProcessing}
             autoFocus
-            className={`px-5 py-2.5 rounded-xl text-xs font-bold active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`px-5 py-2.5 min-h-11 rounded-xl text-sm font-bold disabled:opacity-50 enabled:active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               isAlertOnly ? "w-full" : ""
             } ${getConfirmButtonStyle()}`}
           >

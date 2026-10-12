@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth-context";
 import { request } from "../../lib/http";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 import { SubscriptionLockedState } from "../../components/portal/SubscriptionLockedState";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
 import { MessageCircle, MessageSquare, Check, AlertCircle, X } from "lucide-react";
@@ -22,6 +24,19 @@ interface PodData {
   assigned_team?: TeamMember[];
 }
 
+interface PodCallSlot {
+  id: string;
+  starts_at: string;
+  date_label: string;
+  time_label: string;
+}
+
+interface PodCallAvailability {
+  lead: { id: string; name: string };
+  slots: PodCallSlot[];
+  bookings: PodCallSlot[];
+}
+
 const ROLE_DESCRIPTIONS: Record<string, string> = {
   team_lead: "Strategy, briefs, and client communication. Mon-Fri, 10am-7pm IST.",
   creative_lead: "Art direction, quality control, and brand consistency.",
@@ -38,41 +53,22 @@ function getRoleDesc(role: string): string {
 
 export function PortalCreativePodPage() {
   const { user } = useAuth();
-  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const confirm = useConfirm();
+  const queryClient = useQueryClient();
+  const [bookingSlotId, setBookingSlotId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const showToast = (text: string, type: "success" | "error" = "success") => {
     setToastMessage({ type, text });
-    setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const upcomingSlots = (() => {
-    const slots = [];
-    const times = ["10:30 AM", "2:00 PM", "11:00 AM", "3:30 PM", "10:00 AM"];
-    let d = new Date();
-    while (slots.length < 5) {
-      d = new Date(d.getTime() + 86400000);
-      const day = d.getDay();
-      if (day !== 0 && day !== 6) {
-        const dateStr = d.toLocaleDateString("en-US", { weekday: "short", day: "numeric", month: "short" });
-        slots.push({
-          id: `slot-${d.toISOString().slice(0, 10)}`,
-          date: dateStr,
-          time: times[slots.length % times.length],
-        });
-      }
-    }
-    return slots;
-  })();
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timeout = window.setTimeout(() => setToastMessage(null), 4500);
+    return () => window.clearTimeout(timeout);
+  }, [toastMessage]);
 
   const gate = useOnboardingGate();
-
-  const handleBookSlot = (slotId: string) => {
-    if (!bookedSlots.includes(slotId)) {
-      setBookedSlots(prev => [...prev, slotId]);
-      showToast("Call scheduled with your pod lead! Calendar invite sent.", "success");
-    }
-  };
 
   const { data: podData, isLoading } = useQuery<PodData>({
     queryKey: ["portal-pod", user?.id],
@@ -84,6 +80,42 @@ export function PortalCreativePodPage() {
   const assignedTeam = podData?.assigned_team || [];
   const podLead = assignedTeam.find((m) => m.is_primary || m.raw_role === "team_lead" || m.raw_role === "creative_lead");
   const allMembers = podLead ? [podLead, ...assignedTeam.filter((m) => m.id !== podLead.id)] : assignedTeam;
+
+  const { data: callAvailability, isLoading: isLoadingCallAvailability, isError: callAvailabilityError } = useQuery<PodCallAvailability>({
+    queryKey: ["portal-pod-call-availability", user?.id],
+    queryFn: () => request<PodCallAvailability>("/api/v1/portal/pod-calls/availability"),
+    enabled: !!user?.id && gate.isComplete,
+    staleTime: 30_000,
+  });
+
+  const handleBookSlot = async (slot: PodCallSlot) => {
+    const leadName = callAvailability?.lead?.name || podLead?.name || "your pod lead";
+    const shouldBook = await confirm({
+      title: "Confirm your pod call",
+      description: `Book this 15-minute call with ${leadName}?`,
+      details: [`${slot.date_label} at ${slot.time_label}`, `${leadName} will receive a booking notification.`],
+      confirmText: "Book this call",
+      cancelText: "Choose another time",
+      tone: "info",
+      icon: "info",
+    });
+    if (!shouldBook) return;
+
+    setBookingSlotId(slot.id);
+    try {
+      const result = await request<{ message: string; lead_name: string }>("/api/v1/portal/pod-calls", {
+        method: "POST",
+        body: JSON.stringify({ starts_at: slot.starts_at }),
+      });
+      await queryClient.invalidateQueries({ queryKey: ["portal-pod-call-availability", user?.id] });
+      showToast(`Booked with ${result.lead_name}. Your pod lead has been notified.`, "success");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "We couldn't book that call. Please choose another slot.", "error");
+      await queryClient.invalidateQueries({ queryKey: ["portal-pod-call-availability", user?.id] });
+    } finally {
+      setBookingSlotId(null);
+    }
+  };
 
   // Avatar color palette
   const AVATAR_COLORS = [
@@ -101,24 +133,26 @@ export function PortalCreativePodPage() {
 
   if (!gate.isComplete) {
     return (
-      <div className="flex items-center justify-center py-6 sm:py-10">
+      <div className="w-full">
         <SubscriptionLockedState
           title="Creative Pod Access Locked"
-          description="Your dedicated creative specialists and lead producer will be provisioned once your account setup is completed."
+          description="Complete setup to meet your dedicated creative team."
         />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-4">
       {/* Toast Alert */}
-      {toastMessage && (
+      {toastMessage && typeof document !== "undefined" && createPortal(
         <div
-          className={`fixed top-20 right-4 sm:right-8 z-[9999] p-4 rounded-2xl border text-xs font-bold flex items-center gap-2 shadow-2xl animate-fade-in ${
+          role="status"
+          aria-live="polite"
+          className={`fixed bottom-6 right-6 z-[100000] flex w-[min(420px,calc(100vw-2rem))] items-center gap-3 rounded-2xl border p-4 text-xs font-bold shadow-2xl backdrop-blur-xl animate-fade-in ${
             toastMessage.type === "error"
-              ? "bg-rose-950/90 border-rose-500/50 text-rose-300"
-              : "bg-emerald-950/90 border-emerald-500/50 text-emerald-300"
+              ? "bg-[#161F2D]/95 border-rose-800 text-rose-200"
+              : "bg-[#161F2D]/95 border-[#2A3446] text-[#BCCCE6]"
           }`}
         >
           {toastMessage.type === "error" ? (
@@ -127,17 +161,18 @@ export function PortalCreativePodPage() {
             <Check className="size-4 text-emerald-400 shrink-0" />
           )}
           <span>{toastMessage.text}</span>
-          <button onClick={() => setToastMessage(null)} className="ml-2 text-current opacity-70 hover:opacity-100">
+          <button type="button" onClick={() => setToastMessage(null)} className="ml-auto rounded-lg p-1 text-current opacity-70 hover:bg-white/10 hover:opacity-100" aria-label="Dismiss notification">
             <X className="size-3" />
           </button>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* Page Header */}
       <h1 className="text-2xl font-semibold text-white">Your pod</h1>
 
       {/* ── Team Cards Grid ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {isLoading ? (
           <div className="col-span-full flex items-center justify-center py-16">
             <div className="w-8 h-8 border-2 border-[#7FA0D6] border-t-transparent rounded-full animate-spin" />
@@ -156,7 +191,7 @@ export function PortalCreativePodPage() {
             return (
               <div
                 key={memberId || i}
-                className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] flex flex-col animate-in fade-in zoom-in-95 duration-500 fill-mode-both"
+                className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] flex flex-col animate-in fade-in zoom-in-95 duration-500 fill-mode-both"
                 style={{ animationDelay: `${i * 100}ms` }}
               >
                 {/* Avatar + Name */}
@@ -205,9 +240,9 @@ export function PortalCreativePodPage() {
       </div>
 
       {/* ── Bottom Section: Slack Hub Access + Booking ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Slack Hub Banner (2 cols) */}
-        <div className="lg:col-span-2 bg-gradient-to-br from-[#161F2D] to-[#0D1522] rounded-2xl p-6 sm:p-8 border border-[#2A3446] flex flex-col justify-between shadow-sm relative overflow-hidden">
+        <div className="lg:col-span-2 bg-gradient-to-br from-[#161F2D] to-[#0D1522] rounded-2xl p-5 sm:p-6 border border-[#2A3446] flex flex-col justify-between shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#7FA0D6]/5 rounded-full blur-3xl pointer-events-none" />
           
           <div className="relative z-10">
@@ -241,32 +276,42 @@ export function PortalCreativePodPage() {
         </div>
 
         {/* Booking (1 col) */}
-        <div className="bg-[#161F2D] rounded-2xl p-6 border border-[#2A3446] flex flex-col overflow-hidden shadow-sm">
+        <div className="bg-[#161F2D] rounded-2xl p-5 sm:p-6 border border-[#2A3446] flex flex-col overflow-hidden shadow-sm">
           <div className="shrink-0">
             <h3 className="text-base font-semibold text-white mb-1">Book a call</h3>
-            <p className="text-[13px] text-[#97A0B3] mb-5">15-minute slots with your pod lead</p>
+            <p className="text-[13px] text-[#97A0B3] mb-5">15-minute slots with {callAvailability?.lead?.name || podLead?.name || "your pod lead"}</p>
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto space-y-0 divide-y divide-white/[0.05] pr-1 scrollbar-thin scrollbar-thumb-[#2A3446]">
-            {upcomingSlots.map((slot) => {
-              const isBooked = bookedSlots.includes(slot.id);
+            {(callAvailability?.bookings || []).map((booking) => (
+              <div key={`booked-${booking.id}`} className="flex items-center justify-between gap-3 py-4">
+                <span className="text-sm text-[#BCCCE6]">{booking.date_label}</span>
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-[#7FA0D6]/20 px-3 py-1 text-[13px] font-medium text-[#BCCCE6]">
+                  <Check className="size-3.5" /> Booked · {booking.time_label}
+                </span>
+              </div>
+            ))}
+            {callAvailability?.slots.map((slot) => {
+              const isBooking = bookingSlotId === slot.id;
               return (
                 <div key={slot.id} className="flex items-center justify-between py-4">
-                  <span className="text-sm text-[#97A0B3]">{slot.date}</span>
+                  <span className="text-sm text-[#97A0B3]">{slot.date_label}</span>
                   <button 
-                    onClick={() => handleBookSlot(slot.id)}
-                    disabled={isBooked}
-                    className={`px-3 py-1 rounded-md text-[13px] font-medium transition-colors flex items-center gap-1.5 ${
-                      isBooked 
-                        ? "bg-[#7FA0D6]/20 text-[#BCCCE6] cursor-default" 
-                        : "bg-white/[0.08] text-white hover:bg-white/[0.12]"
-                    }`}
+                    type="button"
+                    onClick={() => void handleBookSlot(slot)}
+                    disabled={bookingSlotId !== null}
+                    className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.08] px-3 py-1 text-[13px] font-medium text-white transition-colors hover:bg-white/[0.12] disabled:cursor-wait disabled:opacity-60"
                   >
-                    {isBooked ? <><Check className="w-3.5 h-3.5"/> Booked</> : slot.time}
+                    {isBooking ? "Booking…" : slot.time_label}
                   </button>
                 </div>
               );
             })}
+            {isLoadingCallAvailability && <p className="py-4 text-sm text-[#97A0B3]">Loading available call times…</p>}
+            {!isLoadingCallAvailability && callAvailabilityError && <p className="py-4 text-sm text-rose-300">Call times could not load. Refresh to try again.</p>}
+            {!isLoadingCallAvailability && !callAvailabilityError && !callAvailability?.slots.length && !callAvailability?.bookings.length && (
+              <p className="py-4 text-sm text-[#97A0B3]">There are no available call times right now. Please check again shortly.</p>
+            )}
           </div>
         </div>
       </div>

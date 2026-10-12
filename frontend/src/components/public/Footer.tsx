@@ -15,7 +15,7 @@ const LEGAL_LINKS = [
 export function Footer() {
   return (
     <footer data-footer className="w-full bg-[#050810] text-[#F8FAFC] border-t border-[#222F44] py-10 sm:py-12 selection:bg-[#7FA0D6]/30">
-      <div className="mx-auto max-w-[1240px] px-4 sm:px-6">
+      <div className="mx-auto max-w-[1440px] px-6 sm:px-8 lg:px-12">
         
         {/* 1. Pre-Footer Conversion Bento Banner */}
         <div className="bg-[#121926] border border-[#222F44] rounded-3xl p-6 sm:p-10 text-center mb-10 sm:mb-12 shadow-2xl relative overflow-hidden">
@@ -190,10 +190,7 @@ export function Footer() {
         </div>
 
         {/* 3. Bottom Legal Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#97A0B3]">
-          <p>
-            &copy; {new Date().getFullYear()} CREO Technologies Inc. All rights reserved.
-          </p>
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-4 text-xs text-[#97A0B3]">
           <ul className="flex items-center gap-6">
             {LEGAL_LINKS.map((link) => (
               <li key={link.href}>

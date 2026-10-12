@@ -7,7 +7,6 @@ import { fetchClientNegotiations } from "../../lib/ops-api";
 import type { PlanNegotiationApiItem } from "../../lib/ops-api";
 import { openRazorpayCheckout } from "../../lib/razorpay";
 import { useOnboardingGate } from "../../lib/useOnboardingGate";
-import { ResumeOnboardingBanner } from "../../components/portal/ResumeOnboardingBanner";
 import { PausePlanModal } from "../../components/portal/PausePlanModal";
 import { ComparePlansModal } from "../../components/portal/ComparePlansModal";
 import { PlanBargainCallModal } from "../../components/portal/PlanBargainCallModal";
@@ -17,9 +16,17 @@ import type { InvoiceData } from "../../lib/pdf-invoice";
 
 interface SubscriptionData {
   status: string;
+  is_active?: boolean;
   name?: string;
   price_minor?: number;
   current_period_end?: string;
+}
+
+interface ClientSubscriptionData {
+  subscription?: SubscriptionData | null;
+  is_active?: boolean;
+  is_paused_next_month?: boolean;
+  [key: string]: unknown;
 }
 
 export function PortalPaymentsPage() {
@@ -35,7 +42,7 @@ export function PortalPaymentsPage() {
   const [actionNotice, setActionNotice] = useState<string | null>(null);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
 
-  const { data: subData, isLoading: isSubLoading } = useQuery<{ subscription?: SubscriptionData; is_paused_next_month?: boolean }>({
+  const { data: subData, isLoading: isSubLoading } = useQuery<ClientSubscriptionData>({
     queryKey: ["client-subscription", user?.id],
     queryFn: () => request<any>("/api/v1/payments/subscription"),
     enabled: !!user?.id,
@@ -57,7 +64,9 @@ export function PortalPaymentsPage() {
     return <CreoLoadingScreen fullScreen={false} label="Loading Plan & Billing" className="min-h-[45vh]" />;
   }
 
-  const hasActivePlan = Boolean((subData as any)?.is_active || subData?.subscription || (subData as any)?.plan);
+  // Only the server's active flag proves the subscription is paid, current, and unexpired.
+  // A pending checkout or expired subscription may still include plan/subscription data.
+  const hasActivePlan = subData.is_active === true || subData.subscription?.is_active === true;
   const planName = (subData as any)?.plan?.display_name || subData?.subscription?.name || (hasActivePlan ? "Active Retainer" : "No Active Plan");
   const planPrice = (subData?.subscription as any)?.amount 
     ? parseFloat((subData?.subscription as any).amount) 
@@ -101,27 +110,30 @@ export function PortalPaymentsPage() {
   const rzpKey = (import.meta.env.VITE_RAZORPAY_KEY_ID as string) || "rzp_test_TO2r0YMjDZSpuC";
 
   const handleAddon = async (addon: typeof addons[0]) => {
+    if (!hasActivePlan) {
+      setErrorNotice("An active subscription is required before you can add extras.");
+      return;
+    }
+
     setProcessingAddon(addon.id);
     setErrorNotice(null);
     try {
-      let orderData: any = null;
-      try {
-        orderData = await request<any>("/api/v1/payments/addon-order", {
-          method: "POST",
-          body: JSON.stringify({ addon_id: addon.id }),
-        });
-      } catch (err) {
-        console.warn("Could not generate server order, falling back to client checkout:", err);
+      const orderData = await request<any>("/api/v1/payments/addon-order", {
+        method: "POST",
+        body: JSON.stringify({ addon_id: addon.id }),
+      });
+      if (!orderData?.order_id || !orderData?.key_id || !orderData?.amount_minor) {
+        throw new Error("Could not prepare add-on checkout. Please try again.");
       }
 
       await openRazorpayCheckout(
         {
-          key: orderData?.key_id || rzpKey,
-          amount: orderData?.amount_minor || addon.price * 100,
-          currency: orderData?.currency || "INR",
+          key: orderData.key_id,
+          amount: orderData.amount_minor,
+          currency: orderData.currency || "INR",
           name: "Creo Studio",
           description: addon.name,
-          order_id: orderData?.order_id?.startsWith("order_") ? orderData.order_id : undefined,
+          order_id: orderData.order_id,
           prefill: { name: user?.full_name || "", email: user?.email || "" },
         },
         async (paymentResponse) => {
@@ -211,7 +223,7 @@ export function PortalPaymentsPage() {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 pb-12">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full min-w-0 space-y-4">
       {/* Action Toast / Confirmation Notice */}
       {actionNotice && (
         <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-700/60 text-emerald-300 text-xs font-semibold flex items-center gap-2.5 animate-[fadeIn_0.2s_ease-out]">
@@ -290,9 +302,6 @@ export function PortalPaymentsPage() {
         </div>
       )}
 
-      {/* Paid but onboarding unfinished */}
-      <ResumeOnboardingBanner variant="hero" title="Your plan is active — finish setup to start production" />
-
       {/* Active Negotiation Status Banner */}
       {latestNeg && (
         <div
@@ -352,10 +361,10 @@ export function PortalPaymentsPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         
         {/* Top Left: Current Plan */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8 flex flex-col justify-between">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-10">
             <div>
               <p className="text-[11px] uppercase font-bold tracking-[0.16em] text-[#97A0B3] mb-1">
@@ -389,8 +398,13 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Top Right: Add to this cycle */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6">
           <h3 className="text-sm font-bold text-white mb-6">Add to this cycle</h3>
+          {!hasActivePlan && (
+            <p className="text-xs text-[#97A0B3] -mt-3 mb-4">
+              An active plan is required before you can add extras.
+            </p>
+          )}
           <div className="divide-y divide-white/[0.05]">
             {addons.map(addon => (
               <div key={addon.id} className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -402,8 +416,13 @@ export function PortalPaymentsPage() {
                   <span className="text-[13px] font-bold text-white">₹{addon.price.toLocaleString('en-IN')}</span>
                   <button 
                     onClick={() => handleAddon(addon)}
-                    disabled={!!processingAddon}
-                    className="px-5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold hover:bg-white transition-colors w-20 flex items-center justify-center disabled:opacity-50 cursor-pointer"
+                    disabled={!hasActivePlan || !!processingAddon}
+                    title={!hasActivePlan ? "An active plan is required to add extras" : undefined}
+                    className={`px-5 py-2 rounded-full bg-[#BCCCE6] text-[#0B111C] text-[13px] font-bold transition-colors w-20 flex items-center justify-center disabled:opacity-50 ${
+                      !hasActivePlan
+                        ? "cursor-not-allowed"
+                        : "cursor-pointer hover:bg-white disabled:cursor-wait"
+                    }`}
                   >
                     {processingAddon === addon.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Add"}
                   </button>
@@ -414,7 +433,7 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Bottom Left: Invoices */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6">
           <h3 className="text-sm font-bold text-white mb-6">Invoices</h3>
           <div className="overflow-x-auto scrollbar-hide">
             <table className="w-full min-w-[500px]">
@@ -463,7 +482,7 @@ export function PortalPaymentsPage() {
         </div>
 
         {/* Bottom Right: Payment method */}
-        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-6 lg:p-8 flex flex-col justify-between">
+        <div className="bg-[#161F2D] border border-[#2A3446] rounded-[24px] p-5 sm:p-6 flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-white mb-6">Payment method</h3>
             

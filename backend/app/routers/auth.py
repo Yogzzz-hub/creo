@@ -1,4 +1,4 @@
-"""Authentication router: OTP with Resend API delivery, Google OAuth, Instagram OAuth, and session management."""
+"""Authentication router: OTP with Brevo API delivery, Google OAuth, Instagram OAuth, and session management."""
 
 from __future__ import annotations
 
@@ -144,13 +144,6 @@ async def _deliver_otp_or_raise(email: str, otp_code: str) -> None:
         delivered = False
 
     if not delivered:
-        if settings.ENVIRONMENT != "production" and getattr(settings, "ALLOW_FALLBACK_OTP", False):
-            logger.warning(
-                "otp_delivery_failed_allowing_fallback",
-                email=email,
-                otp_code=otp_code,
-            )
-            return
         raise HTTPException(
             status_code=503,
             detail="We could not deliver the verification email. Please try again shortly.",
@@ -714,7 +707,7 @@ async def reset_admin_seed(db: AsyncSession = Depends(get_db)) -> dict[str, Any]
 
 @router.post("/send-otp", response_model=dict[str, Any])
 async def send_otp(payload: SendOtpRequest, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
-    """Send 6-digit verification code to email via Resend API with rate limiting."""
+    """Send 6-digit verification code to email via Brevo API with rate limiting."""
     email_clean = _normalize_email(payload.email)
 
     if not _check_rate_limit(f"send_otp:{email_clean}", max_requests=5, window_seconds=600):
@@ -1126,22 +1119,12 @@ async def refresh_access_token(
 
 
 @router.get("/instagram/url", response_model=dict[str, Any])
-async def get_instagram_auth_url(redirect_uri: str | None = None) -> dict[str, Any]:
-    """Generate Instagram Graph API authorization URL."""
-    state = uuid.uuid4().hex
-    app_id = settings.INSTAGRAM_APP_ID or "1025363733231558"
-    redirect = redirect_uri or settings.INSTAGRAM_REDIRECT_URI or "http://localhost:3000/api/auth/callback/instagram"
-    encoded_redirect = urllib.parse.quote(redirect, safe="")
-
-    url = (
-        "https://api.instagram.com/oauth/authorize"
-        f"?client_id={app_id}"
-        f"&redirect_uri={encoded_redirect}"
-        "&scope=user_profile,user_media"
-        "&response_type=code"
-        f"&state={state}"
-    )
-    return {"url": url, "state": state, "app_id": app_id}
+async def get_instagram_auth_url(
+    actor: Actor = Depends(get_current_actor), db: AsyncSession = Depends(get_db)
+) -> dict[str, Any]:
+    """Compatibility alias: authenticated client authorization, fixed redirect only."""
+    from app.services.instagram_connection import start
+    return await start(db, actor)
 
 
 @router.post("/logout", response_model=dict[str, Any])

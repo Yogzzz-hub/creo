@@ -105,6 +105,11 @@ class ClientProfile(Base, TimestampMixin):
     instagram_username: Mapped[str | None] = mapped_column(String(255), nullable=True)
     instagram_user_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     ig_token_encrypted: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    ig_connection_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    ig_connection_status: Mapped[str] = mapped_column(
+        String(30), default="disconnected", server_default="disconnected"
+    )
+    ig_metadata: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, server_default="{}")
     ig_token_expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

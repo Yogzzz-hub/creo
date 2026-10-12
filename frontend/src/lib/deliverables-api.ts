@@ -32,12 +32,14 @@ export async function approveDeliverable(
   deliverableId: string,
   _clientId: string,
   idempotencyKey: string,
+  publishingFingerprint?: string,
 ): Promise<{ status: string; deliverable_id: string }> {
   return request<{ status: string; deliverable_id: string }>(
     `/api/v1/deliverables/${deliverableId}/approve`,
     {
       method: "POST",
       headers: { "Idempotency-Key": idempotencyKey },
+      body: JSON.stringify({ publishing_fingerprint: publishingFingerprint }),
     },
   );
 }
@@ -106,6 +108,9 @@ export function validateUploadFile(file: File): string | null {
   if (!mime) return "Unsupported file type. Upload MP4/MOV video or PNG/JPG/WEBP/GIF images.";
   const limit = mime.startsWith("video/") ? 500 * MB : 10 * MB;
   if (file.size === 0) return "This file is empty.";
+  if (mime.startsWith("video/") && file.size < 1024) {
+    return "This video file is too small or invalid (less than 1KB). Please attach a genuine video export.";
+  }
   if (file.size > limit) {
     return "File exceeds maximum size (10MB for images, 500MB for videos).";
   }

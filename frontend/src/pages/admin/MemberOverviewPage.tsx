@@ -1,5 +1,5 @@
 import { NativeSelect } from "../../ui/NativeSelect";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion } from "motion/react";
 import {
@@ -18,12 +18,21 @@ import {
   Video,
   X,
   ExternalLink,
+  Eye,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { AdminTopHeader } from "../../components/admin/AdminTopHeader";
-import { useQuery } from "@tanstack/react-query";
-import { fetchPodDashboard, type PodDashboardData } from "../../lib/ops-api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchPodDashboard, type PodDashboardData, type PodTask } from "../../lib/ops-api";
+import { uploadTaskDeliverable, validateUploadFile, UPLOAD_ACCEPT } from "../../lib/deliverables-api";
+import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
 import { useAuth } from "../../lib/auth-context";
 import { CreoLoadingScreen } from "../../components/ui/CreoLoadingScreen";
+import {
+  isCreativeRole,
+  isTaskAssignedToUser,
+} from "../../lib/creative-roles";
 
 interface LeadNoteItem {
   id: string;
@@ -41,6 +50,7 @@ interface LeadNoteItem {
 export function MemberOverviewPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery<PodDashboardData>({
     queryKey: ["pod_dashboard", user?.id, undefined],
     queryFn: () => fetchPodDashboard(),
@@ -55,6 +65,31 @@ export function MemberOverviewPage() {
   const qaTasks = data?.tasks?.internal_qa || [];
   const activeSprintTasks = [...inProdTasks, ...qaTasks];
   const completedTasks = data?.tasks?.completed || [];
+  const allEligibleTasks: PodTask[] = [...inProdTasks, ...qaTasks, ...(data?.tasks?.backlog || [])];
+
+  const isAssignedToCurrentUser = (task: PodTask) => isTaskAssignedToUser(task, user);
+
+  const myAssignedTasks = allEligibleTasks.filter(isAssignedToCurrentUser);
+  const otherPodTasks = allEligibleTasks.filter((t) => !isAssignedToCurrentUser(t));
+
+  const myActiveTasks = activeSprintTasks.filter(isAssignedToCurrentUser);
+  const myCompletedTasks = completedTasks.filter(isAssignedToCurrentUser);
+
+  // Deliverables table scoping: Creatives default to "My Deliverables", Leads/Admins to "All Pod"
+  const [deliverablesScope, setDeliverablesScope] = useState<"my" | "all">(() =>
+    isCreativeRole(user?.role) ? "my" : "all"
+  );
+  const [deliverablesTab, setDeliverablesTab] = useState<"active" | "archived">("active");
+
+  useEffect(() => {
+    if (user) {
+      setDeliverablesScope(isCreativeRole(user.role) ? "my" : "all");
+    }
+  }, [user?.role]);
+
+  const displayActiveTasks = deliverablesScope === "my" ? myActiveTasks : activeSprintTasks;
+  const displayCompletedTasks = deliverablesScope === "my" ? myCompletedTasks : completedTasks;
+  const currentTasks = deliverablesTab === "active" ? displayActiveTasks : displayCompletedTasks;
 
   // State for interactive actions
   const [renderPaused, setRenderPaused] = useState(false);
@@ -68,15 +103,23 @@ export function MemberOverviewPage() {
   const [hoursProject, setHoursProject] = useState("Pod Sprint General Deliverables");
   const [hoursNotes, setHoursNotes] = useState("Octane shader tuning, keyframe polishing & lighting pass");
 
+  // Real Upload Modal State
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState("");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadClient, setUploadClient] = useState("Pod Client Workspace");
-  const [uploadAssetTitle, setUploadAssetTitle] = useState("Sprint Deliverable Asset v1.0");
+  const [uploadFileError, setUploadFileError] = useState<string | null>(null);
+  const [uploadNotes, setUploadNotes] = useState("");
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // Preview Modal State
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewTask, setPreviewTask] = useState<PodTask | null>(null);
 
   const [inspectModalOpen, setInspectModalOpen] = useState(false);
   const [handoffConfirmOpen, setHandoffConfirmOpen] = useState(false);
   const [zoomModalOpen, setZoomModalOpen] = useState(false);
-  const [deliverablesTab, setDeliverablesTab] = useState<"active" | "archived">("active");
 
   const [notesList, setNotesList] = useState<LeadNoteItem[]>([
     {
@@ -149,10 +192,66 @@ export function MemberOverviewPage() {
     showToast(`Logged ${hoursToLog} hrs to ${hoursProject}. Weekly total updated!`);
   };
 
-  const handleUploadSubmit = (e: React.FormEvent) => {
+  const openUploadModal = (task?: PodTask) => {
+    setUploadError(null);
+    setUploadFile(null);
+    setUploadFileError(null);
+    setUploadProgress(null);
+    setUploadNotes("");
+    setIsUploading(false);
+    if (task) {
+      setSelectedTaskId(task.id);
+    } else {
+      const defaultTask = myAssignedTasks[0] || allEligibleTasks[0];
+      setSelectedTaskId(defaultTask?.id || "");
+    }
+    setUploadModalOpen(true);
+  };
+
+  const handleFileSelect = (f: File | null) => {
+    setUploadFileError(null);
+    setUploadError(null);
+    if (!f) {
+      setUploadFile(null);
+      return;
+    }
+    const problem = validateUploadFile(f);
+    if (problem) {
+      setUploadFileError(problem);
+      setUploadFile(null);
+      return;
+    }
+    setUploadFile(f);
+  };
+
+  const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setUploadModalOpen(false);
-    showToast(`Successfully uploaded ${uploadAssetTitle} (${uploadClient}) to Frame.io sync pipeline!`);
+    if (!selectedTaskId) {
+      setUploadError("Please select a target task.");
+      return;
+    }
+    if (!uploadFile) {
+      setUploadError("Please choose a file to upload.");
+      return;
+    }
+    setIsUploading(true);
+    setUploadError(null);
+    try {
+      const result = await uploadTaskDeliverable(
+        selectedTaskId,
+        uploadFile,
+        uploadNotes,
+        (fraction) => setUploadProgress(Math.round(fraction * 100)),
+      );
+      queryClient.invalidateQueries({ queryKey: ["pod_dashboard"] });
+      setUploadModalOpen(false);
+      showToast(`Successfully uploaded v${result.version} to ${leadName} for QA review!`, "success");
+    } catch (err: any) {
+      setUploadProgress(null);
+      setUploadError(err.message || "Failed to upload deliverable.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   if (isLoading || !data) {
@@ -385,7 +484,14 @@ export function MemberOverviewPage() {
                     Inspect Cache
                   </button>
                   <button
-                    onClick={() => setHandoffConfirmOpen(true)}
+                    onClick={() => {
+                      const targetTask = myActiveTasks[0] || myAssignedTasks[0] || activeSprintTasks[0];
+                      if (targetTask) {
+                        openUploadModal(targetTask);
+                      } else {
+                        setHandoffConfirmOpen(true);
+                      }
+                    }}
                     className="px-3 py-1.5 rounded-lg bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/20 text-[#7FA0D6] text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer ml-auto"
                   >
                     <Send className="size-3" />
@@ -445,7 +551,12 @@ export function MemberOverviewPage() {
                   </button>
                   <button
                     onClick={() => {
-                      navigate("/workstation/handoff");
+                      const targetTask = myActiveTasks[1] || myAssignedTasks[1] || activeSprintTasks[1] || activeSprintTasks[0];
+                      if (targetTask) {
+                        openUploadModal(targetTask);
+                      } else {
+                        navigate("/workstation/handoff");
+                      }
                     }}
                     className="px-3.5 py-1.5 rounded-lg bg-[#7FA0D6] hover:bg-blue-700 text-white text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer ml-auto"
                   >
@@ -457,40 +568,105 @@ export function MemberOverviewPage() {
             </div>
             {/* Section B: Assigned Sprint Deliverables Table */}
             <div className="bg-[#161F2D] rounded-2xl p-4 sm:p-5 border border-[#2A3446]/80 shadow-2xs space-y-3">
-              <div className="flex items-center justify-between pb-2.5 border-b border-[#2A3446]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 border-b border-[#2A3446] gap-2.5">
                 <div>
                   <h2 className="text-sm font-black text-white">Assigned Sprint Deliverables</h2>
                   <p className="text-[11px] text-[#97A0B3]">Deliverables tracker across client pods</p>
                 </div>
 
-                <div className="flex items-center bg-[#161F2D] p-0.5 rounded-lg text-xs font-bold">
-                  <button
-                    onClick={() => setDeliverablesTab("active")}
-                    className={`px-2.5 py-0.5 rounded-md transition-all ${
-                      deliverablesTab === "active" ? "bg-[#161F2D] text-white shadow-2xs" : "text-[#97A0B3]"
-                    }`}
-                  >
-                    Active ({activeSprintTasks.length})
-                  </button>
-                  <button
-                    onClick={() => setDeliverablesTab("archived")}
-                    className={`px-2.5 py-0.5 rounded-md transition-all ${
-                      deliverablesTab === "archived" ? "bg-[#161F2D] text-white shadow-2xs" : "text-[#97A0B3]"
-                    }`}
-                  >
-                    Archived
-                  </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Pod Scope Sub-Filter: My Deliverables vs All Pod Deliverables */}
+                  <div className="flex items-center bg-[#0B111C] p-0.5 rounded-lg text-xs font-bold border border-[#2A3446]">
+                    <button
+                      type="button"
+                      onClick={() => setDeliverablesScope("my")}
+                      className={`px-2.5 py-1 rounded-md transition-all text-[11px] cursor-pointer ${
+                        deliverablesScope === "my"
+                          ? "bg-[#161F2D] text-white shadow-2xs font-black border border-[#2A3446]"
+                          : "text-[#97A0B3] hover:text-white"
+                      }`}
+                    >
+                      My Deliverables
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeliverablesScope("all")}
+                      className={`px-2.5 py-1 rounded-md transition-all text-[11px] cursor-pointer ${
+                        deliverablesScope === "all"
+                          ? "bg-[#161F2D] text-white shadow-2xs font-black border border-[#2A3446]"
+                          : "text-[#97A0B3] hover:text-white"
+                      }`}
+                    >
+                      All Pod Deliverables
+                    </button>
+                  </div>
+
+                  {/* Status Filter: Active vs Archived */}
+                  <div className="flex items-center bg-[#0B111C] p-0.5 rounded-lg text-xs font-bold border border-[#2A3446]">
+                    <button
+                      type="button"
+                      onClick={() => setDeliverablesTab("active")}
+                      className={`px-2.5 py-1 rounded-md transition-all text-[11px] cursor-pointer ${
+                        deliverablesTab === "active"
+                          ? "bg-[#161F2D] text-white shadow-2xs font-black border border-[#2A3446]"
+                          : "text-[#97A0B3] hover:text-white"
+                      }`}
+                    >
+                      Active ({displayActiveTasks.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeliverablesTab("archived")}
+                      className={`px-2.5 py-1 rounded-md transition-all text-[11px] cursor-pointer ${
+                        deliverablesTab === "archived"
+                          ? "bg-[#161F2D] text-white shadow-2xs font-black border border-[#2A3446]"
+                          : "text-[#97A0B3] hover:text-white"
+                      }`}
+                    >
+                      Archived ({displayCompletedTasks.length})
+                    </button>
+                  </div>
                 </div>
               </div>
 
               {/* Dynamic Deliverables View */}
               {(() => {
-                const currentTasks = deliverablesTab === "active" ? activeSprintTasks : completedTasks;
                 if (currentTasks.length === 0) {
                   return (
-                    <div className="py-10 text-center border-2 border-dashed border-[#2A3446] rounded-xl space-y-1">
-                      <p className="font-bold text-white text-xs">No {deliverablesTab} deliverables found</p>
-                      <p className="text-[11px] text-[#97A0B3]">Tasks will appear here once active in the sprint queue.</p>
+                    <div className="py-10 text-center border-2 border-dashed border-[#2A3446] rounded-xl space-y-2 p-4">
+                      <div className="size-10 rounded-full bg-slate-800 border border-slate-700 mx-auto flex items-center justify-center text-[#97A0B3]">
+                        <Sparkles className="size-5 text-[#7FA0D6]" />
+                      </div>
+                      <p className="font-bold text-white text-xs">
+                        {deliverablesScope === "my"
+                          ? `No ${deliverablesTab} deliverables assigned to you`
+                          : `No ${deliverablesTab} deliverables found in pod`}
+                      </p>
+                      <p className="text-[11px] text-[#97A0B3] max-w-sm mx-auto">
+                        {deliverablesScope === "my"
+                          ? "You have no deliverables currently in production or QA. Pull new deliverables from your assigned backlog or toggle to All Pod Deliverables."
+                          : "Tasks will appear here once active in the sprint queue."}
+                      </p>
+                      {deliverablesScope === "my" && (
+                        <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                          <Link
+                            to="/workstation/tasks"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-2xs"
+                          >
+                            <span>Production Tasks</span>
+                            <ArrowRight className="size-3" />
+                          </Link>
+                          {activeSprintTasks.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setDeliverablesScope("all")}
+                              className="px-3 py-1.5 rounded-lg border border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-[#F1F5F9] text-xs font-semibold transition-all cursor-pointer"
+                            >
+                              View All Pod Deliverables ({activeSprintTasks.length})
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 }
@@ -511,13 +687,41 @@ export function MemberOverviewPage() {
                             </span>
                           </div>
                           <div className="flex items-center justify-between pt-1.5 border-t border-[#2A3446]/60 text-xs">
-                            <span className="font-bold text-[#7FA0D6] text-[10px]">{t.assignee?.full_name || t.assignee_name || "Assigned"}</span>
-                            <div className="flex items-center gap-1">
+                            <span className="font-bold text-[10px]">
+                              {isAssignedToCurrentUser(t) ? (
+                                <span className="text-emerald-400 flex items-center gap-1">
+                                  <span className="size-1.5 rounded-full bg-emerald-400" />
+                                  {t.assignee?.full_name || t.assignee_name || "You"} (You)
+                                </span>
+                              ) : (
+                                <span className="text-[#97A0B3]">{t.assignee?.full_name || t.assignee_name || "Unassigned"}</span>
+                              )}
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              {t.deliverable && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPreviewTask(t);
+                                    setPreviewModalOpen(true);
+                                  }}
+                                  className="px-2 py-0.5 rounded-md border border-[#7FA0D6]/30 bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-[#7FA0D6] font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer"
+                                  title="Quick Video Preview"
+                                >
+                                  <Eye className="size-3" />
+                                  <span>v{t.deliverable.version}</span>
+                                </button>
+                              )}
                               <button
-                                onClick={() => setUploadModalOpen(true)}
-                                className="px-2 py-0.5 rounded-md border border-[#2A3446] bg-[#161F2D] hover:bg-[#161F2D] text-[#F1F5F9] font-bold text-[10px] cursor-pointer"
+                                type="button"
+                                onClick={() => openUploadModal(t)}
+                                className={`px-2 py-0.5 rounded-md border font-bold text-[10px] cursor-pointer ${
+                                  t.status === "internal_qa"
+                                    ? "border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
+                                    : "border-[#2A3446] bg-[#161F2D] hover:bg-[#0B111C] text-[#F1F5F9]"
+                                }`}
                               >
-                                Upload
+                                {t.status === "internal_qa" ? "Re-upload Cut" : t.status === "in_production" ? "Upload & QA" : "Upload"}
                               </button>
                             </div>
                           </div>
@@ -550,13 +754,41 @@ export function MemberOverviewPage() {
                                   {t.status === "in_production" ? "IN PRODUCTION" : t.status === "internal_qa" ? "PENDING QA" : "READY"}
                                 </span>
                               </td>
-                              <td className="py-2.5 px-2.5 font-bold text-[#F1F5F9] text-xs">{t.assignee?.full_name || t.assignee_name || "Unassigned"}</td>
+                              <td className="py-2.5 px-2.5 text-xs">
+                                {isAssignedToCurrentUser(t) ? (
+                                  <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+                                    <span className="size-1.5 rounded-full bg-emerald-400" />
+                                    {t.assignee?.full_name || t.assignee_name || "You"} (You)
+                                  </span>
+                                ) : (
+                                  <span className="text-[#97A0B3] font-medium">{t.assignee?.full_name || t.assignee_name || "Unassigned"}</span>
+                                )}
+                              </td>
                               <td className="py-2.5 px-2.5 text-right space-x-1.5">
+                                {t.deliverable && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setPreviewTask(t);
+                                      setPreviewModalOpen(true);
+                                    }}
+                                    className="px-2.5 py-1 rounded-md border border-[#7FA0D6]/30 bg-[#7FA0D6]/15 hover:bg-[#7FA0D6]/25 text-[#7FA0D6] font-bold text-[10px] inline-flex items-center gap-1 cursor-pointer transition-colors"
+                                    title="Quick Video Preview"
+                                  >
+                                    <Eye className="size-3" />
+                                    <span>v{t.deliverable.version}</span>
+                                  </button>
+                                )}
                                 <button
-                                  onClick={() => setUploadModalOpen(true)}
-                                  className="px-2.5 py-1 rounded-md border border-[#2A3446] hover:bg-[#161F2D] text-[#F1F5F9] font-bold text-[10px] cursor-pointer"
+                                  type="button"
+                                  onClick={() => openUploadModal(t)}
+                                  className={`px-2.5 py-1 rounded-md border font-bold text-[10px] cursor-pointer transition-colors ${
+                                    t.status === "internal_qa"
+                                      ? "border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
+                                      : "border-[#2A3446] hover:bg-[#161F2D] text-[#F1F5F9]"
+                                  }`}
                                 >
-                                  Upload
+                                  {t.status === "internal_qa" ? "Re-upload Cut" : t.status === "in_production" ? "Upload & QA" : "Upload"}
                                 </button>
                               </td>
                             </tr>
@@ -798,7 +1030,7 @@ export function MemberOverviewPage() {
       {uploadModalOpen && (
         <div
           className="fixed inset-0 w-screen h-screen z-[99999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
-          onClick={() => setUploadModalOpen(false)}
+          onClick={() => !isUploading && setUploadModalOpen(false)}
         >
           <div
             className="w-full max-w-lg bg-[#161F2D] rounded-3xl p-6 sm:p-7 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up"
@@ -811,78 +1043,260 @@ export function MemberOverviewPage() {
                 </div>
                 <div>
                   <h3 className="text-base font-black text-white">Upload Sprint Deliverable Cut</h3>
-                  <p className="text-xs text-[#97A0B3]">Sync render exports directly to Frame.io QA gate</p>
+                  <p className="text-xs text-[#97A0B3]">Submit render export directly to {leadName} for QA gate</p>
                 </div>
               </div>
               <button
                 type="button"
+                disabled={isUploading}
                 onClick={() => setUploadModalOpen(false)}
-                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-200 text-[#97A0B3] flex items-center justify-center cursor-pointer"
+                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-700 text-[#97A0B3] flex items-center justify-center cursor-pointer disabled:opacity-50"
               >
                 <X className="size-4" />
               </button>
             </div>
 
+            {uploadError && (
+              <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="size-4 shrink-0 text-rose-400" />
+                  <span>{uploadError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUploadError(null)}
+                  className="text-current opacity-70 hover:opacity-100"
+                >
+                  &times;
+                </button>
+              </div>
+            )}
+
+            {uploadFileError && (
+              <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="size-4 shrink-0 text-rose-400" />
+                  <span>{uploadFileError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUploadFileError(null)}
+                  className="text-current opacity-70 hover:opacity-100"
+                >
+                  &times;
+                </button>
+              </div>
+            )}
+
             <form onSubmit={handleUploadSubmit} className="space-y-3.5 text-xs">
+              {/* Target Task Select */}
               <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Client Workspace</label>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Target Task</label>
                 <NativeSelect
-                  value={uploadClient}
-                  onChange={(e) => setUploadClient(e.target.value)}
+                  value={selectedTaskId}
+                  disabled={isUploading}
+                  onChange={(e) => {
+                    setSelectedTaskId(e.target.value);
+                    setUploadError(null);
+                  }}
                   className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-semibold bg-[#161F2D]"
                 >
-                  {clients.length > 0 ? clients.map(c => <option key={c.id} value={c.name}>{c.name}</option>) : <option value="General Pod Workspace">General Pod Workspace</option>}
+                  {myAssignedTasks.length > 0 && (
+                    <optgroup label="My Assigned Tasks">
+                      {myAssignedTasks.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.blueprint?.concept_name || t.deliverable_type || "Task"} • {t.client_name} (ID: {t.id.slice(0, 6)})
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {otherPodTasks.length > 0 && (
+                    <optgroup label="Pod Tasks (Team Collaborative)">
+                      {otherPodTasks.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.blueprint?.concept_name || t.deliverable_type || "Task"} • {t.client_name} (Assignee: {t.assignee?.full_name || t.assignee_name || "Unassigned"})
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {allEligibleTasks.length === 0 && (
+                    <option value="">No tasks available in sprint</option>
+                  )}
                 </NativeSelect>
               </div>
 
-              <div>
-                <label className="block font-bold text-[#F1F5F9] mb-1">Deliverable Asset Title</label>
-                <input
-                  type="text"
-                  required
-                  value={uploadAssetTitle}
-                  onChange={(e) => setUploadAssetTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-bold"
-                />
-              </div>
+              {/* Assignee Collaboration / Guard Status Notice */}
+              {(() => {
+                const currentTask = allEligibleTasks.find((t) => t.id === selectedTaskId);
+                if (!currentTask) return null;
+                const isMine = isAssignedToCurrentUser(currentTask);
+                if (isMine) {
+                  return (
+                    <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[11px] font-medium flex items-center gap-1.5">
+                      <CheckCircle2 className="size-3.5 shrink-0" />
+                      <span>This task is assigned to you ({user?.full_name || "You"}).</span>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="p-2.5 rounded-xl bg-[#7FA0D6]/10 border border-[#7FA0D6]/25 text-[#F1F5F9] text-[11px] font-medium flex items-start gap-2">
+                    <Sparkles className="size-3.5 text-[#7FA0D6] shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-[#7FA0D6]">Pod Collaboration:</span> Task is assigned to {currentTask.assignee?.full_name || currentTask.assignee_name || "Operations Admin"}. Submitting this deliverable will claim it for your cut and route to {leadName} for QA.
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Drag Drop Area */}
-              <div className="p-6 border-2 border-dashed border-[#2A3446] rounded-2xl text-center space-y-2 bg-[#0B111C] hover:bg-[#7FA0D6]/15/50 hover:border-blue-300 transition-colors cursor-pointer">
-                <Upload className="size-7 text-[#7FA0D6] mx-auto" />
-                <div className="font-bold text-white">
-                  {uploadFile ? uploadFile.name : "Drag & drop master render (ProRes / MP4 / AEP)"}
+              <div className="p-5 border-2 border-dashed border-[#2A3446] rounded-2xl text-center space-y-2 bg-[#0B111C] hover:bg-[#7FA0D6]/10 hover:border-blue-300 transition-colors">
+                <Upload className="size-6 text-[#7FA0D6] mx-auto" />
+                <div className="font-bold text-white text-xs">
+                  {uploadFile ? uploadFile.name : "Drag & drop master render (MP4 / MOV / PNG / JPG)"}
                 </div>
-                <div className="text-[11px] text-[#97A0B3]">Up to 10GB per asset • Color space verified</div>
+                <div className="text-[10px] text-[#97A0B3]">
+                  {uploadFile ? `${(uploadFile.size / (1024 * 1024)).toFixed(2)} MB • Ready to upload` : "Up to 500MB videos, 10MB images • Min 1KB valid media"}
+                </div>
                 <input
                   type="file"
+                  accept={UPLOAD_ACCEPT}
                   className="hidden"
                   id="asset-file-input"
-                  onChange={(e) => e.target.files?.[0] && setUploadFile(e.target.files[0])}
+                  disabled={isUploading}
+                  onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
                 />
                 <label
                   htmlFor="asset-file-input"
-                  className="inline-block px-3 py-1.5 rounded-lg bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] font-bold text-xs hover:bg-[#161F2D] cursor-pointer mt-1"
+                  className="inline-block px-3 py-1.5 rounded-lg bg-[#161F2D] border border-[#2A3446] text-[#F1F5F9] font-bold text-xs hover:bg-[#2A3446] cursor-pointer mt-1"
                 >
                   Browse Computer
                 </label>
               </div>
 
+              {/* Upload Notes */}
+              <div>
+                <label className="block font-bold text-[#F1F5F9] mb-1">Handover Notes for QA (Optional)</label>
+                <textarea
+                  rows={2}
+                  disabled={isUploading}
+                  value={uploadNotes}
+                  onChange={(e) => setUploadNotes(e.target.value)}
+                  placeholder="e.g. Color grade matched to brand DNA, audio compressed to -14 LUFS..."
+                  className="w-full px-3 py-2 rounded-xl border border-[#2A3446] font-medium bg-[#0B111C] text-[#F1F5F9] placeholder:text-[#97A0B3] focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Upload Progress Bar */}
+              {uploadProgress !== null && (
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px] font-bold">
+                    <span className="text-[#97A0B3]">Uploading cut...</span>
+                    <span className="text-[#7FA0D6]">{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-[#0B111C] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-200 rounded-full"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#2A3446]">
                 <button
                   type="button"
+                  disabled={isUploading}
                   onClick={() => setUploadModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[#2A3446] font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer"
+                  disabled={isUploading || !uploadFile || !selectedTaskId}
+                  className="px-5 py-2 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                 >
-                  Confirm & Upload Asset
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="size-3.5 animate-spin" />
+                      <span>Uploading...</span>
+                    </>
+                  ) : (
+                    <span>Confirm & Upload Asset</span>
+                  )}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: DELIVERABLE VIDEO PREVIEW */}
+      {previewModalOpen && previewTask?.deliverable && (
+        <div
+          className="fixed inset-0 w-screen h-screen z-[99999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setPreviewModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-2xl bg-[#161F2D] rounded-3xl p-5 sm:p-6 shadow-2xl border border-[#2A3446] space-y-4 animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded text-[10px] font-black bg-[#7FA0D6]/20 text-[#7FA0D6] border border-[#7FA0D6]/30">
+                  v{previewTask.deliverable.version}
+                </span>
+                <div>
+                  <h3 className="text-sm font-black text-white">
+                    {previewTask.blueprint?.concept_name || previewTask.deliverable_type || "Sprint Cut Preview"}
+                  </h3>
+                  <p className="text-[11px] text-[#97A0B3]">{previewTask.client_name}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewModalOpen(false)}
+                className="size-8 rounded-full bg-[#161F2D] hover:bg-slate-700 text-[#97A0B3] flex items-center justify-center cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="rounded-2xl overflow-hidden bg-black max-h-[380px] flex items-center justify-center border border-[#2A3446]/60">
+              <DeliverableMedia
+                url={previewTask.deliverable.file_url}
+                isVideo={previewTask.deliverable.is_video}
+                title={previewTask.blueprint?.concept_name || "Deliverable"}
+                controls={true}
+                className="w-full max-h-[380px]"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-[#2A3446] text-xs">
+              <div className="text-[11px] text-[#97A0B3]">
+                Format: <strong className="text-white">{previewTask.deliverable.file_type}</strong>
+              </div>
+              <div className="flex items-center gap-2">
+                {previewTask.deliverable.file_url && (
+                  <a
+                    href={previewTask.deliverable.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl border border-[#2A3446] hover:bg-[#0B111C] text-[#F1F5F9] font-bold text-xs flex items-center gap-1.5"
+                  >
+                    <ExternalLink className="size-3.5 text-[#7FA0D6]" />
+                    Direct Link
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setPreviewModalOpen(false)}
+                  className="px-4 py-1.5 rounded-xl bg-[#7FA0D6] hover:bg-blue-700 text-white font-bold text-xs cursor-pointer"
+                >
+                  Close Preview
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

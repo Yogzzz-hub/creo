@@ -269,10 +269,10 @@ export function PortalBrandDNAPage() {
 
   if (!gate.isComplete && isBrandTab) {
     return (
-      <div className="flex items-center justify-center py-6 sm:py-10">
+      <div className="w-full">
         <SubscriptionLockedState
           title="Brand DNA Locked"
-          description="Complete your onboarding setup to manage your brand DNA, visual assets, and brand guidelines."
+          description="Complete setup to manage your brand assets and guidelines."
         />
       </div>
     );
@@ -377,7 +377,7 @@ export function PortalBrandDNAPage() {
   };
 
   return (
-    <div className="animate-in fade-in duration-300 space-y-6 pb-12 relative">
+    <div className="w-full min-w-0 animate-in fade-in duration-300 space-y-4 relative">
       {/* ─────────────────────────────────────────────────────────── */}
       {/* SUCCESS POPUP (CENTERED VIA PORTAL WITH BODY SCROLL LOCKED) */}
       {/* ─────────────────────────────────────────────────────────── */}
@@ -713,7 +713,7 @@ export function PortalBrandDNAPage() {
       </div>
 
       {/* Bento Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {/* ── CARD 1: BRAND VOICE & PERSONALITY ── */}
         <div className="rounded-2xl border border-[#2A3446] bg-[#161F2D] shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#2A3446] bg-[#0B111C]/50">

@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, useLayoutEffect } from "react";
 import { Outlet, useLocation } from "react-router";
 import { useRouteMemory } from "../../lib/useRouteMemory";
 import { PortalSidebarNew } from "./PortalSidebarNew";
@@ -7,16 +7,19 @@ import { AdminTopHeader } from "../admin/AdminTopHeader";
 import { CreoInlineLoader } from "../ui/CreoLoader";
 
 import { ResumeOnboardingBanner } from "./ResumeOnboardingBanner";
+import { useOnboardingGate } from "../../lib/useOnboardingGate";
 
 export function PortalLayout() {
   // Passively save current route to sessionStorage on every navigation
   useRouteMemory();
   const { pathname } = useLocation();
-  // The dashboard and plan pages render the larger resume card themselves instead of the strip
-  const hasHeroResume =
-    pathname === "/portal" || pathname === "/portal/" || pathname.startsWith("/portal/payments");
-
-  const isSlack = pathname.startsWith("/portal/slack");
+  // Start each page below its header rather than retaining the previous page's scroll.
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
+  const gate = useOnboardingGate();
+  // Only an unlocked chat uses a fixed-height viewport; locked pages scroll normally.
+  const isSlack = pathname.startsWith("/portal/slack") && gate.isComplete;
 
   return (
     <AdminSidebarProvider>
@@ -66,7 +69,9 @@ export function PortalLayout() {
                   : "mx-auto w-full max-w-[1400px] min-w-0"
               }
             >
-              {!hasHeroResume && !isSlack && <ResumeOnboardingBanner variant="compact" />}
+              {!isSlack && pathname !== "/portal" && pathname !== "/portal/" && (
+                <ResumeOnboardingBanner variant="compact" />
+              )}
               <Suspense fallback={<CreoInlineLoader />}>
                 <div
                   key={pathname}

@@ -2,6 +2,7 @@ import { NativeSelect } from "../../ui/NativeSelect";
 import { useAuth } from "../../lib/auth-context";
 import * as Dialog from "@radix-ui/react-dialog";
 import { DeliverableMedia } from "../../components/ops/DeliverableMedia";
+import { PublishingControl } from "../../components/ops/PublishingPanel";
 import { resolveAssetUrl } from "../../lib/media";
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams, Navigate } from "react-router";
@@ -22,8 +23,14 @@ import {
   fetchAdminKPIs,
   fetchRevenueTrend,
   fetchAdminTransactions,
+  fetchAdminManualPayments,
+  approveManualPayment,
+  rejectManualPayment,
+  directBypassClientPayment,
 } from "../../lib/ops-api";
-import type { PlanNegotiationApiItem, PlanSummaryItem } from "../../lib/ops-api";
+import type { PlanNegotiationApiItem, PlanSummaryItem, ManualPaymentRequest } from "../../lib/ops-api";
+import { fetchPlans } from "../../lib/onboarding-api";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 import type { ClientRosterItem } from "../../types/ops";
 import {
   BarChart,
@@ -42,6 +49,7 @@ import {
   Search,
   Plus,
   CheckCircle2,
+  Banknote,
   MessageSquare,
   AlertTriangle,
   Briefcase,
@@ -95,6 +103,7 @@ export interface ClientDetailData {
   tierBadge: string;
   status: string;
   monthlyFee: number;
+  onboardingStage?: number;
   addon?: string;
   nextBilling: string;
   billingMethod: string;
@@ -167,6 +176,15 @@ export function AdminClientsPage() {
     queryFn: () => fetchClientRoster(),
     enabled: !!user,
   });
+  const confirm = useConfirm();
+  const manualPaymentsQuery = useQuery({
+    queryKey: ["admin-manual-payments"],
+    queryFn: () => fetchAdminManualPayments(),
+  });
+  const plansQuery = useQuery({
+    queryKey: ["plans"],
+    queryFn: () => fetchPlans(),
+  });
   const { clientId } = useParams<{ clientId?: string }>();
   const [searchParams] = useSearchParams();
   const urlClientId = clientId || searchParams.get("clientId") || searchParams.get("client");
@@ -191,6 +209,17 @@ export function AdminClientsPage() {
   const [isCancelClientModalOpen, setIsCancelClientModalOpen] = useState(false);
   const [isOnboardClientModalOpen, setIsOnboardClientModalOpen] = useState(false);
   const [isRemoveClientModalOpen, setIsRemoveClientModalOpen] = useState(false);
+  const [isManualPaymentsModalOpen, setIsManualPaymentsModalOpen] = useState(false);
+  const [isDirectBypassModalOpen, setIsDirectBypassModalOpen] = useState(false);
+  const [directBypassTargetClient, setDirectBypassTargetClient] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [directBypassPlanId, setDirectBypassPlanId] = useState<string>("");
+  const [directBypassPaymentMethod, setDirectBypassPaymentMethod] = useState<string>("cash");
+  const [directBypassNotes, setDirectBypassNotes] = useState<string>("");
+  const [processingPaymentId, setProcessingPaymentId] = useState<string | null>(null);
+  const [directBypassBusy, setDirectBypassBusy] = useState(false);
+
+  const manualPayments = manualPaymentsQuery.data || [];
+  const pendingManualPayments = manualPayments.filter((p) => p.status === "PENDING");
   const [newClientNameInput, setNewClientNameInput] = useState("");
   const [newClientIndustryInput, setNewClientIndustryInput] = useState("");
   const [newClientPodInput, setNewClientPodInput] = useState("Pod A (Creative & Brand Strategy)");
@@ -304,6 +333,7 @@ export function AdminClientsPage() {
         initials: existing.initials || initials,
         name: existing.name || formattedName,
         status: (sc.subscription_status || sc.account_status || existing.status).toUpperCase(),
+        onboardingStage: sc.onboarding_stage,
         totalAssetsDelivered: postsDelivered + reelsDelivered + storiesDelivered,
         totalAssetsQuota: postsQuota + reelsQuota + storiesQuota,
         postsDelivered,
@@ -333,6 +363,7 @@ export function AdminClientsPage() {
         tierBadge: tierName.toUpperCase(),
         status: (sc.subscription_status || sc.account_status || "ACTIVE RETAINER").toUpperCase(),
         monthlyFee,
+        onboardingStage: sc.onboarding_stage,
         addon: "Add-on: Creative Pod",
         nextBilling: "Next Month Cycle",
         billingMethod: "Direct ACH / Razorpay",
@@ -472,6 +503,109 @@ export function AdminClientsPage() {
     setNewRequestForm({ title: "", type: "Reel", priority: "Standard", notes: "" });
   };
 
+  const handleApprovePayment = async (req: ManualPaymentRequest) => {
+    const ok = await confirm({
+      title: "Approve Offline Payment Bypass",
+      description: `Confirm verification and approve offline payment claim for ${req.client_email}?`,
+      details: [
+        `Plan: ${req.plan_name} (₹${req.amount.toLocaleString()})`,
+        `Payment Method: ${req.payment_method.toUpperCase()}`,
+        `Client Reference / Note: ${req.reference_note || "None provided"}`,
+        "This will activate a manual subscription and bypass client onboarding up to Step 3, unlocking Step 4 (Brand Questionnaire) immediately.",
+      ],
+      confirmText: "Approve & Bypass Step 3",
+      cancelText: "Cancel",
+      tone: "success",
+      icon: "check",
+    });
+    if (!ok) return;
+
+    try {
+      setProcessingPaymentId(req.id);
+      await approveManualPayment(req.id, "Payment verified and approved by agency admin.");
+      await queryClient.invalidateQueries({ queryKey: ["admin-manual-payments"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-client-roster"] });
+      showToast(`Offline payment approved for ${req.client_email}! Step 3 bypassed to Step 4.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to approve payment request.");
+    } finally {
+      setProcessingPaymentId(null);
+    }
+  };
+
+  const handleRejectPayment = async (req: ManualPaymentRequest) => {
+    const ok = await confirm({
+      title: "Decline Offline Payment Claim",
+      description: `Decline offline payment claim for ${req.client_email}?`,
+      details: [
+        `Plan: ${req.plan_name} (₹${req.amount.toLocaleString()})`,
+        `Payment Method: ${req.payment_method.toUpperCase()}`,
+        "The client will stay at Step 3 (Payment) and will receive notification of the decline.",
+      ],
+      confirmText: "Decline Request",
+      cancelText: "Keep Pending",
+      tone: "danger",
+      icon: "danger",
+    });
+    if (!ok) return;
+
+    try {
+      setProcessingPaymentId(req.id);
+      await rejectManualPayment(req.id, "Payment verification could not be validated.");
+      await queryClient.invalidateQueries({ queryKey: ["admin-manual-payments"] });
+      showToast(`Payment request for ${req.client_email} has been declined.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to decline payment request.");
+    } finally {
+      setProcessingPaymentId(null);
+    }
+  };
+
+  const handleDirectBypassSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!directBypassTargetClient || !directBypassPlanId) return;
+
+    const chosenPlan = plansQuery.data?.find((p) => p.id === directBypassPlanId);
+    const planName = chosenPlan?.display_name || chosenPlan?.name || "Selected Plan";
+    const planPrice = chosenPlan ? `₹${(chosenPlan.price_minor / 100).toLocaleString()}/mo` : "";
+
+    const ok = await confirm({
+      title: "Confirm Direct Payment Bypass",
+      description: `Directly bypass Step 3 payment for ${directBypassTargetClient.name} (${directBypassTargetClient.email})?`,
+      details: [
+        `Target Client: ${directBypassTargetClient.name}`,
+        `Assigned Retainer: ${planName} ${planPrice}`,
+        `Payment Method: ${directBypassPaymentMethod.toUpperCase()}`,
+        `Admin Reference Note: ${directBypassNotes || "Direct offline payment bypass by Admin"}`,
+        "This will activate an active retainer subscription and advance the client's onboarding to Step 4 (Questionnaire).",
+      ],
+      confirmText: "Bypass Payment & Advance to Step 4",
+      cancelText: "Cancel",
+      tone: "success",
+      icon: "check",
+    });
+    if (!ok) return;
+
+    try {
+      setDirectBypassBusy(true);
+      await directBypassClientPayment(directBypassTargetClient.id, {
+        plan_id: directBypassPlanId,
+        payment_method: directBypassPaymentMethod,
+        notes: directBypassNotes || undefined,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["admin-client-roster"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-manual-payments"] });
+      setIsDirectBypassModalOpen(false);
+      setDirectBypassTargetClient(null);
+      setDirectBypassNotes("");
+      showToast(`Payment successfully bypassed for ${directBypassTargetClient.name}! Advanced to Step 4.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to bypass client payment.");
+    } finally {
+      setDirectBypassBusy(false);
+    }
+  };
+
   const filteredClientList = clientList.filter((c) => {
     const matchesSearch =
       c.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -548,6 +682,19 @@ export function AdminClientsPage() {
                 </div>
                 <button
                   type="button"
+                  onClick={() => setIsManualPaymentsModalOpen(true)}
+                  className="px-3.5 py-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-bold flex items-center gap-2 cursor-pointer transition-all shrink-0"
+                >
+                  <Banknote className="w-4 h-4 text-amber-400" />
+                  <span>Offline Payments</span>
+                  {pendingManualPayments.length > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-black leading-none">
+                      {pendingManualPayments.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
                   onClick={() => setIsOnboardClientModalOpen(true)}
                   className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/20 cursor-pointer transition-all shrink-0"
                 >
@@ -611,7 +758,24 @@ export function AdminClientsPage() {
                   </div>
 
                   <div className="pt-3 border-t border-[#2A3446] flex items-center justify-between text-xs">
-                    <span className="text-[#97A0B3] font-medium">{client.deliverables.length} Deliverables Active</span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDirectBypassTargetClient({
+                          id: client.id,
+                          name: client.name,
+                          email: client.contact?.email || "",
+                        });
+                        setDirectBypassPlanId(plansQuery.data?.[0]?.id || "");
+                        setIsDirectBypassModalOpen(true);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                      title="Bypass payment for client who paid offline"
+                    >
+                      <Banknote className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Bypass Payment</span>
+                    </button>
                     <span className="text-[#7FA0D6] font-bold group-hover:underline flex items-center gap-1">
                       View Client Detail View &rarr;
                     </span>
@@ -642,6 +806,23 @@ export function AdminClientsPage() {
               </div>
 
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!activeClient) return;
+                    setDirectBypassTargetClient({
+                      id: activeClient.id,
+                      name: activeClient.name,
+                      email: activeClient.contact?.email || "",
+                    });
+                    setDirectBypassPlanId(plansQuery.data?.[0]?.id || "");
+                    setIsDirectBypassModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
+                >
+                  <Banknote className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Bypass Step 3 Payment</span>
+                </button>
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#161F2D] text-white border border-[#2A3446] flex items-center gap-1.5 shadow-2xs">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   Live Client • v2.4
@@ -1782,6 +1963,216 @@ export function AdminClientsPage() {
             </div>
           </div>
         )}
+
+        {/* 8. Offline Payment Requests Review Modal */}
+        {isManualPaymentsModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
+            <div className="bg-[#161F2D] rounded-3xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-[#2A3446] overflow-hidden">
+              <div className="flex items-center justify-between border-b border-[#2A3446] p-5 shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                    <Banknote className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-white">Offline Payment Verification Claims</h3>
+                    <p className="text-xs text-[#97A0B3]">Review offline payment claims (cash, bank transfer, cheque, contract) and bypass Step 3 payment.</p>
+                  </div>
+                </div>
+                <button type="button" onClick={() => setIsManualPaymentsModalOpen(false)} className="p-1.5 text-[#97A0B3] hover:text-white rounded-lg">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-5 flex-1 overflow-y-auto space-y-4">
+                {manualPayments.length === 0 ? (
+                  <div className="py-12 border border-dashed border-[#2A3446] rounded-2xl text-center space-y-2">
+                    <Banknote className="size-8 text-[#97A0B3] mx-auto opacity-40" />
+                    <p className="text-sm font-bold text-white">No Offline Payment Claims</p>
+                    <p className="text-xs text-[#97A0B3]">No clients have submitted an offline verification request yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {manualPayments.map((req) => (
+                      <div
+                        key={req.id}
+                        className={`p-4 rounded-2xl border transition-all ${
+                          req.status === "PENDING"
+                            ? "bg-[#0B111C] border-amber-500/40 shadow-sm"
+                            : "bg-[#0B111C]/60 border-[#2A3446]"
+                        }`}
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#2A3446]/60">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-white text-sm">{req.client_email}</span>
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                  req.status === "PENDING"
+                                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                                    : req.status === "APPROVED"
+                                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                                    : "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                                }`}
+                              >
+                                {req.status}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-[#97A0B3] mt-0.5 block">
+                              Claimed on {new Date(req.created_at).toLocaleString()}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="px-2.5 py-1 rounded-lg bg-[#161F2D] border border-[#2A3446] text-[#7FA0D6] font-bold">
+                              {req.plan_name}
+                            </span>
+                            <span className="px-2.5 py-1 rounded-lg bg-[#161F2D] border border-[#2A3446] text-white font-mono font-bold">
+                              ₹{req.amount.toLocaleString()}
+                            </span>
+                            <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-bold uppercase">
+                              {req.payment_method}
+                            </span>
+                          </div>
+                        </div>
+
+                        {req.reference_note && (
+                          <div className="mt-3 p-2.5 bg-[#161F2D] rounded-xl text-xs text-[#F1F5F9] border border-[#2A3446]/50">
+                            <span className="text-[10px] font-bold uppercase text-[#97A0B3] block mb-0.5">Client Note / Reference</span>
+                            {req.reference_note}
+                          </div>
+                        )}
+
+                        {req.admin_notes && (
+                          <div className="mt-2 text-[11px] text-[#97A0B3] italic">
+                            Admin Note: {req.admin_notes}
+                          </div>
+                        )}
+
+                        {req.status === "PENDING" && (
+                          <div className="mt-3 pt-3 border-t border-[#2A3446]/60 flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              disabled={processingPaymentId === req.id}
+                              onClick={() => void handleRejectPayment(req)}
+                              className="px-3 py-1.5 rounded-xl border border-rose-500/40 hover:bg-rose-500/10 text-rose-300 text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+                            >
+                              Decline Claim
+                            </button>
+                            <button
+                              type="button"
+                              disabled={processingPaymentId === req.id}
+                              onClick={() => void handleApprovePayment(req)}
+                              className="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+                            >
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              {processingPaymentId === req.id ? "Approving..." : "Approve & Bypass Step 3"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 border-t border-[#2A3446] flex justify-between items-center bg-[#0B111C]/40">
+                <span className="text-xs text-[#97A0B3]">
+                  {pendingManualPayments.length} pending verification {pendingManualPayments.length === 1 ? "claim" : "claims"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsManualPaymentsModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#161F2D] cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 9. Direct Bypass Payment Modal */}
+        {isDirectBypassModalOpen && directBypassTargetClient && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
+            <div className="bg-[#161F2D] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-emerald-500/40">
+              <div className="flex items-center justify-between border-b border-[#2A3446] pb-3">
+                <div className="flex items-center gap-2">
+                  <Banknote className="w-5 h-5 text-emerald-400" />
+                  <h3 className="text-base font-black text-white">Direct Payment Bypass (Step 3)</h3>
+                </div>
+                <button type="button" onClick={() => setIsDirectBypassModalOpen(false)} className="p-1 text-[#97A0B3] hover:text-[#F1F5F9] rounded-lg">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-xs text-emerald-300">
+                <p className="font-bold">Bypassing payment for: {directBypassTargetClient.name}</p>
+                <p className="text-[11px] text-emerald-400/80 mt-0.5">{directBypassTargetClient.email}</p>
+                <p className="text-[11px] mt-1 text-gray-300">This activates an active retainer and immediately advances the client past Step 3 to Step 4 (Questionnaire).</p>
+              </div>
+
+              <form onSubmit={handleDirectBypassSubmit} className="space-y-3.5 text-xs">
+                <div>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Select Retainer Plan</label>
+                  <NativeSelect
+                    value={directBypassPlanId}
+                    onChange={(e) => setDirectBypassPlanId(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
+                  >
+                    {plansQuery.data?.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.display_name} (₹{(p.price_minor / 100).toLocaleString()}/mo)
+                      </option>
+                    ))}
+                  </NativeSelect>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Payment Method / Source</label>
+                  <NativeSelect
+                    value={directBypassPaymentMethod}
+                    onChange={(e) => setDirectBypassPaymentMethod(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] text-xs font-bold bg-[#0B111C] text-white"
+                  >
+                    <option value="cash">Cash in Hand</option>
+                    <option value="bank_transfer">Direct Bank NEFT/RTGS/IMPS</option>
+                    <option value="cheque">Cheque Deposit</option>
+                    <option value="contract">Annual Agreement / Contract</option>
+                    <option value="upi">Direct UPI Transfer</option>
+                  </NativeSelect>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#F1F5F9] mb-1">Admin Reference / Approval Notes (Optional)</label>
+                  <textarea
+                    rows={2}
+                    value={directBypassNotes}
+                    onChange={(e) => setDirectBypassNotes(e.target.value)}
+                    placeholder="e.g. Received cash payment at agency office on Oct 12, receipt #4092"
+                    className="w-full px-3 py-2 rounded-xl border border-[#2A3446] bg-[#0B111C] text-xs font-medium text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2 border-t border-[#2A3446]">
+                  <button
+                    type="button"
+                    onClick={() => setIsDirectBypassModalOpen(false)}
+                    className="px-4 py-2 rounded-xl border border-[#2A3446] text-xs font-bold text-[#F1F5F9] hover:bg-[#0B111C] cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={directBypassBusy}
+                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md cursor-pointer transition-all disabled:opacity-50"
+                  >
+                    {directBypassBusy ? "Bypassing..." : "Confirm & Bypass"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
@@ -2068,6 +2459,7 @@ export function AdminDeliverablesPage() {
                 <h3 className="text-sm font-black text-white line-clamp-2 mb-1.5">
                   {item.title}
                 </h3>
+                <PublishingControl deliverableId={item.id} />
                 <p className="text-[11px] font-semibold text-[#97A0B3] flex items-center gap-1.5">
                   <Tag className="w-3 h-3 text-[#97A0B3]" />
                   {item.format}
