@@ -9,6 +9,7 @@ import {
   animate,
   easeIn,
   motion,
+  useAnimationFrame,
   useInView,
   useMotionTemplate,
   useMotionValue,
@@ -16,6 +17,7 @@ import {
   useScroll,
   useSpring,
   useTransform,
+  useVelocity,
 } from "motion/react";
 import {
   type ElementType,
@@ -437,6 +439,81 @@ export function Marquee({
   );
 }
 
+/** Keeps `v` inside [min, max) by wrapping around, for seamless loops. */
+function wrapRange(min: number, max: number, v: number) {
+  const range = max - min;
+  return ((((v - min) % range) + range) % range) + min;
+}
+
+const VELOCITY_COPIES = 4;
+
+/**
+ * Marquee driven by scroll: drifts on its own, rushes ahead while the page is
+ * scrolled, flips direction when scrolling back up, and leans into the motion.
+ * Hovering eases it down to a crawl.
+ */
+export function VelocityMarquee({
+  children,
+  baseVelocity = -3,
+  className = "",
+  skew = true,
+}: {
+  children: ReactNode;
+  /** Percent of one copy's width per second; negative moves left */
+  baseVelocity?: number;
+  className?: string;
+  /** Lean the row with scroll speed */
+  skew?: boolean;
+}) {
+  const reduce = useReducedMotion();
+  const baseX = useMotionValue(0);
+  const { scrollY } = useScroll();
+  const scrollVelocity = useVelocity(scrollY);
+  const smoothVelocity = useSpring(scrollVelocity, { damping: 50, stiffness: 400 });
+  const velocityFactor = useTransform(smoothVelocity, [0, 1000], [0, 4], { clamp: false });
+  const skewX = useTransform(smoothVelocity, [-2500, 0, 2500], [7, 0, -7]);
+  const x = useTransform(baseX, (v) => `${wrapRange(-100 / VELOCITY_COPIES, 0, v)}%`);
+  const direction = useRef(1);
+  const hovered = useRef(false);
+  const speed = useRef(1);
+
+  useAnimationFrame((_, delta) => {
+    if (reduce) return;
+    // Glide between full speed and a hover crawl instead of snapping
+    speed.current += ((hovered.current ? 0.18 : 1) - speed.current) * 0.08;
+    const factor = velocityFactor.get();
+    if (factor < 0) direction.current = -1;
+    else if (factor > 0) direction.current = 1;
+    let moveBy = direction.current * baseVelocity * (delta / 1000);
+    moveBy += moveBy * Math.abs(factor);
+    baseX.set(baseX.get() + (moveBy * speed.current) / VELOCITY_COPIES);
+  });
+
+  return (
+    <div
+      className={`flex overflow-hidden whitespace-nowrap ${className}`}
+      onPointerEnter={() => {
+        hovered.current = true;
+      }}
+      onPointerLeave={() => {
+        hovered.current = false;
+      }}
+    >
+      <motion.div
+        className="flex w-max shrink-0 will-change-transform"
+        style={reduce ? undefined : { x, skewX: skew ? skewX : 0 }}
+      >
+        {Array.from({ length: VELOCITY_COPIES }, (_, copy) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: identical static copies, never reordered
+          <div key={copy} aria-hidden={copy > 0} className="flex shrink-0 items-center">
+            {children}
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
 // ── Masking ─────────────────────────────────────────────────────────────────
 
 type MaskFrom = "bottom" | "top" | "left" | "right" | "center";
@@ -664,7 +741,11 @@ export function MaskedTextZoom({
 
   return (
     <section ref={ref} className="relative h-[240vh]" aria-label={text}>
-      <div ref={stageRef} className="sticky top-0 h-[100svh] overflow-hidden">
+      {/* Feathered top edge so the flat stencil blends into the page's ambient light */}
+      <div
+        ref={stageRef}
+        className="sticky top-0 h-[100svh] overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,#000_96px)]"
+      >
         <motion.img
           src={image}
           alt={imageAlt}

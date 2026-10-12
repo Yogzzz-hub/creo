@@ -10,7 +10,6 @@ import {
   EASE_OUT_EXPO,
   HighlightSweep,
   Magnetic,
-  Marquee,
   MaskReveal,
   MaskedTextZoom,
   Parallax,
@@ -21,6 +20,7 @@ import {
   Stagger,
   StaggerItem,
   TiltCard,
+  VelocityMarquee,
 } from "../../components/motion";
 import { whenIdle } from "../../app/lazy-pages";
 
@@ -41,6 +41,18 @@ const MARQUEE_ITEMS = [
   "Activewear",
   "Home & living",
 ];
+// Front ribbon carries the formats we ship, back ribbon the brand side
+const FORMAT_ITEMS = MARQUEE_ITEMS.slice(0, 6);
+const NICHE_ITEMS = MARQUEE_ITEMS.slice(6);
+
+/** Four-point star used as the ribbon separator */
+function RibbonSparkle({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={`shrink-0 ${className}`}>
+      <path d="M12 0c.6 6.2 5.8 11.4 12 12-6.2.6-11.4 5.8-12 12-.6-6.2-5.8-11.4-12-12C6.2 11.4 11.4 6.2 12 0Z" />
+    </svg>
+  );
+}
 
 function CollageTile({
   src,
@@ -230,7 +242,7 @@ export function HomePage() {
         {/* Animated particle wave behind the hero */}
         {showScene && (
         <Suspense fallback={null}>
-          <HeroWaveScene className="absolute inset-x-0 bottom-0 h-[70%] -z-10 opacity-70 [mask-image:linear-gradient(to_top,#000_40%,transparent)] animate-page-in" />
+          <HeroWaveScene className="absolute inset-x-0 bottom-0 h-[70%] -z-10 opacity-70 [mask-image:linear-gradient(to_top,transparent,#000_22%,#000_45%,transparent)] animate-page-in" />
         </Suspense>
         )}
 
@@ -360,18 +372,48 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* 1.5 What we ship — infinite marquee */}
-      <section aria-label="What we produce" className="relative py-6 sm:py-7 bg-white/[0.02] backdrop-blur-sm">
-        <div aria-hidden="true" className="creo-seam absolute inset-x-0 top-0" />
-        <Marquee speed={42}>
+      {/* 1.5 What we ship — two crossing ribbons that react to scroll speed and direction */}
+      <section aria-label="What we produce" className="relative isolate overflow-hidden py-24 sm:py-32">
+        <ul className="sr-only">
           {MARQUEE_ITEMS.map((item) => (
-            <span key={item} className="flex items-center gap-12 sm:gap-16 whitespace-nowrap text-base sm:text-lg font-semibold tracking-[-0.01em] text-[#B4BFDA]">
-              {item}
-              <span className="size-1.5 rotate-45 bg-[#4F7BFF] shadow-[0_0_10px_2px_rgba(79,123,255,0.7)]" />
-            </span>
+            <li key={item}>{item}</li>
           ))}
-        </Marquee>
-        <div aria-hidden="true" className="creo-seam absolute inset-x-0 bottom-0" />
+        </ul>
+        <div aria-hidden="true" className="absolute inset-0 -z-10 bg-[radial-gradient(50%_45%_at_50%_50%,rgba(59,107,255,0.22),transparent)]" />
+
+        <div aria-hidden="true" className="grid grid-cols-[100%] place-items-center">
+          {/* Back ribbon — electric blue, drifts right; lifted so the two cross off-centre */}
+          <div className="col-start-1 row-start-1 w-[120vw] -translate-y-14 rotate-[4deg] sm:-translate-y-20 border-y border-white/20 bg-gradient-to-r from-[#2F5CF0] via-[#4F7BFF] to-[#3B6BFF] py-3 shadow-[0_24px_60px_-24px_rgba(59,107,255,0.9)] sm:py-4">
+            <VelocityMarquee baseVelocity={2.4}>
+              {NICHE_ITEMS.map((item) => (
+                <span key={item} className="flex items-center gap-6 px-6 text-lg font-bold uppercase tracking-[0.1em] text-white/90 sm:gap-10 sm:px-10 sm:text-2xl">
+                  {item}
+                  <RibbonSparkle className="size-3 text-[#DCE8FF] sm:size-4" />
+                </span>
+              ))}
+            </VelocityMarquee>
+          </div>
+
+          {/* Front ribbon — ice, drifts left */}
+          <div className="col-start-1 row-start-1 w-[120vw] -rotate-[3deg] border-y border-[#050A1A]/10 bg-[#DCE8FF] py-4 shadow-[0_30px_70px_-25px_rgba(1,4,16,0.95)] sm:py-6">
+            <VelocityMarquee baseVelocity={-3}>
+              {FORMAT_ITEMS.map((item, i) => (
+                <span key={item} className="flex items-center gap-6 px-6 sm:gap-10 sm:px-10">
+                  <span
+                    className={`text-3xl leading-none sm:text-6xl ${
+                      i % 2
+                        ? "font-serif italic tracking-[-0.02em] text-[#3B6BFF]"
+                        : "font-black tracking-[-0.045em] text-[#050A1A]"
+                    }`}
+                  >
+                    {item}
+                  </span>
+                  <RibbonSparkle className="size-5 text-[#3B6BFF] sm:size-8" />
+                </span>
+              ))}
+            </VelocityMarquee>
+          </div>
+        </div>
       </section>
 
       {/* 1.8 Signature masking scene — the word is a stencil over the studio */}
